@@ -9,7 +9,7 @@ import ColorModeContext from './utils/ColorModeContext';
 import Layout from './layout/Layout';
 import Home from './pages/Home';
 import NeuraNet from './components/NeuraNet';
-
+import News from './components/News';
 const App = (): JSX.Element => {
   const [mode, setMode] = useState('dark');
   const colorMode = useMemo(
@@ -49,6 +49,7 @@ const App = (): JSX.Element => {
               <Routes>
                 <Route path='/' element={<Home />} />
                 <Route path='/neuranet' element={<NeuraNet />} />
+                <Route path='/news' element={<News />} />
               </Routes>
             </Layout>
           </BrowserRouter>

@@ -27,8 +27,8 @@ const Header = ({ onSidebarOpen }: Props): JSX.Element => {
 
   return (
     <>
-       <Toolbar sx={{ minHeight: 70 }}>
-          <Link href='/' sx={{ textDecoration: 'none' }}>
+       <Toolbar sx={{ minHeight: 70, display: 'flex',justifyContent: 'space-between' }}>
+          <Link href='/' sx={{ textDecoration: 'none', marginRight: 'auto' }}>
             <IconButton size='large' disabled>
               {/* <StormIcon */}
               {/*   sx={{ */}
@@ -40,40 +40,35 @@ const Header = ({ onSidebarOpen }: Props): JSX.Element => {
               {/*     width: 40, */}
               {/*   }} */}
               {/* /> */}
-              <Box >
                 <Typography
                   variant='h6'
                   sx={{
-                    flexGrow: 1,
                     color: theme.palette.text.primary,
                     // fontWeight: 'bold',
                     // textTransform: 'uppercase',
-                    textDecoration: 'none',
                     marginLeft: '10px',
                   }}
                 >
                   Banbury
                 </Typography>
-              </Box>
             </IconButton>
           </Link>
 
-          <Box sx={{ flexGrow: 1 }} />
-         <Box
-            sx={{
-              alignItems: 'flex-start',
-              
-              // display: { lg: 'flex', md: 'none', xs: 'none' },
-            }}
-          >
 
-            <CustomButton href='/' text='Home' />
-            <CustomButton href='/NeuraNet' text='NeuraNet' />
-            <CustomButton href='/Research' text='Research' />
- 
-          </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <CustomButton href='/' text='Home' />
+          <CustomButton href='/NeuraNet' text='NeuraNet' />
+          {/* <CustomButton href='/Research' text='Research' /> */}
+          <CustomButton href='/News' text='News' />
+        </Box>
 
-          <Box sx={{ flexGrow: 2 }} />
+        <Box sx={{ flexGrow: 1 }}>
+<Box sx={{ width: 48 }} /> 
+          {/* Placeholder for right-aligned items if necessary */}
+        </Box>
+
+
+
           {/* </Box> */}
 
           {/* <Divider */}
@@ -103,12 +98,6 @@ const Header = ({ onSidebarOpen }: Props): JSX.Element => {
           {/*     )} */}
           {/*   </IconButton> */}
           {/* </Box> */}
-          <Box
-            sx={{
-              display: { md: 'block', lg: 'none' },
-            }}
-            alignItems='center'
-          >
           {/*   <Button */}
           {/*     onClick={() => onSidebarOpen()} */}
           {/*     aria-label='Menu' */}
@@ -129,7 +118,6 @@ const Header = ({ onSidebarOpen }: Props): JSX.Element => {
           {/*       }} */}
           {/*     /> */}
           {/*   </Button> */}
-          </Box>
         </Toolbar>
     </>
   );
