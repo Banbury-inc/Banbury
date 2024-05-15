@@ -3,13 +3,26 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HelmetProvider, Helmet } from 'react-helmet-async';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-
+import { useNavigate } from 'react-router-dom';
 import getTheme from './theme/theme';
 import ColorModeContext from './utils/ColorModeContext';
 import Layout from './layout/Layout';
 import Home from './pages/Home';
 import NeuraNet from './components/NeuraNet';
 import News from './components/News';
+
+const SitemapRedirect = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    window.location.href = '/sitemap.xml'; // Directly redirect to the sitemap file in the public directory
+  }, [navigate]);
+
+  return null; // Return null because this component doesn't render anything
+};
+
+
+
 const App = (): JSX.Element => {
   const [mode, setMode] = useState('dark');
   const colorMode = useMemo(
@@ -50,6 +63,7 @@ const App = (): JSX.Element => {
                 <Route path='/' element={<Home />} />
                 <Route path='/neuranet' element={<NeuraNet />} />
                 <Route path='/news' element={<News />} />
+                <Route path='/sitemap' element={<SitemapRedirect />} />
               </Routes>
             </Layout>
           </BrowserRouter>
