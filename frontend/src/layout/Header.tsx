@@ -60,7 +60,6 @@ const Header = ({ onSidebarOpen }: Props): JSX.Element => {
           <CustomButton href='/NeuraNet' text='NeuraNet' />
           {/* <CustomButton href='/Research' text='Research' /> */}
           <CustomButton href='/News' text='News' />
-          <CustomButton href='/Terms_of_use' text='Terms of use' />
         </Box>
 
         <Box sx={{ flexGrow: 1 }}>
