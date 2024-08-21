@@ -7,6 +7,7 @@ import Contact from '../components/Contact';
 import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
+import Footer from '../components/Footer';
 
 
 const Home = (): JSX.Element => {
@@ -46,7 +47,7 @@ const Home = (): JSX.Element => {
           </Typography>
         </Box>
       </Box>
- 
+
     </div>
   );
 };

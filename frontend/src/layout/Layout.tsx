@@ -10,6 +10,7 @@ import { useTheme } from '@mui/material/styles';
 
 import Header from './Header';
 import Footer from './Footer';
+// import Footer from '../components/Footer';
 import Sidebar from './Sidebar';
 
 interface Props {
@@ -53,13 +54,22 @@ const Layout = ({ children }: Props): JSX.Element => {
     <Box
       id='page-top'
       sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
         backgroundColor: theme.palette.background.default,
-        height: '100%',
       }}
     >
       <Header onSidebarOpen={handleSidebarOpen} />
       <Sidebar onClose={handleSidebarClose} open={open} />
-      <Box width={1} margin='0 auto'>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          width: '100%',
+          margin: '0 auto',
+        }}
+      >
         {children}
       </Box>
       <Footer />

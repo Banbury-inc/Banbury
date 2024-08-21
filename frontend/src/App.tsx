@@ -10,6 +10,7 @@ import Layout from './layout/Layout';
 import Home from './pages/Home';
 import NeuraNet from './components/NeuraNet';
 import News from './components/News';
+import Footer from './components/Footer';
 
 const SitemapRedirect = () => {
   const navigate = useNavigate();
@@ -67,6 +68,7 @@ const App = (): JSX.Element => {
               </Routes>
             </Layout>
           </BrowserRouter>
+          <Footer />
         </ThemeProvider>
       </ColorModeContext.Provider>
     </HelmetProvider>
