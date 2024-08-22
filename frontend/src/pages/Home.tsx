@@ -54,7 +54,7 @@ const Home = (): JSX.Element => {
           >
             Seamlessly access your devices from anywhere in the world
           </Typography>
-          <Button variant='contained' color='inherit'
+          <Button variant='contained' color='inherit' href='/Cloud'
             sx={{
 
               borderRadius: '20px',

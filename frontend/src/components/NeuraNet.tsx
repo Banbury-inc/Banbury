@@ -133,7 +133,7 @@ const NeuraNet = (): JSX.Element => {
             gutterBottom
             color={theme.palette.text.secondary}
           >
-            {totalNumberOfRequests !== null ? `Total Number of Requests: ${totalNumberOfRequests}` : ''}
+            {totalNumberOfRequests !== null ? `Total Number of Requests: ${totalNumberOfRequests} bytes` : ''}
           </Typography>
         </Box>
 
