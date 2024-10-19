@@ -23,7 +23,7 @@ const Home = (): JSX.Element => {
           justifyContent: 'center',
           alignItems: 'center',
           height: '45vh',
-          width: '80%',
+          width: '60%',
           backgroundImage: `url(${backgroundImage})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',

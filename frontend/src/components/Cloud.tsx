@@ -41,10 +41,10 @@ const Cloud = (): JSX.Element => {
       setDownloadUrl("https://github.com/Banbury-inc/NeuraNet/releases/download/v1.0.1/NeuraNet.1.0.1.msi"); // Set the URL or path to your Windows-specific file
     } else if (userAgent.includes("Mac")) {
       setDownloadText("Download for macOS");
-      setDownloadUrl("https://github.com/Banbury-inc/NeuraNet/releases/download/v1.0.1/NeuraNet-1.0.1-arm64.dmg"); // Set the URL or path to your macOS-specific file
+      setDownloadUrl("https://github.com/Banbury-inc/banbury-cloud-frontend/releases/download/v3.0.0/Banbury.Cloud-3.0.0-arm64.dmg"); // Set the URL or path to your macOS-specific file
     } else if (userAgent.includes("Linux")) {
       setDownloadText("Download for Linux");
-      setDownloadUrl("NeuraNet_1.0.1_amd64.deb"); // Set the URL or path to your Linux-specific file
+      setDownloadUrl("https://github.com/Banbury-inc/banbury-cloud-frontend/releases/download/v3.0.0/BanburyCloud_3.0.0_amd64.deb"); // Set the URL or path to your Linux-specific file
     } else {
       setDownloadText("Download");
       setDownloadUrl("/path_to_generic_file"); // Generic file if OS is not detected
@@ -107,7 +107,7 @@ const Cloud = (): JSX.Element => {
             marginTop: 4,
             alignItems: 'center',
             height: '45vh',
-            width: '80%',
+            width: '60%',
             backgroundImage: `url(${mockup1})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
