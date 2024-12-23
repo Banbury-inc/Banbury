@@ -17,4 +17,5 @@ export const trackPageView = async (path: string) => {
     } catch (error) {
         console.error('Error tracking page view:', error);
     }
-}; 
+};
+
