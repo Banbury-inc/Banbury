@@ -96,6 +96,65 @@ const News = (): JSX.Element => {
                 marginTop={theme.spacing(1)}
                 gutterBottom
                 sx={{ color: theme.palette.text.primary, }}>
+                January 4, 2024 - v3.2.0 Released
+              </Typography>
+
+              <Typography
+                variant='body1'
+                align='left'
+                marginTop={theme.spacing(1)}
+                gutterBottom
+                sx={{
+                  color: theme.palette.text.primary,
+                }}
+              >
+              Happy New Year everyone. A lot of work has been done in this most recent update, which is primarily focused on AI features.
+                We have added a feature called Cloud Sync. This is the backbone of this entire application. This feature allows
+              users to sync their files across all of their devices. You have the ability to select which files are synced, and how you
+              would like them to be synced.
+            </Typography>
+              <Typography
+                variant='body1'
+                align='left'
+                marginTop={theme.spacing(1)}
+                gutterBottom
+                sx={{
+                  color: theme.palette.text.primary,
+                }}
+              >
+            The way that this is done is by collecting information about the device, such as the current wifi speed, in increments of 
+            30 minutues. We then take this data and use AI to predict what these values might be in the future. By being able to predict
+            what these values might be in the future, we can make an intelligent decision about where certain files should be stored.
+            For example, if you turn off your work computer at 5pm every day, we can eventually predict this pattern, and move
+            files from your work computer to your computer at home, so that you can access them there. This is just one example out of many.
+              </Typography>
+              <Typography
+                variant='body1'
+                align='left'
+                marginTop={theme.spacing(1)}
+                gutterBottom
+                sx={{
+                  color: theme.palette.text.primary,
+                }}
+              >
+            We understand that many of you would like to use this software to work with friends and colleagues. The good news is that 
+            this is what we will be working on next. Features like sharing files with friends, allowing friends to access certain files
+            on your computer. All of this, including OAuth, is what will be coming in our next update. Stay tuned!
+              </Typography>
+
+            </Box>
+          </Container>
+
+
+
+          <Container>
+            <Box component="span" sx={{ display: 'inline-block', transform: 'scale(0.8)' }}>
+              <Typography
+                variant='h5'
+                align='center'
+                marginTop={theme.spacing(1)}
+                gutterBottom
+                sx={{ color: theme.palette.text.primary, }}>
                 November 3, 2024 - v3.1.0 Released
               </Typography>
 
