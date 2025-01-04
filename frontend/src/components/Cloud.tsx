@@ -78,7 +78,7 @@ const Cloud = (): JSX.Element => {
               color: theme.palette.text.primary,
             }}
           >
-            Banbury Cloud on your desktop
+            Your Files, Your Control
           </Typography>
           <Typography
             variant='subtitle1'
@@ -87,7 +87,17 @@ const Cloud = (): JSX.Element => {
             gutterBottom
             color={theme.palette.text.secondary}
           >
-            Seamlessly access your devices from anywhere in the world
+            Decentralized Cloud Storage with AI-Powered Intelligence
+          </Typography>
+          <Typography
+            variant='subtitle2'
+            align='center'
+            marginTop={theme.spacing(1)}
+            gutterBottom
+            color={theme.palette.text.secondary}
+          >
+            Experience the future of file management. Secure, private, and intelligent storage that puts you in control of your data.
+
           </Typography>
         </Box>
 
