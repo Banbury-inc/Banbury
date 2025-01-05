@@ -5,6 +5,8 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import TwitterIcon from '@mui/icons-material/Twitter';
+import XIcon from '@mui/icons-material/X';
+
 import { useTheme } from '@mui/material/styles';
 
 const Footer: React.FC = () => {
@@ -70,6 +72,15 @@ const Footer: React.FC = () => {
           © 2024 Banbury. All rights reserved.
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <IconButton
+            component="a"
+            href="https://www.x.com/banbury_io"
+            target="_blank"
+            rel="noopener"
+            color="inherit"
+          >
+            <XIcon />
+          </IconButton>
           <IconButton
             component="a"
             href="https://www.linkedin.com/company/banburyinnovationsinc"
