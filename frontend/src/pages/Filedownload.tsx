@@ -21,22 +21,39 @@ export default function FileDownload() {
   const [currentStep, setCurrentStep] = useState(0);
   const [downloadStatus, setDownloadStatus] = useState<'idle' | 'preparing' | 'ready' | 'error'>('idle');
   const [fileInfo, setFileInfo] = useState<any>();
+  const [fileBlob, setFileBlob] = useState<Blob | null>(null);
 
   useEffect(() => {
     const fetchFileInfo = async () => {
+      handleUpload();
       const file_id = "67659e872b46a3ef70402ead";
       const username = "mmills";
       const fileInfo = await getFileInfo(username, file_id);
       if (fileInfo) {
         setFileInfo(fileInfo);
-        console.log(fileInfo);
-        downloadFile(username, fileInfo);
+        const blob = await downloadFile(username, fileInfo);
+        if (blob) {
+          setFileBlob(blob);
+        }
       }
     };
     fetchFileInfo();
   }, []);
 
-  const handleDownload = async () => {
+  const initiateDownload = () => {
+    if (fileBlob && fileInfo) {
+      const url = window.URL.createObjectURL(fileBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileInfo.file_name;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    }
+  };
+
+  const handleUpload = async () => {
     try {
       setDownloadStatus('preparing');
       
@@ -67,7 +84,6 @@ export default function FileDownload() {
       // Step 6: File ready
       setCurrentStep(5);
       setDownloadStatus('ready');
-      await new Promise(resolve => setTimeout(resolve, 1500));
 
 
     } catch (error) {
@@ -162,11 +178,12 @@ export default function FileDownload() {
 
           <button
             type="button"
-            onClick={handleDownload}
-            disabled={downloadStatus === 'preparing'}
-            className={`btn-download ${downloadStatus === 'preparing' ? 'btn-download-disabled' : ''}`}
+            onClick={initiateDownload}
+            disabled={!fileBlob || downloadStatus === 'preparing'}
+            className={`btn-download ${(!fileBlob || downloadStatus === 'preparing') ? 'btn-download-disabled' : ''}`}
           >
-            {downloadStatus === 'preparing' ? 'Preparing...' : 'Download File'}
+            {downloadStatus === 'preparing' ? 'Preparing...' : 
+             !fileBlob ? 'Loading...' : 'Download File'}
           </button>
         </div>
       </div>

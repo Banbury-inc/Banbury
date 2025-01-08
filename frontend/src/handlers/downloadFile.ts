@@ -66,7 +66,7 @@ export async function downloadFile(username: string, fileInfo: any): Promise<Blo
               // Handle potential control messages
               const message = JSON.parse(data);
               console.log("Received JSON message:", message);
-              if (message.type === 'transfer-complete') {
+              if (message.message === 'File transfer complete') {
                 console.log("Transfer complete! Total chunks received:", chunks.length);
                 // Combine all chunks into a single Blob
                 const blob = new Blob(chunks, { type: 'application/octet-stream' });
