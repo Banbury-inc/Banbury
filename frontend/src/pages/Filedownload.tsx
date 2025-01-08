@@ -73,16 +73,16 @@ export default function FileDownload() {
                   <div className="flex flex-col items-center">
                     <div className="flex items-center justify-center">
                       {getStepStatus(stepIdx) === 'complete' ? (
-                        <span className="relative z-10 flex size-8 items-center justify-center rounded-full bg-white">
-                          <CheckIcon className="size-5 text-black" />
+                        <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white">
+                          <CheckIcon className="h-5 w-5 text-black" />
                         </span>
                       ) : getStepStatus(stepIdx) === 'current' ? (
-                        <span className="relative z-10 flex size-8 items-center justify-center rounded-full border-2 border-white/50 bg-zinc-900">
-                          <span className="size-2.5 rounded-full bg-white" />
+                        <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/50 bg-zinc-900">
+                          <span className="h-2.5 w-2.5 rounded-full bg-white" />
                         </span>
                       ) : (
-                        <span className="relative z-10 flex size-8 items-center justify-center rounded-full border-2 border-zinc-700 bg-zinc-900">
-                          <span className="size-2.5 rounded-full bg-transparent" />
+                        <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-zinc-700 bg-zinc-900">
+                          <span className="h-2.5 w-2.5 rounded-full bg-transparent" />
                         </span>
                       )}
                     </div>
