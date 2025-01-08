@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CheckIcon } from '@heroicons/react/20/solid';
 import { DocumentIcon } from '@heroicons/react/24/outline';
+import { getFileInfo } from '../handlers/getFileInfo';
 
 const steps = [
   { name: 'Initiating', description: 'Starting the download process', status: 'idle' },
@@ -15,6 +16,20 @@ function classNames(...classes: string[]) {
 export default function FileDownload() {
   const [currentStep, setCurrentStep] = useState(0);
   const [downloadStatus, setDownloadStatus] = useState<'idle' | 'preparing' | 'ready' | 'error'>('idle');
+  const [fileInfo, setFileInfo] = useState<any>();
+
+  useEffect(() => {
+    const fetchFileInfo = async () => {
+      const file_id = "67659e872b46a3ef70402ead";
+      const username = "mmills";
+      const fileInfo = await getFileInfo(username, file_id);
+      if (fileInfo) {
+        setFileInfo(fileInfo);
+        console.log(fileInfo);
+      }
+    };
+    fetchFileInfo();
+  }, []);
 
   const handleDownload = async () => {
     try {
@@ -54,10 +69,10 @@ export default function FileDownload() {
               <DocumentIcon className="h-16 w-16 text-zinc-400" />
             </div>
             <h2 className="text-xl font-semibold text-white">
-              example-document.pdf
+              {fileInfo?.file_name}
             </h2>
             <p className="mt-1 text-sm text-zinc-400">
-              24.5 MB
+              {fileInfo?.file_size} MB
             </p>
           </div>
 
