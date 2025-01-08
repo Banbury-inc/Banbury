@@ -89,7 +89,7 @@ export default function FileDownload() {
                     'absolute left-0 top-4 h-0.5 w-full',
                     getStepStatus(stepIdx) === 'complete' ? 'bg-indigo-600' : 'bg-gray-300'
                   )}
-                  style={{ transform: 'translateX(4rem)' }}
+                  style={{ transform: 'translateX(8rem)' }}
                 />
               )}
             </li>
