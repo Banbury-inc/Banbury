@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CheckIcon } from '@heroicons/react/20/solid';
+import { CheckIcon, XMarkIcon } from '@heroicons/react/20/solid';
 import { DocumentIcon } from '@heroicons/react/24/outline';
 import { getFileInfo } from '../handlers/getFileInfo';
 import { downloadFile } from '../handlers/downloadFile';
@@ -22,19 +22,38 @@ export default function FileDownload() {
   const [downloadStatus, setDownloadStatus] = useState<'idle' | 'preparing' | 'ready' | 'error'>('idle');
   const [fileInfo, setFileInfo] = useState<any>();
   const [fileBlob, setFileBlob] = useState<Blob | null>(null);
+  const [errorStep, setErrorStep] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     const fetchFileInfo = async () => {
-      handleUpload();
-      const file_id = "67659e872b46a3ef70402ead";
-      const username = "mmills";
-      const fileInfo = await getFileInfo(username, file_id);
-      if (fileInfo) {
-        setFileInfo(fileInfo);
-        const blob = await downloadFile(username, fileInfo);
-        if (blob) {
-          setFileBlob(blob);
+      setDownloadStatus('preparing');
+      setCurrentStep(0);
+      setErrorStep(null);
+      setErrorMessage('');
+      
+      try {
+        const file_id = "67659e872b46a3ef70402ead";
+        const username = "mmills";
+        const fileInfo = await getFileInfo(username, file_id);
+        if (fileInfo) {
+          setFileInfo(fileInfo);
+          const blob = await downloadFile(username, fileInfo, (step, error?) => {
+            setCurrentStep(step);
+            if (error) {
+              setErrorStep(step);
+              setErrorMessage(error);
+              setDownloadStatus('error');
+            }
+          });
+          if (blob) {
+            setFileBlob(blob);
+            setCurrentStep(5);
+            setDownloadStatus('ready');
+          }
         }
+      } catch (error) {
+        setDownloadStatus('error');
       }
     };
     fetchFileInfo();
@@ -53,47 +72,8 @@ export default function FileDownload() {
     }
   };
 
-  const handleUpload = async () => {
-    try {
-      setDownloadStatus('preparing');
-      
-      // Step 1: Initiating
-      setCurrentStep(0);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Step 2: Preparing File
-      setCurrentStep(1);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-
-      // Step 3: Looking to see if device is online
-      setCurrentStep(2);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-
-      // Step 4: Sending download request
-      setCurrentStep(3);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Step 5: File ready
-      setCurrentStep(4);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      setCurrentStep(5);
-
-      // Step 6: File ready
-      setCurrentStep(5);
-      setDownloadStatus('ready');
-
-
-    } catch (error) {
-      setDownloadStatus('error');
-      console.error('Download failed:', error);
-    }
-  };
-
   const getStepStatus = (stepIdx: number) => {
-    if (downloadStatus === 'error') return 'error';
+    if (errorStep === stepIdx) return 'error';
     if (stepIdx < currentStep) return 'complete';
     if (stepIdx === currentStep) return downloadStatus === 'ready' ? 'complete' : 'current';
     return 'upcoming';
@@ -130,6 +110,10 @@ export default function FileDownload() {
                         <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white">
                           <CheckIcon className="h-5 w-5 text-black" />
                         </span>
+                      ) : getStepStatus(stepIdx) === 'error' ? (
+                        <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-red-600">
+                          <XMarkIcon className="h-5 w-5 text-white" />
+                        </span>
                       ) : getStepStatus(stepIdx) === 'current' ? (
                         <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/50 bg-zinc-900">
                           <span className="h-2.5 w-2.5 rounded-full bg-white" />
@@ -160,7 +144,7 @@ export default function FileDownload() {
                         {step.name}
                       </span>
                       <span className="mt-1 text-sm text-zinc-400">
-                        {step.description}
+                        {errorStep === stepIdx ? errorMessage : step.description}
                       </span>
                     </div>
                   </div>
