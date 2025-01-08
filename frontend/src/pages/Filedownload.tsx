@@ -3,6 +3,7 @@ import { CheckIcon, XMarkIcon } from '@heroicons/react/20/solid';
 import { DocumentIcon } from '@heroicons/react/24/outline';
 import { getFileInfo } from '../handlers/getFileInfo';
 import { downloadFile } from '../handlers/downloadFile';
+import { useParams } from 'react-router-dom';
 
 const steps = [
   { name: 'Initiating', description: '', status: 'idle' },
@@ -18,6 +19,7 @@ function classNames(...classes: string[]) {
 }
 
 export default function FileDownload() {
+  const { username, file_id } = useParams();
   const [currentStep, setCurrentStep] = useState(0);
   const [downloadStatus, setDownloadStatus] = useState<'idle' | 'preparing' | 'ready' | 'error'>('idle');
   const [fileInfo, setFileInfo] = useState<any>();
@@ -33,8 +35,6 @@ export default function FileDownload() {
       setErrorMessage('');
       
       try {
-        const file_id = "67659e872b46a3ef70402ead";
-        const username = "mmills";
         const fileInfo = await getFileInfo(username, file_id);
         if (fileInfo) {
           setFileInfo(fileInfo);
@@ -57,7 +57,7 @@ export default function FileDownload() {
       }
     };
     fetchFileInfo();
-  }, []);
+  }, [username, file_id]);
 
   const initiateDownload = () => {
     if (fileBlob && fileInfo) {

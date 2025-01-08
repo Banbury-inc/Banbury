@@ -7,7 +7,7 @@ import { CONFIG } from "../config/config";
 
 
 // Function to get total requests processed
-export async function downloadFile(username: string, fileInfo: any, onProgress?: (step: number, error?: string) => void): Promise<Blob | null> {
+export async function downloadFile(username: string | undefined, fileInfo: any, onProgress?: (step: number, error?: string) => void): Promise<Blob | null> {
   // Step 1: Getting device info
   onProgress?.(1);
   const device_id = fileInfo.device_id;
