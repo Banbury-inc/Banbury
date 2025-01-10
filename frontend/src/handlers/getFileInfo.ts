@@ -1,4 +1,5 @@
 import axios from "axios";
+import { CONFIG } from "../config/config";
 
 
 
@@ -7,7 +8,7 @@ import axios from "axios";
 // Function to get total requests processed
 export async function getFileInfo(username: string | undefined, file_id: string | undefined): Promise<any | null> {
   try {
-    const response = await axios.get(`http://localhost:8080/files/get_file_info/${username}/${file_id}`);
+    const response = await axios.get(`${CONFIG.url}/files/get_file_info/${username}/${file_id}`);
 
     if (!response.data) {
       return null;

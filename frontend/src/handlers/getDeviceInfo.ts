@@ -1,4 +1,5 @@
 import axios from "axios";
+import { CONFIG } from "../config/config";
 
 
 
@@ -7,7 +8,7 @@ import axios from "axios";
 // Function to get total requests processed
 export async function getDeviceInfo(username: string | undefined, device_id: string | undefined): Promise<any | null> {
   try {
-    const response = await axios.get(`http://localhost:8080/devices/get_single_device_info/${username}/${device_id}`);
+    const response = await axios.get(`${CONFIG.url}/devices/get_single_device_info/${username}/${device_id}`);
 
     console.log(response)
 
