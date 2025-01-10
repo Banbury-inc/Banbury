@@ -6,7 +6,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "PORT=80 react-scripts start",
+    "dev": "PORT=80 react-scripts start",
     "build": "react-scripts build",
     "eject": "react-scripts eject",
     "test": "jest --runInBand",
@@ -36,6 +36,7 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@heroicons/react": "^2.2.0",
     "@mui/icons-material": "^5.16.13",
     "@mui/material": "^5.14.6",
     "axios": "^1.4.0",
