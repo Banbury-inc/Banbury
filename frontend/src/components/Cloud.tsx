@@ -41,20 +41,39 @@ const Cloud = (): JSX.Element => {
     }).catch((error) => console.log(error));
   };
 
-  const determineOS = () => {
-    const userAgent = navigator.userAgent;
-    if (userAgent.includes("Win")) {
-      setDownloadText("Download for Windows");
-      setDownloadUrl("https://github.com/Banbury-inc/banbury-cloud-frontend/releases/download/v3.3.5/Banbury.Cloud.Setup.3.3.5.exe"); // Set the URL or path to your macOS-specific file
-    } else if (userAgent.includes("Mac")) {
-      setDownloadText("Download for macOS");
-      setDownloadUrl("https://github.com/Banbury-inc/banbury-cloud-frontend/releases/download/v3.3.5/Banbury.Cloud-3.3.5-arm64.dmg"); // Set the URL or path to your macOS-specific file
-    } else if (userAgent.includes("Linux")) {
-      setDownloadText("Download for Linux");
-      setDownloadUrl("https://github.com/Banbury-inc/banbury-cloud-frontend/releases/download/v3.3.5/BanburyCloud_3.3.5_amd64.deb"); // Set the URL or path to your Linux-specific file
-    } else {
+  const determineOS = async () => {
+    try {
+      const response = await axios.get('https://api.github.com/repos/Banbury-inc/banbury-cloud-frontend/releases/latest');
+      const latestRelease = response.data;
+      const assets = latestRelease.assets;
+
+      const userAgent = navigator.userAgent;
+      let downloadAsset;
+
+      if (userAgent.includes("Win")) {
+        downloadAsset = assets.find((asset: { name: string }) => asset.name.includes('.exe'));
+        setDownloadText("Download for Windows");
+      } else if (userAgent.includes("Mac")) {
+        downloadAsset = assets.find((asset: { name: string }) => asset.name.includes('.dmg'));
+        setDownloadText("Download for macOS");
+      } else if (userAgent.includes("Linux")) {
+        downloadAsset = assets.find((asset: { name: string }) => asset.name.includes('.deb'));
+        setDownloadText("Download for Linux");
+      } else {
+        setDownloadText("Download");
+        setDownloadUrl("/path_to_generic_file"); // Generic file if OS is not detected
+        return;
+      }
+
+      if (downloadAsset) {
+        setDownloadUrl(downloadAsset.browser_download_url);
+      } else {
+        setDownloadUrl("/path_to_generic_file"); // Fallback if no specific asset is found
+      }
+    } catch (error) {
+      console.error("Error fetching latest release:", error);
       setDownloadText("Download");
-      setDownloadUrl("/path_to_generic_file"); // Generic file if OS is not detected
+      setDownloadUrl("/path_to_generic_file"); // Fallback in case of error
     }
   };
 
