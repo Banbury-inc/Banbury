@@ -33,7 +33,6 @@ const Home = (): JSX.Element => {
       {/* Hero Section */}
       <Box
         sx={{
-          background: '#171717',
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
@@ -210,7 +209,6 @@ const Home = (): JSX.Element => {
       {/* CTA Section */}
       <Box
         sx={{
-          backgroundColor: theme.palette.mode === 'dark' ? '#171717' : '#f5f5f5',
           py: { xs: 8, md: 12 },
         }}
       >

@@ -1,21 +1,10 @@
-import { useContext } from 'react';
-import AppBar from '@mui/material/AppBar';
-import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
-import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Toolbar from '@mui/material/Toolbar';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import StormIcon from '@mui/icons-material/Storm';
-import MenuIcon from '@mui/icons-material/Menu';
 import { alpha, useTheme } from '@mui/material/styles';
-
 import CustomButton from '../components/CustomButton';
-import ColorModeContext from '../utils/ColorModeContext';
 
 interface Props {
   onSidebarOpen: () => void;
@@ -23,7 +12,6 @@ interface Props {
 
 const Header = ({ onSidebarOpen }: Props): JSX.Element => {
   const theme = useTheme();
-  const colorMode = useContext(ColorModeContext);
 
   return (
     <>
