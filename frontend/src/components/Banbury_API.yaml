@@ -1,0 +1,1873 @@
+openapi: 3.0.3
+info:
+  title: Banbury API
+  version: 1.1.0
+  description: Banbury API
+paths:
+  /:
+    get:
+      operationId: root_retrieve
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /analytics/add_file_request/:
+    get:
+      operationId: analytics_add_file_request_retrieve
+      description: Increments the file_requests count in the analytics collection.
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: analytics_add_file_request_create
+      description: Increments the file_requests count in the analytics collection.
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /analytics/add_file_request_success/:
+    get:
+      operationId: analytics_add_file_request_success_retrieve
+      description: Increments the file_requests_success count in the analytics collection.
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: analytics_add_file_request_success_create
+      description: Increments the file_requests_success count in the analytics collection.
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /analytics/get_analytics/:
+    get:
+      operationId: analytics_get_analytics_retrieve
+      description: Retrieves analytics data for a specific user.
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /authentication/add_site_visitor_info/:
+    post:
+      operationId: authentication_add_site_visitor_info_create
+      description: Records information about site visitors, including IP-based geolocation.
+      tags:
+      - authentication
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /authentication/getuserinfo4/{username}/{password}/:
+    get:
+      operationId: authentication_getuserinfo4_retrieve
+      description: Authenticates a user based on username and password (version 4).
+        Duplicate of the one in users/views.py?
+      parameters:
+      - in: path
+        name: password
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - authentication
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /authentication/login/:
+    get:
+      operationId: authentication_login_retrieve
+      description: Handles user login via a traditional form (GET displays form, POST
+        processes it).
+      tags:
+      - authentication
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /authentication/login_api/:
+    get:
+      operationId: authentication_login_api_retrieve
+      description: Handles API-based user login with username and password.
+      tags:
+      - authentication
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /authentication/new_register/{username}/{password}/{firstName}/{lastName}/:
+    get:
+      operationId: authentication_new_register_retrieve
+      description: Registers a new user with basic information (username, password,
+        names).
+      parameters:
+      - in: path
+        name: firstName
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: lastName
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: password
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - authentication
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /authentication/register/:
+    post:
+      operationId: authentication_register_create
+      description: Registers a new user, potentially using Google OAuth profile information.
+      tags:
+      - authentication
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /devices/add_downloaded_model/{username}/:
+    post:
+      operationId: devices_add_downloaded_model_create
+      description: |-
+        Adds a record indicating a model has been downloaded to a specific device.
+
+        Retrieves the device ID (as string) and model name from the POST request body.
+        Updates the device record for the specified user.
+
+        Args:
+            request: The Django HttpRequest object.
+            username (str): The username of the owner of the device.
+
+        Returns:
+            JsonResponse: A JSON response indicating success or failure, including
+                          appropriate status codes and messages.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /devices/declare_device_offline/{username}/:
+    post:
+      operationId: devices_declare_device_offline_create
+      description: |-
+        Marks a specific device as offline in the database.
+
+        Retrieves the device name from the POST request body and sets the 'online'
+        status to False for the corresponding device of the specified user.
+
+        Args:
+            request: The Django HttpRequest object.
+            username (str): The username of the owner of the device.
+
+        Returns:
+            JsonResponse: A JSON response indicating success or failure.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /devices/declare_device_online/{username}/:
+    post:
+      operationId: devices_declare_device_online_create
+      description: |-
+        Marks a specific device as online in the database.
+
+        Retrieves the device name from the POST request body and sets the 'online'
+        status to True for the corresponding device of the specified user.
+
+        Args:
+            request: The Django HttpRequest object.
+            username (str): The username of the owner of the device.
+
+        Returns:
+            JsonResponse: A JSON response indicating success or failure.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /devices/delete_device/{username}/:
+    post:
+      operationId: devices_delete_device_create
+      description: |-
+        Deletes a device associated with a specific user.
+
+        Retrieves the device name from the POST request body and removes the
+        corresponding device entry for the user identified by the username in the URL.
+
+        Args:
+            request: The Django HttpRequest object.
+            username (str): The username of the owner of the device.
+
+        Returns:
+            JsonResponse: A JSON response indicating success or failure.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /devices/get_single_device_info/{username}/{device_id}/:
+    get:
+      operationId: devices_get_single_device_info_retrieve
+      description: |-
+        Retrieves detailed information for a single device using its database ID.
+
+        Calls the db_get_single_device_info function to fetch details.
+
+        Args:
+            request: The Django HttpRequest object.
+            username (str): The username of the owner of the device.
+            device_id (str): The MongoDB ObjectId of the device as a string.
+
+        Returns:
+            JsonResponse: A JSON response containing the device information.
+      parameters:
+      - in: path
+        name: device_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /devices/get_single_device_info_with_device_name/{username}/{device_name}/:
+    get:
+      operationId: devices_get_single_device_info_with_device_name_retrieve
+      description: |-
+        Retrieves detailed information for a single device using its name.
+
+        Calls the db_get_single_device_info_with_device_name function to fetch details.
+
+        Args:
+            request: The Django HttpRequest object.
+            username (str): The username of the owner of the device.
+            device_name (str): The name of the device.
+
+        Returns:
+            JsonResponse: A JSON response containing the device information.
+      parameters:
+      - in: path
+        name: device_name
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /devices/getdeviceinfo/{username}/:
+    get:
+      operationId: devices_getdeviceinfo_retrieve
+      description: |-
+        Retrieves information for all devices associated with a specific user.
+
+        Fetches device details from the database for the user identified
+        by the username in the URL.
+
+        Args:
+            request: The Django HttpRequest object.
+            username (str): The username of the user whose devices are to be retrieved.
+
+        Returns:
+            JsonResponse: A JSON response containing a list of device details
+                          or an error message if the user is not found.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /devices/getonlinedevices/{username}/:
+    post:
+      operationId: devices_getonlinedevices_create
+      description: |-
+        Retrieves a list of online devices for a specific user.
+
+        Calls the get_online_devices function to fetch the status of devices
+        for the user identified by the username.
+
+        Args:
+            request: The Django HttpRequest object.
+            username (str): The username of the user.
+
+        Returns:
+            JsonResponse: A JSON response indicating success or failure.
+                          On success, the message indicates successful deletion (which seems incorrect based on function name).
+                          TODO: Review the response message for accuracy.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /devices/update_device_configurations/{username}/:
+    get:
+      operationId: devices_update_device_configurations_retrieve
+      description: |-
+        Updates the configuration preferences for a specific device.
+
+        Retrieves the device name and configuration settings from the request body
+        and updates the corresponding device for the user identified by the username.
+
+        Args:
+            request: The Django HttpRequest object.
+            username (str): The username of the owner of the device.
+
+        Returns:
+            JsonResponse: A JSON response indicating success and returning the updated data.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: devices_update_device_configurations_create
+      description: |-
+        Updates the configuration preferences for a specific device.
+
+        Retrieves the device name and configuration settings from the request body
+        and updates the corresponding device for the user identified by the username.
+
+        Args:
+            request: The Django HttpRequest object.
+            username (str): The username of the owner of the device.
+
+        Returns:
+            JsonResponse: A JSON response indicating success and returning the updated data.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/add_file/{username}/:
+    post:
+      operationId: files_add_file_create
+      description: |-
+        Adds metadata for a single file to the database for a given user and device.
+
+        Expects a POST request with a JSON body containing file details:
+        - file_type (str)
+        - file_name (str)
+        - file_path (str)
+        - date_uploaded (str/datetime)
+        - date_modified (str/datetime)
+        - file_size (int)
+        - file_priority (any)
+        - file_parent (str)
+        - original_device (str): Name of the device uploading the file.
+        - kind (str)
+
+        URL Parameters:
+            username (str): The username associated with the file.
+
+        Returns:
+            JsonResponse:
+                - On Success: {"result": "success", "username": username}. Broadcasts the new file via websocket.
+                - On Error:
+                    - {"error": "Invalid JSON"}, status=400
+                    - {"result": "device_not_found", "message": "Device not found."}
+                    - {"result": "object_id_not_found", "message": "Device id not found."}
+                    - If DB insert fails (prints error, returns success response but DB might be inconsistent).
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/add_scanned_folder/{username}/:
+    post:
+      operationId: files_add_scanned_folder_create
+      description: |-
+        Adds a folder path to the list of scanned folders for a specific user's device.
+
+        Finds the user and the specified device, then adds the given folder path
+        to the 'scanned_folders' array field in the device's document. Initializes
+        'scanned_folders' as an empty array if it doesn't exist or isn't a list.
+
+        Expects a POST request with a JSON body containing:
+        - device_name (str, required): The name of the device to update.
+        - scanned_folder (str, required): The folder path to add.
+
+        URL Parameters:
+            username (str): The username who owns the device.
+
+        Returns:
+            JsonResponse:
+                - On Success: {"result": "success", "username": username}
+                - On Error:
+                    - {"error": "Invalid JSON"}, status=400
+                    - {"error": "User not found."}, status=404
+                    - {"error": "Device not found."}, status=404
+                    - {"error": "Failed to update device status."}, status=500 (If DB update fails)
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/delete_files/{username}/:
+    post:
+      operationId: files_delete_files_create
+      description: |-
+        Handles the deletion of metadata for multiple files associated with a user and device.
+
+        Delegates the core deletion logic to the `delete_files` utility function.
+
+        Expects a POST request with a JSON body containing:
+        - files (list): A list of file identifiers (e.g., paths or IDs) to be deleted.
+        - device_name (str): The name of the device associated with these files.
+
+        URL Parameters:
+            username (str): The username initiating the deletion.
+
+        Returns:
+            JsonResponse: Based on the result from `delete_files`:
+                - {"result": "success", "message": "Files deleted successfully."}
+                - {"result": "device_not_found", "message": "Device not found."}
+                - {"result": "device_id_not_found", "message": "Device id not found."}
+                - {"error": "Invalid JSON"}, status=400
+                - {"error": "Missing files or device_name"}, status=400
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/get_file_info/{username}/{file_id}/:
+    get:
+      operationId: files_get_file_info_retrieve
+      description: |-
+        Retrieves detailed metadata information for a specific file by its ID.
+
+        Delegates the core logic to the `db_get_file_info` utility function.
+
+        URL Parameters:
+            username (str): The username requesting the file info (potentially used for authorization
+                           within the helper function, though not directly used in this view).
+            file_id (str): The ID (_id) of the file whose information is requested.
+
+        Returns:
+            JsonResponse:
+                - On Success: {"status": "success", "file_info": file_metadata_dict}
+                  (The structure of metadata depends on `db_get_file_info` implementation).
+                - On Error:
+                    - {"error": str(e)}, status=500 (Catches any exception from `db_get_file_info`).
+      parameters:
+      - in: path
+        name: file_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/get_files_from_filepath/{username}/:
+    post:
+      operationId: files_get_files_from_filepath_create
+      description: |-
+        Retrieves files located under a specific 'global_file_path' for a user.
+
+        Delegates the retrieval logic to `db_get_files_from_filepath`.
+
+        Expects a POST request with a JSON body containing:
+        - global_file_path (str): The base path to search within. If missing or null,
+                                   defaults to an empty path ("").
+
+        URL Parameters:
+            username (str): The username whose files are being queried.
+
+        Returns:
+            JsonResponse:
+                - On Success (from `db_get_files_from_filepath`): {"result": "success", "files": [list_of_files]}
+                - On Error:
+                    - {"result": "error", "message": "Empty request body"}, status=400
+                    - {"result": "error", "message": "Invalid JSON format: ..."}, status=400
+                    - {"result": "error", "message": "No files found or invalid response format"}, status=404
+                    - {"result": "error", "message": "Server error: ..."}, status=500 (Generic server error)
+                    - Potentially other errors returned directly from `db_get_files_from_filepath` if it returns a JsonResponse.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/get_scanned_folders/{username}/:
+    post:
+      operationId: files_get_scanned_folders_create
+      description: |-
+        Retrieves the list of scanned folders for a specific user's device.
+
+        Finds the user and the specified device, then returns the 'scanned_folders'
+        array field from the device's document. Defaults to an empty list if the
+        field doesn't exist.
+
+        Expects a POST request with a JSON body containing:
+        - device_name (str, required): The name of the device whose scanned folders are requested.
+
+        URL Parameters:
+            username (str): The username who owns the device.
+
+        Returns:
+            JsonResponse:
+                - On Success: {"result": "success", "scanned_folders": [list_of_folder_paths]}
+                - On Error:
+                    - {"error": "Invalid JSON"}, status=400
+                    - {"error": "User not found."}, status=404
+                    - {"error": "Device not found."}, status=404
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/get_shared_files/:
+    post:
+      operationId: files_get_shared_files_create
+      description: |-
+        Retrieves metadata for files shared with the specified user.
+
+        Delegates the core logic to the `db_get_shared_files` utility function.
+
+        Expects a POST request with JSON body containing:
+        - username (str, required): The username whose shared files are being requested.
+
+        Returns:
+            JsonResponse:
+                - On Success: {"status": "success", "shared_files": [list_of_shared_file_metadata]}
+                  (The structure of metadata depends on `db_get_shared_files` implementation).
+                - On Error:
+                    - {"error": "Invalid JSON"}, status=400
+                    - Potential errors from `db_get_shared_files` if it raises exceptions (not explicitly handled here).
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/get_shared_files_from_filepath/:
+    post:
+      operationId: files_get_shared_files_from_filepath_create
+      description: |-
+        Retrieves shared files under a specific filepath for the specified user.
+
+        *** WARNING: This endpoint calls a function `get_shared_files_from_filepath` which is
+              likely undefined or not imported in the current context. ***
+        It needs to be implemented or imported correctly.
+
+        Expects a POST request with JSON body containing:
+        - username (str, required): The username whose shared files are being requested.
+        - filepath (str, required): The specific file path to filter shared files by.
+
+        Returns:
+            JsonResponse:
+                - On Success (if helper function works): {"status": "success", "shared_files": [list_of_filtered_shared_files]}
+                - On Error:
+                    - {"error": "Invalid JSON"}, status=400
+                    - NameError if `get_shared_files_from_filepath` is not defined.
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/getfileinfo/{username}/:
+    get:
+      operationId: files_getfileinfo_retrieve
+      description: |-
+        Retrieves metadata for all files associated with all devices for a given user.
+
+        Iterates through all devices linked to the user and collects metadata for all
+        files associated with each device.
+
+        URL Parameters:
+            username (str): The username whose files are to be retrieved.
+
+        Returns:
+            JsonResponse:
+                - On Success: {"files": [list_of_file_metadata_dicts]}
+                  Each file metadata dictionary contains keys like:
+                  "file_name", "file_size", "file_type", "file_path", "date_uploaded",
+                  "date_modified", "date_accessed", "kind", "device_name".
+                - On Error:
+                    - {"error": "Please login first."}, status=401 (If user not found)
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/getpartialfileinfo/{username}/:
+    post:
+      operationId: files_getpartialfileinfo_create
+      description: |-
+        Retrieves file metadata within a specified folder path up to a maximum depth.
+
+        Finds all devices for the user, then queries the files collection for each device,
+        filtering by a regex constructed from the `folder_path` and `max_depth`.
+
+        Expects a POST request with a JSON body containing:
+        - folder_path (str): The base folder path to search within.
+        - max_depth (int, optional, default=4): The maximum directory depth relative
+                                                to `folder_path` to include results from.
+
+        URL Parameters:
+            username (str): The username whose files are being queried.
+
+        Returns:
+            JsonResponse:
+                - On Success: {"files": [list_of_matching_file_metadata_dicts]}
+                  File metadata includes: "file_name", "file_size", "file_type", "file_path",
+                  "date_uploaded", "date_modified", "date_accessed", "kind", "device_name".
+                - On Error:
+                    - {"error": "Invalid JSON"}, status=400
+                    - {"error": "User not found."}, status=404
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/make_file_private/:
+    post:
+      operationId: files_make_file_private_create
+      description: |-
+        Sets the 'is_public' flag to False for a specific file associated with a user's device.
+
+        Finds the user, the device, and the file. Updates the file document, setting
+        'is_public' to False, ensuring the update targets the file matching both
+        'file_name' and the found 'device_id'.
+
+        Expects a POST request with JSON body containing:
+        - file_name (str, required): The name of the file to make private.
+        - username (str, required): The username of the file owner.
+        - device_name (str, required): The name of the device the file belongs to.
+
+        Returns:
+            JsonResponse:
+                - On Success: {"status": "success", "message": "File made private successfully"}
+                - On Error:
+                    - {"error": "Invalid JSON"}, status=400
+                    - {"error": "User not found."}, status=404
+                    - {"error": "Device not found."}, status=404 (Implicitly, as device["_id"] would fail)
+                    - {"error": "File not found."}, status=404 (If file_name doesn't match any file, even if device exists)
+                    - Potential KeyError if device is found but lacks "_id".
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/make_file_public/:
+    post:
+      operationId: files_make_file_public_create
+      description: |-
+        Sets the 'is_public' flag to True for a specific file associated with a user's device.
+
+        Finds the user, the device, and the file. Updates the file document, setting
+        'is_public' to True, ensuring the update targets the file matching both
+        'file_name' and the found 'device_id'.
+
+        Expects a POST request with JSON body containing:
+        - file_name (str, required): The name of the file to make public.
+        - username (str, required): The username of the file owner.
+        - device_name (str, required): The name of the device the file belongs to.
+
+        Returns:
+            JsonResponse:
+                - On Success: {"status": "success", "message": "File made public successfully"}
+                - On Error:
+                    - {"error": "Invalid JSON"}, status=400
+                    - {"error": "User not found."}, status=404
+                    - {"error": "Device not found."}, status=404 (Implicitly, as device["_id"] would fail)
+                    - {"error": "File not found."}, status=404 (If file_name doesn't match any file, even if device exists)
+                    - Potential KeyError if device is found but lacks "_id".
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/paginated_get_files_info/{username}/:
+    post:
+      operationId: files_paginated_get_files_info_create
+      description: |-
+        Retrieves paginated file information for a user.
+
+        *** WARNING: THIS ENDPOINT CURRENTLY CAUSES INFINITE RECURSION. ***
+        It calls itself instead of fetching data with pagination parameters.
+        Needs to be refactored to call a database query function with limit/skip.
+
+        Expects a POST request with a JSON body optionally containing:
+        - page (int, optional, default=1): The page number to retrieve.
+        - items_per_page (int, optional, default=10): The number of items per page.
+
+        URL Parameters:
+            username (str): The username whose files are being queried.
+
+        Returns:
+            JsonResponse:
+                - Intended: Paginated file information.
+                - Actual: Infinite recursion leading to server error/timeout.
+                - On Error: {"error": "Invalid JSON"}, status=400
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/remove_scanned_folder/{username}/:
+    post:
+      operationId: files_remove_scanned_folder_create
+      description: |-
+        Removes a folder path from the list of scanned folders for a specific user's device.
+
+        Finds the user and the specified device, then removes the given folder path
+        from the 'scanned_folders' array field using MongoDB's $pull operator.
+
+        Expects a POST request with a JSON body containing:
+        - device_name (str, required): The name of the device to update.
+        - scanned_folder (str, required): The folder path to remove.
+
+        URL Parameters:
+            username (str): The username who owns the device.
+
+        Returns:
+            JsonResponse:
+                - If Removed: {"status": "success", "message": "Folder removed successfully"}
+                - If Not Found in Array: {"status": "not_found", "message": "Folder not found in scanned_folders"}
+                - On Error:
+                    - {"error": "Invalid JSON"}, status=400
+                    - {"error": "User not found."}, status=404
+                    - {"error": "Device not found."}, status=404
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/search_file/{username}/:
+    post:
+      operationId: files_search_file_create
+      description: |-
+        Searches for a specific file by name on a specific device for a user.
+
+        Expects a POST request with a JSON body containing:
+        - device_name (str, required): The name of the device to search on.
+        - file_name (str, required): The exact name of the file to search for.
+
+        URL Parameters:
+            username (str): The username associated with the device/file (though not directly used in the query).
+
+        Returns:
+            JsonResponse (always status 200, even for 'not found' results):
+                - On Success: {"result": "success", "file": file_metadata_dict}
+                  File metadata includes: "file_name", "file_path", "file_size", "file_type",
+                  "date_uploaded", "date_modified", "file_parent", "original_device", "kind".
+                - If Device Not Found: {"result": "device_not_found", "message": "Device not found."}
+                - If Device ID Missing: {"result": "object_id_not_found", "message": "Device ID not found."}
+                - If File Not Found: {"result": "file_not_found", "message": "File not found for the given device."}
+                - On Error:
+                    - {"error": "Invalid JSON"}, status=400
+                    - {"error": "Missing device_name or file_name"}, status=400
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/share_file/:
+    post:
+      operationId: files_share_file_create
+      description: |-
+        Shares a file owned by 'username' with 'friend_username'.
+
+        Finds the user initiating the share ('username'), the user to share with
+        ('friend_username'), and the file ('file_name'). Adds the friend's user ID
+        to the file's 'shared_with' array field using MongoDB's $addToSet operator
+        (ensures uniqueness).
+
+        Note: This currently finds *any* file matching `file_name`, not necessarily
+              one owned by 'username' or associated with a specific device. This might
+              need refinement depending on desired behavior.
+
+        Expects a POST request with JSON body containing:
+        - file_name (str, required): The name of the file to share.
+        - username (str, required): The username of the file owner initiating the share.
+        - friend_username (str, required): The username of the user to share the file with.
+
+        Returns:
+            JsonResponse:
+                - On Success: {"status": "success", "message": "File shared successfully"}
+                - On Error:
+                    - {"error": "Invalid JSON"}, status=400
+                    - {"error": "User not found."}, status=404 (If 'username' not found)
+                    - {"error": "Friend not found."}, status=404 (If 'friend_username' not found)
+                    - {"error": "File not found."}, status=404 (If 'file_name' not found)
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /files/update_files/{username}/:
+    post:
+      operationId: files_update_files_create
+      description: |-
+        Handles the update of metadata for multiple files associated with a user and device.
+
+        Delegates the core update logic to the `update_files` utility function.
+
+        Expects a POST request with a JSON body containing:
+        - files (list): A list of file objects, each containing the updated metadata
+                        (structure depends on `update_files` implementation).
+        - device_name (str): The name of the device associated with these files.
+
+        URL Parameters:
+            username (str): The username initiating the update.
+
+        Returns:
+            JsonResponse: Based on the result from `update_files`:
+                - {"result": "success", "message": "Files updated successfully."} (Note: Message says "deleted" currently)
+                - {"result": "device_not_found", "message": "Device not found."}
+                - {"result": "device_id_not_found", "message": "Device id not found."}
+                - {"error": "Invalid JSON"}, status=400
+                - {"error": "Missing files or device_name"}, status=400
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /notifications/add_notification/{username}/:
+    post:
+      operationId: notifications_add_notification_create
+      description: |-
+        Adds a new notification for a specific user.
+
+        Expects a JSON body with a "notification" key.
+
+        Args:
+            request: The HTTP request object.
+            username: The username of the user for whom the notification is added.
+
+        Returns:
+            JsonResponse: A JSON response indicating the result of the operation.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /notifications/delete_notification/{username}/:
+    post:
+      operationId: notifications_delete_notification_create
+      description: |-
+        Deletes a specific notification for a user.
+
+        Expects a JSON body with a "notification_id" key.
+
+        Args:
+            request: The HTTP request object.
+            username: The username of the user whose notification is to be deleted.
+
+        Returns:
+            JsonResponse: A JSON response indicating the result of the operation.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /notifications/get_notifications/{username}/:
+    get:
+      operationId: notifications_get_notifications_retrieve
+      description: |-
+        Retrieves all notifications for a specific user.
+
+        Args:
+            request: The HTTP request object.
+            username: The username of the user whose notifications are to be retrieved.
+
+        Returns:
+            JsonResponse: A JSON response containing the list of notifications
+                          or an error message.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /notifications/mark_notification_as_read/:
+    post:
+      operationId: notifications_mark_notification_as_read_create
+      description: |-
+        Marks a specific notification as read based on its ID.
+
+        Expects a JSON body with a "notification_id" key.
+
+        Args:
+            request: The HTTP request object.
+
+        Returns:
+            JsonResponse: A JSON response indicating the result of the operation.
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /predictions/add_device_id_to_file_sync_file/{username}/:
+    post:
+      operationId: predictions_add_device_id_to_file_sync_file_create
+      description: |-
+        Associates a device ID with a specific file in the user's synchronization list.
+
+        Expects a JSON body with 'file_name' and 'device_name'.
+
+        Args:
+            request: The HttpRequest object containing 'file_name' and 'device_name'.
+            username: The username who owns the file and device.
+
+        Returns:
+            JsonResponse: A JSON response indicating the result and message of the operation.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - predictions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /predictions/add_file_to_sync/{username}/:
+    post:
+      operationId: predictions_add_file_to_sync_create
+      description: |-
+        Adds a file to the synchronization list for a specific device belonging to the user.
+
+        Expects a JSON body with 'device_name' and 'file_path'.
+
+        Args:
+            request: The HttpRequest object containing the file details in its body.
+            username: The username who owns the device.
+
+        Returns:
+            JsonResponse: A JSON response indicating the result of the operation.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - predictions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /predictions/get_device_prediction_data/{username}/:
+    get:
+      operationId: predictions_get_device_prediction_data_retrieve
+      description: |-
+        Retrieves the device prediction data for the specified user.
+
+        Args:
+            request: The HttpRequest object.
+            username: The username whose prediction data is being requested.
+
+        Returns:
+            JsonResponse: A JSON response containing the device prediction data.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - predictions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /predictions/get_files_to_sync/{username}/:
+    post:
+      operationId: predictions_get_files_to_sync_create
+      description: |-
+        Retrieves the list of files marked for synchronization for a user.
+
+        Optionally filters by a specific global file path provided in the JSON body.
+        Expects an optional JSON body with 'global_file_path'.
+
+        Args:
+            request: The HttpRequest object, potentially containing 'global_file_path'.
+            username: The username whose sync files are being requested.
+
+        Returns:
+            JsonResponse: A JSON response containing the list of files or an error message.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - predictions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /predictions/remove_file_from_sync/{username}/:
+    post:
+      operationId: predictions_remove_file_from_sync_create
+      description: |-
+        Removes a file from the synchronization list for a specific device belonging to the user.
+
+        Expects a JSON body with 'device_name' and 'file_path'.
+
+        Args:
+            request: The HttpRequest object containing the file details in its body.
+            username: The username who owns the device.
+
+        Returns:
+            JsonResponse: A JSON response indicating the result of the operation.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - predictions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /predictions/run_pipeline/{username}/:
+    get:
+      operationId: predictions_run_pipeline_retrieve
+      description: |-
+        Executes the prediction pipeline for the specified user.
+
+        Args:
+            request: The HttpRequest object.
+            username: The username for whom to run the pipeline.
+
+        Returns:
+            JsonResponse: A JSON response indicating success and containing the pipeline results.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - predictions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /predictions/update_file_priority/{username}/:
+    post:
+      operationId: predictions_update_file_priority_create
+      description: |-
+        Updates the synchronization priority of a specific file for the user.
+
+        Expects a JSON body with 'file_id' and 'priority'.
+
+        Args:
+            request: The HttpRequest object containing 'file_id' and 'priority'.
+            username: The username whose file priority is being updated.
+
+        Returns:
+            JsonResponse: A JSON response indicating the result and message of the operation.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - predictions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /predictions/update_sync_storage_capacity/{username}/:
+    post:
+      operationId: predictions_update_sync_storage_capacity_create
+      description: |-
+        Updates the reported storage capacity for a specific device associated with the user.
+
+        Expects a JSON body with 'device_name' and 'storage_capacity'.
+
+        Args:
+            request: The HttpRequest object containing 'device_name' and 'storage_capacity'.
+            username: The username who owns the device.
+
+        Returns:
+            JsonResponse: A JSON response indicating the result and message of the operation,
+                          or an error if JSON is invalid.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - predictions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /sessions/dashboard/{username}/:
+    get:
+      operationId: sessions_dashboard_retrieve
+      description: Renders the dashboard page for a given user.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - sessions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /sessions/get_recent_session/{username}/:
+    get:
+      operationId: sessions_get_recent_session_retrieve
+      description: Retrieves the most recent sessions for a user, filtered by device.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - sessions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: sessions_get_recent_session_create
+      description: Retrieves the most recent sessions for a user, filtered by device.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - sessions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /sessions/get_session/{username}/:
+    post:
+      operationId: sessions_get_session_create
+      description: Retrieves all sessions associated with a given username.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - sessions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /settings/get_settings/{username}/:
+    post:
+      operationId: settings_get_settings_create
+      description: Retrieves settings for a given username.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - settings
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /settings/update_settings/{username}/:
+    post:
+      operationId: settings_update_settings_create
+      description: Updates settings for a given username.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - settings
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /tasks/add_task/{username}/:
+    post:
+      operationId: tasks_add_task_create
+      description: Adds a new task for a given user.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - tasks
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /tasks/fail_task/{username}/:
+    post:
+      operationId: tasks_fail_task_create
+      description: Marks a task as failed for a given user.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - tasks
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /tasks/update_task/{username}/:
+    post:
+      operationId: tasks_update_task_create
+      description: Updates an existing task for a given user.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - tasks
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/accept_friend_request/:
+    post:
+      operationId: users_accept_friend_request_create
+      description: Accepts a pending friend request.
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/change_profile/{username}/{password}/{first_name}/{last_name}/{email}/:
+    get:
+      operationId: users_change_profile_retrieve
+      description: Updates user profile information, including optional password change.
+      parameters:
+      - in: path
+        name: email
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: first_name
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: last_name
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: password
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/get_friend_requests/{username}/:
+    get:
+      operationId: users_get_friend_requests_retrieve
+      description: Retrieves the list of pending friend requests for a given user.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/get_friends/{username}/:
+    get:
+      operationId: users_get_friends_retrieve
+      description: Retrieves the list of friends for a given user.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/get_profile_picture/{username}/:
+    get:
+      operationId: users_get_profile_picture_retrieve
+      description: Retrieves the profile picture for a given user.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/get_small_user_info/{username}/:
+    get:
+      operationId: users_get_small_user_info_retrieve
+      description: Retrieves basic user information (first name, last name, phone,
+        email).
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/get_user_friends/{username}/:
+    get:
+      operationId: users_get_user_friends_retrieve
+      description: Retrieves the list of friends for a given user using the helper
+        function.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/getuserinfo/{username}/:
+    get:
+      operationId: users_getuserinfo_retrieve
+      description: Retrieves user information including profile picture and friends.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/getuserinfo2/{username}/:
+    get:
+      operationId: users_getuserinfo2_retrieve
+      description: Retrieves detailed user information (version 2).
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/getuserinfo3/{username}/{password}/:
+    get:
+      operationId: users_getuserinfo3_retrieve
+      description: Authenticates a user based on username and password (version 3).
+      parameters:
+      - in: path
+        name: password
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/getuserinfo4/{username}/{password}/:
+    get:
+      operationId: users_getuserinfo4_retrieve
+      description: Authenticates a user based on username and password (version 4).
+      parameters:
+      - in: path
+        name: password
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/reject_friend_request/:
+    post:
+      operationId: users_reject_friend_request_create
+      description: Rejects a pending friend request.
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/remove_friend/:
+    post:
+      operationId: users_remove_friend_create
+      description: Removes a friend connection between two users.
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/send_friend_request/:
+    post:
+      operationId: users_send_friend_request_create
+      description: Sends a friend request from one user to another.
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/typeahead/{search}/:
+    get:
+      operationId: users_typeahead_retrieve
+      description: Provides typeahead suggestions for users based on a search term.
+      parameters:
+      - in: path
+        name: search
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /users/update_profile/:
+    post:
+      operationId: users_update_profile_create
+      description: Updates the user profile based on the provided data.
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+components:
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
