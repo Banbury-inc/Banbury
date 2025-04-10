@@ -1,9 +1,7 @@
-
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Box, Button, Card, CardMedia, Container, Grid, Typography } from '@mui/material';
+import { Box, Card, CardMedia, Container, Grid, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import CardContent from '@mui/material/CardContent';
 
 
 interface ProductsProps {
@@ -15,12 +13,9 @@ interface ProductsProps {
 const Terms_of_use = (): JSX.Element => {
   const theme = useTheme();
   const [products, setProducts] = useState<ProductsProps[]>([]);
-  const [downloadText, setDownloadText] = useState<string>('Download');
-  const [downloadUrl, setDownloadUrl] = useState<string>('');
 
   useEffect(() => {
     fetchProducts();
-    determineOS();
   }, []);
 
   const fetchProducts = () => {
@@ -33,26 +28,6 @@ const Terms_of_use = (): JSX.Element => {
     }).catch((error) => console.log(error));
   };
 
-  const determineOS = () => {
-    const userAgent = navigator.userAgent;
-    if (userAgent.includes("Win")) {
-      setDownloadText("Download for Windows");
-      setDownloadUrl("https://github.com/Banbury-inc/NeuraNet/releases/download/v1.0.1/NeuraNet.1.0.1.msi"); // Set the URL or path to your Windows-specific file
-    } else if (userAgent.includes("Mac")) {
-      setDownloadText("Download for macOS");
-      setDownloadUrl("https://github.com/Banbury-inc/NeuraNet/releases/download/v1.0.1/NeuraNet-1.0.1-arm64.dmg"); // Set the URL or path to your macOS-specific file
-    } else if (userAgent.includes("Linux")) {
-      setDownloadText("Download for Linux");
-      setDownloadUrl("NeuraNet_1.0.1_amd64.deb"); // Set the URL or path to your Linux-specific file
-    } else {
-      setDownloadText("Download");
-      setDownloadUrl("/path_to_generic_file"); // Generic file if OS is not detected
-    }
-  };
-
-  const handleDownload = () => {
-    window.open(downloadUrl, '_blank');
-  };
 
   return (
     <div id='neuranet'>
@@ -79,7 +54,7 @@ const Terms_of_use = (): JSX.Element => {
           </Typography>
           <Typography
             variant='subtitle1'
-            align='center'
+            align="center"
             marginTop={theme.spacing(1)}
             gutterBottom
             color={theme.palette.text.secondary}
@@ -109,9 +84,9 @@ const Terms_of_use = (): JSX.Element => {
                 Thank you for using Banbury products!
                 <br />
                 <br />
-                These Terms of Use apply to your use of NeuraNet, Banbury Cloud and Banbury’s other
+                These Terms of Use apply to your use of NeuraNet, Banbury Cloud and Banbury&apos;s other
                 services for individuals, along with any associated software applications and websites
-                (all together, “Services”). These Terms form an agreement between you and Banbury Innovations, Inc.,
+                (all together, &quot;Services&quot;). These Terms form an agreement between you and Banbury Innovations, Inc.,
                 a Delaware company, and they include our Service Terms and important provisions for resolving
                 disputes through arbitration. By using our Services, you agree to these Terms.
                 <br />
@@ -172,7 +147,7 @@ const Terms_of_use = (): JSX.Element => {
                   color: theme.palette.text.primary,
                 }}
               >
-                Minimum age. You must be at least 13 years old or the minimum age required in your country to consent to use the Services. If you are under 18 you must have your parent or legal guardian’s permission to use the Services.
+                Minimum age. You must be at least 13 years old or the minimum age required in your country to consent to use the Services. If you are under 18 you must have your parent or legal guardian&apos;s permission to use the Services.
                 <br />
                 <br />
                 Registration. You must provide accurate and complete information to register for an account to use our Services. You may not share your account credentials or make your account available to anyone else and are responsible for all activities that occur under your account. If you create an account or use the Services on behalf of another person or entity, you must have the authority to accept these Terms on their behalf.
@@ -205,7 +180,7 @@ const Terms_of_use = (): JSX.Element => {
                 Registration. You must provide accurate and complete information to register for an account to use our Services. You may not share your account credentials or make your account available to anyone else and are responsible for all activities that occur under your account. If you create an account or use the Services on behalf of another person or entity, you must have the authority to accept these Terms on their behalf.
                 <br />
                 <br />
-                • Use our Services in a way that infringes, misappropriates or violates anyone’s rights.
+                • Use our Services in a way that infringes, misappropriates or violates anyone&apos;s rights.
                 <br />
                 <br />
                 • Modify, copy, lease, sell or distribute any of our Services.
@@ -223,13 +198,13 @@ const Terms_of_use = (): JSX.Element => {
                 • Interfere with or disrupt our Services, including circumvent any rate limits or restrictions or bypass any protective measures or safety mitigations we put on our Services.
                 <br />
                 <br />
-                Software. Our Services may allow you to download software, such as mobile applications, which may update automatically to ensure you’re using the latest version. Our software may include open source software that is governed by its own licenses that we’ve made available to you.
+                Software. Our Services may allow you to download software, such as mobile applications, which may update automatically to ensure you&apos;re using the latest version. Our software may include open source software that is governed by its own licenses that we&apos;ve made available to you.
                 <br />
                 <br />
-                Corporate domains. If you create an account using an email address owned by an organization (for example, your employer), that account may be added to the organization's business account with us, in which case we will provide notice to you so that you can help facilitate the transfer of your account (unless your organization has already provided notice to you that it may monitor and control your account). Once your account is transferred, the organization’s administrator will be able to control your account, including being able to access Content (defined below) and restrict or remove your access to the account.
+                Corporate domains. If you create an account using an email address owned by an organization (for example, your employer), that account may be added to the organization&apos;s business account with us, in which case we will provide notice to you so that you can help facilitate the transfer of your account (unless your organization has already provided notice to you that it may monitor and control your account). Once your account is transferred, the organization&apos;s administrator will be able to control your account, including being able to access Content (defined below) and restrict or remove your access to the account.
                 <br />
                 <br />
-                Third party Services. Our services may include third party software, products, or services, (“Third Party Services”) and some parts of our Services, like our browse feature, may include output from those services (“Third Party Output”). Third Party Services and Third Party Output are subject to their own terms, and we are not responsible for them.
+                Third party Services. Our services may include third party software, products, or services, (&quot;Third Party Services&quot;) and some parts of our Services, like our browse feature, may include output from those services (&quot;Third Party Output&quot;). Third Party Services and Third Party Output are subject to their own terms, and we are not responsible for them.
                 <br />
                 <br />
                 Feedback. We appreciate your feedback, and you agree that we may use it without restriction or compensation to you.

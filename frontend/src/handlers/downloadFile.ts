@@ -1,17 +1,12 @@
-import axios from "axios";
-
 import { getDeviceInfo } from "./getDeviceInfo";
 import { webSocketService } from "../websockets";
 import { CONFIG } from "../config/config";
-
-
 
 // Function to get total requests processed
 export async function downloadFile(username: string | undefined, fileInfo: any, onProgress?: (step: number, error?: string) => void): Promise<Blob | null> {
   // Step 1: Getting device info
   onProgress?.(1);
   const device_id = fileInfo.device_id;
-  const file_id = fileInfo._id;
 
   // Step 2: Getting device info
   const device_info = await getDeviceInfo(username, device_id);
@@ -47,7 +42,7 @@ export async function downloadFile(username: string | undefined, fileInfo: any, 
 
       // Step 5: Preparing file (waiting for completion)
       const fileDownloadPromise = new Promise((resolve, reject) => {
-        let chunks: Uint8Array[] = [];
+        const chunks: Uint8Array[] = [];
         
         const handleFileData = (event: MessageEvent) => {
           // Add detailed logging for all incoming messages

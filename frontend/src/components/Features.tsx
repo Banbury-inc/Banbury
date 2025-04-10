@@ -1,16 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Box, Button, Card, CardMedia, Container, Grid, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import mockup1 from '../assets/images/mockup1.png';
-import mockup2 from '../assets/images/mockup2.png';
-import mockup3 from '../assets/images/mockup3.png';
-import Screenshot1 from '../assets/images/Screenshot1.png';
-import Screenshot2 from '../assets/images/Screenshot2.png';
-import Screenshot3 from '../assets/images/Screenshot3.png';
-import Screenshot4 from '../assets/images/Screenshot4.png';
 import Recording from '../assets/images/Recording.mp4';
-import Recording2 from '../assets/images/Recording2.mp4';
 import Recording3 from '../assets/images/Recording3.mp4';
 
 

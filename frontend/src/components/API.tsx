@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import CountUp from 'react-countup';
-import VisibilitySensor from 'react-visibility-sensor';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Container from '@mui/material/Container';
-import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import yaml from 'js-yaml';
@@ -70,17 +67,7 @@ const scrollbarStyles = {
 
 const About = (): JSX.Element => {
   const theme = useTheme();
-  const [viewPortEntered, setViewPortEntered] = useState(false);
-  const setViewPortVisibility = (
-    isVisible: boolean | ((prevState: boolean) => boolean)
-  ) => {
-    if (viewPortEntered) {
-      return;
-    }
-    setViewPortEntered(isVisible);
-  };
 
-  const [about, setAbout] = useState<AboutProps[]>([]);
   const [apiData, setApiData] = useState<APIData | null>(null);
   const [groupedPaths, setGroupedPaths] = useState<GroupedPaths>({}); // State for grouped paths
 
@@ -90,9 +77,6 @@ const About = (): JSX.Element => {
         headers: {
           Accept: 'application/json',
         },
-      })
-      .then((response) => {
-        setAbout(response.data);
       })
       .catch((error) => console.log(error));
   };

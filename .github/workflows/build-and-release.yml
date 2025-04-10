@@ -1,0 +1,185 @@
+
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.11.0'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run ESLint
+        run: npm run lint
+
+  unit-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.11.0'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
+
+  build:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [lint, unit-tests, e2e-tests]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.11.0'
+          cache: 'npm'
+
+      # Linux-specific setup
+      - name: Install Snapcraft
+        if: runner.os == 'Linux'
+        run: |
+          sudo snap install snapcraft --classic
+          sudo apt-get update
+          sudo apt-get install -y rpm
+
+      # macOS-specific setup
+      - name: Install Python and Build Tools for macOS
+        if: runner.os == 'macOS'
+        run: |
+          brew install python-setuptools
+          python3 -m venv .venv
+          source .venv/bin/activate
+          python3 -m pip install --upgrade pip setuptools
+
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build all packages
+        run: npm run build
+
+      # Get version for macOS builds
+      - name: Get version from package.json
+        if: runner.os == 'macOS'
+        run: |
+          VERSION=$(node -p "require('./packages/frontend/package.json').version")
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Core Package
+        uses: actions/download-artifact@v4
+        with:
+          name: core-package
+          path: ./packages/core/dist
+        continue-on-error: false
+
+      - name: Verify Core Package
+        run: |
+          if [ ! -d "./packages/core/dist" ] || [ -z "$(ls -A ./packages/core/dist)" ]; then
+            echo "Error: Core package files are missing"
+            exit 1
+          fi
+          echo "Core package files found successfully"
+
+      - name: Download Linux Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ubuntu-latest-artifacts
+          path: ./dist
+
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-latest-artifacts
+          path: ./dist
+
+      - name: Download macOS Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-latest-artifacts
+          path: ./dist
+
+      - name: Get version from package.json
+        id: get_version
+        run: |
+          VERSION=$(jq -r .version ./packages/frontend/package.json)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Create and push a new tag
+        env:
+          VERSION: ${{ env.VERSION }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if tag exists
+          if ! git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "Creating new tag v$VERSION"
+            git tag "v$VERSION"
+            git push https://$GH_TOKEN@github.com/${{ github.repository }} "v$VERSION"
+          else
+            echo "Tag v$VERSION already exists, skipping tag creation"
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "v${{ env.VERSION }}"
+          draft: false
+          prerelease: false
+          make_latest: "true"
+          files: |
+            dist/**/*.AppImage
+            dist/**/*.exe
+            dist/**/*.dmg
+            dist/**/*.zip
+            dist/**/latest*.yml
+            dist/**/latest*.yaml
+            dist/**/*blockmap
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+

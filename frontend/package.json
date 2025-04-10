@@ -6,7 +6,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "PORT=80 react-scripts start",
+    "start": "DISABLE_ESLINT_PLUGIN=true PORT=80 react-scripts start",
     "dev": "PORT=80 react-scripts start",
     "build": "react-scripts build",
     "eject": "react-scripts eject",

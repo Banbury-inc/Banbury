@@ -3,14 +3,10 @@ import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import CustomButton from '../components/CustomButton';
 
-interface Props {
-  onSidebarOpen: () => void;
-}
-
-const Header = ({ onSidebarOpen }: Props): JSX.Element => {
+const Header = (): JSX.Element => {
   const theme = useTheme();
 
   return (
