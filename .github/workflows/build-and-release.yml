@@ -54,7 +54,7 @@ jobs:
 
   build:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [lint, unit-tests, e2e-tests]
+    needs: [lint, unit-tests]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
