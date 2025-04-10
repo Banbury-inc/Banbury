@@ -20,7 +20,7 @@ interface ProductsProps {
   image: string;
 }
 
-const Cloud = (): JSX.Element => {
+const Features = (): JSX.Element => {
   const theme = useTheme();
   const [products, setProducts] = useState<ProductsProps[]>([]);
   const [downloadText, setDownloadText] = useState<string>('Download');
@@ -253,44 +253,7 @@ const Cloud = (): JSX.Element => {
             gap: '24px'
           }}
         >
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{
-              fontWeight: 500,
-              color: theme.palette.text.primary,
-              marginBottom: '16px'
-            }}
-          >
-            Seamless File and Device Management
-          </Typography>
-
-          <Typography
-            variant="subtitle1"
-            sx={{
-              color: theme.palette.text.secondary,
-              marginBottom: '32px',
-              textAlign: 'center',
-              maxWidth: '600px'
-            }}
-          >
-            Experience our intuitive interface designed for effortless organization, with AI-powered intelligence
-            to help you manage your files and devices.
-          </Typography>
-
-          <Button
-            variant="contained"
-            onClick={handleDownload}
-            sx={{
-              borderRadius: '20px',
-
-            }}
-          >
-            {downloadText}
-          </Button>
         </Box>
-
-
 
         <Container>
           <Grid container spacing={4}>
@@ -349,4 +312,4 @@ const Cloud = (): JSX.Element => {
   );
 };
 
-export default Cloud;
+export default Features;
