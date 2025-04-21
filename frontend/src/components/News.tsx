@@ -14,6 +14,16 @@ interface ProductsProps {
 
 const NEWS_POSTS: NewsPostType[] = [
   {
+    id: 'v3-5-0',
+    date: 'April 21, 2025',
+    title: 'v3.5.0 Released',
+    content: [
+      "Happy Easter everyone. We are announcing a new release, v3.5.0. This release is focused around a new AI tab. This gives the user the ability to select various large language models that they can download and run locally. We are excited to begin exploring different features with AI and see what others find useful. We are going to begin a lot of work around this page and see what people get excited about.",
+      "In addition, we are starting to place a lot of emphasis on testing, and making sure that everything runs smoothly in the app. We are making note of bugs we find, and we are going to be working on fixing them. Our next update will be primarily around bug fixes and stability, so the app can be overall more reliable for you. Thank you, and we look forward to our next update."
+
+    ]
+  },
+  {
     id: 'v3-4-23',
     date: 'March 20, 2025',
     title: 'v3.4.23 Released',
@@ -309,7 +319,7 @@ const News = (): JSX.Element => {
         ) : (
           <Container maxWidth="xl" sx={{ px: { xs: 0, sm: 0 } }}>
             <FeaturedPost post={latestPost} />
-            
+
             <Grid container spacing={4}>
               {otherPosts.map((post) => (
                 <Grid item xs={12} sm={6} md={4} key={post.id}>
