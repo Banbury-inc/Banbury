@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Typography, Button, Container, Grid, Paper } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { Link } from 'react-router-dom';
@@ -6,9 +5,13 @@ import CloudIcon from '@mui/icons-material/Cloud';
 import DevicesIcon from '@mui/icons-material/Devices';
 import SecurityIcon from '@mui/icons-material/Security';
 import Screenshot1 from '../assets/images/Screenshot1.png';
+import { useState, useEffect } from 'react';
+import { determineOS } from '../handlers/determineOS';
 
 const Home = (): JSX.Element => {
   const theme = useTheme();
+  const [downloadText, setDownloadText] = useState<string>('Download');
+  const [downloadUrl, setDownloadUrl] = useState<string>('');
 
   const features = [
     {
@@ -27,6 +30,18 @@ const Home = (): JSX.Element => {
       description: 'Enterprise-grade security with end-to-end encryption for all your data.'
     }
   ];
+
+
+  useEffect(() => {
+    determineOS(setDownloadText, setDownloadUrl);
+  }, []);
+
+
+
+  const handleDownload = () => {
+    window.open(downloadUrl, '_blank');
+  };
+
 
   return (
     <Box sx={{ overflow: 'hidden' }}>
@@ -93,6 +108,7 @@ const Home = (): JSX.Element => {
                   <Button
                     variant="contained"
                     size="large"
+                    onClick={handleDownload}
                     sx={{
                       borderRadius: '100px',
                       py: 1.5,
@@ -106,7 +122,7 @@ const Home = (): JSX.Element => {
                       },
                     }}
                   >
-                    Download for macOS
+                  {downloadText}
                   </Button>
                   <Button
                     variant="outlined"

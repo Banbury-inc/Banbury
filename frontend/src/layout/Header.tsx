@@ -3,14 +3,10 @@ import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import CustomButton from '../components/CustomButton';
 
-interface Props {
-  onSidebarOpen: () => void;
-}
-
-const Header = ({ onSidebarOpen }: Props): JSX.Element => {
+const Header = (): JSX.Element => {
   const theme = useTheme();
 
   return (
@@ -45,7 +41,7 @@ const Header = ({ onSidebarOpen }: Props): JSX.Element => {
 
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <CustomButton href='/' text='Home' />
-          <CustomButton href='/Cloud' text='Cloud' />
+          <CustomButton href='/Features' text='Features' />
           {/* <CustomButton href='/filedownload/mmills/67659e872b46a3ef70402ead' text='File Download' /> */}
           {/* <CustomButton href='/NeuraNet' text='NeuraNet' /> */}
           {/* <CustomButton href='/Research' text='Research' /> */}

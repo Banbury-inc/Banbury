@@ -1,17 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Box from '@mui/material/Box';
 import Fab from '@mui/material/Fab';
 import NoSsr from '@mui/material/NoSsr';
 import Zoom from '@mui/material/Zoom';
-import useMediaQuery from '@mui/material/useMediaQuery';
 import useScrollTrigger from '@mui/material/useScrollTrigger';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { useTheme } from '@mui/material/styles';
-
 import Header from './Header';
 import Footer from './Footer';
-// import Footer from '../components/Footer';
-import Sidebar from './Sidebar';
 
 interface Props {
   children: React.ReactNode;
@@ -19,21 +15,6 @@ interface Props {
 
 const Layout = ({ children }: Props): JSX.Element => {
   const theme = useTheme();
-  const isLg = useMediaQuery(theme.breakpoints.up('lg'), {
-    defaultMatches: true,
-  });
-
-  const [openSidebar, setOpenSidebar] = useState(false);
-
-  const handleSidebarOpen = (): void => {
-    setOpenSidebar(true);
-  };
-
-  const handleSidebarClose = (): void => {
-    setOpenSidebar(false);
-  };
-
-  const open = isLg ? false : openSidebar;
 
   const trigger = useScrollTrigger({
     disableHysteresis: true,
@@ -60,8 +41,7 @@ const Layout = ({ children }: Props): JSX.Element => {
         backgroundColor: theme.palette.background.default,
       }}
     >
-      <Header onSidebarOpen={handleSidebarOpen} />
-      <Sidebar onClose={handleSidebarClose} open={open} />
+      <Header />
       <Box
         component="main"
         sx={{

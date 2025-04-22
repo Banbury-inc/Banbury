@@ -1,17 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Box, Button, Card, CardMedia, Container, Grid, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import mockup1 from '../assets/images/mockup1.png';
-import mockup2 from '../assets/images/mockup2.png';
-import mockup3 from '../assets/images/mockup3.png';
-import Screenshot1 from '../assets/images/Screenshot1.png';
-import Screenshot2 from '../assets/images/Screenshot2.png';
-import Screenshot3 from '../assets/images/Screenshot3.png';
-import Screenshot4 from '../assets/images/Screenshot4.png';
 import Recording from '../assets/images/Recording.mp4';
-import Recording2 from '../assets/images/Recording2.mp4';
 import Recording3 from '../assets/images/Recording3.mp4';
+import { determineOS } from '../handlers/determineOS';
 
 
 interface ProductsProps {
@@ -20,7 +13,7 @@ interface ProductsProps {
   image: string;
 }
 
-const Cloud = (): JSX.Element => {
+const Features = (): JSX.Element => {
   const theme = useTheme();
   const [products, setProducts] = useState<ProductsProps[]>([]);
   const [downloadText, setDownloadText] = useState<string>('Download');
@@ -28,7 +21,7 @@ const Cloud = (): JSX.Element => {
 
   useEffect(() => {
     fetchProducts();
-    determineOS();
+    determineOS(setDownloadText, setDownloadUrl);
   }, []);
 
   const fetchProducts = () => {
@@ -41,41 +34,10 @@ const Cloud = (): JSX.Element => {
     }).catch((error) => console.log(error));
   };
 
-  const determineOS = async () => {
-    try {
-      const response = await axios.get('https://api.github.com/repos/Banbury-inc/banbury-cloud-frontend/releases/latest');
-      const latestRelease = response.data;
-      const assets = latestRelease.assets;
 
-      const userAgent = navigator.userAgent;
-      let downloadAsset;
 
-      if (userAgent.includes("Win")) {
-        downloadAsset = assets.find((asset: { name: string }) => asset.name.includes('.exe'));
-        setDownloadText("Download for Windows");
-      } else if (userAgent.includes("Mac")) {
-        downloadAsset = assets.find((asset: { name: string }) => asset.name.includes('.dmg'));
-        setDownloadText("Download for macOS");
-      } else if (userAgent.includes("Linux")) {
-        downloadAsset = assets.find((asset: { name: string }) => asset.name.includes('.deb'));
-        setDownloadText("Download for Linux");
-      } else {
-        setDownloadText("Download");
-        setDownloadUrl("/path_to_generic_file"); // Generic file if OS is not detected
-        return;
-      }
 
-      if (downloadAsset) {
-        setDownloadUrl(downloadAsset.browser_download_url);
-      } else {
-        setDownloadUrl("/path_to_generic_file"); // Fallback if no specific asset is found
-      }
-    } catch (error) {
-      console.error("Error fetching latest release:", error);
-      setDownloadText("Download");
-      setDownloadUrl("/path_to_generic_file"); // Fallback in case of error
-    }
-  };
+
 
   const handleDownload = () => {
     window.open(downloadUrl, '_blank');
@@ -253,44 +215,7 @@ const Cloud = (): JSX.Element => {
             gap: '24px'
           }}
         >
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{
-              fontWeight: 500,
-              color: theme.palette.text.primary,
-              marginBottom: '16px'
-            }}
-          >
-            Seamless File and Device Management
-          </Typography>
-
-          <Typography
-            variant="subtitle1"
-            sx={{
-              color: theme.palette.text.secondary,
-              marginBottom: '32px',
-              textAlign: 'center',
-              maxWidth: '600px'
-            }}
-          >
-            Experience our intuitive interface designed for effortless organization, with AI-powered intelligence
-            to help you manage your files and devices.
-          </Typography>
-
-          <Button
-            variant="contained"
-            onClick={handleDownload}
-            sx={{
-              borderRadius: '20px',
-
-            }}
-          >
-            {downloadText}
-          </Button>
         </Box>
-
-
 
         <Container>
           <Grid container spacing={4}>
@@ -349,4 +274,4 @@ const Cloud = (): JSX.Element => {
   );
 };
 
-export default Cloud;
+export default Features;

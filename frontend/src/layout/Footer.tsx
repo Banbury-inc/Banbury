@@ -2,9 +2,6 @@ import React from 'react';
 import { Box, Typography, Link, Grid, IconButton } from '@mui/material';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import GitHubIcon from '@mui/icons-material/GitHub';
-import YouTubeIcon from '@mui/icons-material/YouTube';
-import InstagramIcon from '@mui/icons-material/Instagram';
-import TwitterIcon from '@mui/icons-material/Twitter';
 import XIcon from '@mui/icons-material/X';
 
 import { useTheme } from '@mui/material/styles';

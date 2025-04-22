@@ -1,10 +1,20 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { BrowserRouter } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 import Home from '../pages/Home';
 
+const theme = createTheme();
+
 const renderApp = () => {
-  render(<Home />);
+  render(
+    <ThemeProvider theme={theme}>
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    </ThemeProvider>
+  );
 
   return { user: userEvent.setup() };
 };
@@ -14,27 +24,19 @@ describe('Home page', () => {
     renderApp();
 
     expect(
-      await screen.findByText(
-        /We offer a range of products to support your business/i
-      )
+      await screen.findByText(/Any Device, Anywhere/i)
     ).toBeInTheDocument();
     expect(
-      await screen.findByText(
-        /We offer a range of services to support your business/i
-      )
+      await screen.findByText(/Tap in to your devices unused resources/i)
     ).toBeVisible();
     expect(
-      await screen.findByText(
-        /We offer a range of pricing plans to suit everyone/i
-      )
+      await screen.findByText(/Cloud Sync/i)
     ).toBeVisible();
     expect(
-      await screen.findByText(
-        /We help software developers learn new skills, gain more experience and create excellent applications/i
-      )
+      await screen.findByText(/Multi-Device Access/i)
     ).toBeVisible();
     expect(
-      await screen.findByText(/We would love to hear from you/i)
+      await screen.findByText(/Secure Access/i)
     ).toBeVisible();
   });
 });

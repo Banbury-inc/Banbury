@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Box, Button, Card, CardMedia, Container, Grid, Typography, Paper } from '@mui/material';
+import { Box, Card, CardMedia, Container, Grid, Typography, Paper } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import CardContent from '@mui/material/CardContent';
-import { useNavigate, Routes, Route, Link, useParams } from 'react-router-dom';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import NewsPost, { NewsPost as NewsPostType } from './NewsPost';
 
 interface ProductsProps {
@@ -129,12 +128,9 @@ const News = (): JSX.Element => {
   const navigate = useNavigate();
   const { postId } = useParams();
   const [products, setProducts] = useState<ProductsProps[]>([]);
-  const [downloadText, setDownloadText] = useState<string>('Download');
-  const [downloadUrl, setDownloadUrl] = useState<string>('');
 
   useEffect(() => {
     fetchProducts();
-    determineOS();
   }, []);
 
   const fetchProducts = () => {
@@ -147,26 +143,6 @@ const News = (): JSX.Element => {
     }).catch((error) => console.log(error));
   };
 
-  const determineOS = () => {
-    const userAgent = navigator.userAgent;
-    if (userAgent.includes("Win")) {
-      setDownloadText("Download for Windows");
-      setDownloadUrl("https://github.com/Banbury-inc/NeuraNet/releases/download/v1.0.1/NeuraNet.1.0.1.msi");
-    } else if (userAgent.includes("Mac")) {
-      setDownloadText("Download for macOS");
-      setDownloadUrl("https://github.com/Banbury-inc/NeuraNet/releases/download/v1.0.1/NeuraNet-1.0.1-arm64.dmg");
-    } else if (userAgent.includes("Linux")) {
-      setDownloadText("Download for Linux");
-      setDownloadUrl("NeuraNet_1.0.1_amd64.deb");
-    } else {
-      setDownloadText("Download");
-      setDownloadUrl("/path_to_generic_file");
-    }
-  };
-
-  const handleDownload = () => {
-    window.open(downloadUrl, '_blank');
-  };
 
   const selectedPost = postId ? NEWS_POSTS.find(post => post.id === postId) : null;
   const latestPost = NEWS_POSTS[0]; // Most recent post

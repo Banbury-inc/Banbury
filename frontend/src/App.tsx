@@ -8,10 +8,8 @@ import getTheme from './theme/theme';
 import ColorModeContext from './utils/ColorModeContext';
 import Layout from './layout/Layout';
 import Home from './pages/Home';
-import NeuraNet from './components/NeuraNet';
-import Cloud from './components/Cloud';
+import Features from './components/Features';
 import News from './components/News';
-import Footer from './components/Footer';
 import Terms_of_use from './components/Terms_of_use';
 import FileDownload from './pages/Filedownload';
 import { trackPageView } from './services/trackingService';
@@ -77,8 +75,7 @@ const App = (): JSX.Element => {
             <Layout>
               <Routes>
                 <Route path='/' element={<Home />} />
-                <Route path='/neuranet' element={<NeuraNet />} />
-                <Route path='/cloud' element={<Cloud />} />
+                <Route path='/features' element={<Features />} />
                 <Route path='/filedownload/:username/:file_id' element={<FileDownload />} />
                 <Route path='/api' element={<API />} />
                 <Route path='/news' element={<News />} />
