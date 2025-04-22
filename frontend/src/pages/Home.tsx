@@ -5,15 +5,11 @@ import CloudIcon from '@mui/icons-material/Cloud';
 import DevicesIcon from '@mui/icons-material/Devices';
 import SecurityIcon from '@mui/icons-material/Security';
 import Screenshot1 from '../assets/images/Screenshot1.png';
-import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { determineOS } from '../handlers/determineOS';
-import { ProductsProps } from '../types/types';
-
 
 const Home = (): JSX.Element => {
   const theme = useTheme();
-  const [products, setProducts] = useState<ProductsProps[]>([]);
   const [downloadText, setDownloadText] = useState<string>('Download');
   const [downloadUrl, setDownloadUrl] = useState<string>('');
 
@@ -37,19 +33,9 @@ const Home = (): JSX.Element => {
 
 
   useEffect(() => {
-    fetchProducts();
     determineOS(setDownloadText, setDownloadUrl);
   }, []);
 
-  const fetchProducts = () => {
-    axios.get<ProductsProps[]>('http://127.0.0.1:8000/products', {
-      headers: {
-        Accept: 'application/json',
-      },
-    }).then((response) => {
-      setProducts(response.data);
-    }).catch((error) => console.log(error));
-  };
 
 
   const handleDownload = () => {
