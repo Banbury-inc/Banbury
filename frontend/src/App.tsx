@@ -11,6 +11,7 @@ import Home from './pages/Home';
 import Features from './components/Features';
 import News from './components/News';
 import Terms_of_use from './components/Terms_of_use';
+import Privacy_Policy from './components/Privacy_Policy';
 import FileDownload from './pages/Filedownload';
 import { trackPageView } from './services/trackingService';
 import './index.css';
@@ -81,6 +82,7 @@ const App = (): JSX.Element => {
                 <Route path='/news' element={<News />} />
                 <Route path='/news/:postId' element={<News />} />
                 <Route path='/terms_of_use' element={<Terms_of_use />} />
+                <Route path='/privacy_policy' element={<Privacy_Policy />} />
                 <Route path='/sitemap' element={<SitemapRedirect />} />
               </Routes>
             </Layout>
