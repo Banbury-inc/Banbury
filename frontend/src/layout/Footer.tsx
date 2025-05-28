@@ -61,6 +61,9 @@ const Footer: React.FC = () => {
             Terms of use
           </Link>
           <br />
+          <Link href="/privacy_policy" color="inherit" underline="hover">
+            Privacy Policy
+          </Link>
         </Grid>
       </Grid>
 
