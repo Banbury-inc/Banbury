@@ -91,7 +91,7 @@ const Home = (): JSX.Element => {
                     maxWidth: '600px',
                   }}
                 >
-                  Tap in to your devices unused resources, regardless of where you are
+                  Tap into your devices' unused resources, regardless of where you are
                 </Typography>
                 <Typography
                   variant="h5"
