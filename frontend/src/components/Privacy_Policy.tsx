@@ -84,7 +84,7 @@ const Privacy_Policy = (): JSX.Element => {
                 At Banbury Innovations, Inc., we are committed to protecting your privacy and ensuring the security 
                 of your personal information. This Privacy Policy explains how we collect, use, disclose, and 
                 safeguard your information when you use our services, including NeuraNet, Banbury Cloud, and 
-                other related products (collectively, the "Services").
+                other related products (collectively, the &quot;Services&quot;).
                 <br />
                 <br />
                 By using our Services, you agree to the collection and use of information in accordance with 
@@ -300,7 +300,7 @@ const Privacy_Policy = (): JSX.Element => {
                   color: theme.palette.text.primary,
                 }}
               >
-                Children's Privacy
+                Children&apos;s Privacy
               </Typography>
               <Typography
                 variant='body1'
@@ -339,7 +339,7 @@ const Privacy_Policy = (): JSX.Element => {
                 }}
               >
                 We may update this Privacy Policy from time to time. We will notify you of any changes by 
-                posting the new Privacy Policy on this page and updating the "Last updated" date. You are 
+                posting the new Privacy Policy on this page and updating the &quot;Last updated&quot; date. You are 
                 advised to review this Privacy Policy periodically for any changes.
                 <br />
                 <br />
