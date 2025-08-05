@@ -8,6 +8,9 @@ import getTheme from './theme/theme';
 import ColorModeContext from './utils/ColorModeContext';
 import Layout from './layout/Layout';
 import Home from './pages/Home';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import AuthCallback from './pages/AuthCallback';
 import Features from './components/Features';
 import News from './components/News';
 import Terms_of_use from './components/Terms_of_use';
@@ -76,6 +79,9 @@ const App = (): JSX.Element => {
             <Layout>
               <Routes>
                 <Route path='/' element={<Home />} />
+                <Route path='/login' element={<Login />} />
+                <Route path='/dashboard' element={<Dashboard />} />
+                <Route path='/authentication/auth/callback' element={<AuthCallback />} />
                 <Route path='/features' element={<Features />} />
                 <Route path='/filedownload/:username/:file_id' element={<FileDownload />} />
                 <Route path='/api' element={<API />} />
