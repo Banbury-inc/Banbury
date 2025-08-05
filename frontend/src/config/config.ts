@@ -7,13 +7,13 @@ export const CONFIG = {
   scan_selected_folders: true,
   run_device_info_loop: false,
   run_device_predictions_loop: false,
-  prod: true,
-  dev: false,
+  prod: false,
+  dev: true,
   semi_local: false,
   get url() {
     //return this.prod ? 'https://banbury-cloud-backend-prod-389236221119.us-east1.run.app/' : 'http://localhost:8080/';
     if (this.prod) {
-      return 'http://54.224.116.254:8080';
+      return 'http://api.dev.banbury.io';
     } else if (this.dev) {
       // return 'http://54.197.4.251:8080';
       //return 'http://3.84.158.138:8080';
@@ -27,7 +27,7 @@ export const CONFIG = {
   get url_ws() {
     //return this.prod ? 'https://banbury-cloud-backend-prod-389236221119.us-east1.run.app/' : 'http://localhost:8080/';
     if (this.prod) {
-      return 'ws://54.224.116.254:8082';
+      return 'ws://api.dev.banbury.io/ws/live_data/';
     } else if (this.dev) {
       // return 'http://54.197.4.251:8080';
       // return 'ws://3.84.158.138:8082/ws/live_data/';

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Box, CircularProgress, Typography, Alert } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { CONFIG } from '../config/config';
+import { ApiService } from '../services/apiService';
 
 const AuthCallback = (): JSX.Element => {
   const theme = useTheme();
@@ -21,27 +21,15 @@ const AuthCallback = (): JSX.Element => {
       }
 
       try {
-        const response = await fetch(`${CONFIG.url}/authentication/auth/callback/?code=${code}`, {
-          method: 'GET'
-        });
+        const result = await ApiService.handleOAuthCallback(code);
 
-        const data = await response.json();
-
-        if (data.success && data.token) {
-          // Store authentication data
-          localStorage.setItem('authToken', data.token);
-          localStorage.setItem('username', data.user.username);
-          localStorage.setItem('userEmail', data.user.email);
-          
+        if (result.success) {
           // Redirect to dashboard
           navigate('/dashboard');
-        } else {
-          setError(data.error || 'Authentication failed');
-          setTimeout(() => navigate('/login'), 3000);
         }
       } catch (err) {
-        setError(`Failed to complete authentication: ${err instanceof Error ? err.message : 'Unknown error'}`);
-
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
         setTimeout(() => navigate('/login'), 3000);
       }
     };

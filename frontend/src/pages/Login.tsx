@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -14,6 +14,9 @@ import { useTheme } from '@mui/material/styles';
 import GoogleIcon from '@mui/icons-material/Google';
 import { Link, useNavigate } from 'react-router-dom';
 import { CONFIG } from '../config/config';
+import { ApiService } from '../services/apiService';
+import { AUTH_CONFIG } from '../services/authConfig';
+import { DebugService } from '../services/debugService';
 
 const Login = (): JSX.Element => {
   const theme = useTheme();
@@ -25,6 +28,27 @@ const Login = (): JSX.Element => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+
+  // Check API connectivity on component mount
+  useEffect(() => {
+    const checkApiHealth = async () => {
+      try {
+        // Run comprehensive API diagnostics
+        const apiInfo = await DebugService.getApiInfo();
+        
+        if (apiInfo.connectivity.available) {
+          setApiStatus('online');
+        } else {
+          setApiStatus('offline');
+        }
+      } catch {
+        setApiStatus('offline');
+      }
+    };
+
+    checkApiHealth();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -40,43 +64,15 @@ const Login = (): JSX.Element => {
     setError('');
 
     try {
-      // First, check if login credentials are valid
-      const loginResponse = await fetch(`${CONFIG.url}/authentication/login_api/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password
-        })
-      });
-
-      const loginData = await loginResponse.json();
-
-      if (loginData.response === 'success') {
-        // Get user info and token using getuserinfo4 endpoint
-        const userInfoResponse = await fetch(
-          `${CONFIG.url}/authentication/getuserinfo4/${formData.username}/${formData.password}/`
-        );
-        
-        const userInfoData = await userInfoResponse.json();
-        
-        if (userInfoData.result === 'success' && userInfoData.token) {
-          // Store authentication token
-          localStorage.setItem('authToken', userInfoData.token);
-          localStorage.setItem('username', userInfoData.username);
-          
-          // Redirect to dashboard
-          navigate('/dashboard');
-        } else {
-          setError('Failed to retrieve user information');
-        }
-      } else {
-        setError('Invalid username or password');
+      const result = await ApiService.login(formData.username, formData.password);
+      
+      if (result.success) {
+        // Redirect to dashboard
+        navigate('/dashboard');
       }
     } catch (err) {
-      setError('Login failed. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -84,22 +80,22 @@ const Login = (): JSX.Element => {
 
   const handleGoogleLogin = async () => {
     try {
+      // Check if current domain is allowed for OAuth
+      if (!AUTH_CONFIG.isAllowedDomain()) {
+        setError(AUTH_CONFIG.getRedirectUriError());
+        return;
+      }
 
-      const redirectUri = `${window.location.origin}/authentication/auth/callback`;
+      const redirectUri = AUTH_CONFIG.getRedirectUri();
       
-      const response = await fetch(`${CONFIG.url}/authentication/google/?redirect_uri=${encodeURIComponent(redirectUri)}`, {
-        method: 'GET'
-      });
+      const result = await ApiService.initiateGoogleAuth(redirectUri);
       
-      const data = await response.json();
-      
-      if (data.authUrl) {
-        window.location.href = data.authUrl;
-      } else {
-        setError('Failed to initiate Google login');
+      if (result.success && result.authUrl) {
+        window.location.href = result.authUrl;
       }
     } catch (err) {
-      setError('Google login failed. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
     }
   };
 
@@ -144,9 +140,20 @@ const Login = (): JSX.Element => {
             </Typography>
           </Box>
 
+          {apiStatus === 'offline' && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              ⚠️ API Server appears to be offline. Please check your connection or try again later.
+              <br />
+              <small>Attempting to connect to: {CONFIG.url}</small>
+            </Alert>
+          )}
+          
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
               {error}
+              {apiStatus === 'offline' && (
+                <><br /><small>Note: This may be due to server connectivity issues.</small></>
+              )}
             </Alert>
           )}
 

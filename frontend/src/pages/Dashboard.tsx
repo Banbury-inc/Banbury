@@ -19,6 +19,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import { CONFIG } from '../config/config';
+import { ApiService } from '../services/apiService';
 
 interface UserInfo {
   username: string;
@@ -49,19 +50,10 @@ const Dashboard = (): JSX.Element => {
 
       try {
         // Validate token first
-        const validateResponse = await fetch(`${CONFIG.url}/authentication/validate-token/`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          }
-        });
+        const isValidToken = await ApiService.validateToken();
 
-        if (!validateResponse.ok) {
+        if (!isValidToken) {
           // Token is invalid, redirect to login
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('username');
-          localStorage.removeItem('userEmail');
           navigate('/login');
           return;
         }
@@ -116,11 +108,8 @@ const Dashboard = (): JSX.Element => {
   }, [navigate]);
 
   const handleLogout = () => {
-    // Clear all authentication data
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('username');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('tempPassword');
+    // Clear all authentication data using ApiService
+    ApiService.clearAuthToken();
     
     // Redirect to home page
     navigate('/');
