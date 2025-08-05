@@ -7,8 +7,8 @@ export const CONFIG = {
   scan_selected_folders: true,
   run_device_info_loop: false,
   run_device_predictions_loop: false,
-  prod: false,
-  dev: true,
+  prod: true,
+  dev: false,
   semi_local: false,
   get url() {
     //return this.prod ? 'https://banbury-cloud-backend-prod-389236221119.us-east1.run.app/' : 'http://localhost:8080/';

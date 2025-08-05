@@ -85,6 +85,7 @@ const Login = (): JSX.Element => {
   const handleGoogleLogin = async () => {
     try {
       // Construct redirect URI for current environment
+      // This should point to your frontend callback page, not the backend
       const redirectUri = `${window.location.origin}/authentication/auth/callback`;
       
       const response = await fetch(`${CONFIG.url}/authentication/google/?redirect_uri=${encodeURIComponent(redirectUri)}`, {
