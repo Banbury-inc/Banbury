@@ -10,16 +10,16 @@ export const AUTH_CONFIG = {
     
     // Map of known domains to their correct redirect URIs
     const redirectUriMap: Record<string, string> = {
-      'http://localhost:3000': 'http://localhost:3000/authentication/auth/callback',
-      'http://localhost:3001': 'http://localhost:3001/authentication/auth/callback',
-      'http://localhost:3002': 'http://localhost:3002/authentication/auth/callback',
-      'https://banbury.io': 'https://banbury.io/authentication/auth/callback',
-      'https://www.banbury.io': 'https://www.banbury.io/authentication/auth/callback',
-      'https://dev.banbury.io': 'https://dev.banbury.io/authentication/auth/callback',
-      'https://www.dev.banbury.io': 'https://www.dev.banbury.io/authentication/auth/callback',
+      'http://localhost:3000': 'http://localhost:3000/auth/callback',
+      'http://localhost:3001': 'http://localhost:3001/auth/callback',
+      'http://localhost:3002': 'http://localhost:3002/auth/callback',
+      'https://banbury.io': 'https://banbury.io/auth/callback',
+      'https://www.banbury.io': 'https://www.banbury.io/auth/callback',
+      'https://dev.banbury.io': 'https://dev.banbury.io/auth/callback',
+      'https://www.dev.banbury.io': 'https://www.dev.banbury.io/auth/callback',
     };
 
-    return redirectUriMap[origin] || `${origin}/authentication/auth/callback`;
+    return redirectUriMap[origin] || `${origin}/auth/callback`;
   },
 
   // Check if current domain is allowed for OAuth

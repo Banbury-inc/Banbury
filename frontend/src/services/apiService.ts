@@ -3,6 +3,8 @@ import { CONFIG } from '../config/config';
 
 // Configure axios defaults
 axios.defaults.timeout = 10000; // 10 second timeout
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+axios.defaults.headers.common['Accept'] = 'application/json';
 
 // API service for centralized HTTP requests
 export class ApiService {
@@ -74,14 +76,13 @@ export class ApiService {
    */
   static async login(username: string, password: string) {
     try {
-      // Use the combined getuserinfo4 endpoint which handles both validation and token generation
-      // This matches the backend pattern where getuserinfo4 does the complete authentication
+      // Use the getuserinfo4 endpoint which handles authentication and token generation
       const response = await this.get<{
         result: string;
         token?: string;
         username?: string;
         message?: string;
-      }>(`/authentication/getuserinfo4/${username}/${password}/`);
+      }>(`/authentication/getuserinfo4/${encodeURIComponent(username)}/${encodeURIComponent(password)}/`);
 
       if (response.result === 'success' && response.token) {
         // Set auth token globally
@@ -91,7 +92,7 @@ export class ApiService {
           success: true,
           token: response.token,
           username: response.username || username,
-          message: response.message
+          message: response.message || 'Login successful'
         };
       } else {
         throw new Error(response.message || 'Invalid username or password');
@@ -204,22 +205,45 @@ export class ApiService {
       const statusText = axiosError.response?.statusText;
       const responseData = axiosError.response?.data;
       
-      let message = `${context}: `;
+      let message = '';
       
-      if (status) {
-        message += `HTTP ${status}`;
-        if (statusText) {
-          message += ` (${statusText})`;
+      // Handle authentication-specific errors with user-friendly messages
+      if (context === 'Login failed') {
+        if (status === 404) {
+          message = 'Authentication service is not available. Please try again later.';
+        } else if (status === 401 || status === 403) {
+          message = 'Invalid username or password. Please check your credentials and try again.';
+        } else if (status === 500) {
+          message = 'Server error occurred during login. Please try again later.';
+        } else if (!status) {
+          message = 'Unable to connect to the authentication server. Please check your internet connection.';
         }
       }
       
-      if (responseData && typeof responseData === 'object' && 'error' in responseData) {
-        const errorResponse = responseData as { error: string };
-        message += ` - ${errorResponse.error}`;
-      } else if (responseData && typeof responseData === 'string') {
-        message += ` - ${responseData}`;
-      } else if (axiosError.message) {
-        message += ` - ${axiosError.message}`;
+      // Fallback to generic error handling if no specific message was set
+      if (!message) {
+        message = `${context}: `;
+        
+        if (status) {
+          message += `HTTP ${status}`;
+          if (statusText) {
+            message += ` (${statusText})`;
+          }
+        }
+        
+        if (responseData && typeof responseData === 'object') {
+          if ('error' in responseData) {
+            const errorResponse = responseData as { error: string };
+            message += ` - ${errorResponse.error}`;
+          } else if ('message' in responseData) {
+            const errorResponse = responseData as { message: string };
+            message += ` - ${errorResponse.message}`;
+          }
+        } else if (responseData && typeof responseData === 'string') {
+          message += ` - ${responseData}`;
+        } else if (axiosError.message) {
+          message += ` - ${axiosError.message}`;
+        }
       }
 
       const enhancedError = new Error(message);

@@ -81,7 +81,7 @@ const App = (): JSX.Element => {
                 <Route path='/' element={<Home />} />
                 <Route path='/login' element={<Login />} />
                 <Route path='/dashboard' element={<Dashboard />} />
-                <Route path='/authentication/auth/callback' element={<AuthCallback />} />
+                <Route path='/auth/callback' element={<AuthCallback />} />
                 <Route path='/features' element={<Features />} />
                 <Route path='/filedownload/:username/:file_id' element={<FileDownload />} />
                 <Route path='/api' element={<API />} />

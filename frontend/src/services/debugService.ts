@@ -58,20 +58,40 @@ export class DebugService {
     try {
       console.log(`🔍 Testing API connectivity to: ${baseUrl}`);
       
-      const response = await fetch(baseUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        }
-      });
-
-      console.log(`📡 API Response: ${response.status} ${response.statusText}`);
+      // Try multiple endpoints to test connectivity
+      const endpoints = [
+        '', // Root
+        '/health/', // Health check if available
+        '/authentication/login/', // Known authentication endpoint
+      ];
       
-      return {
-        available: true,
-        status: response.status,
-        statusText: response.statusText
-      };
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(`${baseUrl}${endpoint}`, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+            },
+            mode: 'cors'
+          });
+
+          console.log(`📡 API Response for ${endpoint || 'root'}: ${response.status} ${response.statusText}`);
+          
+          if (response.status < 500) { // Accept any non-server-error response as connectivity
+            return {
+              available: true,
+              status: response.status,
+              statusText: response.statusText,
+              endpoint: endpoint || 'root'
+            };
+          }
+        } catch (endpointError) {
+          console.log(`⚠️ Endpoint ${endpoint || 'root'} failed: ${endpointError instanceof Error ? endpointError.message : 'Unknown error'}`);
+          continue;
+        }
+      }
+      
+      throw new Error('All connectivity tests failed');
     } catch (error) {
       console.log(`❌ API Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
