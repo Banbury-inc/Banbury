@@ -94,94 +94,25 @@ const Dashboard = (): JSX.Element => {
       try {
         setLoading(true);
         
-        // Check if this is a Google OAuth session (similar to Electron app)
-        const isGoogleOAuth = localStorage.getItem('googleOAuthSession') === 'true';
-        const authUsername = localStorage.getItem('authUsername');
-        const authToken = localStorage.getItem('authToken');
-        
-        if (isGoogleOAuth && authUsername && authToken) {
-          // For Google OAuth, validate the token with the backend
-          try {
-            const response = await fetch(`${CONFIG.url}/authentication/validate-token/`, {
-              headers: {
-                'Authorization': `Bearer ${authToken}`
-              }
-            });
-            
-            if (response.ok) {
-              const data = await response.json();
-              if (data.valid) {
-                // Token is valid, create user info
-                const basicUserInfo: UserInfo = {
-                  username: authUsername,
-                  email: localStorage.getItem('userEmail') || authUsername,
-                  first_name: '',
-                  last_name: '',
-                  picture: null
-                };
-                setUserInfo(basicUserInfo);
-                setLoading(false);
-                return;
-              }
-            }
-          } catch (error) {
-            console.error('Google OAuth token validation failed:', error);
-            // Clear invalid session
-            localStorage.removeItem('googleOAuthSession');
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('authUsername');
-          }
-        }
-        
-        // For regular sessions, check stored credentials
-        const token = localStorage.getItem('authToken');
-        const username = localStorage.getItem('authUsername') || localStorage.getItem('username');
+        // Validate token first using ApiService
+        const isValidToken = await ApiService.validateToken();
 
-        if (!token || !username) {
+        if (!isValidToken) {
+          // Token is invalid, redirect to login
           navigate('/login');
           return;
         }
 
-        // Try to validate token with ApiService (similar to Electron app pattern)
-        try {
-          const isValidToken = await ApiService.validateToken();
-          
-          if (isValidToken) {
-            // Token is valid, create user info from stored data
-            const basicUserInfo: UserInfo = {
-              username: username,
-              email: localStorage.getItem('userEmail') || username,
-              first_name: '',
-              last_name: '',
-              picture: null
-            };
-            setUserInfo(basicUserInfo);
-          } else {
-            // Token validation failed, redirect to login
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('authUsername');
-            localStorage.removeItem('username');
-            navigate('/login');
-            return;
-          }
-        } catch (validationError) {
-          console.error('Token validation error:', validationError);
-          // On validation error, still try to create basic user info if we have credentials
-          if (username) {
-            setError('Authentication warning: Please re-login if you experience issues');
-            const basicUserInfo: UserInfo = {
-              username: username,
-              email: localStorage.getItem('userEmail') || username,
-              first_name: '',
-              last_name: '',
-              picture: null
-            };
-            setUserInfo(basicUserInfo);
-          } else {
-            navigate('/login');
-            return;
-          }
-        }
+        // Token is valid, create user info from stored data
+        const username = localStorage.getItem('authUsername') || localStorage.getItem('username');
+        const basicUserInfo: UserInfo = {
+          username: username || 'User',
+          email: localStorage.getItem('userEmail') || username || '',
+          first_name: '',
+          last_name: '',
+          picture: null
+        };
+        setUserInfo(basicUserInfo);
       } catch (err) {
         console.error('Auth check error:', err);
         setError('Failed to load user information');
@@ -209,17 +140,13 @@ const Dashboard = (): JSX.Element => {
   }, [navigate]);
 
   const handleLogout = () => {
-    // Clear all authentication data (similar to Electron app)
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('authUsername');
-    localStorage.removeItem('username');
-    localStorage.removeItem('userEmail');
+    // Clear all authentication data using ApiService
+    ApiService.clearAuthToken();
+    
+    // Clear any additional session data
     localStorage.removeItem('deviceId');
     localStorage.removeItem('googleOAuthSession');
     localStorage.removeItem('userData');
-    
-    // Clear any remaining session data
-    ApiService.clearAuthToken();
     
     // Redirect to home page
     navigate('/');

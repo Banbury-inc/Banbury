@@ -1,69 +1,50 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Box, CircularProgress, Typography, Alert } from '@mui/material';
-import { CONFIG } from '../config/config';
+import { useTheme } from '@mui/material/styles';
+import { ApiService } from '../services/apiService';
 
-const AuthCallback: React.FC = () => {
+const AuthCallback = (): JSX.Element => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const handleCallback = async () => {
       const code = searchParams.get('code');
-      const error = searchParams.get('error');
+      const urlError = searchParams.get('error');
 
-      if (error) {
+      if (urlError) {
         setStatus('error');
-        setError(`Authentication failed: ${error}`);
+        setError(`Authentication failed: ${urlError}`);
+        setTimeout(() => navigate('/login'), 3000);
         return;
       }
 
       if (!code) {
         setStatus('error');
-        setError('No authorization code received');
+        setError('No authorization code received from Google');
+        setTimeout(() => navigate('/login'), 3000);
         return;
       }
 
       try {
-        // Send the authorization code to our backend
-        const response = await fetch(`${CONFIG.url}/authentication/auth/callback?code=${code}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        const result = await ApiService.handleOAuthCallback(code);
 
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-          // Store authentication data
-          const userData = data.user;
-          const token = data.token;
-          
-          localStorage.setItem('authToken', token);
-          localStorage.setItem('authUsername', userData.username);
-          localStorage.setItem('userEmail', userData.email);
-          localStorage.setItem('googleOAuthSession', 'true');
-          
-          // Store user data for dashboard
-          localStorage.setItem('userData', JSON.stringify(userData));
-          
+        if (result.success) {
           setStatus('success');
-          
           // Redirect to dashboard after a short delay
           setTimeout(() => {
             navigate('/dashboard');
-          }, 2000);
-        } else {
-          setStatus('error');
-          setError(data.error || 'Authentication failed');
+          }, 1500);
         }
       } catch (err) {
         setStatus('error');
-        setError('Network error occurred during authentication');
-        console.error('Auth callback error:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
+        setTimeout(() => navigate('/login'), 3000);
       }
     };
 
@@ -75,63 +56,59 @@ const AuthCallback: React.FC = () => {
       sx={{
         minHeight: '100vh',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#f5f5f5',
-        p: 4
+        backgroundColor: theme.palette.mode === 'dark' ? '#0a0a0a' : '#f5f5f5'
       }}
     >
-      {status === 'loading' && (
-        <>
-          <CircularProgress size={60} sx={{ mb: 3 }} />
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Completing authentication...
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Please wait while we verify your credentials.
-          </Typography>
-        </>
-      )}
-
-      {status === 'success' && (
-        <>
-          <Box sx={{ 
-            fontSize: 64, 
-            mb: 3,
-            color: 'success.main'
-          }}>
-            ✓
-          </Box>
-          <Typography variant="h6" sx={{ mb: 2, color: 'success.main' }}>
-            Authentication Successful!
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Redirecting to your dashboard...
-          </Typography>
-        </>
-      )}
-
-      {status === 'error' && (
-        <>
-          <Alert severity="error" sx={{ mb: 3, maxWidth: 400 }}>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              Authentication Failed
+      <Box sx={{ textAlign: 'center', maxWidth: 400 }}>
+        {status === 'loading' && (
+          <>
+            <CircularProgress size={60} sx={{ mb: 2 }} />
+            <Typography
+              variant="h6"
+              sx={{
+                color: theme.palette.mode === 'dark' ? '#ffffff' : '#171717',
+                mb: 1
+              }}
+            >
+              Completing Authentication
             </Typography>
-            <Typography variant="body2">
+            <Typography variant="body2" color="textSecondary">
+              Please wait while we finish setting up your account...
+            </Typography>
+          </>
+        )}
+
+        {status === 'success' && (
+          <>
+            <Box sx={{ 
+              fontSize: 64, 
+              mb: 2,
+              color: 'success.main'
+            }}>
+              ✓
+            </Box>
+            <Typography variant="h6" sx={{ mb: 1, color: 'success.main' }}>
+              Authentication Successful!
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              Redirecting to your dashboard...
+            </Typography>
+          </>
+        )}
+
+        {status === 'error' && (
+          <>
+            <Alert severity="error" sx={{ mb: 2 }}>
               {error}
+            </Alert>
+            <Typography variant="body2" color="textSecondary">
+              Redirecting to login page...
             </Typography>
-          </Alert>
-          <Typography 
-            variant="body2" 
-            color="primary" 
-            sx={{ cursor: 'pointer', textDecoration: 'underline' }}
-            onClick={() => navigate('/login')}
-          >
-            Return to Login
-          </Typography>
-        </>
-      )}
+          </>
+        )}
+      </Box>
     </Box>
   );
 };
