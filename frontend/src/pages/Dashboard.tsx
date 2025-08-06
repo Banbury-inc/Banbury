@@ -7,8 +7,6 @@ import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import { ApiService } from '../services/apiService';
 import { Thread } from '../components/thread';
-import { SidebarProvider, SidebarTrigger } from "../components/ui/sidebar";
-import { AppSidebar } from "../components/app-sidebar";
 import { NavSidebar } from "../components/nav-sidebar";
 import { TooltipProvider } from "../components/ui/tooltip";
 import { AssistantRuntimeProvider, useLocalRuntime } from '@assistant-ui/react';
@@ -144,22 +142,13 @@ const Dashboard = (): JSX.Element => {
         {/* Navigation Sidebar */}
         <NavSidebar />
         
-        {/* Main Content Area with App Sidebar */}
+        {/* Main Content Area */}
         <div className="flex flex-1 ml-16 with-nav-sidebar bg-black">
-          <SidebarProvider>
-            <AppSidebar 
-              currentView="dashboard"
-              onLogout={handleLogout}
-              userInfo={userInfo}
-            />
-            <main className="flex-1">
-
-                  <AssistantRuntimeProvider runtime={runtime}>
-                    <Thread />
-                  </AssistantRuntimeProvider>
-
-            </main>
-          </SidebarProvider>
+          <main className="flex-1">
+            <AssistantRuntimeProvider runtime={runtime}>
+              <Thread />
+            </AssistantRuntimeProvider>
+          </main>
         </div>
       </div>
     </TooltipProvider>

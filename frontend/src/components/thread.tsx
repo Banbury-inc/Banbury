@@ -165,9 +165,7 @@ const Composer: FC = () => {
   return (
     <div className="relative mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 px-[var(--thread-padding-x)] pb-4 md:pb-6" style={{ backgroundColor: 'transparent' }}>
       <ThreadScrollToBottom />
-      <ThreadPrimitive.Empty>
-        <ThreadWelcomeSuggestions />
-      </ThreadPrimitive.Empty>
+
       <ComposerPrimitive.Root className="relative flex w-full flex-col rounded-2xl">
         <ComposerPrimitive.Input
           placeholder="Send a message..."

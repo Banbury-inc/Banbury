@@ -26,26 +26,6 @@ interface AppSidebarProps {
   } | null
 }
 
-// Main navigation items
-const mainItems = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: Home,
-    view: 'dashboard' as const,
-  },
-  {
-    title: "Workspaces",
-    url: "/workspaces",
-    icon: FolderOpen,
-    view: 'workspaces' as const,
-  },
-]
-
-
-
-
-
 // File tree item component
 interface FileTreeItemProps {
   item: FileSystemItem
@@ -151,30 +131,6 @@ export function AppSidebar({ currentView, onLogout, userInfo }: AppSidebarProps)
   return (
     <Sidebar className="bg-black border-l border-white">
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild
-                    isActive={currentView === item.view}
-                  >
-                    <button
-                      onClick={() => navigate(item.url)}
-                      className="w-full flex items-center gap-2"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        
         <SidebarGroup>
           <SidebarGroupLabel className="flex items-center gap-2">
             Files

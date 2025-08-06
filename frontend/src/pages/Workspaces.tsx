@@ -1,18 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
+
+import { useState, useEffect } from 'react';
 import {
   Box,
-  Paper,
-  Typography,
-  Button,
-  TextField,
+  CircularProgress,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
-import FolderIcon from '@mui/icons-material/Folder';
-import AddIcon from '@mui/icons-material/Add';
 import { ApiService } from '../services/apiService';
+import { AssistantSidebar } from '../components/assistant-sidebar';
+import { SidebarProvider, SidebarTrigger } from "../components/ui/sidebar";
+import { AppSidebar } from "../components/app-sidebar";
 import { NavSidebar } from "../components/nav-sidebar";
 import { TooltipProvider } from "../components/ui/tooltip";
+import { AssistantRuntimeProvider, useLocalRuntime } from '@assistant-ui/react';
+
+
 
 interface UserInfo {
   username: string;
@@ -24,38 +26,38 @@ interface UserInfo {
   auth_method?: string;
 }
 
-interface FileTab {
-  id: string;
-  name: string;
-  content: string;
-  type: 'text' | 'json' | 'markdown';
-  modified: boolean;
-}
 
-interface CloudFile {
-  id: string;
-  name: string;
-  type: string;
-  size: number;
-  modified: Date;
-  content?: string;
-}
 
 const Workspaces = (): JSX.Element => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  
-  // Workspaces state
-  const [openTabs, setOpenTabs] = useState<FileTab[]>([]);
-  const [activeTabId, setActiveTabId] = useState<string | null>(null);
-  const [cloudFiles, setCloudFiles] = useState<CloudFile[]>([]);
-  const [filesDrawerOpen, setFilesDrawerOpen] = useState(false);
-  const [newFileName, setNewFileName] = useState('');
-  const [newFileDialogOpen, setNewFileDialogOpen] = useState(false);
+
+  const runtime = useLocalRuntime({
+    async run({ messages }) {
+      const lastMessage = messages[messages.length - 1];
+      const userContent = lastMessage?.content?.[0]?.type === 'text' 
+        ? lastMessage.content[0].text 
+        : 'Hello';
+      
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `You said: "${userContent}". This is a local runtime response!`,
+          },
+        ],
+      };
+    },
+  });
+
+
 
   useEffect(() => {
+    // Ensure dark mode is enabled
+    window.localStorage.setItem('themeMode', 'dark');
+    
     const checkAuthAndFetchUser = async () => {
       try {
         setLoading(true);
@@ -119,40 +121,6 @@ const Workspaces = (): JSX.Element => {
 
 
 
-  // Workspaces functionality
-  const createNewFile = useCallback((name: string, type: 'text' | 'json' | 'markdown' = 'text') => {
-    const newTab: FileTab = {
-      id: `file-${Date.now()}`,
-      name,
-      content: type === 'json' ? '{}' : '',
-      type,
-      modified: false
-    };
-    
-    setOpenTabs(prev => [...prev, newTab]);
-    setActiveTabId(newTab.id);
-    setNewFileDialogOpen(false);
-    setNewFileName('');
-  }, []);
-
-  const closeTab = useCallback((tabId: string) => {
-    setOpenTabs(prev => prev.filter(tab => tab.id !== tabId));
-    if (activeTabId === tabId) {
-      setActiveTabId(_prev => {
-        const remainingTabs = openTabs.filter(tab => tab.id !== tabId);
-        return remainingTabs.length > 0 ? remainingTabs[remainingTabs.length - 1].id : null;
-      });
-    }
-  }, [activeTabId, openTabs]);
-
-  const updateTabContent = useCallback((tabId: string, content: string) => {
-    setOpenTabs(prev => prev.map(tab => 
-      tab.id === tabId 
-        ? { ...tab, content, modified: true }
-        : tab
-    ));
-  }, []);
-
   if (loading) {
     return (
       <Box
@@ -164,18 +132,46 @@ const Workspaces = (): JSX.Element => {
           backgroundColor: theme.palette.mode === 'dark' ? '#0a0a0a' : '#f5f5f5'
         }}
       >
-        <Typography>Loading...</Typography>
+        <CircularProgress size={60} />
       </Box>
     );
   }
 
-  const activeTab = openTabs.find(tab => tab.id === activeTabId);
-  
+
+
   return (
-      <div>
-        <h1>Workspaces</h1>
+    <TooltipProvider>
+      <div className="flex h-screen">
+        {/* Navigation Sidebar */}
+        <NavSidebar />
+        
+        {/* Main Content Area with App Sidebar */}
+        <div className="flex flex-1 ml-8 with-nav-sidebar bg-black">
+          <SidebarProvider>
+            <AppSidebar 
+              currentView="workspaces"
+              onLogout={handleLogout}
+              userInfo={userInfo}
+            />
+            <AssistantRuntimeProvider runtime={runtime}>
+              <AssistantSidebar>
+                <main className="flex-1 h-full flex items-center justify-center">
+                  <div className="text-center max-w-md">
+                    <h1 className="text-4xl font-bold text-white mb-4">Welcome to Workspaces</h1>
+                    <p className="text-gray-300 text-lg mb-6">
+                      Your collaborative workspace environment is ready. Create, organize, and manage your projects with ease.
+                    </p>
+                    <p className="text-gray-400 text-sm">
+                      The AI assistant is available in the right panel to help you with your work.
+                    </p>
+                  </div>
+                </main>
+              </AssistantSidebar>
+            </AssistantRuntimeProvider>
+          </SidebarProvider>
+        </div>
       </div>
+    </TooltipProvider>
   );
 };
-
 export default Workspaces;
