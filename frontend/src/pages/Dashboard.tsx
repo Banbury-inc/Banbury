@@ -140,7 +140,7 @@ const Dashboard = (): JSX.Element => {
     <TooltipProvider>
       <div className="flex h-screen">
         {/* Navigation Sidebar */}
-        <NavSidebar />
+        <NavSidebar onLogout={handleLogout} />
         
         {/* Main Content Area */}
         <div className="flex flex-1 ml-16 with-nav-sidebar bg-black">

@@ -1,10 +1,14 @@
-import { Home, FolderOpen } from "lucide-react"
+import { Home, FolderOpen, LogOut } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Button } from "./ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
 import BanburyLogo from "../assets/images/Banbury_Cloud_Logo.png"
 
-export function NavSidebar() {
+interface NavSidebarProps {
+  onLogout?: () => void
+}
+
+export function NavSidebar({ onLogout }: NavSidebarProps) {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -26,7 +30,7 @@ export function NavSidebar() {
   const isActive = (path: string) => location.pathname === path
 
   return (
-    <div className="fixed left-0 top-0 z-40 flex h-full w-16 flex-col bg-black border-r border-sidebar-border">
+    <div className="fixed left-0 top-0 z-40 flex h-full w-16 flex-col bg-black border-r border-b border-zinc-300 dark:border-zinc-600">
       <div className="flex flex-1 flex-col items-center gap-4 py-4">
         {/* Logo/Brand */}
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white p-1">
@@ -47,7 +51,7 @@ export function NavSidebar() {
                   <Button
                     variant={isActive(item.path) ? "default" : "ghost"}
                     size="icon"
-                    className="h-10 w-10 text-white hover:bg-black hover:text-white"
+                    className="h-10 w-10 text-white hover:bg-primary hover:text-white bg-black border border-zinc-300 dark:border-zinc-600"
                     onClick={() => navigate(item.path)}
                   >
                     <Icon className="h-5 w-5" />
@@ -61,6 +65,27 @@ export function NavSidebar() {
           })}
         </nav>
       </div>
+      
+      {/* Footer with Logout Button */}
+      {onLogout && (
+        <div className="flex items-center justify-center pb-4">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 text-white hover:bg-black hover:text-white border border-zinc-300 dark:border-zinc-600"
+                onClick={onLogout}
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8}>
+              Logout
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      )}
     </div>
   )
 }

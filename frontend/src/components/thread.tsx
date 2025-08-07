@@ -18,6 +18,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   Square,
+  SendIcon,
 } from "lucide-react";
 
 import { TooltipIconButton } from "./tooltip-icon-button";
@@ -169,7 +170,7 @@ const Composer: FC = () => {
       <ComposerPrimitive.Root className="relative flex w-full flex-col rounded-2xl">
         <ComposerPrimitive.Input
           placeholder="Send a message..."
-          className="bg-muted border-border/20 focus:border-primary/30 placeholder:text-muted-foreground text-foreground max-h-[calc(50dvh)] min-h-16 w-full resize-none rounded-t-2xl border-x border-t px-4 pt-2 pb-3 text-base outline-none focus:outline-none"
+          className="bg-zinc-800 border-l border-r border-t border-zinc-300 dark:border-zinc-600 focus:border-primary/30 placeholder:text-zinc-400 text-zinc-400 max-h-[calc(50dvh)] min-h-16 w-full resize-none rounded-t-2xl px-4 pt-2 pb-3 text-base outline-none focus:outline-none"
           rows={1}
           autoFocus
           aria-label="Message input"
@@ -182,11 +183,11 @@ const Composer: FC = () => {
 
 const ComposerAction: FC = () => {
   return (
-    <div className="bg-muted border-border/20 relative flex items-center justify-between rounded-b-2xl border-x border-b p-2">
+    <div className="bg-zinc-800 border-l border-r border-b border-zinc-300 dark:border-zinc-600 relative flex items-center justify-between rounded-b-2xl p-2">
       <TooltipIconButton
         tooltip="Attach file"
-        variant="ghost"
-        className="hover:bg-black hover:text-white bg-gray-500 dark:hover:bg-background/50 scale-75 p-3.5 text-white"
+        variant="default"
+        className="hover:bg-black hover:text-white dark:hover:bg-background/50 scale-75 p-3.5 text-white border border-zinc-300 dark:border-zinc-600"
         onClick={() => {
           console.log("Attachment clicked - not implemented");
         }}
@@ -196,14 +197,15 @@ const ComposerAction: FC = () => {
 
       <ThreadPrimitive.If running={false}>
         <ComposerPrimitive.Send asChild>
-          <Button
+          <TooltipIconButton
+            tooltip="Send"
             type="submit"
             variant="default"
-            className="dark:border-muted-foreground/90 border-muted-foreground/60 hover:bg-primary/75 size-8 rounded-full border"
+            className="dark:border-muted-foreground/90 border-muted-foreground/60 hover:bg-primary/75 p-2 border border-zinc-300 dark:border-zinc-600 scale-100"
             aria-label="Send message"
           >
-            <ArrowUpIcon className="size-5" />
-          </Button>
+            <ChevronRightIcon />
+          </TooltipIconButton>
         </ComposerPrimitive.Send>
       </ThreadPrimitive.If>
 
@@ -212,10 +214,10 @@ const ComposerAction: FC = () => {
           <Button
             type="button"
             variant="default"
-            className="dark:border-muted-foreground/90 border-muted-foreground/60 hover:bg-primary/75 size-8 rounded-full border"
+            className="dark:border-muted-foreground/90 border-muted-foreground/60 hover:bg-primary/75 size-8 rounded-full border border-zinc-300 dark:border-zinc-600"
             aria-label="Stop generating"
           >
-            <Square className="size-3.5 fill-white dark:size-4 dark:fill-black" />
+            <Square className="size-3.5 fill-white dark:size-4 dark:fill-black border border-zinc-300 dark:border-zinc-600" />
           </Button>
         </ComposerPrimitive.Cancel>
       </ThreadPrimitive.If>

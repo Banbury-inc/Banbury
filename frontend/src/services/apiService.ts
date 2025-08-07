@@ -312,6 +312,42 @@ export class ApiService {
   }
 
   /**
+   * Upload file content to S3 (if endpoint exists) and add metadata
+   */
+  static async uploadFile(username: string, file: File | Blob, fileName: string, filePath: string, fileType: string) {
+    try {
+      // Ensure token is loaded
+      this.loadAuthToken();
+      
+      // First, create file metadata
+      const fileMetadata = {
+        file_type: fileType,
+        file_name: fileName,
+        file_path: filePath,
+        date_uploaded: new Date().toISOString(),
+        date_modified: new Date().toISOString(),
+        file_size: file.size,
+        file_priority: 1,
+        file_parent: filePath.split('/').slice(0, -1).join('/') || 'root',
+        original_device: 'web-upload',
+        kind: file instanceof File ? 'file' : 'document'
+      };
+
+      // Add file metadata to database
+      const metadataResponse = await this.post(`/files/add_file/${username}/`, fileMetadata);
+      
+      return {
+        success: true,
+        message: 'File metadata added successfully',
+        response: metadataResponse
+      };
+    } catch (error) {
+      console.error('uploadFile error:', error);
+      throw this.enhanceError(error, 'Failed to upload file');
+    }
+  }
+
+  /**
    * Enhanced error handling
    */
   private static enhanceError(error: unknown, context: string): Error {

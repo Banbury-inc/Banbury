@@ -1,5 +1,4 @@
-import { Home, FolderOpen, LogOut, ChevronDown, ChevronRight, File, Folder, RefreshCw } from "lucide-react"
-import { useNavigate } from 'react-router-dom'
+import { ChevronDown, ChevronRight, File, Folder, RefreshCw } from "lucide-react"
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from "./ui/button"
 import { ApiService } from "../services/apiService"
@@ -7,7 +6,6 @@ import { buildFileTree, FileSystemItem, S3FileInfo } from "../utils/fileTreeUtil
 
 interface AppSidebarProps {
   currentView: 'dashboard' | 'workspaces'
-  onLogout: () => void
   userInfo?: {
     username: string
     email?: string
@@ -61,8 +59,8 @@ function FileTreeItem({ item, level, expandedItems, toggleExpanded, onFileSelect
       <div className="w-full">
         <button
           onClick={handleClick}
-          className={`w-full flex items-center gap-2 text-left px-3 py-2 hover:bg-gray-800 hover:text-white transition-colors ${
-            isSelected ? 'bg-gray-800 text-white' : 'text-gray-300'
+          className={`w-full flex items-center gap-2 text-left px-3 py-2 hover:bg-zinc-800 hover:text-white transition-colors ${
+            isSelected ? 'bg-zinc-800 text-white' : 'text-zinc-300'
           }`}
           style={{ paddingLeft: `${(level * 12) + 12}px` }}
         >
@@ -96,8 +94,7 @@ function FileTreeItem({ item, level, expandedItems, toggleExpanded, onFileSelect
   )
 }
 
-export function AppSidebar({ currentView, onLogout, userInfo, onFileSelect, selectedFile }: AppSidebarProps) {
-  const navigate = useNavigate()
+export function AppSidebar({ currentView, userInfo, onFileSelect, selectedFile }: AppSidebarProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [fileSystem, setFileSystem] = useState<FileSystemItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -140,9 +137,9 @@ export function AppSidebar({ currentView, onLogout, userInfo, onFileSelect, sele
   }, [fetchUserFiles])
   
   return (
-    <div className="h-full w-full bg-black border-r border-gray-800 flex flex-col">
+    <div className="h-full w-full bg-black border-r border-zinc-300 dark:border-zinc-600 flex flex-col relative z-10">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-300 dark:border-zinc-600">
         <h2 className="text-white text-sm font-medium">Files</h2>
         <Button
           variant="ghost"
@@ -187,26 +184,6 @@ export function AppSidebar({ currentView, onLogout, userInfo, onFileSelect, sele
             selectedFile={selectedFile}
           />
         ))}
-      </div>
-      
-      {/* Footer */}
-      <div className="border-t border-gray-800 p-4">
-        <div className="space-y-2">
-          {userInfo && (
-            <div className="text-xs text-gray-400 truncate">
-              {userInfo.email || userInfo.username}
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onLogout}
-            className="w-full justify-start gap-2 text-gray-300 hover:bg-gray-800 hover:text-white"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
-        </div>
       </div>
     </div>
   )
