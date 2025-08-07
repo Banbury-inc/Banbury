@@ -11,9 +11,10 @@ interface DocumentViewerProps {
     username: string;
     email?: string;
   } | null;
+  onSaveComplete?: () => void;
 }
 
-export function DocumentViewer({ file, userInfo }: DocumentViewerProps) {
+export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewerProps) {
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -156,8 +157,8 @@ export function DocumentViewer({ file, userInfo }: DocumentViewerProps) {
         parentPath
       );
       
-      // Optionally reload the document to show the saved version
-      // We could trigger a refresh here if needed
+      // Call the save complete callback
+      onSaveComplete?.();
       
     } catch (err) {
       setError('Failed to save document');

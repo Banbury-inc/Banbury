@@ -9,7 +9,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import { Add as AddIcon, Description as DocumentIcon } from '@mui/icons-material';
+import { Add as AddIcon, Description as DocumentIcon, Folder as FolderIcon } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import { ApiService } from '../services/apiService';
@@ -56,6 +56,7 @@ const Workspaces = (): JSX.Element => {
     message: string;
     severity: 'success' | 'error' | 'info';
   }>({ open: false, message: '', severity: 'info' });
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
 
   // Helper functions to check file types
   const isImageFile = (fileName: string): boolean => {
@@ -117,6 +118,9 @@ const Workspaces = (): JSX.Element => {
           message: 'File uploaded to S3 successfully!', 
           severity: 'success' 
         });
+        
+        // Trigger sidebar refresh after successful upload
+        triggerSidebarRefresh();
       } catch (error) {
         setUploadStatus({ 
           open: true, 
@@ -234,6 +238,9 @@ Created on: ${new Date().toLocaleDateString()}`;
         message: 'Word document created and uploaded successfully!', 
         severity: 'success' 
       });
+      
+      // Trigger sidebar refresh after successful document creation
+      triggerSidebarRefresh();
     } catch (error) {
       setUploadStatus({ 
         open: true, 
@@ -245,9 +252,96 @@ Created on: ${new Date().toLocaleDateString()}`;
     }
   };
 
+  // Handle folder creation
+  const handleCreateFolder = async () => {
+    if (!userInfo?.username) return;
+
+    // Prompt user for folder name
+    const folderName = prompt('Enter folder name:');
+    if (!folderName || !folderName.trim()) return;
+
+    const sanitizedFolderName = folderName.trim().replace(/[^a-zA-Z0-9\s\-_]/g, '');
+    if (!sanitizedFolderName) {
+      setUploadStatus({ 
+        open: true, 
+        message: 'Invalid folder name. Please use only letters, numbers, spaces, hyphens, and underscores.', 
+        severity: 'error' 
+      });
+      return;
+    }
+
+    setUploading(true);
+    setUploadStatus({ open: true, message: 'Creating folder...', severity: 'info' });
+
+    try {
+      // Create a placeholder file to represent the folder structure
+      // This is a common pattern when the backend doesn't have explicit folder creation
+      const placeholderContent = `This folder was created on ${new Date().toLocaleDateString()}`;
+      const blob = new Blob([placeholderContent], { type: 'text/plain' });
+      const placeholderFileName = '.folder_placeholder';
+
+      // Upload placeholder file to create the folder structure
+      await uploadToS3(
+        blob,
+        userInfo.username,
+        `${sanitizedFolderName}/${placeholderFileName}`,
+        sanitizedFolderName
+      );
+      
+      setUploadStatus({ 
+        open: true, 
+        message: `Folder "${sanitizedFolderName}" created successfully!`, 
+        severity: 'success' 
+      });
+      
+      // Trigger sidebar refresh after successful folder creation
+      triggerSidebarRefresh();
+    } catch (error) {
+      setUploadStatus({ 
+        open: true, 
+        message: `Failed to create folder: ${error instanceof Error ? error.message : 'Unknown error'}`, 
+        severity: 'error' 
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   // Handle snackbar close
   const handleCloseSnackbar = () => {
     setUploadStatus(prev => ({ ...prev, open: false }));
+  };
+
+  // Function to trigger sidebar refresh
+  const triggerSidebarRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleFileDeleted = (fileId: string) => {
+    // If the deleted file was selected, clear the selection
+    if (selectedFile?.file_id === fileId) {
+      setSelectedFile(null);
+    }
+    // Refresh the sidebar to update the file list
+    triggerSidebarRefresh();
+  };
+
+  const handleFileRenamed = (oldPath: string, newPath: string) => {
+    // If the renamed file was selected, update its path
+    if (selectedFile?.path === oldPath) {
+      setSelectedFile(prev => prev ? { ...prev, path: newPath, name: newPath.split('/').pop() || newPath } : null);
+    }
+    // Refresh the sidebar to update the file list
+    triggerSidebarRefresh();
+  };
+
+  const handleFileMoved = (fileId: string, oldPath: string, newPath: string) => {
+    // If the moved file was selected, update its path
+    if (selectedFile?.file_id === fileId) {
+      setSelectedFile(prev => prev ? { ...prev, path: newPath, name: newPath.split('/').pop() || newPath } : null);
+    }
+    // Refresh the sidebar to update the file list
+    triggerSidebarRefresh();
   };
 
   const runtime = useLocalRuntime({
@@ -399,6 +493,12 @@ Created on: ${new Date().toLocaleDateString()}`;
                     <DocumentIcon fontSize="small" className="mr-2" />
                     Document
                   </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onSelect={handleCreateFolder}
+                  >
+                    <FolderIcon fontSize="small" className="mr-2" />
+                    Folder
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -422,6 +522,10 @@ Created on: ${new Date().toLocaleDateString()}`;
                     userInfo={userInfo}
                     onFileSelect={handleFileSelect}
                     selectedFile={selectedFile}
+                    refreshTrigger={refreshTrigger}
+                    onFileDeleted={handleFileDeleted}
+                    onFileRenamed={handleFileRenamed}
+                    onFileMoved={handleFileMoved}
                   />
                 </Allotment.Pane>
                 
@@ -433,7 +537,11 @@ Created on: ${new Date().toLocaleDateString()}`;
                     ) : selectedFile && isPdfFile(selectedFile.name) ? (
                       <PDFViewer file={selectedFile} userInfo={userInfo} />
                     ) : selectedFile && isDocumentFile(selectedFile.name) ? (
-                      <DocumentViewer file={selectedFile} userInfo={userInfo} />
+                      <DocumentViewer 
+                        file={selectedFile} 
+                        userInfo={userInfo} 
+                        onSaveComplete={triggerSidebarRefresh}
+                      />
                     ) : (
                         <div className="h-full flex items-center justify-center">
                           <div className="text-center max-w-md">

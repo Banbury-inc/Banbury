@@ -50,6 +50,7 @@
     "@langchain/openai": "^0.3.15",
     "@mui/icons-material": "^5.16.13",
     "@mui/material": "^5.14.6",
+    "@radix-ui/react-context-menu": "^2.2.15",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-dropdown-menu": "^2.1.15",
     "@radix-ui/react-popover": "^1.1.14",

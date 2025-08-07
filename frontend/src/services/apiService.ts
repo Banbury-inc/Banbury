@@ -393,6 +393,81 @@ export class ApiService {
   }
 
   /**
+   * Rename S3 file by downloading, uploading with new name, and deleting old file
+   */
+  static async renameS3File(fileId: string, newFileName: string, currentFilePath: string) {
+    try {
+      // Ensure token is loaded
+      this.loadAuthToken();
+      
+      // Step 1: Download the current file content
+      const downloadResult = await this.downloadS3File(fileId, newFileName);
+      
+      // Step 2: Calculate new file path with the new name
+      const pathParts = currentFilePath.split('/');
+      pathParts[pathParts.length - 1] = newFileName; // Replace the filename part
+      const newFilePath = pathParts.join('/');
+      
+      // Step 3: Upload the file with the new name
+      const uploadResult = await this.uploadToS3(
+        downloadResult.blob,
+        newFileName,
+        'web-editor',
+        newFilePath,
+        pathParts.slice(0, -1).join('/') || 'root'
+      );
+      
+      // Step 4: Delete the old file
+      await this.deleteS3File(fileId);
+      
+      return {
+        success: true,
+        message: 'File renamed successfully',
+        file_info: uploadResult.file_info,
+        new_file_url: uploadResult.file_url
+      };
+    } catch (error) {
+      console.error('renameS3File error:', error);
+      throw this.enhanceError(error, 'Failed to rename file');
+    }
+  }
+
+  /**
+   * Move S3 file to a new path by downloading, uploading to new location, and deleting old file
+   */
+  static async moveS3File(fileId: string, newFilePath: string, fileName: string) {
+    try {
+      // Ensure token is loaded
+      this.loadAuthToken();
+      
+      // Step 1: Download the file content
+      const downloadResult = await this.downloadS3File(fileId, fileName);
+      
+      // Step 2: Upload to new location
+      const uploadResult = await this.uploadToS3(
+        downloadResult.blob,
+        fileName,
+        'web-editor',
+        newFilePath,
+        newFilePath.split('/').slice(0, -1).join('/') || 'root'
+      );
+      
+      // Step 3: Delete the old file
+      await this.deleteS3File(fileId);
+      
+      return {
+        success: true,
+        message: 'File moved successfully',
+        file_info: uploadResult.file_info,
+        new_file_url: uploadResult.file_url
+      };
+    } catch (error) {
+      console.error('moveS3File error:', error);
+      throw this.enhanceError(error, 'Failed to move file');
+    }
+  }
+
+  /**
    * Upload file to S3 (replacing existing file)
    */
   static async uploadToS3(file: File | Blob, fileName: string, deviceName: string = 'web-editor', filePath: string = '', fileParent: string = '') {
