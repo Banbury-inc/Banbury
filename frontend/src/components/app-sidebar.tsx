@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, File, Folder, RefreshCw, Edit2, Trash2 } from "lucide-react"
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from "./ui/button"
 import { ApiService } from "../services/apiService"
 import { buildFileTree, FileSystemItem, S3FileInfo } from "../utils/fileTreeUtils"
@@ -123,6 +123,16 @@ function FileTreeItem({
   const isSelected = selectedFile?.id === item.id
   const [isRenaming, setIsRenaming] = useState(false)
   const [newName, setNewName] = useState(item.name)
+  const inputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    if (isRenaming && inputRef.current) {
+      requestAnimationFrame(() => {
+        inputRef.current?.focus()
+        inputRef.current?.select()
+      })
+    }
+  }, [isRenaming])
   
   // Check if this item is being dragged or is a drop target
   const isDragged = dragState.draggedItem?.id === item.id
@@ -162,21 +172,10 @@ function FileTreeItem({
   
   const handleClick = () => {
     if (isRenaming) return; // Don't handle clicks while renaming
-    
-    console.log('Click detected on:', item.name, 'type:', item.type, 'hasChildren:', hasChildren);
-    
     if (hasChildren) {
-      console.log('Expanding/collapsing folder:', item.name);
       toggleExpanded(item.id)
     } else if (item.type === 'file' && onFileSelect) {
-      // For files, trigger the selection callback
-      console.log('File clicked:', item.name, item);
       onFileSelect(item)
-    } else {
-      console.log('Click conditions not met:', {
-        type: item.type,
-        hasOnFileSelect: !!onFileSelect
-      });
     }
   }
 
@@ -195,7 +194,6 @@ function FileTreeItem({
       await ApiService.deleteS3File(item.file_id)
       onFileDeleted?.(item.file_id)
     } catch (error) {
-      console.error('Failed to delete file:', error)
       alert('Failed to delete file. Please try again.')
     }
   }
@@ -227,31 +225,24 @@ function FileTreeItem({
   }
   
   const buttonContent = (
-    <button
-      onClick={handleClick}
-      draggable={item.type === 'file' && item.file_id ? true : false}
-      onDragStart={handleDragStart}
-      onDragEnd={onDragEnd}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      className={`w-full flex items-center gap-2 text-left px-3 py-2 hover:bg-zinc-800 hover:text-white transition-colors ${
-        isSelected ? 'bg-zinc-800 text-white' : 'text-zinc-300'
-      } ${isDragged ? 'opacity-50' : ''} ${isDropTarget ? 'bg-zinc-700 ring-2 ring-blue-500' : ''}`}
-      style={{ paddingLeft: `${(level * 12) + 12}px` }}
-    >
-          {hasChildren && (
-            isExpanded ? 
-              <ChevronDown className="h-3 w-3" /> : 
-              <ChevronRight className="h-3 w-3" />
-          )}
-          {!hasChildren && <div className="w-3" />}
-          {item.type === 'folder' ? (
-            <Folder className="h-4 w-4" />
-          ) : (
-            <File className="h-4 w-4" />
-          )}
-      {isRenaming ? (
+    isRenaming ? (
+      <div
+        className={`w-full flex items-center gap-2 text-left px-3 py-2 ${
+          isSelected ? 'bg-zinc-800 text-white' : 'text-zinc-300'
+        }`}
+        style={{ paddingLeft: `${(level * 12) + 12}px` }}
+      >
+        {hasChildren && (
+          isExpanded ? 
+            <ChevronDown className="h-3 w-3" /> : 
+            <ChevronRight className="h-3 w-3" />
+        )}
+        {!hasChildren && <div className="w-3" />}
+        {item.type === 'folder' ? (
+          <Folder className="h-4 w-4" />
+        ) : (
+          <File className="h-4 w-4" />
+        )}
         <input
           type="text"
           value={newName}
@@ -260,12 +251,39 @@ function FileTreeItem({
           onKeyDown={handleKeyDown}
           className="text-sm bg-zinc-700 text-white px-1 py-0 rounded border-none outline-none flex-1"
           autoFocus
+          ref={inputRef}
+          onFocus={(e) => e.currentTarget.select()}
           onClick={(e) => e.stopPropagation()}
         />
-      ) : (
+      </div>
+    ) : (
+      <button
+        onClick={handleClick}
+        draggable={item.type === 'file' && item.file_id ? true : false}
+        onDragStart={handleDragStart}
+        onDragEnd={onDragEnd}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`w-full flex items-center gap-2 text-left px-3 py-2 hover:bg-zinc-800 hover:text-white transition-colors ${
+          isSelected ? 'bg-zinc-800 text-white' : 'text-zinc-300'
+        } ${isDragged ? 'opacity-50' : ''} ${isDropTarget ? 'bg-zinc-700 ring-2 ring-blue-500' : ''}`}
+        style={{ paddingLeft: `${(level * 12) + 12}px` }}
+      >
+        {hasChildren && (
+          isExpanded ? 
+            <ChevronDown className="h-3 w-3" /> : 
+            <ChevronRight className="h-3 w-3" />
+        )}
+        {!hasChildren && <div className="w-3" />}
+        {item.type === 'folder' ? (
+          <Folder className="h-4 w-4" />
+        ) : (
+          <File className="h-4 w-4" />
+        )}
         <span className="text-sm truncate">{item.name}</span>
-      )}
-    </button>
+      </button>
+    )
   )
 
   return (
@@ -378,7 +396,6 @@ export function AppSidebar({ currentView, userInfo, onFileSelect, selectedFile, 
       fetchUserFiles()
       
     } catch (error) {
-      console.error('Failed to move file:', error)
       alert('Failed to move file. Please try again.')
     } finally {
       handleDragEnd()
@@ -392,19 +409,15 @@ export function AppSidebar({ currentView, userInfo, onFileSelect, selectedFile, 
     setError(null)
     
     try {
-      console.log('Fetching files for user:', userInfo.username);
       const result = await ApiService.getUserFiles(userInfo.username)
-      console.log('Files fetch result:', result);
       
       if (result.success) {
         const tree = buildFileTree(result.files)
-        console.log('Built file tree:', tree);
         setFileSystem(tree)
         // Call the refresh complete callback if provided
         onRefreshComplete?.()
       }
     } catch (err) {
-      console.error('Error fetching files:', err);
       setError('Failed to fetch files')
     } finally {
       setLoading(false)
