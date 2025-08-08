@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Box, Card, CardMedia, Container, Grid, Typography, Paper } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { useNavigate, Link, useParams } from 'react-router-dom';
+import NextLink from 'next/link';
+import { useRouter } from 'next/router';
 import NewsPost, { NewsPost as NewsPostType } from './NewsPost';
 
 interface ProductsProps {
@@ -134,8 +135,8 @@ const NEWS_POSTS: NewsPostType[] = [
 
 const News = (): JSX.Element => {
   const theme = useTheme();
-  const navigate = useNavigate();
-  const { postId } = useParams();
+  const router = useRouter();
+  const { postId } = router.query as { postId?: string };
   const [products, setProducts] = useState<ProductsProps[]>([]);
 
   useEffect(() => {
@@ -176,7 +177,7 @@ const News = (): JSX.Element => {
           transform: 'translateY(-2px)',
         },
       }}
-      onClick={() => navigate(`/news/${post.id}`)}
+      onClick={() => router.push(`/news/${post.id}`)}
     >
       <Box
         sx={{
@@ -238,7 +239,7 @@ const News = (): JSX.Element => {
           },
         },
       }}
-      onClick={() => navigate(`/news/${post.id}`)}
+      onClick={() => router.push(`/news/${post.id}`)}
     >
       <Box sx={{ p: 4 }}>
         <Typography
@@ -290,14 +291,14 @@ const News = (): JSX.Element => {
         {selectedPost ? (
           <>
             <Box sx={{ mb: 4 }}>
-              <Link to="/news" style={{ textDecoration: 'none' }}>
+              <NextLink href="/news" style={{ textDecoration: 'none' }}>
                 <Typography
                   variant="body1"
                   sx={{ color: theme.palette.primary.main }}
                 >
                   ← Back to News
                 </Typography>
-              </Link>
+              </NextLink>
             </Box>
             <NewsPost post={selectedPost} />
           </>

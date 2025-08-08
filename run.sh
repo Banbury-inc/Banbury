@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run the entire Banbury-Website locally:
-# - Backend: builds Docker image from backend/Dockerfile and runs on host port 8080 (container port 80)
-# - Frontend: builds CRA and serves static build on port 3000
+# Run the Banbury-Website frontend locally with Next.js (no Docker, no backend)
+# - Default: starts Next.js dev server with Fast Refresh on port 3000
+# - With --prod: builds Next.js and starts the production server on port 3000
 #
 # Flags:
 #   --local-api       Build frontend to use http://localhost:8080 as API base (temporary edit to config.ts)
@@ -12,18 +12,17 @@ set -euo pipefail
 #   --no-frontend     Skip frontend build/run
 #   --backend-port N  Host port to expose backend on (default 8080)
 #   --frontend-port N Port to serve frontend on (default 3000)
+#   --dev             Start Next.js dev server (default)
+#   --prod            Build and start Next.js production server
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 ROOT_DIR="$SCRIPT_DIR"
 
-BACKEND_IMAGE="banbury-backend:local"
-BACKEND_CONTAINER_NAME="banbury-backend"
-BACKEND_PORT=8080
 FRONTEND_PORT=3000
 USE_LOCAL_API=false
 BUILD_ONLY=false
-RUN_BACKEND=true
 RUN_FRONTEND=true
+DEV_MODE=true
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -35,21 +34,21 @@ while [[ $# -gt 0 ]]; do
       BUILD_ONLY=true
       shift
       ;;
-    --no-backend)
-      RUN_BACKEND=false
-      shift
-      ;;
     --no-frontend)
       RUN_FRONTEND=false
       shift
       ;;
-    --backend-port)
-      BACKEND_PORT="${2:-8080}"
-      shift 2
-      ;;
     --frontend-port)
       FRONTEND_PORT="${2:-3000}"
       shift 2
+      ;;
+    --dev)
+      DEV_MODE=true
+      shift
+      ;;
+    --prod)
+      DEV_MODE=false
+      shift
       ;;
     *)
       echo "Unknown option: $1" >&2
@@ -58,33 +57,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-cleanup() {
-  # Stop backend container on exit if running
-  if docker ps --format '{{.Names}}' | grep -q "^${BACKEND_CONTAINER_NAME}$"; then
-    docker stop "$BACKEND_CONTAINER_NAME" >/dev/null 2>&1 || true
-  fi
-}
-trap cleanup EXIT
-
-echo "[1/4] Backend: build Docker image ($BACKEND_IMAGE)"
-if [[ "$RUN_BACKEND" == "true" ]]; then
-  docker build -f "$ROOT_DIR/backend/Dockerfile" -t "$BACKEND_IMAGE" "$ROOT_DIR/backend"
+if [[ "$DEV_MODE" == "true" ]]; then
+  echo "[1/2] Frontend (dev): install deps"
 else
-  echo "  Skipped (per --no-backend)"
+  echo "[1/2] Frontend (prod): install deps and build (Next.js)"
 fi
-
-echo "[2/4] Backend: run container ($BACKEND_CONTAINER_NAME on :$BACKEND_PORT -> :80)"
-if [[ "$RUN_BACKEND" == "true" && "$BUILD_ONLY" == "false" ]]; then
-  # Stop existing container if present
-  if docker ps -a --format '{{.Names}}' | grep -q "^${BACKEND_CONTAINER_NAME}$"; then
-    docker rm -f "$BACKEND_CONTAINER_NAME" >/dev/null 2>&1 || true
-  fi
-  docker run -d --name "$BACKEND_CONTAINER_NAME" -p "$BACKEND_PORT:80" "$BACKEND_IMAGE" >/dev/null
-else
-  echo "  Skipped (per --no-backend or --build-only)"
-fi
-
-echo "[3/4] Frontend: install deps and build"
 if [[ "$RUN_FRONTEND" == "true" ]]; then
   FRONTEND_DIR="$ROOT_DIR/frontend"
   pushd "$FRONTEND_DIR" >/dev/null
@@ -104,8 +81,10 @@ if [[ "$RUN_FRONTEND" == "true" ]]; then
     fi
   fi
 
-  npm ci --no-audit --no-fund
-  npm run build --silent
+npm ci --no-audit --no-fund
+if [[ "$DEV_MODE" == "false" ]]; then
+  npm run next:build --silent
+fi
 
   if [[ "$RESTORE_CONFIG" == "true" ]]; then
     mv -f "$BACKUP_CONFIG" "$ORIGINAL_CONFIG"
@@ -116,15 +95,23 @@ else
   echo "  Skipped (per --no-frontend)"
 fi
 
-if [[ "$BUILD_ONLY" == "true" ]]; then
-  echo "[4/4] Build-only mode: not starting frontend server"
+if [[ "$BUILD_ONLY" == "true" && "$DEV_MODE" == "false" ]]; then
+  echo "[2/2] Build-only mode: not starting frontend server"
   exit 0
 fi
 
-echo "[4/4] Frontend: serve build on :$FRONTEND_PORT"
+if [[ "$DEV_MODE" == "true" ]]; then
+  echo "[2/2] Frontend: start Next.js dev server with Fast Refresh on :$FRONTEND_PORT"
+else
+  echo "[2/2] Frontend: start Next.js server on :$FRONTEND_PORT"
+fi
 if [[ "$RUN_FRONTEND" == "true" ]]; then
   pushd "$ROOT_DIR/frontend" >/dev/null
-  npx --yes serve -s build -l "$FRONTEND_PORT"
+  if [[ "$DEV_MODE" == "true" ]]; then
+    npm run next:dev -- --port "$FRONTEND_PORT"
+  else
+    npm run next:start -- --port "$FRONTEND_PORT"
+  fi
   popd >/dev/null
 else
   echo "  Skipped (per --no-frontend)"

@@ -55,7 +55,7 @@
   cursor: not-allowed;
 }
 
-.toolbar-button.active {
+.active {
   background: #3b82f6;
   color: white;
 }
@@ -203,4 +203,3 @@
   margin-top: 0.25em;
 }
 
-/* Force light mode - dark mode styles removed */

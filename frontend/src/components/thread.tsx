@@ -185,7 +185,7 @@ const ComposerAction: FC = () => {
       <TooltipIconButton
         tooltip="Attach file"
         variant="default"
-        className="hover:bg-black hover:text-white dark:hover:bg-background/50 scale-75 p-3.5 text-white border border-zinc-300 dark:border-zinc-600"
+        className="hover:bg-black hover:text-white dark:hover:bg-background/50 scale-75 p-3.5 text-white border border-zinc-300 dark:border-zinc-600 bg-zinc-800"
         onClick={() => {}}
       >
         <PlusIcon />

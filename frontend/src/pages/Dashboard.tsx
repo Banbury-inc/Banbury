@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import {
   Box,
   CircularProgress,
+  Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { ApiService } from '../services/apiService';
 import { Thread } from '../components/thread';
 import { NavSidebar } from "../components/nav-sidebar";
@@ -27,7 +28,7 @@ interface UserInfo {
 
 const Dashboard = (): JSX.Element => {
   const theme = useTheme();
-  const navigate = useNavigate();
+  const router = useRouter();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -48,7 +49,7 @@ const Dashboard = (): JSX.Element => {
 
         if (!isValidToken) {
           // Token is invalid, redirect to login
-          navigate('/login');
+          router.push('/login');
           return;
         }
 
@@ -76,7 +77,7 @@ const Dashboard = (): JSX.Element => {
           };
           setUserInfo(basicUserInfo);
         } else {
-          navigate('/login');
+          router.push('/login');
           return;
         }
       } finally {
@@ -85,7 +86,7 @@ const Dashboard = (): JSX.Element => {
     };
 
     checkAuthAndFetchUser();
-  }, [navigate]);
+  }, [router]);
 
   const handleLogout = () => {
     // Clear all authentication data using ApiService
@@ -97,7 +98,7 @@ const Dashboard = (): JSX.Element => {
     localStorage.removeItem('userData');
     
     // Redirect to home page
-    navigate('/');
+    router.push('/');
   };
 
 

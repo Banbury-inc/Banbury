@@ -12,7 +12,8 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import GoogleIcon from '@mui/icons-material/Google';
-import { Link, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { CONFIG } from '../config/config';
 import { ApiService } from '../services/apiService';
 import { AUTH_CONFIG } from '../services/authConfig';
@@ -20,7 +21,7 @@ import { DebugService } from '../services/debugService';
 
 const Login = (): JSX.Element => {
   const theme = useTheme();
-  const navigate = useNavigate();
+  const router = useRouter();
   
   const [formData, setFormData] = useState({
     username: '',
@@ -68,7 +69,7 @@ const Login = (): JSX.Element => {
       
       if (result.success) {
         // Redirect to dashboard
-        navigate('/dashboard');
+        router.push('/dashboard');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -240,7 +241,7 @@ const Login = (): JSX.Element => {
             <Typography variant="body2" color="textSecondary">
               Don&apos;t have an account?{' '}
               <Link
-                to="/register"
+                href="/register"
                 style={{
                   color: theme.palette.mode === 'dark' ? '#ffffff' : '#171717',
                   textDecoration: 'none',
@@ -254,7 +255,7 @@ const Login = (): JSX.Element => {
 
           <Box sx={{ textAlign: 'center', mt: 2 }}>
             <Link
-              to="/"
+              href="/"
               style={{
                 color: theme.palette.mode === 'dark' ? '#a0a0a0' : '#666666',
                 textDecoration: 'none',

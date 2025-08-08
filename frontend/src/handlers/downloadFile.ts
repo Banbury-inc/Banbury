@@ -42,7 +42,7 @@ export async function downloadFile(username: string | undefined, fileInfo: any, 
 
       // Step 5: Preparing file (waiting for completion)
       const fileDownloadPromise = new Promise((resolve, reject) => {
-        const chunks: Uint8Array[] = [];
+        const chunks: ArrayBuffer[] = [];
         
         const handleFileData = (event: MessageEvent) => {
           // Add detailed logging for all incoming messages
@@ -55,7 +55,7 @@ export async function downloadFile(username: string | undefined, fileInfo: any, 
           if (data instanceof ArrayBuffer) {
             // Handle binary chunk
             console.log("Received binary chunk of size:", data.byteLength, "bytes");
-            chunks.push(new Uint8Array(data));
+            chunks.push(data);
           } else {
             // Handle potential control messages
             const message = JSON.parse(data);

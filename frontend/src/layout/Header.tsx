@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
-import Link from '@mui/material/Link';
+import Link from 'next/link';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -9,7 +9,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Avatar from '@mui/material/Avatar';
 import { useTheme } from '@mui/material/styles';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import PersonIcon from '@mui/icons-material/Person';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -17,7 +17,7 @@ import CustomButton from '../components/CustomButton';
 
 const Header = (): JSX.Element => {
   const theme = useTheme();
-  const navigate = useNavigate();
+  const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -50,18 +50,18 @@ const Header = (): JSX.Element => {
     setIsLoggedIn(false);
     setUsername('');
     handleMenuClose();
-    navigate('/');
+    router.push('/');
   };
 
   const handleDashboard = () => {
     handleMenuClose();
-    navigate('/dashboard');
+    router.push('/dashboard');
   };
 
   return (
     <>
       <Toolbar sx={{ minHeight: 70, display: 'flex', justifyContent: 'space-between' }}>
-        <Link href='/' sx={{ textDecoration: 'none', marginRight: 'auto' }}>
+        <Link href='/' style={{ textDecoration: 'none', marginRight: 'auto' }}>
           <IconButton size='large' disabled>
             {/* <StormIcon */}
             {/*   sx={{ */}
@@ -90,12 +90,12 @@ const Header = (): JSX.Element => {
 
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <CustomButton href='/' text='Home' />
-          <CustomButton href='/Features' text='Features' />
+          <CustomButton href='/features' text='Features' />
           {/* <CustomButton href='/filedownload/mmills/67659e872b46a3ef70402ead' text='File Download' /> */}
           {/* <CustomButton href='/NeuraNet' text='NeuraNet' /> */}
           {/* <CustomButton href='/Research' text='Research' /> */}
-          <CustomButton href='/News' text='News' />
-          <CustomButton href='/api' text='API' />
+          <CustomButton href='/news' text='News' />
+          <CustomButton href='/api-docs' text='API' />
         </Box>
 
         <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -166,8 +166,7 @@ const Header = (): JSX.Element => {
             </>
           ) : (
             <Button
-              component={RouterLink}
-              to="/login"
+              onClick={() => router.push('/login')}
               variant="contained"
               sx={{
                 borderRadius: '20px',

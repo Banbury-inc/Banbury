@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { Add as AddIcon, Description as DocumentIcon, Folder as FolderIcon } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { ApiService } from '../services/apiService';
 import { CONFIG } from '../config/config';
 import { Button } from '../components/ui/button';
@@ -47,7 +47,7 @@ interface UserInfo {
 
 const Workspaces = (): JSX.Element => {
   const theme = useTheme();
-  const navigate = useNavigate();
+  const router = useRouter();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<FileSystemItem | null>(null);
@@ -83,13 +83,6 @@ const Workspaces = (): JSX.Element => {
 
   // Handle file selection from sidebar
   const handleFileSelect = (file: FileSystemItem) => {
-    console.log('File selected in Workspaces:', file.name, file);
-    console.log('File type checks:', {
-      isImage: isImageFile(file.name),
-      isPdf: isPdfFile(file.name),
-      isDocument: isDocumentFile(file.name),
-      isViewable: isViewableFile(file.name)
-    });
     setSelectedFile(file);
   };
 
@@ -362,7 +355,7 @@ Created on: ${new Date().toLocaleDateString()}`;
 
         if (!isValidToken) {
           // Token is invalid, redirect to login
-          navigate('/login');
+          router.push('/login');
           return;
         }
 
@@ -377,7 +370,6 @@ Created on: ${new Date().toLocaleDateString()}`;
         };
         setUserInfo(basicUserInfo);
       } catch (err) {
-        console.error('Auth check error:', err);
         // Still try to show basic info if we have some stored data
         const username = localStorage.getItem('authUsername') || localStorage.getItem('username');
         if (username) {
@@ -390,7 +382,7 @@ Created on: ${new Date().toLocaleDateString()}`;
           };
           setUserInfo(basicUserInfo);
         } else {
-          navigate('/login');
+          router.push('/login');
           return;
         }
       } finally {
@@ -399,7 +391,7 @@ Created on: ${new Date().toLocaleDateString()}`;
     };
 
     checkAuthAndFetchUser();
-  }, [navigate]);
+  }, [router]);
 
   const handleLogout = () => {
     // Clear all authentication data using ApiService
@@ -411,7 +403,7 @@ Created on: ${new Date().toLocaleDateString()}`;
     localStorage.removeItem('userData');
     
     // Redirect to home page
-    navigate('/');
+    router.push('/');
   };
 
 
@@ -493,7 +485,7 @@ Created on: ${new Date().toLocaleDateString()}`;
                 className="h-8 bg-black hover:bg-primary disabled:bg-muted border border-zinc-300 dark:border-zinc-600 disabled:text-muted-foreground rounded px-3 py-1"
                 title="Upload File"
               >
-                <UploadIcon className="h-4 w-4" />
+                <UploadIcon className="h-4 w-4 text-white" />
               </Button>
             </Toolbar>
 

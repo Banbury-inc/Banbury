@@ -5,6 +5,12 @@
 /.pnp
 .pnp.js
 
+# Next.js build output
+/.next
+/out
+.vercel
+.turbo
+
 # testing
 /coverage
 
@@ -13,6 +19,13 @@
 
 # misc
 .DS_Store
+.eslintcache
+*.log
+
+# TypeScript
+*.tsbuildinfo
+
+# environment
 .env.local
 .env.development.local
 .env.test.local

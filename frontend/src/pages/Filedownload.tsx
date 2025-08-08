@@ -3,7 +3,7 @@ import { CheckIcon, XMarkIcon } from '@heroicons/react/20/solid';
 import { DocumentIcon } from '@heroicons/react/24/outline';
 import { getFileInfo } from '../handlers/getFileInfo';
 import { downloadFile } from '../handlers/downloadFile';
-import { useParams } from 'react-router-dom';
+import { useRouter } from 'next/router';
 
 const steps = [
   { name: 'Initiating', description: '', status: 'idle' },
@@ -19,7 +19,8 @@ function classNames(...classes: string[]) {
 }
 
 export default function FileDownload() {
-  const { username, file_id } = useParams();
+  const router = useRouter();
+  const { username, file_id } = router.query as { username?: string; file_id?: string };
   const [currentStep, setCurrentStep] = useState(0);
   const [downloadStatus, setDownloadStatus] = useState<'idle' | 'preparing' | 'ready' | 'error'>('idle');
   const [fileInfo, setFileInfo] = useState<any>();

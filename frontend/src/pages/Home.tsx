@@ -1,6 +1,7 @@
 import { Box, Typography, Button, Container, Grid, Paper } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { Link } from 'react-router-dom';
+import NextLink from 'next/link';
+import Image from 'next/image';
 import CloudIcon from '@mui/icons-material/Cloud';
 import DevicesIcon from '@mui/icons-material/Devices';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -155,21 +156,21 @@ const Home = (): JSX.Element => {
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <Box
-                component="img"
-                src={Screenshot1}
-                sx={{
-                  position: 'absolute',
-                  right: { xs: '-20%', md: '-40%' },
-                  width: { xs: '120%', md: '140%' },
-                  maxWidth: 'none',
-                  height: 'auto',
-                  borderRadius: '12px',
-                  filter: 'drop-shadow(0 24px 48px rgba(0,0,0,0.4))',
-                  backgroundColor: '#1a1a1a',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                }}
-              />
+              <Box sx={{ position: 'absolute', right: { xs: '-20%', md: '-40%' }, width: { xs: '120%', md: '140%' }, maxWidth: 'none', height: 'auto' }}>
+                <Image
+                  src={Screenshot1}
+                  alt="App screenshot"
+                  width={1400}
+                  height={800}
+                  style={{
+                    borderRadius: '12px',
+                    filter: 'drop-shadow(0 24px 48px rgba(0,0,0,0.4))',
+                    backgroundColor: '#1a1a1a',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}
+                  priority
+                />
+              </Box>
             </Grid>
           </Grid>
         </Container>
@@ -250,8 +251,8 @@ const Home = (): JSX.Element => {
               Join thousands of users who trust Banbury Cloud for their device management needs.
             </Typography>
             <Button
-              component={Link}
-              to="/cloud"
+              component={NextLink}
+              href="/cloud"
               variant="contained"
               size="large"
               sx={{

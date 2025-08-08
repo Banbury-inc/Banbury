@@ -1,32 +1,31 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { Box, CircularProgress, Typography, Alert } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { ApiService } from '../services/apiService';
 
 const AuthCallback = (): JSX.Element => {
   const theme = useTheme();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const router = useRouter();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState('');
 
   useEffect(() => {
     const handleCallback = async () => {
-      const code = searchParams.get('code');
-      const urlError = searchParams.get('error');
+      const code = router.query.code as string | undefined;
+      const urlError = router.query.error as string | undefined;
 
       if (urlError) {
         setStatus('error');
         setError(`Authentication failed: ${urlError}`);
-        setTimeout(() => navigate('/login'), 3000);
+        setTimeout(() => router.push('/login'), 3000);
         return;
       }
 
       if (!code) {
         setStatus('error');
         setError('No authorization code received from Google');
-        setTimeout(() => navigate('/login'), 3000);
+        setTimeout(() => router.push('/login'), 3000);
         return;
       }
 
@@ -37,19 +36,19 @@ const AuthCallback = (): JSX.Element => {
           setStatus('success');
           // Redirect to dashboard after a short delay
           setTimeout(() => {
-            navigate('/dashboard');
+            router.push('/dashboard');
           }, 1500);
         }
       } catch (err) {
         setStatus('error');
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         setError(errorMessage);
-        setTimeout(() => navigate('/login'), 3000);
+        setTimeout(() => router.push('/login'), 3000);
       }
     };
 
     handleCallback();
-  }, [searchParams, navigate]);
+  }, [router]);
 
   return (
     <Box
