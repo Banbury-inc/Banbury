@@ -14,8 +14,6 @@ const nextConfig = {
   experimental: {
     // Reduce memory usage during build
     optimizePackageImports: ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extensions'],
-    // Disable some features that consume memory
-    serverComponentsExternalPackages: ['@tiptap/react'],
     // Disable memory-intensive features
     optimizeCss: false,
     scrollRestoration: false,
@@ -79,8 +77,6 @@ const nextConfig = {
     maxInactiveAge: 25 * 1000,
     pagesBufferLength: 2,
   },
-  // Disable telemetry to reduce memory usage
-  telemetry: false,
 };
 
 export default nextConfig;
