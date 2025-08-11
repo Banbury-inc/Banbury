@@ -4,9 +4,51 @@ import { tool } from "@langchain/core/tools";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
 
+// Simple DOCX text extraction function
+function extractTextFromDocx(buffer: Buffer, fileName: string): string {
+  try {
+    // DOCX files are ZIP archives containing XML files
+    // We'll try a simple approach to extract text from the main document
+    const content = buffer.toString('binary');
+    
+    // Look for XML content between tags
+    const xmlMatches = content.match(/<w:t[^>]*>(.*?)<\/w:t>/g);
+    
+    if (xmlMatches) {
+      const extractedText = xmlMatches
+        .map(match => {
+          // Extract text content from w:t tags
+          const textMatch = match.match(/<w:t[^>]*>(.*?)<\/w:t>/);
+          return textMatch ? textMatch[1] : '';
+        })
+        .filter(text => text.trim().length > 0)
+        .join(' ');
+      
+      if (extractedText.trim().length > 0) {
+        return `Document: ${fileName}\n\nExtracted Content:\n${extractedText}`;
+      }
+    }
+    
+    // Fallback: simple text extraction
+    const simpleText = content.replace(/[^\x20-\x7E]/g, ' ').replace(/\s+/g, ' ').trim();
+    const meaningfulText = simpleText.length > 100 ? simpleText.substring(0, 2000) : '';
+    
+    if (meaningfulText) {
+      return `Document: ${fileName}\n\nPartial Content:\n${meaningfulText}`;
+    }
+    
+    return `Document: ${fileName}\n\nThis DOCX file was attached but text extraction was not successful. The document contains ${buffer.length} bytes of data. Please ask the user to provide the key content or specific information from this document.`;
+    
+  } catch (error) {
+    console.error('Error extracting text from DOCX:', error);
+    return `Document: ${fileName}\n\nThis DOCX file could not be processed for text extraction. Please ask the user to provide the text content or key information from this document.`;
+  }
+}
+
 type AssistantUiMessagePart =
   | { type: "text"; text: string }
-  | { type: "tool-call"; toolCallId: string; toolName: string; args: any; argsText?: string; result?: any };
+  | { type: "tool-call"; toolCallId: string; toolName: string; args: any; argsText?: string; result?: any }
+  | { type: "file-attachment"; fileId: string; fileName: string; filePath: string; fileData?: string; mimeType?: string };
 
 type AssistantUiMessage = {
   role: "system" | "user" | "assistant";
@@ -139,12 +181,13 @@ const webSearch: any = tool(
   { name: "web_search", description: "Search the web and read page content for summaries", schema: z.object({ query: z.string() }) } as any
 );
 
+
+
 const anthropicModel = new ChatAnthropic({
   model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514",
   apiKey: "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",
   temperature: 0.2,
 });
-const modelWithTools = anthropicModel.bindTools([webSearch] as any);
 
 function toLangChainMessages(messages: AssistantUiMessage[]): any[] {
   const lc: any[] = [];
@@ -155,8 +198,213 @@ function toLangChainMessages(messages: AssistantUiMessage[]): any[] {
       continue;
     }
     if (msg.role === "user") {
-      const text = msg.content.filter((p) => p.type === "text").map((p: any) => p.text).join("\n\n");
-      if (text) lc.push(new HumanMessage(text));
+      const textParts = msg.content.filter((p) => p.type === "text").map((p: any) => p.text);
+      const fileAttachments = msg.content.filter((p) => p.type === "file-attachment") as any[];
+      
+      let userContent = textParts.join("\n\n");
+      
+      // Create Anthropic-compatible message with attachments
+      if (fileAttachments.length > 0) {
+        const anthropicContent: any[] = [];
+        
+        // Add text content first
+        if (userContent) {
+          anthropicContent.push({ type: "text", text: userContent });
+        }
+        
+        // Add file attachments in Anthropic format
+        for (const fa of fileAttachments) {
+          if (fa.fileData && fa.mimeType) {
+            console.log(`📎 Processing attachment: ${fa.fileName}, Original MIME: ${fa.mimeType}`);
+            
+            // Normalize MIME type for Anthropic compatibility
+            let anthropicMimeType = fa.mimeType;
+            const fileExtension = fa.fileName?.split('.').pop()?.toLowerCase();
+            console.log(`🔍 File extension: ${fileExtension}`);
+            
+            // Handle generic octet-stream based on file extension
+            if (fa.mimeType === 'application/octet-stream' && fa.fileName) {
+              const ext = fa.fileName.split('.').pop()?.toLowerCase();
+              const mimeMap: Record<string, string> = {
+                // Documents
+                'pdf': 'application/pdf',
+                'doc': 'application/msword',
+                'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'xls': 'application/vnd.ms-excel',
+                'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'ppt': 'application/vnd.ms-powerpoint',
+                'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'rtf': 'application/rtf',
+                
+                // Text formats
+                'txt': 'text/plain',
+                'csv': 'text/csv',
+                'html': 'text/html',
+                'htm': 'text/html',
+                'xml': 'application/xml',
+                'md': 'text/markdown',
+                'markdown': 'text/markdown',
+                'json': 'application/json',
+                'yaml': 'text/yaml',
+                'yml': 'text/yaml',
+                
+                // Images
+                'jpg': 'image/jpeg',
+                'jpeg': 'image/jpeg',
+                'png': 'image/png',
+                'gif': 'image/gif',
+                'webp': 'image/webp',
+                'bmp': 'image/bmp',
+                'tiff': 'image/tiff',
+                'svg': 'image/svg+xml',
+                
+                // Code files (as text for processing)
+                'js': 'text/javascript',
+                'ts': 'text/typescript',
+                'py': 'text/x-python',
+                'java': 'text/x-java-source',
+                'cpp': 'text/x-c++src',
+                'c': 'text/x-csrc',
+                'h': 'text/x-chdr',
+                'css': 'text/css',
+                'php': 'text/x-php',
+                'rb': 'text/x-ruby',
+                'go': 'text/x-go',
+                'rs': 'text/x-rust',
+                'sql': 'text/x-sql',
+                'sh': 'text/x-shellscript'
+              };
+              anthropicMimeType = mimeMap[ext || ''] || fa.mimeType;
+            }
+            
+            // Anthropic-supported MIME types (more restrictive than we thought)
+            const supportedTypes = [
+              // Documents (only PDF supported for document type)
+              'application/pdf',
+              
+              // Text formats (all treated as text/plain for document processing)
+              'text/plain',
+              'text/csv',
+              'text/html',
+              'text/markdown',
+              'application/xml',
+              'application/json',
+              'text/yaml',
+              
+              // Images
+              'image/jpeg',
+              'image/png',
+              'image/gif',
+              'image/webp',
+              'image/bmp',
+              'image/tiff',
+              'image/svg+xml',
+              
+              // Code/Programming files (treated as text)
+              'text/javascript',
+              'text/typescript',
+              'text/x-python',
+              'text/x-java-source',
+              'text/x-c++src',
+              'text/x-csrc',
+              'text/x-chdr',
+              'text/css',
+              'text/x-php',
+              'text/x-ruby',
+              'text/x-go',
+              'text/x-rust',
+              'text/x-sql',
+              'text/x-shellscript'
+            ];
+            
+            // Special handling for Office documents - convert to text/plain
+            const officeDocumentTypes = [
+              'application/msword',
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              'application/vnd.ms-excel',
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+              'application/vnd.ms-powerpoint',
+              'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+              'application/rtf'
+            ];
+            
+            if (officeDocumentTypes.includes(anthropicMimeType)) {
+              console.log(`📄 Office document detected: ${anthropicMimeType} → converting to text/plain for Anthropic compatibility`);
+              anthropicMimeType = 'text/plain';
+              
+              // Convert office document to text representation
+              try {
+                if (fa.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                  // For DOCX files, extract text content
+                  const binaryData = Buffer.from(fa.fileData, 'base64');
+                  const extractedText = extractTextFromDocx(binaryData, fa.fileName);
+                  fa.fileData = Buffer.from(extractedText, 'utf8').toString('base64');
+                  console.log(`📝 Extracted text from DOCX: ${extractedText.length} characters`);
+                } else {
+                  // For other office documents, send descriptive message
+                  const fileInfo = `This is a ${fa.fileName} file (${fa.mimeType}). The file has been attached as a ${fa.mimeType} document. Please note that text extraction is not available for this format - only PDF and DOCX files can be fully processed. You may ask the user to provide key information from this document.`;
+                  fa.fileData = Buffer.from(fileInfo, 'utf8').toString('base64');
+                  console.log(`📝 Converted office document to descriptive text for Anthropic`);
+                }
+              } catch (error) {
+                console.error(`❌ Error processing office document:`, error);
+                const fallbackInfo = `This is a ${fa.fileName} file (${fa.mimeType}) that could not be processed. Please ask the user to provide the text content or key information from this document.`;
+                fa.fileData = Buffer.from(fallbackInfo, 'utf8').toString('base64');
+              }
+            }
+            
+            if (!supportedTypes.includes(anthropicMimeType)) {
+              console.warn(`⚠️ Unsupported MIME type for Anthropic: ${anthropicMimeType}`);
+              // Only fallback to text/plain for non-image types
+              if (!anthropicMimeType.startsWith('image/')) {
+                console.warn(`📄 Falling back to text/plain for non-image type`);
+                anthropicMimeType = 'text/plain';
+              } else {
+                console.warn(`🖼️ Keeping image MIME type even if not in supported list`);
+              }
+            }
+            
+            console.log(`🔄 Normalized MIME type: ${anthropicMimeType}`);
+            
+            // Use different content types based on MIME type
+            if (anthropicMimeType.startsWith('image/')) {
+              // Images use the image content type
+              anthropicContent.push({
+                type: "image",
+                source: {
+                  type: "base64",
+                  media_type: anthropicMimeType,
+                  data: fa.fileData
+                }
+              });
+              console.log(`🖼️ Added as image attachment`);
+            } else if (anthropicMimeType === 'application/pdf') {
+              // Only PDFs can use document content type
+              anthropicContent.push({
+                type: "document",
+                source: {
+                  type: "base64",
+                  media_type: anthropicMimeType,
+                  data: fa.fileData
+                }
+              });
+              console.log(`📄 Added as PDF document attachment`);
+            } else {
+              // All other files (including converted DOCX) are sent as text content
+              const textContent = Buffer.from(fa.fileData, 'base64').toString('utf8');
+              anthropicContent.push({
+                type: "text",
+                text: textContent
+              });
+              console.log(`📝 Added as text content (${textContent.length} characters)`);
+            }
+          }
+        }
+        
+        lc.push(new HumanMessage({ content: anthropicContent }));
+      } else if (userContent) {
+        lc.push(new HumanMessage(userContent));
+      }
       continue;
     }
     if (msg.role === "assistant") {
@@ -178,7 +426,7 @@ function toLangChainMessages(messages: AssistantUiMessage[]): any[] {
 }
 
 const SYSTEM_PROMPT =
-  "You are a helpful assistant. Stream tokens as they are generated. After tool results, produce a concise 3-5 bullet summary with short citations (title + URL).";
+  "You are a helpful assistant. Stream tokens as they are generated. After tool results, produce a concise 3-5 bullet summary with short citations (title + URL). You can read files that users attach to help answer their questions. When a user attaches a file, you can use the read_file tool to access its content.";
 
 export const config = { api: { bodyParser: { sizeLimit: "1mb" } } };
 
@@ -198,9 +446,144 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   try {
-    const body = req.body as { messages: AssistantUiMessage[] };
-    const lcMessages = toLangChainMessages(body.messages);
+    const body = req.body as { messages: any[] };
+    // Normalize: fold any message-level attachments into content as file-attachment parts
+    const normalizedMessages: AssistantUiMessage[] = Array.isArray(body.messages)
+      ? body.messages.map((msg: any) => {
+          const attachments = Array.isArray(msg?.attachments) ? msg.attachments : [];
+          const attachmentParts = attachments
+            .map((att: any) => {
+              const fileId = att?.fileId ?? att?.id ?? att?.file_id;
+              const fileName = att?.fileName ?? att?.name;
+              const filePath = att?.filePath ?? att?.path;
+              if (!fileId || !fileName || !filePath) return null;
+              return { type: "file-attachment", fileId, fileName, filePath } as AssistantUiMessagePart;
+            })
+            .filter(Boolean) as AssistantUiMessagePart[];
+
+          const baseContent = Array.isArray(msg?.content) ? msg.content : [];
+          const content = attachmentParts.length > 0 ? [...baseContent, ...attachmentParts] : baseContent;
+          const { attachments: _omit, ...rest } = msg || {};
+          return { ...(rest as AssistantUiMessage), content };
+        })
+      : (body.messages as AssistantUiMessage[]);
+
+    // Debug: Log normalized messages to see what we're working with
+    console.log('🔍 Normalized messages:', JSON.stringify(normalizedMessages, null, 2));
+    
+    // Pre-download files from S3 and prepare them as base64 attachments for Anthropic
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    console.log('🔑 Auth token present:', !!token);
+    const messagesWithFileData: AssistantUiMessage[] = await (async () => {
+      if (!Array.isArray(normalizedMessages)) return normalizedMessages;
+      const out: AssistantUiMessage[] = [];
+      for (const m of normalizedMessages) {
+        const parts = Array.isArray(m?.content) ? [...m.content] : [];
+        for (let i = 0; i < parts.length; i++) {
+          const p: any = parts[i];
+          if (p?.type === 'file-attachment' && p?.fileId) {
+            if (p?.fileData) {
+              console.log(`✅ File already downloaded on frontend: ${p.fileName} (${p.fileData.length} chars)`);
+            } else if (token) {
+              console.log(`🔄 Attempting to download file: ${p.fileName} (ID: ${p.fileId})`);
+              try {
+                // Use the same download endpoint as the frontend file viewers
+                const apiUrl = 'http://www.api.dev.banbury.io';
+                const downloadUrl = `${apiUrl}/files/download_s3_file/${encodeURIComponent(p.fileId)}/`;
+                console.log(`📡 Download URL: ${downloadUrl}`);
+                
+                const resp = await fetch(downloadUrl, {
+                  method: 'GET',
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                });
+                
+                console.log(`📥 Download response status: ${resp.status} ${resp.statusText}`);
+                
+                if (resp.ok) {
+                  const arrayBuffer = await resp.arrayBuffer();
+                  const contentType = resp.headers.get('content-type') || 'application/octet-stream';
+                  
+                  console.log(`✅ File downloaded successfully: ${arrayBuffer.byteLength} bytes, type: ${contentType}`);
+                  
+                  // Convert to base64 for Anthropic attachment
+                  const base64Data = Buffer.from(arrayBuffer).toString('base64');
+                  parts[i] = { 
+                    ...p, 
+                    fileData: base64Data,
+                    mimeType: contentType 
+                  } as any;
+                  
+                  console.log(`🔒 File converted to base64: ${base64Data.length} characters`);
+                } else {
+                  console.error(`❌ Failed to download file: ${resp.status} ${resp.statusText}`);
+                  const errorText = await resp.text();
+                  console.error(`❌ Error response: ${errorText}`);
+                }
+              } catch (error) {
+                console.error(`💥 Exception downloading file:`, error);
+                // If download fails, skip this attachment
+                parts.splice(i, 1);
+                i--; // Adjust index since we removed an item
+              }
+            }
+          }
+        }
+        out.push({ ...m, content: parts } as AssistantUiMessage);
+      }
+      return out;
+    })();
+
+    const lcMessages = toLangChainMessages(messagesWithFileData);
     const messages: any[] = [new SystemMessage(SYSTEM_PROMPT), ...lcMessages];
+
+    // Create readFile tool with access to req
+    const readFile: any = tool(
+      async (input: { fileId: string; fileName: string; filePath: string }) => {
+        try {
+          // Get the file content from S3
+          const token = req.headers.authorization?.replace('Bearer ', '');
+          if (!token) {
+            throw new Error('No authentication token provided');
+          }
+
+          const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:8000'}/files/download/${input.fileId}/`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to download file: ${response.statusText}`);
+          }
+
+          const fileContent = await response.text();
+          
+          return JSON.stringify({
+            fileName: input.fileName,
+            filePath: input.filePath,
+            content: fileContent,
+            size: fileContent.length,
+          });
+        } catch (error) {
+          return JSON.stringify({
+            error: `Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            fileName: input.fileName,
+            filePath: input.filePath,
+          });
+        }
+      },
+      { name: "read_file", description: "Read the content of a file from S3 storage", schema: z.object({ 
+        fileId: z.string(),
+        fileName: z.string(),
+        filePath: z.string()
+      }) } as any
+    );
+
+    const modelWithTools = anthropicModel.bindTools([webSearch, readFile] as any);
 
     // start assistant message
     send({ type: "message-start", role: "assistant" });
@@ -231,6 +614,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       for (const tc of toolCalls) {
         if (tc.name === "web_search") {
           const toolResult = await webSearch.invoke(tc.args);
+          send({
+            type: "tool-call",
+            part: {
+              type: "tool-call",
+              toolCallId: tc.id,
+              toolName: tc.name,
+              args: tc.args,
+              argsText: JSON.stringify(tc.args, null, 2),
+              result: toolResult,
+            },
+          });
+          toolMsgs.push(new ToolMessage({ content: toolResult, tool_call_id: tc.id }));
+        } else if (tc.name === "read_file") {
+          const toolResult = await readFile.invoke(tc.args);
           send({
             type: "tool-call",
             part: {

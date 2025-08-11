@@ -5,8 +5,10 @@ import {
   ActionBarPrimitive,
   BranchPickerPrimitive,
   ErrorPrimitive,
+  useComposerRuntime,
 } from "@assistant-ui/react";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import {
   ArrowDownIcon,
   PlusIcon,
@@ -24,12 +26,46 @@ import { ToolFallback } from "./tool-fallback";
 import { TooltipIconButton } from "./tooltip-icon-button";
 import { Button } from "./ui/button";
 import { WebSearchTool } from "./web-search-result";
+import { FileAttachment } from "./file-attachment";
+import { FileAttachmentDisplay } from "./file-attachment-display";
+import { FileSystemItem } from "../utils/fileTreeUtils";
 import { cn } from "../utils";
 
 import type { FC } from "react";
 import styles from "../styles/scrollbar.module.css";
 
-export const Thread: FC = () => {
+interface ThreadProps {
+  userInfo?: {
+    username: string;
+    email?: string;
+  } | null;
+}
+
+export const Thread: FC<ThreadProps> = ({ userInfo }) => {
+  const [attachedFiles, setAttachedFiles] = useState<FileSystemItem[]>([]);
+
+  const handleFileAttach = (file: FileSystemItem) => {
+    setAttachedFiles(prev => [...prev, file]);
+  };
+
+  const handleFileRemove = (fileId: string) => {
+    setAttachedFiles(prev => prev.filter(file => file.file_id !== fileId));
+  };
+
+  // Keep a copy of attachments in localStorage so the runtime can inject them
+  useEffect(() => {
+    try {
+      const simplified = attachedFiles.map((f) => ({
+        fileId: f.file_id,
+        fileName: f.name,
+        filePath: f.path,
+      }));
+      localStorage.setItem('pendingAttachments', JSON.stringify(simplified));
+    } catch {
+      // ignore storage errors
+    }
+  }, [attachedFiles]);
+
   return (
     <ThreadPrimitive.Root
       className="flex h-full flex-col"
@@ -55,7 +91,12 @@ export const Thread: FC = () => {
         </ThreadPrimitive.If>
       </ThreadPrimitive.Viewport>
 
-      <Composer />
+      <Composer 
+        attachedFiles={attachedFiles}
+        onFileAttach={handleFileAttach}
+        onFileRemove={handleFileRemove}
+        userInfo={userInfo}
+      />
     </ThreadPrimitive.Root>
   );
 };
@@ -163,36 +204,108 @@ const ThreadWelcomeSuggestions: FC = () => {
   );
 };
 
-const Composer: FC = () => {
+interface ComposerProps {
+  attachedFiles: FileSystemItem[];
+  onFileAttach: (file: FileSystemItem) => void;
+  onFileRemove: (fileId: string) => void;
+  userInfo: {
+    username: string;
+    email?: string;
+  } | null;
+}
+
+const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove, userInfo }) => {
+  const composer = useComposerRuntime();
+
+  // Add attachments to the composer when files are attached
+  useEffect(() => {
+    if (!composer.attachments) return;
+    
+    if (attachedFiles.length > 0) {
+      // Clear existing attachments first
+      composer.attachments.clear();
+      
+      // Add new attachments
+      attachedFiles.forEach((file) => {
+        composer.attachments.add({
+          type: "file",
+          id: file.file_id!,
+          name: file.name,
+          content: [
+            {
+              type: "file-attachment",
+              fileId: file.file_id!,
+              fileName: file.name,
+              filePath: file.path
+            }
+          ]
+        });
+      });
+    } else {
+      // Clear attachments when no files are attached
+      composer.attachments.clear();
+    }
+  }, [attachedFiles, composer.attachments]);
+
   return (
     <div className="relative mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 px-[var(--thread-padding-x)] pb-4 md:pb-6" style={{ backgroundColor: 'transparent' }}>
       <ThreadScrollToBottom />
 
-      <ComposerPrimitive.Root className="relative flex w-full flex-col rounded-2xl">
-        <ComposerPrimitive.Input
-          placeholder="Send a message..."
-          className="bg-zinc-800 border-l border-r border-t border-zinc-300 dark:border-zinc-600 focus:border-primary/30 placeholder:text-zinc-400 text-zinc-400 max-h-[calc(50dvh)] min-h-16 w-full resize-none rounded-t-2xl px-4 pt-2 pb-3 text-base outline-none focus:outline-none"
-          rows={1}
-          autoFocus
-          aria-label="Message input"
-        />
-        <ComposerAction />
-      </ComposerPrimitive.Root>
+      <div className="relative flex w-full flex-col">
+        {/* Display attached files above the composer */}
+        {attachedFiles.length > 0 && (
+          <div className="bg-zinc-800 border-l border-r border-t border-b border-zinc-300 dark:border-zinc-600 rounded-t-2xl px-2 py-0.5">
+            <FileAttachmentDisplay 
+              files={attachedFiles}
+              onFileClick={(file) => onFileRemove(file.file_id!)}
+            />
+          </div>
+        )}
+
+        <ComposerPrimitive.Root className="relative flex w-full flex-col rounded-2xl">
+          <ComposerPrimitive.Input
+            placeholder="Send a message..."
+            className={`bg-zinc-800 border-l border-r border-zinc-300 dark:border-zinc-600 focus:border-primary/30 placeholder:text-zinc-400 text-zinc-400 max-h-[calc(50dvh)] min-h-16 w-full resize-none px-4 pt-2 pb-3 text-base outline-none focus:outline-none ${
+              attachedFiles.length > 0 ? 'border-t-0 rounded-t-none' : 'border-t rounded-t-2xl'
+            }`}
+            rows={1}
+            autoFocus
+            aria-label="Message input"
+          />
+          
+          <ComposerAction 
+            attachedFiles={attachedFiles}
+            onFileAttach={onFileAttach}
+            onFileRemove={onFileRemove}
+            userInfo={userInfo}
+          />
+        </ComposerPrimitive.Root>
+      </div>
     </div>
   );
 };
 
-const ComposerAction: FC = () => {
+interface ComposerActionProps {
+  attachedFiles: FileSystemItem[];
+  onFileAttach: (file: FileSystemItem) => void;
+  onFileRemove: (fileId: string) => void;
+  userInfo: {
+    username: string;
+    email?: string;
+  } | null;
+}
+
+const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, onFileRemove, userInfo }) => {
   return (
     <div className="bg-zinc-800 border-l border-r border-b border-zinc-300 dark:border-zinc-600 relative flex items-center justify-between rounded-b-2xl p-2">
-      <TooltipIconButton
-        tooltip="Attach file"
-        variant="default"
-        className="hover:bg-black hover:text-white dark:hover:bg-background/50 scale-75 p-3.5 text-white border border-zinc-300 dark:border-zinc-600 bg-zinc-800"
-        onClick={() => {}}
-      >
-        <PlusIcon />
-      </TooltipIconButton>
+      <div className="flex items-center gap-2">
+        <FileAttachment
+          onFileAttach={onFileAttach}
+          attachedFiles={[]}
+          onFileRemove={onFileRemove}
+          userInfo={userInfo}
+        />
+      </div>
 
       <ThreadPrimitive.If running={false}>
         <ComposerPrimitive.Send asChild>
@@ -238,16 +351,12 @@ const AssistantMessage: FC = () => {
   return (
     <MessagePrimitive.Root asChild>
       <motion.div
-        className="relative mx-auto grid w-full max-w-[var(--thread-max-width)] grid-cols-[auto_auto_1fr] grid-rows-[auto_1fr] px-[var(--thread-padding-x)] py-1"
+        className="relative mx-auto grid w-full max-w-[var(--thread-max-width)] grid-cols-[1fr] grid-rows-[auto_1fr] px-[var(--thread-padding-x)] py-1"
         initial={{ y: 5, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         data-role="assistant"
       >
-        <div className="ring-border bg-background col-start-1 row-start-1 flex size-4 shrink-0 items-center justify-center rounded-full ring-1">
-          <StarIcon size={14} />
-        </div>
-
-        <div className="text-white col-span-2 col-start-2 row-start-1 ml-1 leading-none break-words text-xs">
+        <div className="text-white col-start-1 row-start-1 leading-none break-words text-sm">
           <MessagePrimitive.Content
             components={{
               Text: MarkdownText,
@@ -264,7 +373,7 @@ const AssistantMessage: FC = () => {
 
         <AssistantActionBar />
 
-        <BranchPicker className="col-start-2 row-start-2 mr-2 -ml-2" />
+        <BranchPicker className="col-start-1 row-start-2" />
       </motion.div>
     </MessagePrimitive.Root>
   );
@@ -301,7 +410,7 @@ const UserMessage: FC = () => {
   return (
     <MessagePrimitive.Root asChild>
       <motion.div
-        className="mx-auto grid w-full max-w-[var(--thread-max-width)] auto-rows-auto grid-cols-[minmax(72px,1fr)_auto] gap-y-1 px-[var(--thread-padding-x)] py-4 [&:where(>*)]:col-start-2"
+        className="mx-auto grid w-full max-w-[var(--thread-max-width)] auto-rows-auto text-sm grid-cols-[minmax(72px,1fr)_auto] gap-y-1 px-[var(--thread-padding-x)] py-4 [&:where(>*)]:col-start-2"
         initial={{ y: 5, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         data-role="user"
@@ -310,6 +419,20 @@ const UserMessage: FC = () => {
 
         <div className="bg-muted text-foreground col-start-2 rounded-3xl px-5 py-2.5 break-words">
           <MessagePrimitive.Content components={{ Text: MarkdownText }} />
+          
+          {/* Display attached files */}
+          <MessagePrimitive.Attachments>
+            {(attachments) => (
+              <FileAttachmentDisplay 
+                files={attachments.map((att: any) => ({
+                  file_id: att.fileId,
+                  name: att.fileName,
+                  path: att.filePath,
+                  type: 'file'
+                }))}
+              />
+            )}
+          </MessagePrimitive.Attachments>
         </div>
 
         <BranchPicker className="col-span-full col-start-1 row-start-3 -mr-1 justify-end" />

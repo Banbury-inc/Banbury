@@ -536,7 +536,7 @@ Created on: ${new Date().toLocaleDateString()}`;
                 {/* Assistant Panel */}
                 <Allotment.Pane minSize={250} preferredSize={350} maxSize={500}>
                       <div className="h-full bg-black border-l border-gray-800">
-                        <Thread />
+                        <Thread userInfo={userInfo} />
                       </div>
                 </Allotment.Pane>
               </Allotment>
