@@ -51,7 +51,7 @@ export const WebSearchTool: ToolCallMessagePartComponent = ({
         <SearchIcon className="size-4 text-blue-500" />
         <span className="font-medium text-sm">Web Search</span>
         <span className="text-muted-foreground text-sm flex-1">
-          "{searchQuery}"
+          &ldquo;{searchQuery}&rdquo;
         </span>
         <Button 
           onClick={() => setIsCollapsed(!isCollapsed)}
