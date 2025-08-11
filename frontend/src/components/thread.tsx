@@ -11,7 +11,6 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import {
   ArrowDownIcon,
-  PlusIcon,
   CopyIcon,
   CheckIcon,
   PencilIcon,
@@ -19,6 +18,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   Square,
+  Globe,
+  Wrench,
 } from "lucide-react";
 
 import { MarkdownText } from "./markdown-text";
@@ -31,19 +32,36 @@ import { FileAttachmentDisplay } from "./file-attachment-display";
 import { TiptapAITool } from "./TiptapAITool";
 import { FileSystemItem } from "../utils/fileTreeUtils";
 import { cn } from "../utils";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "./ui/dropdown-menu";
 
 import type { FC } from "react";
 import styles from "../styles/scrollbar.module.css";
 
 interface ThreadProps {
-  userInfo?: {
+  userInfo: {
     username: string;
     email?: string;
   } | null;
+  selectedFile?: FileSystemItem | null;
 }
 
-export const Thread: FC<ThreadProps> = ({ userInfo }) => {
+export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile }) => {
   const [attachedFiles, setAttachedFiles] = useState<FileSystemItem[]>([]);
+  const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true);
+  const [toolPreferences, setToolPreferences] = useState<{ web_search: boolean; tiptap_ai: boolean; read_file: boolean }>(() => {
+    try {
+      const saved = localStorage.getItem("toolPreferences");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return { web_search: true, tiptap_ai: true, read_file: true };
+  });
 
   const handleFileAttach = (file: FileSystemItem) => {
     setAttachedFiles(prev => [...prev, file]);
@@ -52,6 +70,33 @@ export const Thread: FC<ThreadProps> = ({ userInfo }) => {
   const handleFileRemove = (fileId: string) => {
     setAttachedFiles(prev => prev.filter(file => file.file_id !== fileId));
   };
+
+  const toggleWebSearch = () => {
+    setIsWebSearchEnabled(prev => !prev);
+    setToolPreferences(prev => ({ ...prev, web_search: !prev.web_search }));
+  };
+
+  // Auto-attach the selected file from Workspaces
+  useEffect(() => {
+    if (selectedFile && selectedFile.file_id) {
+      // Check if the file is already attached
+      const isAlreadyAttached = attachedFiles.some(f => f.file_id === selectedFile.file_id);
+      
+      if (!isAlreadyAttached) {
+        // Only attach if it's a viewable file type (same logic as in Workspaces)
+        const isViewableFile = (fileName: string): boolean => {
+          const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'];
+          const documentExtensions = ['.docx', '.doc', '.pdf'];
+          const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+          return [...imageExtensions, ...documentExtensions].includes(extension);
+        };
+        
+        if (isViewableFile(selectedFile.name)) {
+          setAttachedFiles(prev => [selectedFile, ...prev]);
+        }
+      }
+    }
+  }, [selectedFile, attachedFiles]);
 
   // Keep a copy of attachments in localStorage so the runtime can inject them
   useEffect(() => {
@@ -66,6 +111,16 @@ export const Thread: FC<ThreadProps> = ({ userInfo }) => {
       // ignore storage errors
     }
   }, [attachedFiles]);
+
+  // Persist tool preferences and keep web search toggle in sync with menu
+  useEffect(() => {
+    try {
+      localStorage.setItem("toolPreferences", JSON.stringify(toolPreferences));
+    } catch {}
+    if (isWebSearchEnabled !== toolPreferences.web_search) {
+      setIsWebSearchEnabled(toolPreferences.web_search);
+    }
+  }, [toolPreferences]);
 
   return (
     <ThreadPrimitive.Root
@@ -97,6 +152,10 @@ export const Thread: FC<ThreadProps> = ({ userInfo }) => {
         onFileAttach={handleFileAttach}
         onFileRemove={handleFileRemove}
         userInfo={userInfo}
+        isWebSearchEnabled={isWebSearchEnabled}
+        onToggleWebSearch={toggleWebSearch}
+        toolPreferences={toolPreferences}
+        onUpdateToolPreferences={setToolPreferences}
       />
     </ThreadPrimitive.Root>
   );
@@ -213,9 +272,13 @@ interface ComposerProps {
     username: string;
     email?: string;
   } | null;
+  isWebSearchEnabled: boolean;
+  onToggleWebSearch: () => void;
+  toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean };
+  onUpdateToolPreferences: (prefs: { web_search: boolean; tiptap_ai: boolean; read_file: boolean }) => void;
 }
 
-const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove, userInfo }) => {
+const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences }) => {
   const composer = useComposerRuntime();
 
   // Add attachments to the composer when files are attached
@@ -279,6 +342,10 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove
             onFileAttach={onFileAttach}
             onFileRemove={onFileRemove}
             userInfo={userInfo}
+            isWebSearchEnabled={isWebSearchEnabled}
+            onToggleWebSearch={onToggleWebSearch}
+            toolPreferences={toolPreferences}
+            onUpdateToolPreferences={onUpdateToolPreferences}
           />
         </ComposerPrimitive.Root>
       </div>
@@ -294,9 +361,13 @@ interface ComposerActionProps {
     username: string;
     email?: string;
   } | null;
+  isWebSearchEnabled: boolean;
+  onToggleWebSearch: () => void;
+  toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean };
+  onUpdateToolPreferences: (prefs: { web_search: boolean; tiptap_ai: boolean; read_file: boolean }) => void;
 }
 
-const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, onFileRemove, userInfo }) => {
+const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, onFileRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences }) => {
   return (
     <div className="bg-zinc-800 border-l border-r border-b border-zinc-300 dark:border-zinc-600 relative flex items-center justify-between rounded-b-2xl p-2">
       <div className="flex items-center gap-2">
@@ -306,6 +377,51 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, 
           onFileRemove={onFileRemove}
           userInfo={userInfo}
         />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded flex items-center justify-center"
+              title="Tools"
+              aria-label="Tools"
+            >
+              <Wrench className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start" className="w-56">
+            <DropdownMenuLabel>Tools</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem
+              checked={toolPreferences.web_search}
+              onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, web_search: Boolean(checked) })}
+            >
+              Web Search
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={toolPreferences.tiptap_ai}
+              onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, tiptap_ai: Boolean(checked) })}
+            >
+              TipTap AI
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={toolPreferences.read_file}
+              onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, read_file: Boolean(checked) })}
+            >
+              Read File
+            </DropdownMenuCheckboxItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <button
+          className={`h-8 w-8 p-0 rounded flex items-center justify-center ${
+            isWebSearchEnabled 
+              ? "bg-blue-600 hover:bg-blue-700 text-white" 
+              : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+          }`}
+          onClick={onToggleWebSearch}
+          title={isWebSearchEnabled ? "Disable web search" : "Enable web search"}
+          aria-label={isWebSearchEnabled ? "Disable web search" : "Enable web search"}
+        >
+          <Globe className="h-4 w-4" />
+        </button>
       </div>
 
       <ThreadPrimitive.If running={false}>
@@ -424,9 +540,10 @@ const UserMessage: FC = () => {
           
           {/* Display attached files */}
           <MessagePrimitive.Attachments>
-            {(attachments) => (
+            {(attachments: any[]) => (
               <FileAttachmentDisplay 
                 files={attachments.map((att: any) => ({
+                  id: att.fileId,
                   file_id: att.fileId,
                   name: att.fileName,
                   path: att.filePath,

@@ -1,5 +1,5 @@
 import * as ContextMenu from "@radix-ui/react-context-menu"
-import { ChevronDown, ChevronRight, File, Folder, RefreshCw, Edit2, Trash2 } from "lucide-react"
+import { ChevronDown, ChevronRight, File, Folder, RefreshCw, Edit2, Trash2, FolderPlus } from "lucide-react"
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 import { Button } from "./ui/button"
@@ -19,6 +19,8 @@ interface AppSidebarProps {
   onFileDeleted?: (fileId: string) => void
   onFileRenamed?: (oldPath: string, newPath: string) => void
   onFileMoved?: (fileId: string, oldPath: string, newPath: string) => void
+  onFolderCreated?: (folderPath: string) => void
+  triggerRootFolderCreation?: boolean
 }
 
 // Drag and drop state interfaces
@@ -38,6 +40,7 @@ interface FileTreeItemProps {
   selectedFile?: FileSystemItem | null
   onFileDeleted?: (fileId: string) => void
   onFileRenamed?: (oldPath: string, newPath: string) => void
+  onFolderCreated?: (folderPath: string) => void
   dragState: DragState
   onDragStart: (item: FileSystemItem) => void
   onDragEnd: () => void
@@ -72,10 +75,12 @@ const isViewableFile = (fileName: string): boolean => {
 interface FileContextMenuProps {
   children: React.ReactNode
   onRename: () => void
-  onDelete: () => void
+  onDelete?: () => void
+  onNewFolder?: () => void
+  isFolder?: boolean
 }
 
-function FileContextMenu({ children, onRename, onDelete }: FileContextMenuProps) {
+function FileContextMenu({ children, onRename, onDelete, onNewFolder, isFolder }: FileContextMenuProps) {
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
@@ -83,6 +88,15 @@ function FileContextMenu({ children, onRename, onDelete }: FileContextMenuProps)
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
         <ContextMenu.Content className="min-w-[160px] bg-zinc-800 rounded-md p-1 shadow-lg border border-zinc-700 z-50">
+          {isFolder && onNewFolder && (
+            <ContextMenu.Item 
+              className="flex items-center gap-2 px-2 py-1.5 text-sm text-white hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              onSelect={onNewFolder}
+            >
+              <FolderPlus className="w-4 h-4" />
+              New Folder
+            </ContextMenu.Item>
+          )}
           <ContextMenu.Item 
             className="flex items-center gap-2 px-2 py-1.5 text-sm text-white hover:bg-zinc-700 rounded cursor-pointer outline-none"
             onSelect={onRename}
@@ -90,13 +104,15 @@ function FileContextMenu({ children, onRename, onDelete }: FileContextMenuProps)
             <Edit2 className="w-4 h-4" />
             Rename
           </ContextMenu.Item>
-          <ContextMenu.Item 
-            className="flex items-center gap-2 px-2 py-1.5 text-sm text-red-400 hover:bg-zinc-700 rounded cursor-pointer outline-none"
-            onSelect={onDelete}
-          >
-            <Trash2 className="w-4 h-4" />
-            Delete
-          </ContextMenu.Item>
+          {onDelete && (
+            <ContextMenu.Item 
+              className="flex items-center gap-2 px-2 py-1.5 text-sm text-red-400 hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              onSelect={onDelete}
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </ContextMenu.Item>
+          )}
         </ContextMenu.Content>
       </ContextMenu.Portal>
     </ContextMenu.Root>
@@ -112,6 +128,7 @@ function FileTreeItem({
   selectedFile, 
   onFileDeleted, 
   onFileRenamed, 
+  onFolderCreated, 
   dragState, 
   onDragStart, 
   onDragEnd, 
@@ -124,7 +141,10 @@ function FileTreeItem({
   const isSelected = selectedFile?.id === item.id
   const [isRenaming, setIsRenaming] = useState(false)
   const [newName, setNewName] = useState(item.name)
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false)
+  const [newFolderName, setNewFolderName] = useState('New Folder')
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const newFolderInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     if (isRenaming && inputRef.current) {
@@ -134,6 +154,15 @@ function FileTreeItem({
       })
     }
   }, [isRenaming])
+
+  useEffect(() => {
+    if (isCreatingFolder && newFolderInputRef.current) {
+      requestAnimationFrame(() => {
+        newFolderInputRef.current?.focus()
+        newFolderInputRef.current?.select()
+      })
+    }
+  }, [isCreatingFolder])
   
   // Check if this item is being dragged or is a drop target
   const isDragged = dragState.draggedItem?.id === item.id
@@ -224,6 +253,37 @@ function FileTreeItem({
       setNewName(item.name)
     }
   }
+
+  const handleCreateFolder = () => {
+    setIsCreatingFolder(true)
+    setNewFolderName('New Folder')
+  }
+
+  const handleCreateFolderSubmit = async () => {
+    if (newFolderName.trim() === '') {
+      setIsCreatingFolder(false)
+      return
+    }
+    
+    try {
+      await ApiService.createFolder(item.path, newFolderName.trim())
+      onFolderCreated?.(item.path ? `${item.path}/${newFolderName.trim()}` : newFolderName.trim())
+      setIsCreatingFolder(false)
+      setNewFolderName('New Folder')
+    } catch (error) {
+      alert('Failed to create folder. Please try again.')
+      setIsCreatingFolder(false)
+    }
+  }
+
+  const handleCreateFolderKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleCreateFolderSubmit()
+    } else if (e.key === 'Escape') {
+      setIsCreatingFolder(false)
+      setNewFolderName('New Folder')
+    }
+  }
   
   const buttonContent = (
     isRenaming ? (
@@ -290,8 +350,13 @@ function FileTreeItem({
   return (
     <>
       <div className="w-full">
-        {item.type === 'file' && item.file_id ? (
-          <FileContextMenu onRename={handleRename} onDelete={handleDelete}>
+        {(item.type === 'file' && item.file_id) || item.type === 'folder' ? (
+          <FileContextMenu 
+            onRename={handleRename} 
+            onDelete={item.type === 'file' && item.file_id ? handleDelete : undefined} 
+            onNewFolder={item.type === 'folder' ? handleCreateFolder : undefined}
+            isFolder={item.type === 'folder'}
+          >
             {buttonContent}
           </FileContextMenu>
         ) : (
@@ -299,34 +364,66 @@ function FileTreeItem({
         )}
       </div>
       
-      {hasChildren && isExpanded && item.children?.map((child) => (
-        <FileTreeItem
-          key={child.id}
-          item={child}
-          level={level + 1}
-          expandedItems={expandedItems}
-          toggleExpanded={toggleExpanded}
-          onFileSelect={onFileSelect}
-          selectedFile={selectedFile}
-          onFileDeleted={onFileDeleted}
-          onFileRenamed={onFileRenamed}
-          dragState={dragState}
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          onDrop={onDrop}
-        />
-      ))}
+      {hasChildren && isExpanded && (
+        <>
+          {/* Show new folder input if creating */}
+          {isCreatingFolder && (
+            <div
+              className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300"
+              style={{ paddingLeft: `${((level + 1) * 12) + 12}px` }}
+            >
+              <div className="w-3" />
+              <Folder className="h-4 w-4" />
+              <input
+                type="text"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                onBlur={handleCreateFolderSubmit}
+                onKeyDown={handleCreateFolderKeyDown}
+                className="text-sm bg-zinc-700 text-white px-1 py-0 rounded border-none outline-none flex-1"
+                autoFocus
+                ref={newFolderInputRef}
+                onFocus={(e) => e.currentTarget.select()}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          )}
+          
+          {/* Render existing children */}
+          {item.children?.map((child) => (
+            <FileTreeItem
+              key={child.id}
+              item={child}
+              level={level + 1}
+              expandedItems={expandedItems}
+              toggleExpanded={toggleExpanded}
+              onFileSelect={onFileSelect}
+              selectedFile={selectedFile}
+              onFileDeleted={onFileDeleted}
+              onFileRenamed={onFileRenamed}
+              onFolderCreated={onFolderCreated}
+              dragState={dragState}
+              onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              onDrop={onDrop}
+            />
+          ))}
+        </>
+      )}
     </>
   )
 }
 
-export function AppSidebar({ currentView, userInfo, onFileSelect, selectedFile, onRefreshComplete, refreshTrigger, onFileDeleted, onFileRenamed, onFileMoved }: AppSidebarProps) {
+export function AppSidebar({ currentView, userInfo, onFileSelect, selectedFile, onRefreshComplete, refreshTrigger, onFileDeleted, onFileRenamed, onFileMoved, onFolderCreated, triggerRootFolderCreation }: AppSidebarProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [fileSystem, setFileSystem] = useState<FileSystemItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isCreatingRootFolder, setIsCreatingRootFolder] = useState(false)
+  const [newRootFolderName, setNewRootFolderName] = useState('New Folder')
+  const rootFolderInputRef = useRef<HTMLInputElement | null>(null)
   
   // Drag and drop state
   const [dragState, setDragState] = useState<DragState>({
@@ -403,6 +500,13 @@ export function AppSidebar({ currentView, userInfo, onFileSelect, selectedFile, 
     }
   }
 
+  const handleFolderCreated = (folderPath: string) => {
+    // Refresh the file tree when a folder is created
+    fetchUserFiles()
+    // Call the parent callback if provided
+    onFolderCreated?.(folderPath)
+  }
+
   const fetchUserFiles = useCallback(async () => {
     if (!userInfo?.username) return
     
@@ -436,6 +540,50 @@ export function AppSidebar({ currentView, userInfo, onFileSelect, selectedFile, 
       fetchUserFiles()
     }
   }, [refreshTrigger, fetchUserFiles])
+
+  // Handle trigger for root folder creation
+  useEffect(() => {
+    if (triggerRootFolderCreation) {
+      setIsCreatingRootFolder(true)
+      setNewRootFolderName('New Folder')
+    }
+  }, [triggerRootFolderCreation])
+
+  // Focus root folder input when creating
+  useEffect(() => {
+    if (isCreatingRootFolder && rootFolderInputRef.current) {
+      requestAnimationFrame(() => {
+        rootFolderInputRef.current?.focus()
+        rootFolderInputRef.current?.select()
+      })
+    }
+  }, [isCreatingRootFolder])
+
+  const handleCreateRootFolderSubmit = async () => {
+    if (newRootFolderName.trim() === '') {
+      setIsCreatingRootFolder(false)
+      return
+    }
+    
+    try {
+      await ApiService.createFolder('', newRootFolderName.trim())
+      handleFolderCreated(newRootFolderName.trim())
+      setIsCreatingRootFolder(false)
+      setNewRootFolderName('New Folder')
+    } catch (error) {
+      alert('Failed to create folder. Please try again.')
+      setIsCreatingRootFolder(false)
+    }
+  }
+
+  const handleCreateRootFolderKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleCreateRootFolderSubmit()
+    } else if (e.key === 'Escape') {
+      setIsCreatingRootFolder(false)
+      setNewRootFolderName('New Folder')
+    }
+  }
   
   return (
     <div className="h-full w-full bg-black border-r border-zinc-300 dark:border-zinc-600 flex flex-col relative z-10">
@@ -454,7 +602,10 @@ export function AppSidebar({ currentView, userInfo, onFileSelect, selectedFile, 
       </div>
 
       {/* File Tree Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" onContextMenu={(e) => {
+        e.preventDefault()
+        // You could add a root-level context menu here for creating folders at the root
+      }}>
         {loading && !fileSystem.length && (
           <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-400">
             <RefreshCw className="h-4 w-4 animate-spin" />
@@ -473,6 +624,26 @@ export function AppSidebar({ currentView, userInfo, onFileSelect, selectedFile, 
             No files found
           </div>
         )}
+
+        {/* Root level folder creation */}
+        {isCreatingRootFolder && (
+          <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300" style={{ paddingLeft: '12px' }}>
+            <div className="w-3" />
+            <Folder className="h-4 w-4" />
+            <input
+              type="text"
+              value={newRootFolderName}
+              onChange={(e) => setNewRootFolderName(e.target.value)}
+              onBlur={handleCreateRootFolderSubmit}
+              onKeyDown={handleCreateRootFolderKeyDown}
+              className="text-sm bg-zinc-700 text-white px-1 py-0 rounded border-none outline-none flex-1"
+              autoFocus
+              ref={rootFolderInputRef}
+              onFocus={(e) => e.currentTarget.select()}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
         
         {fileSystem.map((item) => (
           <FileTreeItem
@@ -485,6 +656,7 @@ export function AppSidebar({ currentView, userInfo, onFileSelect, selectedFile, 
             selectedFile={selectedFile}
             onFileDeleted={onFileDeleted}
             onFileRenamed={onFileRenamed}
+            onFolderCreated={handleFolderCreated}
             dragState={dragState}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}

@@ -469,6 +469,53 @@ export class ApiService {
   }
 
   /**
+   * Create a folder by uploading a marker file
+   */
+  static async createFolder(folderPath: string, folderName: string) {
+    try {
+      // Ensure token is loaded
+      this.loadAuthToken();
+      
+      // Create a small marker file to represent the folder
+      const markerContent = new Blob([''], { type: 'text/plain' });
+      const markerFileName = '.folder_marker';
+      const fullFolderPath = folderPath ? `${folderPath}/${folderName}` : folderName;
+      const markerFilePath = `${fullFolderPath}/${markerFileName}`;
+      
+      const formData = new FormData();
+      formData.append('file', markerContent, markerFileName);
+      formData.append('device_name', 'web-editor');
+      formData.append('file_path', markerFilePath);
+      formData.append('file_parent', fullFolderPath);
+
+      const response = await axios({
+        method: 'post',
+        url: `${this.baseURL}/files/upload_to_s3/`,
+        data: formData,
+        headers: {
+          'Authorization': axios.defaults.headers.common['Authorization'],
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data.result === 'success') {
+        return {
+          success: true,
+          folderPath: fullFolderPath,
+          message: 'Folder created successfully'
+        };
+      } else if (response.data.error) {
+        throw new Error(response.data.error);
+      } else {
+        throw new Error('Failed to create folder');
+      }
+    } catch (error) {
+      console.error('createFolder error:', error);
+      throw this.enhanceError(error, 'Failed to create folder');
+    }
+  }
+
+  /**
    * Upload file to S3 (replacing existing file)
    */
   static async uploadToS3(file: File | Blob, fileName: string, deviceName: string = 'web-editor', filePath: string = '', fileParent: string = '') {

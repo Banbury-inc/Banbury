@@ -1,5 +1,6 @@
-import { AlertCircle, Download, Eye } from 'lucide-react';
+import { AlertCircle, Download } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { Button } from './ui/button';
 
 import { ApiService } from '../services/apiService';
 import { FileSystemItem } from '../utils/fileTreeUtils';
@@ -39,8 +40,7 @@ export function ImageViewer({ file, userInfo }: ImageViewerProps) {
         } else {
           setError('Failed to load image content');
         }
-      } catch (err) {
-        console.error('Failed to load image:', err);
+      } catch (_err) {
         setError('Failed to load image content');
       } finally {
         setLoading(false);
@@ -72,8 +72,8 @@ export function ImageViewer({ file, userInfo }: ImageViewerProps) {
         // Clean up the blob URL after download
         setTimeout(() => window.URL.revokeObjectURL(result.url), 1000);
       }
-    } catch (err) {
-      console.error('Failed to download image:', err);
+    } catch (_err) {
+      // swallow download error to avoid console output
     }
   };
 
@@ -81,8 +81,8 @@ export function ImageViewer({ file, userInfo }: ImageViewerProps) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-          <p className="text-gray-300">Loading image...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">Loading image...</p>
         </div>
       </div>
     );
@@ -92,10 +92,10 @@ export function ImageViewer({ file, userInfo }: ImageViewerProps) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col items-center gap-4 text-center">
-          <AlertCircle className="h-12 w-12 text-red-400" />
+          <AlertCircle className="h-12 w-12 text-destructive" />
           <div>
-            <h3 className="text-lg font-semibold text-white mb-2">Failed to load image</h3>
-            <p className="text-gray-300">{error}</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Failed to load image</h3>
+            <p className="text-muted-foreground">{error}</p>
           </div>
         </div>
       </div>
@@ -103,42 +103,21 @@ export function ImageViewer({ file, userInfo }: ImageViewerProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-black">
+    <div className="h-full flex flex-col bg-background">
       {/* Header with file info and actions */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-800">
-        <div className="flex items-center gap-3">
-          <Eye className="h-5 w-5 text-blue-400" />
-          <div>
-            <h2 className="text-lg font-semibold text-white">{file.name}</h2>
-            <p className="text-sm text-gray-400">
-              {file.size ? `${(file.size / 1024).toFixed(1)} KB` : 'Unknown size'}
-              {file.modified && ` • Modified ${file.modified.toLocaleDateString()}`}
-            </p>
-          </div>
-        </div>
-        
-        <button
-          onClick={handleDownload}
-          className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-        >
-          <Download className="h-4 w-4" />
-          Download
-        </button>
-      </div>
 
       {/* Image display area */}
-      <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
+      <div className="flex-1 flex justify-center overflow-auto bg-black p-6">
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={file.name}
             className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-            style={{ maxHeight: 'calc(100vh - 200px)' }}
           />
         ) : (
           <div className="text-center">
-            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-300">Image URL not available</p>
+            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Image URL not available</p>
           </div>
         )}
       </div>

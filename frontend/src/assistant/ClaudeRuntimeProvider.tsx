@@ -9,6 +9,8 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
       const contentParts: any[] = [];
       yield { content: contentParts, status: { type: "running" } } as any;
 
+      try {
+
       // Get auth token for file access
       const token = localStorage.getItem('authToken');
 
@@ -62,20 +64,52 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
           })()
         : options.messages;
 
+      // Read tool preferences from localStorage (defaults if missing)
+      let toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean } = {
+        web_search: true,
+        tiptap_ai: true,
+        read_file: true,
+      };
+      try {
+        const saved = localStorage.getItem('toolPreferences');
+        if (saved) toolPreferences = JSON.parse(saved);
+      } catch {}
+
       const res = await fetch("/api/assistant/stream", {
         method: "POST",
         headers: { 
           "content-type": "application/json",
           ...(token && { "Authorization": `Bearer ${token}` })
         },
-        body: JSON.stringify({ messages: messagesWithAttachmentParts }),
+        body: JSON.stringify({ messages: messagesWithAttachmentParts, toolPreferences }),
         signal: options.abortSignal,
       });
+
+      // Check if the response is not ok (e.g., 400, 500 errors)
+      if (!res.ok) {
+        const errorText = await res.text();
+        let errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        
+        // Try to parse error details from response
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch {
+          // Use default error message if parsing fails
+        }
+        
+        contentParts.push({ type: "text", text: `❌ Error: ${errorMessage}` });
+        yield { content: contentParts, status: { type: "incomplete", reason: "error" } } as any;
+        return;
+      }
 
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       if (!reader) {
-        yield { content: [{ type: "text", text: "" }], status: { type: "incomplete", reason: "other" } } as any;
+        contentParts.push({ type: "text", text: "❌ Error: Unable to read response stream" });
+        yield { content: contentParts, status: { type: "incomplete", reason: "error" } } as any;
         return;
       }
 
@@ -91,24 +125,44 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
           if (!chunk.startsWith("data: ")) continue;
           const json = chunk.slice(6).trim();
           if (!json) continue;
-          const evt = JSON.parse(json);
-          if (evt.type === "tool-call" && evt.part) {
-            // Append tool call in chronological order
-            contentParts.push(evt.part);
-            yield { content: contentParts, status: { type: "running" } } as any;
-          } else if (evt.type === "text-delta" && evt.text) {
-            aggregatedText += evt.text;
-            const last = contentParts[contentParts.length - 1];
-            if (last && (last as any).type === "text") {
-              (last as any).text = aggregatedText;
-            } else {
-              contentParts.push({ type: "text", text: aggregatedText });
+          
+          try {
+            const evt = JSON.parse(json);
+            if (evt.type === "tool-call" && evt.part) {
+              // Append tool call in chronological order
+              contentParts.push(evt.part);
+              yield { content: contentParts, status: { type: "running" } } as any;
+            } else if (evt.type === "text-delta" && evt.text) {
+              aggregatedText += evt.text;
+              const last = contentParts[contentParts.length - 1];
+              if (last && (last as any).type === "text") {
+                (last as any).text = aggregatedText;
+              } else {
+                contentParts.push({ type: "text", text: aggregatedText });
+              }
+              yield { content: contentParts, status: { type: "running" } } as any;
+            } else if (evt.type === "error") {
+              // Display error message in chat
+              const errorMessage = evt.error || "An error occurred";
+              contentParts.push({ type: "text", text: `❌ Error: ${errorMessage}` });
+              yield { content: contentParts, status: { type: "incomplete", reason: "error" } } as any;
+              return; // Stop processing further events
+            } else if (evt.type === "message-end") {
+              yield { content: contentParts, status: evt.status } as any;
             }
-            yield { content: contentParts, status: { type: "running" } } as any;
-          } else if (evt.type === "message-end") {
-            yield { content: contentParts, status: evt.status } as any;
+          } catch (parseError) {
+            // Handle JSON parsing errors
+            contentParts.push({ type: "text", text: `❌ Error: Invalid response format received` });
+            yield { content: contentParts, status: { type: "incomplete", reason: "error" } } as any;
+            return;
           }
         }
+      }
+      } catch (error: any) {
+        // Handle any unexpected errors during streaming
+        const errorMessage = error?.message || "An unexpected error occurred";
+        contentParts.push({ type: "text", text: `❌ Error: ${errorMessage}` });
+        yield { content: contentParts, status: { type: "incomplete", reason: "error" } } as any;
       }
     },
   } as any;

@@ -1,4 +1,4 @@
-import { AlertCircle, Download, FileText, ExternalLink, Save } from 'lucide-react';
+import { AlertCircle, Download, FileText, Save } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 import { Button } from './ui/button';
@@ -81,11 +81,7 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
     }
   };
 
-  const handleOpenInNewTab = () => {
-    if (documentUrl) {
-      window.open(documentUrl, '_blank');
-    }
-  };
+
 
   const handleSave = async () => {
     if (!file.file_id || !userInfo?.username || !currentContent) return;
@@ -214,15 +210,7 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
           >
             <Save className="h-4 w-4" />
           </Button>
-          <Button
-            variant="default"
-            size="icon"
-            onClick={handleOpenInNewTab}
-            className="h-9 w-9 bg-primary hover:bg-primary/80"
-            title="Open in new tab"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Button>
+
           <Button
             variant="default"
             size="icon"

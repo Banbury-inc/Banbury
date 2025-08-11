@@ -476,7 +476,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   try {
-    const body = req.body as { messages: any[] };
+    const body = req.body as { messages: any[]; toolPreferences?: { web_search?: boolean; tiptap_ai?: boolean; read_file?: boolean } };
     // Normalize: fold any message-level attachments into content as file-attachment parts
     const normalizedMessages: AssistantUiMessage[] = Array.isArray(body.messages)
       ? body.messages.map((msg: any) => {
@@ -566,6 +566,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     })();
 
     const lcMessages = toLangChainMessages(messagesWithFileData);
+    const prefs = body.toolPreferences || { web_search: true, tiptap_ai: true, read_file: true };
     const messages: any[] = [new SystemMessage(SYSTEM_PROMPT), ...lcMessages];
 
     // Create readFile tool with access to req
@@ -613,7 +614,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }) } as any
     );
 
-    const modelWithTools = anthropicModel.bindTools([webSearch, readFile, tiptapAI] as any);
+    const enabledTools: any[] = [];
+    if (prefs.web_search) enabledTools.push(webSearch);
+    if (prefs.read_file) enabledTools.push(readFile);
+    if (prefs.tiptap_ai) enabledTools.push(tiptapAI);
+    const modelWithTools = anthropicModel.bindTools(enabledTools as any);
 
     // start assistant message
     send({ type: "message-start", role: "assistant" });
@@ -699,7 +704,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.end();
     res.end();
   } catch (e: any) {
-    send({ type: "error", error: e?.message || "unknown error" });
+    // Parse the error to extract meaningful message for file size or other errors
+    let errorMessage = e?.message || "unknown error";
+    
+    // Check if it's an Anthropic API error with structured error information
+    if (typeof e?.message === 'string' && e.message.includes('image exceeds 5 MB maximum')) {
+      // Extract the specific error message from the Anthropic response
+      try {
+        const match = e.message.match(/"message":"([^"]+)"/);
+        if (match && match[1]) {
+          errorMessage = match[1].replace(/\\"/g, '"');
+        }
+      } catch (parseError) {
+        // Fallback to generic message if parsing fails
+        errorMessage = "File size exceeds 5 MB maximum limit";
+      }
+    } else if (typeof e?.message === 'string' && e.message.includes('400')) {
+      // Try to extract error from any 400 response
+      try {
+        const errorMatch = e.message.match(/"error":\s*{[^}]*"message":"([^"]+)"/);
+        if (errorMatch && errorMatch[1]) {
+          errorMessage = errorMatch[1].replace(/\\"/g, '"');
+        }
+      } catch (parseError) {
+        // Keep original message if parsing fails
+      }
+    }
+
+    send({ type: "error", error: errorMessage });
     res.end();
   }
 }

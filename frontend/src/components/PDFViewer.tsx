@@ -1,4 +1,4 @@
-import { AlertCircle, Download, FileText, ExternalLink, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AlertCircle, Download, FileText, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 
@@ -86,11 +86,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
     }
   };
 
-  const handleOpenInNewTab = () => {
-    if (pdfUrl) {
-      window.open(pdfUrl, '_blank');
-    }
-  };
+
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -195,35 +191,6 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Header with file info and actions */}
-      <div className="flex items-center justify-between p-3 border-b border-border bg-card">
-        <div className="flex items-center gap-3">
-          <div>
-            <h3 className="text-sm font-semibold text-card-foreground">{file.name}</h3>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            variant="default"
-            size="icon"
-            onClick={handleOpenInNewTab}
-            className="h-9 w-9 bg-primary hover:bg-primary/80"
-            title="Open in new tab"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="default"
-            size="icon"
-            onClick={handleDownload}
-            className="h-9 w-9 bg-primary hover:bg-primary/80"
-            title="Download PDF"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
 
       {/* PDF Controls */}
       {pdfUrl && !loading && !error && (
@@ -294,7 +261,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
       )}
 
       {/* PDF display area */}
-      <div className="flex-1 flex justify-center overflow-auto bg-muted p-6">
+      <div className="flex-1 flex justify-center overflow-auto bg-blackp-6">
         {pdfUrl ? (
           <div className="flex flex-col items-center">
             <Document
