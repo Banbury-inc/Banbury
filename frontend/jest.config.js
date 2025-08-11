@@ -22,7 +22,12 @@ module.exports = {
     '^.+\\.(ts|tsx|js|jsx)$': ['ts-jest', { 
       isolatedModules: true,
       tsconfig: {
-        jsx: 'react-jsx'
+        jsx: 'react-jsx',
+        module: 'commonjs',
+        moduleResolution: 'node',
+        target: 'es6',
+        esModuleInterop: true,
+        allowSyntheticDefaultImports: true
       }
     }],
   },
