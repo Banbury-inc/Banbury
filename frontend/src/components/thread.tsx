@@ -27,6 +27,7 @@ import { WebSearchTool } from "./web-search-result";
 import { cn } from "../utils";
 
 import type { FC } from "react";
+import styles from "../styles/scrollbar.module.css";
 
 export const Thread: FC = () => {
   return (
@@ -38,7 +39,7 @@ export const Thread: FC = () => {
         backgroundColor: 'transparent',
       }}
     >
-      <ThreadPrimitive.Viewport className="relative flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto">
+      <ThreadPrimitive.Viewport className={cn(styles.darkScrollbar, "relative flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto") }>
         <ThreadWelcome />
 
         <ThreadPrimitive.Messages
@@ -237,16 +238,16 @@ const AssistantMessage: FC = () => {
   return (
     <MessagePrimitive.Root asChild>
       <motion.div
-        className="relative mx-auto grid w-full max-w-[var(--thread-max-width)] grid-cols-[auto_auto_1fr] grid-rows-[auto_1fr] px-[var(--thread-padding-x)] py-4"
+        className="relative mx-auto grid w-full max-w-[var(--thread-max-width)] grid-cols-[auto_auto_1fr] grid-rows-[auto_1fr] px-[var(--thread-padding-x)] py-1"
         initial={{ y: 5, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         data-role="assistant"
       >
-        <div className="ring-border bg-background col-start-1 row-start-1 flex size-8 shrink-0 items-center justify-center rounded-full ring-1">
+        <div className="ring-border bg-background col-start-1 row-start-1 flex size-4 shrink-0 items-center justify-center rounded-full ring-1">
           <StarIcon size={14} />
         </div>
 
-        <div className="text-white col-span-2 col-start-2 row-start-1 ml-4 leading-7 break-words">
+        <div className="text-white col-span-2 col-start-2 row-start-1 ml-1 leading-none break-words text-xs">
           <MessagePrimitive.Content
             components={{
               Text: MarkdownText,
