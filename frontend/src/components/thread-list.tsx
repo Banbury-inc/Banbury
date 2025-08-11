@@ -1,5 +1,4 @@
 import {
-  ThreadListItemPrimitive,
   ThreadListPrimitive,
 } from "@assistant-ui/react";
 import { ArchiveIcon, PlusIcon } from "lucide-react";
@@ -30,38 +29,21 @@ const ThreadListNew: FC = () => {
 };
 
 const ThreadListItems: FC = () => {
-  return <ThreadListPrimitive.Items components={{ ThreadListItem }} />;
-};
-
-const ThreadListItem: FC = () => {
   return (
-    <ThreadListItemPrimitive.Root className="data-active:bg-muted hover:bg-muted focus-visible:bg-muted focus-visible:ring-ring flex items-center gap-2 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2">
-      <ThreadListItemPrimitive.Trigger className="flex-grow px-3 py-2 text-start">
-        <ThreadListItemTitle />
-      </ThreadListItemPrimitive.Trigger>
-      <ThreadListItemArchive />
-    </ThreadListItemPrimitive.Root>
-  );
-};
-
-const ThreadListItemTitle: FC = () => {
-  return (
-    <p className="text-sm">
-      <ThreadListItemPrimitive.Title fallback="New Chat" />
-    </p>
-  );
-};
-
-const ThreadListItemArchive: FC = () => {
-  return (
-    <ThreadListItemPrimitive.Archive asChild>
-      <TooltipIconButton
-        className="hover:text-foreground/60 p-4 text-foreground ml-auto mr-1 size-4"
-        variant="ghost"
-        tooltip="Archive thread"
-      >
-        <ArchiveIcon />
-      </TooltipIconButton>
-    </ThreadListItemPrimitive.Archive>
+    <div className="flex flex-col gap-1">
+      {/* Placeholder for thread items - this would be populated by the assistant-ui runtime */}
+      <div className="data-active:bg-muted hover:bg-muted focus-visible:bg-muted focus-visible:ring-ring flex items-center gap-2 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2">
+        <button className="flex-grow px-3 py-2 text-start">
+          <p className="text-sm">New Chat</p>
+        </button>
+        <TooltipIconButton
+          className="hover:text-foreground/60 p-4 text-foreground ml-auto mr-1 size-4"
+          variant="ghost"
+          tooltip="Archive thread"
+        >
+          <ArchiveIcon />
+        </TooltipIconButton>
+      </div>
+    </div>
   );
 };

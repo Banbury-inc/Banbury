@@ -22,6 +22,7 @@ import { Thread } from '../components/thread';
 import { UploadIcon } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { ClaudeRuntimeProvider } from '../assistant/ClaudeRuntimeProvider';
+import { TiptapAIProvider } from '../contexts/TiptapAIContext';
 import { AppSidebar } from "../components/app-sidebar";
 import { ImageViewer } from '../components/ImageViewer';
 import { NavSidebar } from "../components/nav-sidebar";
@@ -429,8 +430,9 @@ Created on: ${new Date().toLocaleDateString()}`;
 
   return (
     <TooltipProvider>
-      <ClaudeRuntimeProvider>
-        <div className="flex h-screen bg-black">
+      <TiptapAIProvider>
+        <ClaudeRuntimeProvider>
+          <div className="flex h-screen bg-black">
 
           {/* Navigation Sidebar - Fixed */}
           <NavSidebar onLogout={handleLogout} />
@@ -559,7 +561,8 @@ Created on: ${new Date().toLocaleDateString()}`;
             </Alert>
           </Snackbar>
         </div>
-      </ClaudeRuntimeProvider>
+        </ClaudeRuntimeProvider>
+      </TiptapAIProvider>
     </TooltipProvider>
   );
 };

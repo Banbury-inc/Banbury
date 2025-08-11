@@ -1,4 +1,5 @@
 import { AssistantRuntimeProvider, useLocalRuntime } from "@assistant-ui/react";
+import { useEffect } from "react";
 import type { FC, PropsWithChildren } from "react";
 
 export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
@@ -112,5 +113,53 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
     },
   } as any;
   const runtime = useLocalRuntime(adapter as any);
+  
+  // Listen for AI requests from Tiptap and auto-send messages
+  useEffect(() => {
+    const handleAIRequest = (event: CustomEvent) => {
+      const { message } = event.detail;
+      
+      // Send the message to the runtime
+      if (runtime && message) {
+        runtime.composer.setValue(message);
+        setTimeout(() => {
+          runtime.composer.send();
+        }, 100);
+      }
+    };
+    
+    // Also check for pending requests on mount
+    const checkPendingRequest = () => {
+      try {
+        const pending = localStorage.getItem('pendingAIRequest');
+        if (pending) {
+          const { message, timestamp } = JSON.parse(pending);
+          // Only process if it's recent (within 5 seconds)
+          if (Date.now() - timestamp < 5000) {
+            if (runtime) {
+              runtime.composer.setValue(message);
+              setTimeout(() => {
+                runtime.composer.send();
+              }, 100);
+            }
+          }
+          localStorage.removeItem('pendingAIRequest');
+        }
+      } catch (error) {
+        // Ignore localStorage errors
+      }
+    };
+    
+    window.addEventListener('assistant-ai-request', handleAIRequest as EventListener);
+    
+    // Check for pending requests after a short delay to ensure runtime is ready
+    const timeoutId = setTimeout(checkPendingRequest, 500);
+    
+    return () => {
+      window.removeEventListener('assistant-ai-request', handleAIRequest as EventListener);
+      clearTimeout(timeoutId);
+    };
+  }, [runtime]);
+  
   return <AssistantRuntimeProvider runtime={runtime}>{children}</AssistantRuntimeProvider>;
 };

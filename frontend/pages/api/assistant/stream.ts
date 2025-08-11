@@ -55,6 +55,36 @@ type AssistantUiMessage = {
   content: AssistantUiMessagePart[];
 };
 
+const tiptapAI: any = tool(
+  async (input: { action: string; content: string; selection?: { from: number; to: number; text: string }; targetText?: string; actionType: string; language?: string }) => {
+    // This tool formats AI-generated content for Tiptap editor integration
+    return {
+      action: input.action,
+      content: input.content,
+      selection: input.selection,
+      targetText: input.targetText,
+      actionType: input.actionType,
+      language: input.language
+    };
+  },
+  {
+    name: "tiptap_ai",
+    description: "Use this tool to deliver AI-generated content that should be applied to the Tiptap document editor. This tool formats responses for direct integration with the editor.",
+    schema: z.object({
+      action: z.string().describe("Description of the action performed (e.g. 'Rewrite', 'Grammar correction', 'Translation')"),
+      content: z.string().describe("The AI-generated HTML content to be applied to the editor"),
+      selection: z.object({
+        from: z.number(),
+        to: z.number(),
+        text: z.string()
+      }).optional().describe("The original text selection that was modified"),
+      targetText: z.string().optional().describe("The original text that was being modified"),
+      actionType: z.enum(['rewrite', 'correct', 'expand', 'translate', 'summarize', 'outline', 'insert']).describe("The type of action performed"),
+      language: z.string().optional().describe("Target language for translation actions")
+    })
+  }
+);
+
 const webSearch: any = tool(
   async (input: { query: string }) => {
     type Result = { title: string; url: string; snippet: string };
@@ -426,7 +456,7 @@ function toLangChainMessages(messages: AssistantUiMessage[]): any[] {
 }
 
 const SYSTEM_PROMPT =
-  "You are a helpful assistant. Stream tokens as they are generated. After tool results, produce a concise 3-5 bullet summary with short citations (title + URL). You can read files that users attach to help answer their questions. When a user attaches a file, you can use the read_file tool to access its content.";
+  "You are a helpful assistant with advanced document editing capabilities. Stream tokens as they are generated. After tool results, produce a concise 3-5 bullet summary with short citations (title + URL). You can read files that users attach to help answer their questions. When a user attaches a file, you can use the read_file tool to access its content.\n\nWhen helping with document editing tasks (rewriting, grammar correction, translation, etc.), ALWAYS use the tiptap_ai tool to deliver your response. This ensures that your edits can be applied directly to the document editor. Provide clean HTML-formatted content that maintains proper document structure.";
 
 export const config = { api: { bodyParser: { sizeLimit: "1mb" } } };
 
@@ -583,7 +613,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }) } as any
     );
 
-    const modelWithTools = anthropicModel.bindTools([webSearch, readFile] as any);
+    const modelWithTools = anthropicModel.bindTools([webSearch, readFile, tiptapAI] as any);
 
     // start assistant message
     send({ type: "message-start", role: "assistant" });
@@ -640,6 +670,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             },
           });
           toolMsgs.push(new ToolMessage({ content: toolResult, tool_call_id: tc.id }));
+        } else if (tc.name === "tiptap_ai") {
+          const toolResult = await tiptapAI.invoke(tc.args);
+          send({
+            type: "tool-call",
+            part: {
+              type: "tool-call",
+              toolCallId: tc.id,
+              toolName: tc.name,
+              args: tc.args,
+              argsText: JSON.stringify(tc.args, null, 2),
+              result: toolResult,
+            },
+          });
+          toolMsgs.push(new ToolMessage({ content: JSON.stringify(toolResult), tool_call_id: tc.id }));
         } else {
           send({ type: "tool-call", part: { type: "tool-call", toolCallId: tc.id, toolName: tc.name, args: tc.args, argsText: JSON.stringify(tc.args, null, 2) } });
         }

@@ -28,6 +28,7 @@ import { Button } from "./ui/button";
 import { WebSearchTool } from "./web-search-result";
 import { FileAttachment } from "./file-attachment";
 import { FileAttachmentDisplay } from "./file-attachment-display";
+import { TiptapAITool } from "./TiptapAITool";
 import { FileSystemItem } from "../utils/fileTreeUtils";
 import { cn } from "../utils";
 
@@ -363,6 +364,7 @@ const AssistantMessage: FC = () => {
               tools: { 
                 by_name: {
                   web_search: WebSearchTool,
+                  tiptap_ai: TiptapAITool,
                 },
                 Fallback: ToolFallback 
               },
