@@ -181,7 +181,7 @@ function toLangChainMessages(messages: AssistantUiMessage[]): BaseMessage[] {
 }
 
 const SYSTEM_PROMPT = 
-  "You are Athena, a helpful AI assistant with advanced capabilities. " +
+  "You are a helpful AI assistant with advanced capabilities. " +
   "You have access to web search, memory management, and document editing tools. " +
   "When helping with document editing tasks (rewriting, grammar correction, translation, etc.), " +
   "ALWAYS use the tiptap_ai tool to deliver your response. This ensures that your edits can be " +
@@ -298,17 +298,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const stream = await reactAgent.stream({ messages: allMessages }, { streamMode: "values" });
 
-      // Track how many messages we've already emitted to avoid missing or duplicating events
-      let prevMessageCount = 0;
-      // Track the cumulative text length to send only deltas
-      let lastTextLength = 0;
-      let cumulativeText = "";
+      // Track how many messages we've already processed to avoid duplicates
+      let prevMessageCount = allMessages.length;
+      // Track processed content to avoid sending duplicate text
+      let processedAiMessages = new Set<string>();
       // Track tool execution status
       let currentToolExecution: any = null;
       // Track processed tool calls to avoid duplicates
       let processedToolCalls = new Set<string>();
-      // Track the last AI message ID to reset text when switching messages
-      let lastAiMessageId: any = null;
 
       for await (const chunk of stream) {
         finalResult = chunk;
@@ -317,83 +314,71 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
         // Stream thinking/processing indicator and step progression
         if (chunk && typeof chunk === 'object' && 'messages' in chunk) {
-          const stepNumber = messages.length;
+          const newMessageCount = messages.length - allMessages.length;
           
-          // Only send thinking/progression if we have new messages
-          if (stepNumber > prevMessageCount) {
-            send({ type: "thinking", message: `Processing step ${stepNumber}...` });
-            
-            // For step progression, we can't know total steps in advance with LangGraph
-            // So we'll just show current step and indicate it's ongoing
-            send({ type: "step-progression", step: stepNumber, totalSteps: stepNumber + 1 });
+          // Only send thinking/progression if we have new messages beyond the input
+          if (newMessageCount > 0) {
+            send({ type: "thinking", message: `Processing step ${newMessageCount}...` });
+            send({ type: "step-progression", step: newMessageCount, totalSteps: newMessageCount + 1 });
           }
         }
 
-        const newMessages = messages.slice(prevMessageCount);
-        prevMessageCount = messages.length;
+        // Only process messages that are NEW (beyond the input messages)
+        const newMessages = messages.slice(allMessages.length);
 
         for (const m of newMessages) {
           const type = m?._getType?.();
           if (type === "ai") {
-            // Reset text tracking when we encounter a new AI message
-            const currentAiMessageId = m.id || m;
-            if (currentAiMessageId !== lastAiMessageId) {
-              lastTextLength = 0;
-              cumulativeText = "";
-              lastAiMessageId = currentAiMessageId;
-            }
-            const toolCalls = (m as any).tool_calls || (m as any).additional_kwargs?.tool_calls || [];
-            const content: any = (m as any).content;
-            const fullText = typeof content === "string"
-              ? content
-              : Array.isArray(content)
-                ? content.map((c: any) => (typeof c === "string" ? c : c?.text || "")).join("")
-                : "";
+            const messageId = m.id || JSON.stringify(m);
             
-            // Stream AI text content - only send deltas (new text)
-            if (fullText && fullText.trim()) {
-              const normalized = fullText.trim();
-              if (normalized.length > lastTextLength) {
-                // Only send the new part of the text
-                const deltaText = normalized.slice(lastTextLength);
-                if (deltaText) {
-                  send({ type: "text-delta", text: deltaText });
-                  lastTextLength = normalized.length;
-                  cumulativeText = normalized;
-                }
+            // Only process this AI message if we haven't seen it before
+            if (!processedAiMessages.has(messageId)) {
+              processedAiMessages.add(messageId);
+              
+              const toolCalls = (m as any).tool_calls || (m as any).additional_kwargs?.tool_calls || [];
+              const content: any = (m as any).content;
+              const fullText = typeof content === "string"
+                ? content
+                : Array.isArray(content)
+                  ? content.map((c: any) => (typeof c === "string" ? c : c?.text || "")).join("")
+                  : "";
+              
+              // Send the complete text content for this NEW AI message
+              if (fullText && fullText.trim()) {
+                send({ type: "text-delta", text: fullText.trim() });
               }
-            }
 
-            // Stream tool calls (avoid duplicates)
-            for (const toolCall of toolCalls) {
-              if (!processedToolCalls.has(toolCall.id)) {
-                processedToolCalls.add(toolCall.id);
-                
-                // Send tool call start event
-                send({
-                  type: "tool-call-start",
-                  part: {
-                    type: "tool-call",
-                    toolCallId: toolCall.id,
-                    toolName: toolCall.name,
-                    args: toolCall.args,
-                    argsText: JSON.stringify(toolCall.args, null, 2),
-                  },
-                });
-                
-                // Stream tool-specific status messages
-                const toolStatusMessages: Record<string, string> = {
-                  web_search: "Searching the web...",
-                  tiptap_ai: "Processing document content...",
-                  store_memory: "Storing information in memory...",
-                  search_memory: "Searching memory..."
-                };
-                
-                const statusMessage = toolStatusMessages[toolCall.name] || `Executing ${toolCall.name}...`;
-                send({ type: "tool-status", tool: toolCall.name, message: statusMessage });
-                
-                // Track current tool execution
-                currentToolExecution = toolCall;
+              // Stream tool calls (avoid duplicates)
+              for (const toolCall of toolCalls) {
+                if (!processedToolCalls.has(toolCall.id)) {
+                  processedToolCalls.add(toolCall.id);
+                  
+                  // Send tool call start event
+                  send({
+                    type: "tool-call-start",
+                    part: {
+                      type: "tool-call",
+                      toolCallId: toolCall.id,
+                      toolName: toolCall.name,
+                      args: toolCall.args,
+                      argsText: JSON.stringify(toolCall.args, null, 2),
+                    },
+                  });
+                  
+                  // Stream tool-specific status messages
+                  const toolStatusMessages: Record<string, string> = {
+                    web_search: "Searching the web...",
+                    tiptap_ai: "Processing document content...",
+                    store_memory: "Storing information in memory...",
+                    search_memory: "Searching memory..."
+                  };
+                  
+                  const statusMessage = toolStatusMessages[toolCall.name] || `Executing ${toolCall.name}...`;
+                  send({ type: "tool-status", tool: toolCall.name, message: statusMessage });
+                  
+                  // Track current tool execution
+                  currentToolExecution = toolCall;
+                }
               }
             }
           } else if (type === "tool") {

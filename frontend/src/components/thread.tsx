@@ -470,14 +470,14 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, 
 
       <ThreadPrimitive.If running>
         <ComposerPrimitive.Cancel asChild>
-          <Button
+          <TooltipIconButton
             type="button"
             variant="default"
-            className="dark:border-muted-foreground/90 border-muted-foreground/60 hover:bg-primary/75 size-8 rounded-full border border-zinc-300 dark:border-zinc-600"
+            className="dark:border-muted-foreground/90 border-muted-foreground/60 hover:bg-primary/75 p-2 border border-zinc-300 dark:border-zinc-600 scale-100"
             aria-label="Stop generating"
           >
-            <Square className="size-3.5 fill-white dark:size-4 dark:fill-black border border-zinc-300 dark:border-zinc-600" />
-          </Button>
+            <Square size={20} />
+          </TooltipIconButton>
         </ComposerPrimitive.Cancel>
       </ThreadPrimitive.If>
     </div>
