@@ -6,6 +6,7 @@ import {
   BranchPickerPrimitive,
   ErrorPrimitive,
   useComposerRuntime,
+  useThreadRuntime,
 } from "@assistant-ui/react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -20,6 +21,7 @@ import {
   Square,
   Globe,
   Wrench,
+  Zap,
 } from "lucide-react";
 
 import { MarkdownText } from "./markdown-text";
@@ -55,12 +57,16 @@ interface ThreadProps {
 export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile }) => {
   const [attachedFiles, setAttachedFiles] = useState<FileSystemItem[]>([]);
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true);
-  const [toolPreferences, setToolPreferences] = useState<{ web_search: boolean; tiptap_ai: boolean; read_file: boolean }>(() => {
+  const [toolPreferences, setToolPreferences] = useState<{ web_search: boolean; tiptap_ai: boolean; read_file: boolean; langgraph_mode: boolean }>(() => {
     try {
       const saved = localStorage.getItem("toolPreferences");
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Always force langgraph_mode to true
+        return { ...parsed, langgraph_mode: true };
+      }
     } catch {}
-    return { web_search: true, tiptap_ai: true, read_file: true };
+    return { web_search: true, tiptap_ai: true, read_file: true, langgraph_mode: true };
   });
 
   const handleFileAttach = (file: FileSystemItem) => {
@@ -115,12 +121,14 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile }) => {
   // Persist tool preferences and keep web search toggle in sync with menu
   useEffect(() => {
     try {
-      localStorage.setItem("toolPreferences", JSON.stringify(toolPreferences));
+      // Always force langgraph_mode to true when saving
+      const prefsToSave = { ...toolPreferences, langgraph_mode: true };
+      localStorage.setItem("toolPreferences", JSON.stringify(prefsToSave));
     } catch {}
     if (isWebSearchEnabled !== toolPreferences.web_search) {
       setIsWebSearchEnabled(toolPreferences.web_search);
     }
-  }, [toolPreferences]);
+  }, [toolPreferences, isWebSearchEnabled]);
 
   return (
     <ThreadPrimitive.Root
@@ -141,6 +149,8 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile }) => {
             AssistantMessage,
           }}
         />
+
+        <StreamingStatus />
 
         <ThreadPrimitive.If empty={false}>
           <motion.div className="min-h-6 min-w-6 shrink-0" />
@@ -176,6 +186,9 @@ const ThreadScrollToBottom: FC = () => {
 };
 
 const ThreadWelcome: FC = () => {
+  // Always show LangGraph mode as active
+  const toolPreferences = { langgraph_mode: true };
+
   return (
     <ThreadPrimitive.Empty>
       <div className="mx-auto flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col px-[var(--thread-padding-x)]">
@@ -274,8 +287,8 @@ interface ComposerProps {
   } | null;
   isWebSearchEnabled: boolean;
   onToggleWebSearch: () => void;
-  toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean };
-  onUpdateToolPreferences: (prefs: { web_search: boolean; tiptap_ai: boolean; read_file: boolean }) => void;
+  toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; langgraph_mode: boolean };
+  onUpdateToolPreferences: (prefs: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; langgraph_mode: boolean }) => void;
 }
 
 const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences }) => {
@@ -363,8 +376,8 @@ interface ComposerActionProps {
   } | null;
   isWebSearchEnabled: boolean;
   onToggleWebSearch: () => void;
-  toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean };
-  onUpdateToolPreferences: (prefs: { web_search: boolean; tiptap_ai: boolean; read_file: boolean }) => void;
+  toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; langgraph_mode: boolean };
+  onUpdateToolPreferences: (prefs: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; langgraph_mode: boolean }) => void;
 }
 
 const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, onFileRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences }) => {
@@ -388,25 +401,42 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, 
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" className="w-56">
-            <DropdownMenuLabel>Tools</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              Tools
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuCheckboxItem
               checked={toolPreferences.web_search}
               onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, web_search: Boolean(checked) })}
             >
-              Web Search
+              <div className="flex flex-col">
+                <span>Web Search</span>
+                <span className="text-xs text-muted-foreground">Enhanced with content enrichment</span>
+              </div>
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={toolPreferences.tiptap_ai}
               onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, tiptap_ai: Boolean(checked) })}
             >
-              TipTap AI
+              <div className="flex flex-col">
+                <span>Document Editing</span>
+                <span className="text-xs text-muted-foreground">Document editing workflows</span>
+              </div>
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={toolPreferences.read_file}
               onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, read_file: Boolean(checked) })}
             >
-              Read File
+              <div className="flex flex-col">
+                <span>Read File</span>
+                <span className="text-xs text-muted-foreground">Advanced file processing</span>
+              </div>
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked disabled>
+              <div className="flex flex-col">
+                <span>Memory</span>
+                <span className="text-xs text-muted-foreground">Always enabled in LangGraph</span>
+              </div>
             </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -461,6 +491,88 @@ const MessageError: FC = () => {
         <ErrorPrimitive.Message className="line-clamp-2" />
       </ErrorPrimitive.Root>
     </MessagePrimitive.Error>
+  );
+};
+
+const StreamingStatus: FC = () => {
+  const runtime = useThreadRuntime();
+  const [statusDetails, setStatusDetails] = useState<any>(null);
+
+  useEffect(() => {
+    // Listen for status changes from the runtime
+    const updateStatus = () => {
+      try {
+        const lastMessage = runtime.messages[runtime.messages.length - 1];
+        if (lastMessage?.status?.details) {
+          setStatusDetails(lastMessage.status.details);
+        } else {
+          setStatusDetails(null);
+        }
+      } catch (e) {
+        // Ignore errors accessing runtime
+      }
+    };
+
+    // Subscribe to runtime changes if possible
+    updateStatus();
+    
+    // Set up a polling interval to check for status updates
+    const interval = setInterval(updateStatus, 100);
+    
+    return () => clearInterval(interval);
+  }, [runtime]);
+
+  if (!statusDetails) return null;
+
+  return (
+    <ThreadPrimitive.If running>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 10 }}
+        className="mx-auto max-w-[var(--thread-max-width)] px-[var(--thread-padding-x)] mb-4"
+      >
+        <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/30 rounded-lg p-3">
+          {statusDetails.thinking && (
+            <div className="flex items-center text-blue-700 dark:text-blue-300 text-sm mb-2">
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-2"></div>
+              {statusDetails.thinking}
+            </div>
+          )}
+          
+          {statusDetails.step && statusDetails.totalSteps && (
+            <div className="mb-2">
+              <div className="flex items-center justify-between text-xs text-blue-600 dark:text-blue-400 mb-1">
+                <span>Step {statusDetails.step} of {statusDetails.totalSteps}</span>
+                <span>{Math.round(statusDetails.progress || 0)}%</span>
+              </div>
+              <div className="w-full bg-blue-200 dark:bg-blue-800/30 rounded-full h-1.5">
+                <div 
+                  className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                  style={{ width: `${statusDetails.progress || 0}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+          
+          {statusDetails.toolStatus && (
+            <div className="flex items-center text-green-600 dark:text-green-400 text-xs">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2"></span>
+              <span className="font-medium">{statusDetails.toolStatus.tool}:</span>
+              <span className="ml-1">{statusDetails.toolStatus.message}</span>
+            </div>
+          )}
+          
+          {statusDetails.toolCompleted && (
+            <div className="flex items-center text-green-600 dark:text-green-400 text-xs">
+              <CheckIcon className="w-3 h-3 mr-2" />
+              <span className="font-medium">{statusDetails.toolCompleted.tool}:</span>
+              <span className="ml-1">{statusDetails.toolCompleted.message}</span>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </ThreadPrimitive.If>
   );
 };
 

@@ -65,17 +65,25 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
         : options.messages;
 
       // Read tool preferences from localStorage (defaults if missing)
-      let toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean } = {
+      let toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; langgraph_mode: boolean } = {
         web_search: true,
         tiptap_ai: true,
         read_file: true,
+        langgraph_mode: true, // Always use LangGraph mode
       };
       try {
         const saved = localStorage.getItem('toolPreferences');
-        if (saved) toolPreferences = JSON.parse(saved);
+        if (saved) {
+          toolPreferences = { ...JSON.parse(saved), langgraph_mode: true }; // Force LangGraph mode
+        }
       } catch {}
 
-      const res = await fetch("/api/assistant/stream", {
+      // Always use LangGraph endpoint
+      const apiEndpoint = '/api/assistant/langgraph-stream';
+
+      console.log(`🔧 Assistant Mode: LangGraph → ${apiEndpoint}`);
+
+      const res = await fetch(apiEndpoint, {
         method: "POST",
         headers: { 
           "content-type": "application/json",
@@ -114,7 +122,6 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
       }
 
       let buffer = "";
-      let aggregatedText = "";
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -128,19 +135,97 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
           
           try {
             const evt = JSON.parse(json);
-            if (evt.type === "tool-call" && evt.part) {
-              // Append tool call in chronological order
+            
+            // Only yield updates for significant content changes, not status updates
+            let shouldYield = false;
+            
+            if (evt.type === "tool-call-start" && evt.part) {
+              // Handle tool-call-start event
               contentParts.push(evt.part);
-              yield { content: contentParts, status: { type: "running" } } as any;
+              shouldYield = true;
             } else if (evt.type === "text-delta" && evt.text) {
-              aggregatedText += evt.text;
+              // Don't accumulate - the backend is already sending true deltas
+              // Just append the new text to the existing text content
               const last = contentParts[contentParts.length - 1];
               if (last && (last as any).type === "text") {
-                (last as any).text = aggregatedText;
+                (last as any).text += evt.text;
               } else {
-                contentParts.push({ type: "text", text: aggregatedText });
+                contentParts.push({ type: "text", text: evt.text });
               }
-              yield { content: contentParts, status: { type: "running" } } as any;
+              shouldYield = true;
+            } else if (evt.type === "thinking") {
+              // Handle thinking messages - could be displayed as temporary status
+              yield { 
+                content: contentParts, 
+                status: { 
+                  type: "running",
+                  details: { thinking: evt.message }
+                } 
+              } as any;
+            } else if (evt.type === "step-progression") {
+              // Handle step progression - show progress
+              yield { 
+                content: contentParts, 
+                status: { 
+                  type: "running",
+                  details: { 
+                    step: evt.step, 
+                    totalSteps: evt.totalSteps,
+                    progress: evt.step && evt.totalSteps ? (evt.step / evt.totalSteps) * 100 : undefined
+                  }
+                } 
+              } as any;
+            } else if (evt.type === "tool-status") {
+              // Handle tool status messages
+              yield { 
+                content: contentParts, 
+                status: { 
+                  type: "running",
+                  details: { 
+                    toolStatus: { 
+                      tool: evt.tool, 
+                      message: evt.message 
+                    }
+                  }
+                } 
+              } as any;
+            } else if (evt.type === "tool-completion") {
+              // Handle tool completion
+              yield { 
+                content: contentParts, 
+                status: { 
+                  type: "running",
+                  details: { 
+                    toolCompleted: { 
+                      tool: evt.tool, 
+                      message: evt.message 
+                    }
+                  }
+                } 
+              } as any;
+            } else if (evt.type === "tool-result" && evt.part) {
+              // Handle tool result - update the corresponding tool call with the result
+              const toolCalls = contentParts.filter(p => (p as any).type === "tool-call");
+              const matchingToolCall = toolCalls.find(tc => (tc as any).toolCallId === evt.part.toolCallId);
+              if (matchingToolCall) {
+                (matchingToolCall as any).result = evt.part.result;
+              }
+              shouldYield = true;
+            } else if (evt.type === "completion-summary") {
+              // Handle completion summary
+              yield { 
+                content: contentParts, 
+                status: { 
+                  type: "running",
+                  details: { 
+                    summary: {
+                      totalSteps: evt.totalSteps,
+                      toolExecutions: evt.toolExecutions,
+                      toolsUsed: evt.toolsUsed
+                    }
+                  }
+                } 
+              } as any;
             } else if (evt.type === "error") {
               // Display error message in chat
               const errorMessage = evt.error || "An error occurred";
@@ -149,6 +234,12 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
               return; // Stop processing further events
             } else if (evt.type === "message-end") {
               yield { content: contentParts, status: evt.status } as any;
+              return; // Don't process further after message end
+            }
+            
+            // Only yield for significant content changes
+            if (shouldYield) {
+              yield { content: contentParts, status: { type: "running" } } as any;
             }
           } catch (parseError) {
             // Handle JSON parsing errors
