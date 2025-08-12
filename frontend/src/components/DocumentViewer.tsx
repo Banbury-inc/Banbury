@@ -85,13 +85,7 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
     }
   };
 
-  const testToast = () => {
-    toast({
-      title: "🎉 TEST TOAST SUCCESS!",
-      description: "If you can see this, the toast system is working perfectly! Click the X to dismiss.",
-      variant: "success",
-    });
-  };
+
 
 
 
@@ -245,16 +239,6 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
             title="Download document"
           >
             <Download className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={testToast}
-            className="h-9 px-3 bg-blue-500 text-white hover:bg-blue-600 border-blue-500"
-            title="Test toast - Click to verify toast system is working"
-          >
-            🧪 TEST TOAST
           </Button>
         </div>
       </div>

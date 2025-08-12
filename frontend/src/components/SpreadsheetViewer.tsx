@@ -1,5 +1,5 @@
 import { AlertCircle, Download, Save, FileSpreadsheet } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { ApiService } from '../services/apiService';
 import { FileSystemItem } from '../utils/fileTreeUtils';
@@ -21,7 +21,25 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
   const [error, setError] = useState<string | null>(null);
   const [currentContent, setCurrentContent] = useState<string>('');
   const [saving, setSaving] = useState(false);
+  const [latestData, setLatestData] = useState<any[][] | null>(null);
   const { toast } = useToast();
+
+  // Convert table data to CSV (mirrors CSVEditor's logic)
+  const convertToCSV = (data: any[][]): string => {
+    return data
+      .map((row) =>
+        row
+          .map((cell) => {
+            const value = String(cell ?? '');
+            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+              return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+          })
+          .join(',')
+      )
+      .join('\n');
+  };
 
   useEffect(() => {
     let currentUrl: string | null = null;
@@ -83,7 +101,9 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
   };
 
   const handleSave = async () => {
-    if (!file.file_id || !userInfo?.username || !currentContent) return;
+    if (!file.file_id || !userInfo?.username) return;
+    const contentToSave = currentContent || (latestData ? convertToCSV(latestData) : '');
+    if (!contentToSave) return;
     
     setSaving(true);
     try {
@@ -91,7 +111,7 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
       await ApiService.deleteS3File(file.file_id);
       
       // Create CSV blob
-      const blob = new Blob([currentContent], { type: 'text/csv' });
+      const blob = new Blob([contentToSave], { type: 'text/csv' });
       
       // Extract parent path from file path
       const parentPath = file.path ? file.path.split('/').slice(0, -1).join('/') : '';
@@ -112,6 +132,7 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
       toast({
         title: "Spreadsheet saved successfully",
         description: `${file.name} has been saved.`,
+        variant: "success",
       });
       
     } catch (err) {
@@ -120,7 +141,7 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
       toast({
         title: "Failed to save spreadsheet",
         description: "There was an error saving your spreadsheet. Please try again.",
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setSaving(false);
@@ -167,6 +188,16 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
           <Button
             variant="default"
             size="icon"
+            onClick={handleSave}
+            disabled={saving || (!currentContent && !latestData)}
+            className="h-9 w-9 bg-primary hover:bg-primary/80"
+            title="Save spreadsheet"
+          >
+            <Save className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="default"
+            size="icon"
             onClick={handleDownload}
             className="h-9 w-9 bg-primary hover:bg-primary/80"
             title="Download spreadsheet"
@@ -177,18 +208,21 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
       </div>
 
       {/* Spreadsheet display area with CSVEditor */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden h-full">
         {documentUrl ? (
-          <CSVEditor
-            src={documentUrl}
-            fileName={file.name}
-            onError={() => setError('Failed to load spreadsheet in editor')}
-            onLoad={() => setError(null)}
-            onSave={(content) => {
-              setCurrentContent(content);
-              handleSave();
-            }}
-          />
+          <div className="h-full">
+            <CSVEditor
+              src={documentUrl}
+              fileName={file.name}
+              onError={() => setError('Failed to load spreadsheet in editor')}
+              onLoad={() => setError(null)}
+              onContentChange={(data) => setLatestData(data)}
+              onSave={(content) => {
+                setCurrentContent(content);
+                handleSave();
+              }}
+            />
+          </div>
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-muted-foreground">No spreadsheet to display</div>

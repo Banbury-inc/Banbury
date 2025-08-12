@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { HotTable } from '@handsontable/react';
 import { registerAllModules } from 'handsontable/registry';
+import { textRenderer, registerRenderer } from 'handsontable/renderers';
 import 'handsontable/dist/handsontable.full.css';
-import { Box, Typography, Alert, CircularProgress, Button, Toolbar, IconButton } from '@mui/material';
+import { Box, Typography, Alert, CircularProgress, Button, Toolbar, IconButton, Divider, Menu, MenuItem, TextField } from '@mui/material';
 import {
-  Save,
   Add,
   ViewColumn,
   Undo,
@@ -13,10 +13,86 @@ import {
   ContentCopy,
   ContentPaste,
   Delete,
+  SelectAll,
+  Clear,
+  FilterList,
+  Search,
+  GetApp,
+  CallSplit,
+  FormatBold,
+  FormatItalic,
+  FormatUnderlined,
+  FormatAlignLeft,
+  FormatAlignCenter,
+  FormatAlignRight,
+  ColorLens,
+  BorderAll,
+  FormatSize,
+  AttachMoney,
+  CalendarToday,
+  Percent,
+  Tag,
+  Numbers,
+  KeyboardArrowDown,
+  Remove,
+  TextFormat,
+  BorderTop,
+  BorderRight,
+  BorderBottom,
+  BorderLeft,
 } from '@mui/icons-material';
-
 // Register all Handsontable modules
 registerAllModules();
+
+// Handsontable merge-cells icon as SVG component
+const MergeCellsIcon: React.FC<{ sx?: any }> = ({ sx }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    style={{
+      width: sx?.fontSize || 16,
+      height: sx?.fontSize || 16,
+      fill: 'currentColor',
+      ...sx
+    }}
+  >
+    <path d="M3.1,9h1.8C4.955,9,5,8.955,5,8.9V6.1C5,6.045,5.045,6,5.1,6h5.8C10.955,6,11,5.955,11,5.9V4.1C11,4.045,10.955,4,10.9,4H3.1C3.045,4,3,4.045,3,4.1v4.8C3,8.955,3.045,9,3.1,9z M13,4.1v1.8C13,5.955,13.045,6,13.1,6h5.8C18.955,6,19,6.045,19,6.1v2.8C19,8.955,19.045,9,19.1,9h1.8C20.955,9,21,8.955,21,8.9V4.1C21,4.045,20.955,4,20.9,4h-7.8C13.045,4,13,4.045,13,4.1z M18.9,18h-5.8c-0.055,0-0.1,0.045-0.1,0.1v1.8c0,0.055,0.045,0.1,0.1,0.1h7.8c0.055,0,0.1-0.045,0.1-0.1v-4.8c0-0.055-0.045-0.1-0.1-0.1h-1.8c-0.055,0-0.1,0.045-0.1,0.1v2.8C19,17.955,18.955,18,18.9,18z M4.9,15H3.1C3.045,15,3,15.045,3,15.1v4.8C3,19.955,3.045,20,3.1,20h7.8c0.055,0,0.1-0.045,0.1-0.1v-1.8c0-0.055-0.045-0.1-0.1-0.1H5.1C5.045,18,5,17.955,5,17.9v-2.8C5,15.045,4.955,15,4.9,15z M6.9,11H3.1C3.045,11,3,11.045,3,11.1v1.8C3,12.955,3.045,13,3.1,13h3.8C6.955,13,7,13.045,7,13.1v2.659c0,0.089,0.108,0.134,0.171,0.071l3.759-3.759c0.039-0.039,0.039-0.102,0-0.141L7.171,8.171C7.108,8.108,7,8.152,7,8.241V10.9C7,10.955,6.955,11,6.9,11z M16.829,8.171l-3.759,3.759c-0.039,0.039-0.039,0.102,0,0.141l3.759,3.759C16.892,15.892,17,15.848,17,15.759V13.1c0-0.055,0.045-0.1,0.1-0.1h3.8c0.055,0,0.1-0.045,0.1-0.1v-1.8c0-0.055-0.045-0.1-0.1-0.1h-3.8c-0.055,0-0.1-0.045-0.1-0.1V8.241C17,8.152,16.892,8.108,16.829,8.171z"/>
+  </svg>
+);
+
+// Handsontable fill-color icon as SVG component
+const FillColorIcon: React.FC<{ sx?: any }> = ({ sx }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    style={{
+      width: sx?.fontSize || 16,
+      height: sx?.fontSize || 16,
+      fill: 'currentColor',
+      ...sx
+    }}
+  >
+    <path d="M17.54,14.032c-0.019-0.023-0.047-0.036-0.077-0.036L6.582,14l-0.457-0.457l7.462-6.396c0.042-0.036,0.047-0.099,0.011-0.141l-2.953-3.429c-0.036-0.042-0.099-0.047-0.141-0.011L9.496,4.434C9.454,4.47,9.45,4.533,9.486,4.575l1.953,2.267c0.036,0.042,0.031,0.105-0.011,0.141l-7.47,6.404c-0.044,0.038-0.047,0.105-0.006,0.147l7.437,7.437c0.037,0.037,0.095,0.039,0.135,0.006l6.89-5.741c0.042-0.035,0.048-0.098,0.013-0.141L17.54,14.032z M19.5,17.309c-0.206-0.412-0.793-0.412-0.999,0c0,0-1.506,3.186,0.5,3.186S19.5,17.309,19.5,17.309z"/>
+  </svg>
+);
+
+// Handsontable text-color icon as SVG component
+const TextColorIcon: React.FC<{ sx?: any }> = ({ sx }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    style={{
+      width: sx?.fontSize || 16,
+      height: sx?.fontSize || 16,
+      fill: 'currentColor',
+      ...sx
+    }}
+  >
+    <path d="M9.763,13.407L9.05,15.68c-0.013,0.042-0.052,0.07-0.095,0.07h-2.72c-0.069,0-0.117-0.068-0.094-0.133l4.125-11.81c0.014-0.04,0.052-0.067,0.094-0.067h3.223c0.044,0,0.082,0.028,0.095,0.07l3.753,11.81c0.02,0.064-0.028,0.13-0.095,0.13h-2.847c-0.045,0-0.085-0.03-0.097-0.074l-0.609-2.265c-0.012-0.044-0.051-0.074-0.097-0.074H9.859C9.815,13.337,9.776,13.366,9.763,13.407z M11.807,6.754l-1.315,4.239c-0.02,0.064,0.028,0.13,0.096,0.13h2.453c0.066,0,0.114-0.062,0.097-0.126l-1.137-4.239C11.973,6.661,11.836,6.658,11.807,6.754z"/>
+    <path d="M20.9,21H3.1C3.045,21,3,20.955,3,20.9v-2.8C3,18.045,3.045,18,3.1,18h17.8c0.055,0,0.1,0.045,0.1,0.1v2.8C21,20.955,20.955,21,20.9,21z"/>
+  </svg>
+);
+
 
 interface CSVEditorProps {
   src: string;
@@ -44,7 +120,12 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [containerHeight, setContainerHeight] = useState(400);
+  const [alignmentAnchorEl, setAlignmentAnchorEl] = useState<null | HTMLElement>(null);
+  const [fontSize, setFontSize] = useState<number>(12);
   const hotTableRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastSelectionRef = useRef<[number, number, number, number] | null>(null);
 
   // Helper function to parse CSV content
   const parseCSV = (csvContent: string): any[][] => {
@@ -136,11 +217,102 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
     loadCSVContent();
   }, [src, onLoad, onError]);
 
+  // Calculate container height dynamically
+  useEffect(() => {
+    const calculateHeight = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const availableHeight = rect.height;
+        if (availableHeight > 100) {
+          setContainerHeight(availableHeight);
+        } else {
+          // Fallback: try to get parent height
+          const parent = containerRef.current.parentElement;
+          if (parent) {
+            const parentRect = parent.getBoundingClientRect();
+            const calculatedHeight = Math.max(400, parentRect.height - 100); // Account for toolbar
+            setContainerHeight(calculatedHeight);
+          }
+        }
+      }
+    };
+
+    // Initial calculation with a slight delay to ensure DOM is ready
+    const initialTimer = setTimeout(calculateHeight, 100);
+
+    // Recalculate on window resize
+    const handleResize = () => {
+      setTimeout(calculateHeight, 100);
+    };
+
+    window.addEventListener('resize', handleResize);
+    
+    // Use ResizeObserver for more accurate container size changes
+    let resizeObserver: ResizeObserver;
+    if (containerRef.current && window.ResizeObserver) {
+      resizeObserver = new ResizeObserver(() => {
+        setTimeout(calculateHeight, 100);
+      });
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      clearTimeout(initialTimer);
+      window.removeEventListener('resize', handleResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
+  }, []);
+
+  // Force HotTable refresh when height changes
+  useEffect(() => {
+    if (hotTableRef.current?.hotInstance && containerHeight > 100) {
+      setTimeout(() => {
+        hotTableRef.current.hotInstance.render();
+      }, 50);
+    }
+  }, [containerHeight]);
+
+  // Configure plugins after table initialization
+  useEffect(() => {
+    if (hotTableRef.current?.hotInstance) {
+      const hotInstance = hotTableRef.current.hotInstance;
+      
+      // Enable plugins if they exist
+      try {
+        if (hotInstance.getPlugin) {
+          const undoRedo = hotInstance.getPlugin('undoRedo');
+          if (undoRedo && !undoRedo.isEnabled()) {
+            undoRedo.enablePlugin();
+          }
+          
+          const copyPaste = hotInstance.getPlugin('copyPaste');
+          if (copyPaste && !copyPaste.isEnabled()) {
+            copyPaste.enablePlugin();
+          }
+          
+          const search = hotInstance.getPlugin('search');
+          if (search && !search.isEnabled()) {
+            search.enablePlugin();
+          }
+          
+          const columnSorting = hotInstance.getPlugin('columnSorting');
+          if (columnSorting && !columnSorting.isEnabled()) {
+            columnSorting.enablePlugin();
+          }
+        }
+      } catch (error) {
+        // Silently handle plugin initialization errors
+      }
+    }
+  }, [data]);
+
   const handleDataChange = useCallback((changes: any, source: string) => {
     // Ignore programmatic changes to prevent infinite loops
     if (source === 'loadData' || source === 'updateData' || !changes) return;
     
-    console.log('Data changed:', changes, source);
+
     setHasChanges(true);
     
     // Only update our state for user-initiated changes
@@ -158,7 +330,7 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   }, [onContentChange]);
 
   const handleSave = useCallback(() => {
-    console.log('Saving data:', data);
+
     const csvContent = convertToCSV(data);
     onSave?.(csvContent);
     setHasChanges(false);
@@ -166,7 +338,7 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
 
   // Spreadsheet actions
   const handleAddRow = () => {
-    console.log('Adding row');
+
     const hotInstance = hotTableRef.current?.hotInstance;
     if (hotInstance?.alter) {
       hotInstance.alter('insert_row_below');
@@ -175,13 +347,761 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   };
 
   const handleAddColumn = () => {
-    console.log('Adding column');
     const hotInstance = hotTableRef.current?.hotInstance;
     if (hotInstance?.alter) {
       hotInstance.alter('insert_col_end');
       setHasChanges(true);
     }
   };
+
+  // Undo/Redo functions - using documented API
+  const handleUndo = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance && hotInstance.isUndoAvailable && hotInstance.isUndoAvailable()) {
+      hotInstance.undo();
+    }
+  };
+
+  const handleRedo = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance && hotInstance.isRedoAvailable && hotInstance.isRedoAvailable()) {
+      hotInstance.redo();
+    }
+  };
+
+  // Clipboard functions - using documented API
+  const handleCut = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance?.getPlugin) {
+      const copyPaste = hotInstance.getPlugin('copyPaste');
+      if (copyPaste && copyPaste.isEnabled()) {
+        copyPaste.cut();
+        setHasChanges(true);
+      }
+    }
+  };
+
+  const handleCopy = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance?.getPlugin) {
+      const copyPaste = hotInstance.getPlugin('copyPaste');
+      if (copyPaste && copyPaste.isEnabled()) {
+        copyPaste.copy();
+      }
+    }
+  };
+
+  const handlePaste = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance?.getPlugin) {
+      const copyPaste = hotInstance.getPlugin('copyPaste');
+      if (copyPaste && copyPaste.isEnabled()) {
+        copyPaste.paste();
+        setHasChanges(true);
+      }
+    }
+  };
+
+  // Clear selected cells - using documented API
+  const handleClear = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance) {
+      hotInstance.emptySelectedCells();
+      setHasChanges(true);
+    }
+  };
+
+  // Select all - using documented API
+  const handleSelectAll = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance) {
+      hotInstance.selectAll();
+    }
+  };
+
+  // Search function - using documented API
+  const handleSearch = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance?.getPlugin) {
+      const search = hotInstance.getPlugin('search');
+      if (search && search.isEnabled()) {
+        const searchTerm = prompt('Enter search term:');
+        if (searchTerm) {
+          const results = search.query(searchTerm);
+          if (results.length > 0) {
+            hotInstance.selectCell(results[0].row, results[0].col);
+          } else {
+            alert('No matches found');
+          }
+        }
+      }
+    }
+  };
+
+  // Filter toggle - using documented API
+  const handleToggleFilters = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance?.getPlugin) {
+      const filters = hotInstance.getPlugin('filters');
+      if (filters) {
+        if (filters.isEnabled()) {
+          filters.disablePlugin();
+        } else {
+          filters.enablePlugin();
+        }
+        hotInstance.render();
+      }
+    }
+  };
+
+  // Export to CSV - using documented API
+  const handleExport = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance?.getPlugin) {
+      const exportFile = hotInstance.getPlugin('exportFile');
+      if (exportFile && exportFile.isEnabled()) {
+        exportFile.downloadFile('csv', {
+          filename: fileName ? fileName.replace(/\.[^/.]+$/, '') : 'export',
+        });
+      } else {
+        // Fallback: manual CSV export
+        const data = hotInstance.getData();
+        const csvContent = data.map((row: any[]) => 
+          row.map((cell: any) => {
+            const value = String(cell || '');
+            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+              return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+          }).join(',')
+        ).join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName ? fileName.replace(/\.[^/.]+$/, '.csv') : 'export.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    }
+  };
+
+  // Merge cells - using documented API
+  const handleMergeCells = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance?.getPlugin) {
+      const mergeCells = hotInstance.getPlugin('mergeCells');
+      if (mergeCells && mergeCells.isEnabled()) {
+        const selected = hotInstance.getSelected();
+        if (selected && selected.length > 0) {
+          const [startRow, startCol, endRow, endCol] = selected[0];
+          if (startRow !== endRow || startCol !== endCol) {
+            mergeCells.merge(startRow, startCol, endRow, endCol);
+            setHasChanges(true);
+          }
+        }
+      }
+    }
+  };
+
+  // Unmerge cells - using documented API
+  const handleUnmergeCells = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance?.getPlugin) {
+      const mergeCells = hotInstance.getPlugin('mergeCells');
+      if (mergeCells && mergeCells.isEnabled()) {
+        const selected = hotInstance.getSelected();
+        if (selected && selected.length > 0) {
+          const [row, col] = selected[0];
+          const mergedCells = mergeCells.mergedCellsCollection.get(row, col);
+          if (mergedCells) {
+            mergeCells.unmerge(mergedCells.row, mergedCells.col, mergedCells.row + mergedCells.rowspan - 1, mergedCells.col + mergedCells.colspan - 1);
+            setHasChanges(true);
+          }
+        }
+      }
+    }
+  };
+
+  // Delete row/column functions - using documented API
+  const handleDeleteRow = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance) {
+      const selected = hotInstance.getSelected();
+      if (selected && selected.length > 0) {
+        const row = selected[0][0];
+        hotInstance.alter('remove_row', row);
+        setHasChanges(true);
+      }
+    }
+  };
+
+  const handleDeleteColumn = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance) {
+      const selected = hotInstance.getSelected();
+      if (selected && selected.length > 0) {
+        const col = selected[0][1];
+        hotInstance.alter('remove_col', col);
+        setHasChanges(true);
+      }
+    }
+  };
+
+  // Store cell formatting state
+  const [cellFormats, setCellFormats] = useState<{[key: string]: {className?: string}}>({});
+
+  // Cell formatting functions using proper Handsontable approach
+  const toggleCellFormat = (formatProperty: string, className: string) => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance) {
+      const selected = hotInstance.getSelected();
+      if (selected && selected.length > 0) {
+        const [startRow, startCol, endRow, endCol] = selected[0];
+        const newCellFormats = { ...cellFormats };
+        
+        hotInstance.suspendRender();
+        for (let row = startRow; row <= endRow; row++) {
+          for (let col = startCol; col <= endCol; col++) {
+            const cellKey = `${row}-${col}`;
+            const currentFormat = newCellFormats[cellKey] || {};
+            const currentClassName = currentFormat.className || '';
+            const classNames = currentClassName.split(' ').filter((c: string) => c.trim() !== '');
+            
+            // Check if the class is already applied
+            const classIndex = classNames.indexOf(className);
+            
+            if (classIndex > -1) {
+              // Remove the class (toggle off)
+              classNames.splice(classIndex, 1);
+            } else {
+              // Add the class (toggle on)
+              classNames.push(className);
+            }
+            
+            // Also update Handsontable meta directly so it applies immediately
+            hotInstance.setCellMeta(row, col, 'className', classNames.join(' '));
+
+            // Update the cell format
+            newCellFormats[cellKey] = {
+              ...currentFormat,
+              className: classNames.join(' ').trim()
+            };
+          }
+        }
+        
+        setCellFormats(newCellFormats);
+        hotInstance.resumeRender();
+        hotInstance.render();
+        setHasChanges(true);
+      }
+    }
+  };
+
+  const handleBold = () => {
+    toggleCellFormat('fontWeight', 'ht-bold');
+  };
+
+  const handleItalic = () => {
+    toggleCellFormat('fontStyle', 'ht-italic');
+  };
+
+  const handleUnderline = () => {
+    toggleCellFormat('textDecoration', 'ht-underline');
+  };
+
+  const handleAlignLeft = () => {
+    setCellAlignment('ht-align-left');
+  };
+
+  const handleAlignCenter = () => {
+    setCellAlignment('ht-align-center');
+  };
+
+  const handleAlignRight = () => {
+    setCellAlignment('ht-align-right');
+  };
+
+  // Helper function to set cell alignment
+  const setCellAlignment = (alignmentClass: string) => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance) {
+      const selected = hotInstance.getSelected();
+      if (selected && selected.length > 0) {
+        const [startRow, startCol, endRow, endCol] = selected[0];
+        const newCellFormats = { ...cellFormats };
+        
+        hotInstance.suspendRender();
+        for (let row = startRow; row <= endRow; row++) {
+          for (let col = startCol; col <= endCol; col++) {
+            const cellKey = `${row}-${col}`;
+            const currentFormat = newCellFormats[cellKey] || {};
+            const currentClassName = currentFormat.className || '';
+            const classNames = currentClassName.split(' ').filter((c: string) => c.trim() !== '');
+            
+            // Remove any existing alignment classes
+            const alignmentClasses = ['ht-align-left', 'ht-align-center', 'ht-align-right'];
+            alignmentClasses.forEach(alignClass => {
+              const index = classNames.indexOf(alignClass);
+              if (index > -1) {
+                classNames.splice(index, 1);
+              }
+            });
+            
+            // Add the new alignment class
+            classNames.push(alignmentClass);
+            
+            // Also update Handsontable meta directly so it applies immediately
+            hotInstance.setCellMeta(row, col, 'className', classNames.join(' '));
+
+            // Update the cell format
+            newCellFormats[cellKey] = {
+              ...currentFormat,
+              className: classNames.join(' ').trim()
+            };
+          }
+        }
+        
+        setCellFormats(newCellFormats);
+        hotInstance.resumeRender();
+        hotInstance.render();
+        setHasChanges(true);
+      }
+    }
+  };
+
+  // Text/Fill color dropdown anchors
+  const [textColorAnchorEl, setTextColorAnchorEl] = useState<null | HTMLElement>(null);
+  const [fillColorAnchorEl, setFillColorAnchorEl] = useState<null | HTMLElement>(null);
+
+  const handleTextColorClick = (event: React.MouseEvent<HTMLElement>) => {
+    setTextColorAnchorEl(event.currentTarget);
+  };
+  const handleTextColorClose = () => setTextColorAnchorEl(null);
+  const handleBackgroundColorClick = (event: React.MouseEvent<HTMLElement>) => {
+    setFillColorAnchorEl(event.currentTarget);
+  };
+  const handleBackgroundColorClose = () => setFillColorAnchorEl(null);
+
+  // Helper function to apply styles via cell meta (persists across re-render)
+  const applyCellStyle = (styleProperty: string, styleValue: string) => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (!hotInstance) return;
+    let sel = hotInstance.getSelected();
+    if (!sel || sel.length === 0) {
+      if (lastSelectionRef.current) {
+        const [r, c, r2, c2] = lastSelectionRef.current;
+        sel = [[r, c, r2, c2]] as any;
+      } else {
+        return;
+      }
+    }
+    const [startRow, startCol, endRow, endCol] = sel[0] as [number, number, number, number];
+    hotInstance.suspendRender();
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        const currentStyle = hotInstance.getCellMeta(row, col).style || {};
+        hotInstance.setCellMeta(row, col, 'style', {
+          ...currentStyle,
+          [styleProperty]: styleValue,
+        });
+        const td = hotInstance.getCell(row, col) as HTMLElement | null;
+        if (td) {
+          try { (td.style as any)[styleProperty] = styleValue as any; } catch {}
+        }
+      }
+    }
+    hotInstance.resumeRender();
+    hotInstance.render();
+    setHasChanges(true);
+  };
+
+  const removeCellStyle = (styleProperty: string) => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (!hotInstance) return;
+    let sel = hotInstance.getSelected();
+    if (!sel || sel.length === 0) {
+      if (lastSelectionRef.current) {
+        const [r, c, r2, c2] = lastSelectionRef.current;
+        sel = [[r, c, r2, c2]] as any;
+      } else {
+        return;
+      }
+    }
+    const [startRow, startCol, endRow, endCol] = sel[0] as [number, number, number, number];
+    hotInstance.suspendRender();
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        const currentStyle = { ...(hotInstance.getCellMeta(row, col).style || {}) } as any;
+        if (currentStyle && styleProperty in currentStyle) {
+          delete currentStyle[styleProperty as any];
+        }
+        hotInstance.setCellMeta(row, col, 'style', currentStyle);
+        const td = hotInstance.getCell(row, col) as HTMLElement | null;
+        if (td) {
+          try { (td.style as any)[styleProperty] = ''; } catch {}
+        }
+      }
+    }
+    hotInstance.resumeRender();
+    hotInstance.render();
+    setHasChanges(true);
+  };
+
+  const [borderAnchorEl, setBorderAnchorEl] = useState<null | HTMLElement>(null);
+  const [borderStyle, setBorderStyle] = useState<'thin' | 'thick' | 'dashed'>('thin');
+  const [customBordersDefs, setCustomBordersDefs] = useState<any[]>([]);
+  // Register a stable renderer to apply meta.className and meta.style as per docs
+  useEffect(() => {
+    try {
+      registerRenderer('banburyStyledRenderer', (instance: any, td: HTMLTableCellElement, ...rest: any[]) => {
+        // Use default text renderer first
+        // @ts-ignore
+        textRenderer(instance, td, ...rest);
+        const [row, col] = rest;
+        const meta = instance.getCellMeta(row, col) || {};
+        if (meta.className) td.className = meta.className;
+        if (meta.style) {
+          try { Object.assign(td.style, meta.style); } catch {}
+        }
+        return td;
+      });
+    } catch {}
+  }, []);
+
+  const handleBorders = () => {
+    // Open dropdown if available elsewhere
+    setBorderAnchorEl(document.body);
+  };
+
+  const handleBorderClick = (event: React.MouseEvent<HTMLElement>) => {
+    setBorderAnchorEl(event.currentTarget);
+  };
+
+  const handleBorderClose = () => setBorderAnchorEl(null);
+
+  type BorderOption = 'all' | 'outer' | 'inner' | 'top' | 'right' | 'bottom' | 'left' | 'thick-outer' | 'dashed-outer' | 'none';
+
+  const applyBordersOption = (option: BorderOption) => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (!hotInstance) return;
+    // Use last selection if click caused selection to clear
+    let sel = hotInstance.getSelected();
+    if (!sel || sel.length === 0) {
+      if (lastSelectionRef.current) {
+        const [r, c, r2, c2] = lastSelectionRef.current;
+        sel = [[r, c, r2, c2]] as any;
+      } else {
+        return;
+      }
+    }
+
+    const [startRow, startCol, endRow, endCol] = sel[0] as [number, number, number, number];
+
+    const clearBorderKeys = (style: Record<string, any>) => {
+      const { border, borderTop, borderRight, borderBottom, borderLeft, ...rest } = style || {};
+      return rest;
+    };
+
+    const setEdge = (row: number, col: number, edges: Partial<Record<'top'|'right'|'bottom'|'left', string>>) => {
+      const currentStyle = hotInstance.getCellMeta(row, col).style || {};
+      const base = clearBorderKeys(currentStyle);
+      const next: Record<string, any> = { ...base };
+      if (edges.top) next.borderTop = edges.top;
+      if (edges.right) next.borderRight = edges.right;
+      if (edges.bottom) next.borderBottom = edges.bottom;
+      if (edges.left) next.borderLeft = edges.left;
+      hotInstance.setCellMeta(row, col, 'style', next);
+    };
+
+    const styleFor = (kind: 'thin' | 'thick' | 'dashed') => {
+      if (kind === 'thick') return '2px solid #000';
+      if (kind === 'dashed') return '1px dashed #000';
+      return '1px solid #000';
+    };
+
+    const writeAll = (value: string) => {
+      for (let r = startRow; r <= endRow; r++) {
+        for (let c = startCol; c <= endCol; c++) {
+          setEdge(r, c, { top: value, right: value, bottom: value, left: value });
+        }
+      }
+    };
+
+    // Build CustomBorders plugin config based on selection
+    const width = borderStyle === 'thick' ? 2 : 1; // dashed maps to thin (plugin doesn't support dashed style)
+    const color = '#000';
+
+    const defs: any[] = [];
+
+    const pushOuterRange = () => {
+      defs.push({
+        range: {
+          from: { row: startRow, col: startCol },
+          to: { row: endRow, col: endCol },
+        },
+        top: { width, color },
+        bottom: { width, color },
+        start: { width, color },
+        end: { width, color },
+      });
+    };
+
+    const pushPerCell = (r: number, c: number, edges: Partial<Record<'top'|'right'|'bottom'|'left', boolean>>) => {
+      const entry: any = { row: r, col: c };
+      if (edges.top) entry.top = { width, color };
+      if (edges.right) entry.right = { width, color };
+      if (edges.bottom) entry.bottom = { width, color };
+      if (edges.left) entry.left = { width, color };
+      defs.push(entry);
+    };
+
+    switch (option) {
+      case 'all': {
+        for (let r = startRow; r <= endRow; r++) {
+          for (let c = startCol; c <= endCol; c++) {
+            pushPerCell(r, c, { top: true, right: true, bottom: true, left: true });
+          }
+        }
+        break;
+      }
+      case 'outer':
+        pushOuterRange();
+        break;
+      case 'thick-outer':
+        defs.push({
+          range: { from: { row: startRow, col: startCol }, to: { row: endRow, col: endCol } },
+          top: { width: 2, color },
+          bottom: { width: 2, color },
+          start: { width: 2, color },
+          end: { width: 2, color },
+        });
+        break;
+      case 'dashed-outer':
+        // Fallback to thin since plugin doesn't support dashed. Could emulate via CSS if needed.
+        pushOuterRange();
+        break;
+      case 'inner': {
+        for (let r = startRow; r <= endRow; r++) {
+          for (let c = startCol; c <= endCol; c++) {
+            const edges: any = {};
+            if (r > startRow) edges.top = true;
+            if (c > startCol) edges.left = true;
+            if (Object.keys(edges).length) pushPerCell(r, c, edges);
+          }
+        }
+        break;
+      }
+      case 'top':
+        for (let c = startCol; c <= endCol; c++) pushPerCell(startRow, c, { top: true });
+        break;
+      case 'bottom':
+        for (let c = startCol; c <= endCol; c++) pushPerCell(endRow, c, { bottom: true });
+        break;
+      case 'left':
+        for (let r = startRow; r <= endRow; r++) pushPerCell(r, startCol, { left: true });
+        break;
+      case 'right':
+        for (let r = startRow; r <= endRow; r++) pushPerCell(r, endCol, { right: true });
+        break;
+      case 'none':
+        setCustomBordersDefs([]);
+        handleBorderClose();
+        hotInstance.render();
+        setHasChanges(true);
+        return;
+    }
+
+    setCustomBordersDefs(defs);
+    hotInstance.render();
+    setHasChanges(true);
+    handleBorderClose();
+  };
+
+  const handleFontSize = (newFontSize?: number) => {
+    const fontSizeValue = newFontSize || fontSize;
+    applyCellStyle('fontSize', `${fontSizeValue}px`);
+  };
+
+  const handleFontSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(event.target.value);
+    if (!isNaN(value) && value > 0 && value <= 72) {
+      setFontSize(value);
+      handleFontSize(value);
+    }
+  };
+
+  const handleFontSizeIncrement = () => {
+    const newSize = Math.min(fontSize + 1, 72);
+    setFontSize(newSize);
+    handleFontSize(newSize);
+  };
+
+  const handleFontSizeDecrement = () => {
+    const newSize = Math.max(fontSize - 1, 6);
+    setFontSize(newSize);
+    handleFontSize(newSize);
+  };
+
+  // Data type formatting functions
+  const handleCurrencyFormat = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance) {
+      const selected = hotInstance.getSelected();
+      if (selected && selected.length > 0) {
+        const [startRow, startCol, endRow, endCol] = selected[0];
+        
+        for (let row = startRow; row <= endRow; row++) {
+          for (let col = startCol; col <= endCol; col++) {
+            hotInstance.setCellMeta(row, col, 'type', 'numeric');
+            hotInstance.setCellMeta(row, col, 'numericFormat', {
+              pattern: '$0,0.00',
+              culture: 'en-US'
+            });
+          }
+        }
+        hotInstance.render();
+        setHasChanges(true);
+      }
+    }
+  };
+
+  const handleDateFormat = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance) {
+      const selected = hotInstance.getSelected();
+      if (selected && selected.length > 0) {
+        const [startRow, startCol, endRow, endCol] = selected[0];
+        
+        for (let row = startRow; row <= endRow; row++) {
+          for (let col = startCol; col <= endCol; col++) {
+            hotInstance.setCellMeta(row, col, 'type', 'date');
+            hotInstance.setCellMeta(row, col, 'dateFormat', 'MM/DD/YYYY');
+          }
+        }
+        hotInstance.render();
+        setHasChanges(true);
+      }
+    }
+  };
+
+  const handlePercentageFormat = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance) {
+      const selected = hotInstance.getSelected();
+      if (selected && selected.length > 0) {
+        const [startRow, startCol, endRow, endCol] = selected[0];
+        
+        for (let row = startRow; row <= endRow; row++) {
+          for (let col = startCol; col <= endCol; col++) {
+            hotInstance.setCellMeta(row, col, 'type', 'numeric');
+            hotInstance.setCellMeta(row, col, 'numericFormat', {
+              pattern: '0.00%'
+            });
+          }
+        }
+        hotInstance.render();
+        setHasChanges(true);
+      }
+    }
+  };
+
+  const handleNumberFormat = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance) {
+      const selected = hotInstance.getSelected();
+      if (selected && selected.length > 0) {
+        const [startRow, startCol, endRow, endCol] = selected[0];
+        
+        for (let row = startRow; row <= endRow; row++) {
+          for (let col = startCol; col <= endCol; col++) {
+            hotInstance.setCellMeta(row, col, 'type', 'numeric');
+            hotInstance.setCellMeta(row, col, 'numericFormat', {
+              pattern: '0,0.00'
+            });
+          }
+        }
+        hotInstance.render();
+        setHasChanges(true);
+      }
+    }
+  };
+
+  const handleTextFormat = () => {
+    const hotInstance = hotTableRef.current?.hotInstance;
+    if (hotInstance) {
+      const selected = hotInstance.getSelected();
+      if (selected && selected.length > 0) {
+        const [startRow, startCol, endRow, endCol] = selected[0];
+        
+        for (let row = startRow; row <= endRow; row++) {
+          for (let col = startCol; col <= endCol; col++) {
+            hotInstance.setCellMeta(row, col, 'type', 'text');
+            // Remove any numeric formatting
+            hotInstance.removeCellMeta(row, col, 'numericFormat');
+            hotInstance.removeCellMeta(row, col, 'dateFormat');
+          }
+        }
+        hotInstance.render();
+        setHasChanges(true);
+      }
+    }
+  };
+
+  // Alignment dropdown handlers
+  const handleAlignmentClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAlignmentAnchorEl(event.currentTarget);
+  };
+
+  const handleAlignmentClose = () => {
+    setAlignmentAnchorEl(null);
+  };
+
+  const handleAlignmentSelect = (alignment: 'left' | 'center' | 'right') => {
+    switch (alignment) {
+      case 'left':
+        handleAlignLeft();
+        break;
+      case 'center':
+        handleAlignCenter();
+        break;
+      case 'right':
+        handleAlignRight();
+        break;
+    }
+    handleAlignmentClose();
+  };
+
+  // Add custom CSS styles for cell formatting
+  useEffect(() => {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+      .handsontable .ht-bold {
+        font-weight: bold !important;
+      }
+      .handsontable .ht-italic {
+        font-style: italic !important;
+      }
+      .handsontable .ht-underline {
+        text-decoration: underline !important;
+      }
+      .handsontable .ht-align-left {
+        text-align: left !important;
+      }
+      .handsontable .ht-align-center {
+        text-align: center !important;
+      }
+      .handsontable .ht-align-right {
+        text-align: right !important;
+      }
+    `;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -192,34 +1112,8 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
     );
   }
 
-  console.log('Rendering CSVEditor with data:', data);
-
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Header with file info and save button */}
-      <Box sx={{ 
-        p: 2, 
-        borderBottom: 1, 
-        borderColor: 'divider',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: 'background.paper'
-      }}>
-        <Typography variant="h6" component="h2">
-          {fileName || 'Spreadsheet'}
-        </Typography>
-        
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<Save />}
-          onClick={handleSave}
-          disabled={!hasChanges}
-        >
-          Save {hasChanges ? '(Modified)' : ''}
-        </Button>
-      </Box>
 
       {error && (
         <Alert severity="warning" sx={{ m: 1 }}>
@@ -227,65 +1121,604 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
         </Alert>
       )}
 
-      {/* Simplified toolbar */}
-      <Toolbar sx={{ 
+      {/* Handsontable Functions Toolbar - Only documented API functions */}
+      <Box sx={{ 
         borderBottom: 1, 
         borderColor: 'divider',
-        backgroundColor: 'background.paper',
-        gap: 1,
-        px: 2
+        backgroundColor: '#f8fafc',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 0.5,
+        height: '40px',
+        px: 1,
+        py: 0,
+        overflow: 'hidden',
       }}>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<Add />}
-          onClick={handleAddRow}
-        >
-          Add Row
-        </Button>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<ViewColumn />}
-          onClick={handleAddColumn}
-        >
-          Add Column
-        </Button>
-      </Toolbar>
 
-      {/* Debug info */}
-      <Box sx={{ p: 1, backgroundColor: '#f5f5f5', fontSize: '12px' }}>
-        Data rows: {data.length}, Columns: {data[0]?.length || 0}, Has changes: {hasChanges.toString()}
-      </Box>
+        {/* Undo/Redo Group */}
+        <IconButton
+          size="small"
+          onClick={handleUndo}
+          title="Undo"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <Undo sx={{ fontSize: 16 }} />
+        </IconButton>
+        <IconButton
+          size="small"
+          onClick={handleRedo}
+          title="Redo"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <Redo sx={{ fontSize: 16 }} />
+        </IconButton>
+        <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: '#e2e8f0' }} />
+        
+        {/* Data Type Group */}
+        <IconButton
+          size="small"
+          onClick={handleCurrencyFormat}
+          title="Currency Format"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <AttachMoney sx={{ fontSize: 16 }} />
+        </IconButton>
+        <IconButton
+          size="small"
+          onClick={handleDateFormat}
+          title="Date Format"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <CalendarToday sx={{ fontSize: 16 }} />
+        </IconButton>
+        <IconButton
+          size="small"
+          onClick={handlePercentageFormat}
+          title="Percentage Format"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <Percent sx={{ fontSize: 16 }} />
+        </IconButton>
+        <IconButton
+          size="small"
+          onClick={handleNumberFormat}
+          title="Number Format"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <Numbers sx={{ fontSize: 16 }} />
+        </IconButton>
+        <IconButton
+          size="small"
+          onClick={handleTextFormat}
+          title="Text Format"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <TextFormat sx={{ fontSize: 16 }} />
+        </IconButton>
+        
+        <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: '#e2e8f0' }} />
+        
+        {/* Formatting Group */}
+        {/* Font Size Control */}
+        <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
+          <IconButton
+            size="small"
+            onClick={handleFontSizeDecrement}
+            title="Decrease Font Size"
+            sx={{
+              width: 24,
+              height: 24,
+              color: '#64748b',
+              borderRadius: '2px 0 0 2px',
+              border: '1px solid #e2e8f0',
+              borderRight: 'none',
+              '&:hover': {
+                backgroundColor: '#e2e8f0',
+                color: '#475569',
+              },
+            }}
+          >
+            <Remove sx={{ fontSize: 12 }} />
+          </IconButton>
+          <TextField
+            value={fontSize}
+            onChange={handleFontSizeChange}
+            size="small"
+            inputProps={{
+              min: 6,
+              max: 72,
+              type: 'number',
+              style: {
+                textAlign: 'center',
+                padding: '2px 4px',
+                fontSize: '12px',
+                width: '32px',
+                height: '20px',
+                border: 'none',
+                outline: 'none',
+              }
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                height: '24px',
+                border: '1px solid #e2e8f0',
+                borderRadius: 0,
+                '& fieldset': {
+                  border: 'none',
+                },
+                '&:hover fieldset': {
+                  border: 'none',
+                },
+                '&.Mui-focused fieldset': {
+                  border: 'none',
+                },
+              },
+              '& .MuiInputBase-input': {
+                padding: 0,
+                color: '#000000',
+                // Hide number input spinner arrows
+                '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
+                  WebkitAppearance: 'none',
+                  margin: 0,
+                },
+                '&[type=number]': {
+                  MozAppearance: 'textfield',
+                },
+              },
+            }}
+          />
+          <IconButton
+            size="small"
+            onClick={handleFontSizeIncrement}
+            title="Increase Font Size"
+            sx={{
+              width: 24,
+              height: 24,
+              color: '#64748b',
+              borderRadius: '0 2px 2px 0',
+              border: '1px solid #e2e8f0',
+              borderLeft: 'none',
+              '&:hover': {
+                backgroundColor: '#e2e8f0',
+                color: '#475569',
+              },
+            }}
+          >
+            <Add sx={{ fontSize: 12 }} />
+          </IconButton>
+        </Box>
+        
+        <IconButton
+          size="small"
+          onClick={handleBold}
+          title="Bold"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <FormatBold sx={{ fontSize: 16 }} />
+        </IconButton>
+        <IconButton
+          size="small"
+          onClick={handleItalic}
+          title="Italic"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <FormatItalic sx={{ fontSize: 16 }} />
+        </IconButton>
+        <IconButton
+          size="small"
+          onClick={handleUnderline}
+          title="Underline"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <FormatUnderlined sx={{ fontSize: 16 }} />
+        </IconButton>
 
-      {/* Spreadsheet component with fixed height */}
-      <Box sx={{ 
-        flex: 1,
-        minHeight: '400px', // Ensure minimum height
-        position: 'relative',
-        backgroundColor: '#ffffff',
-        border: '2px solid red' // Debug border to see the container
-      }}>
-        <div style={{ 
-          width: '100%', 
-          height: '100%', 
-          minHeight: '400px',
+        <IconButton
+          size="small"
+          onClick={handleTextColorClick}
+          title="Text Color"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <TextColorIcon sx={{ fontSize: 16 }} />
+        </IconButton>
+        <Menu
+          anchorEl={textColorAnchorEl}
+          open={Boolean(textColorAnchorEl)}
+          onClose={handleTextColorClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          PaperProps={{ sx: { minWidth: '220px', p: 1 } }}
+        >
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(10, 18px)', gap: '6px', p: 1 }} onMouseDown={(e) => e.preventDefault()}>
+            {['#000000','#333333','#666666','#999999','#CCCCCC','#FFFFFF',
+              '#E53935','#D81B60','#8E24AA','#5E35B1','#3949AB','#1E88E5','#039BE5','#00ACC1','#00897B','#43A047','#7CB342','#C0CA33','#FDD835','#FB8C00']
+              .map((c) => (
+                <Box key={c}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => { handleTextColorClose(); setTimeout(() => applyCellStyle('color', c), 0); }}
+                  sx={{ width: 18, height: 18, backgroundColor: c, border: '1px solid #e5e7eb', cursor: 'pointer' }} />
+              ))}
+          </Box>
+          <Divider />
+          <MenuItem onMouseDown={(e) => e.preventDefault()} onClick={() => { handleTextColorClose(); setTimeout(() => removeCellStyle('color'), 0); }}>Clear text color</MenuItem>
+        </Menu>
+        
+        <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: '#e2e8f0' }} />
+        
+        <IconButton
+          size="small"
+          onClick={handleBackgroundColorClick}
+          title="Fill Color"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <FillColorIcon sx={{ fontSize: 16 }} />
+        </IconButton>
+        <Menu
+          anchorEl={fillColorAnchorEl}
+          open={Boolean(fillColorAnchorEl)}
+          onClose={handleBackgroundColorClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          PaperProps={{ sx: { minWidth: '220px', p: 1 } }}
+        >
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(10, 18px)', gap: '6px', p: 1 }} onMouseDown={(e) => e.preventDefault()}>
+            {['#000000','#333333','#666666','#999999','#CCCCCC','#FFFFFF',
+              '#E53935','#D81B60','#8E24AA','#5E35B1','#3949AB','#1E88E5','#039BE5','#00ACC1','#00897B','#43A047','#7CB342','#C0CA33','#FDD835','#FB8C00']
+              .map((c) => (
+                <Box key={c}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => { handleBackgroundColorClose(); setTimeout(() => applyCellStyle('backgroundColor', c), 0); }}
+                  sx={{ width: 18, height: 18, backgroundColor: c, border: '1px solid #e5e7eb', cursor: 'pointer' }} />
+              ))}
+          </Box>
+          <Divider />
+          <MenuItem onMouseDown={(e) => e.preventDefault()} onClick={() => { handleBackgroundColorClose(); setTimeout(() => removeCellStyle('backgroundColor'), 0); }}>Clear fill color</MenuItem>
+        </Menu>
+        <IconButton
+          size="small"
+          onClick={handleBorderClick}
+          title="Borders"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <BorderAll sx={{ fontSize: 16 }} />
+        </IconButton>
+        <Menu
+          anchorEl={borderAnchorEl}
+          open={Boolean(borderAnchorEl)}
+          onClose={handleBorderClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          PaperProps={{ sx: { minWidth: '260px', border: '1px solid #e2e8f0', p: 1 } }}
+        >
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 40px)', gap: 1, p: 1 }}>
+            {/* First row: All / Outer / Inner / None placeholder / None */}
+        <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('all')} title="All borders"><BorderAll sx={{ fontSize: 18 }} /></IconButton>
+        <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('outer')} title="Outer borders"><BorderAll sx={{ fontSize: 18 }} /></IconButton>
+        <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('inner')} title="Inner borders"><BorderAll sx={{ fontSize: 18 }} /></IconButton>
+            <Box />
+        <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('none')} title="Clear borders"><Clear sx={{ fontSize: 18 }} /></IconButton>
+
+            {/* Second row: Top / Right / Bottom / Left */}
+        <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('top')} title="Top border"><BorderTop sx={{ fontSize: 18 }} /></IconButton>
+        <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('right')} title="Right border"><BorderRight sx={{ fontSize: 18 }} /></IconButton>
+        <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('bottom')} title="Bottom border"><BorderBottom sx={{ fontSize: 18 }} /></IconButton>
+        <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('left')} title="Left border"><BorderLeft sx={{ fontSize: 18 }} /></IconButton>
+            <Box />
+          </Box>
+          <Divider sx={{ my: 1 }} />
+          {/* Style subgroup */}
+          <Box sx={{ display: 'flex', alignItems: 'center', px: 1, gap: 1 }}>
+            <Typography variant="body2" sx={{ color: '#475569' }}>Style</Typography>
+            <IconButton size="small" onClick={() => setBorderStyle('thin')} title="Thin"><Remove sx={{ fontSize: 18, borderBottom: '1px solid currentColor', width: 18 }} /></IconButton>
+            <IconButton size="small" onClick={() => setBorderStyle('thick')} title="Thick"><Remove sx={{ fontSize: 18, borderBottom: '3px solid currentColor', width: 18 }} /></IconButton>
+            <IconButton size="small" onClick={() => setBorderStyle('dashed')} title="Dashed"><Remove sx={{ fontSize: 18, borderBottom: '1px dashed currentColor', width: 18 }} /></IconButton>
+          </Box>
+        </Menu>
+        <IconButton
+          size="small"
+          onClick={handleMergeCells}
+          title="Merge Selected Cells"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <MergeCellsIcon sx={{ fontSize: 16 }} />
+        </IconButton>
+
+        <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: '#e2e8f0' }} />
+        {/* Alignment Group - Dropdown */}
+        <IconButton
+          size="small"
+          onClick={handleAlignmentClick}
+          title="Text Alignment"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <FormatAlignLeft sx={{ fontSize: 16 }} />
+          <KeyboardArrowDown sx={{ fontSize: 12, ml: 0.5 }} />
+        </IconButton>
+        <Menu
+          anchorEl={alignmentAnchorEl}
+          open={Boolean(alignmentAnchorEl)}
+          onClose={handleAlignmentClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'left',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'left',
+          }}
+          PaperProps={{
+            sx: {
+              minWidth: '120px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              border: '1px solid #e2e8f0',
+            }
+          }}
+        >
+          <MenuItem 
+            onClick={() => handleAlignmentSelect('left')}
+            sx={{ 
+              fontSize: '14px',
+              py: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            <FormatAlignLeft sx={{ fontSize: 16 }} />
+            Align Left
+          </MenuItem>
+          <MenuItem 
+            onClick={() => handleAlignmentSelect('center')}
+            sx={{ 
+              fontSize: '14px',
+              py: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            <FormatAlignCenter sx={{ fontSize: 16 }} />
+            Align Center
+          </MenuItem>
+          <MenuItem 
+            onClick={() => handleAlignmentSelect('right')}
+            sx={{ 
+              fontSize: '14px',
+              py: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            <FormatAlignRight sx={{ fontSize: 16 }} />
+            Align Right
+          </MenuItem>
+        </Menu>
+        
+        <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: '#e2e8f0' }} />
+        
+        
+        {/* Tools Group */}
+        <IconButton
+          size="small"
+          onClick={handleToggleFilters}
+          title="Toggle Filters"
+          sx={{
+            width: 32,
+            height: 32,
+            color: '#64748b',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#e2e8f0',
+              color: '#475569',
+            },
+          }}
+        >
+          <FilterList sx={{ fontSize: 16 }} />
+        </IconButton>
+        
+        </Box>
+        
+
+      {/* Spreadsheet component stretching to full height */}
+      <Box 
+        ref={containerRef}
+        sx={{ 
+          flex: 1,
           position: 'relative',
-          border: '2px solid blue' // Debug border for the div
-        }}>
+          backgroundColor: '#ffffff',
+          overflow: 'hidden'
+        }}
+      >
+        <div 
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+          className="handsontable-container-full"
+        >
           <HotTable
             ref={hotTableRef}
             data={data}
             colHeaders={true}
             rowHeaders={true}
-            height={400} // Fixed height instead of percentage
+            dropdownMenu={true}
+            height={containerHeight}
             width="100%"
             licenseKey="non-commercial-and-evaluation"
             contextMenu={true}
             manualRowResize={true}
             manualColumnResize={true}
+            outsideClickDeselects={false}
+            selectionMode="multiple"
             afterChange={handleDataChange}
+            afterSelectionEnd={(r,c,r2,c2) => { lastSelectionRef.current = [r,c,r2,c2]; }}
+            stretchH="all"
+            customBorders={customBordersDefs.length ? customBordersDefs : undefined}
+            cells={(row: number, col: number) => {
+              return {
+                renderer: (instance: any, td: HTMLTableCellElement, r: number, c: number, prop: any, value: any, cellProperties: any) => {
+                  textRenderer(instance, td, r, c, prop, value, cellProperties);
+                  const meta = instance.getCellMeta(r, c) || {};
+                  if (meta.className) {
+                    try { meta.className.split(' ').forEach((cls: string) => { if (cls) td.classList.add(cls); }); } catch {}
+                  }
+                  if (meta.style) {
+                    try { Object.assign(td.style, meta.style); } catch {}
+                  }
+                  return td;
+                }
+              };
+            }}
+            cell={Object.entries(cellFormats).map(([cellKey, format]) => {
+              const [row, col] = cellKey.split('-').map(Number);
+              return {
+                row,
+                col,
+                className: format.className
+              };
+            })}
+            key={`hot-table-${containerHeight}-${Object.keys(cellFormats).length}`}
           />
+
         </div>
       </Box>
     </Box>
@@ -293,3 +1726,4 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
 };
 
 export default CSVEditor;
+
