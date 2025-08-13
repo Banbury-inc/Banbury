@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { HumanMessage, SystemMessage, AIMessage, BaseMessage } from "@langchain/core/messages";
+import { HumanMessage, SystemMessage, AIMessage, BaseMessage, ToolMessage } from "@langchain/core/messages";
 import { reactAgent } from "../../../src/lib/langraph/agent";
 
 // Types following athena-intelligence patterns
@@ -165,14 +165,36 @@ function toLangChainMessages(messages: AssistantUiMessage[]): BaseMessage[] {
       const toolCalls = msg.content.filter((p) => p.type === "tool-call") as any[];
       
       if (textParts.length > 0 || toolCalls.length > 0) {
-        lc.push(new AIMessage({ 
-          content: textParts.join("\n\n"), 
-          tool_calls: toolCalls.map((c: any) => ({ 
-            name: c.toolName, 
-            args: c.args, 
-            id: c.toolCallId 
-          })) 
-        }));
+        // Only include tool calls that have completed results to maintain proper message flow
+        const completedToolCalls = toolCalls.filter((c: any) => c.result !== undefined);
+        
+        if (completedToolCalls.length > 0) {
+          // For messages with tool calls, we need to maintain the proper sequence:
+          // 1. Assistant message with tool_calls
+          // 2. Tool result messages
+          
+          lc.push(new AIMessage({ 
+            content: textParts.join("\n\n"), 
+            tool_calls: completedToolCalls.map((c: any) => ({ 
+              name: c.toolName, 
+              args: c.args, 
+              id: c.toolCallId 
+            }))
+          }));
+          
+          // Add tool result messages immediately after
+          for (const toolCall of completedToolCalls) {
+            lc.push(new ToolMessage({
+              content: typeof toolCall.result === 'string' ? toolCall.result : JSON.stringify(toolCall.result),
+              tool_call_id: toolCall.toolCallId
+            }));
+          }
+        } else if (textParts.length > 0) {
+          // If there are only text parts (no completed tool calls), just add the text message
+          lc.push(new AIMessage({ 
+            content: textParts.join("\n\n")
+          }));
+        }
       }
     }
   }

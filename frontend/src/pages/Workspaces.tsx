@@ -1308,50 +1308,64 @@ Alice Brown,alice.brown@example.com,555-0104,HR`;
           {/* Main Content Area with Resizable Panels */}
           <div className="flex flex-1 ml-16 flex-col">
             {/* Toolbar */}
-            <div className="bg-black border-b border-zinc-700 min-h-12 px-4 flex items-center justify-start">
+            <div className="bg-black border-b border-zinc-700 px-4 py-2 flex items-center justify-start gap-2">
               {/* Add Dropdown Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button 
-                    className="h-8 bg-black hover:bg-primary disabled:bg-muted disabled:text-muted-foreground border border-zinc-300 dark:border-zinc-600 px-3 py-1 rounded flex items-center gap-1 mr-2"
-                    disabled={uploading}
-                    title="Add New"
+              <div className="relative group">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 text-white hover:bg-zinc-700 hover:text-white bg-black border border-zinc-300 dark:border-zinc-600 transition-colors"
+                      disabled={uploading}
+                    >
+                      <Plus className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    style={{ zIndex: 999999 }}
                   >
-                    <Plus size={16} />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  style={{ zIndex: 999999 }}
-                >
-                  <DropdownMenuItem 
-                    onSelect={handleCreateWordDocument}
-                  >
-                    <FileText size={20} className="mr-2" />
-                    Document
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onSelect={handleCreateSpreadsheet}
-                  >
-                    <FileSpreadsheet size={20} className="mr-2" />
-                    Spreadsheet
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onSelect={handleCreateFolder}
-                  >
-                    <Folder size={20} className="mr-2" />
-                    Folder
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <DropdownMenuItem 
+                      onSelect={handleCreateWordDocument}
+                    >
+                      <FileText size={20} className="mr-2" />
+                      Document
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onSelect={handleCreateSpreadsheet}
+                    >
+                      <FileSpreadsheet size={20} className="mr-2" />
+                      Spreadsheet
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onSelect={handleCreateFolder}
+                    >
+                      <Folder size={20} className="mr-2" />
+                      Folder
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {/* Custom CSS tooltip */}
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
+                  Add New
+                </div>
+              </div>
 
-              <Button
-                onClick={handleFileUpload}
-                disabled={uploading}
-                className="h-8 bg-black hover:bg-primary disabled:bg-muted border border-zinc-300 dark:border-zinc-600 disabled:text-muted-foreground rounded px-3 py-1"
-                title="Upload File"
-              >
-                <UploadIcon className="h-4 w-4 text-white" />
-              </Button>
+              <div className="relative group">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleFileUpload}
+                  disabled={uploading}
+                  className="h-10 w-10 text-white hover:bg-zinc-700 hover:text-white bg-black border border-zinc-300 dark:border-zinc-600 transition-colors"
+                >
+                  <UploadIcon className="h-5 w-5" />
+                </Button>
+                {/* Custom CSS tooltip */}
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
+                  Upload File
+                </div>
+              </div>
             </div>
 
             {/* Resizable Panels */}

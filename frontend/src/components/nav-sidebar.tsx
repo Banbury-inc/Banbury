@@ -3,7 +3,6 @@ import Image from 'next/image'
 import { useRouter } from "next/router"
 
 import { Button } from "./ui/button"
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
 import BanburyLogo from "../assets/images/Logo.png"
 
 interface NavSidebarProps {
@@ -50,21 +49,20 @@ export function NavSidebar({ onLogout }: NavSidebarProps) {
           {navItems.map((item) => {
             const Icon = item.icon
             return (
-              <Tooltip key={item.id}>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={isActive(item.path) ? "default" : "ghost"}
-                    size="icon"
-                    className="h-10 w-10 text-white hover:bg-primary hover:text-white bg-black border border-zinc-300 dark:border-zinc-600"
-                    onClick={() => router.push(item.path)}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right" sideOffset={8}>
+              <div key={item.id} className="relative">
+                <Button
+                  variant={isActive(item.path) ? "default" : "ghost"}
+                  size="icon"
+                  className="h-10 w-10 text-white hover:bg-zinc-700 hover:text-white bg-black border border-zinc-300 dark:border-zinc-600 transition-colors peer"
+                  onClick={() => router.push(item.path)}
+                >
+                  <Icon className="h-5 w-5" />
+                </Button>
+                {/* Custom CSS tooltip for testing */}
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 z-50 top-1/2 -translate-y-1/2">
                   {item.label}
-                </TooltipContent>
-              </Tooltip>
+                </div>
+              </div>
             )
           })}
         </nav>
@@ -73,21 +71,20 @@ export function NavSidebar({ onLogout }: NavSidebarProps) {
       {/* Footer with Logout Button */}
       {onLogout && (
         <div className="flex items-center justify-center pb-4">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 text-white hover:bg-black hover:text-white border border-zinc-300 dark:border-zinc-600"
-                onClick={onLogout}
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8}>
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 text-white hover:bg-zinc-700 hover:text-white border border-zinc-300 dark:border-zinc-600 transition-colors peer"
+              onClick={onLogout}
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+            {/* Custom CSS tooltip for testing */}
+            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 z-50 top-1/2 -translate-y-1/2">
               Logout
-            </TooltipContent>
-          </Tooltip>
+            </div>
+          </div>
         </div>
       )}
     </div>

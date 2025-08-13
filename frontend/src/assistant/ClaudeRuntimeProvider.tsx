@@ -209,6 +209,8 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
               const matchingToolCall = toolCalls.find(tc => (tc as any).toolCallId === evt.part.toolCallId);
               if (matchingToolCall) {
                 (matchingToolCall as any).result = evt.part.result;
+                // Mark this tool call as completed for proper message formatting
+                (matchingToolCall as any).status = "completed";
               }
               shouldYield = true;
             } else if (evt.type === "completion-summary") {
