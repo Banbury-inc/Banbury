@@ -207,6 +207,7 @@ const Workspaces = (): JSX.Element => {
       return;
     }
     
+
     // Create new tab
     const tabId = `${file.path}_${Date.now()}`;
     const newTab: FileTab = {
