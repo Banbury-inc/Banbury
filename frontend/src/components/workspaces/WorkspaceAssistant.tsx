@@ -16,7 +16,7 @@ import {
   Stack,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 interface Message {
   id: string;
@@ -61,6 +61,53 @@ export default function WorkspaceAssistant({
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const theme = useTheme();
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  const getRecognition = () => {
+    const SpeechRecognitionImpl = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionImpl) return null;
+    if (!recognitionRef.current) {
+      const rec = new SpeechRecognitionImpl();
+      rec.continuous = false;
+      rec.interimResults = true;
+      rec.lang = 'en-US';
+      recognitionRef.current = rec;
+    }
+    return recognitionRef.current;
+  };
+
+  const startRecording = () => {
+    const rec = getRecognition();
+    if (!rec) return;
+    let finalTranscript = '';
+    rec.onresult = (event: any) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interim += transcript;
+        }
+      }
+      const text = (finalTranscript || interim).trim();
+      setInputValue(text);
+    };
+    rec.onend = () => {
+      setIsRecording(false);
+    };
+    rec.start();
+    setIsRecording(true);
+  };
+
+  const stopRecording = () => {
+    const rec = recognitionRef.current;
+    if (rec) {
+      try { rec.stop(); } catch {}
+    }
+    setIsRecording(false);
+  };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -279,6 +326,20 @@ export default function WorkspaceAssistant({
             size="small"
             disabled={isTyping}
           />
+          <IconButton
+            onClick={isRecording ? stopRecording : startRecording}
+            disabled={isTyping || !(typeof window !== 'undefined' && (((window as any).SpeechRecognition) || ((window as any).webkitSpeechRecognition)))}
+            color={isRecording ? 'error' : 'default'}
+            sx={{
+              backgroundColor: isRecording ? theme.palette.error.main : theme.palette.action.hover,
+              color: isRecording ? theme.palette.error.contrastText : theme.palette.text.primary,
+              '&:hover': {
+                backgroundColor: isRecording ? theme.palette.error.dark : theme.palette.action.selected,
+              },
+            }}
+          >
+            {isRecording ? 'Stop' : 'Mic'}
+          </IconButton>
           <IconButton
             onClick={handleSendMessage}
             disabled={!inputValue.trim() || isTyping}

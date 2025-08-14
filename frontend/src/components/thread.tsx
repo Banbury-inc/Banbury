@@ -1,13 +1,4 @@
-import {
-  ThreadPrimitive,
-  ComposerPrimitive,
-  MessagePrimitive,
-  ActionBarPrimitive,
-  BranchPickerPrimitive,
-  ErrorPrimitive,
-  useComposerRuntime,
-  useThreadRuntime,
-} from "@assistant-ui/react";
+import * as AssistantUI from "@assistant-ui/react";
 import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import {
@@ -22,6 +13,10 @@ import {
   Globe,
   Wrench,
   Zap,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 import { MarkdownText } from "./markdown-text";
@@ -49,6 +44,18 @@ import {
 
 import type { FC } from "react";
 import styles from "../styles/scrollbar.module.css";
+
+// Destructure Assistant UI primitives from namespace import to avoid named import type issues
+const {
+  ThreadPrimitive,
+  ComposerPrimitive,
+  MessagePrimitive,
+  ActionBarPrimitive,
+  BranchPickerPrimitive,
+  ErrorPrimitive,
+  useComposerRuntime,
+  useThreadRuntime,
+} = AssistantUI as any;
 
 interface ThreadProps {
   userInfo: {
@@ -401,9 +408,7 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove
       text = input?.value || '';
     }
     
-    console.log('Sending text:', text); // Debug log
-    console.log('Text length:', text.length); // Debug log
-    console.log('Composer state:', composer); // Debug composer
+    
     
     if (text.trim().length > 0) {
       // Try multiple approaches to get the text into the composer
@@ -422,19 +427,13 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove
         try {
           if (composer && typeof composer.setText === 'function') {
             composer.setText(text);
-            console.log('Set text directly on composer using setText');
-            
-            // Check the state after setting
-            const stateAfter = composer.getState();
-            console.log('Composer state after setText:', stateAfter);
           }
         } catch (e) {
-          console.log('Could not set text directly:', e);
+          
         }
         
         // Wait and then send
         setTimeout(() => {
-          console.log('About to send, input value:', input.value);
           composer.send();
           
           // Clear after sending
@@ -522,6 +521,62 @@ interface ComposerActionProps {
 const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, onFileRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences }) => {
   const composer = useComposerRuntime();
   const [hasText, setHasText] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  const getRecognition = () => {
+    const SpeechRecognitionImpl = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionImpl) return null;
+    if (!recognitionRef.current) {
+      const rec = new SpeechRecognitionImpl();
+      rec.continuous = false;
+      rec.interimResults = true;
+      rec.lang = 'en-US';
+      recognitionRef.current = rec;
+    }
+    return recognitionRef.current;
+  };
+
+  const startRecording = () => {
+    const rec = getRecognition();
+    if (!rec) return;
+    let finalTranscript = '';
+    rec.onresult = (event: any) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interim += transcript;
+        }
+      }
+      const text = (finalTranscript || interim).trim();
+      const input = document.querySelector('textarea[aria-label="Message input"]') as HTMLTextAreaElement | null;
+      if (input) {
+        input.value = text;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      try {
+        window.dispatchEvent(new CustomEvent('composer-set-text', { detail: { text } }));
+      } catch {}
+      setHasText(Boolean(text.length));
+    };
+    rec.onend = () => {
+      setIsRecording(false);
+    };
+    rec.start();
+    setIsRecording(true);
+  };
+
+  const stopRecording = () => {
+    const rec = recognitionRef.current;
+    if (rec) {
+      try { rec.stop(); } catch {}
+    }
+    setIsRecording(false);
+  };
 
   // Check for text content in the hidden input
   useEffect(() => {
@@ -570,15 +625,13 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, 
       text = input?.value || '';
     }
     
-    console.log('Button sending text:', text); // Debug log
-    console.log('Button text length:', text.length); // Debug log
+    
     
     if (text.trim().length > 0) {
       // Use the composer's setText method directly
       try {
         if (composer && typeof composer.setText === 'function') {
           composer.setText(text);
-          console.log('Button: Set text directly on composer using setText');
           
           // Send immediately
           setTimeout(() => {
@@ -598,7 +651,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, 
           }, 50);
         }
       } catch (e) {
-        console.log('Button: Could not set text directly:', e);
+        
       }
     }
   };
@@ -662,6 +715,19 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, 
             </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <button
+          className={`h-8 w-8 p-0 rounded flex items-center justify-center ${
+            isRecording
+              ? "bg-red-600 text-white hover:bg-red-700"
+              : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+          }`}
+          onClick={isRecording ? stopRecording : startRecording}
+          title={isRecording ? "Stop recording" : "Start voice input"}
+          aria-label={isRecording ? "Stop recording" : "Start voice input"}
+          disabled={!(typeof window !== 'undefined' && (((window as any).SpeechRecognition) || ((window as any).webkitSpeechRecognition)))}
+        >
+          {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+        </button>
         <button
           className={`h-8 w-8 p-0 rounded flex items-center justify-center ${
             isWebSearchEnabled 
@@ -856,12 +922,63 @@ const AssistantActionBar: FC = () => {
           </MessagePrimitive.If>
         </TooltipIconButton>
       </ActionBarPrimitive.Copy>
+      <VoiceControls />
       <ActionBarPrimitive.Reload asChild>
         <TooltipIconButton tooltip="Refresh">
           <RefreshCwIcon />
         </TooltipIconButton>
       </ActionBarPrimitive.Reload>
     </ActionBarPrimitive.Root>
+  );
+};
+
+const VoiceControls: FC = () => {
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const extractMessageText = (el: HTMLElement | null) => {
+    if (!el) return '';
+    // Fallback: innerText of message root
+    return (el.innerText || '').trim();
+  };
+
+  const handleSpeak = (e: React.MouseEvent) => {
+    const synth = (typeof window !== 'undefined') ? window.speechSynthesis : null;
+    if (!synth) return;
+    if (synth.speaking) {
+      synth.cancel();
+    }
+    const root = (e.currentTarget as HTMLElement).closest('[data-role="assistant"]') as HTMLElement | null;
+    const text = extractMessageText(root);
+    if (!text) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.onend = () => setIsSpeaking(false);
+    utter.onerror = () => setIsSpeaking(false);
+    setIsSpeaking(true);
+    synth.speak(utter);
+  };
+
+  const handleStop = () => {
+    const synth = (typeof window !== 'undefined') ? window.speechSynthesis : null;
+    if (!synth) return;
+    synth.cancel();
+    setIsSpeaking(false);
+  };
+
+  const hasTts = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  if (!hasTts) return null;
+
+  return (
+    <div className="flex items-center gap-1">
+      {!isSpeaking ? (
+        <TooltipIconButton tooltip="Play audio" onClick={handleSpeak}>
+          <Volume2 />
+        </TooltipIconButton>
+      ) : (
+        <TooltipIconButton tooltip="Stop audio" onClick={handleStop}>
+          <VolumeX />
+        </TooltipIconButton>
+      )}
+    </div>
   );
 };
 
@@ -943,7 +1060,7 @@ const EditComposer: FC = () => {
   );
 };
 
-const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
+const BranchPicker: FC<any> = ({
   className,
   ...rest
 }) => {

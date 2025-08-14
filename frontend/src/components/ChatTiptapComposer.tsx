@@ -500,6 +500,38 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
     };
   }, [editorInstance]);
 
+  // Allow external text injection (e.g., voice input) to populate the editor
+  useEffect(() => {
+    const handleSetText = (e: CustomEvent) => {
+      const text = (e as any)?.detail?.text ?? '';
+      if (!editorInstance) return;
+      const doc = {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: text ? [{ type: 'text', text: String(text) }] : [],
+          },
+        ],
+      } as any;
+      try {
+        editorInstance.commands.setContent(doc, false);
+        setTimeout(() => {
+          try { editorInstance.commands.focus('end'); } catch {}
+        }, 0);
+        const el = hiddenInputRef.current;
+        if (el) {
+          const latest = editorInstance.getText();
+          el.value = latest;
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+          el.dispatchEvent(new CustomEvent('tiptap-update', { bubbles: true, detail: { text: latest } }));
+        }
+      } catch {}
+    };
+    window.addEventListener('composer-set-text', handleSetText as EventListener);
+    return () => window.removeEventListener('composer-set-text', handleSetText as EventListener);
+  }, [editorInstance, hiddenInputRef]);
 
 
   return (
