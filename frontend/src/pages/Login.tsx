@@ -85,6 +85,7 @@ const Login = (): JSX.Element => {
     }
   };
 
+
   const handleGoogleLogin = async () => {
     try {
       // Check if current domain is allowed for OAuth
