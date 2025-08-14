@@ -16,7 +16,7 @@ export const CONFIG = {
     } else if (this.dev) {
       // return 'http://54.197.4.251:8080';
       //return 'http://3.84.158.138:8080';
-      return 'http://www.api.dev.banbury.io';
+      return 'https://www.api.dev.banbury.io';
     } else if (this.semi_local) {
       return 'http://10.123.1.90:8080/';
     } else {
