@@ -19,11 +19,13 @@ export class ApiService {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     
     // Store in localStorage for persistence
-    if (token) {
-      localStorage.setItem('authToken', token);
-    }
-    if (username) {
-      localStorage.setItem('username', username);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      if (token) {
+        localStorage.setItem('authToken', token);
+      }
+      if (username) {
+        localStorage.setItem('username', username);
+      }
     }
   }
 
@@ -32,18 +34,23 @@ export class ApiService {
    */
   static clearAuthToken() {
     delete axios.defaults.headers.common['Authorization'];
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('username');
-    localStorage.removeItem('userEmail');
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('username');
+      localStorage.removeItem('userEmail');
+    }
   }
 
   /**
    * Load existing token from localStorage
    */
   static loadAuthToken() {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    // Check if we're in a browser environment
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      }
     }
   }
 
@@ -157,7 +164,9 @@ export class ApiService {
         // Set auth token globally
         this.setAuthToken(response.token, response.user.username);
         // Store email separately
-        localStorage.setItem('userEmail', response.user.email);
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.setItem('userEmail', response.user.email);
+        }
         
         return {
           success: true,
@@ -178,9 +187,11 @@ export class ApiService {
   static async validateToken() {
     try {
       // Check if we have a token first
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        return false;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          return false;
+        }
       }
 
       // Try to make an authenticated request to test the token
@@ -255,7 +266,7 @@ export class ApiService {
         status_code?: number;
       }>(`/files/get_s3_files/`);
 
-      console.log('S3 Files API Response:', response);
+      // console.log('S3 Files API Response:', response);
 
       // Handle both possible response formats from the backend
       if (response.result === 'success' && response.files) {
@@ -728,7 +739,7 @@ ApiService.loadAuthToken();
 // Ensure Authorization header is always sent if token exists
 axios.interceptors.request.use((config) => {
   const existingAuth = (config.headers || {})['Authorization'] as string | undefined;
-  if (!existingAuth) {
+  if (!existingAuth && typeof window !== 'undefined' && window.localStorage) {
     const token = localStorage.getItem('authToken');
     if (token) {
       (config.headers ||= {});
@@ -751,10 +762,12 @@ axios.interceptors.response.use(
       const refreshed = await ApiService.refreshToken();
       if (refreshed) {
         // Set updated Authorization header and retry
-        const token = localStorage.getItem('authToken');
-        if (token) {
-          (originalRequest.headers ||= {});
-          originalRequest.headers['Authorization'] = `Bearer ${token}`;
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const token = localStorage.getItem('authToken');
+          if (token) {
+            (originalRequest.headers ||= {});
+            originalRequest.headers['Authorization'] = `Bearer ${token}`;
+          }
         }
         return axios(originalRequest);
       }

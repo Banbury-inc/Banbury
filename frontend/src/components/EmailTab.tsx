@@ -2,25 +2,18 @@ import { useState, useEffect, useCallback } from 'react'
 import { 
   Mail, 
   Send, 
-  Trash2, 
-  Archive, 
   Star, 
   StarOff, 
-  Reply, 
-  Forward, 
   Search,
   RefreshCw,
   ChevronLeft,
   ChevronRight,
-  MoreVertical,
-  Paperclip,
-  Eye,
-  EyeOff,
-  Edit2
+  Paperclip
 } from 'lucide-react'
 import { EmailService, GmailMessage, GmailMessageListResponse } from '../services/emailService'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
+import { EmailViewer } from './EmailViewer'
 
 interface EmailTabProps {
   onOpenEmailApp?: () => void
@@ -41,6 +34,8 @@ interface ParsedEmail {
   labels: string[]
   isDraft: boolean
 }
+
+type GmailHeader = { name: string; value: string }
 
 export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: EmailTabProps) {
   const [messages, setMessages] = useState<GmailMessageListResponse>({})
@@ -116,8 +111,8 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
 
   // Parse Gmail message into readable format
   const parseGmailMessage = useCallback((message: GmailMessage): ParsedEmail => {
-    const headers = message.payload?.headers || []
-    const getHeader = (name: string) => headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || ''
+    const headers = (message.payload?.headers as GmailHeader[]) || []
+    const getHeader = (name: string) => headers.find((h: GmailHeader) => h.name.toLowerCase() === name.toLowerCase())?.value || ''
     
     // For sent emails, show "To" field as the primary contact
     const isSentEmail = activeTab === 'sent'
@@ -260,7 +255,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [activeTab])
 
   // Load full message details
   const loadMessageDetails = useCallback(async (messageId: string) => {
@@ -360,6 +355,21 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
   useEffect(() => {
     loadMessages()
   }, [loadMessages, activeTab])
+
+  // Global refresh listener so other components can force a refresh
+  useEffect(() => {
+    const handler = () => {
+      loadMessages(undefined, searchQuery)
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('email-refresh', handler)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('email-refresh', handler)
+      }
+    }
+  }, [loadMessages, searchQuery])
 
   // Handle tab change
   const handleTabChange = useCallback((tab: 'inbox' | 'sent' | 'drafts') => {
@@ -534,106 +544,16 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
             </div>
           </div>
         ) : selectedMessage ? (
-          /* Message Detail View */
-          <div className="h-full flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-zinc-700">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedMessage(null)}
-                className="text-gray-400 hover:text-white"
-              >
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-              <div className="flex gap-1">
-                {parseGmailMessage(selectedMessage).isDraft ? (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleMessageAction(selectedMessage.id, 'edit')}
-                      className="text-gray-400 hover:text-white"
-                    >
-                      <Edit2 className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleMessageAction(selectedMessage.id, 'send')}
-                      className="text-gray-400 hover:text-white"
-                    >
-                      <Send className="h-3 w-3" />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleMessageAction(selectedMessage.id, 'reply')}
-                      className="text-gray-400 hover:text-white"
-                    >
-                      <Reply className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleMessageAction(selectedMessage.id, 'archive')}
-                      className="text-gray-400 hover:text-white"
-                    >
-                      <Archive className="h-3 w-3" />
-                    </Button>
-                  </>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleMessageAction(selectedMessage.id, 'delete')}
-                  className="text-gray-400 hover:text-white"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-white font-medium mb-2">
-                    {parseGmailMessage(selectedMessage).subject}
-                  </h3>
-                  <div className="text-gray-300 text-sm">
-                    {parseGmailMessage(selectedMessage).isDraft ? (
-                      <>
-                        <div>To: {parseGmailMessage(selectedMessage).to || 'No recipient'}</div>
-                        <div className="text-yellow-400">Draft</div>
-                      </>
-                    ) : (
-                      <>From: {parseGmailMessage(selectedMessage).from}</>
-                    )}
-                  </div>
-                  <div className="text-gray-400 text-xs">
-                    {parseGmailMessage(selectedMessage).date}
-                  </div>
-                </div>
-                
-                <div className="text-gray-200 text-sm whitespace-pre-wrap">
-                  {parseGmailMessage(selectedMessage).snippet}
-                </div>
-                
-                                 {/* Full message content */}
-                 <div className="text-gray-300 text-sm">
-                   <div className="bg-zinc-800 p-3 rounded border border-zinc-700">
-                     <div className="text-xs text-gray-400 mb-2">Message Content</div>
-                     <div className="text-sm whitespace-pre-wrap">
-                       {extractMessageBody(selectedMessage.payload) || 'Message content not available'}
-                     </div>
-                   </div>
-                 </div>
-              </div>
-            </div>
-          </div>
+          <EmailViewer
+            email={selectedMessage}
+            onBack={() => setSelectedMessage(null)}
+            onReply={() => setComposeOpen(true)}
+            onForward={() => setComposeOpen(true)}
+            onArchive={() => { setSelectedMessage(null); loadMessages(undefined, searchQuery) }}
+            onDelete={() => { setSelectedMessage(null); loadMessages(undefined, searchQuery) }}
+            onStarToggled={() => { loadMessages(undefined, searchQuery) }}
+            onRefresh={() => { loadMessages(undefined, searchQuery) }}
+          />
         ) : (
           /* Message List */
                      <div className="h-full flex flex-col">

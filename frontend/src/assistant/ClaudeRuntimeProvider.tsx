@@ -1,4 +1,5 @@
 import { AssistantRuntimeProvider, useLocalRuntime } from "@assistant-ui/react";
+import { ApiService } from "../services/apiService";
 import { useEffect } from "react";
 import type { FC, PropsWithChildren } from "react";
 
@@ -81,7 +82,12 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
       // Always use LangGraph endpoint
       const apiEndpoint = '/api/assistant/langgraph-stream';
 
-      console.log(`🔧 Assistant Mode: LangGraph → ${apiEndpoint}`);
+      // Track that a user sent a message to the AI (fire-and-forget)
+      try {
+        await ApiService.post('/users/ai_message_sent/', {} as any);
+      } catch {
+        // ignore tracking errors
+      }
 
       const res = await fetch(apiEndpoint, {
         method: "POST",

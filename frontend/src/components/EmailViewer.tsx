@@ -1,15 +1,21 @@
+import { useMemo, useState } from "react"
 import { Button } from "./ui/button"
 import { ArrowLeft, Reply, Forward, Trash2, Archive, Star, Clock, User, Mail, Paperclip, Download } from "lucide-react"
-import { extractEmailContent, getBestContent, hasAttachments, formatFileSize, cleanHtmlContent, type EmailContent } from "../utils/emailUtils"
+import { extractEmailContent, hasAttachments, formatFileSize, cleanHtmlContent } from "../utils/emailUtils"
 import { EmailService } from "../services/emailService"
 
 interface EmailViewerProps {
   email: any
   onBack?: () => void
   onReply?: (email: any) => void
+  onForward?: (email: any) => void
+  onArchive?: (email: any) => void
+  onDelete?: (email: any) => void
+  onStarToggled?: (email: any, isStarred: boolean) => void
+  onRefresh?: () => void
 }
 
-export function EmailViewer({ email, onBack, onReply }: EmailViewerProps) {
+export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDelete, onStarToggled, onRefresh }: EmailViewerProps) {
   if (!email) {
     return (
       <div className="h-full flex items-center justify-center text-gray-400">
@@ -45,6 +51,11 @@ export function EmailViewer({ email, onBack, onReply }: EmailViewerProps) {
   const emailContent = extractEmailContent(email.payload)
   const hasAttachmentsFlag = hasAttachments(emailContent)
 
+  const [labels, setLabels] = useState<string[]>(email?.labelIds || [])
+  const [actionLoading, setActionLoading] = useState<boolean>(false)
+
+  const isStarred = useMemo(() => labels.includes('STARRED'), [labels])
+
   const handleDownloadAttachment = async (attachmentId: string, filename: string) => {
     try {
       const response = await EmailService.getAttachment(email.id, attachmentId)
@@ -76,6 +87,75 @@ export function EmailViewer({ email, onBack, onReply }: EmailViewerProps) {
   const handleReply = () => {
     if (onReply) {
       onReply(email)
+    }
+  }
+
+  const handleForward = () => {
+    if (onForward) {
+      onForward(email)
+    }
+  }
+
+  const handleArchive = async () => {
+    try {
+      setActionLoading(true)
+      await EmailService.modifyMessage(email.id, { removeLabelIds: ['INBOX'] })
+      setLabels((prev) => prev.filter((l) => l !== 'INBOX'))
+      if (onArchive) onArchive(email)
+      if (onRefresh) onRefresh()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('email-refresh'))
+      }
+    } catch (error) {
+      alert('Failed to archive email')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleToggleStar = async () => {
+    const currentlyStarred = labels.includes('STARRED')
+    try {
+      setActionLoading(true)
+      if (currentlyStarred) {
+        await EmailService.modifyMessage(email.id, { removeLabelIds: ['STARRED'] })
+        setLabels((prev) => prev.filter((l) => l !== 'STARRED'))
+        if (onStarToggled) onStarToggled(email, false)
+        if (onRefresh) onRefresh()
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('email-refresh'))
+        }
+      } else {
+        await EmailService.modifyMessage(email.id, { addLabelIds: ['STARRED'] })
+        setLabels((prev) => (prev.includes('STARRED') ? prev : [...prev, 'STARRED']))
+        if (onStarToggled) onStarToggled(email, true)
+        if (onRefresh) onRefresh()
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('email-refresh'))
+        }
+      }
+    } catch (error) {
+      alert('Failed to toggle star')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      setActionLoading(true)
+      await EmailService.modifyMessage(email.id, { addLabelIds: ['TRASH'] })
+      setLabels((prev) => (prev.includes('TRASH') ? prev : [...prev, 'TRASH']))
+      if (onDelete) onDelete(email)
+      if (onRefresh) onRefresh()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('email-refresh'))
+      }
+      if (onBack) onBack()
+    } catch (error) {
+      alert('Failed to delete email')
+    } finally {
+      setActionLoading(false)
     }
   }
 
@@ -113,19 +193,25 @@ export function EmailViewer({ email, onBack, onReply }: EmailViewerProps) {
         
         {/* Compact Actions */}
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black p-1 h-8 w-8" onClick={handleReply}>
+          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black p-1 h-8 w-8" onClick={handleReply} disabled={actionLoading}>
             <Reply className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black p-1 h-8 w-8">
+          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black p-1 h-8 w-8" onClick={handleForward} disabled={actionLoading}>
             <Forward className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black p-1 h-8 w-8">
+          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black p-1 h-8 w-8" onClick={handleArchive} disabled={actionLoading}>
             <Archive className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black p-1 h-8 w-8">
-            <Star className="h-3 w-3" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={isStarred ? "text-yellow-500 p-1 h-8 w-8" : "text-gray-600 hover:text-black p-1 h-8 w-8"}
+            onClick={handleToggleStar}
+            disabled={actionLoading}
+          >
+            <Star className="h-3 w-3" fill={isStarred ? 'currentColor' : 'none'} />
           </Button>
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black p-1 h-8 w-8">
+          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black p-1 h-8 w-8" onClick={handleDelete} disabled={actionLoading}>
             <Trash2 className="h-3 w-3" />
           </Button>
         </div>

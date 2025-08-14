@@ -29,6 +29,7 @@ interface User {
   auth_method?: string
   created_at?: string
   totalFiles?: number
+  aiMessageCount?: number
 }
 
 interface ApiKey {
@@ -85,23 +86,18 @@ export default function AdminPage() {
         setUsers(usersResponse.users || [])
         setSystemStats(prev => ({
           ...prev,
-          totalUsers: usersResponse.total_count || 0
+          totalUsers: usersResponse.total_count || 0,
+          totalFiles: usersResponse.system_total_files || 0,
+          activeSessions: 23,
+          systemUptime: '15 days'
         }))
       } else {
-        // Fallback to mock data if API fails
+        // Fallback
         setUsers([])
       }
     } catch (error) {
       setUsers([])
     }
-
-    // Set other system stats (these could be made dynamic later)
-    setSystemStats(prev => ({
-      ...prev,
-      totalFiles: 1250,
-      activeSessions: 23,
-      systemUptime: '15 days'
-    }))
 
     try {
       // Try to load API keys, but don't fail if it doesn't work
@@ -286,6 +282,7 @@ export default function AdminPage() {
                           <th className="text-left py-3 px-4 text-zinc-300 font-medium">User</th>
                           <th className="text-left py-3 px-4 text-zinc-300 font-medium">Email</th>
                           <th className="text-left py-3 px-4 text-zinc-300 font-medium">Total Files</th>
+                          <th className="text-left py-3 px-4 text-zinc-300 font-medium">AI Messages</th>
                           <th className="text-left py-3 px-4 text-zinc-300 font-medium">Auth Method</th>
                           <th className="text-left py-3 px-4 text-zinc-300 font-medium">Created</th>
                           <th className="text-left py-3 px-4 text-zinc-300 font-medium">Actions</th>
@@ -313,6 +310,9 @@ export default function AdminPage() {
                                 <Database className="h-4 w-4 text-blue-400" />
                                 <span className="text-white font-medium">{user.totalFiles?.toLocaleString() || 0}</span>
                               </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="text-white font-medium">{user.aiMessageCount?.toLocaleString() || 0}</span>
                             </td>
                             <td className="py-3 px-4">
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
