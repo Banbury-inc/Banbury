@@ -29,6 +29,7 @@ import { ToolFallback } from "./tool-fallback";
 import { TooltipIconButton } from "./tooltip-icon-button";
 import { Button } from "./ui/button";
 import { WebSearchTool } from "./web-search-result";
+import { DocumentAITool } from "./DocumentAITool";
 import { FileAttachment } from "./file-attachment";
 import { FileAttachmentDisplay } from "./file-attachment-display";
 import { TiptapAITool } from "./TiptapAITool";
@@ -648,11 +649,12 @@ const AssistantMessage: FC = () => {
           <MessagePrimitive.Content
             components={{
               Text: MarkdownText,
-              tools: { 
+                  tools: { 
                 by_name: {
                   web_search: WebSearchTool,
                   tiptap_ai: TiptapAITool,
-                  sheet_ai: SheetAITool,
+                      sheet_ai: SheetAITool,
+                      document_ai: DocumentAITool,
                 },
                 Fallback: ToolFallback 
               },

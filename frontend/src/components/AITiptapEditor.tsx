@@ -154,10 +154,31 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
         case 'expand':
         case 'translate':
           if (responseSelection) {
-            editor.chain().focus()
-              .deleteRange({ from: responseSelection.from, to: responseSelection.to })
-              .insertContent(response)
-              .run();
+            const { from, to, text: originalText } = responseSelection;
+            const currentSlice = editor.state.doc.textBetween(from, to);
+
+            if (currentSlice.trim() === (originalText || '').trim()) {
+              editor.chain().focus()
+                .deleteRange({ from, to })
+                .insertContent(response)
+                .run();
+            } else {
+              const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const html = editor.getHTML();
+              let updated = html;
+              if (originalText && originalText.trim().length > 0) {
+                const words = originalText.trim().split(/\s+/).map(escapeRegExp);
+                const flexible = new RegExp(words.join('(?:\\s*(?:<[^>]+>\\s*)*)'), 'i');
+                updated = html.replace(flexible, response);
+              } else {
+                updated = html;
+              }
+              if (updated !== html) {
+                editor.commands.setContent(updated, true);
+              } else {
+                editor.chain().focus().insertContent(response).run();
+              }
+            }
           } else {
             editor.chain().focus().insertContent(response).run();
           }

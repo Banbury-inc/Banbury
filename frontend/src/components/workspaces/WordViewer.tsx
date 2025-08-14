@@ -1,6 +1,7 @@
 import { Box, Typography, Alert, CircularProgress } from '@mui/material';
 import mammoth from 'mammoth';
 import React, { useState, useEffect } from 'react';
+import { useTiptapAIContext } from '../../contexts/TiptapAIContext';
 
 import TiptapWordEditor from './TiptapWordEditor';
 
@@ -36,6 +37,7 @@ const WordViewer: React.FC<WordViewerProps> = ({
   const [content, setContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { editor } = useTiptapAIContext();
 
   // Load DOCX content using mammoth
   useEffect(() => {
@@ -200,6 +202,110 @@ const WordViewer: React.FC<WordViewerProps> = ({
 
     loadDocxContent();
   }, [src, srcBlob, fileName]);
+
+  // Listen for AI document edit responses and apply to editor + internal state
+  useEffect(() => {
+    const handler = (event: any) => {
+      const detail = event?.detail || {};
+      const { htmlContent, operations } = detail as {
+        htmlContent?: string;
+        operations?: Array<
+          | { type: 'setContent'; html: string }
+          | { type: 'replaceText'; target: string; replacement: string; all?: boolean; caseSensitive?: boolean }
+          | { type: 'replaceBetween'; from: number; to: number; html: string }
+          | { type: 'insertAfterText'; target: string; html: string; occurrence?: number; caseSensitive?: boolean }
+          | { type: 'insertBeforeText'; target: string; html: string; occurrence?: number; caseSensitive?: boolean }
+          | { type: 'deleteText'; target: string; all?: boolean; caseSensitive?: boolean }
+        >
+      };
+
+      const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const applyOps = (html: string, ops: any[]): string => {
+        let next = html;
+        for (const op of ops) {
+          if (!op || typeof op !== 'object') continue;
+          switch (op.type) {
+            case 'setContent':
+              if (typeof op.html === 'string') next = op.html;
+              break;
+            case 'replaceText': {
+              const flags = `${op.all ? 'g' : ''}${op.caseSensitive ? '' : 'i'}`;
+              try {
+                const rx = new RegExp(escapeRegExp(op.target), flags);
+                next = next.replace(rx, op.replacement);
+              } catch {}
+              break;
+            }
+            case 'replaceBetween': {
+              if (typeof op.from === 'number' && typeof op.to === 'number' && typeof op.html === 'string') {
+                const from = Math.max(0, Math.min(op.from, next.length));
+                const to = Math.max(from, Math.min(op.to, next.length));
+                next = next.slice(0, from) + op.html + next.slice(to);
+              }
+              break;
+            }
+            case 'insertAfterText': {
+              const flags = op.caseSensitive ? '' : 'i';
+              try {
+                const rx = new RegExp(escapeRegExp(op.target), flags);
+                const occurrence = Math.max(1, Number(op.occurrence) || 1);
+                let count = 0;
+                next = next.replace(rx, (m) => {
+                  count += 1;
+                  return count === occurrence ? m + op.html : m;
+                });
+              } catch {}
+              break;
+            }
+            case 'insertBeforeText': {
+              const flags = op.caseSensitive ? '' : 'i';
+              try {
+                const rx = new RegExp(escapeRegExp(op.target), flags);
+                const occurrence = Math.max(1, Number(op.occurrence) || 1);
+                let count = 0;
+                next = next.replace(rx, (m) => {
+                  count += 1;
+                  return count === occurrence ? op.html + m : m;
+                });
+              } catch {}
+              break;
+            }
+            case 'deleteText': {
+              const flags = op.caseSensitive ? 'g' : 'gi';
+              try {
+                const rx = new RegExp(escapeRegExp(op.target), flags);
+                next = next.replace(rx, '');
+              } catch {}
+              break;
+            }
+            default:
+              break;
+          }
+        }
+        return next;
+      };
+
+      let nextHTML = content;
+      if (htmlContent && typeof htmlContent === 'string') {
+        nextHTML = htmlContent;
+      } else if (operations && Array.isArray(operations)) {
+        nextHTML = applyOps(content || '', operations);
+      }
+
+      if (nextHTML && typeof nextHTML === 'string') {
+        setContent(nextHTML);
+        // update the live editor if available
+        try {
+          editor?.commands.setContent(nextHTML, true);
+        } catch {}
+        // bubble up so save button enables
+        onSave?.(nextHTML);
+      }
+    };
+
+    window.addEventListener('document-ai-response', handler as EventListener);
+    return () => window.removeEventListener('document-ai-response', handler as EventListener);
+  }, [content, editor, onSave]);
 
   const handleContentChange = (newContent: string) => {
     setContent(newContent);

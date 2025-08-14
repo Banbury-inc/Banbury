@@ -65,59 +65,59 @@ const useCopyToClipboard = ({
 };
 
 const defaultComponents = memoizeMarkdownComponents({
-  h1: ({ className, ...props }) => (
-    <h1 className={cn("mb-8 scroll-m-20 text-4xl font-extrabold tracking-tight last:mb-0", className)} {...props} />
+  h1: ({ className, ...props }: { className?: string }) => (
+    <h1 className={cn("text-[1.5rem] font-bold leading-tight tracking-tight mt-8 mb-3", className)} {...props} />
   ),
-  h2: ({ className, ...props }) => (
-    <h2 className={cn("mb-4 mt-8 scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0 last:mb-0", className)} {...props} />
+  h2: ({ className, ...props }: { className?: string }) => (
+    <h2 className={cn("text-[1.25rem] font-semibold leading-tight tracking-tight mt-7 mb-2", className)} {...props} />
   ),
-  h3: ({ className, ...props }) => (
-    <h3 className={cn("mb-4 mt-6 scroll-m-20 text-2xl font-semibold tracking-tight first:mt-0 last:mb-0", className)} {...props} />
+  h3: ({ className, ...props }: { className?: string }) => (
+    <h3 className={cn("text-[1.1rem] font-semibold leading-tight mt-6 mb-2", className)} {...props} />
   ),
-  h4: ({ className, ...props }) => (
-    <h4 className={cn("mb-4 mt-6 scroll-m-20 text-xl font-semibold tracking-tight first:mt-0 last:mb-0", className)} {...props} />
+  h4: ({ className, ...props }: { className?: string }) => (
+    <h4 className={cn("text-[1rem] font-semibold leading-tight mt-5 mb-2", className)} {...props} />
   ),
-  h5: ({ className, ...props }) => (
-    <h5 className={cn("my-4 text-lg font-semibold first:mt-0 last:mb-0", className)} {...props} />
+  h5: ({ className, ...props }: { className?: string }) => (
+    <h5 className={cn("text-[0.95rem] font-semibold leading-tight mt-4 mb-2", className)} {...props} />
   ),
-  h6: ({ className, ...props }) => (
-    <h6 className={cn("my-4 font-semibold first:mt-0 last:mb-0", className)} {...props} />
+  h6: ({ className, ...props }: { className?: string }) => (
+    <h6 className={cn("text-[0.9rem] font-semibold leading-tight mt-3 mb-2", className)} {...props} />
   ),
-  p: ({ className, ...props }) => (
-    <p className={cn("mb-5 mt-5 leading-7 first:mt-0 last:mb-0", className)} {...props} />
+  p: ({ className, ...props }: { className?: string }) => (
+    <p className={cn("text-[0.98rem] leading-[1.7] my-2", className)} {...props} />
   ),
-  a: ({ className, ...props }) => (
-    <a className={cn("text-primary font-medium underline underline-offset-4", className)} {...props} />
+  a: ({ className, ...props }: { className?: string }) => (
+    <a className={cn("text-blue-500 underline underline-offset-2 hover:text-blue-400 transition-colors", className)} {...props} />
   ),
-  blockquote: ({ className, ...props }) => (
-    <blockquote className={cn("border-l-2 pl-6 italic", className)} {...props} />
+  blockquote: ({ className, ...props }: { className?: string }) => (
+    <blockquote className={cn("border-l-4 border-zinc-700 pl-4 italic text-zinc-400 my-4", className)} {...props} />
   ),
-  ul: ({ className, ...props }) => (
-    <ul className={cn("my-5 ml-6 list-disc [&>li]:mt-2", className)} {...props} />
+  ul: ({ className, ...props }: { className?: string }) => (
+    <ul className={cn("list-disc ml-6 my-2 space-y-1 leading-[1.7]", className)} {...props} />
   ),
-  ol: ({ className, ...props }) => (
-    <ol className={cn("my-5 ml-6 list-decimal [&>li]:mt-2", className)} {...props} />
+  ol: ({ className, ...props }: { className?: string }) => (
+    <ol className={cn("list-decimal ml-6 my-2 space-y-1 leading-[1.7]", className)} {...props} />
   ),
-  hr: ({ className, ...props }) => (
-    <hr className={cn("my-5 border-b", className)} {...props} />
+  hr: ({ className, ...props }: { className?: string }) => (
+    <hr className={cn("my-6 border-zinc-700", className)} {...props} />
   ),
-  table: ({ className, ...props }) => (
-    <table className={cn("my-5 w-full border-separate border-spacing-0 overflow-y-auto", className)} {...props} />
+  table: ({ className, ...props }: { className?: string }) => (
+    <table className={cn("my-6 w-full border-collapse text-[0.98rem]", className)} {...props} />
   ),
-  th: ({ className, ...props }) => (
-    <th className={cn("bg-muted px-4 py-2 text-left font-bold first:rounded-tl-lg last:rounded-tr-lg [&[align=center]]:text-center [&[align=right]]:text-right", className)} {...props} />
+  th: ({ className, ...props }: { className?: string }) => (
+    <th className={cn("bg-zinc-800 px-4 py-2 text-left font-semibold", className)} {...props} />
   ),
-  td: ({ className, ...props }) => (
-    <td className={cn("border-b border-l px-4 py-2 text-left last:border-r [&[align=center]]:text-center [&[align=right]]:text-right", className)} {...props} />
+  td: ({ className, ...props }: { className?: string }) => (
+    <td className={cn("border-t border-zinc-700 px-4 py-2", className)} {...props} />
   ),
-  tr: ({ className, ...props }) => (
-    <tr className={cn("m-0 border-b p-0 first:border-t [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg", className)} {...props} />
+  tr: ({ className, ...props }: { className?: string }) => (
+    <tr className={cn("border-b border-zinc-700", className)} {...props} />
   ),
-  sup: ({ className, ...props }) => (
-    <sup className={cn("[&>a]:text-xs [&>a]:no-underline", className)} {...props} />
+  sup: ({ className, ...props }: { className?: string }) => (
+    <sup className={cn("text-xs", className)} {...props} />
   ),
-  pre: ({ className, ...props }) => (
-    <pre className={cn("overflow-x-auto rounded-b-lg !rounded-t-none bg-black p-4 text-white", className)} {...props} />
+  pre: ({ className, ...props }: { className?: string }) => (
+    <pre className={cn("overflow-x-auto rounded-lg bg-zinc-900 p-4 text-[0.97rem] text-zinc-100 my-4", className)} {...props} />
   ),
   code: function Code({ className, ...props }) {
     const isCodeBlock = useIsMarkdownCodeBlock();
