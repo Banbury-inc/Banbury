@@ -30,6 +30,7 @@ import { Toaster } from "../components/ui/toaster";
 import { useToast } from "../components/ui/use-toast";
 import { CONFIG } from '../config/config';
 import { ApiService } from '../services/apiService';
+import { extractEmailContent } from '../utils/emailUtils';
 
 
 
@@ -492,6 +493,38 @@ const Workspaces = (): JSX.Element => {
     setRefreshTrigger(prev => prev + 1);
   }, []);
 
+  // Helper function to extract and format email body for replies
+  const extractReplyBody = useCallback((email: any): string => {
+    if (!email?.payload) return '';
+    
+    // Extract full email content
+    const emailContent = extractEmailContent(email.payload);
+    
+    // Prefer HTML content if available, otherwise use text
+    let body = emailContent.html || emailContent.text || email.snippet || '';
+    
+    // If we have HTML content, clean it up for reply formatting
+    if (emailContent.html) {
+      // Remove excessive styling but keep structure
+      body = body
+        .replace(/style="[^"]*"/g, '') // Remove inline styles
+        .replace(/class="[^"]*"/g, '') // Remove classes
+        .replace(/<div[^>]*>/g, '<p>') // Convert divs to paragraphs
+        .replace(/<\/div>/g, '</p>') // Close paragraphs
+        .replace(/<br\s*\/?>/g, '<br>') // Normalize line breaks
+        .replace(/<p><\/p>/g, '') // Remove empty paragraphs
+        .replace(/<p><br><\/p>/g, '<br>') // Convert empty paragraphs to line breaks
+        .trim();
+    } else if (emailContent.text) {
+      // For plain text, preserve line breaks
+      body = emailContent.text
+        .replace(/\n/g, '<br>') // Convert newlines to HTML line breaks
+        .trim();
+    }
+    
+    return body;
+  }, []);
+
   // Handle reply to email
   const handleReplyToEmail = useCallback((email: any) => {
     setComposeMode(true);
@@ -640,7 +673,7 @@ const Workspaces = (): JSX.Element => {
               replyTo={replyToEmail ? {
                 to: replyToEmail.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'from')?.value || '',
                 subject: replyToEmail.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')?.value || '',
-                body: replyToEmail.snippet || '',
+                body: extractReplyBody(replyToEmail),
                 messageId: replyToEmail.id || ''
               } : undefined}
             />
@@ -1448,7 +1481,7 @@ Alice Brown,alice.brown@example.com,555-0104,HR`;
             <div className="flex flex-1">
               <Allotment>
                 {/* File Sidebar Panel */}
-                <Allotment.Pane minSize={200} preferredSize={280} maxSize={400} className="relative z-10">
+                <Allotment.Pane minSize={250} preferredSize={350} maxSize={500} className="relative z-10">
                   <AppSidebar 
                     currentView="workspaces"
                     userInfo={userInfo}
@@ -1474,7 +1507,7 @@ Alice Brown,alice.brown@example.com,555-0104,HR`;
                 </Allotment.Pane>
                 
                 {/* Assistant Panel */}
-                <Allotment.Pane minSize={250} preferredSize={350} maxSize={500}>
+                <Allotment.Pane minSize={300} preferredSize={400} maxSize={600}>
                       <div className="h-full bg-black border-l border-gray-800">
                         <Thread 
                           userInfo={userInfo} 

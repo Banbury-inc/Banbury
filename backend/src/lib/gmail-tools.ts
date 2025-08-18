@@ -221,3 +221,66 @@ export const gmailGetFromSender = tool(
     }),
   }
 );
+
+// Tool to get user's email signature
+export const gmailGetSignature = tool(
+  async () => {
+    try {
+      const result = await gmailService.getEmailSignature();
+      return JSON.stringify({
+        success: result.success,
+        signature: result.signature,
+        error: result.error,
+      });
+    } catch (error) {
+      return JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  },
+  {
+    name: "gmail_get_signature",
+    description: "Get the user's Gmail signature that is automatically added to outgoing emails",
+    schema: z.object({}),
+  }
+);
+
+// Tool to send email with automatic signature
+export const gmailSendEmailWithSignature = tool(
+  async (input: { to: string; subject: string; body: string; from?: string }) => {
+    try {
+      const result = await gmailService.sendEmailWithSignature({
+        to: input.to,
+        subject: input.subject,
+        body: input.body,
+        from: input.from,
+      });
+      
+      return JSON.stringify({
+        success: result.success,
+        messageId: result.messageId,
+        to: input.to,
+        subject: input.subject,
+        note: "Email sent with automatic signature",
+      });
+    } catch (error) {
+      return JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        to: input.to,
+        subject: input.subject,
+      });
+    }
+  },
+  {
+    name: "gmail_send_email_with_signature",
+    description: "Send an email through Gmail with the user's signature automatically added",
+    schema: z.object({
+      to: z.string().describe("Recipient email address"),
+      subject: z.string().describe("Email subject"),
+      body: z.string().describe("Email body content"),
+      from: z.string().optional().describe("Sender email address (optional, uses default if not provided)"),
+    }),
+  }
+);

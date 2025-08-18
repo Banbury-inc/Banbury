@@ -173,7 +173,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
               variant="ghost"
               size="sm"
               onClick={onBack}
-              className="text-gray-600 hover:text-black p-1 h-8 w-8"
+              className="text-slate-500 hover:bg-slate-100 hover:text-slate-700 p-1 h-8 w-8 rounded-md transition-colors duration-200"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -182,7 +182,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
             <h1 className="text-black text-lg font-semibold truncate">
               {getHeader('Subject') || '(No Subject)'}
             </h1>
-            <div className="flex items-center gap-4 text-xs text-gray-600 mt-1">
+            <div className="flex items-center gap-4 text-xs text-slate-600 mt-1">
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
                 <span className="truncate">{getHeader('From')}</span>
@@ -197,25 +197,25 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
         
         {/* Compact Actions */}
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black p-1 h-8 w-8" onClick={handleReply} disabled={actionLoading}>
+          <Button variant="ghost" size="sm" className="text-slate-500 hover:bg-slate-100 hover:text-slate-700 p-1 h-8 w-8 rounded-md transition-colors duration-200" onClick={handleReply} disabled={actionLoading}>
             <Reply className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black p-1 h-8 w-8" onClick={handleForward} disabled={actionLoading}>
+          <Button variant="ghost" size="sm" className="text-slate-500 hover:bg-slate-100 hover:text-slate-700 p-1 h-8 w-8 rounded-md transition-colors duration-200" onClick={handleForward} disabled={actionLoading}>
             <Forward className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black p-1 h-8 w-8" onClick={handleArchive} disabled={actionLoading}>
+          <Button variant="ghost" size="sm" className="text-slate-500 hover:bg-slate-100 hover:text-slate-700 p-1 h-8 w-8 rounded-md transition-colors duration-200" onClick={handleArchive} disabled={actionLoading}>
             <Archive className="h-3 w-3" />
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            className={isStarred ? "text-yellow-500 p-1 h-8 w-8" : "text-gray-600 hover:text-black p-1 h-8 w-8"}
+            className={isStarred ? "text-yellow-500 hover:bg-yellow-50 p-1 h-8 w-8 rounded-md transition-colors duration-200" : "text-slate-500 hover:bg-slate-100 hover:text-slate-700 p-1 h-8 w-8 rounded-md transition-colors duration-200"}
             onClick={handleToggleStar}
             disabled={actionLoading}
           >
             <Star className="h-3 w-3" fill={isStarred ? 'currentColor' : 'none'} />
           </Button>
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-black p-1 h-8 w-8" onClick={handleDelete} disabled={actionLoading}>
+          <Button variant="ghost" size="sm" className="text-slate-500 hover:bg-slate-100 hover:text-slate-700 p-1 h-8 w-8 rounded-md transition-colors duration-200" onClick={handleDelete} disabled={actionLoading}>
             <Trash2 className="h-3 w-3" />
           </Button>
         </div>
@@ -228,14 +228,14 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
           <div className="px-6 py-4 border-b border-zinc-800/30 bg-white">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 text-sm">
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-gray-500" />
-                <span className="text-gray-400 w-12">From:</span>
-                <span className="text-black font-medium truncate">{getHeader('From')}</span>
+                <Mail className="h-4 w-4 text-slate-500" />
+                <span className="text-slate-400 w-12">From:</span>
+                <span className="text-slate-900 font-medium truncate">{getHeader('From')}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-gray-500" />
-                <span className="text-gray-400 w-12">To:</span>
-                <span className="text-black font-medium truncate">{getHeader('To')}</span>
+                <Mail className="h-4 w-4 text-slate-500" />
+                <span className="text-slate-400 w-12">To:</span>
+                <span className="text-slate-900 font-medium truncate">{getHeader('To')}</span>
               </div>
             </div>
           </div>
@@ -261,9 +261,9 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
             <div className="px-6 pb-6 bg-white">
               <div className="border-t border-gray-200 pt-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <Paperclip className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700">Attachments</span>
-                  <span className="text-xs text-gray-500">({emailContent.attachments.length})</span>
+                  <Paperclip className="h-4 w-4 text-slate-500" />
+                  <span className="text-sm font-medium text-slate-700">Attachments</span>
+                  <span className="text-xs text-slate-500">({emailContent.attachments.length})</span>
                 </div>
                 <div className="space-y-2">
                   {emailContent.attachments.map((attachment) => (
@@ -272,12 +272,12 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <Paperclip className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                        <Paperclip className="h-4 w-4 text-slate-500 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-sm font-medium text-slate-900 truncate">
                             {attachment.filename}
                           </p>
-                          <p className="text-xs text-gray-600">
+                          <p className="text-xs text-slate-600">
                             {attachment.mimeType} • {formatFileSize(attachment.size)}
                           </p>
                         </div>
@@ -285,7 +285,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-gray-600 hover:text-black p-1 h-8 w-8 flex-shrink-0"
+                        className="text-slate-500 hover:bg-slate-100 hover:text-slate-700 p-1 h-8 w-8 flex-shrink-0 rounded-md transition-colors duration-200"
                         title="Download attachment"
                         onClick={() => handleDownloadAttachment(attachment.id, attachment.filename)}
                       >

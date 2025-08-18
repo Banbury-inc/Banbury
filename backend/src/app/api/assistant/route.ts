@@ -11,7 +11,9 @@ import {
   gmailGetUnread, 
   gmailGetEmail, 
   gmailSendEmail, 
-  gmailGetFromSender 
+  gmailGetFromSender,
+  gmailGetSignature,
+  gmailSendEmailWithSignature
 } from "../../../lib/gmail-tools";
 
 type AssistantUiMessagePart =
@@ -131,7 +133,9 @@ export async function POST(req: NextRequest) {
         gmailGetUnread,
         gmailGetEmail,
         gmailSendEmail,
-        gmailGetFromSender
+        gmailGetFromSender,
+        gmailGetSignature,
+        gmailSendEmailWithSignature
       );
     }
     

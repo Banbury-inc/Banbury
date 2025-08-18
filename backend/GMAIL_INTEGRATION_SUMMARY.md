@@ -45,6 +45,8 @@ Gmail integration has been successfully implemented for the Banbury website AI a
 
 The AI assistant now has access to these Gmail tools:
 
+**Email Management:**
+
 ### 1. `gmail_search`
 - **Purpose**: Search emails using Gmail search syntax
 - **Example queries**: 
@@ -73,6 +75,19 @@ The AI assistant now has access to these Gmail tools:
 - **Purpose**: Get emails from specific sender
 - **Parameters**: `sender`, `maxResults` (optional)
 
+### 7. `gmail_get_signature`
+- **Purpose**: Get the user's Gmail signature that is automatically added to outgoing emails
+- **Parameters**: None
+
+### 8. `gmail_send_email_with_signature`
+- **Purpose**: Send emails with the user's signature automatically added
+- **Parameters**: `to`, `subject`, `body`, `from` (optional)
+
+**Signature Management:**
+- **Automatic signature retrieval** from Gmail settings
+- **Signature insertion** in email composer
+- **Signature-aware email sending** with automatic inclusion
+
 ## Environment Variables Required
 
 ```env
@@ -90,6 +105,8 @@ The AI can now handle requests like:
 - **"Send an email to jane@example.com with subject 'Meeting tomorrow' and body 'Let's meet at 2 PM'"**
 - **"Find emails about project updates"**
 - **"Get emails from the last week"**
+- **"Get my email signature"**
+- **"Send an email with my signature automatically added"**
 
 ## Security Features
 
@@ -114,6 +131,15 @@ The implementation follows the existing pattern:
 - **Error handling** with try-catch blocks
 - **JSON responses** for consistent API responses
 - **Modular design** with separate service and tools files
+
+## Frontend Integration
+
+**Email Composer Features:**
+- **Automatic signature loading** when composing new emails
+- **Manual signature insertion** button for user control
+- **Signature-aware sending** with automatic inclusion
+- **Visual feedback** during signature loading
+- **Graceful fallback** if signature cannot be retrieved
 
 ## Build Status
 

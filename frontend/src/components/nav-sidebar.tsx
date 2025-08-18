@@ -1,4 +1,4 @@
-import { Home, FolderOpen, LogOut, Settings } from "lucide-react"
+import { Home, FolderOpen, LogOut, Settings, UserStarIcon} from "lucide-react"
 import Image from 'next/image'
 import { useRouter } from "next/router"
 import { useState, useEffect } from "react"
@@ -35,10 +35,16 @@ export function NavSidebar({ onLogout }: NavSidebarProps) {
       label: 'Workspaces',
       path: '/workspaces'
     },
+    {
+      id: 'settings',
+      icon: Settings,
+      label: 'Settings',
+      path: '/settings'
+    },
     // Only include admin item if user is mmills or mmills6060@gmail.com
     ...(username === 'mmills' || username === 'mmills6060@gmail.com' ? [{
       id: 'admin',
-      icon: Settings,
+      icon: UserStarIcon,
       label: 'Admin',
       path: '/admin'
     }] : [])

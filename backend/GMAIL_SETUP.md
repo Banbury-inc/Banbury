@@ -43,6 +43,7 @@ This guide explains how to set up Gmail integration for the Banbury website AI a
    ```
    https://www.googleapis.com/auth/gmail.readonly
    https://www.googleapis.com/auth/gmail.send
+   https://www.googleapis.com/auth/gmail.settings.basic
    ```
 7. Click "Authorize"
 
@@ -108,6 +109,18 @@ Get emails from a specific sender
   - `sender`: Email address of the sender
   - `maxResults`: Maximum number of results (optional, default: 10)
 
+### 7. `gmail_get_signature`
+Get the user's Gmail signature that is automatically added to outgoing emails
+- **Parameters:** None
+
+### 8. `gmail_send_email_with_signature`
+Send an email through Gmail with the user's signature automatically added
+- **Parameters:**
+  - `to`: Recipient email address
+  - `subject`: Email subject
+  - `body`: Email body content
+  - `from`: Sender email address (optional, uses default if not provided)
+
 ## Example Usage
 
 The AI assistant can now handle requests like:
@@ -117,6 +130,8 @@ The AI assistant can now handle requests like:
 - "Get my unread emails"
 - "Send an email to jane@example.com with subject 'Meeting tomorrow' and body 'Let's meet at 2 PM'"
 - "Find emails about project updates"
+- "Get my email signature"
+- "Send an email with my signature automatically added"
 
 ## Troubleshooting
 

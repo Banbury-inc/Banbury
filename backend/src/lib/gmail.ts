@@ -10,7 +10,7 @@ const getGmailClient = () => {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
       private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
     },
-    scopes: ['https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/gmail.send'],
+    scopes: ['https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/gmail.send', 'https://www.googleapis.com/auth/gmail.settings.basic'],
   });
 
   return google.gmail({ version: 'v1', auth });
@@ -173,5 +173,68 @@ export class GmailService {
   // Get emails from specific sender
   async getEmailsFromSender(sender: string, maxResults: number = 10): Promise<EmailMessage[]> {
     return this.searchEmails(`from:${sender}`, maxResults);
+  }
+
+  // Get user's email signature
+  async getEmailSignature(): Promise<{ success: boolean; signature?: string; error?: string }> {
+    try {
+      const response = await this.gmailClient.users.settings.sendAs.list({
+        userId: 'me',
+      });
+
+      const sendAsList = response.data.sendAs || [];
+      
+      // Get the primary send-as identity (usually the user's main email)
+      const primarySendAs = sendAsList.find(sendAs => sendAs.isPrimary) || sendAsList[0];
+      
+      if (!primarySendAs) {
+        return {
+          success: false,
+          error: 'No send-as identity found',
+        };
+      }
+
+      // Get the signature for the primary send-as identity
+      const signatureResponse = await this.gmailClient.users.settings.sendAs.get({
+        userId: 'me',
+        sendAsEmail: primarySendAs.sendAsEmail!,
+      });
+
+      const signature = signatureResponse.data.signature;
+      
+      return {
+        success: true,
+        signature: signature || '',
+      };
+    } catch (error) {
+      console.error('Error getting email signature:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to get email signature',
+      };
+    }
+  }
+
+  // Send email with automatic signature
+  async sendEmailWithSignature(request: SendEmailRequest): Promise<{ success: boolean; messageId?: string }> {
+    try {
+      // Get the user's signature
+      const signatureResult = await this.getEmailSignature();
+      let bodyWithSignature = request.body;
+      
+      // Add signature if available
+      if (signatureResult.success && signatureResult.signature) {
+        bodyWithSignature = `${request.body}\n\n${signatureResult.signature}`;
+      }
+      
+      // Send email with signature
+      return this.sendEmail({
+        ...request,
+        body: bodyWithSignature,
+      });
+    } catch (error) {
+      console.error('Error sending email with signature:', error);
+      throw new Error('Failed to send email with signature');
+    }
   }
 }
