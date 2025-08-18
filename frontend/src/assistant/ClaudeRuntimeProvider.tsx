@@ -92,13 +92,32 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
         // ignore tracking errors
       }
 
+      // Debug: Check the last user message
+      const lastMessage = messagesWithAttachmentParts[messagesWithAttachmentParts.length - 1];
+      if (lastMessage && lastMessage.role === 'user') {
+        const textContent = lastMessage.content?.find((c: any) => c.type === 'text')?.text || '';
+      }
+
+      // Check for document context in localStorage
+      let documentContext = '';
+      try {
+        documentContext = localStorage.getItem('pendingDocumentContext') || '';
+        if (documentContext) {
+          localStorage.removeItem('pendingDocumentContext'); // Clean up after reading
+        }
+      } catch {}
+
       const res = await fetch(apiEndpoint, {
         method: "POST",
         headers: { 
           "content-type": "application/json",
           ...(token && { "Authorization": `Bearer ${token}` })
         },
-        body: JSON.stringify({ messages: messagesWithAttachmentParts, toolPreferences }),
+        body: JSON.stringify({ 
+          messages: messagesWithAttachmentParts, 
+          toolPreferences,
+          documentContext: documentContext || undefined
+        }),
         signal: options.abortSignal,
       });
 

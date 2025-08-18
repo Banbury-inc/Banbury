@@ -50,11 +50,22 @@ interface FileTab {
   filePath: string;
   fileType: string;
   file: FileSystemItem;
+  type: 'file';
 }
+
+interface EmailTab {
+  id: string;
+  subject: string;
+  emailId: string;
+  email: any; // Gmail message object
+  type: 'email';
+}
+
+type WorkspaceTab = FileTab | EmailTab;
 
 interface Panel {
   id: string;
-  tabs: FileTab[];
+  tabs: WorkspaceTab[];
   activeTabId: string | null;
 }
 
@@ -99,16 +110,13 @@ const Workspaces = (): JSX.Element => {
     panelId: string;
   } | null>(null);
   
-  // Email viewing state
-  const [selectedEmail, setSelectedEmail] = useState<any>(null);
-  const [composeMode, setComposeMode] = useState(false);
+  // Email composition state (for reply context)
   const [replyToEmail, setReplyToEmail] = useState<any>(null);
-  const [emailLoading, setEmailLoading] = useState(false);
   
   // Drag and drop state
   const [dragState, setDragState] = useState<{
     isDragging: boolean;
-    draggedTab: FileTab | null;
+    draggedTab: WorkspaceTab | null;
     draggedFromPanel: string | null;
     dragStartPosition: { x: number; y: number } | null;
     currentPosition: { x: number; y: number } | null;
@@ -180,7 +188,7 @@ const Workspaces = (): JSX.Element => {
   }, []);
   
   // Helper function to get all tabs across all panels
-  const getAllTabs = useCallback((layout: PanelGroup): FileTab[] => {
+  const getAllTabs = useCallback((layout: PanelGroup): WorkspaceTab[] => {
     if (layout.type === 'panel' && layout.panel) {
       return layout.panel.tabs;
     }
@@ -194,7 +202,7 @@ const Workspaces = (): JSX.Element => {
   const openFileInTab = useCallback((file: FileSystemItem, targetPanelId: string = activePanelId) => {
     // Check if file is already open in any panel
     const allTabs = getAllTabs(panelLayout);
-    const existingTab = allTabs.find(tab => tab.filePath === file.path);
+    const existingTab = allTabs.find(tab => tab.type === 'file' && tab.filePath === file.path);
     
     if (existingTab) {
       // Find which panel contains this tab and switch to it
@@ -226,13 +234,59 @@ const Workspaces = (): JSX.Element => {
       fileName: file.name,
       filePath: file.path,
       fileType: file.name.substring(file.name.lastIndexOf('.') + 1).toLowerCase(),
-      file: file
+      file: file,
+      type: 'file'
     };
     
     // Add tab to the target panel
     setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab));
     setActivePanelId(targetPanelId);
     setSelectedFile(file);
+  }, [activePanelId, panelLayout, getAllTabs, findPanel]);
+
+  // Open email in a new tab within specified panel
+  const openEmailInTab = useCallback((email: any, targetPanelId: string = activePanelId) => {
+    // Check if email is already open in any panel
+    const allTabs = getAllTabs(panelLayout);
+    const existingTab = allTabs.find(tab => tab.type === 'email' && tab.emailId === email.id);
+    
+    if (existingTab) {
+      // Find which panel contains this tab and switch to it
+      const switchToExistingTab = (layout: PanelGroup): boolean => {
+        if (layout.type === 'panel' && layout.panel) {
+          const tabExists = layout.panel.tabs.some(tab => tab.id === existingTab.id);
+          if (tabExists) {
+            setActivePanelId(layout.panel.id);
+            setPanelLayout(prev => updatePanelActiveTab(prev, layout.panel!.id, existingTab.id));
+            return true;
+          }
+        }
+        if (layout.type === 'group' && layout.children) {
+          return layout.children.some(child => switchToExistingTab(child));
+        }
+        return false;
+      };
+      
+      switchToExistingTab(panelLayout);
+      return;
+    }
+    
+    // Extract subject from email headers
+    const subject = email.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')?.value || 'No Subject';
+    
+    // Create new email tab
+    const tabId = `email_${email.id}_${Date.now()}`;
+    const newTab: EmailTab = {
+      id: tabId,
+      subject: subject,
+      emailId: email.id,
+      email: email,
+      type: 'email'
+    };
+    
+    // Add tab to the target panel
+    setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab));
+    setActivePanelId(targetPanelId);
   }, [activePanelId, panelLayout, getAllTabs, findPanel]);
   
   // Helper functions for panel operations
@@ -525,12 +579,28 @@ const Workspaces = (): JSX.Element => {
     return body;
   }, []);
 
-  // Handle reply to email
+  // Handle reply to email - opens a new compose tab
   const handleReplyToEmail = useCallback((email: any) => {
-    setComposeMode(true);
-    setSelectedEmail(null);
+    // Create a compose tab with reply data
+    const tabId = `reply_${email.id}_${Date.now()}`;
+    const subject = email.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')?.value || '';
+    const replySubject = subject.startsWith('Re: ') ? subject : `Re: ${subject}`;
+    
+    const newTab: EmailTab = {
+      id: tabId,
+      subject: replySubject,
+      emailId: 'compose',
+      email: null, // No email data for compose mode - reply data handled separately
+      type: 'email'
+    };
+    
+    // Set the reply context
     setReplyToEmail(email);
-  }, []);
+    
+    // Add tab to the active panel
+    setPanelLayout(prev => addTabToPanel(prev, activePanelId, newTab));
+    setActivePanelId(activePanelId);
+  }, [activePanelId]);
 
   
   // Render a single panel
@@ -553,7 +623,10 @@ const Workspaces = (): JSX.Element => {
           <div className="bg-black border-b border-zinc-600 min-h-[40px] flex items-end">
             <div className="flex items-end overflow-x-auto flex-1">
               <OlympusTabs
-                tabs={panel.tabs.map<OlympusTab>((t) => ({ id: t.id, label: t.fileName }))}
+                tabs={panel.tabs.map<OlympusTab>((t) => ({ 
+                  id: t.id, 
+                  label: t.type === 'email' ? t.subject : t.fileName 
+                }))}
                 activeTab={panel.activeTabId || panel.tabs[0]?.id}
                 onTabChange={(tabId) => handleTabChange(panel.id, tabId)}
                 onTabClose={(tabId) => handleCloseTab(tabId, panel.id)}
@@ -631,65 +704,82 @@ const Workspaces = (): JSX.Element => {
               const activeTab = panel.tabs.find(tab => tab.id === panel.activeTabId);
               if (!activeTab) return null;
               
-              const file = activeTab.file;
-              
-              if (isImageFile(file.name)) {
-                return <ImageViewer file={file} userInfo={userInfo} />;
-              } else if (isPdfFile(file.name)) {
-                return <PDFViewer file={file} userInfo={userInfo} />;
-              } else if (isDocumentFile(file.name)) {
-                return (
-                  <DocumentViewer 
-                    file={file} 
-                    userInfo={userInfo} 
-                    onSaveComplete={triggerSidebarRefresh}
-                  />
-                );
-              } else if (isSpreadsheetFile(file.name)) {
-                return (
-                  <SpreadsheetViewer 
-                    file={file} 
-                    userInfo={userInfo} 
-                    onSaveComplete={triggerSidebarRefresh}
-                  />
-                );
-              } else {
-                return (
-                  <div className="h-full flex items-center justify-center">
-                    <div className="text-center max-w-md">
-                      <h3 className="text-xl font-semibold text-white mb-2">File Type Not Supported</h3>
-                      <p className="text-gray-400">
-                        Preview for this file type is not available yet.
-                      </p>
-                    </div>
-                  </div>
-                );
+              // Handle email tabs
+              if (activeTab.type === 'email') {
+                // Check if this is a compose tab (email is null)
+                if (activeTab.email === null) {
+                  return (
+                    <EmailComposer 
+                      onBack={() => {
+                        // Close the compose tab when back is clicked
+                        handleCloseTab(activeTab.id, panel.id);
+                      }}
+                      onSendComplete={() => {
+                        // Close the compose tab when send is complete
+                        handleCloseTab(activeTab.id, panel.id);
+                      }}
+                      replyTo={replyToEmail ? {
+                        to: replyToEmail.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'from')?.value || '',
+                        subject: replyToEmail.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')?.value || '',
+                        body: extractReplyBody(replyToEmail),
+                        messageId: replyToEmail.id || ''
+                      } : undefined}
+                    />
+                  );
+                } else {
+                  return (
+                    <EmailViewer 
+                      email={activeTab.email} 
+                      onBack={() => {
+                        // Close the email tab when back is clicked
+                        handleCloseTab(activeTab.id, panel.id);
+                      }}
+                      onReply={handleReplyToEmail}
+                    />
+                  );
+                }
               }
+              
+              // Handle file tabs
+              if (activeTab.type === 'file') {
+                const file = activeTab.file;
+                
+                if (isImageFile(file.name)) {
+                  return <ImageViewer file={file} userInfo={userInfo} />;
+                } else if (isPdfFile(file.name)) {
+                  return <PDFViewer file={file} userInfo={userInfo} />;
+                } else if (isDocumentFile(file.name)) {
+                  return (
+                    <DocumentViewer 
+                      file={file} 
+                      userInfo={userInfo} 
+                      onSaveComplete={triggerSidebarRefresh}
+                    />
+                  );
+                } else if (isSpreadsheetFile(file.name)) {
+                  return (
+                    <SpreadsheetViewer 
+                      file={file} 
+                      userInfo={userInfo} 
+                      onSaveComplete={triggerSidebarRefresh}
+                    />
+                  );
+                } else {
+                  return (
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center max-w-md">
+                        <h3 className="text-xl font-semibold text-white mb-2">File Type Not Supported</h3>
+                        <p className="text-gray-400">
+                          Preview for this file type is not available yet.
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+              }
+              
+              return null;
             })()
-          ) : composeMode ? (
-            <EmailComposer 
-              onBack={() => setComposeMode(false)}
-              onSendComplete={handleSendComplete}
-              replyTo={replyToEmail ? {
-                to: replyToEmail.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'from')?.value || '',
-                subject: replyToEmail.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')?.value || '',
-                body: extractReplyBody(replyToEmail),
-                messageId: replyToEmail.id || ''
-              } : undefined}
-            />
-          ) : emailLoading ? (
-            <div className="h-full flex items-center justify-center bg-white">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading email...</p>
-              </div>
-            </div>
-          ) : selectedEmail ? (
-            <EmailViewer 
-              email={selectedEmail} 
-              onBack={() => setSelectedEmail(null)}
-              onReply={handleReplyToEmail}
-            />
           ) : (
             <div className="h-full flex items-center justify-center">
               <div className="text-center max-w-md">
@@ -706,7 +796,7 @@ const Workspaces = (): JSX.Element => {
         </div>
       </div>
     );
-  }, [activePanelId, handleTabChange, handleTabContextMenu, handleCloseTab, handleTabMouseDown, splitPanel, userInfo, triggerSidebarRefresh, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, dragState, composeMode, selectedEmail, replyToEmail, handleReplyToEmail]);
+  }, [activePanelId, handleTabChange, handleTabContextMenu, handleCloseTab, handleTabMouseDown, splitPanel, userInfo, triggerSidebarRefresh, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, dragState, replyToEmail, handleReplyToEmail]);
   
   // Render panel group (recursive for nested splits)
   const renderPanelGroup = useCallback((group: PanelGroup): React.ReactNode => {
@@ -969,31 +1059,29 @@ Alice Brown,alice.brown@example.com,555-0104,HR`;
 
 
 
-  // Handle email selection from EmailTab
+  // Handle email selection from EmailTab - now opens in tabs
   const handleEmailSelect = useCallback((email: any) => {
-    setEmailLoading(true);
-    setSelectedEmail(email);
-    setComposeMode(false);
-    setReplyToEmail(null);
-    // Simulate loading time for better UX
-    setTimeout(() => {
-      setEmailLoading(false);
-    }, 500);
-  }, []);
+    openEmailInTab(email, activePanelId);
+  }, [openEmailInTab, activePanelId]);
 
-  // Handle compose email
+  // Handle compose email - now opens in a tab
   const handleComposeEmail = useCallback(() => {
-    setComposeMode(true);
-    setSelectedEmail(null);
-    setReplyToEmail(null);
-  }, []);
+    // Create a special email tab for composing
+    const tabId = `compose_${Date.now()}`;
+    const newTab: EmailTab = {
+      id: tabId,
+      subject: 'New Email',
+      emailId: 'compose',
+      email: null, // No email data for compose mode
+      type: 'email'
+    };
+    
+    // Add tab to the active panel
+    setPanelLayout(prev => addTabToPanel(prev, activePanelId, newTab));
+    setActivePanelId(activePanelId);
+  }, [activePanelId]);
 
-  // Handle send complete
-  const handleSendComplete = useCallback(() => {
-    setComposeMode(false);
-    setReplyToEmail(null);
-    // Refresh email list if needed
-  }, []);
+
 
   const handleFileDeleted = useCallback((fileId: string) => {
     // Remove tabs for the deleted file from all panels

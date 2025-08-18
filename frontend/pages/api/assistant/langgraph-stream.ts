@@ -286,7 +286,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const body = req.body as { 
       messages: any[]; 
       threadId?: string;
-      toolPreferences?: { web_search?: boolean; tiptap_ai?: boolean; memory?: boolean; gmail?: boolean } 
+      toolPreferences?: { web_search?: boolean; tiptap_ai?: boolean; memory?: boolean; gmail?: boolean };
+      documentContext?: string;
     };
     
     // Normalize messages like in athena-intelligence
@@ -309,6 +310,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return { ...(rest as AssistantUiMessage), content };
         })
       : (body.messages as AssistantUiMessage[]);
+
+    // Add document context to the last user message if provided
+    if (body.documentContext && normalizedMessages.length > 0) {
+      const lastMessage = normalizedMessages[normalizedMessages.length - 1];
+      if (lastMessage.role === 'user') {
+        // Get the text content from the last user message
+        const textContent = lastMessage.content.find((part: any) => part.type === 'text')?.text || '';
+        
+        // Combine with document context
+        const enhancedText = textContent + body.documentContext;
+        
+        // Update the content with the enhanced text
+        const updatedContent = lastMessage.content.map((part: any) => 
+          part.type === 'text' ? { ...part, text: enhancedText } : part
+        );
+        
+        // If no text content found, add it
+        if (!lastMessage.content.some((part: any) => part.type === 'text')) {
+          updatedContent.unshift({ type: 'text', text: enhancedText });
+        }
+        
+        // Update the last message
+        normalizedMessages[normalizedMessages.length - 1] = {
+          ...lastMessage,
+          content: updatedContent
+        };
+      }
+    }
 
     // Pre-download files from S3 (same logic as existing implementation)
     const token = req.headers.authorization?.replace('Bearer ', '');

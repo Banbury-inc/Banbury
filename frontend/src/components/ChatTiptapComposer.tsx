@@ -33,6 +33,50 @@ type FileMentionItem = {
   file: FileSystemItem;
 };
 
+// Helper function to get document editor content if available
+const getDocumentEditorContent = (currentEditorDom?: Element | null): string => {
+  try {
+    // Look for document editor content - be very specific to avoid chat composers
+    const documentEditors = Array.from(document.querySelectorAll('.ProseMirror[contenteditable="true"]'));
+    
+    for (const element of documentEditors) {
+      // Skip if it's the current chat editor
+      if (element === currentEditorDom) {
+        continue;
+      }
+      
+      // Check various document editor indicators
+      const hasSimpleTiptapClass = element.classList.contains('simple-tiptap-editor') || 
+                                   element.closest('.simple-tiptap-editor');
+      const isInAITiptap = element.closest('.min-h-\\[600px\\]') || // AITiptapEditor specific class
+                          element.closest('.bg-card');
+      const isInWordViewer = element.closest('[class*="MuiBox"]') || // Material UI Box from WordViewer
+                            element.closest('.h-full.border-0.rounded-none'); // TiptapWordEditor class
+      
+      // Skip if it's inside a chat composer area
+      const isInChatComposer = element.closest('.bg-zinc-800') || 
+                              element.closest('[aria-label*="Message input"]') ||
+                              element.closest('[data-role="composer"]') ||
+                              element.closest('.min-h-16'); // ChatTiptapComposer class
+      
+      
+      
+      if ((hasSimpleTiptapClass || isInAITiptap || isInWordViewer) && !isInChatComposer) {
+        const content = element.textContent || '';
+        // Only include if it has substantial content
+        if (content.trim() && content.length > 20) {
+          return `\n\nCurrent document content:\n${content}`;
+        }
+      }
+    }
+    
+  } catch (e) {
+    console.error('Error getting document content:', e);
+  }
+  
+  return '';
+};
+
 export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenInputRef, userInfo, onFileAttach, placeholder = 'Send a message...', className, onSend }) => {
   const [files, setFiles] = React.useState<FileSystemItem[]>([]);
   const [loading, setLoading] = React.useState<boolean>(false);
@@ -62,13 +106,14 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
   useEffect(() => { filesRef.current = files; }, [files]);
   useEffect(() => { loadingRef.current = loading; }, [loading]);
 
-  // Lightweight visual highlighter for any @token (plain text).
+  // Lightweight visual highlighter for any @token (plain text), excluding email addresses.
   const MentionHighlighter = useMemo(() => {
     return Extension.create({
       name: 'mentionHighlighter',
       addProseMirrorPlugins() {
         const createDecos = (doc: any) => {
           const decorations: any[] = [];
+          // Pattern to match @mentions but only if there's a space before the @
           const pattern = /@[^\s]+/g;
           doc.descendants((node: any, pos: number) => {
             if (!node.isText) return;
@@ -77,7 +122,14 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
             while ((match = pattern.exec(text)) !== null) {
               const from = pos + match.index;
               const to = from + match[0].length;
-              decorations.push(Decoration.inline(from, to, { class: 'mention file-mention', 'data-type': 'mention' }));
+              
+              // Only highlight if there's a space before the @ symbol
+              const beforeMatch = text.substring(0, match.index);
+              const hasSpaceBefore = beforeMatch.endsWith(' ') || beforeMatch === '';
+              
+              if (hasSpaceBefore) {
+                decorations.push(Decoration.inline(from, to, { class: 'mention file-mention', 'data-type': 'mention' }));
+              }
             }
           });
           return DecorationSet.create(doc, decorations);
@@ -200,7 +252,6 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
             hideOnClick: false,
             animation: false,
             duration: 0,
-            boundary: 'viewport',
             maxWidth: 'none',
           }) as unknown as TippyInstance[];
 
@@ -344,14 +395,11 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
   const editorInstance = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit.configure({
-        history: true,
-      }),
+      StarterKit,
       Placeholder.configure({ placeholder }),
       MentionHighlighter,
       Mention.configure({
         suggestion: suggestionOptions,
-        exitable: false,
         HTMLAttributes: {
           class: 'mention file-mention',
           'data-type': 'mention',
@@ -360,10 +408,9 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
           const label = node.attrs.label ?? node.attrs.id ?? '';
           return `@${label}`;
         },
-        renderHTML({ node, HTMLAttributes }) {
+        renderHTML({ node }) {
           const label = node.attrs.label ?? node.attrs.id ?? '';
           return ['span', {
-            ...HTMLAttributes,
             'data-id': node.attrs.id,
             'data-label': node.attrs.label,
             class: 'mention-chip-white',
@@ -382,7 +429,7 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
       },
       handleKeyDown: (_view, event) => {
         // Check if suggestion dropdown is active (mention popup is open)
-        const suggestionPopup = document.querySelector('[data-tippy-root]');
+        const suggestionPopup = document.querySelector('[data-tippy-root]') as HTMLElement;
         if (suggestionPopup && suggestionPopup.style.display !== 'none') {
           // Let the suggestion handle Enter key
           return false;
@@ -392,15 +439,29 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
           event.preventDefault();
           const el = hiddenInputRef.current;
           if (el) {
-            // Ensure composer has latest text
-            const text = editorInstance?.getText() ?? '';
-            el.value = text;
+            // Get text from the chat composer
+            const chatText = editorInstance?.getText() ?? '';
+            
+            // Get document editor content if available
+            const documentContent = getDocumentEditorContent(editorInstance?.view.dom);
+            
+            // Only put the chat text in the hidden input for UI display
+            el.value = chatText;
             el.dispatchEvent(new Event('input', { bubbles: true }));
             el.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            // Store document content directly in localStorage
+            if (documentContent) {
+              localStorage.setItem('pendingDocumentContext', documentContent);
+            } else {
+              localStorage.removeItem('pendingDocumentContext');
+            }
           }
-          // Call the send function if provided
+          // Call the send function if provided, with a small delay to ensure event is dispatched first
           if (onSend) {
-            onSend();
+            setTimeout(() => {
+              onSend();
+            }, 10);
           }
           return true;
         }
@@ -461,18 +522,22 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
       const el = hiddenInputRef.current;
       if (el) {
         // Get text including mentions - this should properly extract mention text
-        const text = editor.getText();
-        el.value = text;
+        const chatText = editor.getText();
+        
+        // For onUpdate, we'll just use the chat text without document content
+        // to avoid constantly appending document content during typing.
+        // Document content will only be added when sending (Enter key)
+        el.value = chatText;
         
         // Dispatch multiple events to ensure the @assistant-ui library detects the change
         el.dispatchEvent(new Event('input', { bubbles: true }));
         el.dispatchEvent(new Event('change', { bubbles: true }));
         
         // Force a re-render by dispatching a custom event
-        el.dispatchEvent(new CustomEvent('tiptap-update', { bubbles: true, detail: { text } }));
+        el.dispatchEvent(new CustomEvent('tiptap-update', { bubbles: true, detail: { text: chatText } }));
         
         // Also trigger a composition event to simulate real typing
-        el.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: text }));
+        el.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: chatText }));
       }
     },
   }, []);
@@ -518,7 +583,7 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
         ],
       } as any;
       try {
-        editorInstance.commands.setContent(doc, false);
+        editorInstance.commands.setContent(doc);
         setTimeout(() => {
           try { editorInstance.commands.focus('end'); } catch {}
         }, 0);
@@ -532,8 +597,12 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
         }
       } catch {}
     };
+
     window.addEventListener('composer-set-text', handleSetText as EventListener);
-    return () => window.removeEventListener('composer-set-text', handleSetText as EventListener);
+    
+    return () => {
+      window.removeEventListener('composer-set-text', handleSetText as EventListener);
+    };
   }, [editorInstance, hiddenInputRef]);
 
 

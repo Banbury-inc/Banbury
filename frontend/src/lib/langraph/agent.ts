@@ -408,6 +408,48 @@ const createFileTool = tool(
   }
 );
 
+// Utility function to truncate Gmail message content to prevent token limit issues
+const truncateGmailResponse = (messages: any[], maxTokensPerMessage: number = 2000, maxTotalMessages: number = 10) => {
+  const truncatedMessages = messages.slice(0, maxTotalMessages).map(msg => {
+    if (!msg || typeof msg !== 'object') return msg;
+    
+    const truncated = { ...msg };
+    
+    // Truncate body content if it exists and is too long
+    if (truncated.body && typeof truncated.body === 'string') {
+      const bodyLength = truncated.body.length;
+      if (bodyLength > maxTokensPerMessage) {
+        // Rough estimate: 1 token ≈ 4 characters
+        const maxChars = maxTokensPerMessage * 4;
+        truncated.body = truncated.body.substring(0, maxChars) + '... [truncated]';
+        truncated.bodyTruncated = true;
+        truncated.originalBodyLength = bodyLength;
+      }
+    }
+    
+    // Truncate snippet if it exists and is too long
+    if (truncated.snippet && typeof truncated.snippet === 'string') {
+      const snippetLength = truncated.snippet.length;
+      if (snippetLength > 500) { // 500 chars for snippet
+        truncated.snippet = truncated.snippet.substring(0, 500) + '... [truncated]';
+        truncated.snippetTruncated = true;
+      }
+    }
+    
+    return truncated;
+  });
+  
+  return {
+    messages: truncatedMessages,
+    totalCount: messages.length,
+    truncated: messages.length > maxTotalMessages,
+    maxMessagesReturned: maxTotalMessages,
+    note: messages.length > maxTotalMessages ? 
+      `Showing first ${maxTotalMessages} messages. Use gmail_get_message for full content of specific messages.` : 
+      undefined
+  };
+};
+
 // Gmail tools (proxy to Banbury API). Respects user toolPreferences via server context
 const gmailGetRecentTool = tool(
   async (input: { maxResults?: number; labelIds?: string[] }) => {
@@ -422,7 +464,7 @@ const gmailGetRecentTool = tool(
       throw new Error("Missing auth token in server context");
     }
 
-    const maxResults = Number(input?.maxResults || 20);
+    const maxResults = Math.min(Number(input?.maxResults || 20), 10); // Cap at 10 to prevent token limit issues
     const labelIds = (input?.labelIds && input.labelIds.length > 0 ? input.labelIds : ["INBOX"]).join(",");
 
     // First, get the list of message IDs
@@ -470,18 +512,20 @@ const gmailGetRecentTool = tool(
       .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
       .map(result => result.value);
 
+    // Truncate the response to prevent token limit issues
+    const truncatedResponse = truncateGmailResponse(successfulMessages);
+
     return JSON.stringify({ 
       success: true, 
-      messages: successfulMessages,
-      totalCount: listData.resultSizeEstimate || successfulMessages.length,
+      ...truncatedResponse,
       nextPageToken: listData.nextPageToken
     });
   },
   {
     name: "gmail_get_recent",
-    description: "Get recent Gmail messages with full content (subject, sender, body, timestamp, attachments) from the INBOX",
+    description: "Get recent Gmail messages with content (subject, sender, body, timestamp, attachments) from the INBOX. Long messages are automatically truncated to prevent token limit issues.",
     schema: z.object({
-      maxResults: z.number().optional().describe("Maximum number of results to return (default 20)"),
+      maxResults: z.number().optional().describe("Maximum number of results to return (default 20, max 10 to prevent token limits)"),
       labelIds: z.array(z.string()).optional().describe("Optional Gmail labelIds (default ['INBOX'])"),
     }),
   }
@@ -500,7 +544,7 @@ const gmailSearchTool = tool(
       throw new Error("Missing auth token in server context");
     }
 
-    const maxResults = Number(input?.maxResults || 20);
+    const maxResults = Math.min(Number(input?.maxResults || 20), 10); // Cap at 10 to prevent token limit issues
     // Backend supports Gmail-style q param if implemented; pass-through
     const listUrl = `${apiBase}/authentication/gmail/list_messages/?labelIds=${encodeURIComponent("INBOX")}&maxResults=${encodeURIComponent(String(maxResults))}&q=${encodeURIComponent(input.query)}`;
     const listResp = await fetch(listUrl, { method: "GET", headers: { Authorization: `Bearer ${token}` } });
@@ -546,20 +590,22 @@ const gmailSearchTool = tool(
       .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
       .map(result => result.value);
 
+    // Truncate the response to prevent token limit issues
+    const truncatedResponse = truncateGmailResponse(successfulMessages);
+
     return JSON.stringify({ 
       success: true, 
-      messages: successfulMessages,
+      ...truncatedResponse,
       query: input.query,
-      totalCount: listData.resultSizeEstimate || successfulMessages.length,
       nextPageToken: listData.nextPageToken
     });
   },
   {
     name: "gmail_search",
-    description: "Search Gmail INBOX using Gmail query syntax and return full message content (subject, sender, body, timestamp, attachments)",
+    description: "Search Gmail INBOX using Gmail query syntax and return message content (subject, sender, body, timestamp, attachments). Long messages are automatically truncated to prevent token limit issues.",
     schema: z.object({
       query: z.string().describe("Gmail search query, e.g., 'from:john@example.com is:unread'"),
-      maxResults: z.number().optional().describe("Maximum number of results to return (default 20)"),
+      maxResults: z.number().optional().describe("Maximum number of results to return (default 20, max 10 to prevent token limits)"),
     }),
   }
 );
@@ -584,17 +630,20 @@ const gmailGetMessageTool = tool(
     }
     const messageData = await getResp.json();
     
+    // Truncate single message content if it's too long
+    const truncatedMessage = truncateGmailResponse([{ id: input.messageId, ...messageData }], 5000, 1);
+    
     return JSON.stringify({ 
       success: true, 
-      message: {
-        id: input.messageId,
-        ...messageData
-      }
+      message: truncatedMessage.messages[0],
+      note: truncatedMessage.messages[0].bodyTruncated ? 
+        "Message body was truncated due to length. Full content available in Gmail." : 
+        undefined
     });
   },
   {
     name: "gmail_get_message",
-    description: "Get a specific Gmail message by ID with full content (subject, sender, body, timestamp, attachments)",
+    description: "Get a specific Gmail message by ID with content (subject, sender, body, timestamp, attachments). Very long messages are automatically truncated to prevent token limit issues.",
     schema: z.object({
       messageId: z.string().describe("The Gmail message ID to retrieve"),
     }),

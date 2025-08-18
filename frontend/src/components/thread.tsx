@@ -396,12 +396,20 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove
 
   const handleSend = () => {
     // Get the text directly from the Tiptap editor, including mentions
-    const proseMirrorElement = document.querySelector('.ProseMirror');
+    const proseMirrorElements = document.querySelectorAll('.ProseMirror');
+    
+    // Find the chat composer's ProseMirror element (should be inside .bg-zinc-800)
+    let proseMirrorElement = null;
     let text = '';
     
-    // Extract text content from the DOM, which includes mentions
-    if (proseMirrorElement) {
-      text = proseMirrorElement.textContent || '';
+    for (const element of Array.from(proseMirrorElements)) {
+      const isInChatComposer = element.closest('.bg-zinc-800') || element.closest('.min-h-16');
+      
+      if (isInChatComposer) {
+        proseMirrorElement = element;
+        text = element.textContent || '';
+        break;
+      }
     }
     
     // If we still don't have text, try the hidden input
@@ -410,14 +418,15 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove
       text = input?.value || '';
     }
     
-    
-    
+    // Document context is already stored in localStorage by ChatTiptapComposer
+    const documentContext = localStorage.getItem('pendingDocumentContext') || '';
+      
     if (text.trim().length > 0) {
       // Try multiple approaches to get the text into the composer
       const input = document.querySelector('textarea[aria-label="Message input"]') as HTMLTextAreaElement;
       if (input) {
         // Set the input value and trigger all possible events
-        input.value = text;
+        input.value = text; // Keep original text for display
         input.focus();
         
         // Trigger all possible events to ensure detection
@@ -425,13 +434,13 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove
           input.dispatchEvent(new Event(eventType, { bubbles: true }));
         });
         
-        // Use the composer's setText method directly
+        // Use the composer's setText method with just the chat text
         try {
           if (composer && typeof composer.setText === 'function') {
-            composer.setText(text);
+            composer.setText(text); // Send only chat text for display
           }
         } catch (e) {
-          
+          console.error('Error setting composer text:', e);
         }
         
         // Wait and then send
@@ -499,6 +508,7 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove
             onToggleWebSearch={onToggleWebSearch}
             toolPreferences={toolPreferences}
             onUpdateToolPreferences={onUpdateToolPreferences}
+            onSend={handleSend}
           />
         </ComposerPrimitive.Root>
       </div>
@@ -518,9 +528,10 @@ interface ComposerActionProps {
   onToggleWebSearch: () => void;
   toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean };
   onUpdateToolPreferences: (prefs: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean }) => void;
+  onSend: () => void;
 }
 
-const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, onFileRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences }) => {
+const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, onFileRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, onSend }) => {
   const composer = useComposerRuntime();
   const [hasText, setHasText] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -612,50 +623,8 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, 
   }, []);
 
   const handleSendFromButton = () => {
-    // Get the text directly from the Tiptap editor, including mentions
-    const proseMirrorElement = document.querySelector('.ProseMirror');
-    let text = '';
-    
-    // Extract text content from the DOM, which includes mentions
-    if (proseMirrorElement) {
-      text = proseMirrorElement.textContent || '';
-    }
-    
-    // If we still don't have text, try the hidden input
-    if (!text.trim()) {
-      const input = document.querySelector('textarea[aria-label="Message input"]') as HTMLTextAreaElement;
-      text = input?.value || '';
-    }
-    
-    
-    
-    if (text.trim().length > 0) {
-      // Use the composer's setText method directly
-      try {
-        if (composer && typeof composer.setText === 'function') {
-          composer.setText(text);
-          
-          // Send immediately
-          setTimeout(() => {
-            composer.send();
-            
-            // Clear after sending
-            setTimeout(() => {
-              const input = document.querySelector('textarea[aria-label="Message input"]') as HTMLTextAreaElement;
-              if (input) {
-                input.value = '';
-                input.dispatchEvent(new Event('input', { bubbles: true }));
-              }
-              if (proseMirrorElement) {
-                proseMirrorElement.innerHTML = '<p></p>';
-              }
-            }, 100);
-          }, 50);
-        }
-      } catch (e) {
-        
-      }
-    }
+    // Simply call the onSend function which handles document context
+    onSend();
   };
 
   return (
