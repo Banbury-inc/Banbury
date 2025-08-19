@@ -56,7 +56,10 @@ export function NavSidebar({ onLogout }: NavSidebarProps) {
     <div className="fixed left-0 top-0 z-40 flex h-full w-16 flex-col bg-black border-r border-b border-zinc-300 dark:border-zinc-600">
       <div className="flex flex-1 flex-col items-center gap-4 py-4">
         {/* Logo/Brand */}
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg p-1">
+        <div 
+          className="flex h-8 w-8 items-center justify-center rounded-lg p-1 cursor-pointer hover:bg-zinc-700 transition-colors"
+          onClick={() => router.push('/')}
+        >
           <Image 
             src={BanburyLogo} 
             alt="Banbury Logo" 

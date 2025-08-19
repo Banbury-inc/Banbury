@@ -8,7 +8,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Paperclip,
-  Trash2
+  Trash2,
+  AlertCircle,
+  Settings
 } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 
@@ -16,6 +18,7 @@ import { EmailViewer } from './EmailViewer'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { EmailService, GmailMessage, GmailMessageListResponse } from '../services/emailService'
+import { ScopeService } from '../services/scopeService'
 
 interface EmailTabProps {
   onOpenEmailApp?: () => void
@@ -47,8 +50,10 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
   const [error, setError] = useState<string | null>(null)
   const [composeOpen, setComposeOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'drafts'>('inbox')
+  const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'drafts' | 'starred'>('inbox')
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [gmailAvailable, setGmailAvailable] = useState<boolean | null>(null)
+  const [checkingGmailAccess, setCheckingGmailAccess] = useState(false)
   
   // Compose form state
   const [composeForm, setComposeForm] = useState({
@@ -166,7 +171,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
     }
     setError(null)
     try {
-      const labelIds = activeTab === 'inbox' ? ['INBOX'] : activeTab === 'sent' ? ['SENT'] : ['DRAFT']
+      const labelIds = activeTab === 'inbox' ? ['INBOX'] : activeTab === 'sent' ? ['SENT'] : activeTab === 'drafts' ? ['DRAFT'] : ['STARRED']
       const response = await EmailService.listMessages({
         maxResults: 20,
         labelIds,
@@ -176,7 +181,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
       
       // Load full message details in batch
       if (response.messages && response.messages.length > 0) {
-        const messageIds = response.messages.map(msg => msg.id)
+        const messageIds = response.messages.map((msg: { id: string }) => msg.id)
         try {
           const batchResponse = await EmailService.getMessagesBatch(messageIds)
           const fullMessages: GmailMessage[] = []
@@ -350,6 +355,29 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
     }
   }, [loadMessages])
 
+  // Check Gmail access
+  const checkGmailAccess = useCallback(async () => {
+    try {
+      setCheckingGmailAccess(true)
+      const isAvailable = await ScopeService.isFeatureAvailable('gmail')
+      setGmailAvailable(isAvailable)
+    } catch (error) {
+      console.error('Error checking Gmail access:', error)
+      setGmailAvailable(false)
+    } finally {
+      setCheckingGmailAccess(false)
+    }
+  }, [])
+
+  // Request Gmail access
+  const requestGmailAccess = useCallback(async () => {
+    try {
+      await ScopeService.requestFeatureAccess(['gmail'])
+    } catch (error) {
+      console.error('Error requesting Gmail access:', error)
+    }
+  }, [])
+
   // Parse messages when messages state changes
   useEffect(() => {
     if (messages.messages) {
@@ -358,10 +386,17 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
     }
   }, [messages, parseGmailMessage])
 
+  // Check Gmail access on component mount
+  useEffect(() => {
+    checkGmailAccess()
+  }, [checkGmailAccess])
+
   // Load initial messages
   useEffect(() => {
-    loadMessages()
-  }, [loadMessages, activeTab])
+    if (gmailAvailable) {
+      loadMessages()
+    }
+  }, [loadMessages, activeTab, gmailAvailable])
 
   // Global refresh listener so other components can force a refresh
   useEffect(() => {
@@ -379,7 +414,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
   }, [loadMessages, searchQuery])
 
   // Handle tab change
-  const handleTabChange = useCallback((tab: 'inbox' | 'sent' | 'drafts') => {
+  const handleTabChange = useCallback((tab: 'inbox' | 'sent' | 'drafts' | 'starred') => {
     setActiveTab(tab)
     setSelectedMessage(null)
     setMessages({})
@@ -443,6 +478,17 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
             >
               Drafts
             </button>
+            <button
+              onClick={() => handleTabChange('starred')}
+              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                activeTab === 'starred'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-300 hover:text-white hover:bg-zinc-800'
+              }`}
+            >
+              <Star className="h-3 w-3 mr-1" />
+              Starred
+            </button>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -487,7 +533,27 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
 
       {/* Email Content */}
       <div className="flex-1 overflow-hidden">
-        {composeOpen ? (
+        {checkingGmailAccess ? (
+          <div className="flex items-center justify-center h-full text-gray-400">
+            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+            Checking Gmail access...
+          </div>
+        ) : gmailAvailable === false ? (
+          <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
+            <Mail className="h-12 w-12 mb-4 opacity-50" />
+            <h3 className="text-lg font-medium text-white mb-2">Gmail Access Required</h3>
+            <p className="text-sm text-gray-400 text-center mb-4 max-w-md">
+              To use the email features, you need to grant Gmail access to your Google account.
+            </p>
+            <Button
+              onClick={requestGmailAccess}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Activate Gmail Access
+            </Button>
+          </div>
+        ) : composeOpen ? (
           /* Compose Form */
           <div className="h-full flex flex-col p-4">
             <div className="flex items-center justify-between mb-4">
@@ -585,12 +651,14 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
                        <p className="text-sm mb-2">
                          {activeTab === 'inbox' ? 'No emails found' : 
                           activeTab === 'sent' ? 'No sent emails found' : 
-                          'No drafts found'}
+                          activeTab === 'drafts' ? 'No drafts found' :
+                          'No starred emails found'}
                        </p>
                        <p className="text-xs text-gray-500">
                          {activeTab === 'inbox' ? 'Your inbox is empty or try refreshing' :
                           activeTab === 'sent' ? 'You haven\'t sent any emails yet' :
-                          'You don\'t have any saved drafts'}
+                          activeTab === 'drafts' ? 'You don\'t have any saved drafts' :
+                          'You haven\'t starred any emails yet'}
                        </p>
                      </div>
                    ) : (
@@ -635,7 +703,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
                                  <Button
                                    variant="ghost"
                                    size="sm"
-                                   onClick={(e) => {
+                                   onClick={(e: React.MouseEvent) => {
                                      e.stopPropagation()
                                      handleMessageAction(email.id, email.labels.includes('STARRED') ? 'unstar' : 'star')
                                    }}
@@ -650,7 +718,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
                                  <Button
                                    variant="ghost"
                                    size="sm"
-                                   onClick={(e) => {
+                                   onClick={(e: React.MouseEvent) => {
                                      e.stopPropagation()
                                      handleMessageAction(email.id, 'delete')
                                    }}

@@ -1,22 +1,33 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { ApiService } from '../services/apiService';
+import { ScopeService } from '../services/scopeService';
 
 const AuthCallback = (): JSX.Element => {
   const router = useRouter();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState('');
+  const handledRef = useRef(false);
 
   useEffect(() => {
     if (!router.isReady) return;
-    let handled = false;
-    const handleCallback = async () => {
-      if (handled) return;
-      handled = true;
-      const code = router.query.code as string | undefined;
-      const urlError = router.query.error as string | undefined;
 
+    const code = router.query.code as string | undefined;
+    const scope = router.query.scope as string | undefined;
+    const urlError = router.query.error as string | undefined;
+
+    // Guard: prevent double-calls in React Strict Mode or route re-mounts
+    if (handledRef.current) return;
+    if (!code && !urlError) return; // wait until params are present
+
+    // Also guard by code value in sessionStorage (avoid reusing same code)
+    const lastCode = typeof window !== 'undefined' ? sessionStorage.getItem('lastOAuthCode') : null;
+    if (code && lastCode === code) return;
+
+    handledRef.current = true;
+
+    const handleCallback = async () => {
       if (urlError) {
         setStatus('error');
         setError(`Authentication failed: ${urlError}`);
@@ -32,11 +43,27 @@ const AuthCallback = (): JSX.Element => {
       }
 
       try {
-        const result = await ApiService.handleOAuthCallback(code);
+        // Persist code to avoid reuse
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('lastOAuthCode', code);
+        }
+
+        const result = await ApiService.handleOAuthCallback(code, scope);
 
         if (result.success) {
-          setStatus('success');
-          router.replace('/dashboard');
+          // Check if this was a scope activation callback
+          const requestedFeatures = ScopeService.getRequestedFeatures();
+          
+          if (requestedFeatures.length > 0) {
+            setStatus('success');
+            ScopeService.clearRequestedFeatures();
+            setTimeout(() => {
+              router.replace('/dashboard?scopeActivated=true');
+            }, 2000);
+          } else {
+            setStatus('success');
+            router.replace('/dashboard');
+          }
         } else {
           setStatus('error');
           setError('OAuth callback succeeded but result was not successful');
@@ -51,7 +78,7 @@ const AuthCallback = (): JSX.Element => {
     };
 
     handleCallback();
-  }, [router.isReady]);
+  }, [router.isReady, router.query.code, router.query.error]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black p-4">
@@ -68,7 +95,12 @@ const AuthCallback = (): JSX.Element => {
           <>
             <div className="text-green-500 text-5xl mb-2">✓</div>
             <h2 className="text-green-500 text-lg mb-1">Authentication Successful!</h2>
-            <p className="text-zinc-400 text-sm">Redirecting to your dashboard...</p>
+            <p className="text-zinc-400 text-sm">
+              {ScopeService.getRequestedFeatures().length > 0 
+                ? 'Additional features activated successfully! Redirecting to dashboard...'
+                : 'Redirecting to your dashboard...'
+              }
+            </p>
           </>
         )}
 

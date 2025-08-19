@@ -151,14 +151,22 @@ export class ApiService {
   /**
    * Handle OAuth callback
    */
-  static async handleOAuthCallback(code: string) {
+  static async handleOAuthCallback(code: string, scope?: string) {
     try {
+      const redirectUri = typeof window !== 'undefined' ? AUTH_CONFIG.getRedirectUri() : '';
+      const params = new URLSearchParams();
+      params.set('code', code);
+      if (redirectUri) params.set('redirect_uri', redirectUri);
+      if (scope) params.set('scope', scope);
+      const qs = `/authentication/auth/callback/?${params.toString()}`;
+
       const response = await this.get<{
         success: boolean;
         token?: string;
         user?: { username: string; email: string };
         error?: string;
-      }>(`/authentication/auth/callback/?code=${encodeURIComponent(code)}&redirect_uri=${encodeURIComponent(AUTH_CONFIG.getRedirectUri())}`);
+        details?: any;
+      }>(qs);
 
       if (response.success && response.token && response.user) {
         // Set auth token globally
@@ -174,6 +182,11 @@ export class ApiService {
           user: response.user
         };
       } else {
+        // Surface backend details to console to aid debugging
+        if ((response as any)?.details) {
+          // eslint-disable-next-line no-console
+          console.error('OAuth exchange details:', (response as any).details);
+        }
         throw new Error(response.error || 'Authentication failed');
       }
     } catch (error) {

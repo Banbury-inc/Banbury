@@ -1,197 +1,220 @@
 import { useState, useEffect } from 'react'
-import { NavSidebar } from '../components/nav-sidebar'
+import { useRouter } from 'next/router'
+import { 
+  Settings as SettingsIcon, 
+  User, 
+  Mail, 
+  FolderOpen, 
+  Calendar,
+  ArrowLeft,
+  CheckCircle,
+  AlertCircle,
+  Link
+} from 'lucide-react'
+
 import { Button } from '../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
-import { Label } from '../components/ui/label'
-import { Input } from '../components/ui/input'
+import { ScopeManager } from '../components/ScopeManager'
 import { ApiService } from '../services/apiService'
+import { NavSidebar } from '../components/nav-sidebar'
 
-interface UserInfo {
-  username: string
-  email?: string
-  first_name?: string
-  last_name?: string
-}
+const Settings = (): JSX.Element => {
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [userInfo, setUserInfo] = useState<any>(null)
+  const [scopeActivated, setScopeActivated] = useState(false)
+  const [activeTab, setActiveTab] = useState('profile')
 
-export default function Settings() {
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const settingsTabs = [
+    {
+      id: 'profile',
+      label: 'Profile',
+      icon: User,
+      description: 'Manage your account information'
+    },
+    {
+      id: 'connections',
+      label: 'Connections',
+      icon: Link,
+      description: 'Manage your Google integrations'
+    }
+  ]
 
   useEffect(() => {
-    // Get user info from localStorage
-    if (typeof window !== 'undefined') {
+    // Check if user just activated a scope
+    if (router.query.scopeActivated === 'true') {
+      setScopeActivated(true)
+      // Remove the query parameter
+      router.replace('/settings', undefined, { shallow: true })
+    }
+
+    loadUserInfo()
+  }, [router.query.scopeActivated])
+
+  const loadUserInfo = async () => {
+    try {
+      setLoading(true)
+      // Get username from localStorage for now
       const username = localStorage.getItem('username')
       const email = localStorage.getItem('userEmail')
-      setUserInfo({ 
-        username: username || '', 
-        email: email || undefined 
+      setUserInfo({
+        username: username || 'Unknown',
+        email: email || 'Not provided',
+        first_name: 'Not provided',
+        last_name: 'Not provided'
       })
-      setFormData(prev => ({
-        ...prev,
-        email: email || ''
-      }))
-    }
-  }, [])
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setMessage(null)
-
-    // Validate passwords match if password is being changed
-    if (formData.password && formData.password !== formData.confirmPassword) {
-      setMessage({ type: 'error', text: 'Passwords do not match' })
-      setIsLoading(false)
-      return
-    }
-
-    try {
-      const updateData = {
-        username: userInfo?.username,
-        password: formData.password || undefined,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        email: formData.email
-      }
-
-      const response = await ApiService.post('/users/update_profile/', updateData)
-
-      if (response.result === 'success') {
-        setMessage({ type: 'success', text: 'Profile updated successfully!' })
-        
-        // Update localStorage with new email if changed
-        if (formData.email && formData.email !== userInfo?.email) {
-          localStorage.setItem('userEmail', formData.email)
-          setUserInfo(prev => prev ? { ...prev, email: formData.email } : null)
-        }
-
-        // Clear password fields
-        setFormData(prev => ({
-          ...prev,
-          password: '',
-          confirmPassword: ''
-        }))
-      } else {
-        setMessage({ type: 'error', text: response.message || 'Failed to update profile' })
-      }
     } catch (error) {
-      console.error('Error updating profile:', error)
-      setMessage({ type: 'error', text: 'An error occurred while updating your profile' })
+      console.error('Error loading user info:', error)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  return (
-    <div className="flex">
-      <NavSidebar />
-      <div className="flex-1 ml-16 p-8">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Account Settings</h1>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Update Profile Information</CardTitle>
-              <CardDescription>
-                Update your account information. Leave password fields empty if you don&apos;t want to change your password.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="first_name">First Name</Label>
-                    <Input
-                      id="first_name"
-                      type="text"
-                      value={formData.first_name}
-                      onChange={(e) => handleInputChange('first_name', e.target.value)}
-                      placeholder="Enter your first name"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="last_name">Last Name</Label>
-                    <Input
-                      id="last_name"
-                      type="text"
-                      value={formData.last_name}
-                      onChange={(e) => handleInputChange('last_name', e.target.value)}
-                      placeholder="Enter your last name"
-                    />
-                  </div>
-                </div>
+  const handleLogout = () => {
+    // Clear all authentication data using ApiService
+    ApiService.clearAuthToken();
+    
+    // Clear any additional session data
+    localStorage.removeItem('deviceId');
+    localStorage.removeItem('googleOAuthSession');
+    localStorage.removeItem('userData');
+    
+    // Redirect to home page
+    router.push('/');
+  };
 
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="Enter your email"
-                    required
-                  />
-                </div>
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-black">
+        <NavSidebar onLogout={handleLogout} />
+        <div className="flex-1 ml-16 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        </div>
+      </div>
+    )
+  }
 
-                <div>
-                  <Label htmlFor="password">New Password (optional)</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    placeholder="Enter new password"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                    placeholder="Confirm new password"
-                  />
-                </div>
-
-                {message && (
-                  <div className={`p-3 rounded-md ${
-                    message.type === 'success' 
-                      ? 'bg-green-100 text-green-700 border border-green-200' 
-                      : 'bg-red-100 text-red-700 border border-red-200'
-                  }`}>
-                    {message.text}
-                  </div>
-                )}
-
-                <Button 
-                  type="submit" 
-                  disabled={isLoading}
-                  className="w-full"
+    return (
+    <div className="flex h-screen bg-black">
+      <NavSidebar onLogout={handleLogout} />
+      <div className="flex-1 ml-16 flex">
+        {/* Settings Sidebar */}
+        <div className="w-64 bg-zinc-900 border-r border-zinc-700 p-4">
+          <h2 className="text-white text-lg font-semibold mb-6">Settings</h2>
+          <nav className="space-y-2">
+            {settingsTabs.map((tab) => {
+              const Icon = tab.icon
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-zinc-800 text-white'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                  }`}
                 >
-                  {isLoading ? 'Updating...' : 'Update Profile'}
+                  <Icon className="h-4 w-4" />
+                  <div>
+                    <div className="font-medium">{tab.label}</div>
+                    <div className="text-xs text-zinc-500">{tab.description}</div>
+                  </div>
+                </button>
+              )
+            })}
+          </nav>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 p-8">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-white">
+              {settingsTabs.find(tab => tab.id === activeTab)?.label}
+            </h1>
+            <p className="text-gray-400">
+              {settingsTabs.find(tab => tab.id === activeTab)?.description}
+            </p>
+          </div>
+
+                  {/* Tab Content */}
+          {activeTab === 'profile' && (
+            <div className="space-y-6">
+              {/* Scope Activation Success Message */}
+              {scopeActivated && (
+                <div className="p-4 bg-green-900/20 border border-green-700 rounded-lg">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
+                    <span className="text-green-400">
+                      Google integration features activated successfully!
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* User Info */}
+              {userInfo && (
+                <div className="p-6 bg-zinc-900 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-4 flex items-center text-white">
+                    <User className="h-5 w-5 mr-2" />
+                    Account Information
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm text-gray-400">Username</label>
+                      <p className="text-white">{userInfo.username}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-400">Email</label>
+                      <p className="text-white">{userInfo.email || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-400">First Name</label>
+                      <p className="text-white">{userInfo.first_name || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-400">Last Name</label>
+                      <p className="text-white">{userInfo.last_name || 'Not provided'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Profile Update Form - Coming Soon */}
+              <div className="p-6 bg-zinc-900 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4 text-white">Update Profile</h3>
+                <p className="text-gray-400 mb-4">Profile update functionality coming soon.</p>
+                <Button variant="outline" disabled>
+                  Coming Soon
                 </Button>
-              </form>
-            </CardContent>
-          </Card>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'connections' && (
+            <div className="space-y-8">
+              {/* Google Integration */}
+              <div className="p-6 bg-zinc-900 rounded-lg">
+                <h2 className="text-lg font-semibold mb-4 flex items-center text-white">
+                  <Link className="h-5 w-5 mr-2" />
+                  Google Integration
+                </h2>
+                <ScopeManager 
+                  onFeatureActivated={(feature) => {
+                    console.log(`Feature activated: ${feature}`)
+                    // You could show a success message or refresh the page
+                  }}
+                />
+              </div>
+
+
+            </div>
+          )}
+
+
         </div>
       </div>
     </div>
   )
 }
+
+export default Settings
