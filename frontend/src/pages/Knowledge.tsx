@@ -1,17 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { 
-  Brain,
-  Search,
-  Plus,
-  Filter,
   RefreshCw,
   BookOpen,
   Network,
-  Share2,
   Upload,
-  Trash2,
-  Edit3,
   Eye
 } from 'lucide-react'
 
@@ -71,11 +64,9 @@ interface KnowledgeGraphData {
 const Knowledge = (): JSX.Element => {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
   const [knowledgeGraph, setKnowledgeGraph] = useState<KnowledgeGraphData | null>(null)
   const [selectedNode, setSelectedNode] = useState<KnowledgeEntity | KnowledgeFact | KnowledgeUser | null>(null)
   const [searchResults, setSearchResults] = useState<KnowledgeGraphData | null>(null)
-  const [isSearching, setIsSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -95,34 +86,13 @@ const Knowledge = (): JSX.Element => {
         throw new Error(data.error || 'Failed to load knowledge graph')
       }
     } catch (error) {
-      console.error('Error loading knowledge graph:', error)
       setError(error instanceof Error ? error.message : 'Unknown error occurred')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return
-    
-    try {
-      setIsSearching(true)
-      setError(null)
-      
-      const data = await ApiService.searchKnowledgeGraph(searchQuery)
-      
-      if (data.success && data.data) {
-        setSearchResults(data.data)
-      } else {
-        throw new Error(data.error || 'Failed to search knowledge graph')
-      }
-    } catch (error) {
-      console.error('Error searching:', error)
-      setError(error instanceof Error ? error.message : 'Unknown error occurred')
-    } finally {
-      setIsSearching(false)
-    }
-  }
+
 
   const handleLogout = () => {
     // Clear all authentication data using ApiService
@@ -175,7 +145,7 @@ const Knowledge = (): JSX.Element => {
                 <div className="h-full flex flex-col">
                   <div className="flex items-center justify-between p-3 border-b border-zinc-800 bg-zinc-900/50">
                     <h3 className="text-sm font-medium text-white">
-                      Search Results for "{searchQuery}"
+                      Search Results
                     </h3>
                     <Button
                       variant="outline"
@@ -183,7 +153,6 @@ const Knowledge = (): JSX.Element => {
                       className="text-white border-zinc-600 hover:bg-zinc-800 text-xs h-7 px-2"
                       onClick={() => {
                         setSearchResults(null)
-                        setSearchQuery('')
                       }}
                     >
                       <Eye className="h-3 w-3 mr-1" />
@@ -196,7 +165,7 @@ const Knowledge = (): JSX.Element => {
                       data={searchResults}
                       onNodeClick={setSelectedNode}
                       selectedNode={selectedNode}
-                      loading={isSearching}
+                      loading={false}
                     />
                   </div>
                 </div>
