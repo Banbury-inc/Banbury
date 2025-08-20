@@ -184,7 +184,7 @@ const isVectorFile = (fileName: string): boolean => {
 }
 
 const isViewableFile = (fileName: string): boolean => {
-  return isImageFile(fileName) || isPdfFile(fileName) || isDocumentFile(fileName) || isVideoFile(fileName) || isAudioFile(fileName)
+  return isImageFile(fileName) || isPdfFile(fileName) || isDocumentFile(fileName) || isVideoFile(fileName) || isAudioFile(fileName) || isCodeFile(fileName)
 }
 
 // Function to get the appropriate icon component and color for a file type

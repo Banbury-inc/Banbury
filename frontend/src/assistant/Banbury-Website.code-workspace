@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../../../../banbury-cloud-backend"
+		},
+		{
+			"path": "../../../../athena-intelligence"
 		}
 	],
 	"settings": {}

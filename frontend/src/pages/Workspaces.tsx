@@ -13,13 +13,15 @@ import { ImageViewer } from '../components/ImageViewer';
 import { NavSidebar } from "../components/nav-sidebar";
 import { SpreadsheetViewer } from '../components/SpreadsheetViewer';
 import { VideoViewer } from '../components/VideoViewer';
+import CodeViewer from '../components/CodeViewer';
+import IDE from '../components/IDE';
 import { FileSystemItem } from '../utils/fileTreeUtils';
 import 'allotment/dist/style.css';
 import { Thread } from '../components/thread';
 import { motion } from "framer-motion";
 
 
-import { X, FileText, Folder, SplitSquareHorizontal, SplitSquareVertical, Move, FileSpreadsheet, Save, FolderOpen, Trash2, Edit3, Search, ChevronDown, Plus, TimerReset } from 'lucide-react';
+import { X, FileText, Folder, SplitSquareHorizontal, SplitSquareVertical, Move, FileSpreadsheet, Save, FolderOpen, Trash2, Edit3, Search, ChevronDown, Plus, TimerReset, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Menu } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { attachClosestEdge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
@@ -154,6 +156,10 @@ const Workspaces = (): JSX.Element => {
     dropTargetPanel: null,
   });
 
+  // Panel collapse state
+  const [isFileSidebarCollapsed, setIsFileSidebarCollapsed] = useState(false);
+  const [isAssistantPanelCollapsed, setIsAssistantPanelCollapsed] = useState(false);
+
   // Helper functions to check file types
   const isImageFile = (fileName: string): boolean => {
     const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg']
@@ -184,8 +190,19 @@ const Workspaces = (): JSX.Element => {
     return videoExtensions.includes(extension)
   };
 
+  const isCodeFile = (fileName: string): boolean => {
+    const codeExtensions = [
+      '.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala',
+      '.html', '.htm', '.css', '.scss', '.sass', '.less', '.xml', '.json', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf', '.sh', '.bash', '.zsh', '.fish',
+      '.sql', '.r', '.m', '.mat', '.ipynb', '.jl', '.dart', '.lua', '.pl', '.pm', '.tcl', '.vbs', '.ps1', '.bat', '.cmd', '.coffee', '.litcoffee', '.iced',
+      '.md', '.markdown', '.tex', '.rtex', '.bib', '.vue', '.svelte'
+    ]
+    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
+    return codeExtensions.includes(extension)
+  };
+
   const isViewableFile = (fileName: string): boolean => {
-    return isImageFile(fileName) || isPdfFile(fileName) || isDocumentFile(fileName) || isSpreadsheetFile(fileName) || isVideoFile(fileName)
+    return isImageFile(fileName) || isPdfFile(fileName) || isDocumentFile(fileName) || isSpreadsheetFile(fileName) || isVideoFile(fileName) || isCodeFile(fileName)
   };
 
   // Conversation management functions
@@ -889,6 +906,8 @@ const Workspaces = (): JSX.Element => {
                   );
                 } else if (isVideoFile(file.name)) {
                   return <VideoViewer file={file} userInfo={userInfo} />;
+                } else if (isCodeFile(file.name)) {
+                  return <IDE file={file} userInfo={userInfo} onSaveComplete={triggerSidebarRefresh} />;
                 } else {
                   return (
                     <div className="h-full flex items-center justify-center">
@@ -926,7 +945,7 @@ const Workspaces = (): JSX.Element => {
         </div>
       </div>
     );
-  }, [activePanelId, handleTabChange, handleTabContextMenu, handleCloseTab, handleTabMouseDown, splitPanel, userInfo, triggerSidebarRefresh, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, dragState, replyToEmail, handleReplyToEmail]);
+  }, [activePanelId, handleTabChange, handleTabContextMenu, handleCloseTab, handleTabMouseDown, splitPanel, userInfo, triggerSidebarRefresh, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, dragState, replyToEmail, handleReplyToEmail]);
   
   // Render panel group (recursive for nested splits)
   const renderPanelGroup = useCallback((group: PanelGroup): React.ReactNode => {
@@ -1638,39 +1657,84 @@ Alice Brown,alice.brown@example.com,555-0104,HR`;
             <div className="flex flex-1">
               <Allotment>
                 {/* File Sidebar Panel */}
-                <Allotment.Pane minSize={250} preferredSize={350} maxSize={500} className="relative z-10">
-                  <AppSidebar 
-                    currentView="workspaces"
-                    userInfo={userInfo}
-                    onFileSelect={handleFileSelect}
-                    selectedFile={selectedFile}
-                    refreshTrigger={refreshTrigger}
-                    onFileDeleted={handleFileDeleted}
-                    onFileRenamed={handleFileRenamed}
-                    onFileMoved={handleFileMoved}
-                    onFolderCreated={handleFolderCreated}
-                    onFolderRenamed={handleFolderRenamed}
-                    triggerRootFolderCreation={folderCreationTrigger}
-                    onEmailSelect={handleEmailSelect}
-                    onComposeEmail={handleComposeEmail}
-                    onCreateDocument={handleCreateWordDocument}
-                    onCreateSpreadsheet={handleCreateSpreadsheet}
-                    onCreateFolder={handleCreateFolder}
-                  />
-                </Allotment.Pane>
+                {!isFileSidebarCollapsed && (
+                  <Allotment.Pane minSize={250} preferredSize={350} maxSize={500} className="relative z-10">
+                    <div className="h-full flex flex-col relative">
+                      {/* Collapse button for file sidebar - positioned on right border */}
+                      <button
+                        onClick={() => setIsFileSidebarCollapsed(true)}
+                        className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-white hover:bg-zinc-700 hover:text-white bg-black border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black shadow-lg burger-button"
+                        title="Collapse file sidebar"
+                      >
+                        <Menu className="h-3 w-3" />
+                      </button>
+                      {/* File Sidebar Content */}
+                      <div className="flex-1 overflow-hidden">
+                        <AppSidebar 
+                          currentView="workspaces"
+                          userInfo={userInfo}
+                          onFileSelect={handleFileSelect}
+                          selectedFile={selectedFile}
+                          refreshTrigger={refreshTrigger}
+                          onFileDeleted={handleFileDeleted}
+                          onFileRenamed={handleFileRenamed}
+                          onFileMoved={handleFileMoved}
+                          onFolderCreated={handleFolderCreated}
+                          onFolderRenamed={handleFolderRenamed}
+                          triggerRootFolderCreation={folderCreationTrigger}
+                          onEmailSelect={handleEmailSelect}
+                          onComposeEmail={handleComposeEmail}
+                          onCreateDocument={handleCreateWordDocument}
+                          onCreateSpreadsheet={handleCreateSpreadsheet}
+                          onCreateFolder={handleCreateFolder}
+                        />
+                      </div>
+                    </div>
+                  </Allotment.Pane>
+                )}
                 
                 {/* Main Content Panel */}
                 <Allotment.Pane minSize={300}>
-                  <main className="h-full bg-black">
+                  <main className="h-full bg-black relative">
+                    {/* Expand button for file sidebar when collapsed - positioned on left border */}
+                    {isFileSidebarCollapsed && (
+                      <button
+                        onClick={() => setIsFileSidebarCollapsed(false)}
+                        className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-white hover:bg-zinc-700 hover:text-white bg-black border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black shadow-lg burger-button"
+                        title="Expand file sidebar"
+                      >
+                        <Menu className="h-3 w-3" />
+                      </button>
+                    )}
+                    {/* Expand button for assistant panel when collapsed - positioned on right border */}
+                    {isAssistantPanelCollapsed && (
+                      <button
+                        onClick={() => setIsAssistantPanelCollapsed(false)}
+                        className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-white hover:bg-zinc-700 hover:text-white bg-black border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black shadow-lg burger-button"
+                        title="Expand assistant panel"
+                      >
+                        <Menu className="h-3 w-3" />
+                      </button>
+                    )}
                     {renderPanelGroup(panelLayout)}
                   </main>
                 </Allotment.Pane>
                 
                 {/* Assistant Panel */}
-                <Allotment.Pane minSize={300} preferredSize={400} maxSize={600}>
-                      <div className="h-full bg-black border-l border-gray-800 flex flex-col">
-                        {/* Conversation Management Dropdown */}
-                        <div className="bg-black px-4 py-2 flex items-center justify-end gap-2">
+                {!isAssistantPanelCollapsed && (
+                  <Allotment.Pane minSize={300} preferredSize={400} maxSize={600}>
+                    <div className="h-full bg-black border-l border-gray-800 flex flex-col relative">
+                      {/* Collapse button for assistant panel - positioned on left border */}
+                      <button
+                        onClick={() => setIsAssistantPanelCollapsed(true)}
+                        className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-white hover:bg-zinc-700 hover:text-white bg-black border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black shadow-lg burger-button"
+                        title="Collapse assistant panel"
+                      >
+                        <Menu className="h-3 w-3" />
+                      </button>
+                      {/* Conversation Management Dropdown */}
+                      <div className="bg-black px-4 py-2 flex items-center justify-end gap-2">
+                        <div className="flex items-center gap-2">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button className="h-8 px-3 text-white hover:bg-zinc-700 hover:text-white bg-black border border-zinc-300 dark:border-zinc-600 transition-colors rounded-md flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black">
@@ -1735,16 +1799,18 @@ Alice Brown,alice.brown@example.com,555-0104,HR`;
                             </div>
                           </div>
                         </div>
-                        {/* Thread Component */}
-                        <div className="flex-1 min-h-0 overflow-hidden">
-                          <Thread 
-                            userInfo={userInfo} 
-                            selectedFile={selectedFile} 
-                            onEmailSelect={handleEmailSelect}
-                          />
-                        </div>
                       </div>
-                </Allotment.Pane>
+                      {/* Thread Component */}
+                      <div className="flex-1 min-h-0 overflow-hidden">
+                        <Thread 
+                          userInfo={userInfo} 
+                          selectedFile={selectedFile} 
+                          onEmailSelect={handleEmailSelect}
+                        />
+                      </div>
+                    </div>
+                  </Allotment.Pane>
+                )}
               </Allotment>
             </div>
           </div>
@@ -1935,6 +2001,18 @@ Alice Brown,alice.brown@example.com,555-0104,HR`;
           }
           .tab:active {
             transform: translateY(1px);
+          }
+          /* Panel collapse/expand transitions */
+          .panel-transition {
+            transition: all 0.3s ease-in-out;
+          }
+          /* Burger button styling */
+          .burger-button {
+            transition: all 0.2s ease-in-out;
+          }
+          .burger-button:hover {
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
           }
         `}</style>
         </ClaudeRuntimeProvider>

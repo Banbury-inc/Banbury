@@ -13,7 +13,7 @@ const nextConfig = {
   },
   experimental: {
     // Reduce memory usage during build
-    optimizePackageImports: ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extensions'],
+    optimizePackageImports: ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extensions', '@monaco-editor/react'],
     // Disable memory-intensive features
     optimizeCss: false,
     scrollRestoration: false,
@@ -43,6 +43,12 @@ const nextConfig = {
             tiptap: {
               test: /[\\/]node_modules[\\/]@tiptap[\\/]/,
               name: 'tiptap',
+              chunks: 'all',
+              priority: 20,
+            },
+            monaco: {
+              test: /[\\/]node_modules[\\/]@monaco-editor[\\/]/,
+              name: 'monaco',
               chunks: 'all',
               priority: 20,
             },

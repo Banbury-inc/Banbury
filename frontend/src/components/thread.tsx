@@ -431,8 +431,14 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect 
           const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'];
           const documentExtensions = ['.docx', '.doc', '.pdf'];
           const spreadsheetExtensions = ['.csv', '.xlsx', '.xls'];
+          const codeExtensions = [
+            '.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala',
+            '.html', '.htm', '.css', '.scss', '.sass', '.less', '.xml', '.json', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf', '.sh', '.bash', '.zsh', '.fish',
+            '.sql', '.r', '.m', '.mat', '.ipynb', '.jl', '.dart', '.lua', '.pl', '.pm', '.tcl', '.vbs', '.ps1', '.bat', '.cmd', '.coffee', '.litcoffee', '.iced',
+            '.md', '.markdown', '.tex', '.rtex', '.bib', '.vue', '.svelte'
+          ];
           const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
-          return [...imageExtensions, ...documentExtensions, ...spreadsheetExtensions].includes(extension);
+          return [...imageExtensions, ...documentExtensions, ...spreadsheetExtensions, ...codeExtensions].includes(extension);
         };
         
         if (isViewableFile(selectedFile.name)) {

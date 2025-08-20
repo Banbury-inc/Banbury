@@ -174,70 +174,8 @@ export class SessionManager {
 // Global session manager instance
 export const sessionManager = new SessionManager();
 
-// Memory utilities following athena-intelligence patterns
-export interface Memory {
-  content: string;
-  type: string;
-  timestamp: number;
-  sessionId: string;
-  metadata?: Record<string, any>;
-}
-
-export class MemoryManager {
-  private memories = new Map<string, Memory[]>();
-  private readonly MAX_MEMORIES_PER_SESSION = 100;
-  
-  storeMemory(sessionId: string, content: string, type: string = "general", metadata?: Record<string, any>): string {
-    if (!this.memories.has(sessionId)) {
-      this.memories.set(sessionId, []);
-    }
-    
-    const memories = this.memories.get(sessionId)!;
-    const memory: Memory = {
-      content,
-      type,
-      timestamp: Date.now(),
-      sessionId,
-      metadata
-    };
-    
-    memories.push(memory);
-    
-    // Keep only recent memories
-    if (memories.length > this.MAX_MEMORIES_PER_SESSION) {
-      memories.splice(0, memories.length - this.MAX_MEMORIES_PER_SESSION);
-    }
-    
-    return `Memory stored: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`;
-  }
-  
-  searchMemories(sessionId: string, query: string, limit: number = 10): Memory[] {
-    const memories = this.memories.get(sessionId) || [];
-    const queryLower = query.toLowerCase();
-    
-    return memories
-      .filter(memory => 
-        memory.content.toLowerCase().includes(queryLower) ||
-        memory.type.toLowerCase().includes(queryLower)
-      )
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, limit);
-  }
-  
-  getRecentMemories(sessionId: string, limit: number = 10): Memory[] {
-    const memories = this.memories.get(sessionId) || [];
-    return memories
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, limit);
-  }
-  
-  clearSession(sessionId: string): void {
-    this.memories.delete(sessionId);
-  }
-}
-
-// Global memory manager instance
-export const memoryManager = new MemoryManager();
+// Memory utilities are now handled by the backend API
+// See agent.ts for the integrated memory tools
 
 // Cleanup interval (run every hour)
 setInterval(() => {

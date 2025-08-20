@@ -50,6 +50,7 @@
     "@langchain/langgraph": "^0.2.35",
     "@langchain/langgraph-sdk": "^0.0.105",
     "@langchain/openai": "^0.3.15",
+    "@monaco-editor/react": "^4.7.0",
     "@mui/icons-material": "^5.16.13",
     "@mui/material": "^5.14.6",
     "@radix-ui/react-context-menu": "^2.2.16",

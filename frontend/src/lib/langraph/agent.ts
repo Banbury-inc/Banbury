@@ -234,76 +234,164 @@ const sheetAiTool = tool(
   }
 );
 
-// Memory management tools (simplified version since langmem isn't available in NPM)
-const memoryStore = new Map<string, Array<{ content: string; timestamp: number; type: string }>>();
-
+// Memory management tools (integrated with Zep Cloud and Mem0)
 const createMemoryTool = tool(
-  async (input: { content: string; type?: string; sessionId?: string }) => {
-    const sessionId = input.sessionId || "default";
-    const memory = {
-      content: input.content,
-      timestamp: Date.now(),
-      type: input.type || "general"
+  async (input: { content: string; dataType?: string; overflowStrategy?: string; sessionId?: string }) => {
+    const apiBase = CONFIG.url;
+    const token = getServerContextValue<string>("authToken");
+
+    if (!token) {
+      throw new Error("Missing auth token in server context");
+    }
+
+    console.log(`Storing memory: ${input.content}`);
+    
+    // Get user information from context (in a real implementation, this would come from auth)
+    const userInfo = {
+      userId: "user123", // This should come from auth context
+      workspaceId: "workspace123", // This should come from auth context
+      email: "user@example.com", // This should come from auth context
+      firstName: "User",
+      lastName: "Example"
     };
     
-    if (!memoryStore.has(sessionId)) {
-      memoryStore.set(sessionId, []);
+    const chosenSessionId = input.sessionId || `assistant_ui`;
+
+    const response = await fetch(`${apiBase}/conversations/memory/enhanced/store/`, {
+      method: 'POST',
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        content: input.content,
+        type: input.dataType || "text",
+        session_id: chosenSessionId,
+        use_zep: true
+      })
+    });
+
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      const backendError = data?.error || data?.message || JSON.stringify(data || {});
+      throw new Error(`Failed to store memory: HTTP ${response.status}${backendError ? ` - ${backendError}` : ''}`);
     }
-    
-    const memories = memoryStore.get(sessionId)!;
-    memories.push(memory);
-    
-    // Keep only last 50 memories per session
-    if (memories.length > 50) {
-      memories.splice(0, memories.length - 50);
+
+    // Surface Zep diagnostics if present
+    // Accept success shape from Django and surface diagnostics
+    if (data?.success) {
+      if (data?.zep?.stored_memory) {
+        return `Memory stored successfully in Zep and Mongo. session_id: ${chosenSessionId}`;
+      }
+      const diag = data?.zep ? JSON.stringify(data.zep, null, 2) : 'no zep diagnostics available';
+      return `Memory stored in Mongo (Zep disabled or failed). session_id: ${chosenSessionId}. Diagnostics: ${diag}`;
     }
-    
-    return `Memory stored: ${input.content}`;
+
+    throw new Error(`Failed to store memory: ${data?.error || data?.message || 'Unknown error'}`);
   },
   {
     name: "store_memory",
-    description: "Store information in memory for future reference",
+    description: "Store important information in the user's memory for future reference. Use this to remember user preferences, important facts, or key information from conversations.",
     schema: z.object({
-      content: z.string().describe("The content to remember"),
-      type: z.string().optional().describe("Type of memory (e.g., 'preference', 'fact', 'context')"),
-      sessionId: z.string().optional().describe("Session ID for memory isolation")
+      content: z.string().describe("The information to store in memory"),
+      dataType: z.string().optional().describe("Type of data being stored (text, json, message)"),
+      overflowStrategy: z.string().optional().describe("How to handle data that exceeds size limits (truncate, split, fail)")
     })
   }
 );
 
 const searchMemoryTool = tool(
-  async (input: { query: string; sessionId?: string; limit?: number }) => {
-    const sessionId = input.sessionId || "default";
-    const memories = memoryStore.get(sessionId) || [];
-    const limit = input.limit || 10;
-    
-    // Simple keyword search
-    const queryLower = input.query.toLowerCase();
-    const relevantMemories = memories
-      .filter(memory => memory.content.toLowerCase().includes(queryLower))
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, limit);
-    
-    if (relevantMemories.length === 0) {
-      return "No relevant memories found.";
+  async (input: { query: string; scope?: string; reranker?: string; maxResults?: number; sessionId?: string }) => {
+    const apiBase = CONFIG.url;
+    const token = getServerContextValue<string>("authToken");
+
+    if (!token) {
+      throw new Error("Missing auth token in server context");
     }
+
+    console.log(`Searching memories with query: ${input.query}`);
     
-    return JSON.stringify({
-      memories: relevantMemories.map(m => ({
-        content: m.content,
-        type: m.type,
-        timestamp: new Date(m.timestamp).toISOString()
-      })),
-      count: relevantMemories.length
+    // Get user information from context (in a real implementation, this would come from auth)
+    const userInfo = {
+      userId: "user123", // This should come from auth context
+      workspaceId: "workspace123", // This should come from auth context
+      email: "user@example.com", // This should come from auth context
+      firstName: "User",
+      lastName: "Example"
+    };
+    
+    const chosenSessionId = input.sessionId || `assistant_ui`;
+
+    const params = new URLSearchParams({
+      query: input.query,
+      scope: input.scope || "nodes",
+      reranker: input.reranker || "cross_encoder",
+      limit: String(input.maxResults || 10),
+      use_zep: "true",
+      session_id: chosenSessionId
     });
+    
+    const response = await fetch(`${apiBase}/conversations/memory/enhanced/search/?${params}`, {
+      method: 'GET',
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      let message = `HTTP ${response.status}`;
+      try {
+        const data = await response.json();
+        if (data?.error) message += ` - ${data.error}`;
+      } catch {}
+      throw new Error(`Failed to search memories: ${message}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.success) {
+      // Combine MongoDB and Zep results
+      let response = "Memory search results (Zep):\n\n";
+      if (typeof data.used_strategy !== 'undefined') {
+        response += `Strategy: ${data.used_strategy}${data.used_user_id ? `, user: ${data.used_user_id}` : ''}\n\n`;
+      }
+      
+      // Mongo results suppressed when use_zep=true
+      
+      if (data.zep_facts && data.zep_facts.length > 0) {
+        response += "Zep Facts:\n";
+        data.zep_facts.forEach((fact: any, index: number) => {
+          response += `${index + 1}. ${fact.fact} (confidence: ${fact.confidence.toFixed(2)})\n`;
+        });
+        response += "\n";
+      }
+      
+      if (data.zep_entities && data.zep_entities.length > 0) {
+        response += "Zep Entities:\n";
+        data.zep_entities.forEach((entity: any, index: number) => {
+          response += `${index + 1}. ${entity.name} (${entity.type})\n`;
+          response += `   Summary: ${entity.summary}\n`;
+        });
+      }
+      
+      if (data.count === 0) {
+        return "No relevant memories found for the given query.";
+      }
+      
+      return response;
+    } else {
+      throw new Error(`Failed to search memories: ${data.error || 'Unknown error'}`);
+    }
   },
   {
     name: "search_memory",
-    description: "Search stored memories for relevant information",
+    description: "Search through the user's memories from previous conversations and interactions. Use this to find relevant information about the user's preferences, past conversations, or stored knowledge.",
     schema: z.object({
-      query: z.string().describe("Search query for memories"),
-      sessionId: z.string().optional().describe("Session ID for memory isolation"),
-      limit: z.number().optional().describe("Maximum number of memories to return")
+      query: z.string().describe("Simple, concise search query to find relevant memories"),
+      scope: z.string().optional().describe("Scope of the search: 'nodes' for entities/concepts, 'edges' for relationships/facts"),
+      reranker: z.string().optional().describe("Method to rerank results for better relevance (cross_encoder, rrf, mmr, episode_mentions)"),
+      maxResults: z.number().optional().describe("Maximum number of results to return (default: 10)")
     })
   }
 );
