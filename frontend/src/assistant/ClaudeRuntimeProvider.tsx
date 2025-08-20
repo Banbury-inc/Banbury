@@ -241,9 +241,9 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
                 (matchingToolCall as any).status = "completed";
               }
 
-              // Dispatch an event for create_file to allow UI to refresh and open the new file
+              // Dispatch an event for create_file and download_from_url to allow UI to refresh and open the new file
               try {
-                if ((evt as any).part?.toolName === 'create_file') {
+                if ((evt as any).part?.toolName === 'create_file' || (evt as any).part?.toolName === 'download_from_url') {
                   const raw = (evt as any).part?.result;
                   let parsed: any = null;
                   if (typeof raw === 'string') {

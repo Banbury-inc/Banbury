@@ -711,6 +711,106 @@ export class ApiService {
   }
 
   /**
+   * Download a file from a URL and upload it to S3
+   */
+  static async downloadFromUrl(url: string, fileName?: string, filePath: string = '', fileParent: string = '', deviceName: string = 'web-editor') {
+    try {
+      // Ensure token is loaded
+      this.loadAuthToken();
+      
+      console.log(`Downloading file from URL: ${url}`);
+      
+      // Download the file from the URL
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to download file: HTTP ${response.status} ${response.statusText}`);
+      }
+      
+      // Get file information
+      const contentType = response.headers.get('content-type') || 'application/octet-stream';
+      const contentLength = response.headers.get('content-length');
+      const fileSize = contentLength ? parseInt(contentLength) : 0;
+      
+      // Determine file name
+      let finalFileName = fileName;
+      if (!finalFileName) {
+        // Try to extract filename from URL
+        const urlObj = new URL(url);
+        const pathname = urlObj.pathname;
+        if (pathname && pathname.includes('/')) {
+          finalFileName = pathname.split('/').pop() || '';
+          if (!finalFileName || !finalFileName.includes('.')) {
+            // If no filename in URL, try to determine from content-type
+            const extension = this.getExtensionFromMimeType(contentType);
+            finalFileName = `downloaded_file${extension}`;
+          }
+        } else {
+          // Fallback filename
+          const extension = this.getExtensionFromMimeType(contentType);
+          finalFileName = `downloaded_file${extension}`;
+        }
+      }
+      
+      // Convert response to blob
+      const blob = await response.blob();
+      
+      // Upload the blob to S3 using the existing uploadToS3 method
+      const result = await this.uploadToS3(blob, finalFileName, deviceName, filePath, fileParent);
+      
+      return {
+        success: true,
+        file_url: result.file_url,
+        file_info: {
+          ...result.file_info,
+          source_url: url,
+          file_size: fileSize
+        },
+        message: `File downloaded from URL and uploaded successfully`
+      };
+    } catch (error) {
+      console.error('downloadFromUrl error:', error);
+      throw this.enhanceError(error, 'Failed to download file from URL');
+    }
+  }
+
+  /**
+   * Helper method to get file extension from MIME type
+   */
+  private static getExtensionFromMimeType(mimeType: string): string {
+    const mimeToExt: { [key: string]: string } = {
+      'text/plain': '.txt',
+      'text/html': '.html',
+      'text/css': '.css',
+      'text/javascript': '.js',
+      'application/json': '.json',
+      'application/xml': '.xml',
+      'application/pdf': '.pdf',
+      'application/zip': '.zip',
+      'application/x-zip-compressed': '.zip',
+      'image/jpeg': '.jpg',
+      'image/jpg': '.jpg',
+      'image/png': '.png',
+      'image/gif': '.gif',
+      'image/webp': '.webp',
+      'image/svg+xml': '.svg',
+      'audio/mpeg': '.mp3',
+      'audio/wav': '.wav',
+      'audio/ogg': '.ogg',
+      'video/mp4': '.mp4',
+      'video/webm': '.webm',
+      'video/ogg': '.ogv',
+      'application/msword': '.doc',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+      'application/vnd.ms-excel': '.xls',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+      'application/vnd.ms-powerpoint': '.ppt',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx'
+    };
+    
+    return mimeToExt[mimeType] || '';
+  }
+
+  /**
    * Enhanced error handling
    */
   private static enhanceError(error: unknown, context: string): Error {

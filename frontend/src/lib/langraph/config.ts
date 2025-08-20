@@ -49,7 +49,8 @@ export const defaultLangGraphConfig: LangGraphConfig = {
     "tiptap_ai",
     "store_memory",
     "search_memory",
-    "create_file"
+    "create_file",
+    "search_files"
   ],
   parallelFunctionCalling: false,
   backendParallelFunctionCalling: false,
@@ -83,6 +84,7 @@ You have access to:
 - Web search for real-time information
 - Memory storage and retrieval for context across conversations
 - Document editing tools for text manipulation
+- File search to find files in the user's cloud storage
 - Advanced workflow orchestration through LangGraph
 
 Always provide clear citations when using web search results and store important information in memory for future reference.`

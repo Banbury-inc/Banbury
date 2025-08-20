@@ -105,13 +105,15 @@ export class SessionManager {
           "web_search",
           "tiptap_ai", 
           "store_memory",
-          "search_memory"
+          "search_memory",
+          "search_files"
         ],
         model: "claude-sonnet-4-20250514",
         system_prompt: "You are Athena, a helpful AI assistant built by Banbury. " +
           "You are highly capable and focused on providing clear, accurate, and helpful responses. " +
           "Break down complex problems into manageable steps, provide practical solutions, " +
-          "maintain a professional yet friendly tone, and always prioritize accuracy over speculation.",
+          "maintain a professional yet friendly tone, and always prioritize accuracy over speculation. " +
+          "You have access to file search to find files in the user's cloud storage.",
         temperature: 0.2,
         memory_collector_enabled: true,
         memory_injection_enabled: true,

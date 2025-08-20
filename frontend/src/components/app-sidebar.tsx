@@ -17,34 +17,10 @@ import {
   FileSpreadsheet,
   FileArchive,
   FileJson,
-  FileX,
   FileType,
-  FileCheck,
-  FileSearch,
   FileBarChart,
-  FilePieChart,
-  FileDigit,
-  FileHeart,
-  FileLock,
-  FileMinus,
   FilePlus,
-  FileQuestion,
-  FileSignature,
-  FileStack,
-  FileSymlink,
-  FileTerminal,
-  FileWarning,
   FileCog,
-  FileKey,
-  FilePen,
-  FileClock,
-  FileDown,
-  FileUp,
-  FileVolume,
-  FileVolume2,
-  FileMusic,
-  FilePlay,
-  FileBarChart2,
   Upload,
   Plus,
 } from "lucide-react"
@@ -362,6 +338,8 @@ function FileTreeItem({
     if (item.type === 'file' && item.file_id) {
       e.dataTransfer.effectAllowed = 'move'
       e.dataTransfer.setData('text/plain', item.id)
+      // Add a custom type to identify internal drags
+      e.dataTransfer.setData('application/x-internal-file-move', 'true')
       onDragStart(item)
     } else {
       e.preventDefault()
@@ -371,6 +349,7 @@ function FileTreeItem({
   const handleDragOver = (e: React.DragEvent) => {
     if (item.type === 'folder' && dragState.draggedItem && dragState.draggedItem.id !== item.id) {
       e.preventDefault()
+      e.stopPropagation() // Prevent the parent container from handling this drag
       e.dataTransfer.dropEffect = 'move'
       onDragOver(item)
     }
@@ -384,6 +363,7 @@ function FileTreeItem({
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
+    e.stopPropagation() // Prevent the parent container from handling this drop
     if (item.type === 'folder' && dragState.draggedItem && dragState.draggedItem.id !== item.id) {
       onDrop(item, dragState.draggedItem)
     }
@@ -1044,7 +1024,15 @@ export function AppSidebar({ currentView, userInfo, onFileSelect, selectedFile, 
             onDragOver={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              setIsDragOver(true)
+              
+              // Check if this is an internal drag (file move) or external drag (file upload)
+              const isInternalDrag = e.dataTransfer.types.includes('application/x-internal-file-move') && 
+                                   dragState.isDragging
+              
+              // Only show upload overlay for external drags
+              if (!isInternalDrag) {
+                setIsDragOver(true)
+              }
             }}
             onDragLeave={(e) => {
               e.preventDefault()
@@ -1056,6 +1044,16 @@ export function AppSidebar({ currentView, userInfo, onFileSelect, selectedFile, 
             onDrop={async (e) => {
               e.preventDefault()
               e.stopPropagation()
+              
+              // Check if this is an internal drag (file move) or external drag (file upload)
+              const isInternalDrag = e.dataTransfer.types.includes('application/x-internal-file-move') && 
+                                   dragState.isDragging
+              
+              // If it's an internal drag, don't handle it here (let the FileTreeItem handle it)
+              if (isInternalDrag) {
+                setIsDragOver(false)
+                return
+              }
               
               if (!userInfo?.username) return
               

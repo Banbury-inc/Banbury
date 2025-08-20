@@ -456,7 +456,7 @@ function toLangChainMessages(messages: AssistantUiMessage[]): any[] {
 }
 
 const SYSTEM_PROMPT =
-  "You are a helpful assistant with advanced document editing capabilities. Stream tokens as they are generated. After tool results, produce a concise 3-5 bullet summary with short citations (title + URL). You can read files that users attach to help answer their questions. When a user attaches a file, you can use the read_file tool to access its content.\n\nWhen helping with document editing tasks (rewriting, grammar correction, translation, etc.), ALWAYS use the tiptap_ai tool to deliver your response. This ensures that your edits can be applied directly to the document editor. Provide clean HTML-formatted content that maintains proper document structure.";
+  "You are a helpful assistant with advanced document editing capabilities. Stream tokens as they are generated. After tool results, produce a concise 3-5 bullet summary with short citations (title + URL). You can read files that users attach to help answer their questions. When a user attaches a file, you can use the read_file tool to access its content.\n\nWhen helping with document editing tasks (rewriting, grammar correction, translation, etc.), ALWAYS use the tiptap_ai tool to deliver your response. This ensures that your edits can be applied directly to the document editor. Provide clean HTML-formatted content that maintains proper document structure.\n\nYou also have access to file search capabilities to help users find files in their cloud storage.";
 
 export const config = { api: { bodyParser: { sizeLimit: "1mb" } } };
 

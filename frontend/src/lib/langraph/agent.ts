@@ -408,6 +408,190 @@ const createFileTool = tool(
   }
 );
 
+// Download from URL tool
+const downloadFromUrlTool = tool(
+  async (input: { url: string; fileName?: string; filePath?: string; fileParent?: string }) => {
+    const apiBase = CONFIG.url;
+    const token = getServerContextValue<string>("authToken");
+
+    if (!token) {
+      throw new Error("Missing auth token in server context");
+    }
+
+    console.log(`Downloading file from URL: ${input.url}`);
+    
+    // Download the file from the URL
+    const response = await fetch(input.url);
+    if (!response.ok) {
+      throw new Error(`Failed to download file: HTTP ${response.status} ${response.statusText}`);
+    }
+    
+    // Get file information
+    const contentType = response.headers.get('content-type') || 'application/octet-stream';
+    const contentLength = response.headers.get('content-length');
+    const fileSize = contentLength ? parseInt(contentLength) : 0;
+    
+    // Determine file name
+    let finalFileName = input.fileName;
+    if (!finalFileName) {
+      // Try to extract filename from URL
+      const urlObj = new URL(input.url);
+      const pathname = urlObj.pathname;
+      if (pathname && pathname.includes('/')) {
+        finalFileName = pathname.split('/').pop() || '';
+        if (!finalFileName || !finalFileName.includes('.')) {
+          // If no filename in URL, try to determine from content-type
+          const extension = getExtensionFromMimeType(contentType);
+          finalFileName = `downloaded_file${extension}`;
+        }
+      } else {
+        // Fallback filename
+        const extension = getExtensionFromMimeType(contentType);
+        finalFileName = `downloaded_file${extension}`;
+      }
+    }
+    
+    // Convert response to blob
+    const blob = await response.blob();
+    
+    // Upload the blob to S3
+    const formData = new FormData();
+    formData.append('file', blob, finalFileName);
+    formData.append('device_name', 'web-editor');
+    formData.append('file_path', input.filePath || 'uploads');
+    formData.append('file_parent', input.fileParent || 'uploads');
+
+    const resp = await fetch(`${apiBase}/files/upload_to_s3/`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+
+    if (!resp.ok) {
+      let message = `HTTP ${resp.status}`;
+      try {
+        const data = await resp.json();
+        if (data?.error) message += ` - ${data.error}`;
+      } catch {}
+      throw new Error(`Failed to upload downloaded file: ${message}`);
+    }
+
+    const data = await resp.json();
+    return JSON.stringify({
+      result: data?.result || 'success',
+      file_url: data?.file_url,
+      file_info: {
+        ...data?.file_info,
+        source_url: input.url,
+        file_size: fileSize
+      },
+      message: `File downloaded from URL and uploaded successfully`,
+    });
+  },
+  {
+    name: 'download_from_url',
+    description: 'Download a file from a URL and upload it to the user\'s cloud workspace. Provide the URL and optionally a custom file name and path.',
+    schema: z.object({
+      url: z.string().describe("The URL of the file to download"),
+      fileName: z.string().optional().describe("Optional custom file name (if not provided, will extract from URL)"),
+      filePath: z.string().optional().describe("Optional file path where to store the file (default: 'uploads')"),
+      fileParent: z.string().optional().describe("Optional parent directory (default: 'uploads')"),
+    }),
+  }
+);
+
+// File search tool
+const searchFilesTool = tool(
+  async (input: { query: string }) => {
+    const apiBase = CONFIG.url;
+    const token = getServerContextValue<string>("authToken");
+
+    if (!token) {
+      throw new Error("Missing auth token in server context");
+    }
+
+    console.log(`Searching files with query: ${input.query}`);
+    
+    const response = await fetch(`${apiBase}/files/search_s3_files/`, {
+      method: 'POST',
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ query: input.query })
+    });
+
+    if (!response.ok) {
+      let message = `HTTP ${response.status}`;
+      try {
+        const data = await response.json();
+        if (data?.error) message += ` - ${data.error}`;
+      } catch {}
+      throw new Error(`Failed to search files: ${message}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.result === 'success') {
+      return JSON.stringify({
+        success: true,
+        files: data.files || [],
+        total_results: data.total_results || 0,
+        query: input.query,
+        message: `Found ${data.total_results || 0} files matching "${input.query}"`
+      });
+    } else {
+      return JSON.stringify({
+        success: false,
+        error: data.error || 'Search failed',
+        query: input.query
+      });
+    }
+  },
+  {
+    name: "search_files",
+    description: "Search for files in the user's cloud storage by file name. Use this to find specific files or files containing certain keywords in their names.",
+    schema: z.object({
+      query: z.string().describe("The search query to match against file names (case-insensitive)")
+    })
+  }
+);
+
+// Helper function to get file extension from MIME type
+function getExtensionFromMimeType(mimeType: string): string {
+  const mimeToExt: { [key: string]: string } = {
+    'text/plain': '.txt',
+    'text/html': '.html',
+    'text/css': '.css',
+    'text/javascript': '.js',
+    'application/json': '.json',
+    'application/xml': '.xml',
+    'application/pdf': '.pdf',
+    'application/zip': '.zip',
+    'application/x-zip-compressed': '.zip',
+    'image/jpeg': '.jpg',
+    'image/jpg': '.jpg',
+    'image/png': '.png',
+    'image/gif': '.gif',
+    'image/webp': '.webp',
+    'image/svg+xml': '.svg',
+    'audio/mpeg': '.mp3',
+    'audio/wav': '.wav',
+    'audio/ogg': '.ogg',
+    'video/mp4': '.mp4',
+    'video/webm': '.webm',
+    'video/ogg': '.ogv',
+    'application/msword': '.doc',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+    'application/vnd.ms-excel': '.xls',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+    'application/vnd.ms-powerpoint': '.ppt',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx'
+  };
+  
+  return mimeToExt[mimeType] || '';
+}
+
 // Utility function to truncate Gmail message content to prevent token limit issues
 const truncateGmailResponse = (messages: any[], maxTokensPerMessage: number = 2000, maxTotalMessages: number = 10) => {
   const truncatedMessages = messages.slice(0, maxTotalMessages).map(msg => {
@@ -843,6 +1027,8 @@ const tools = [
   createMemoryTool,
   searchMemoryTool,
   createFileTool,
+  downloadFromUrlTool,
+  searchFilesTool,
   gmailGetRecentTool,
   gmailSearchTool,
   gmailGetMessageTool,
@@ -865,10 +1051,12 @@ async function agentNode(state: AgentState): Promise<AgentState> {
     if (!hasSystemMessage) {
       const systemMessage = new SystemMessage(
         "You are Athena, a helpful AI assistant with advanced capabilities. " +
-        "You have access to web search, memory management, document editing, spreadsheet editing, and file creation tools. " +
+        "You have access to web search, memory management, document editing, spreadsheet editing, file creation, file downloading, and file search tools. " +
         "When helping with document editing tasks, use the tiptap_ai tool to deliver your response. " +
         "When helping with spreadsheet editing tasks (cleaning, transformations, formulas, row/column edits), use the sheet_ai tool to deliver structured operations. " +
         "To create a new file in the user's cloud workspace, use the create_file tool with file name, full path (including the file name), and content. " +
+        "To download a file from a URL and save it to the user's cloud workspace, use the download_from_url tool with the URL and optionally a custom file name and path. " +
+        "To search for files in the user's cloud storage, use the search_files tool with a search query to find files by name. " +
         "Store important information in memory for future reference using the store_memory tool. " +
         "Search your memories when relevant using the search_memory tool. " +
         "Provide clear, accurate, and helpful responses with proper citations when using web search."
@@ -924,6 +1112,12 @@ async function toolNode(state: AgentState): Promise<AgentState> {
           break;
         case "create_file":
           result = await createFileTool.invoke(toolCall.args);
+          break;
+        case "download_from_url":
+          result = await downloadFromUrlTool.invoke(toolCall.args);
+          break;
+        case "search_files":
+          result = await searchFilesTool.invoke(toolCall.args);
           break;
         case "gmail_get_recent":
           result = await gmailGetRecentTool.invoke(toolCall.args);
