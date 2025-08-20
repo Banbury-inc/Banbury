@@ -16,6 +16,7 @@ import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
 import FileDownload from './pages/Filedownload';
 import Home from './pages/Home';
+import Knowledge from './pages/Knowledge';
 import Login from './pages/Login';
 import Workspaces from './pages/Workspaces';
 import { trackPageView } from './services/trackingService';
@@ -83,6 +84,7 @@ const App = (): JSX.Element => {
               <Routes>
                 <Route path='/dashboard' element={<Dashboard />} />
                 <Route path='/workspaces' element={<Workspaces />} />
+                <Route path='/knowledge' element={<Knowledge />} />
                 <Route path='/admin' element={<Admin />} />
                 <Route path='/' element={<Layout><Home /></Layout>} />
                 <Route path='/login' element={<Layout><Login /></Layout>} />

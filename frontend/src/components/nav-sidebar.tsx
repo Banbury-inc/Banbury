@@ -1,4 +1,4 @@
-import { Home, FolderOpen, LogOut, Settings, UserStarIcon} from "lucide-react"
+import { Home, FolderOpen, LogOut, Settings, UserStarIcon, Brain} from "lucide-react"
 import Image from 'next/image'
 import { useRouter } from "next/router"
 import { useState, useEffect } from "react"
@@ -34,6 +34,12 @@ export function NavSidebar({ onLogout }: NavSidebarProps) {
       icon: FolderOpen,
       label: 'Workspaces',
       path: '/workspaces'
+    },
+    {
+      id: 'knowledge',
+      icon: Brain,
+      label: 'Knowledge',
+      path: '/knowledge'
     },
     {
       id: 'settings',
