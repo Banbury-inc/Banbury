@@ -418,6 +418,160 @@ const createFileTool = tool(
     let resolvedType = input.contentType || 'text/plain';
     let bodyContent = input.content;
 
+    // Local helpers to normalize and format plain text into HTML when appropriate
+    const escapeHtml = (raw: string): string =>
+      raw
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    const isLikelyHtml = (raw: string): boolean => /<\s*([a-zA-Z]+)(\s|>|\/)/.test(raw) || /<html[\s>]/i.test(raw);
+
+    const normalizeNewlines = (raw: string): string => raw.replace(/\r\n?/g, '\n');
+
+    const plainTextToHtml = (raw: string): string => {
+      const text = normalizeNewlines(raw).trim();
+      if (!text) return '';
+      const paragraphs = text.split(/\n{2,}/);
+      const htmlParagraphs = paragraphs.map((para) => {
+        const escaped = escapeHtml(para);
+        const withBreaks = escaped.replace(/\n/g, '<br>');
+        return `<p>${withBreaks}</p>`;
+      });
+      return htmlParagraphs.join('\n');
+    };
+
+    // Basic Markdown support for common structures: headings, lists, links, inline code, bold/italics, blockquotes, code fences
+    const applyInlineMarkdown = (text: string): string => {
+      // code span
+      let s = text.replace(/`([^`]+)`/g, (_m, p1) => `<code>${escapeHtml(p1)}</code>`);
+      // bold
+      s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      // italics (simple heuristic, avoids interfering with bold already handled)
+      s = s.replace(/(^|\W)\*([^*]+)\*(?=$|\W)/g, (_m, p1, p2) => `${p1}<em>${p2}</em>`);
+      // links [text](url)
+      s = s.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, (_m, p1, p2) => `<a href="${escapeHtml(p2)}">${escapeHtml(p1)}</a>`);
+      return s;
+    };
+
+    const looksLikeMarkdown = (raw: string): boolean => {
+      const t = normalizeNewlines(raw);
+      return /^(#{1,6})\s+/.test(t) || /\n[-*]\s+/.test(t) || /\n\d+\.\s+/.test(t) || /\*\*[^*]+\*\*/.test(t) || /^>\s+/.test(t) || /^---$/m.test(t) || /```[\s\S]*?```/.test(t);
+    };
+
+    const markdownToHtml = (raw: string): string => {
+      const text = normalizeNewlines(raw);
+      // Extract fenced code blocks first to avoid processing inside
+      const codeBlocks: string[] = [];
+      let withoutFences = text.replace(/```([\s\S]*?)```/g, (_m, p1) => {
+        const idx = codeBlocks.length;
+        codeBlocks.push(`<pre><code>${escapeHtml(p1.trim())}</code></pre>`);
+        return `@@CODEBLOCK_${idx}@@`;
+      });
+
+      const lines = withoutFences.split('\n');
+      const htmlParts: string[] = [];
+      let inUl = false;
+      let inOl = false;
+      let inBlockquote = false;
+      let paraBuffer: string[] = [];
+
+      const flushPara = () => {
+        if (paraBuffer.length) {
+          const p = applyInlineMarkdown(escapeHtml(paraBuffer.join('\n'))).replace(/\n/g, '<br>');
+          htmlParts.push(`<p>${p}</p>`);
+          paraBuffer = [];
+        }
+      };
+      const closeLists = () => {
+        if (inUl) { htmlParts.push('</ul>'); inUl = false; }
+        if (inOl) { htmlParts.push('</ol>'); inOl = false; }
+      };
+      const closeBlockquote = () => {
+        if (inBlockquote) { htmlParts.push('</blockquote>'); inBlockquote = false; }
+      };
+
+      for (const rawLine of lines) {
+        const line = rawLine.trimEnd();
+        if (!line.trim()) {
+          flushPara();
+          closeLists();
+          closeBlockquote();
+          continue;
+        }
+
+        // Horizontal rule
+        if (/^-{3,}$/.test(line)) {
+          flushPara();
+          closeLists();
+          closeBlockquote();
+          htmlParts.push('<hr>');
+          continue;
+        }
+
+        // Headings
+        const h = line.match(/^(#{1,6})\s+(.+)$/);
+        if (h) {
+          flushPara();
+          closeLists();
+          closeBlockquote();
+          const level = Math.min(h[1].length, 6);
+          const content = applyInlineMarkdown(escapeHtml(h[2].trim()));
+          htmlParts.push(`<h${level}>${content}</h${level}>`);
+          continue;
+        }
+
+        // Blockquote
+        const bq = line.match(/^>\s?(.*)$/);
+        if (bq) {
+          flushPara();
+          closeLists();
+          if (!inBlockquote) { htmlParts.push('<blockquote>'); inBlockquote = true; }
+          const content = applyInlineMarkdown(escapeHtml(bq[1]));
+          htmlParts.push(`<p>${content}</p>`);
+          continue;
+        }
+
+        // Ordered list
+        const ol = line.match(/^\d+\.\s+(.*)$/);
+        if (ol) {
+          flushPara();
+          closeBlockquote();
+          if (inUl) { htmlParts.push('</ul>'); inUl = false; }
+          if (!inOl) { htmlParts.push('<ol>'); inOl = true; }
+          const content = applyInlineMarkdown(escapeHtml(ol[1]));
+          htmlParts.push(`<li>${content}</li>`);
+          continue;
+        }
+
+        // Unordered list
+        const ul = line.match(/^[-*]\s+(.*)$/);
+        if (ul) {
+          flushPara();
+          closeBlockquote();
+          if (inOl) { htmlParts.push('</ol>'); inOl = false; }
+          if (!inUl) { htmlParts.push('<ul>'); inUl = true; }
+          const content = applyInlineMarkdown(escapeHtml(ul[1]));
+          htmlParts.push(`<li>${content}</li>`);
+          continue;
+        }
+
+        // Default: accumulate paragraph lines
+        paraBuffer.push(line);
+      }
+
+      flushPara();
+      closeLists();
+      closeBlockquote();
+
+      let html = htmlParts.join('\n');
+      // Restore code blocks
+      html = html.replace(/@@CODEBLOCK_(\d+)@@/g, (_m, p1) => codeBlocks[Number(p1)] || '');
+      return html;
+    };
+
     const wrapHtml = (title: string, bodyHtml: string) => (
       `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <title>${title}</title>\n    <style>body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }</style>\n</head>\n<body>\n${bodyHtml}\n</body>\n</html>`
     );
@@ -425,14 +579,34 @@ const createFileTool = tool(
     switch (ext) {
       case 'docx': {
         const title = input.fileName;
-        bodyContent = wrapHtml(title, bodyContent);
+        let prepared: string;
+        if (isLikelyHtml(bodyContent)) {
+          prepared = bodyContent;
+        } else if (looksLikeMarkdown(bodyContent)) {
+          prepared = markdownToHtml(bodyContent);
+        } else {
+          prepared = plainTextToHtml(bodyContent);
+        }
+        bodyContent = wrapHtml(title, prepared);
         resolvedType = 'application/vnd.banbury.docx-html';
         break;
       }
       case 'html':
       case 'htm': {
         const hasHtmlTag = /<html[\s>]/i.test(bodyContent);
-        bodyContent = hasHtmlTag ? bodyContent : wrapHtml(input.fileName, bodyContent);
+        if (hasHtmlTag) {
+          bodyContent = bodyContent;
+        } else {
+          let prepared: string;
+          if (isLikelyHtml(bodyContent)) {
+            prepared = bodyContent;
+          } else if (looksLikeMarkdown(bodyContent)) {
+            prepared = markdownToHtml(bodyContent);
+          } else {
+            prepared = plainTextToHtml(bodyContent);
+          }
+          bodyContent = wrapHtml(input.fileName, prepared);
+        }
         resolvedType = 'text/html';
         break;
       }

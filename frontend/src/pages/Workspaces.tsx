@@ -515,6 +515,21 @@ const Workspaces = (): JSX.Element => {
   // Close a tab
   const handleCloseTab = useCallback((tabId: string, panelId: string) => {
     setPanelLayout(prev => {
+      // Dispatch an event before removal so listeners (e.g., Thread) can react
+      try {
+        const panelBefore = findPanel(prev, panelId);
+        const closingTab = panelBefore?.tabs.find(tab => tab.id === tabId);
+        if (closingTab && closingTab.type === 'file') {
+          window.dispatchEvent(new CustomEvent('workspace-tab-closed', {
+            detail: {
+              fileId: closingTab.file.file_id,
+              filePath: closingTab.file.path,
+              fileName: closingTab.file.name,
+            }
+          }));
+        }
+      } catch {}
+
       const newLayout = removeTabFromPanel(prev, panelId, tabId);
       
       // Update selected file if needed

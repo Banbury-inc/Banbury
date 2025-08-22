@@ -145,7 +145,12 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   const lastSelectionRef = useRef<[number, number, number, number] | null>(null);
 
   // Pending meta captured from CSV/XLSX load to apply after table renders
-  const pendingCellMetaRef = useRef<Record<string, { type: 'dropdown' | 'checkbox' | 'numeric' | 'date' | 'text'; source?: string[] }> | null>(null);
+  const pendingCellMetaRef = useRef<Record<string, { 
+    type: 'dropdown' | 'checkbox' | 'numeric' | 'date' | 'text'; 
+    source?: string[]; 
+    numericFormat?: { pattern?: string; culture?: string };
+    dateFormat?: string;
+  }> | null>(null);
 
   // Helper function to parse CSV content, capturing meta header if present
   const parseCSV = (csvContent: string): any[][] => {
@@ -220,11 +225,22 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
               cellsMeta[`${r}-${c}`] = { type: 'checkbox' };
             } else if (meta.type === 'dropdown' && Array.isArray(meta.source) && meta.source.length > 0) {
               cellsMeta[`${r}-${c}`] = { type: 'dropdown', source: meta.source };
+            } else if (meta.type === 'numeric' && meta.numericFormat) {
+              const pattern = meta.numericFormat.pattern;
+              const culture = meta.numericFormat.culture;
+              cellsMeta[`${r}-${c}`] = { type: 'numeric', numericFormat: { ...(pattern ? { pattern } : {}), ...(culture ? { culture } : {}) } };
+            } else if (meta.type === 'date') {
+              const dateFormat = meta.dateFormat || 'MM/DD/YYYY';
+              cellsMeta[`${r}-${c}`] = { type: 'date', dateFormat };
             }
           } catch {}
         }
       }
     }
+    // Merge in any locally tracked type meta to ensure persistence even if Handsontable meta gets reset on navigation
+    Object.entries(cellTypeMeta).forEach(([key, m]) => {
+      cellsMeta[key] = { ...(cellsMeta[key] || {}), ...m };
+    });
     const baseCsv = convertToCSV(data);
     if (Object.keys(cellsMeta).length === 0) return baseCsv;
     const metaObj = { cells: cellsMeta };
@@ -279,7 +295,8 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
               if (value && typeof value === 'object') {
                 if (value.text != null) value = value.text; else if (value.result != null) value = value.result; else if (value.richText) value = value.richText.map((t:any)=>t.text).join('');
               }
-              if (value instanceof Date) value = value.toISOString();
+              const wasDate = value instanceof Date;
+              if (wasDate) value = (value as Date).toISOString();
               // Capture checkbox if boolean
               if (typeof value === 'boolean') {
                 nextMeta[`${r-1}-${c-1}`] = { type: 'checkbox' };
@@ -316,6 +333,25 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
                   const options = m[1].split(',').map((s) => s.trim()).filter(Boolean);
                   if (options.length > 0) nextMeta[key] = { type: 'dropdown', source: options };
                 }
+              }
+              // Capture date formatting from Excel if present
+              const numFmt: string | undefined = (cell as any).numFmt;
+              const looksLikeDateFmt = (fmt?: string) => {
+                if (!fmt) return false;
+                const f = String(fmt).toLowerCase();
+                // crude check: contains y and either m and d
+                return f.includes('y') && f.includes('m') && f.includes('d');
+              };
+              if (wasDate || looksLikeDateFmt(numFmt)) {
+                // Default to MM/DD/YYYY
+                let dateFormat = 'MM/DD/YYYY';
+                if (numFmt) {
+                  const f = String(numFmt).toLowerCase();
+                  if (f.includes('dd') || f.includes('d')) {
+                    dateFormat = 'MM/DD/YYYY';
+                  }
+                }
+                nextMeta[key] = { ...(nextMeta[key] || {}), type: 'date', dateFormat } as any;
               }
               if (classes.length) nextFormats[key] = { className: classes.join(' ') };
               if (Object.keys(styles).length) nextStyles[key] = styles;
@@ -428,8 +464,14 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
         const c = parseInt(cs, 10);
         if (Number.isNaN(r) || Number.isNaN(c)) continue;
         hotInstance.setCellMeta(r, c, 'type', meta.type);
-        if (meta.type === 'dropdown' && Array.isArray(meta.source)) {
+        if (meta.type === 'dropdown' && Array.isArray((meta as any).source)) {
           hotInstance.setCellMeta(r, c, 'source', meta.source);
+        }
+        if (meta.type === 'numeric' && (meta as any).numericFormat) {
+          hotInstance.setCellMeta(r, c, 'numericFormat', (meta as any).numericFormat);
+        }
+        if (meta.type === 'date' && (meta as any).dateFormat) {
+          hotInstance.setCellMeta(r, c, 'dateFormat', (meta as any).dateFormat);
         }
         // Clean numeric/date format if switching from them
         if (meta.type === 'dropdown' || meta.type === 'checkbox') {
@@ -438,6 +480,10 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
         }
       }
       hotInstance.render();
+      // Mirror to our local state so it persists on subsequent renders and edits
+      const mirrored: {[key:string]: any} = {};
+      Object.entries(pending).forEach(([k, m]) => { mirrored[k] = m as any; });
+      setCellTypeMeta((prev) => ({ ...prev, ...mirrored }));
     } catch {}
     pendingCellMetaRef.current = null;
   }, [data]);
@@ -800,6 +846,77 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   // Store cell formatting state
   const [cellFormats, setCellFormats] = useState<{[key: string]: {className?: string}}>({});
   const [cellStyles, setCellStyles] = useState<{[key: string]: React.CSSProperties}>({});
+  // Persist data type meta similarly to how we persist bold/italic via React state
+  const [cellTypeMeta, setCellTypeMeta] = useState<{[key: string]: { type: 'dropdown' | 'checkbox' | 'numeric' | 'date' | 'text'; source?: string[]; numericFormat?: { pattern?: string; culture?: string }; dateFormat?: string }} >({});
+
+  // Keep metadata aligned when rows/columns are inserted or removed
+  const shiftMapForRowInsert = useCallback((map: {[key: string]: any}, index: number, amount: number) => {
+    const next: {[key: string]: any} = {};
+    Object.entries(map).forEach(([key, value]) => {
+      const [rs, cs] = key.split('-');
+      const r = parseInt(rs, 10);
+      const c = parseInt(cs, 10);
+      if (Number.isNaN(r) || Number.isNaN(c)) return;
+      if (r >= index) {
+        next[`${r + amount}-${c}`] = value;
+      } else {
+        next[key] = value;
+      }
+    });
+    return next;
+  }, []);
+
+  const shiftMapForRowRemove = useCallback((map: {[key: string]: any}, index: number, amount: number) => {
+    const next: {[key: string]: any} = {};
+    const end = index + amount - 1;
+    Object.entries(map).forEach(([key, value]) => {
+      const [rs, cs] = key.split('-');
+      const r = parseInt(rs, 10);
+      const c = parseInt(cs, 10);
+      if (Number.isNaN(r) || Number.isNaN(c)) return;
+      if (r < index) {
+        next[key] = value;
+      } else if (r > end) {
+        next[`${r - amount}-${c}`] = value;
+      }
+      // rows within [index, end] are deleted -> drop entries
+    });
+    return next;
+  }, []);
+
+  const shiftMapForColInsert = useCallback((map: {[key: string]: any}, index: number, amount: number) => {
+    const next: {[key: string]: any} = {};
+    Object.entries(map).forEach(([key, value]) => {
+      const [rs, cs] = key.split('-');
+      const r = parseInt(rs, 10);
+      const c = parseInt(cs, 10);
+      if (Number.isNaN(r) || Number.isNaN(c)) return;
+      if (c >= index) {
+        next[`${r}-${c + amount}`] = value;
+      } else {
+        next[key] = value;
+      }
+    });
+    return next;
+  }, []);
+
+  const shiftMapForColRemove = useCallback((map: {[key: string]: any}, index: number, amount: number) => {
+    const next: {[key: string]: any} = {};
+    const end = index + amount - 1;
+    Object.entries(map).forEach(([key, value]) => {
+      const [rs, cs] = key.split('-');
+      const r = parseInt(rs, 10);
+      const c = parseInt(cs, 10);
+      if (Number.isNaN(r) || Number.isNaN(c)) return;
+      if (c < index) {
+        next[key] = value;
+      } else if (c > end) {
+        next[`${r}-${c - amount}`] = value;
+      }
+      // cols within [index, end] are deleted -> drop entries
+    });
+    return next;
+  }, []);
 
   // Cell formatting functions using proper Handsontable approach
   const toggleCellFormat = (className: string) => {
@@ -838,6 +955,10 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
         setCellFormats(newCellFormats);
         hotInstance.render();
         setHasChanges(true);
+        try {
+          const current = hotInstance.getData && hotInstance.getData();
+          if (current) onContentChange?.(current);
+        } catch {}
       }
     }
   };
@@ -904,6 +1025,10 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
         setCellFormats(newCellFormats);
         hotInstance.render();
         setHasChanges(true);
+        try {
+          const current = hotInstance.getData && hotInstance.getData();
+          if (current) onContentChange?.(current);
+        } catch {}
       }
     }
   };
@@ -948,6 +1073,10 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
     setCellStyles(nextStyles);
     hotInstance.render();
     setHasChanges(true);
+    try {
+      const current = hotInstance.getData && hotInstance.getData();
+      if (current) onContentChange?.(current);
+    } catch {}
   };
 
   const removeCellStyle = (styleProperty: string) => {
@@ -979,6 +1108,10 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
     setCellStyles(nextStyles);
     hotInstance.render();
     setHasChanges(true);
+    try {
+      const current = hotInstance.getData && hotInstance.getData();
+      if (current) onContentChange?.(current);
+    } catch {}
   };
 
   const [borderAnchorEl, setBorderAnchorEl] = useState<null | HTMLElement>(null);
@@ -1351,6 +1484,10 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
         setCellStyles(nextStyles);
         hotInstance.render();
         setHasChanges(true);
+        try {
+          const current = hotInstance.getData && hotInstance.getData();
+          if (current) onContentChange?.(current);
+        } catch {}
         return;
     }
 
@@ -1358,6 +1495,10 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
     setCellStyles(nextStyles);
     hotInstance.render();
     setHasChanges(true);
+    try {
+      const current = hotInstance.getData && hotInstance.getData();
+      if (current) onContentChange?.(current);
+    } catch {}
     handleBorderClose();
   };
 
@@ -1393,7 +1534,7 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
       const selected = hotInstance.getSelected();
       if (selected && selected.length > 0) {
         const [startRow, startCol, endRow, endCol] = selected[0];
-        
+        const next: {[key:string]: any} = { ...cellTypeMeta };
         for (let row = startRow; row <= endRow; row++) {
           for (let col = startCol; col <= endCol; col++) {
             hotInstance.setCellMeta(row, col, 'type', 'numeric');
@@ -1401,10 +1542,16 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
               pattern: '$0,0.00',
               culture: 'en-US'
             });
+            next[`${row}-${col}`] = { type: 'numeric', numericFormat: { pattern: '$0,0.00', culture: 'en-US' } };
           }
         }
         hotInstance.render();
+        setCellTypeMeta(next);
         setHasChanges(true);
+        try {
+          const current = hotInstance.getData && hotInstance.getData();
+          if (current) onContentChange?.(current);
+        } catch {}
       }
     }
   };
@@ -1415,15 +1562,21 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
       const selected = hotInstance.getSelected();
       if (selected && selected.length > 0) {
         const [startRow, startCol, endRow, endCol] = selected[0];
-        
+        const next: {[key:string]: any} = { ...cellTypeMeta };
         for (let row = startRow; row <= endRow; row++) {
           for (let col = startCol; col <= endCol; col++) {
             hotInstance.setCellMeta(row, col, 'type', 'date');
             hotInstance.setCellMeta(row, col, 'dateFormat', 'MM/DD/YYYY');
+            next[`${row}-${col}`] = { type: 'date', dateFormat: 'MM/DD/YYYY' };
           }
         }
         hotInstance.render();
+        setCellTypeMeta(next);
         setHasChanges(true);
+        try {
+          const current = hotInstance.getData && hotInstance.getData();
+          if (current) onContentChange?.(current);
+        } catch {}
       }
     }
   };
@@ -1434,17 +1587,23 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
       const selected = hotInstance.getSelected();
       if (selected && selected.length > 0) {
         const [startRow, startCol, endRow, endCol] = selected[0];
-        
+        const next: {[key:string]: any} = { ...cellTypeMeta };
         for (let row = startRow; row <= endRow; row++) {
           for (let col = startCol; col <= endCol; col++) {
             hotInstance.setCellMeta(row, col, 'type', 'numeric');
             hotInstance.setCellMeta(row, col, 'numericFormat', {
               pattern: '0.00%'
             });
+            next[`${row}-${col}`] = { type: 'numeric', numericFormat: { pattern: '0.00%' } };
           }
         }
         hotInstance.render();
+        setCellTypeMeta(next);
         setHasChanges(true);
+        try {
+          const current = hotInstance.getData && hotInstance.getData();
+          if (current) onContentChange?.(current);
+        } catch {}
       }
     }
   };
@@ -1455,17 +1614,23 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
       const selected = hotInstance.getSelected();
       if (selected && selected.length > 0) {
         const [startRow, startCol, endRow, endCol] = selected[0];
-        
+        const next: {[key:string]: any} = { ...cellTypeMeta };
         for (let row = startRow; row <= endRow; row++) {
           for (let col = startCol; col <= endCol; col++) {
             hotInstance.setCellMeta(row, col, 'type', 'numeric');
             hotInstance.setCellMeta(row, col, 'numericFormat', {
               pattern: '0,0.00'
             });
+            next[`${row}-${col}`] = { type: 'numeric', numericFormat: { pattern: '0,0.00' } };
           }
         }
         hotInstance.render();
+        setCellTypeMeta(next);
         setHasChanges(true);
+        try {
+          const current = hotInstance.getData && hotInstance.getData();
+          if (current) onContentChange?.(current);
+        } catch {}
       }
     }
   };
@@ -1476,19 +1641,46 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
       const selected = hotInstance.getSelected();
       if (selected && selected.length > 0) {
         const [startRow, startCol, endRow, endCol] = selected[0];
-        
+        const next: {[key:string]: any} = { ...cellTypeMeta };
         for (let row = startRow; row <= endRow; row++) {
           for (let col = startCol; col <= endCol; col++) {
             hotInstance.setCellMeta(row, col, 'type', 'text');
             // Remove any numeric formatting
             hotInstance.removeCellMeta(row, col, 'numericFormat');
             hotInstance.removeCellMeta(row, col, 'dateFormat');
+            next[`${row}-${col}`] = { type: 'text' };
           }
         }
         hotInstance.render();
+        setCellTypeMeta(next);
         setHasChanges(true);
+        try {
+          const current = hotInstance.getData && hotInstance.getData();
+          if (current) onContentChange?.(current);
+        } catch {}
       }
     }
+  };
+
+  // Display helper: format dates as MM/DD/YYYY by default when cell type is 'date'
+  const formatDateDisplay = (value: any): string => {
+    if (value == null || value === '') return '';
+    try {
+      if (value instanceof Date) {
+        return value.toLocaleDateString('en-US');
+      }
+      if (typeof value === 'number') {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) return date.toLocaleDateString('en-US');
+      }
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) return trimmed;
+        const parsed = new Date(trimmed);
+        if (!isNaN(parsed.getTime())) return parsed.toLocaleDateString('en-US');
+      }
+    } catch {}
+    return String(value);
   };
 
   // New: Dropdown (handsontable "dropdown" type) and Checkbox cell types
@@ -1504,6 +1696,7 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
     const [startRow, startCol, endRow, endCol] = selected[0];
+    const next: {[key:string]: any} = { ...cellTypeMeta };
     for (let row = startRow; row <= endRow; row++) {
       for (let col = startCol; col <= endCol; col++) {
         hotInstance.setCellMeta(row, col, 'type', 'dropdown');
@@ -1511,10 +1704,16 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
         // Clean other formatting that conflicts
         hotInstance.removeCellMeta(row, col, 'numericFormat');
         hotInstance.removeCellMeta(row, col, 'dateFormat');
+        next[`${row}-${col}`] = { type: 'dropdown', source };
       }
     }
     hotInstance.render();
+    setCellTypeMeta(next);
     setHasChanges(true);
+    try {
+      const current = hotInstance.getData && hotInstance.getData();
+      if (current) onContentChange?.(current);
+    } catch {}
   };
 
   const handleCheckboxFormat = () => {
@@ -1523,16 +1722,23 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
     const selected = hotInstance.getSelected();
     if (!selected || selected.length === 0) return;
     const [startRow, startCol, endRow, endCol] = selected[0];
+    const next: {[key:string]: any} = { ...cellTypeMeta };
     for (let row = startRow; row <= endRow; row++) {
       for (let col = startCol; col <= endCol; col++) {
         hotInstance.setCellMeta(row, col, 'type', 'checkbox');
         // Optional: you can preset checkedTemplate/uncheckedTemplate if needed
         hotInstance.removeCellMeta(row, col, 'numericFormat');
         hotInstance.removeCellMeta(row, col, 'dateFormat');
+        next[`${row}-${col}`] = { type: 'checkbox' };
       }
     }
     hotInstance.render();
+    setCellTypeMeta(next);
     setHasChanges(true);
+    try {
+      const current = hotInstance.getData && hotInstance.getData();
+      if (current) onContentChange?.(current);
+    } catch {}
   };
 
   // Edit dropdown options for selected cells (prefills current options when possible)
@@ -1566,6 +1772,10 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
     }
     hotInstance.render();
     setHasChanges(true);
+    try {
+      const current = hotInstance.getData && hotInstance.getData();
+      if (current) onContentChange?.(current);
+    } catch {}
   };
 
   // Handsontable context menu configuration with custom items
@@ -2418,16 +2628,61 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
             autoWrapRow={false}
             viewportRowRenderingOffset={50}
             viewportColumnRenderingOffset={50}
+            afterCreateRow={(index: number, amount: number) => {
+              setCellTypeMeta((prev) => shiftMapForRowInsert(prev, index, amount));
+              setCellFormats((prev) => shiftMapForRowInsert(prev, index, amount));
+              setCellStyles((prev) => shiftMapForRowInsert(prev, index, amount));
+            }}
+            afterRemoveRow={(index: number, amount: number) => {
+              setCellTypeMeta((prev) => shiftMapForRowRemove(prev, index, amount));
+              setCellFormats((prev) => shiftMapForRowRemove(prev, index, amount));
+              setCellStyles((prev) => shiftMapForRowRemove(prev, index, amount));
+            }}
+            afterCreateCol={(index: number, amount: number) => {
+              setCellTypeMeta((prev) => shiftMapForColInsert(prev, index, amount));
+              setCellFormats((prev) => shiftMapForColInsert(prev, index, amount));
+              setCellStyles((prev) => shiftMapForColInsert(prev, index, amount));
+            }}
+            afterRemoveCol={(index: number, amount: number) => {
+              setCellTypeMeta((prev) => shiftMapForColRemove(prev, index, amount));
+              setCellFormats((prev) => shiftMapForColRemove(prev, index, amount));
+              setCellStyles((prev) => shiftMapForColRemove(prev, index, amount));
+            }}
             cells={(row: number, col: number) => {
               return {
                 renderer: (instance: any, td: HTMLTableCellElement, r: number, c: number, prop: any, value: any, cellProperties: any) => {
                   // Delegate to appropriate base renderer based on meta.type
                   try {
                     const meta = instance.getCellMeta(r, c) || {};
-                    if (meta.type === 'checkbox') {
+                    // Re-apply persisted type meta if Handsontable meta was lost (similar to class/style persistence)
+                    const key = `${r}-${c}`;
+                    const persisted = cellTypeMeta[key];
+                    if (persisted && (!meta || meta.type !== persisted.type)) {
+                      try {
+                        instance.setCellMeta(r, c, 'type', persisted.type);
+                        if (persisted.type === 'dropdown' && Array.isArray(persisted.source)) {
+                          instance.setCellMeta(r, c, 'source', persisted.source);
+                        }
+                        if (persisted.type === 'numeric' && persisted.numericFormat) {
+                          instance.setCellMeta(r, c, 'numericFormat', persisted.numericFormat);
+                        }
+                        if (persisted.type === 'date' && persisted.dateFormat) {
+                          instance.setCellMeta(r, c, 'dateFormat', persisted.dateFormat);
+                        }
+                      } catch {}
+                    }
+                    const effectiveType = (persisted && persisted.type) ? persisted.type : meta.type;
+                    if (effectiveType === 'checkbox') {
                       checkboxRenderer(instance, td, r, c, prop, value, cellProperties);
                     } else {
                       textRenderer(instance, td, r, c, prop, value, cellProperties);
+                      // If this is a date cell, display only the date portion
+                      if (effectiveType === 'date') {
+                        try {
+                          const display = formatDateDisplay(value);
+                          td.textContent = display;
+                        } catch {}
+                      }
                     }
                   } catch {
                     textRenderer(instance, td, r, c, prop, value, cellProperties);

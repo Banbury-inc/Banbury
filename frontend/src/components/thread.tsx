@@ -655,6 +655,22 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect 
     }
   }, [attachedFiles, attachmentPayloads]);
 
+  // Remove attachment when a corresponding workspace tab is closed
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail || {};
+      const { fileId, filePath } = detail || {};
+      if (!fileId && !filePath) return;
+      setAttachedFiles((prev) => prev.filter((f) => {
+        if (fileId) return f.file_id !== fileId;
+        if (filePath) return f.path !== filePath;
+        return true;
+      }));
+    };
+    window.addEventListener('workspace-tab-closed', handler as EventListener);
+    return () => window.removeEventListener('workspace-tab-closed', handler as EventListener);
+  }, []);
+
   // Persist tool preferences and keep web search toggle in sync with menu
   useEffect(() => {
     try {
