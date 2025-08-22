@@ -19,7 +19,7 @@ interface EmailViewerProps {
 export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDelete, onStarToggled, onRefresh }: EmailViewerProps) {
 
   const getHeader = (name: string) => {
-    return email.payload?.headers?.find((h: any) => h.name.toLowerCase() === name.toLowerCase())?.value || 'Unknown'
+    return email?.payload?.headers?.find((h: any) => h.name.toLowerCase() === name.toLowerCase())?.value || 'Unknown'
   }
 
   const formatDate = (internalDate: string) => {
@@ -43,6 +43,8 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
 
   const [labels, setLabels] = useState<string[]>(email?.labelIds || [])
   const [actionLoading, setActionLoading] = useState<boolean>(false)
+  const [threadLoading, setThreadLoading] = useState<boolean>(false)
+  const [threadMessages, setThreadMessages] = useState<any[]>([])
 
   const isStarred = useMemo(() => labels.includes('STARRED'), [labels])
 
@@ -54,9 +56,9 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
   const emailContent = email ? extractEmailContent(email.payload) : { text: '', html: '', attachments: [] as any[] }
   const hasAttachmentsFlag = hasAttachments(emailContent)
 
-  const handleDownloadAttachment = async (attachmentId: string, filename: string) => {
+  const handleDownloadAttachment = async (attachmentId: string, filename: string, messageId?: string) => {
     try {
-      const response = await EmailService.getAttachment(email.id, attachmentId)
+      const response = await EmailService.getAttachment(messageId || email.id, attachmentId)
       if (response.data) {
         // Decode base64url data
         const base64 = response.data.replace(/-/g, '+').replace(/_/g, '/')
@@ -157,6 +159,42 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
     }
   }
 
+  // Load full thread messages when a new email is selected
+  useEffect(() => {
+    const loadThread = async () => {
+      if (!email?.threadId) {
+        setThreadMessages(email ? [email] : [])
+        return
+      }
+      try {
+        setThreadLoading(true)
+        // Get thread metadata (ids in the thread)
+        const thread: any = await EmailService.getThread(email.threadId)
+        const ids: string[] = (thread?.messages || thread?.thread?.messages || [])
+          .map((m: any) => (m.id ? m.id : m.messageId ? m.messageId : m))
+          .filter(Boolean)
+
+        if (ids && ids.length > 0) {
+          // Fetch full messages in batch for rendering contents
+          const batch = await EmailService.getMessagesBatch(ids)
+          const fullMessages: any[] = ids
+            .map((id) => batch?.messages?.[id])
+            .filter((m) => m && !m.error)
+            // Sort by internalDate ascending (oldest first)
+            .sort((a: any, b: any) => Number(a.internalDate || 0) - Number(b.internalDate || 0))
+          setThreadMessages(fullMessages.length > 0 ? fullMessages : [email])
+        } else {
+          setThreadMessages([email])
+        }
+      } catch (e) {
+        setThreadMessages([email])
+      } finally {
+        setThreadLoading(false)
+      }
+    }
+    loadThread()
+  }, [email])
+
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Compact Header */}
@@ -224,7 +262,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
       {/* Email Content */}
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-500">
         <div className="w-full">
-          {/* Email Metadata - Compact */}
+          {/* Threaded conversation header */}
           <div className="px-6 py-4 border-b border-zinc-800/30 bg-white">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 text-sm">
               <div className="flex items-center gap-2">
@@ -240,63 +278,76 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
             </div>
           </div>
 
-          {/* Email Body */}
           <div className="w-full">
-            <div className="bg-white overflow-hidden">
-              {emailContent.html ? (
-                <div 
-                  className="text-gray-900 leading-relaxed p-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: cleanHtmlContent(emailContent.html) }}
-                />
-              ) : (
-                <div className="text-gray-900 leading-relaxed whitespace-pre-wrap p-6 font-sans">
-                  {emailContent.text || email.snippet || 'No content available'}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Attachments */}
-          {hasAttachmentsFlag && emailContent.attachments && (
-            <div className="px-6 pb-6 bg-white">
-              <div className="border-t border-gray-200 pt-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Paperclip className="h-4 w-4 text-slate-500" />
-                  <span className="text-sm font-medium text-slate-700">Attachments</span>
-                  <span className="text-xs text-slate-500">({emailContent.attachments.length})</span>
-                </div>
-                <div className="space-y-2">
-                  {emailContent.attachments.map((attachment) => (
-                    <div 
-                      key={attachment.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <Paperclip className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-slate-900 truncate">
-                            {attachment.filename}
-                          </p>
-                          <p className="text-xs text-slate-600">
-                            {attachment.mimeType} • {formatFileSize(attachment.size)}
-                          </p>
+            {threadLoading && (
+              <div className="p-6 text-sm text-slate-500">Loading thread…</div>
+            )}
+            {!threadLoading && (threadMessages.length > 0 ? (
+              <div className="bg-white">
+                {threadMessages.map((msg) => {
+                  const content = extractEmailContent(msg?.payload)
+                  const header = (n: string) => msg?.payload?.headers?.find((h: any) => h.name.toLowerCase() === n.toLowerCase())?.value || 'Unknown'
+                  const msgHasAttachments = hasAttachments(content)
+                  return (
+                    <div key={msg.id} className="border-b border-gray-200">
+                      <div className="px-6 pt-4 pb-2 text-xs text-slate-600 flex items-center gap-4">
+                        <div className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          <span className="truncate">{header('From')}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span>{formatDate(msg.internalDate)}</span>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-slate-500 hover:bg-slate-100 hover:text-slate-700 p-1 h-8 w-8 flex-shrink-0 rounded-md transition-colors duration-200"
-                        title="Download attachment"
-                        onClick={() => handleDownloadAttachment(attachment.id, attachment.filename)}
-                      >
-                        <Download className="h-3 w-3" />
-                      </Button>
+                      {content?.html ? (
+                        <div className="text-gray-900 leading-relaxed p-6 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: cleanHtmlContent(content.html) }} />
+                      ) : (
+                        <div className="text-gray-900 leading-relaxed whitespace-pre-wrap p-6 font-sans">
+                          {content?.text || msg?.snippet || 'No content available'}
+                        </div>
+                      )}
+                      {msgHasAttachments && content.attachments && (
+                        <div className="px-6 pb-6 bg-white">
+                          <div className="border-t border-gray-200 pt-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Paperclip className="h-4 w-4 text-slate-500" />
+                              <span className="text-sm font-medium text-slate-700">Attachments</span>
+                              <span className="text-xs text-slate-500">({content.attachments.length})</span>
+                            </div>
+                            <div className="space-y-2">
+                              {content.attachments.map((attachment: any) => (
+                                <div key={attachment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    <Paperclip className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-sm font-medium text-slate-900 truncate">{attachment.filename}</p>
+                                      <p className="text-xs text-slate-600">{attachment.mimeType} • {formatFileSize(attachment.size)}</p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-slate-500 hover:bg-slate-100 hover:text-slate-700 p-1 h-8 w-8 flex-shrink-0 rounded-md transition-colors duration-200"
+                                    title="Download attachment"
+                                    onClick={() => handleDownloadAttachment(attachment.id, attachment.filename, msg.id)}
+                                  >
+                                    <Download className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  )
+                })}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="p-6 text-sm text-slate-500">No messages in this thread</div>
+            ))}
+          </div>
         </div>
       </div>
         </>
@@ -304,3 +355,4 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
     </div>
   )
 }
+
