@@ -19,7 +19,9 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react'
-import { useRouter } from 'next/router'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts'
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../components/ui/chart'
+import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
 import { NavSidebar } from '../components/nav-sidebar'
@@ -73,6 +75,25 @@ interface RecentActivity {
   severity: 'info' | 'warning' | 'error'
 }
 
+interface VisitorData {
+  _id: string
+  ip_address: string
+  time: string
+  city: string
+  region: string
+  country: string
+}
+
+interface VisitorStats {
+  total_visitors: number
+  recent_visitors: number
+  period_days: number
+  country_stats: Array<{_id: string, count: number}>
+  city_stats: Array<{_id: string, count: number}>
+  hourly_stats: Array<{_id: number, count: number}>
+  daily_stats: Array<{date: string, count: number}>
+}
+
 export default function Admin() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -95,6 +116,9 @@ export default function Admin() {
   })
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [username, setUsername] = useState<string>('')
+  const [visitorData, setVisitorData] = useState<VisitorData[]>([])
+  const [visitorStats, setVisitorStats] = useState<VisitorStats | null>(null)
+  const [visitorLoading, setVisitorLoading] = useState(false)
 
   useEffect(() => {
     // Check if user is authorized (mmills only)
@@ -116,6 +140,20 @@ export default function Admin() {
     
     loadAdminData()
   }, [router])
+
+  // Load visitor data when analytics tab is selected
+  useEffect(() => {
+    if (activeTab === 'analytics' && !visitorLoading) {
+      loadVisitorData(30)
+    }
+  }, [activeTab])
+
+  // Debug daily_stats changes
+  useEffect(() => {
+    if (visitorStats?.daily_stats) {
+      console.log('Daily stats updated:', visitorStats.daily_stats)
+    }
+  }, [visitorStats?.daily_stats])
 
   const loadAdminData = async () => {
     setLoading(true)
@@ -142,6 +180,11 @@ export default function Admin() {
       }
     } catch (error) {
       setUsers([])
+    }
+
+    // Load visitor data if analytics tab is active
+    if (activeTab === 'analytics') {
+      await loadVisitorData(30)
     }
 
     // Mock recent activity
@@ -214,6 +257,32 @@ export default function Admin() {
       await loadAdminData() // Refresh the list
     } catch (error) {
       // Handle error silently
+    }
+  }
+
+  const loadVisitorData = async (days: number = 30) => {
+    setVisitorLoading(true)
+    try {
+      const response = await ApiService.getSiteVisitorInfo(100, days) as any
+      console.log('Visitor data response:', response)
+      if (response.result === 'success') {
+        setVisitorData(response.visitors || [])
+        const stats = {
+          ...response.summary,
+          country_stats: response.country_stats || [],
+          city_stats: response.city_stats || [],
+          hourly_stats: response.hourly_stats || [],
+          daily_stats: response.daily_stats || []
+        }
+        console.log('Processed visitor stats:', stats)
+        setVisitorStats(stats)
+      }
+    } catch (error) {
+      console.error('Failed to load visitor data:', error)
+      setVisitorData([])
+      setVisitorStats(null)
+    } finally {
+      setVisitorLoading(false)
     }
   }
 
@@ -729,111 +798,297 @@ export default function Admin() {
 
           {activeTab === 'analytics' && (
             <div className="space-y-6">
-              <h1 className="text-2xl font-bold text-white">Analytics</h1>
+              <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-white">Site Analytics</h1>
+                <div className="flex gap-2">
+                  <select 
+                    onChange={(e) => loadVisitorData(parseInt(e.target.value))}
+                    className="bg-zinc-800 text-white border border-zinc-600 rounded px-3 py-2"
+                    defaultValue="30"
+                  >
+                    <option value="7">Last 7 days</option>
+                    <option value="30">Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                  </select>
+                  <Button onClick={() => loadVisitorData(30)} variant="outline" className="text-white border-zinc-600">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh
+                  </Button>
+                </div>
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card className="bg-zinc-900 border-zinc-700">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-white text-sm">Daily Active Users</CardTitle>
+                    <CardTitle className="text-white text-sm">Total Visitors</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-white">1,247</div>
-                    <div className="text-green-400 text-sm">+12% from yesterday</div>
+                    <div className="text-2xl font-bold text-white">
+                      {visitorStats?.total_visitors?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-zinc-400 text-sm">All time</div>
                   </CardContent>
                 </Card>
                 
                 <Card className="bg-zinc-900 border-zinc-700">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-white text-sm">File Uploads</CardTitle>
+                    <CardTitle className="text-white text-sm">Recent Visitors</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-white">3,421</div>
-                    <div className="text-green-400 text-sm">+8% from yesterday</div>
+                    <div className="text-2xl font-bold text-white">
+                      {visitorStats?.recent_visitors?.toLocaleString() || '0'}
+                    </div>
+                    <div className="text-zinc-400 text-sm">Last {visitorStats?.period_days || 30} days</div>
                   </CardContent>
                 </Card>
                 
                 <Card className="bg-zinc-900 border-zinc-700">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-white text-sm">API Requests</CardTitle>
+                    <CardTitle className="text-white text-sm">Unique Countries</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-white">45.2K</div>
-                    <div className="text-blue-400 text-sm">+5% from yesterday</div>
+                    <div className="text-2xl font-bold text-white">
+                      {visitorStats?.country_stats?.length || '0'}
+                    </div>
+                    <div className="text-zinc-400 text-sm">Countries visited</div>
                   </CardContent>
                 </Card>
                 
                 <Card className="bg-zinc-900 border-zinc-700">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-white text-sm">Error Rate</CardTitle>
+                    <CardTitle className="text-white text-sm">Unique Cities</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-white">0.2%</div>
-                    <div className="text-green-400 text-sm">-0.1% from yesterday</div>
+                    <div className="text-2xl font-bold text-white">
+                      {visitorStats?.city_stats?.length || '0'}
+                    </div>
+                    <div className="text-zinc-400 text-sm">Cities visited</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+                            <Card className="bg-zinc-900 border-zinc-700">
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle className="text-white">Visitors Over Time</CardTitle>
+                      <CardDescription className="text-zinc-400">Daily visitor trends for the selected period</CardDescription>
+                    </div>
+                    <Button 
+                      onClick={() => loadVisitorData(30)} 
+                      variant="outline" 
+                      size="sm"
+                      className="text-white border-zinc-600 hover:bg-zinc-800"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {visitorLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                    </div>
+                  ) : visitorStats?.daily_stats && visitorStats.daily_stats.length > 0 ? (
+                    <div className="w-full h-80 overflow-hidden p-4">
+                      <ChartContainer
+                        config={{
+                          visitors: {
+                            label: "Visitors",
+                            color: "#3b82f6",
+                          },
+                        }}
+                        className="w-full h-full"
+                      >
+                        <AreaChart 
+                          data={visitorStats.daily_stats}
+                          margin={{ top: 10, right: 10, left: 10, bottom: 30 }}
+                        >
+                          <defs>
+                            <linearGradient id="visitorGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <XAxis 
+                            dataKey="date" 
+                            stroke="#9ca3af"
+                            fontSize={11}
+                            tickFormatter={(value) => {
+                              const date = new Date(value)
+                              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            }}
+                            angle={-45}
+                            textAnchor="end"
+                            height={60}
+                          />
+                          <YAxis 
+                            stroke="#9ca3af"
+                            fontSize={11}
+                            tickFormatter={(value) => value.toLocaleString()}
+                            width={50}
+                          />
+                          <ChartTooltip
+                            content={({ active, payload, label }) => {
+                              if (!active || !payload?.length) return null
+                              const date = new Date(label)
+                              return (
+                                <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-3 shadow-lg">
+                                  <div className="text-white font-medium">
+                                    {date.toLocaleDateString('en-US', { 
+                                      weekday: 'long', 
+                                      year: 'numeric', 
+                                      month: 'long', 
+                                      day: 'numeric' 
+                                    })}
+                                  </div>
+                                  <div className="text-blue-400">
+                                    {payload[0].value} visitors
+                                  </div>
+                                </div>
+                              )
+                            }}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="count" 
+                            stroke="#3b82f6" 
+                            strokeWidth={2}
+                            fill="url(#visitorGradient)"
+                            fillOpacity={1}
+                          />
+                        </AreaChart>
+                      </ChartContainer>
+                      <div className="px-4 py-2 border-t border-zinc-700">
+                        <div className="text-sm text-zinc-400">
+                          Total visitors in period: {visitorStats.daily_stats.reduce((sum, day) => sum + day.count, 0).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-8 text-zinc-400">
+                      <div className="text-center">
+                        <div>No visitor data available for the selected period</div>
+                        {visitorStats && (
+                          <div className="mt-2 text-xs">
+                            <div>Daily stats length: {visitorStats.daily_stats?.length || 0}</div>
+                            <div>Daily stats data: {JSON.stringify(visitorStats.daily_stats || [])}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="bg-zinc-900 border-zinc-700">
+                  <CardHeader>
+                    <CardTitle className="text-white">Top Countries</CardTitle>
+                    <CardDescription className="text-zinc-400">Most visited countries</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {visitorStats?.country_stats && visitorStats.country_stats.length > 0 ? (
+                      <div className="space-y-3">
+                        {visitorStats.country_stats.slice(0, 8).map((country, index) => (
+                          <div key={country._id} className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 bg-zinc-700 rounded-full flex items-center justify-center text-xs text-white">
+                                {index + 1}
+                              </div>
+                              <span className="text-white">{country._id}</span>
+                            </div>
+                            <span className="text-zinc-400 font-medium">{country.count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-zinc-400">
+                        No country data available
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-zinc-900 border-zinc-700">
+                  <CardHeader>
+                    <CardTitle className="text-white">Top Cities</CardTitle>
+                    <CardDescription className="text-zinc-400">Most visited cities</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {visitorStats?.city_stats && visitorStats.city_stats.length > 0 ? (
+                      <div className="space-y-3">
+                        {visitorStats.city_stats.slice(0, 8).map((city, index) => (
+                          <div key={city._id} className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 bg-zinc-700 rounded-full flex items-center justify-center text-xs text-white">
+                                {index + 1}
+                              </div>
+                              <span className="text-white">{city._id}</span>
+                            </div>
+                            <span className="text-zinc-400 font-medium">{city.count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-zinc-400">
+                        No city data available
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
 
               <Card className="bg-zinc-900 border-zinc-700">
                 <CardHeader>
-                  <CardTitle className="text-white">System Performance</CardTitle>
-                  <CardDescription className="text-zinc-400">Real-time system performance metrics</CardDescription>
+                  <CardTitle className="text-white">Recent Visitors</CardTitle>
+                  <CardDescription className="text-zinc-400">Latest site visitors with location data</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-4">
-                      <h3 className="text-white font-medium">Response Times</h3>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-zinc-300">API Calls</span>
-                          <span className="text-white">45ms avg</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-zinc-300">File Uploads</span>
-                          <span className="text-white">1.2s avg</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-zinc-300">Database Queries</span>
-                          <span className="text-white">12ms avg</span>
-                        </div>
-                      </div>
+                  {visitorLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
                     </div>
-                    
-                    <div className="space-y-4">
-                      <h3 className="text-white font-medium">Throughput</h3>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-zinc-300">Requests/sec</span>
-                          <span className="text-white">1,247</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-zinc-300">Data Transfer</span>
-                          <span className="text-white">2.4 GB/s</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-zinc-300">Concurrent Users</span>
-                          <span className="text-white">89</span>
-                        </div>
-                      </div>
+                  ) : visitorData.length > 0 ? (
+                    <div className="overflow-x-auto border border-zinc-700 rounded-lg">
+                      <table className="w-full min-w-full">
+                        <thead>
+                          <tr className="border-b border-zinc-700">
+                            <th className="text-left py-3 px-4 text-zinc-300 font-medium">IP Address</th>
+                            <th className="text-left py-3 px-4 text-zinc-300 font-medium">Location</th>
+                            <th className="text-left py-3 px-4 text-zinc-300 font-medium">Country</th>
+                            <th className="text-left py-3 px-4 text-zinc-300 font-medium">Time</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {visitorData.slice(0, 20).map((visitor) => (
+                            <tr key={visitor._id} className="border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors">
+                              <td className="py-3 px-4">
+                                <span className="text-white font-mono text-sm">{visitor.ip_address}</span>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div>
+                                  <div className="text-white">{visitor.city}</div>
+                                  <div className="text-zinc-400 text-sm">{visitor.region}</div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <span className="text-zinc-300">{visitor.country}</span>
+                              </td>
+                              <td className="py-3 px-4 text-zinc-400 text-sm">
+                                {new Date(visitor.time).toLocaleString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                    
-                    <div className="space-y-4">
-                      <h3 className="text-white font-medium">Errors</h3>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-zinc-300">4xx Errors</span>
-                          <span className="text-yellow-400">12</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-zinc-300">5xx Errors</span>
-                          <span className="text-red-400">3</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-zinc-300">Timeouts</span>
-                          <span className="text-orange-400">7</span>
-                        </div>
-                      </div>
+                  ) : (
+                    <div className="text-center py-8 text-zinc-400">
+                      No visitor data available
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

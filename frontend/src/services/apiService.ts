@@ -267,6 +267,19 @@ export class ApiService {
   }
 
   /**
+   * Get site visitor analytics
+   */
+  static async getSiteVisitorInfo(limit: number = 100, days: number = 30) {
+    try {
+      const response = await this.get(`/authentication/get_site_visitor_info/?limit=${limit}&days=${days}`);
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch visitor data:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get user's S3 cloud files
    */
   static async getUserFiles(username: string) {

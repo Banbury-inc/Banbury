@@ -2174,7 +2174,7 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
                 )}
                 <IconButton
                   size="small"
-                  onClick={(e) => {
+                  onClick={(e: any) => {
                     // For handlers that need event parameters, pass them through
                     if (button.id === 'textColor' || button.id === 'fillColor' || button.id === 'borders' || button.id === 'alignment') {
                       button.handler(e as any);
@@ -2407,7 +2407,7 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
            .map((button) => (
              <MenuItem
                key={button.id}
-               onClick={(e) => {
+               onClick={(e: any) => {
                  handleOverflowClose();
                  // For handlers that need event parameters, we need to handle them specially
                  if (button.id === 'textColor' || button.id === 'fillColor' || button.id === 'borders' || button.id === 'alignment') {
@@ -2449,18 +2449,18 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
          PaperProps={{ sx: { minWidth: '220px', p: 1 } }}
        >
-         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(10, 18px)', gap: '6px', p: 1 }} onMouseDown={(e) => e.preventDefault()}>
+         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(10, 18px)', gap: '6px', p: 1 }} onMouseDown={(e: any) => e.preventDefault()}>
            {['#000000','#333333','#666666','#999999','#CCCCCC','#FFFFFF',
              '#E53935','#D81B60','#8E24AA','#5E35B1','#3949AB','#1E88E5','#039BE5','#00ACC1','#00897B','#43A047','#7CB342','#C0CA33','#FDD835','#FB8C00']
              .map((c) => (
                <Box key={c}
-                 onMouseDown={(e) => e.preventDefault()}
+                 onMouseDown={(e: any) => e.preventDefault()}
                  onClick={() => { handleTextColorClose(); setTimeout(() => applyCellStyle('color', c), 0); }}
                  sx={{ width: 18, height: 18, backgroundColor: c, border: '1px solid #e5e7eb', cursor: 'pointer' }} />
              ))}
          </Box>
          <Divider />
-         <MenuItem onMouseDown={(e) => e.preventDefault()} onClick={() => { handleTextColorClose(); setTimeout(() => removeCellStyle('color'), 0); }}>Clear text color</MenuItem>
+         <MenuItem onMouseDown={(e: any) => e.preventDefault()} onClick={() => { handleTextColorClose(); setTimeout(() => removeCellStyle('color'), 0); }}>Clear text color</MenuItem>
        </Menu>
 
        {/* Fill Color Menu */}
@@ -2472,18 +2472,18 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
          PaperProps={{ sx: { minWidth: '220px', p: 1 } }}
        >
-         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(10, 18px)', gap: '6px', p: 1 }} onMouseDown={(e) => e.preventDefault()}>
+         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(10, 18px)', gap: '6px', p: 1 }} onMouseDown={(e: any) => e.preventDefault()}>
            {['#000000','#333333','#666666','#999999','#CCCCCC','#FFFFFF',
              '#E53935','#D81B60','#8E24AA','#5E35B1','#3949AB','#1E88E5','#039BE5','#00ACC1','#00897B','#43A047','#7CB342','#C0CA33','#FDD835','#FB8C00']
              .map((c) => (
                <Box key={c}
-                 onMouseDown={(e) => e.preventDefault()}
+                 onMouseDown={(e: any) => e.preventDefault()}
                  onClick={() => { handleBackgroundColorClose(); setTimeout(() => applyCellStyle('backgroundColor', c), 0); }}
                  sx={{ width: 18, height: 18, backgroundColor: c, border: '1px solid #e5e7eb', cursor: 'pointer' }} />
              ))}
          </Box>
          <Divider />
-         <MenuItem onMouseDown={(e) => e.preventDefault()} onClick={() => { handleBackgroundColorClose(); setTimeout(() => removeCellStyle('backgroundColor'), 0); }}>Clear fill color</MenuItem>
+         <MenuItem onMouseDown={(e: any) => e.preventDefault()} onClick={() => { handleBackgroundColorClose(); setTimeout(() => removeCellStyle('backgroundColor'), 0); }}>Clear fill color</MenuItem>
        </Menu>
 
        {/* Borders Menu */}
@@ -2497,17 +2497,17 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
        >
          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 40px)', gap: 1, p: 1 }}>
            {/* First row: All / Outer / Inner / None placeholder / None */}
-           <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('all')} title="All borders"><BorderAll sx={{ fontSize: 18 }} /></IconButton>
-           <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('outer')} title="Outer borders"><BorderAll sx={{ fontSize: 18 }} /></IconButton>
-           <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('inner')} title="Inner borders"><BorderAll sx={{ fontSize: 18 }} /></IconButton>
+           <IconButton size="small" onMouseDown={(e: any) => e.preventDefault()} onClick={() => applyBordersOption('all')} title="All borders"><BorderAll sx={{ fontSize: 18 }} /></IconButton>
+           <IconButton size="small" onMouseDown={(e: any) => e.preventDefault()} onClick={() => applyBordersOption('outer')} title="Outer borders"><BorderAll sx={{ fontSize: 18 }} /></IconButton>
+           <IconButton size="small" onMouseDown={(e: any) => e.preventDefault()} onClick={() => applyBordersOption('inner')} title="Inner borders"><BorderAll sx={{ fontSize: 18 }} /></IconButton>
            <Box />
-           <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('none')} title="Clear borders"><Clear sx={{ fontSize: 18 }} /></IconButton>
+           <IconButton size="small" onMouseDown={(e: any) => e.preventDefault()} onClick={() => applyBordersOption('none')} title="Clear borders"><Clear sx={{ fontSize: 18 }} /></IconButton>
 
            {/* Second row: Top / Right / Bottom / Left */}
-           <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('top')} title="Top border"><BorderTop sx={{ fontSize: 18 }} /></IconButton>
-           <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('right')} title="Right border"><BorderRight sx={{ fontSize: 18 }} /></IconButton>
-           <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('bottom')} title="Bottom border"><BorderBottom sx={{ fontSize: 18 }} /></IconButton>
-           <IconButton size="small" onMouseDown={(e) => e.preventDefault()} onClick={() => applyBordersOption('left')} title="Left border"><BorderLeft sx={{ fontSize: 18 }} /></IconButton>
+           <IconButton size="small" onMouseDown={(e: any) => e.preventDefault()} onClick={() => applyBordersOption('top')} title="Top border"><BorderTop sx={{ fontSize: 18 }} /></IconButton>
+           <IconButton size="small" onMouseDown={(e: any) => e.preventDefault()} onClick={() => applyBordersOption('right')} title="Right border"><BorderRight sx={{ fontSize: 18 }} /></IconButton>
+           <IconButton size="small" onMouseDown={(e: any) => e.preventDefault()} onClick={() => applyBordersOption('bottom')} title="Bottom border"><BorderBottom sx={{ fontSize: 18 }} /></IconButton>
+           <IconButton size="small" onMouseDown={(e: any) => e.preventDefault()} onClick={() => applyBordersOption('left')} title="Left border"><BorderLeft sx={{ fontSize: 18 }} /></IconButton>
            <Box />
          </Box>
          <Divider sx={{ my: 1 }} />
@@ -2620,7 +2620,7 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
             outsideClickDeselects={false}
             selectionMode="multiple"
             afterChange={handleDataChange}
-            afterSelectionEnd={(r,c,r2,c2) => { lastSelectionRef.current = [r,c,r2,c2]; }}
+            afterSelectionEnd={(r: number, c: number, r2: number, c2: number) => { lastSelectionRef.current = [r,c,r2,c2]; }}
             stretchH="all"
             customBorders={customBordersDefs.length ? customBordersDefs : undefined}
             minRows={Math.max(1000, data.length)}

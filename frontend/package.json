@@ -120,6 +120,7 @@
     "react-router-dom": "^6.15.0",
     "react-spreadsheet": "^0.10.1",
     "react-visibility-sensor": "^5.1.1",
+    "recharts": "^2.15.4",
     "remark-gfm": "^4.0.1",
     "stream-browserify": "^3.0.0",
     "tailwind-merge": "^3.3.1",

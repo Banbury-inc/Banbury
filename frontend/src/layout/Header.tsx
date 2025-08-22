@@ -68,7 +68,7 @@ const Header = (): JSX.Element => {
   return (
     <>
       <div 
-        className="flex justify-between items-center min-h-[70px] px-4" 
+        className="flex justify-between items-center min-h-[70px] px-4 md:px-6" 
         style={{
           background: '#000000',
           borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
@@ -76,6 +76,7 @@ const Header = (): JSX.Element => {
           zIndex: 10,
         }}
       >
+        {/* Logo - Left side */}
         <Link href='/' className="text-decoration-none mr-auto">
           <div className="flex items-center">
             <h6 
@@ -94,7 +95,8 @@ const Header = (): JSX.Element => {
           </div>
         </Link>
 
-        <div className="flex justify-center">
+        {/* Navigation - Center (hidden on mobile) */}
+        <div className="hidden md:flex justify-center">
           <Button 
             asChild 
             variant="ghost" 
@@ -133,12 +135,14 @@ const Header = (): JSX.Element => {
           </Button>
         </div>
 
-        <div className="flex-grow flex justify-end items-center">
+        {/* Right side - Profile/Login */}
+        <div className="flex items-center justify-end">
           {isLoggedIn ? (
             <>
-              <div className="flex items-center gap-1 mr-4">
+              {/* Welcome text - hidden on mobile */}
+              <div className="hidden sm:flex items-center gap-1 mr-4">
                 <span 
-                  className="text-sm hidden sm:block"
+                  className="text-sm"
                   style={{
                     color: '#a1a1aa',
                     fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -148,7 +152,7 @@ const Header = (): JSX.Element => {
                   Welcome,
                 </span>
                 <span 
-                  className="text-sm hidden sm:block"
+                  className="text-sm"
                   style={{
                     color: '#ffffff',
                     fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -158,12 +162,18 @@ const Header = (): JSX.Element => {
                   {username}
                 </span>
               </div>
+              
+              {/* Profile Icon */}
               <div className="relative" ref={dropdownRef}>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="p-1 hover:bg-zinc-800/50"
                   onClick={toggleDropdown}
+                  style={{
+                    minWidth: '44px',
+                    minHeight: '44px',
+                  }}
                 >
                   <div 
                     className="w-9 h-9 rounded-full flex items-center justify-center"
@@ -187,11 +197,12 @@ const Header = (): JSX.Element => {
                     <div className="py-1">
                       <button
                         onClick={handleDashboard}
-                        className="flex items-center w-full px-4 py-2 text-sm hover:bg-zinc-800/50"
+                        className="flex items-center w-full px-4 py-3 text-sm hover:bg-zinc-800/50"
                         style={{
                           color: '#ffffff',
                           fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                           fontWeight: 400,
+                          minHeight: '44px',
                         }}
                       >
                         <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -199,11 +210,12 @@ const Header = (): JSX.Element => {
                       </button>
                       <button
                         onClick={handleLogoutClick}
-                        className="flex items-center w-full px-4 py-2 text-sm hover:bg-zinc-800/50"
+                        className="flex items-center w-full px-4 py-3 text-sm hover:bg-zinc-800/50"
                         style={{
                           color: '#ffffff',
                           fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                           fontWeight: 400,
+                          minHeight: '44px',
                         }}
                       >
                         <LogOut className="mr-2 h-4 w-4" />
@@ -225,6 +237,8 @@ const Header = (): JSX.Element => {
                 color: '#ffffff',
                 fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontWeight: 500,
+                minHeight: '44px',
+                padding: '8px 16px',
               }}
               className="hover:opacity-90 transition-opacity"
             >
