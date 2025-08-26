@@ -287,7 +287,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const body = req.body as { 
       messages: any[]; 
       threadId?: string;
-      toolPreferences?: { web_search?: boolean; tiptap_ai?: boolean; memory?: boolean; gmail?: boolean };
+      toolPreferences?: { web_search?: boolean; tiptap_ai?: boolean; read_file?: boolean; gmail?: boolean; browser?: boolean; browserbase?: boolean; langgraph_mode?: boolean };
       documentContext?: string;
       dateTimeContext?: {
         currentDate: string;
@@ -414,7 +414,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       await runWithServerContext({ 
         authToken: token, 
-        toolPreferences: body.toolPreferences || { gmail: true },
+        // Normalize tool preferences: new "browser" toggle replaces legacy "browserbase"
+        toolPreferences: (() => {
+          const prefs = body.toolPreferences || {};
+          // Browser toggle: prefer explicit 'browser'; fall back to legacy 'browserbase'
+          const browserEnabled = (typeof (prefs as any).browser === 'boolean')
+            ? Boolean((prefs as any).browser)
+            : Boolean((prefs as any).browserbase);
+          return {
+            web_search: prefs.web_search !== false,
+            tiptap_ai: prefs.tiptap_ai !== false,
+            read_file: prefs.read_file !== false,
+            gmail: prefs.gmail !== false,
+            browser: browserEnabled, // single source of truth inside server context
+            browserbase: browserEnabled, // maintain legacy mirror in context for any old reads
+            langgraph_mode: true,
+          } as any;
+        })(),
         dateTimeContext: body.dateTimeContext
       }, async () => {
         // Use a custom streaming approach for character-by-character updates

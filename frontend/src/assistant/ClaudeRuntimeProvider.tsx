@@ -68,17 +68,24 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
         : options.messages;
 
       // Read tool preferences from localStorage (defaults if missing)
-      let toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean } = {
+      let toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean; browserbase: boolean } = {
         web_search: true,
         tiptap_ai: true,
         read_file: true,
         gmail: true,
         langgraph_mode: true, // Always use LangGraph mode
+        browserbase: true, // Enable Browserbase tool by default
       };
       try {
         const saved = localStorage.getItem('toolPreferences');
         if (saved) {
-          toolPreferences = { ...JSON.parse(saved), langgraph_mode: true }; // Force LangGraph mode
+          const parsed = JSON.parse(saved);
+          toolPreferences = { 
+            ...toolPreferences, 
+            ...parsed, 
+            langgraph_mode: true,
+            browserbase: (parsed && typeof parsed.browserbase === 'boolean') ? parsed.browserbase : true,
+          }; // Force LangGraph + ensure browserbase present
         }
       } catch {}
 
@@ -92,10 +99,11 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
         // ignore tracking errors
       }
 
-      // Debug: Check the last user message
+      // Debug + intent: Check the last user message and optionally trigger Browserbase session
       const lastMessage = messagesWithAttachmentParts[messagesWithAttachmentParts.length - 1];
+      let lastTextContent: string = '';
       if (lastMessage && lastMessage.role === 'user') {
-        const textContent = lastMessage.content?.find((c: any) => c.type === 'text')?.text || '';
+        lastTextContent = lastMessage.content?.find((c: any) => c.type === 'text')?.text || '';
       }
 
       // Check for document context in localStorage
@@ -137,6 +145,8 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
       };
 
       const dateTimeContext = getCurrentDateTimeContext();
+
+      // Removed client-side browser shim - now handled by AI tools
 
       const res = await fetch(apiEndpoint, {
         method: "POST",
@@ -263,6 +273,23 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
                   }
                 } 
               } as any;
+
+              // Fallback: if the provider sends viewerUrl only in the completion message
+              try {
+                if (typeof evt.message === 'string') {
+                  let parsed: any = null;
+                  try { parsed = JSON.parse(evt.message); } catch {}
+                  if (parsed && parsed.viewerUrl) {
+                    const detail = { viewerUrl: parsed.viewerUrl, sessionId: parsed.sessionId, title: parsed.title || 'Browser Session' };
+                    window.dispatchEvent(new CustomEvent('assistant-open-browser', { detail }));
+                  }
+                } else if (evt.message && typeof evt.message === 'object' && (evt.message as any).viewerUrl) {
+                  const p: any = evt.message as any;
+                  const detail = { viewerUrl: p.viewerUrl, sessionId: p.sessionId, title: p.title || 'Browser Session' };
+                  window.dispatchEvent(new CustomEvent('assistant-open-browser', { detail }));
+                }
+              } catch {}
+              shouldYield = true;
             } else if (evt.type === "tool-result" && evt.part) {
               // Handle tool result - update the corresponding tool call with the result
               const toolCalls = contentParts.filter(p => (p as any).type === "tool-call");
@@ -273,9 +300,10 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
                 (matchingToolCall as any).status = "completed";
               }
 
-              // Dispatch an event for create_file and download_from_url to allow UI to refresh and open the new file
+              // Dispatch events for tools so the UI can react (e.g., open files or browser sessions)
               try {
-                if ((evt as any).part?.toolName === 'create_file' || (evt as any).part?.toolName === 'download_from_url') {
+                const toolName = (evt as any).part?.toolName;
+                if (toolName === 'create_file' || toolName === 'download_from_url') {
                   const raw = (evt as any).part?.result;
                   let parsed: any = null;
                   if (typeof raw === 'string') {
@@ -285,6 +313,34 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
                   }
                   const detail = { result: parsed };
                   window.dispatchEvent(new CustomEvent('assistant-file-created', { detail }));
+                } else if (toolName === 'browser' || toolName === 'browser_create_session' || toolName === 'stagehand_create_session') {
+                  const raw = (evt as any).part?.result;
+                  let parsed: any = null;
+                  if (typeof raw === 'string') {
+                    try { parsed = JSON.parse(raw); } catch {}
+                  } else if (raw && typeof raw === 'object') {
+                    parsed = raw;
+                  }
+                  const candidate = parsed || (evt as any).result || (evt as any).toolResult || (evt as any).data?.result;
+                  if (candidate && candidate.viewerUrl) {
+                    const detail = { viewerUrl: candidate.viewerUrl, sessionId: candidate.sessionId, title: candidate.title || 'Browser Session' };
+                    window.dispatchEvent(new CustomEvent('assistant-open-browser', { detail }));
+                  }
+                } else if (toolName === 'stagehand_goto') {
+                  // After navigation, embed the actual page URL
+                  const raw = (evt as any).part?.result;
+                  let parsed: any = null;
+                  if (typeof raw === 'string') {
+                    try { parsed = JSON.parse(raw); } catch {}
+                  } else if (raw && typeof raw === 'object') {
+                    parsed = raw;
+                  }
+                  const url = parsed?.url || (evt as any).result?.url;
+                  const title = parsed?.title || (evt as any).result?.title || 'Browser Session';
+                  if (url) {
+                    const detail = { viewerUrl: url, title };
+                    window.dispatchEvent(new CustomEvent('assistant-open-browser', { detail }));
+                  }
                 }
               } catch {}
               shouldYield = true;

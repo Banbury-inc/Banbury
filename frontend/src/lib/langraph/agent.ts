@@ -844,6 +844,700 @@ const searchFilesTool = tool(
   }
 );
 
+// Simple session cache for the current conversation
+let currentBrowserbaseSession: { id: string; viewerUrl: string } | null = null;
+
+// Helper to get/set current Browserbase session
+function getCurrentBrowserbaseSession(): { id: string; viewerUrl: string } | null {
+  return currentBrowserbaseSession;
+}
+
+function setCurrentBrowserbaseSession(session: { id: string; viewerUrl: string } | null) {
+  currentBrowserbaseSession = session;
+}
+
+// Global toggle helper: "Browser" tool (controls both Browserbase and Stagehand)
+function isBrowserToolEnabled(): boolean {
+  const prefs = (getServerContextValue<any>("toolPreferences") || {}) as { browser?: boolean };
+  // Default OFF unless explicitly enabled
+  return prefs.browser === true;
+}
+
+// Browserbase browser automation tools
+const browserCreateSessionTool = tool(
+  async (input: { startUrl?: string }) => {
+    if (!isBrowserToolEnabled()) {
+      return JSON.stringify({ success: false, error: "Browser access is disabled. Enable the Browser tool to proceed." });
+    }
+    const apiBase = CONFIG.url;
+    const token = getServerContextValue<string>("authToken");
+
+    if (!token) {
+      throw new Error("Missing auth token in server context");
+    }
+
+    console.log(`Creating Browserbase session with URL: ${input.startUrl || 'https://www.google.com'}`);
+    
+    const response = await fetch(`${apiBase}/authentication/browserbase/session/`, {
+      method: 'POST',
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ startUrl: input.startUrl })
+    });
+
+    if (!response.ok) {
+      let message = `HTTP ${response.status}`;
+      try {
+        const data = await response.json();
+        if (data?.error) message += ` - ${data.error}`;
+      } catch {}
+      throw new Error(`Failed to create browser session: ${message}`);
+    }
+
+    const data = await response.json();
+    
+    // Store session info for other tools
+    setCurrentBrowserbaseSession({
+      id: data.id,
+      viewerUrl: data.viewerUrl || data.embedUrl
+    });
+    
+    return JSON.stringify({
+      success: true,
+      sessionId: data.id,
+      viewerUrl: data.viewerUrl || data.embedUrl,
+      connectUrl: data.connectUrl,
+      message: 'Browser session created successfully. The browser is now open in the center panel.'
+    });
+  },
+  {
+    name: "browser_create_session",
+    description: "Create a new browser session and open it in the center panel. Use this to start web browsing.",
+    schema: z.object({
+      startUrl: z.string().optional().describe("Initial URL to navigate to (default: https://www.google.com)")
+    })
+  }
+);
+
+const browserNavigateTool = tool(
+  async (input: { url: string }) => {
+    if (!isBrowserToolEnabled()) {
+      return JSON.stringify({ success: false, error: "Browser access is disabled. Enable the Browser tool to proceed." });
+    }
+    const apiBase = CONFIG.url;
+    const token = getServerContextValue<string>("authToken");
+
+    if (!token) {
+      throw new Error("Missing auth token in server context");
+    }
+
+    const currentSession = getCurrentBrowserbaseSession();
+    if (!currentSession) {
+      throw new Error("No active browser session. Please create a session first using browserbase_create_session.");
+    }
+
+    console.log(`Navigating to ${input.url} in session ${currentSession.id}`);
+    
+    const response = await fetch(`${apiBase}/browserbase/navigate/`, {
+      method: 'POST',
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sessionId: currentSession.id,
+        url: input.url
+      })
+    });
+
+    if (!response.ok) {
+      let message = `HTTP ${response.status}`;
+      try {
+        const error = await response.json();
+        message += `: ${error.error || error.message || JSON.stringify(error)}`;
+      } catch {}
+      throw new Error(`Failed to navigate: ${message}`);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      return JSON.stringify({
+        success: false,
+        message: result.error || `Failed to navigate to ${input.url}`
+      });
+    }
+    // Fetch updated page content so the AI is aware of the new state
+    let contentSummary: { title?: string; url?: string; text?: string } = {};
+    try {
+      const contentResp = await fetch(`${apiBase}/browserbase/content/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionId: currentSession.id
+        })
+      });
+      if (contentResp.ok) {
+        const contentData = await contentResp.json();
+        if (contentData.success && contentData.content) {
+          const content = contentData.content;
+          contentSummary = {
+            title: content.title,
+            url: content.url,
+            text: content.text?.substring(0, 2000) + (content.text?.length > 2000 ? '...' : '')
+          };
+        }
+      }
+    } catch {}
+    return JSON.stringify({
+      success: true,
+      message: `Successfully navigated to ${result.url || input.url}`,
+      ...contentSummary
+    });
+  },
+  {
+    name: "browser_navigate",
+    description: "Navigate the browser to a specific URL",
+    schema: z.object({
+      url: z.string().describe("The URL to navigate to")
+    })
+  }
+);
+
+const browserClickTool = tool(
+  async (input: { selector: string }) => {
+    if (!isBrowserToolEnabled()) {
+      return JSON.stringify({ success: false, error: "Browser access is disabled. Enable the Browser tool to proceed." });
+    }
+    const apiBase = CONFIG.url;
+    const token = getServerContextValue<string>("authToken");
+
+    if (!token) {
+      throw new Error("Missing auth token in server context");
+    }
+
+    const currentSession = getCurrentBrowserbaseSession();
+    if (!currentSession) {
+      throw new Error("No active browser session. Please create a session first using browserbase_create_session.");
+    }
+
+    console.log(`Clicking element ${input.selector} in session ${currentSession.id}`);
+    
+    const response = await fetch(`${apiBase}/browserbase/click/`, {
+      method: 'POST',
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sessionId: currentSession.id,
+        selector: input.selector
+      })
+    });
+
+    if (!response.ok) {
+      let message = `HTTP ${response.status}`;
+      try {
+        const error = await response.json();
+        message += `: ${error.error || error.message || JSON.stringify(error)}`;
+      } catch {}
+      throw new Error(`Failed to click: ${message}`);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      return JSON.stringify({
+        success: false,
+        message: result.error || `Failed to click element: ${input.selector}`
+      });
+    }
+    // After clicking, fetch updated page content so the AI can reason about changes
+    let contentSummary: { title?: string; url?: string; text?: string } = {};
+    try {
+      const contentResp = await fetch(`${apiBase}/browserbase/content/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionId: currentSession.id
+        })
+      });
+      if (contentResp.ok) {
+        const contentData = await contentResp.json();
+        if (contentData.success && contentData.content) {
+          const content = contentData.content;
+          contentSummary = {
+            title: content.title,
+            url: content.url,
+            text: content.text?.substring(0, 2000) + (content.text?.length > 2000 ? '...' : '')
+          };
+        }
+      }
+    } catch {}
+    return JSON.stringify({
+      success: true,
+      message: `Successfully clicked element: ${input.selector}`,
+      ...contentSummary
+    });
+  },
+  {
+    name: "browser_click",
+    description: "Click an element in the browser by CSS selector",
+    schema: z.object({
+      selector: z.string().describe("CSS selector of the element to click")
+    })
+  }
+);
+
+const browserTypeTool = tool(
+  async (input: { selector: string; text: string }) => {
+    if (!isBrowserToolEnabled()) {
+      return JSON.stringify({ success: false, error: "Browser access is disabled. Enable the Browser tool to proceed." });
+    }
+    const apiBase = CONFIG.url;
+    const token = getServerContextValue<string>("authToken");
+
+    if (!token) {
+      throw new Error("Missing auth token in server context");
+    }
+
+    const currentSession = getCurrentBrowserbaseSession();
+    if (!currentSession) {
+      throw new Error("No active browser session. Please create a session first using browserbase_create_session.");
+    }
+
+    console.log(`Typing "${input.text}" into ${input.selector} in session ${currentSession.id}`);
+    
+    const response = await fetch(`${apiBase}/browserbase/type/`, {
+      method: 'POST',
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sessionId: currentSession.id,
+        selector: input.selector,
+        text: input.text
+      })
+    });
+
+    if (!response.ok) {
+      let message = `HTTP ${response.status}`;
+      try {
+        const error = await response.json();
+        message += `: ${error.error || error.message || JSON.stringify(error)}`;
+      } catch {}
+      throw new Error(`Failed to type: ${message}`);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      return JSON.stringify({
+        success: false,
+        message: result.error || `Failed to type text into ${input.selector}`
+      });
+    }
+    // After typing, fetch updated page content so the AI can reason about changes
+    let contentSummary: { title?: string; url?: string; text?: string } = {};
+    try {
+      const contentResp = await fetch(`${apiBase}/browserbase/content/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionId: currentSession.id
+        })
+      });
+      if (contentResp.ok) {
+        const contentData = await contentResp.json();
+        if (contentData.success && contentData.content) {
+          const content = contentData.content;
+          contentSummary = {
+            title: content.title,
+            url: content.url,
+            text: content.text?.substring(0, 2000) + (content.text?.length > 2000 ? '...' : '')
+          };
+        }
+      }
+    } catch {}
+    return JSON.stringify({
+      success: true,
+      message: `Successfully typed "${input.text}" into ${input.selector}`,
+      ...contentSummary
+    });
+  },
+  {
+    name: "browser_type",
+    description: "Type text into an input field in the browser",
+    schema: z.object({
+      selector: z.string().describe("CSS selector of the input field"),
+      text: z.string().describe("Text to type")
+    })
+  }
+);
+
+const browserScreenshotTool = tool(
+  async (input: { fullPage?: boolean }) => {
+    if (!isBrowserToolEnabled()) {
+      return JSON.stringify({ success: false, error: "Browser access is disabled. Enable the Browser tool to proceed." });
+    }
+    const apiBase = CONFIG.url;
+    const token = getServerContextValue<string>("authToken");
+
+    if (!token) {
+      throw new Error("Missing auth token in server context");
+    }
+
+    const currentSession = getCurrentBrowserbaseSession();
+    if (!currentSession) {
+      throw new Error("No active browser session. Please create a session first using browserbase_create_session.");
+    }
+
+    console.log(`Taking screenshot of session ${currentSession.id}`);
+    console.log(`Screenshot request body:`, { sessionId: currentSession.id, fullPage: input.fullPage });
+    
+    const response = await fetch(`${apiBase}/browserbase/screenshot/`, {
+      method: 'POST',
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sessionId: currentSession.id,
+        fullPage: input.fullPage
+      })
+    });
+
+    if (!response.ok) {
+      let message = `HTTP ${response.status}`;
+      try {
+        const error = await response.json();
+        message += `: ${error.error || error.message || JSON.stringify(error)}`;
+      } catch {}
+      throw new Error(`Failed to take screenshot: ${message}`);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      return JSON.stringify({
+        success: false,
+        message: result.error || "Failed to take screenshot"
+      });
+    }
+    return JSON.stringify({
+      success: true,
+      screenshot: result.screenshot,
+      message: "Screenshot taken successfully"
+    });
+  },
+  {
+    name: "browser_screenshot",
+    description: "Take a screenshot of the current browser page",
+    schema: z.object({
+      fullPage: z.boolean().optional().describe("Capture full page (default: false)")
+    })
+  }
+);
+
+const browserGetContentTool = tool(
+  async () => {
+    if (!isBrowserToolEnabled()) {
+      return JSON.stringify({ success: false, error: "Browser access is disabled. Enable the Browser tool to proceed." });
+    }
+    const apiBase = CONFIG.url;
+    const token = getServerContextValue<string>("authToken");
+
+    if (!token) {
+      throw new Error("Missing auth token in server context");
+    }
+
+    const currentSession = getCurrentBrowserbaseSession();
+    if (!currentSession) {
+      throw new Error("No active browser session. Please create a session first using browserbase_create_session.");
+    }
+
+    console.log(`Getting page content from session ${currentSession.id}`);
+    
+    const response = await fetch(`${apiBase}/browserbase/content/`, {
+      method: 'POST',
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sessionId: currentSession.id
+      })
+    });
+
+    if (!response.ok) {
+      let message = `HTTP ${response.status}`;
+      try {
+        const error = await response.json();
+        message += `: ${error.error || error.message || JSON.stringify(error)}`;
+      } catch {}
+      throw new Error(`Failed to get content: ${message}`);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      return JSON.stringify({
+        success: false,
+        message: result.error || "Failed to get page content"
+      });
+    }
+    const content = result.content || {};
+    
+    return JSON.stringify({
+      success: true,
+      title: content.title,
+      url: content.url,
+      text: content.text?.substring(0, 2000) + (content.text?.length > 2000 ? '...' : ''),
+      message: "Page content retrieved successfully"
+    });
+  },
+  {
+    name: "browser_get_content",
+    description: "Get the text content from the current browser page",
+    schema: z.object({})
+  }
+);
+
+const browserWaitTool = tool(
+  async (input: { selector?: string; timeout?: number }) => {
+    if (!isBrowserToolEnabled()) {
+      return JSON.stringify({ success: false, error: "Browser access is disabled. Enable the Browser tool to proceed." });
+    }
+    const apiBase = CONFIG.url;
+    const token = getServerContextValue<string>("authToken");
+
+    if (!token) {
+      throw new Error("Missing auth token in server context");
+    }
+
+    const currentSession = getCurrentBrowserbaseSession();
+    if (!currentSession) {
+      throw new Error("No active browser session. Please create a session first using browserbase_create_session.");
+    }
+
+    console.log(`Waiting in session ${currentSession.id}`);
+    
+    const response = await fetch(`${apiBase}/browserbase/wait/`, {
+      method: 'POST',
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sessionId: currentSession.id,
+        selector: input.selector,
+        timeout: input.timeout
+      })
+    });
+
+    if (!response.ok) {
+      let message = `HTTP ${response.status}`;
+      try {
+        const error = await response.json();
+        message += `: ${error.error || error.message || JSON.stringify(error)}`;
+      } catch {}
+      throw new Error(`Failed to wait: ${message}`);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      return JSON.stringify({
+        success: false,
+        message: result.error || (input.selector ? 
+          `Failed to find element: ${input.selector}` : 
+          `Failed to wait`)
+      });
+    }
+    return JSON.stringify({
+      success: true,
+      message: input.selector ? `Successfully found element: ${input.selector}` : `Waited ${result.waited || input.timeout || 5000}ms`
+    });
+  },
+  {
+    name: "browser_wait",
+    description: "Wait for an element to appear or for a specified time",
+    schema: z.object({
+      selector: z.string().optional().describe("CSS selector to wait for"),
+      timeout: z.number().optional().describe("Timeout in milliseconds (default: 5000)")
+    })
+  }
+);
+
+// Stagehand tools
+let currentStagehandSessionId: string | null = null;
+
+function getStagehandSessionId(): string | null {
+  return currentStagehandSessionId;
+}
+
+function setStagehandSessionId(id: string | null) {
+  currentStagehandSessionId = id;
+}
+
+const stagehandCreateSessionTool = tool(
+  async (input: { startUrl?: string; modelName?: string }) => {
+    if (!isBrowserToolEnabled()) {
+      return JSON.stringify({ success: false, error: "Browser access is disabled. Enable the Browser tool to use Stagehand." });
+    }
+    try {
+      if (typeof window !== 'undefined') {
+        return JSON.stringify({ success: false, error: 'Stagehand can only be created server-side' });
+      }
+      const { createStagehandSession } = await import('../../pages/api/stagehand/_manager');
+      const created = await createStagehandSession({ startUrl: input.startUrl, modelName: input.modelName });
+      setStagehandSessionId(created.id);
+      
+      return JSON.stringify({ 
+        success: true, 
+        sessionId: created.id, 
+        viewerUrl: created.viewerUrl,
+        title: created.title || `Web Browser`
+      });
+    } catch (e: any) {
+      return JSON.stringify({ success: false, error: e?.message || 'Failed to create Stagehand session' });
+    }
+  },
+  {
+    name: 'stagehand_create_session',
+    description: 'Create a Stagehand session backed by Browserbase',
+    schema: z.object({
+      startUrl: z.string().optional(),
+      modelName: z.string().optional()
+    })
+  }
+);
+
+const stagehandGotoTool = tool(
+  async (input: { url: string }) => {
+    if (!isBrowserToolEnabled()) {
+      return JSON.stringify({ success: false, error: "Browser access is disabled. Enable the Browser tool to use Stagehand." });
+    }
+    const sessionId = getStagehandSessionId();
+    if (!sessionId) return JSON.stringify({ success: false, error: 'No active Stagehand session' });
+    if (typeof window !== 'undefined') {
+      return JSON.stringify({ success: false, error: 'Stagehand navigation must run server-side' });
+    }
+    const { getStagehandSession } = await import('../../pages/api/stagehand/_manager');
+    const instance = getStagehandSession(sessionId);
+    if (!instance) return JSON.stringify({ success: false, error: 'Session not found' });
+    await instance.page.goto(input.url);
+    const title = await instance.page.title();
+    const url = instance.page.url();
+    return JSON.stringify({ success: true, title, url });
+  },
+  {
+    name: 'stagehand_goto',
+    description: 'Navigate the Stagehand-controlled browser to a URL',
+    schema: z.object({ url: z.string() })
+  }
+);
+
+const stagehandObserveTool = tool(
+  async (input: { instruction: string }) => {
+    if (!isBrowserToolEnabled()) {
+      return JSON.stringify({ success: false, error: "Browser access is disabled. Enable the Browser tool to use Stagehand." });
+    }
+    const sessionId = getStagehandSessionId();
+    if (!sessionId) return JSON.stringify({ success: false, error: 'No active Stagehand session' });
+    if (typeof window !== 'undefined') {
+      return JSON.stringify({ success: false, error: 'Stagehand observe must run server-side' });
+    }
+    const { getStagehandSession } = await import('../../pages/api/stagehand/_manager');
+    const instance = getStagehandSession(sessionId);
+    if (!instance) return JSON.stringify({ success: false, error: 'Session not found' });
+    const suggestions = await instance.page.observe(input.instruction);
+    return JSON.stringify({ success: true, suggestions });
+  },
+  {
+    name: 'stagehand_observe',
+    description: 'Ask Stagehand to suggest actions for an instruction',
+    schema: z.object({ instruction: z.string() })
+  }
+);
+
+const stagehandActTool = tool(
+  async (input: { suggestion: any }) => {
+    if (!isBrowserToolEnabled()) {
+      return JSON.stringify({ success: false, error: "Browser access is disabled. Enable the Browser tool to use Stagehand." });
+    }
+    const sessionId = getStagehandSessionId();
+    if (!sessionId) return JSON.stringify({ success: false, error: 'No active Stagehand session' });
+    if (typeof window !== 'undefined') {
+      return JSON.stringify({ success: false, error: 'Stagehand act must run server-side' });
+    }
+    const { getStagehandSession } = await import('../../pages/api/stagehand/_manager');
+    const instance = getStagehandSession(sessionId);
+    if (!instance) return JSON.stringify({ success: false, error: 'Session not found' });
+    await instance.page.act(input.suggestion);
+    const title = await instance.page.title();
+    const url = instance.page.url();
+    return JSON.stringify({ success: true, title, url });
+  },
+  {
+    name: 'stagehand_act',
+    description: 'Perform a Stagehand suggestion',
+    schema: z.object({ suggestion: z.any() })
+  }
+);
+
+const stagehandExtractTool = tool(
+  async (input: { instruction: string; schema: Record<string, string> }) => {
+    if (!isBrowserToolEnabled()) {
+      return JSON.stringify({ success: false, error: "Browser access is disabled. Enable the Browser tool to use Stagehand." });
+    }
+    const sessionId = getStagehandSessionId();
+    if (!sessionId) return JSON.stringify({ success: false, error: 'No active Stagehand session' });
+    if (typeof window !== 'undefined') {
+      return JSON.stringify({ success: false, error: 'Stagehand extract must run server-side' });
+    }
+    const { getStagehandSession } = await import('../../pages/api/stagehand/_manager');
+    const instance = getStagehandSession(sessionId);
+    if (!instance) return JSON.stringify({ success: false, error: 'Session not found' });
+    const built = z.object(Object.fromEntries(Object.keys(input.schema || {}).map((k) => [k, z.string()])) as Record<string, z.ZodTypeAny>);
+    const result = await instance.page.extract({ instruction: input.instruction, schema: built });
+    return JSON.stringify({ success: true, result });
+  },
+  {
+    name: 'stagehand_extract',
+    description: 'Extract structured data via Stagehand using a simple field map',
+    schema: z.object({ instruction: z.string(), schema: z.record(z.string()) })
+  }
+);
+
+const stagehandCloseTool = tool(
+  async () => {
+    if (!isBrowserToolEnabled()) {
+      return JSON.stringify({ success: false, error: "Browser access is disabled. Enable the Browser tool to use Stagehand." });
+    }
+    const sessionId = getStagehandSessionId();
+    if (!sessionId) return JSON.stringify({ success: false, error: 'No active Stagehand session' });
+    if (typeof window !== 'undefined') {
+      return JSON.stringify({ success: false, error: 'Stagehand close must run server-side' });
+    }
+    const { closeStagehandSession } = await import('../../pages/api/stagehand/_manager');
+    const ok = await closeStagehandSession(sessionId);
+    if (ok) setStagehandSessionId(null);
+    return JSON.stringify({ success: ok });
+  },
+  {
+    name: 'stagehand_close',
+    description: 'Close the Stagehand session',
+    schema: z.object({})
+  }
+);
+
 // Tool to get current date/time information
 const getCurrentDateTimeTool = tool(
   async () => {
@@ -1562,6 +2256,19 @@ const tools = [
   calendarCreateEventTool,
   calendarUpdateEventTool,
   calendarDeleteEventTool,
+  browserCreateSessionTool,
+  browserNavigateTool,
+  browserClickTool,
+  browserTypeTool,
+  browserScreenshotTool,
+  browserGetContentTool,
+  browserWaitTool,
+  stagehandCreateSessionTool,
+  stagehandGotoTool,
+  stagehandObserveTool,
+  stagehandActTool,
+  stagehandExtractTool,
+  stagehandCloseTool,
 ];
 const modelWithTools = anthropicModel.bindTools(tools);
 
@@ -1588,7 +2295,7 @@ async function agentNode(state: AgentState): Promise<AgentState> {
       
       const systemMessage = new SystemMessage(
         "You are Athena, a helpful AI assistant with advanced capabilities. " +
-        "You have access to web search, memory management, document editing, spreadsheet editing, file creation, file downloading, file search, and datetime tools. " +
+        "You have access to web search, memory management, document editing, spreadsheet editing, file creation, file downloading, file search, datetime tools, and browser automation. " +
         "When helping with document editing tasks, use the tiptap_ai tool to deliver your response. " +
         "When helping with spreadsheet editing tasks (cleaning, transformations, formulas, row/column edits), use the sheet_ai tool to deliver structured operations. " +
         "To create a new file in the user's cloud workspace, use the create_file tool with file name, full path (including the file name), and content. " +
@@ -1597,6 +2304,24 @@ async function agentNode(state: AgentState): Promise<AgentState> {
         "Store important information in memory for future reference using the store_memory tool. " +
         "Search your memories when relevant using the search_memory tool. " +
         "Use the get_current_datetime tool when you need to know the current date and time for scheduling, planning, or time-sensitive tasks. " +
+        "For web browsing and automation, there is a Browser tool (disabled by default). " +
+        "Only use Browser tools if the Browser feature is enabled. " +
+        "Browser tools include: " +
+        "- browser_create_session: Start a new browser session (opens in center panel) " +
+        "- browser_navigate: Navigate to a URL " +
+        "- browser_click: Click elements on the page " +
+        "- browser_type: Type text into input fields " +
+        "- browser_screenshot: Take screenshots " +
+        "- browser_get_content: Extract page content " +
+        "- browser_wait: Wait for elements or time " +
+        "Alternatively, for tighter AI-browser coupling, Stagehand tools are also available but must obey the same Browser toggle: " +
+        "- stagehand_create_session: Start a Stagehand session on Browserbase " +
+        "- stagehand_goto: Navigate to a URL " +
+        "- stagehand_observe: Get suggested actions for an instruction " +
+        "- stagehand_act: Execute a selected suggestion " +
+        "- stagehand_extract: Extract structured data using a simple schema " +
+        "- stagehand_close: Close the Stagehand session " +
+        "When the user asks you to browse the web or search online, first ensure the Browser feature is enabled; otherwise do not use any Browser or Stagehand tools. If enabled, use browserbase_create_session to open a browser. " +
         "Provide clear, accurate, and helpful responses with proper citations when using web search. " +
         "\n\n" + dateTimeContext
       );
@@ -1688,6 +2413,45 @@ async function toolNode(state: AgentState): Promise<AgentState> {
         case "calendar_delete_event":
           result = await calendarDeleteEventTool.invoke(toolCall.args);
           break;
+        case "browser_create_session":
+          result = await browserCreateSessionTool.invoke(toolCall.args);
+          break;
+        case "browser_navigate":
+          result = await browserNavigateTool.invoke(toolCall.args);
+          break;
+        case "browser_click":
+          result = await browserClickTool.invoke(toolCall.args);
+          break;
+        case "browser_type":
+          result = await browserTypeTool.invoke(toolCall.args);
+          break;
+        case "browser_screenshot":
+          result = await browserScreenshotTool.invoke(toolCall.args);
+          break;
+        case "browser_get_content":
+          result = await browserGetContentTool.invoke(toolCall.args);
+          break;
+        case "browser_wait":
+          result = await browserWaitTool.invoke(toolCall.args);
+          break;
+        case "stagehand_create_session":
+          result = await stagehandCreateSessionTool.invoke(toolCall.args);
+          break;
+        case "stagehand_goto":
+          result = await stagehandGotoTool.invoke(toolCall.args);
+          break;
+        case "stagehand_observe":
+          result = await stagehandObserveTool.invoke(toolCall.args);
+          break;
+        case "stagehand_act":
+          result = await stagehandActTool.invoke(toolCall.args);
+          break;
+        case "stagehand_extract":
+          result = await stagehandExtractTool.invoke(toolCall.args);
+          break;
+        case "stagehand_close":
+          result = await stagehandCloseTool.invoke(toolCall.args);
+          break;
         default:
           result = `Unknown tool: ${toolCall.name}`;
       }
@@ -1723,8 +2487,13 @@ function shouldContinue(state: AgentState): string {
   }
   
   const lastMessage = state.messages[state.messages.length - 1];
-  
-  if (lastMessage && "tool_calls" in lastMessage && lastMessage.tool_calls?.length) {
+  const hasToolCalls =
+    !!lastMessage &&
+    typeof (lastMessage as any) === 'object' &&
+    'tool_calls' in (lastMessage as any) &&
+    Array.isArray((lastMessage as any).tool_calls) &&
+    (lastMessage as any).tool_calls.length > 0;
+  if (hasToolCalls) {
     return "tools";
   }
   

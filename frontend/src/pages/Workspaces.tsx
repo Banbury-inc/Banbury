@@ -20,6 +20,7 @@ import { FileSystemItem } from '../utils/fileTreeUtils';
 import 'allotment/dist/style.css';
 import { Thread } from '../components/thread';
 import { motion } from "framer-motion";
+import BrowserViewer from '../components/BrowserViewer';
 
 
 import { X, FileText, Folder, SplitSquareHorizontal, SplitSquareVertical, Move, FileSpreadsheet, Save, FolderOpen, Trash2, Edit3, Search, ChevronDown, Plus, TimerReset, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Menu } from 'lucide-react';
@@ -208,8 +209,13 @@ const Workspaces = (): JSX.Element => {
     return codeExtensions.includes(extension)
   };
 
+  const isBrowserFile = (fileName: string): boolean => {
+    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
+    return extension === '.browserbase'
+  };
+
   const isViewableFile = (fileName: string): boolean => {
-    return isImageFile(fileName) || isPdfFile(fileName) || isDocumentFile(fileName) || isSpreadsheetFile(fileName) || isVideoFile(fileName) || isCodeFile(fileName)
+    return isBrowserFile(fileName) || isImageFile(fileName) || isPdfFile(fileName) || isDocumentFile(fileName) || isSpreadsheetFile(fileName) || isVideoFile(fileName) || isCodeFile(fileName)
   };
 
   // Conversation management functions
@@ -939,6 +945,14 @@ const Workspaces = (): JSX.Element => {
               if (activeTab.type === 'file') {
                 const file = activeTab.file;
                 
+                // Browser session virtual file
+                if (isBrowserFile(file.name)) {
+                  const params = new URLSearchParams(file.path.split('?')[1] || '');
+                  const viewerUrl = params.get('viewerUrl') || '';
+                  const title = params.get('title') || 'Browser Session';
+                  return <BrowserViewer viewerUrl={viewerUrl} title={title} />;
+                }
+
                 if (isImageFile(file.name)) {
                   return <ImageViewer file={file} userInfo={userInfo} />;
                 } else if (isPdfFile(file.name)) {
@@ -1562,6 +1576,30 @@ Alice Brown,alice.brown@example.com,555-0104,HR`;
 
     checkAuthAndFetchUser();
   }, [router]);
+
+  // Listen for assistant-open-browser events to open a virtual browser tab
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail || {};
+      const { viewerUrl, title } = detail;
+      if (!viewerUrl) return;
+
+      const virtualName = `${title || 'Browser Session'}.browserbase`;
+      const virtualPath = `browserbase/${virtualName}?viewerUrl=${encodeURIComponent(viewerUrl)}&title=${encodeURIComponent(title || 'Browser Session')}`;
+      const file: FileSystemItem = {
+        id: virtualPath,
+        file_id: virtualPath,
+        name: virtualName,
+        type: 'file',
+        path: virtualPath,
+      } as FileSystemItem;
+
+      // Always open browser sessions in the middle (main) panel
+      openFileInTab(file, 'main-panel');
+    };
+    window.addEventListener('assistant-open-browser', handler as EventListener);
+    return () => window.removeEventListener('assistant-open-browser', handler as EventListener);
+  }, [openFileInTab]);
   
   // Load conversations on mount
   useEffect(() => {

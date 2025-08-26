@@ -43,6 +43,7 @@ import {
   DropdownMenuItem,
 } from "./ui/dropdown-menu";
 import { WebSearchTool } from "./web-search-result";
+import { BrowserTool } from "./BrowserTool";
 import { ApiService } from "../services/apiService";
 import { ConversationService } from "../services/conversationService";
 import { useToast } from "./ui/use-toast";
@@ -78,16 +79,25 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect 
   const { toast } = useToast();
   const [attachedFiles, setAttachedFiles] = useState<FileSystemItem[]>([]);
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true);
-  const [toolPreferences, setToolPreferences] = useState<{ web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean }>(() => {
+  const [toolPreferences, setToolPreferences] = useState<{ web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean; browser: boolean }>(() => {
     try {
       const saved = localStorage.getItem("toolPreferences");
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Always force langgraph_mode to true
-        return { ...parsed, langgraph_mode: true };
+        // Always force langgraph_mode to true; map legacy 'browserbase' to new 'browser' (default OFF)
+        const mappedBrowser = (typeof parsed.browser === 'boolean') ? parsed.browser : (typeof parsed.browserbase === 'boolean' ? Boolean(parsed.browserbase) : false);
+        // Return only supported keys to drop legacy fields like 'browserbase'
+        return {
+          web_search: parsed.web_search !== false,
+          tiptap_ai: parsed.tiptap_ai !== false,
+          read_file: parsed.read_file !== false,
+          gmail: parsed.gmail !== false,
+          langgraph_mode: true,
+          browser: mappedBrowser,
+        };
       }
     } catch {}
-    return { web_search: true, tiptap_ai: true, read_file: true, gmail: true, langgraph_mode: true };
+    return { web_search: true, tiptap_ai: true, read_file: true, gmail: true, langgraph_mode: true, browser: false };
   });
 
   // Cache of pre-downloaded attachment payloads keyed by fileId
@@ -675,7 +685,9 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect 
   useEffect(() => {
     try {
       // Always force langgraph_mode to true when saving
-      const prefsToSave = { ...toolPreferences, langgraph_mode: true };
+      const prefsToSave = { ...toolPreferences, langgraph_mode: true } as any;
+      // Ensure legacy 'browserbase' mirrors the new 'browser' for backwards compatibility
+      prefsToSave.browserbase = Boolean(toolPreferences.browser);
       localStorage.setItem("toolPreferences", JSON.stringify(prefsToSave));
     } catch {}
     if (isWebSearchEnabled !== toolPreferences.web_search) {
@@ -934,8 +946,8 @@ interface ComposerProps {
   } | null;
   isWebSearchEnabled: boolean;
   onToggleWebSearch: () => void;
-  toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean };
-  onUpdateToolPreferences: (prefs: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean }) => void;
+  toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean; browser: boolean };
+  onUpdateToolPreferences: (prefs: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean; browser: boolean }) => void;
   attachmentPayloads: Record<string, { fileData: string; mimeType: string }>;
   onSend?: () => void;
 }
@@ -1114,8 +1126,8 @@ interface ComposerActionProps {
   } | null;
   isWebSearchEnabled: boolean;
   onToggleWebSearch: () => void;
-  toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean };
-  onUpdateToolPreferences: (prefs: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean }) => void;
+  toolPreferences: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean; browser: boolean };
+  onUpdateToolPreferences: (prefs: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean; browser: boolean }) => void;
   onSend: () => void;
 }
 
@@ -1275,10 +1287,19 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, 
                 <span className="text-xs text-muted-foreground">Read, search, and send emails</span>
               </div>
             </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={toolPreferences.browser}
+              onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, browser: Boolean(checked) })}
+            >
+              <div className="flex flex-col">
+                <span>Browser</span>
+                <span className="text-xs text-muted-foreground">Automated browser sessions</span>
+              </div>
+            </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem checked disabled>
               <div className="flex flex-col">
                 <span>Memory</span>
-                <span className="text-xs text-muted-foreground">Always enabled in LangGraph</span>
+                <span className="text-xs text-muted-foreground">Always enabled</span>
               </div>
             </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
@@ -1450,12 +1471,13 @@ const AssistantMessage: FC = () => {
           <MessagePrimitive.Content
             components={{
               Text: MarkdownText,
-                  tools: { 
+              tools: { 
                 by_name: {
                   web_search: WebSearchTool,
                   tiptap_ai: TiptapAITool,
-                      sheet_ai: SheetAITool,
-                      document_ai: DocumentAITool,
+                  sheet_ai: SheetAITool,
+                  document_ai: DocumentAITool,
+                  browser: BrowserTool,
                 },
                 Fallback: ToolFallback 
               },
