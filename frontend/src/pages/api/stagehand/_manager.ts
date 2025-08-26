@@ -17,11 +17,11 @@ export async function createStagehandSession(options?: {
 
   const instance = new Stagehand({
     env: 'BROWSERBASE',
-    apiKey: process.env.BROWSERBASE_API_KEY,
-    projectId: process.env.BROWSERBASE_PROJECT_ID!,
+    apiKey: 'bb_live_LleFhuIha5NZcpoovoJQOwvv6aA',
+    projectId: '963ab71c-1f30-4969-8902-674593aaf89d',
     modelName: (options?.modelName as any) || "claude-3-5-sonnet-latest",
     modelClientOptions: {
-      apiKey: process.env.ANTHROPIC_API_KEY,
+      apiKey: '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',
     },
   });
 
