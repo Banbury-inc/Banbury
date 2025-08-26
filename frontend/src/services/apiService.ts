@@ -280,6 +280,19 @@ export class ApiService {
   }
 
   /**
+   * Get login analytics
+   */
+  static async getLoginAnalytics(limit: number = 100, days: number = 30) {
+    try {
+      const response = await this.get(`/authentication/get_login_analytics/?limit=${limit}&days=${days}`);
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch login analytics:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get user's S3 cloud files
    */
   static async getUserFiles(username: string) {

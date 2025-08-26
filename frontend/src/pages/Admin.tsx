@@ -44,6 +44,9 @@ interface User {
   is_active?: boolean
   totalFiles?: number
   aiMessageCount?: number
+  loginCount?: number
+  lastLoginDate?: string
+  preferredAuthMethod?: string
 }
 
 interface ApiKey {
@@ -94,6 +97,26 @@ interface VisitorStats {
   daily_stats: Array<{date: string, count: number}>
 }
 
+interface LoginData {
+  _id: string
+  username: string
+  user_id: string
+  timestamp: string
+  ip_address: string
+  user_agent: string
+  auth_method: string
+}
+
+interface LoginStats {
+  total_logins: number
+  recent_logins: number
+  period_days: number
+  auth_method_stats: Array<{_id: string, count: number}>
+  hourly_stats: Array<{_id: number, count: number}>
+  daily_stats: Array<{date: string, count: number}>
+  top_users_stats: Array<{_id: string, count: number}>
+}
+
 export default function Admin() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -119,6 +142,9 @@ export default function Admin() {
   const [visitorData, setVisitorData] = useState<VisitorData[]>([])
   const [visitorStats, setVisitorStats] = useState<VisitorStats | null>(null)
   const [visitorLoading, setVisitorLoading] = useState(false)
+  const [loginData, setLoginData] = useState<LoginData[]>([])
+  const [loginStats, setLoginStats] = useState<LoginStats | null>(null)
+  const [loginLoading, setLoginLoading] = useState(false)
 
   useEffect(() => {
     // Check if user is authorized (mmills only)
@@ -141,10 +167,11 @@ export default function Admin() {
     loadAdminData()
   }, [router])
 
-  // Load visitor data when analytics tab is selected
+  // Load visitor and login data when analytics tab is selected
   useEffect(() => {
-    if (activeTab === 'analytics' && !visitorLoading) {
+    if (activeTab === 'analytics' && !visitorLoading && !loginLoading) {
       loadVisitorData(30)
+      loadLoginData(30)
     }
   }, [activeTab])
 
@@ -152,6 +179,10 @@ export default function Admin() {
   useEffect(() => {
     if (visitorStats?.daily_stats) {
       console.log('Daily stats updated:', visitorStats.daily_stats)
+      console.log('Today date:', new Date().toISOString().split('T')[0])
+      const today = new Date().toISOString().split('T')[0]
+      const todayData = visitorStats.daily_stats.find(stat => stat.date === today)
+      console.log('Today data found:', todayData)
     }
   }, [visitorStats?.daily_stats])
 
@@ -267,14 +298,26 @@ export default function Admin() {
       console.log('Visitor data response:', response)
       if (response.result === 'success') {
         setVisitorData(response.visitors || [])
+        
+        // Process daily stats to ensure proper sorting and today's data inclusion
+        let processedDailyStats = response.daily_stats || []
+        
+        // Sort by date to ensure chronological order
+        processedDailyStats = processedDailyStats.sort((a: any, b: any) => {
+          return new Date(a.date).getTime() - new Date(b.date).getTime()
+        })
+        
+        console.log('Raw daily stats from API:', response.daily_stats)
+        console.log('Processed and sorted daily stats:', processedDailyStats)
+        
         const stats = {
           ...response.summary,
           country_stats: response.country_stats || [],
           city_stats: response.city_stats || [],
           hourly_stats: response.hourly_stats || [],
-          daily_stats: response.daily_stats || []
+          daily_stats: processedDailyStats
         }
-        console.log('Processed visitor stats:', stats)
+        console.log('Final visitor stats:', stats)
         setVisitorStats(stats)
       }
     } catch (error) {
@@ -283,6 +326,39 @@ export default function Admin() {
       setVisitorStats(null)
     } finally {
       setVisitorLoading(false)
+    }
+  }
+
+  const loadLoginData = async (days: number = 30) => {
+    setLoginLoading(true)
+    try {
+      const response = await ApiService.getLoginAnalytics(100, days) as any
+      console.log('Login analytics response:', response)
+      if (response.result === 'success') {
+        setLoginData(response.logins || [])
+        
+        // Process daily stats to ensure proper sorting
+        let processedDailyStats = response.daily_stats || []
+        processedDailyStats = processedDailyStats.sort((a: any, b: any) => {
+          return new Date(a.date).getTime() - new Date(b.date).getTime()
+        })
+        
+        const stats = {
+          ...response.summary,
+          auth_method_stats: response.auth_method_stats || [],
+          hourly_stats: response.hourly_stats || [],
+          daily_stats: processedDailyStats,
+          top_users_stats: response.top_users_stats || []
+        }
+        console.log('Processed login stats:', stats)
+        setLoginStats(stats)
+      }
+    } catch (error) {
+      console.error('Failed to load login analytics:', error)
+      setLoginData([])
+      setLoginStats(null)
+    } finally {
+      setLoginLoading(false)
     }
   }
 
@@ -332,8 +408,6 @@ export default function Admin() {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity },
     { id: 'users', label: 'Users', icon: Users },
-    { id: 'api-keys', label: 'API Keys', icon: Key },
-    { id: 'system', label: 'System', icon: Settings },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 }
   ]
 
@@ -522,6 +596,8 @@ export default function Admin() {
                           <th className="text-left py-3 px-4 text-zinc-300 font-medium">Email</th>
                           <th className="text-left py-3 px-4 text-zinc-300 font-medium">Total Files</th>
                           <th className="text-left py-3 px-4 text-zinc-300 font-medium">AI Messages</th>
+                          <th className="text-left py-3 px-4 text-zinc-300 font-medium">Login Count</th>
+                          <th className="text-left py-3 px-4 text-zinc-300 font-medium">Last Login</th>
                           <th className="text-left py-3 px-4 text-zinc-300 font-medium">Auth Method</th>
                           <th className="text-left py-3 px-4 text-zinc-300 font-medium">Created</th>
                           <th className="text-left py-3 px-4 text-zinc-300 font-medium">Actions</th>
@@ -552,6 +628,15 @@ export default function Admin() {
                             </td>
                             <td className="py-3 px-4">
                               <span className="text-white font-medium">{user.aiMessageCount?.toLocaleString() || 0}</span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <Activity className="h-4 w-4 text-green-400" />
+                                <span className="text-white font-medium">{user.loginCount?.toLocaleString() || 0}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-zinc-400 text-sm">
+                              {user.lastLoginDate ? new Date(user.lastLoginDate).toLocaleString() : 'Never'}
                             </td>
                             <td className="py-3 px-4">
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -802,7 +887,11 @@ export default function Admin() {
                 <h1 className="text-2xl font-bold text-white">Site Analytics</h1>
                 <div className="flex gap-2">
                   <select 
-                    onChange={(e) => loadVisitorData(parseInt(e.target.value))}
+                    onChange={(e) => {
+                      const days = parseInt(e.target.value)
+                      loadVisitorData(days)
+                      loadLoginData(days)
+                    }}
                     className="bg-zinc-800 text-white border border-zinc-600 rounded px-3 py-2"
                     defaultValue="30"
                   >
@@ -810,7 +899,10 @@ export default function Admin() {
                     <option value="30">Last 30 days</option>
                     <option value="90">Last 90 days</option>
                   </select>
-                  <Button onClick={() => loadVisitorData(30)} variant="outline" className="text-white border-zinc-600">
+                  <Button onClick={() => {
+                    loadVisitorData(30)
+                    loadLoginData(30)
+                  }} variant="outline" className="text-white border-zinc-600">
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Refresh
                   </Button>
@@ -844,30 +936,30 @@ export default function Admin() {
                 
                 <Card className="bg-zinc-900 border-zinc-700">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-white text-sm">Unique Countries</CardTitle>
+                    <CardTitle className="text-white text-sm">Total Logins</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-white">
-                      {visitorStats?.country_stats?.length || '0'}
+                      {loginStats?.total_logins?.toLocaleString() || '0'}
                     </div>
-                    <div className="text-zinc-400 text-sm">Countries visited</div>
+                    <div className="text-zinc-400 text-sm">All time</div>
                   </CardContent>
                 </Card>
                 
                 <Card className="bg-zinc-900 border-zinc-700">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-white text-sm">Unique Cities</CardTitle>
+                    <CardTitle className="text-white text-sm">Recent Logins</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-white">
-                      {visitorStats?.city_stats?.length || '0'}
+                      {loginStats?.recent_logins?.toLocaleString() || '0'}
                     </div>
-                    <div className="text-zinc-400 text-sm">Cities visited</div>
+                    <div className="text-zinc-400 text-sm">Last {loginStats?.period_days || 30} days</div>
                   </CardContent>
                 </Card>
               </div>
 
-                            <Card className="bg-zinc-900 border-zinc-700">
+              <Card className="bg-zinc-900 border-zinc-700 mb-4">
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
@@ -890,7 +982,13 @@ export default function Admin() {
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
                     </div>
                   ) : visitorStats?.daily_stats && visitorStats.daily_stats.length > 0 ? (
-                    <div className="w-full h-80 overflow-hidden p-4">
+                    <div className="w-full h-72 p-4">
+                      {/* Debug info */}
+                      <div className="text-xs text-zinc-500 mb-2">
+                        Chart data points: {visitorStats.daily_stats.length} | 
+                        Date range: {visitorStats.daily_stats[0]?.date} to {visitorStats.daily_stats[visitorStats.daily_stats.length - 1]?.date} |
+                        Today: {new Date().toISOString().split('T')[0]}
+                      </div>
                       <ChartContainer
                         config={{
                           visitors: {
@@ -898,11 +996,11 @@ export default function Admin() {
                             color: "#3b82f6",
                           },
                         }}
-                        className="w-full h-full"
+                        className="w-full h-full !flex-none"
                       >
                         <AreaChart 
                           data={visitorStats.daily_stats}
-                          margin={{ top: 10, right: 10, left: 10, bottom: 30 }}
+                          margin={{ top: 5, right: 5, left: 5, bottom: 25 }}
                         >
                           <defs>
                             <linearGradient id="visitorGradient" x1="0" y1="0" x2="0" y2="1">
@@ -914,25 +1012,29 @@ export default function Admin() {
                           <XAxis 
                             dataKey="date" 
                             stroke="#9ca3af"
-                            fontSize={11}
+                            fontSize={10}
+                            type="category"
+                            scale="point"
                             tickFormatter={(value) => {
-                              const date = new Date(value)
+                              // Fix timezone issue by explicitly treating as local date
+                              const date = new Date(value + 'T12:00:00')
                               return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                             }}
                             angle={-45}
                             textAnchor="end"
-                            height={60}
+                            height={50}
                           />
                           <YAxis 
                             stroke="#9ca3af"
-                            fontSize={11}
+                            fontSize={10}
                             tickFormatter={(value) => value.toLocaleString()}
-                            width={50}
+                            width={45}
                           />
                           <ChartTooltip
                             content={({ active, payload, label }) => {
                               if (!active || !payload?.length) return null
-                              const date = new Date(label)
+                              // Fix timezone issue by explicitly treating as local date
+                              const date = new Date(label + 'T12:00:00')
                               return (
                                 <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-3 shadow-lg">
                                   <div className="text-white font-medium">
@@ -960,11 +1062,6 @@ export default function Admin() {
                           />
                         </AreaChart>
                       </ChartContainer>
-                      <div className="px-4 py-2 border-t border-zinc-700">
-                        <div className="text-sm text-zinc-400">
-                          Total visitors in period: {visitorStats.daily_stats.reduce((sum, day) => sum + day.count, 0).toLocaleString()}
-                        </div>
-                      </div>
                     </div>
                   ) : (
                     <div className="flex items-center justify-center py-8 text-zinc-400">
@@ -974,6 +1071,126 @@ export default function Admin() {
                           <div className="mt-2 text-xs">
                             <div>Daily stats length: {visitorStats.daily_stats?.length || 0}</div>
                             <div>Daily stats data: {JSON.stringify(visitorStats.daily_stats || [])}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="bg-zinc-900 border-zinc-700 mb-4">
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle className="text-white">User Logins Over Time</CardTitle>
+                      <CardDescription className="text-zinc-400">Daily login trends for the selected period</CardDescription>
+                    </div>
+                    <Button 
+                      onClick={() => loadLoginData(30)} 
+                      variant="outline" 
+                      size="sm"
+                      className="text-white border-zinc-600 hover:bg-zinc-800"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {loginLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                    </div>
+                  ) : loginStats?.daily_stats && loginStats.daily_stats.length > 0 ? (
+                    <div className="w-full h-72 p-4">
+                      {/* Debug info */}
+                      <div className="text-xs text-zinc-500 mb-2">
+                        Login data points: {loginStats.daily_stats.length} | 
+                        Date range: {loginStats.daily_stats[0]?.date} to {loginStats.daily_stats[loginStats.daily_stats.length - 1]?.date} |
+                        Today: {new Date().toISOString().split('T')[0]}
+                      </div>
+                      <ChartContainer
+                        config={{
+                          logins: {
+                            label: "Logins",
+                            color: "#10b981",
+                          },
+                        }}
+                        className="w-full h-full !flex-none"
+                      >
+                        <AreaChart 
+                          data={loginStats.daily_stats}
+                          margin={{ top: 5, right: 5, left: 5, bottom: 25 }}
+                        >
+                          <defs>
+                            <linearGradient id="loginGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <XAxis 
+                            dataKey="date" 
+                            stroke="#9ca3af"
+                            fontSize={10}
+                            type="category"
+                            scale="point"
+                            tickFormatter={(value) => {
+                              // Fix timezone issue by explicitly treating as local date
+                              const date = new Date(value + 'T12:00:00')
+                              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            }}
+                            angle={-45}
+                            textAnchor="end"
+                            height={50}
+                          />
+                          <YAxis 
+                            stroke="#9ca3af"
+                            fontSize={10}
+                            tickFormatter={(value) => value.toLocaleString()}
+                            width={45}
+                          />
+                          <ChartTooltip
+                            content={({ active, payload, label }) => {
+                              if (!active || !payload?.length) return null
+                              // Fix timezone issue by explicitly treating as local date
+                              const date = new Date(label + 'T12:00:00')
+                              return (
+                                <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-3 shadow-lg">
+                                  <div className="text-white font-medium">
+                                    {date.toLocaleDateString('en-US', { 
+                                      weekday: 'long', 
+                                      year: 'numeric', 
+                                      month: 'long', 
+                                      day: 'numeric' 
+                                    })}
+                                  </div>
+                                  <div className="text-green-400">
+                                    {payload[0].value} logins
+                                  </div>
+                                </div>
+                              )
+                            }}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="count" 
+                            stroke="#10b981" 
+                            strokeWidth={2}
+                            fill="url(#loginGradient)"
+                            fillOpacity={1}
+                          />
+                        </AreaChart>
+                      </ChartContainer>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-8 text-zinc-400">
+                      <div className="text-center">
+                        <div>No login data available for the selected period</div>
+                        {loginStats && (
+                          <div className="mt-2 text-xs">
+                            <div>Daily stats length: {loginStats.daily_stats?.length || 0}</div>
+                            <div>Daily stats data: {JSON.stringify(loginStats.daily_stats || [])}</div>
                           </div>
                         )}
                       </div>
@@ -1013,27 +1230,98 @@ export default function Admin() {
 
                 <Card className="bg-zinc-900 border-zinc-700">
                   <CardHeader>
-                    <CardTitle className="text-white">Top Cities</CardTitle>
-                    <CardDescription className="text-zinc-400">Most visited cities</CardDescription>
+                    <CardTitle className="text-white">Authentication Methods</CardTitle>
+                    <CardDescription className="text-zinc-400">Login methods breakdown</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {visitorStats?.city_stats && visitorStats.city_stats.length > 0 ? (
+                    {loginStats?.auth_method_stats && loginStats.auth_method_stats.length > 0 ? (
                       <div className="space-y-3">
-                        {visitorStats.city_stats.slice(0, 8).map((city, index) => (
-                          <div key={city._id} className="flex items-center justify-between">
+                        {loginStats.auth_method_stats.map((method, index) => (
+                          <div key={method._id} className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div className="w-6 h-6 bg-zinc-700 rounded-full flex items-center justify-center text-xs text-white">
                                 {index + 1}
                               </div>
-                              <span className="text-white">{city._id}</span>
+                              <span className="text-white capitalize">
+                                {method._id === 'google_oauth' ? 'Google OAuth' : method._id === 'password' ? 'Password' : method._id}
+                              </span>
                             </div>
-                            <span className="text-zinc-400 font-medium">{city.count}</span>
+                            <span className="text-zinc-400 font-medium">{method.count}</span>
                           </div>
                         ))}
                       </div>
                     ) : (
                       <div className="text-center py-8 text-zinc-400">
-                        No city data available
+                        No authentication data available
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <Card className="bg-zinc-900 border-zinc-700">
+                  <CardHeader>
+                    <CardTitle className="text-white">Top Users by Logins</CardTitle>
+                    <CardDescription className="text-zinc-400">Most active users in the selected period</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loginStats?.top_users_stats && loginStats.top_users_stats.length > 0 ? (
+                      <div className="space-y-3">
+                        {loginStats.top_users_stats.slice(0, 8).map((user, index) => (
+                          <div key={user._id} className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 bg-zinc-700 rounded-full flex items-center justify-center text-xs text-white">
+                                {index + 1}
+                              </div>
+                              <span className="text-white">{user._id}</span>
+                            </div>
+                            <span className="text-zinc-400 font-medium">{user.count} logins</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-zinc-400">
+                        No user login data available
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-zinc-900 border-zinc-700">
+                  <CardHeader>
+                    <CardTitle className="text-white">Recent Logins</CardTitle>
+                    <CardDescription className="text-zinc-400">Latest user authentication events</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loginLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                      </div>
+                    ) : loginData.length > 0 ? (
+                      <div className="space-y-3 max-h-64 overflow-y-auto">
+                        {loginData.slice(0, 10).map((login) => (
+                          <div key={login._id} className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-2 h-2 rounded-full ${
+                                login.auth_method === 'google_oauth' ? 'bg-blue-500' : 'bg-green-500'
+                              }`}></div>
+                              <div>
+                                <div className="text-white font-medium">{login.username}</div>
+                                <div className="text-zinc-500 text-xs">
+                                  {login.auth_method === 'google_oauth' ? 'Google OAuth' : 'Password'}
+                                </div>
+                              </div>
+                            </div>
+                            <span className="text-zinc-400 text-xs">
+                              {new Date(login.timestamp).toLocaleString()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-zinc-400">
+                        No recent login data available
                       </div>
                     )}
                   </CardContent>
