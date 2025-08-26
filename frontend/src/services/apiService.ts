@@ -293,6 +293,19 @@ export class ApiService {
   }
 
   /**
+   * Get Google scopes analytics
+   */
+  static async getGoogleScopesAnalytics() {
+    try {
+      const response = await this.get(`/authentication/get_google_scopes_analytics/`);
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch Google scopes analytics:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get user's S3 cloud files
    */
   static async getUserFiles(username: string) {

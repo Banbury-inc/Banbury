@@ -47,6 +47,15 @@ interface User {
   loginCount?: number
   lastLoginDate?: string
   preferredAuthMethod?: string
+  googleScopes?: string[]
+  scopeCount?: number
+  // Individual scope flags
+  hasEmailScope?: boolean
+  hasProfileScope?: boolean
+  hasGmailScope?: boolean
+  hasDriveScope?: boolean
+  hasCalendarScope?: boolean
+  hasContactsScope?: boolean
 }
 
 interface ApiKey {
@@ -117,6 +126,20 @@ interface LoginStats {
   top_users_stats: Array<{_id: string, count: number}>
 }
 
+interface GoogleScopesAnalytics {
+  summary: {
+    total_google_users: number
+    users_with_scopes: number
+    unique_scopes: number
+    most_common_scope: string
+    average_scopes_per_user: number
+  }
+  scope_stats: Array<{scope: string, count: number, percentage: number}>
+  category_stats: Array<{category: string, count: number}>
+  distribution_stats: Array<{scope_count: number, user_count: number}>
+  users_with_scopes: Array<{user_id: string, username: string, email: string, scopes: string[], scope_count: number}>
+}
+
 export default function Admin() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -145,6 +168,8 @@ export default function Admin() {
   const [loginData, setLoginData] = useState<LoginData[]>([])
   const [loginStats, setLoginStats] = useState<LoginStats | null>(null)
   const [loginLoading, setLoginLoading] = useState(false)
+  const [scopesAnalytics, setScopesAnalytics] = useState<GoogleScopesAnalytics | null>(null)
+  const [scopesLoading, setScopesLoading] = useState(false)
 
   useEffect(() => {
     // Check if user is authorized (mmills only)
@@ -167,11 +192,12 @@ export default function Admin() {
     loadAdminData()
   }, [router])
 
-  // Load visitor and login data when analytics tab is selected
+  // Load visitor, login, and scopes data when analytics tab is selected
   useEffect(() => {
-    if (activeTab === 'analytics' && !visitorLoading && !loginLoading) {
+    if (activeTab === 'analytics' && !visitorLoading && !loginLoading && !scopesLoading) {
       loadVisitorData(30)
       loadLoginData(30)
+      loadScopesAnalytics()
     }
   }, [activeTab])
 
@@ -193,6 +219,21 @@ export default function Admin() {
       // Load real users data
       const usersResponse = await ApiService.get('/users/list_all_users/') as any
       if (usersResponse.result === 'success') {
+        console.log('Users response:', usersResponse.users)
+        // Debug first user's scope data
+        if (usersResponse.users && usersResponse.users.length > 0) {
+          console.log('First user scope data:', {
+            username: usersResponse.users[0].username,
+            auth_method: usersResponse.users[0].auth_method,
+            googleScopes: usersResponse.users[0].googleScopes,
+            hasEmailScope: usersResponse.users[0].hasEmailScope,
+            hasProfileScope: usersResponse.users[0].hasProfileScope,
+            hasGmailScope: usersResponse.users[0].hasGmailScope,
+            hasDriveScope: usersResponse.users[0].hasDriveScope,
+            hasCalendarScope: usersResponse.users[0].hasCalendarScope,
+            hasContactsScope: usersResponse.users[0].hasContactsScope
+          })
+        }
         setUsers(usersResponse.users || [])
         setSystemStats(prev => ({
           ...prev,
@@ -359,6 +400,22 @@ export default function Admin() {
       setLoginStats(null)
     } finally {
       setLoginLoading(false)
+    }
+  }
+
+  const loadScopesAnalytics = async () => {
+    setScopesLoading(true)
+    try {
+      const response = await ApiService.getGoogleScopesAnalytics() as any
+      console.log('Google scopes analytics response:', response)
+      if (response.result === 'success') {
+        setScopesAnalytics(response)
+      }
+    } catch (error) {
+      console.error('Failed to load Google scopes analytics:', error)
+      setScopesAnalytics(null)
+    } finally {
+      setScopesLoading(false)
     }
   }
 
@@ -592,73 +649,117 @@ export default function Admin() {
                     <table className="w-full min-w-full">
                       <thead>
                         <tr className="border-b border-zinc-700">
-                          <th className="text-left py-3 px-4 text-zinc-300 font-medium">User</th>
-                          <th className="text-left py-3 px-4 text-zinc-300 font-medium">Email</th>
-                          <th className="text-left py-3 px-4 text-zinc-300 font-medium">Total Files</th>
-                          <th className="text-left py-3 px-4 text-zinc-300 font-medium">AI Messages</th>
-                          <th className="text-left py-3 px-4 text-zinc-300 font-medium">Login Count</th>
-                          <th className="text-left py-3 px-4 text-zinc-300 font-medium">Last Login</th>
-                          <th className="text-left py-3 px-4 text-zinc-300 font-medium">Auth Method</th>
-                          <th className="text-left py-3 px-4 text-zinc-300 font-medium">Created</th>
-                          <th className="text-left py-3 px-4 text-zinc-300 font-medium">Actions</th>
+                          <th className="text-left py-2 px-2 text-zinc-300 font-medium text-sm">User</th>
+                          <th className="text-left py-2 px-2 text-zinc-300 font-medium text-sm">Email</th>
+                          <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Files</th>
+                          <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">AI Msgs</th>
+                          <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Logins</th>
+                          <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Last Login</th>
+                          <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs" title="Email Scope">Email</th>
+                          <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs" title="Profile Scope">Profile</th>
+                          <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs" title="Gmail Scope">Gmail</th>
+                          <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs" title="Drive Scope">Drive</th>
+                          <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs" title="Calendar Scope">Calendar</th>
+                          <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs" title="Contacts Scope">Contacts</th>
+                          <th className="text-center py-2 px-2 text-zinc-300 font-medium text-xs">Auth</th>
+                          <th className="text-center py-2 px-2 text-zinc-300 font-medium text-xs">Created</th>
                         </tr>
                       </thead>
                       <tbody>
                         {users.map((user) => (
                           <tr key={user._id} className="border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors">
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-zinc-700 rounded-full flex items-center justify-center">
-                                  <Users className="h-4 w-4 text-zinc-400" />
+                            <td className="py-2 px-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-zinc-700 rounded-full flex items-center justify-center">
+                                  <Users className="h-3 w-3 text-zinc-400" />
                                 </div>
-                                <div>
-                                  <div className="text-white font-medium">
+                                <div className="min-w-0">
+                                  <div className="text-white font-medium text-sm truncate">
                                     {user.first_name} {user.last_name}
                                   </div>
-                                  <div className="text-zinc-400 text-sm">@{user.username}</div>
+                                  <div className="text-zinc-400 text-xs truncate">@{user.username}</div>
                                 </div>
                               </div>
                             </td>
-                            <td className="py-3 px-4 text-zinc-300">{user.email}</td>
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-2">
-                                <Database className="h-4 w-4 text-blue-400" />
-                                <span className="text-white font-medium">{user.totalFiles?.toLocaleString() || 0}</span>
-                              </div>
+                            <td className="py-2 px-2 text-zinc-300 text-sm truncate">{user.email}</td>
+                            <td className="py-2 px-1 text-center">
+                              <span className="text-white font-medium text-sm">{user.totalFiles?.toLocaleString() || 0}</span>
                             </td>
-                            <td className="py-3 px-4">
-                              <span className="text-white font-medium">{user.aiMessageCount?.toLocaleString() || 0}</span>
+                            <td className="py-2 px-1 text-center">
+                              <span className="text-white font-medium text-sm">{user.aiMessageCount?.toLocaleString() || 0}</span>
                             </td>
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-2">
-                                <Activity className="h-4 w-4 text-green-400" />
-                                <span className="text-white font-medium">{user.loginCount?.toLocaleString() || 0}</span>
-                              </div>
+                            <td className="py-2 px-1 text-center">
+                              <span className="text-white font-medium text-sm">{user.loginCount?.toLocaleString() || 0}</span>
                             </td>
-                            <td className="py-3 px-4 text-zinc-400 text-sm">
-                              {user.lastLoginDate ? new Date(user.lastLoginDate).toLocaleString() : 'Never'}
+                            <td className="py-2 px-1 text-center text-zinc-400 text-xs">
+                              {user.lastLoginDate ? new Date(user.lastLoginDate).toLocaleDateString() : 'Never'}
                             </td>
-                            <td className="py-3 px-4">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                user.auth_method === 'Google OAuth' 
+                            {/* Individual Scope Columns */}
+                            <td className="py-2 px-1 text-center">
+                              {user.hasEmailScope ? (
+                                <CheckCircle className="h-3 w-3 text-green-400 mx-auto" />
+                              ) : user.auth_method === 'google_oauth' ? (
+                                <XCircle className="h-3 w-3 text-red-400 mx-auto" />
+                              ) : (
+                                <span className="text-zinc-600 text-xs">-</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-1 text-center">
+                              {user.hasProfileScope ? (
+                                <CheckCircle className="h-3 w-3 text-green-400 mx-auto" />
+                              ) : user.auth_method === 'google_oauth' ? (
+                                <XCircle className="h-3 w-3 text-red-400 mx-auto" />
+                              ) : (
+                                <span className="text-zinc-600 text-xs">-</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-1 text-center">
+                              {user.hasGmailScope ? (
+                                <CheckCircle className="h-3 w-3 text-green-400 mx-auto" />
+                              ) : user.auth_method === 'google_oauth' ? (
+                                <XCircle className="h-3 w-3 text-red-400 mx-auto" />
+                              ) : (
+                                <span className="text-zinc-600 text-xs">-</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-1 text-center">
+                              {user.hasDriveScope ? (
+                                <CheckCircle className="h-3 w-3 text-green-400 mx-auto" />
+                              ) : user.auth_method === 'google_oauth' ? (
+                                <XCircle className="h-3 w-3 text-red-400 mx-auto" />
+                              ) : (
+                                <span className="text-zinc-600 text-xs">-</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-1 text-center">
+                              {user.hasCalendarScope ? (
+                                <CheckCircle className="h-3 w-3 text-green-400 mx-auto" />
+                              ) : user.auth_method === 'google_oauth' ? (
+                                <XCircle className="h-3 w-3 text-red-400 mx-auto" />
+                              ) : (
+                                <span className="text-zinc-600 text-xs">-</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-1 text-center">
+                              {user.hasContactsScope ? (
+                                <CheckCircle className="h-3 w-3 text-green-400 mx-auto" />
+                              ) : user.auth_method === 'google_oauth' ? (
+                                <XCircle className="h-3 w-3 text-red-400 mx-auto" />
+                              ) : (
+                                <span className="text-zinc-600 text-xs">-</span>
+                              )}
+                            </td>
+                            <td className="py-2 px-2 text-center">
+                              <span className={`px-1 py-0.5 rounded text-xs font-medium ${
+                                user.auth_method === 'google_oauth' 
                                   ? 'bg-blue-900/50 text-blue-300' 
                                   : 'bg-green-900/50 text-green-300'
                               }`}>
-                                {user.auth_method}
+                                {user.auth_method === 'google_oauth' ? 'Google' : 'Email'}
                               </span>
                             </td>
-                            <td className="py-3 px-4 text-zinc-400 text-sm">
+                            <td className="py-2 px-2 text-center text-zinc-400 text-xs">
                               {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                            </td>
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">
-                                  <Settings className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300">
-                                  <Database className="h-4 w-4" />
-                                </Button>
-                              </div>
                             </td>
                           </tr>
                         ))}
@@ -891,6 +992,7 @@ export default function Admin() {
                       const days = parseInt(e.target.value)
                       loadVisitorData(days)
                       loadLoginData(days)
+                      loadScopesAnalytics()
                     }}
                     className="bg-zinc-800 text-white border border-zinc-600 rounded px-3 py-2"
                     defaultValue="30"
@@ -902,6 +1004,7 @@ export default function Admin() {
                   <Button onClick={() => {
                     loadVisitorData(30)
                     loadLoginData(30)
+                    loadScopesAnalytics()
                   }} variant="outline" className="text-white border-zinc-600">
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Refresh
@@ -958,6 +1061,115 @@ export default function Admin() {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Google Scopes Analytics Section */}
+              <Card className="bg-zinc-900 border-zinc-700 mb-4">
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle className="text-white">Google OAuth Scopes Analytics</CardTitle>
+                      <CardDescription className="text-zinc-400">Analysis of Google permissions granted by users</CardDescription>
+                    </div>
+                    <Button 
+                      onClick={() => loadScopesAnalytics()} 
+                      variant="outline" 
+                      size="sm"
+                      className="text-white border-zinc-600 hover:bg-zinc-800"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {scopesLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                    </div>
+                  ) : scopesAnalytics ? (
+                    <div className="space-y-6">
+                      {/* Summary Stats */}
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-white">{scopesAnalytics.summary.total_google_users}</div>
+                          <div className="text-zinc-400 text-sm">Google Users</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-white">{scopesAnalytics.summary.users_with_scopes}</div>
+                          <div className="text-zinc-400 text-sm">With Scopes</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-white">{scopesAnalytics.summary.unique_scopes}</div>
+                          <div className="text-zinc-400 text-sm">Unique Scopes</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-white">{scopesAnalytics.summary.average_scopes_per_user}</div>
+                          <div className="text-zinc-400 text-sm">Avg per User</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-white truncate" title={scopesAnalytics.summary.most_common_scope}>
+                            {scopesAnalytics.summary.most_common_scope ? 
+                              scopesAnalytics.summary.most_common_scope.split('/').pop() : 'N/A'}
+                          </div>
+                          <div className="text-zinc-400 text-sm">Most Common</div>
+                        </div>
+                      </div>
+
+                      {/* Scope Categories and Top Scopes */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="text-white font-medium mb-3">Scope Categories</h4>
+                          <div className="space-y-2">
+                            {scopesAnalytics.category_stats.slice(0, 6).map((category, index) => (
+                              <div key={category.category} className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-4 h-4 bg-purple-500 rounded" style={{
+                                    backgroundColor: ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#6366f1'][index % 6]
+                                  }}></div>
+                                  <span className="text-white">{category.category}</span>
+                                </div>
+                                <span className="text-zinc-400 font-medium">{category.count} users</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="text-white font-medium mb-3">Top Scopes</h4>
+                          <div className="space-y-2">
+                            {scopesAnalytics.scope_stats.slice(0, 6).map((scope, index) => (
+                              <div key={scope.scope} className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-6 h-6 bg-zinc-700 rounded-full flex items-center justify-center text-xs text-white">
+                                    {index + 1}
+                                  </div>
+                                  <span className="text-white text-sm truncate" title={scope.scope}>
+                                    {scope.scope.includes('userinfo.email') ? 'User Email' :
+                                     scope.scope.includes('userinfo.profile') ? 'User Profile' :
+                                     scope.scope.includes('gmail') ? 'Gmail Access' :
+                                     scope.scope.includes('drive') ? 'Google Drive' :
+                                     scope.scope.includes('calendar') ? 'Google Calendar' : 
+                                     scope.scope.split('/').pop() || scope.scope}
+                                  </span>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-zinc-400 font-medium">{scope.count}</div>
+                                  <div className="text-zinc-500 text-xs">{scope.percentage}%</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-8 text-zinc-400">
+                      <div className="text-center">
+                        <div>No Google scopes data available</div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               <Card className="bg-zinc-900 border-zinc-700 mb-4">
                 <CardHeader>
