@@ -20,6 +20,7 @@ import {
   FolderOpen,
   Trash2,
   Edit3,
+  Mail,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
@@ -45,6 +46,7 @@ import {
 import { WebSearchTool } from "./web-search-result";
 import { BrowserTool } from "./BrowserTool";
 import { ApiService } from "../services/apiService";
+import { extractEmailContent } from "../utils/emailUtils";
 import { ConversationService } from "../services/conversationService";
 import { useToast } from "./ui/use-toast";
 import styles from "../styles/scrollbar.module.css";
@@ -72,12 +74,14 @@ interface ThreadProps {
     email?: string;
   } | null;
   selectedFile?: FileSystemItem | null;
+  selectedEmail?: any | null;
   onEmailSelect?: (email: any) => void;
 }
 
-export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect }) => {
+export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail, onEmailSelect }) => {
   const { toast } = useToast();
   const [attachedFiles, setAttachedFiles] = useState<FileSystemItem[]>([]);
+  const [attachedEmails, setAttachedEmails] = useState<any[]>([]);
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true);
   const [toolPreferences, setToolPreferences] = useState<{ web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean; browser: boolean }>(() => {
     try {
@@ -122,6 +126,14 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect 
 
   const handleFileRemove = (fileId: string) => {
     setAttachedFiles(prev => prev.filter(file => file.file_id !== fileId));
+  };
+
+  const handleEmailAttach = (email: any) => {
+    setAttachedEmails(prev => [...prev, email]);
+  };
+
+  const handleEmailRemove = (emailId: string) => {
+    setAttachedEmails(prev => prev.filter(email => email.id !== emailId));
   };
 
   const toggleWebSearch = () => {
@@ -310,14 +322,15 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect 
         return;
       }
       
-      const result = await ConversationService.saveConversation({
-        title: conversationTitle,
-        messages: messages,
-        metadata: {
-          attachedFiles: attachedFiles.map(f => ({ id: f.file_id, name: f.name })),
-          toolPreferences,
-        }
-      });
+              const result = await ConversationService.saveConversation({
+          title: conversationTitle,
+          messages: messages,
+          metadata: {
+            attachedFiles: attachedFiles.map(f => ({ id: f.file_id, name: f.name })),
+            attachedEmails: attachedEmails.map(e => ({ id: e.id, subject: e.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')?.value || 'No Subject' })),
+            toolPreferences,
+          }
+        });
       
       if (result.success) {
         setSaveDialogOpen(false);
@@ -351,6 +364,12 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect 
           s3_url: ''
         }));
         setAttachedFiles(fileItems);
+      }
+      if (conversation.metadata?.attachedEmails) {
+        // Note: We can't fully restore emails from metadata alone
+        // The emails would need to be re-fetched from Gmail API
+        // For now, we'll just clear the attached emails
+        setAttachedEmails([]);
       }
       if (conversation.metadata?.toolPreferences) {
         setToolPreferences(conversation.metadata.toolPreferences);
@@ -458,6 +477,18 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect 
     }
   }, [selectedFile, attachedFiles]);
 
+  // Auto-attach the selected email from Email tab
+  useEffect(() => {
+    if (selectedEmail && selectedEmail.id) {
+      // Check if the email is already attached
+      const isAlreadyAttached = attachedEmails.some(e => e.id === selectedEmail.id);
+      
+      if (!isAlreadyAttached) {
+        setAttachedEmails(prev => [selectedEmail, ...prev]);
+      }
+    }
+  }, [selectedEmail, attachedEmails]);
+
   // Get the thread runtime at the component level
   const runtime = useThreadRuntime();
 
@@ -547,16 +578,17 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect 
         console.log('🔍 Checking for existing conversation...');
         if (existingConversation) {
           console.log('📝 Updating existing conversation:', existingConversation._id);
-          // Update existing conversation
-          const result = await ConversationService.updateConversation(existingConversation._id, {
-            title,
-            messages,
-            metadata: {
-              attachedFiles: attachedFiles.map(f => ({ id: f.file_id, name: f.name })),
-              toolPreferences,
-              lastUpdated: new Date().toISOString()
-            }
-          });
+                  // Update existing conversation
+        const result = await ConversationService.updateConversation(existingConversation._id, {
+          title,
+          messages,
+          metadata: {
+            attachedFiles: attachedFiles.map(f => ({ id: f.file_id, name: f.name })),
+            attachedEmails: attachedEmails.map(e => ({ id: e.id, subject: e.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')?.value || 'No Subject' })),
+            toolPreferences,
+            lastUpdated: new Date().toISOString()
+          }
+        });
           
           if (result.success) {
             console.log('Conversation auto-updated:', existingConversation._id);
@@ -569,6 +601,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect 
             messages,
             metadata: {
               attachedFiles: attachedFiles.map(f => ({ id: f.file_id, name: f.name })),
+              attachedEmails: attachedEmails.map(e => ({ id: e.id, subject: e.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')?.value || 'No Subject' })),
               toolPreferences,
               createdAt: new Date().toISOString()
             }
@@ -594,7 +627,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect 
       unsubscribe2();
       unsubscribe3();
     };
-  }, [runtime, userInfo?.username, conversations, attachedFiles, toolPreferences]);
+  }, [runtime, userInfo?.username, conversations, attachedFiles, attachedEmails, toolPreferences]);
 
   // Listen for global assistant-load-conversation events to show fallback buffer immediately
   useEffect(() => {
@@ -651,7 +684,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect 
   // Keep a copy of attachments in localStorage so the runtime can inject them
   useEffect(() => {
     try {
-      const simplified = attachedFiles.map((f) => ({
+      const simplifiedFiles = attachedFiles.map((f) => ({
         fileId: f.file_id,
         fileName: f.name,
         filePath: f.path,
@@ -659,23 +692,42 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect 
           ? { fileData: attachmentPayloads[f.file_id].fileData, mimeType: attachmentPayloads[f.file_id].mimeType }
           : {}),
       }));
-      localStorage.setItem('pendingAttachments', JSON.stringify(simplified));
+      
+      const simplifiedEmails = attachedEmails.map((e) => ({
+        emailId: e.id,
+        subject: e.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')?.value || 'No Subject',
+        from: e.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'from')?.value || 'Unknown',
+        snippet: e.snippet || '',
+        threadId: e.threadId,
+        internalDate: e.internalDate,
+        payload: e.payload
+      }));
+      
+      localStorage.setItem('pendingAttachments', JSON.stringify(simplifiedFiles));
+      localStorage.setItem('pendingEmailAttachments', JSON.stringify(simplifiedEmails));
     } catch {
       // ignore storage errors
     }
-  }, [attachedFiles, attachmentPayloads]);
+  }, [attachedFiles, attachedEmails, attachmentPayloads]);
 
   // Remove attachment when a corresponding workspace tab is closed
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent).detail || {};
-      const { fileId, filePath } = detail || {};
-      if (!fileId && !filePath) return;
-      setAttachedFiles((prev) => prev.filter((f) => {
-        if (fileId) return f.file_id !== fileId;
-        if (filePath) return f.path !== filePath;
-        return true;
-      }));
+      const { fileId, filePath, emailId } = detail || {};
+      if (!fileId && !filePath && !emailId) return;
+      
+      if (fileId || filePath) {
+        setAttachedFiles((prev) => prev.filter((f) => {
+          if (fileId) return f.file_id !== fileId;
+          if (filePath) return f.path !== filePath;
+          return true;
+        }));
+      }
+      
+      if (emailId) {
+        setAttachedEmails((prev) => prev.filter((e) => e.id !== emailId));
+      }
     };
     window.addEventListener('workspace-tab-closed', handler as EventListener);
     return () => window.removeEventListener('workspace-tab-closed', handler as EventListener);
@@ -800,8 +852,11 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, onEmailSelect 
 
       <Composer 
         attachedFiles={attachedFiles}
+        attachedEmails={attachedEmails}
         onFileAttach={handleFileAttach}
         onFileRemove={handleFileRemove}
+        onEmailAttach={handleEmailAttach}
+        onEmailRemove={handleEmailRemove}
         userInfo={userInfo}
         isWebSearchEnabled={isWebSearchEnabled}
         onToggleWebSearch={toggleWebSearch}
@@ -938,8 +993,11 @@ const ThreadWelcomeSuggestions: FC = () => {
 
 interface ComposerProps {
   attachedFiles: FileSystemItem[];
+  attachedEmails: any[];
   onFileAttach: (file: FileSystemItem) => void;
   onFileRemove: (fileId: string) => void;
+  onEmailAttach: (email: any) => void;
+  onEmailRemove: (emailId: string) => void;
   userInfo: {
     username: string;
     email?: string;
@@ -952,42 +1010,61 @@ interface ComposerProps {
   onSend?: () => void;
 }
 
-const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onSend }) => {
+const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onSend }) => {
   const composer = useComposerRuntime();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // Add attachments to the composer when files are attached
+  // Add attachments to the composer when files or emails are attached
   useEffect(() => {
     if (!composer.attachments) return;
     
-    if (attachedFiles.length > 0) {
-      // Clear existing attachments first
-      composer.attachments.clear();
-      
-      // Add new attachments
-      attachedFiles.forEach((file) => {
-        composer.attachments.add({
-          type: "file",
-          id: file.file_id!,
-          name: file.name,
-          content: [
-            {
-              type: "file-attachment",
-              fileId: file.file_id!,
-              fileName: file.name,
-                filePath: file.path,
-                ...(file.file_id && attachmentPayloads[file.file_id]
-                  ? { fileData: attachmentPayloads[file.file_id].fileData, mimeType: attachmentPayloads[file.file_id].mimeType }
-                  : {}),
-            }
-          ]
-        });
+    // Clear existing attachments first
+    composer.attachments.clear();
+    
+    // Add file attachments
+    attachedFiles.forEach((file) => {
+      composer.attachments.add({
+        type: "file",
+        id: file.file_id!,
+        name: file.name,
+        content: [
+          {
+            type: "file-attachment",
+            fileId: file.file_id!,
+            fileName: file.name,
+            filePath: file.path,
+            ...(file.file_id && attachmentPayloads[file.file_id]
+              ? { fileData: attachmentPayloads[file.file_id].fileData, mimeType: attachmentPayloads[file.file_id].mimeType }
+              : {}),
+          }
+        ]
       });
-    } else {
-      // Clear attachments when no files are attached
-      composer.attachments.clear();
-    }
-  }, [attachedFiles, composer.attachments, attachmentPayloads]);
+    });
+    
+    // Add email attachments
+    attachedEmails.forEach((email) => {
+      const subject = email.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')?.value || 'No Subject';
+      const from = email.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'from')?.value || 'Unknown';
+      
+      composer.attachments.add({
+        type: "email",
+        id: email.id,
+        name: `Email: ${subject}`,
+        content: [
+          {
+            type: "email-attachment",
+            emailId: email.id,
+            subject: subject,
+            from: from,
+            snippet: email.snippet || '',
+            threadId: email.threadId,
+            internalDate: email.internalDate,
+            payload: email.payload
+          }
+        ]
+      });
+    });
+  }, [attachedFiles, attachedEmails, composer.attachments, attachmentPayloads]);
 
   const handleSend = () => {
     // Get the text directly from the Tiptap editor, including mentions
@@ -1013,15 +1090,87 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove
       text = input?.value || '';
     }
     
-    // Document context is already stored in localStorage by ChatTiptapComposer
-    const documentContext = localStorage.getItem('pendingDocumentContext') || '';
+    // CRITICAL: Set document context with email content BEFORE any composer.send() call
+    try {
+      // Get existing document content (docx, etc)
+      const documentContent = '';
+      try {
+        const documentEditors = Array.from(document.querySelectorAll('.ProseMirror[contenteditable="true"]'));
+        for (const element of documentEditors) {
+          // Skip if it's the current chat editor
+          const isInChatComposer = element.closest('.bg-zinc-800') || element.closest('.min-h-16');
+          if (isInChatComposer) continue;
+          
+          // Check various document editor indicators
+          const hasSimpleTiptapClass = element.classList.contains('simple-tiptap-editor') || 
+                                       element.closest('.simple-tiptap-editor');
+          const isInAITiptap = element.closest('.min-h-\\[600px\\]') || 
+                              element.closest('.bg-card');
+          const isInWordViewer = element.closest('[class*="MuiBox"]') || 
+                                element.closest('.h-full.border-0.rounded-none');
+          
+          if (hasSimpleTiptapClass || isInAITiptap || isInWordViewer) {
+            const content = element.textContent || '';
+            if (content.trim() && content.length > 20) {
+              break; // Found document content
+            }
+          }
+        }
+      } catch {}
+      
+      // Get and merge email content
+      const emailsRaw = localStorage.getItem('pendingEmailAttachments');
+      console.log('[thread.tsx] DEBUG - BEFORE SEND - emailsRaw:', emailsRaw);
+      const emails = emailsRaw ? JSON.parse(emailsRaw) : [];
+      const emailSections: string[] = [];
+      if (Array.isArray(emails)) {
+        emails.forEach((e: any) => {
+          const subject = e?.subject || 'No Subject';
+          const from = e?.from || '';
+          const dateStr = e?.date || '';
+          let body = '';
+          try {
+            if (e?.payload) {
+              const content = extractEmailContent(e.payload);
+              const raw = (content?.text || content?.html || e?.snippet || '').toString();
+              body = raw.length > 20000 ? raw.slice(0, 20000) + '\n...[truncated]...' : raw;
+            } else {
+              const raw = (e?.preview || e?.snippet || '').toString();
+              body = raw.length > 20000 ? raw.slice(0, 20000) + '\n...[truncated]...' : raw;
+            }
+          } catch {}
+          emailSections.push([
+            `Subject: ${subject}`,
+            from ? `From: ${from}` : '',
+            dateStr ? `Date: ${dateStr}` : '',
+            'Body:',
+            body
+          ].filter(Boolean).join('\n'));
+        });
+      }
+
+      const emailDocBlock = emailSections.length > 0
+        ? ['Current email content:', ...emailSections].join('\n\n---\n\n')
+        : '';
+
+      const combinedContext = [documentContent, emailDocBlock].filter(Boolean).join('\n\n');
+      if (combinedContext) {
+        localStorage.setItem('pendingDocumentContext', combinedContext);
+        console.log('[thread.tsx] DEBUG - BEFORE SEND - SET pendingDocumentContext to:', combinedContext.slice(0, 200));
+      } else {
+        localStorage.removeItem('pendingDocumentContext');
+        console.log('[thread.tsx] DEBUG - BEFORE SEND - REMOVED pendingDocumentContext');
+      }
+    } catch (error) {
+      console.error('[thread.tsx] DEBUG - Error in email merge:', error);
+    }
       
     if (text.trim().length > 0) {
       // Try multiple approaches to get the text into the composer
       const input = document.querySelector('textarea[aria-label="Message input"]') as HTMLTextAreaElement;
       if (input) {
         // Set the input value and trigger all possible events
-        input.value = text; // Keep original text for display
+        input.value = text; // Keep only the user's message visible
         input.focus();
         
         // Trigger all possible events to ensure detection
@@ -1029,10 +1178,10 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove
           input.dispatchEvent(new Event(eventType, { bubbles: true }));
         });
         
-        // Use the composer's setText method with just the chat text
+        // Use the composer's setText method with just the chat text (hidden context is provided separately)
         try {
           if (composer && typeof composer.setText === 'function') {
-            composer.setText(text); // Send only chat text for display
+            composer.setText(text);
           }
         } catch (e) {
           console.error('Error setting composer text:', e);
@@ -1055,7 +1204,7 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove
               proseMirrorElement.innerHTML = '<p></p>';
             }
           }, 100);
-        }, 100);
+        }, 50); // Reduced delay since context is already set
       }
     }
   };
@@ -1065,12 +1214,14 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove
       <ThreadScrollToBottom />
 
       <div className="relative flex w-full flex-col">
-        {/* Display attached files above the composer */}
-        {attachedFiles.length > 0 && (
+        {/* Display attachments (files + emails) above the composer */}
+        {(attachedFiles.length > 0 || attachedEmails.length > 0) && (
           <div className="bg-zinc-800 border-l border-r border-t border-b border-zinc-300 dark:border-zinc-600 rounded-t-2xl px-2 py-0.5">
             <FileAttachmentDisplay 
               files={attachedFiles}
+              emails={attachedEmails}
               onFileClick={(file) => onFileRemove(file.file_id!)}
+              onEmailClick={(emailId) => onEmailRemove(emailId)}
             />
           </div>
         )}
@@ -1088,7 +1239,7 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove
           />
 
           {/* Visible Tiptap editor with @ mention for files */}
-          <div className={`bg-zinc-800 border-l border-r border-zinc-300 dark:border-zinc-600 ${attachedFiles.length > 0 ? 'border-t-0 rounded-t-none' : 'border-t rounded-t-2xl'}`}>
+          <div className={`bg-zinc-800 border-l border-r border-zinc-300 dark:border-zinc-600 ${(attachedFiles.length > 0 || attachedEmails.length > 0) ? 'border-t-0 rounded-t-none' : 'border-t rounded-t-2xl'}`}>
             <ChatTiptapComposer
               hiddenInputRef={inputRef}
               userInfo={userInfo}
@@ -1101,8 +1252,11 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove
 
           <ComposerAction 
             attachedFiles={attachedFiles}
+            attachedEmails={attachedEmails}
             onFileAttach={onFileAttach}
             onFileRemove={onFileRemove}
+            onEmailAttach={onEmailAttach}
+            onEmailRemove={onEmailRemove}
             userInfo={userInfo}
             isWebSearchEnabled={isWebSearchEnabled}
             onToggleWebSearch={onToggleWebSearch}
@@ -1118,8 +1272,11 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, onFileAttach, onFileRemove
 
 interface ComposerActionProps {
   attachedFiles: FileSystemItem[];
+  attachedEmails: any[];
   onFileAttach: (file: FileSystemItem) => void;
   onFileRemove: (fileId: string) => void;
+  onEmailAttach: (email: any) => void;
+  onEmailRemove: (emailId: string) => void;
   userInfo: {
     username: string;
     email?: string;
@@ -1131,7 +1288,7 @@ interface ComposerActionProps {
   onSend: () => void;
 }
 
-const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, onFileAttach, onFileRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, onSend }) => {
+const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, onSend }) => {
   const composer = useComposerRuntime();
   const [hasText, setHasText] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -1588,17 +1745,41 @@ const UserMessage: FC = () => {
           
           {/* Display attached files */}
           <MessagePrimitive.Attachments>
-            {(attachments: any[]) => (
-              <FileAttachmentDisplay 
-                files={attachments.map((att: any) => ({
-                  id: att.fileId,
-                  file_id: att.fileId,
-                  name: att.fileName,
-                  path: att.filePath,
-                  type: 'file'
-                }))}
-              />
-            )}
+            {(attachments: any[]) => {
+              const fileAttachments = attachments.filter((att: any) => att.type === 'file');
+              const emailAttachments = attachments.filter((att: any) => att.type === 'email');
+              
+              return (
+                <div className="space-y-2">
+                  {fileAttachments.length > 0 && (
+                    <FileAttachmentDisplay 
+                      files={fileAttachments.map((att: any) => ({
+                        id: att.fileId,
+                        file_id: att.fileId,
+                        name: att.fileName,
+                        path: att.filePath,
+                        type: 'file'
+                      }))}
+                    />
+                  )}
+                  
+                  {emailAttachments.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {emailAttachments.map((att: any) => (
+                        <div
+                          key={att.emailId}
+                          className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm"
+                          title={`From: ${att.from}\nSubject: ${att.subject}`}
+                        >
+                          <Mail className="h-3 w-3" />
+                          <span className="truncate max-w-32">{att.subject}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }}
           </MessagePrimitive.Attachments>
         </div>
 

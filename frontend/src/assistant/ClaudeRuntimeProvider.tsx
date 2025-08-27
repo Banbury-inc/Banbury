@@ -129,10 +129,16 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
       let documentContext = '';
       try {
         documentContext = localStorage.getItem('pendingDocumentContext') || '';
+        console.log('[ClaudeRuntimeProvider] DEBUG - Read pendingDocumentContext:', documentContext.slice(0, 200));
         if (documentContext) {
           localStorage.removeItem('pendingDocumentContext'); // Clean up after reading
+          console.log('[ClaudeRuntimeProvider] DEBUG - Cleaned up pendingDocumentContext');
+        } else {
+          console.log('[ClaudeRuntimeProvider] DEBUG - No pendingDocumentContext found');
         }
-      } catch {}
+      } catch (error) {
+        console.error('[ClaudeRuntimeProvider] DEBUG - Error reading pendingDocumentContext:', error);
+      }
 
       // Get current date/time context
       const getCurrentDateTimeContext = () => {
@@ -167,18 +173,22 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
 
       // Removed client-side browser shim - now handled by AI tools
 
+      const requestBody = { 
+        messages: messagesWithAttachmentParts, 
+        toolPreferences,
+        documentContext: documentContext || undefined,
+        dateTimeContext
+      };
+      console.log('[ClaudeRuntimeProvider] DEBUG - Request body documentContext:', requestBody.documentContext?.slice(0, 200));
+      console.log('[ClaudeRuntimeProvider] DEBUG - Full request body:', JSON.stringify(requestBody, null, 2).slice(0, 1000));
+      
       const res = await fetch(apiEndpoint, {
         method: "POST",
         headers: { 
           "content-type": "application/json",
           ...(token && { "Authorization": `Bearer ${token}` })
         },
-        body: JSON.stringify({ 
-          messages: messagesWithAttachmentParts, 
-          toolPreferences,
-          documentContext: documentContext || undefined,
-          dateTimeContext
-        }),
+        body: JSON.stringify(requestBody),
         signal: options.abortSignal,
       });
 

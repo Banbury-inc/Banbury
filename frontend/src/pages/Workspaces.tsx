@@ -109,6 +109,7 @@ const Workspaces = (): JSX.Element => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<FileSystemItem | null>(null);
+  const [selectedEmail, setSelectedEmail] = useState<any | null>(null);
   const [uploading, setUploading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [folderCreationTrigger, setFolderCreationTrigger] = useState<boolean>(false);
@@ -440,6 +441,7 @@ const Workspaces = (): JSX.Element => {
     // Add tab to the target panel
     setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab));
     setActivePanelId(targetPanelId);
+    setSelectedEmail(email);
   }, [activePanelId, panelLayout, getAllTabs, findPanel]);
   
   // Helper functions for panel operations
@@ -545,15 +547,25 @@ const Workspaces = (): JSX.Element => {
 
       const newLayout = removeTabFromPanel(prev, panelId, tabId);
       
-      // Update selected file if needed
+      // Update selected file/email if needed
       const panel = findPanel(newLayout, panelId);
       if (panel && panel.activeTabId) {
         const activeTab = panel.tabs.find(tab => tab.id === panel.activeTabId);
         if (activeTab) {
-          setSelectedFile(activeTab.file);
+          if ((activeTab as any).type === 'file') {
+            setSelectedFile((activeTab as any).file);
+            setSelectedEmail(null);
+          } else if ((activeTab as any).type === 'email') {
+            setSelectedFile(null);
+            setSelectedEmail((activeTab as any).email || null);
+          } else {
+            setSelectedFile(null);
+            setSelectedEmail(null);
+          }
         }
       } else {
         setSelectedFile(null);
+        setSelectedEmail(null);
       }
       
       return newLayout;
@@ -571,8 +583,13 @@ const Workspaces = (): JSX.Element => {
       const tab = panel.tabs.find(t => t.id === tabId);
       if (tab && (tab as any).type === 'file') {
         setSelectedFile((tab as any).file);
+        setSelectedEmail(null);
+      } else if (tab && (tab as any).type === 'email') {
+        setSelectedFile(null);
+        setSelectedEmail((tab as any).email || null);
       } else {
         setSelectedFile(null);
+        setSelectedEmail(null);
       }
     }
   }, [updatePanelActiveTab, findPanel, panelLayout]);
@@ -1324,6 +1341,7 @@ Alice Brown,alice.brown@example.com,555-0104,HR`;
 
   // Handle email selection from EmailTab - now opens in tabs
   const handleEmailSelect = useCallback((email: any) => {
+    setSelectedEmail(email);
     openEmailInTab(email, activePanelId);
   }, [openEmailInTab, activePanelId]);
 
@@ -1943,7 +1961,8 @@ Alice Brown,alice.brown@example.com,555-0104,HR`;
                       <div className="flex-1 min-h-0 overflow-hidden">
                         <Thread 
                           userInfo={userInfo} 
-                          selectedFile={selectedFile} 
+                          selectedFile={selectedFile}
+                          selectedEmail={selectedEmail}
                           onEmailSelect={handleEmailSelect}
                         />
                       </div>

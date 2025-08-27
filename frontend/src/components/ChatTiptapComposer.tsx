@@ -13,6 +13,7 @@ import { Decoration, DecorationSet } from 'prosemirror-view';
 import tippy, { Instance as TippyInstance } from 'tippy.js';
 
 import { ApiService } from '../services/apiService';
+import { extractEmailContent } from '../utils/emailUtils';
 import { buildFileTree, flattenFileTree, FileSystemItem } from '../utils/fileTreeUtils';
 
 import type { Editor } from '@tiptap/core';
@@ -441,23 +442,23 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
           if (el) {
             // Get text from the chat composer
             const chatText = editorInstance?.getText() ?? '';
-            
+
             // Get document editor content if available
             const documentContent = getDocumentEditorContent(editorInstance?.view.dom);
-            
-            // Only put the chat text in the hidden input for UI display
-            el.value = chatText;
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-            el.dispatchEvent(new Event('change', { bubbles: true }));
-            
-            // Store document content directly in localStorage
+
+            // Only handle document content (docx files), email context is handled by thread.tsx handleSend
             if (documentContent) {
               localStorage.setItem('pendingDocumentContext', documentContent);
             } else {
               localStorage.removeItem('pendingDocumentContext');
             }
+
+            // Update the UI input field
+            el.value = chatText;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
           }
-          // Call the send function if provided, with a small delay to ensure event is dispatched first
+          // Call the send function if provided - this will trigger thread.tsx handleSend which merges email context
           if (onSend) {
             setTimeout(() => {
               onSend();
