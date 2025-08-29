@@ -13,6 +13,33 @@ import { NavSidebar } from '../components/nav-sidebar'
 import { ApiService } from '../services/apiService'
 import KnowledgeGraphVisualizer from '../components/KnowledgeGraphVisualizer'
 
+// Utility function to convert UTC timestamp to Eastern time
+const convertToEasternTime = (timestamp: string): string => {
+  try {
+    // All timestamps from backend are now in UTC
+    // If no timezone info, assume UTC and add 'Z'
+    const utcTimestamp = timestamp.includes('Z') || timestamp.includes('+') || timestamp.includes('-') 
+      ? timestamp 
+      : timestamp + 'Z'
+    
+    const date = new Date(utcTimestamp)
+    
+    return date.toLocaleString('en-US', {
+      timeZone: 'America/New_York',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    })
+  } catch (error) {
+    console.error('Error converting timestamp to Eastern time:', error)
+    return timestamp // Fallback to original timestamp
+  }
+}
+
 interface KnowledgeEntity {
   id: string;
   name: string;
@@ -271,7 +298,7 @@ const Knowledge = (): JSX.Element => {
                     {selectedNode.created_at && (
                       <div>
                         <label className="block text-sm font-medium text-zinc-400 mb-1">Created</label>
-                        <p className="text-white text-sm">{new Date(selectedNode.created_at).toLocaleString()}</p>
+                        <p className="text-white text-sm">{convertToEasternTime(selectedNode.created_at)}</p>
                       </div>
                     )}
                     {selectedNode.source && (
@@ -337,7 +364,7 @@ const Knowledge = (): JSX.Element => {
                     {selectedNode.created_at && (
                       <div>
                         <label className="block text-sm font-medium text-zinc-400 mb-1">Created</label>
-                        <p className="text-white text-sm">{new Date(selectedNode.created_at).toLocaleString()}</p>
+                        <p className="text-white text-sm">{convertToEasternTime(selectedNode.created_at)}</p>
                       </div>
                     )}
                     <div>

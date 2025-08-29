@@ -31,6 +31,33 @@ import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { ApiService } from '../services/apiService'
 
+// Utility function to convert UTC timestamp to Eastern time
+const convertToEasternTime = (timestamp: string): string => {
+  try {
+    // All timestamps from backend are now in UTC
+    // If no timezone info, assume UTC and add 'Z'
+    const utcTimestamp = timestamp.includes('Z') || timestamp.includes('+') || timestamp.includes('-') 
+      ? timestamp 
+      : timestamp + 'Z'
+    
+    const date = new Date(utcTimestamp)
+    
+    return date.toLocaleString('en-US', {
+      timeZone: 'America/New_York',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    })
+  } catch (error) {
+    console.error('Error converting timestamp to Eastern time:', error)
+    return timestamp // Fallback to original timestamp
+  }
+}
+
 // Utility function to format bytes into human readable format
 const formatBytes = (bytes: number, decimals: number = 2): string => {
   if (bytes === 0) return '0 B'
@@ -713,7 +740,7 @@ export default function Admin() {
                               <span className="text-white font-medium text-sm">{user.totalFiles?.toLocaleString() || 0}</span>
                             </td>
                             <td className="py-2 px-1 text-center">
-                              <span className="text-white font-medium text-sm" title={user.lastFileUploadAt ? new Date(user.lastFileUploadAt).toLocaleString() : 'Never'}>
+                              <span className="text-white font-medium text-sm" title={user.lastFileUploadAt ? convertToEasternTime(user.lastFileUploadAt) : 'Never'}>
                                 {user.totalFileSize ? formatBytes(user.totalFileSize) : '0 B'}
                               </span>
                             </td>
@@ -724,7 +751,7 @@ export default function Admin() {
                               <span className="text-white font-medium text-sm">{user.loginCount?.toLocaleString() || 0}</span>
                             </td>
                             <td className="py-2 px-1 text-center text-zinc-400 text-xs">
-                              {user.lastLoginDate ? new Date(user.lastLoginDate).toLocaleDateString() : 'Never'}
+                              {user.lastLoginDate ? convertToEasternTime(user.lastLoginDate) : 'Never'}
                             </td>
                             {/* Individual Scope Columns */}
                             <td className="py-2 px-1 text-center">
@@ -791,7 +818,7 @@ export default function Admin() {
                               </span>
                             </td>
                             <td className="py-2 px-2 text-center text-zinc-400 text-xs">
-                              {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                              {user.created_at ? convertToEasternTime(user.created_at) : 'N/A'}
                             </td>
                           </tr>
                         ))}
@@ -876,7 +903,7 @@ export default function Admin() {
                         <div className="flex-1">
                           <div className="text-white font-medium">{key.key.substring(0, 8)}...</div>
                           <div className="text-zinc-400 text-sm">Role: {key.role}</div>
-                          <div className="text-zinc-500 text-xs">Created: {new Date(key.created_at).toLocaleDateString()}</div>
+                          <div className="text-zinc-500 text-xs">Created: {convertToEasternTime(key.created_at)}</div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
@@ -1558,7 +1585,7 @@ export default function Admin() {
                               </div>
                             </div>
                             <span className="text-zinc-400 text-xs">
-                              {new Date(login.timestamp).toLocaleString()}
+                              {convertToEasternTime(login.timestamp)}
                             </span>
                           </div>
                         ))}
@@ -1609,7 +1636,7 @@ export default function Admin() {
                                 <span className="text-zinc-300">{visitor.country}</span>
                               </td>
                               <td className="py-3 px-4 text-zinc-400 text-sm">
-                                {new Date(visitor.time).toLocaleString()}
+                                {convertToEasternTime(visitor.time)}
                               </td>
                             </tr>
                           ))}
