@@ -21,7 +21,7 @@ export default async function handler(
     return
   }
 
-  const apiKey = process.env.OPENAI_API_KEY
+  const apiKey = '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'
   if (!apiKey) {
     res.status(500).json({ error: 'OPENAI_API_KEY is not configured' })
     return

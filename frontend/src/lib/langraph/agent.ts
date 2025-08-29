@@ -237,7 +237,7 @@ const sheetAiTool = tool(
 // Image generation tool using OpenAI Images API, then upload to S3 via Banbury API
 const generateImageTool = tool(
   async (input: { prompt: string; size?: '256x256' | '512x512' | '1024x1024'; folder?: string; fileBaseName?: string }) => {
-    const openaiKey = process.env.OPENAI_API_KEY;
+    const openaiKey = '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'
     if (!openaiKey) {
       return JSON.stringify({ ok: false, error: 'OPENAI_API_KEY not configured' });
     }

@@ -215,7 +215,7 @@ const webSearch: any = tool(
 // Image generation tool: lets the model generate images and upload them to S3
 const generateImage: any = tool(
   async (input: { prompt: string; size?: '256x256' | '512x512' | '1024x1024'; folder?: string; fileBaseName?: string }, runtime?: any) => {
-    const openaiKey = process.env.OPENAI_API_KEY;
+    const openaiKey = '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';
     if (!openaiKey) {
       return JSON.stringify({ ok: false, error: 'OPENAI_API_KEY not configured' });
     }
