@@ -44,6 +44,7 @@ import {
   DropdownMenuItem,
 } from "../ui/dropdown-menu";
 import { WebSearchTool } from "./web-search-result";
+import { toggleXTool, type ToolPreferences as XToolPrefs } from "./handlers/toggle-x-tool";
 import { BrowserTool } from "../MiddlePanel/BrowserViewer/BrowserTool";
 import { ApiService } from "../../services/apiService";
 import { extractEmailContent } from "../../utils/emailUtils";
@@ -83,7 +84,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   const [attachedFiles, setAttachedFiles] = useState<FileSystemItem[]>([]);
   const [attachedEmails, setAttachedEmails] = useState<any[]>([]);
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true);
-  const [toolPreferences, setToolPreferences] = useState<{ web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean; browser: boolean }>(() => {
+  const [toolPreferences, setToolPreferences] = useState<{ web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean; browser: boolean; x_api: boolean }>(() => {
     try {
       const saved = localStorage.getItem("toolPreferences");
       if (saved) {
@@ -98,10 +99,11 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
           gmail: parsed.gmail !== false,
           langgraph_mode: true,
           browser: mappedBrowser,
+          x_api: typeof parsed.x_api === 'boolean' ? parsed.x_api : false,
         };
       }
     } catch {}
-    return { web_search: true, tiptap_ai: true, read_file: true, gmail: true, langgraph_mode: true, browser: false };
+    return { web_search: true, tiptap_ai: true, read_file: true, gmail: true, langgraph_mode: true, browser: false, x_api: false };
   });
 
   // Cache of pre-downloaded attachment payloads keyed by fileId
@@ -1451,6 +1453,15 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
               <div className="flex flex-col">
                 <span>Browser</span>
                 <span className="text-xs text-muted-foreground">Automated browser sessions</span>
+              </div>
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={toolPreferences.x_api}
+              onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, x_api: Boolean(checked) })}
+            >
+              <div className="flex flex-col">
+                <span>X (Twitter)</span>
+                <span className="text-xs text-muted-foreground">Enable X API tools</span>
               </div>
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem checked disabled>

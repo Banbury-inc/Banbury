@@ -1835,7 +1835,7 @@ const xApiGetUserInfoTool = tool(
 );
 
 const xApiGetUserTweetsTool = tool(
-  async (input: { username?: string; userId?: string; maxResults?: number; excludeRetweets?: boolean; excludeReplies?: boolean }) => {
+  async (input: { username?: string; userId?: string; maxResults?: number; excludeRetweets?: boolean; excludeReplies?: boolean; useAppBearer?: boolean }) => {
     const prefs = (getServerContextValue<any>("toolPreferences") || {}) as { x_api?: boolean };
     if (prefs.x_api === false) {
       return JSON.stringify({ success: false, error: "X API access is disabled by user preference" });
@@ -1855,6 +1855,7 @@ const xApiGetUserTweetsTool = tool(
     });
     if (input.username) params.append('username', input.username);
     if (input.userId) params.append('user_id', input.userId);
+    if (typeof input.useAppBearer === 'undefined' || input.useAppBearer === true) params.append('use_app_bearer', 'true');
 
     const url = `${apiBase}/authentication/x_api/user_tweets/?${params.toString()}`;
     const resp = await fetch(url, { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
@@ -1873,6 +1874,7 @@ const xApiGetUserTweetsTool = tool(
       maxResults: z.number().optional().describe("Maximum number of tweets to return (default 10, max 100)"),
       excludeRetweets: z.boolean().optional().describe("Exclude retweets from results (default false)"),
       excludeReplies: z.boolean().optional().describe("Exclude replies from results (default false)"),
+      useAppBearer: z.boolean().optional().describe("Force app bearer for arbitrary public accounts (default true)"),
     }),
   }
 );
@@ -1989,7 +1991,7 @@ const xApiPostTweetTool = tool(
   },
   {
     name: "x_api_post_tweet",
-    description: "Post a new tweet to X (Twitter)",
+    description: "Post a new tweet to X (Twitter) using your connected account",
     schema: z.object({
       text: z.string().describe("Tweet text content (max 280 characters)"),
       replyToTweetId: z.string().optional().describe("Tweet ID to reply to"),
