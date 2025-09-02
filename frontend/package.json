@@ -67,7 +67,6 @@
     "@radix-ui/themes": "^3.2.1",
     "@stripe/react-stripe-js": "^3.9.2",
     "@stripe/stripe-js": "^7.9.0",
-    "@tiptap-pro/extension-comments": "^3.2.1",
     "@tiptap/extension-font-family": "^3.3.0",
     "@tiptap/extension-highlight": "^3.0.9",
     "@tiptap/extension-horizontal-rule": "^3.0.9",
