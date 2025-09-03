@@ -40,7 +40,7 @@ export const defaultLangGraphConfig: LangGraphConfig = {
   maxTokens: 4096,
   
   // Workflow settings
-  recursionLimit: 10,
+  recursionLimit: 1000, // Maximum recursion limit for complex workflows
   streamMode: "values",
   
   // Tool settings
@@ -92,13 +92,13 @@ Always provide clear citations when using web search results and store important
 
 // Environment-specific configurations
 export const developmentConfig: Partial<LangGraphConfig> = {
-  recursionLimit: 15, // Allow more steps for debugging
+  recursionLimit: 1000, // Maximum recursion limit for development
   streamMode: "debug" as const,
   persistToolInvocationLogs: true
 };
 
 export const productionConfig: Partial<LangGraphConfig> = {
-  recursionLimit: 8, // Stricter limits for production
+  recursionLimit: 1000, // Maximum recursion limit for production
   streamMode: "values" as const,
   temperature: 0.1 // More deterministic
 };
