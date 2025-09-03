@@ -815,10 +815,10 @@ const createFileTool = tool(
   },
   {
     name: 'create_file',
-    description: 'Create a new file in the user\'s cloud workspace. Provide file name, full path including the file name, and the file content.',
+    description: 'Create a new file in the user\'s cloud workspace. Prefer Microsoft Word (.docx) for documents. Provide file name, full path including the file name, and the file content. For documents (reports, proposals, notes), default to .docx unless the user explicitly asks for another format.',
     schema: z.object({
-      fileName: z.string().describe("The new file name (e.g., 'notes.md')"),
-      filePath: z.string().describe("Full path where the file should be stored, including the file name (e.g., 'projects/alpha/notes.md')"),
+      fileName: z.string().describe("The new file name. Prefer '.docx' for documents (e.g., 'notes.docx')"),
+      filePath: z.string().describe("Full path including the file name. Prefer '.docx' for documents (e.g., 'projects/alpha/notes.docx')"),
       content: z.string().describe('The file contents as text'),
       contentType: z.string().optional().describe("Optional MIME type, defaults by extension"),
     }),
@@ -2111,7 +2111,7 @@ async function agentNode(state: AgentState): Promise<AgentState> {
         "You have access to web search, memory management, spreadsheet editing, DOCX document editing, file creation, file downloading, file search, datetime tools, X (Twitter) API, and browser automation. " +
         "When helping with spreadsheet editing tasks (cleaning, transformations, formulas, row/column edits), use the sheet_ai tool to deliver structured operations. " +
         "When helping with DOCX document editing tasks (adding content, formatting text, inserting tables/lists/images, restructuring), use the docx_ai tool to deliver structured document operations. The docx_ai tool supports operations like insertText, replaceText, insertParagraph, insertHeading, insertList, insertTable, formatText, insertImage, and setPageSettings. " +
-        "To create a new file in the user's cloud workspace, use the create_file tool with file name, full path (including the file name), and content. " +
+        "To create a new file in the user's cloud workspace, use the create_file tool with file name, full path (including the file name), and content. When the user asks to create a document, default to Microsoft Word (.docx) for the fileName and filePath unless they explicitly ask for another format. " +
         "To download a file from a URL and save it to the user's cloud workspace, use the download_from_url tool with the URL and optionally a custom file name and path. " +
         "To search for files in the user's cloud storage, use the search_files tool with a search query to find files by name. " +
         "Store important information in memory for future reference using the store_memory tool. " +

@@ -268,7 +268,19 @@ const SYSTEM_PROMPT =
   "- x_api_post_tweet: Post a new tweet " +
   "Only use X API tools if the X API feature is enabled. " +
   "Store important information in memory for future reference and search your memories when relevant. " +
-  "Provide clear citations when using web search results.";
+  "Provide clear citations when using web search results. " +
+  "When the user asks to create a new document, default to Microsoft Word (.docx), not Markdown. " +
+  "Use the create_file tool with a .docx fileName and filePath (e.g., 'documents/Title.docx') unless the user explicitly requests Markdown or another format. " +
+  "When modifying or structuring a document, prefer the docx_ai tool. " +
+  "Only create .md files if the user specifically asks for Markdown. " +
+  "When the user asks to create a new spreadsheet, default to Microsoft Excel (.xlsx), not CSV. " +
+  "Use the create_file tool with a .xlsx fileName and filePath (e.g., 'spreadsheets/Title.xlsx') unless the user explicitly requests CSV or another format. " +
+  "When modifying or structuring a spreadsheet, prefer the sheet_ai tool. " +
+  "Only create .csv files if the user specifically asks for CSV. " +
+  "When the user asks to create a new email, default to Microsoft Outlook (.eml), not HTML. " +
+  "Use the create_file tool with a .eml fileName and filePath (e.g., 'emails/Title.eml') unless the user explicitly requests HTML or another format. " +
+  "When modifying or structuring an email, prefer the email_ai tool. " +
+  "Only create .html files if the user specifically asks for HTML. ";
 
 export const config = { api: { bodyParser: { sizeLimit: "2mb" } } };
 
