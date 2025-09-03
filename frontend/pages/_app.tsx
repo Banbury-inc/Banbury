@@ -9,9 +9,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { ClaudeRuntimeProvider } from '@/assistant/ClaudeRuntimeProvider';
 import { Toaster } from '@/components/ui/toaster';
 import '@/index.css';
+import { useRouter } from 'next/router';
+import { attachRouteTracking } from './handlers/routeTracking';
 
 function AppInner({ Component, pageProps }: AppProps) {
   const [mode, setMode] = useState<'light' | 'dark'>('dark');
+  const router = useRouter();
 
   const colorMode = useMemo(
     () => ({
@@ -36,6 +39,13 @@ function AppInner({ Component, pageProps }: AppProps) {
       setMode('dark');
     }
   }, []);
+
+  useEffect(() => {
+    const detach = attachRouteTracking(router)
+    return () => {
+      if (typeof detach === 'function') detach()
+    }
+  }, [router])
 
   useEffect(() => {
     if (typeof document !== 'undefined') {

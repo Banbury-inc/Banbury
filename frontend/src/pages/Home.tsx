@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import AppImage from '../assets/images/app_image.png';
 import { Button } from '../components/ui/button';
 import { determineOS } from '../handlers/determineOS';
-import { trackPageView } from '../services/trackingService';
+// Tracking handled globally in pages/_app.tsx via routeTracking handler
 
 const Home = (): JSX.Element => {
   const theme = useTheme();
@@ -49,10 +49,7 @@ const Home = (): JSX.Element => {
     determineOS(setDownloadText, setDownloadUrl);
   }, []);
 
-  // Track page visit when component mounts
-  useEffect(() => {
-    trackPageView('/');
-  }, []);
+  // Page tracking is handled globally; no local tracking here
 
   const handleDownload = () => {
     window.open(downloadUrl, '_blank');

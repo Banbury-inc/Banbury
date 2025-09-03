@@ -30,6 +30,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { ApiService } from '../services/apiService'
+import { 
+  getTotalPages, 
+  getPageSlice, 
+  nextPage as nextVisitorPage, 
+  prevPage as prevVisitorPage, 
+  canGoNext, 
+  canGoPrev, 
+  clampPage 
+} from './handlers/adminVisitors'
 
 // Utility function to convert UTC timestamp to Eastern time
 const convertToEasternTime = (timestamp: string): string => {
@@ -137,6 +146,8 @@ interface VisitorData {
   city: string
   region: string
   country: string
+  path?: string
+  client_timestamp?: string
 }
 
 interface VisitorStats {
@@ -208,6 +219,8 @@ export default function Admin() {
   const [visitorData, setVisitorData] = useState<VisitorData[]>([])
   const [visitorStats, setVisitorStats] = useState<VisitorStats | null>(null)
   const [visitorLoading, setVisitorLoading] = useState(false)
+  const [visitorPage, setVisitorPage] = useState<number>(1)
+  const [visitorPageSize] = useState<number>(20)
   const [loginData, setLoginData] = useState<LoginData[]>([])
   const [loginStats, setLoginStats] = useState<LoginStats | null>(null)
   const [loginLoading, setLoginLoading] = useState(false)
@@ -382,6 +395,7 @@ export default function Admin() {
       console.log('Visitor data response:', response)
       if (response.result === 'success') {
         setVisitorData(response.visitors || [])
+        setVisitorPage(1)
         
         // Process daily stats to ensure proper sorting and today's data inclusion
         let processedDailyStats = response.daily_stats || []
@@ -1597,8 +1611,43 @@ export default function Admin() {
 
               <Card className="bg-zinc-900 border-zinc-700">
                 <CardHeader>
-                  <CardTitle className="text-white">Recent Visitors</CardTitle>
-                  <CardDescription className="text-zinc-400">Latest site visitors with location data</CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-white">Recent Visitors</CardTitle>
+                      <CardDescription className="text-zinc-400">Latest site visitors with location data</CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const totalPages = getTotalPages({ totalItems: visitorData.length, pageSize: visitorPageSize })
+                        const currentPage = clampPage({ page: visitorPage, totalPages })
+                        return (
+                          <>
+                            <span className="text-zinc-400 text-xs hidden md:inline">
+                              Page {currentPage} of {totalPages} • {visitorData.length} total
+                            </span>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setVisitorPage(prevVisitorPage({ page: currentPage }))}
+                              disabled={!canGoPrev({ page: currentPage })}
+                              className="text-white border-zinc-600"
+                            >
+                              Prev
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setVisitorPage(nextVisitorPage({ page: currentPage, totalPages }))}
+                              disabled={!canGoNext({ page: currentPage, totalPages })}
+                              className="text-white border-zinc-600"
+                            >
+                              Next
+                            </Button>
+                          </>
+                        )
+                      })()}
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {visitorLoading ? (
@@ -1611,16 +1660,27 @@ export default function Admin() {
                         <thead>
                           <tr className="border-b border-zinc-700">
                             <th className="text-left py-3 px-4 text-zinc-300 font-medium">IP Address</th>
+                            <th className="text-left py-3 px-4 text-zinc-300 font-medium">Page</th>
                             <th className="text-left py-3 px-4 text-zinc-300 font-medium">Location</th>
                             <th className="text-left py-3 px-4 text-zinc-300 font-medium">Country</th>
                             <th className="text-left py-3 px-4 text-zinc-300 font-medium">Time</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {visitorData.slice(0, 20).map((visitor) => (
+                          {(() => {
+                            const totalPages = getTotalPages({ totalItems: visitorData.length, pageSize: visitorPageSize })
+                            const currentPage = clampPage({ page: visitorPage, totalPages })
+                            const paged = getPageSlice({ items: visitorData, page: currentPage, pageSize: visitorPageSize })
+                            return paged
+                          })().map((visitor) => (
                             <tr key={visitor._id} className="border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors">
                               <td className="py-3 px-4">
                                 <span className="text-white font-mono text-sm">{visitor.ip_address}</span>
+                              </td>
+                              <td className="py-3 px-4 max-w-[360px]">
+                                <span className="text-zinc-300 text-sm font-mono truncate inline-block max-w-full" title={visitor.path || 'Unknown'}>
+                                  {visitor.path || 'Unknown'}
+                                </span>
                               </td>
                               <td className="py-3 px-4">
                                 <div>

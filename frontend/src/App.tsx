@@ -39,8 +39,9 @@ const PageTracker = () => {
   const location = useLocation();
 
   useEffect(() => {
-    trackPageView(location.pathname);
-  }, [location]);
+    const fullPath = `${location.pathname}${location.search}${location.hash}`;
+    trackPageView(fullPath);
+  }, [location.pathname, location.search, location.hash]);
 
   return null;
 };

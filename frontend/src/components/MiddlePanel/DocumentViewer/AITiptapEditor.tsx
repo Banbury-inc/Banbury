@@ -40,7 +40,6 @@ import {
   Image as ImageIcon,
   Subscript as SubscriptIcon,
   Superscript as SuperscriptIcon,
-  Wand2,
   MoreHorizontal,
   Save,
   Download,
@@ -49,7 +48,7 @@ import {
   Search,
   FileImage
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 
 import styles from '../../../styles/SimpleTiptapEditor.module.css';
@@ -68,6 +67,7 @@ import { insertImageFromBackendFile } from '../../handlers/editorImage';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { ApiService } from '../../../services/apiService';
 import { registerTiptapEditor, unregisterTiptapEditor } from '../../RightPanel/handlers/handle-docx-ai-response';
+import { createToolbarHandlers } from './handlers/toolbarHandlers';
  
 
 interface AITiptapEditorProps {
@@ -201,6 +201,92 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
       },
     },
   });
+
+  // Responsive toolbar calculation (visible vs overflow)
+  const toolbarRef = useRef<HTMLDivElement | null>(null)
+  const rightActionsRef = useRef<HTMLDivElement | null>(null)
+  const [visibleButtons, setVisibleButtons] = useState<string[]>([])
+  const [overflowOpen, setOverflowOpen] = useState(false)
+
+  const handlers = useMemo(() => createToolbarHandlers({ editor, setIsImageMenuOpen }), [editor])
+
+  const toolbarButtons = useMemo(() => (
+    [
+      { id: 'undo', title: 'Undo', icon: <Undo size={16} />, onClick: handlers.undo },
+      { id: 'redo', title: 'Redo', icon: <Redo size={16} />, onClick: handlers.redo },
+      { id: 'bold', title: 'Bold', icon: <Bold size={16} />, onClick: handlers.toggleBold },
+      { id: 'italic', title: 'Italic', icon: <Italic size={16} />, onClick: handlers.toggleItalic },
+      { id: 'underline', title: 'Underline', icon: <UnderlineIcon size={16} />, onClick: handlers.toggleUnderline },
+      { id: 'strike', title: 'Strikethrough', icon: <Strikethrough size={16} />, onClick: handlers.toggleStrike },
+      { id: 'code', title: 'Code', icon: <Code size={16} />, onClick: handlers.toggleCode },
+      { id: 'highlight', title: 'Highlight', icon: <Highlighter size={16} />, onClick: handlers.toggleHighlight },
+      { id: 'subscript', title: 'Subscript', icon: <SubscriptIcon size={16} />, onClick: handlers.toggleSubscript },
+      { id: 'superscript', title: 'Superscript', icon: <SuperscriptIcon size={16} />, onClick: handlers.toggleSuperscript },
+      { id: 'alignLeft', title: 'Align Left', icon: <AlignLeft size={16} />, onClick: handlers.alignLeft },
+      { id: 'alignCenter', title: 'Align Center', icon: <AlignCenter size={16} />, onClick: handlers.alignCenter },
+      { id: 'alignRight', title: 'Align Right', icon: <AlignRight size={16} />, onClick: handlers.alignRight },
+      { id: 'alignJustify', title: 'Justify', icon: <AlignJustify size={16} />, onClick: handlers.alignJustify },
+      { id: 'bullet', title: 'Bullet List', icon: <List size={16} />, onClick: handlers.toggleBulletList },
+      { id: 'ordered', title: 'Numbered List', icon: <ListOrdered size={16} />, onClick: handlers.toggleOrderedList },
+      { id: 'quote', title: 'Quote', icon: <Quote size={16} />, onClick: handlers.toggleBlockquote },
+      { id: 'table', title: 'Insert Table', icon: <TableIcon size={16} />, onClick: handlers.insertTable },
+      { id: 'image', title: 'Add Image', icon: <ImageIcon size={16} />, onClick: handlers.openImageMenu },
+      { id: 'link', title: 'Add Link', icon: <LinkIcon size={16} />, onClick: () => setLink() },
+    ]
+  ), [handlers])
+
+  const calculateVisible = useMemo(() => {
+    return () => {
+      const el = toolbarRef.current
+      if (!el) {
+        setVisibleButtons(toolbarButtons.map(b => b.id))
+        return
+      }
+      const containerWidth = el.offsetWidth || 0
+      if (containerWidth === 0) {
+        setVisibleButtons(toolbarButtons.map(b => b.id))
+        return
+      }
+      // Reserve space for non-responsive groups (headings dropdown, font select, image/link, AI menu)
+      const reserved = 360 // px, heuristic
+      const overflowButtonWidth = 32
+      const rightWidth = rightActionsRef.current?.offsetWidth || 120
+      const available = Math.max(0, containerWidth - reserved - rightWidth - overflowButtonWidth)
+      const buttonWidth = 32
+
+      let used = 0
+      const visible: string[] = []
+      for (const btn of toolbarButtons) {
+        if (used + buttonWidth <= available) {
+          visible.push(btn.id)
+          used += buttonWidth
+        } else {
+          break
+        }
+      }
+      if (visible.length === 0) {
+        setVisibleButtons(toolbarButtons.slice(0, 5).map(b => b.id))
+      } else {
+        setVisibleButtons(visible)
+      }
+    }
+  }, [toolbarButtons])
+
+  useEffect(() => {
+    // Initial and on resize
+    const fn = calculateVisible
+    const t = setTimeout(fn, 50)
+    const RO = (typeof window !== 'undefined' ? (window as any).ResizeObserver : undefined)
+    const ro = RO ? new RO(() => setTimeout(fn, 50)) : null
+    if (ro && toolbarRef.current) ro.observe(toolbarRef.current)
+    const onResize = () => setTimeout(fn, 50)
+    window.addEventListener('resize', onResize)
+    return () => {
+      clearTimeout(t)
+      window.removeEventListener('resize', onResize)
+      if (ro) ro.disconnect()
+    }
+  }, [calculateVisible])
 
   // Register the editor with the AI context and DOCX handler
   useEffect(() => {
@@ -383,131 +469,55 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
   return (
     <div className={cn(styles['simple-tiptap-container'], className)}>
       {/* Toolbar */}
-      <div className={styles['simple-tiptap-toolbar']}>
+      <div className={styles['simple-tiptap-toolbar']} ref={toolbarRef} style={{ flexWrap: 'nowrap' }}>
         {/* Left side toolbar items */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1 }}>
-          {/* Undo/Redo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: 0 }}>
+          {/* Responsive icon buttons */}
           <div className={styles['toolbar-group']}>
-            <button
-              onClick={() => editor.chain().focus().undo().run()}
-              disabled={!editor.can().chain().focus().undo().run()}
-              className={styles['toolbar-button']}
-              title="Undo"
-            >
-              <Undo size={16} />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().redo().run()}
-              disabled={!editor.can().chain().focus().redo().run()}
-              className={styles['toolbar-button']}
-              title="Redo"
-            >
-              <Redo size={16} />
-            </button>
-          </div>
-
-          <div className={styles['toolbar-separator']} />
-
-          {/* Text formatting */}
-          <div className={styles['toolbar-group']}>
-            <button
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              disabled={!editor.can().chain().focus().toggleBold().run()}
-              className={`${styles['toolbar-button']} ${editor.isActive('bold') ? styles['active'] : ''}`}
-              title="Bold"
-            >
-              <Bold size={16} />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              disabled={!editor.can().chain().focus().toggleItalic().run()}
-              className={`${styles['toolbar-button']} ${editor.isActive('italic') ? styles['active'] : ''}`}
-              title="Italic"
-            >
-              <Italic size={16} />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
-              disabled={!editor.can().chain().focus().toggleUnderline().run()}
-              className={`${styles['toolbar-button']} ${editor.isActive('underline') ? styles['active'] : ''}`}
-              title="Underline"
-            >
-              <UnderlineIcon size={16} />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleStrike().run()}
-              disabled={!editor.can().chain().focus().toggleStrike().run()}
-              className={`${styles['toolbar-button']} ${editor.isActive('strike') ? styles['active'] : ''}`}
-              title="Strikethrough"
-            >
-              <Strikethrough size={16} />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleCode().run()}
-              disabled={!editor.can().chain().focus().toggleCode().run()}
-              className={`${styles['toolbar-button']} ${editor.isActive('code') ? styles['active'] : ''}`}
-              title="Code"
-            >
-              <Code size={16} />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleHighlight().run()}
-              disabled={!editor.can().chain().focus().toggleHighlight().run()}
-              className={`${styles['toolbar-button']} ${editor.isActive('highlight') ? styles['active'] : ''}`}
-              title="Highlight"
-            >
-              <Highlighter size={16} />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleSubscript().run()}
-              disabled={!editor.can().chain().focus().toggleSubscript().run()}
-              className={`${styles['toolbar-button']} ${editor.isActive('subscript') ? styles['active'] : ''}`}
-              title="Subscript"
-            >
-              <SubscriptIcon size={16} />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleSuperscript().run()}
-              disabled={!editor.can().chain().focus().toggleSuperscript().run()}
-              className={`${styles['toolbar-button']} ${editor.isActive('superscript') ? styles['active'] : ''}`}
-              title="Superscript"
-            >
-              <SuperscriptIcon size={16} />
-            </button>
-          </div>
-
-          <div className={styles['toolbar-separator']} />
-
-          {/* Alignment */}
-          <div className={styles['toolbar-group']}>
-            <button
-              onClick={() => editor.chain().focus().setTextAlign('left').run()}
-              className={`${styles['toolbar-button']} ${editor.isActive({ textAlign: 'left' }) ? styles['active'] : ''}`}
-              title="Align Left"
-            >
-              <AlignLeft size={16} />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().setTextAlign('center').run()}
-              className={`${styles['toolbar-button']} ${editor.isActive({ textAlign: 'center' }) ? styles['active'] : ''}`}
-              title="Align Center"
-            >
-              <AlignCenter size={16} />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().setTextAlign('right').run()}
-              className={`${styles['toolbar-button']} ${editor.isActive({ textAlign: 'right' }) ? styles['active'] : ''}`}
-              title="Align Right"
-            >
-              <AlignRight size={16} />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-              className={`${styles['toolbar-button']} ${editor.isActive({ textAlign: 'justify' }) ? styles['active'] : ''}`}
-              title="Justify"
-            >
-              <AlignJustify size={16} />
-            </button>
+            {toolbarButtons.map((btn) => (
+              visibleButtons.includes(btn.id) ? (
+                <button
+                  key={btn.id}
+                  onClick={btn.onClick}
+                  className={styles['toolbar-button']}
+                  title={btn.title}
+                >
+                  {btn.icon}
+                </button>
+              ) : null
+            ))}
+            {/* Overflow trigger if any hidden buttons */}
+            {toolbarButtons.some(b => !visibleButtons.includes(b.id)) && (
+              <DropdownMenu open={overflowOpen} onOpenChange={setOverflowOpen}>
+                <DropdownMenuTrigger asChild>
+                  <button className={styles['toolbar-button']} title="More tools">
+                    <MoreHorizontal size={16} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {toolbarButtons.filter(b => !visibleButtons.includes(b.id)).map(b => (
+                    <DropdownMenuItem key={b.id} onClick={() => { setOverflowOpen(false); b.onClick(); }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                        {b.icon}
+                        {b.title}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuItem onClick={() => { setOverflowOpen(false); handlers.insertHorizontalRule(); }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <Minus size={16} />
+                      Horizontal Rule
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setOverflowOpen(false); editor.chain().focus().insertContent('™').run(); }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <Type size={16} />
+                      Typography
+                    </span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
 
           <div className={styles['toolbar-separator']} />
@@ -585,46 +595,6 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
               <option value="serif">Serif</option>
               <option value="monospace">Monospace</option>
             </select>
-          </div>
-
-          <div className={styles['toolbar-separator']} />
-
-          {/* Lists and quotes */}
-          <div className={styles['toolbar-group']}>
-            <button
-              onClick={() => editor.chain().focus().toggleBulletList().run()}
-              className={`${styles['toolbar-button']} ${editor.isActive('bulletList') ? styles['active'] : ''}`}
-              title="Bullet List"
-            >
-              <List size={16} />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleOrderedList().run()}
-              className={`${styles['toolbar-button']} ${editor.isActive('orderedList') ? styles['active'] : ''}`}
-              title="Numbered List"
-            >
-              <ListOrdered size={16} />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleBlockquote().run()}
-              className={`${styles['toolbar-button']} ${editor.isActive('blockquote') ? styles['active'] : ''}`}
-              title="Quote"
-            >
-              <Quote size={16} />
-            </button>
-          </div>
-
-          <div className={styles['toolbar-separator']} />
-
-          {/* Insert Table */}
-          <div className={styles['toolbar-group']}>
-            <button
-              onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-              className={styles['toolbar-button']}
-              title="Insert Table"
-            >
-              <TableIcon size={16} />
-            </button>
           </div>
 
           <div className={styles['toolbar-separator']} />
@@ -754,47 +724,20 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            <button
-              onClick={setLink}
-              className={styles['toolbar-button']}
-              title="Add Link"
-            >
+            <button onClick={setLink} className={styles['toolbar-button']} title="Add Link">
               <LinkIcon size={16} />
             </button>
           </div>
 
           <div className={styles['toolbar-separator']} />
 
-          {/* AI Features */}
-          <div className={styles['toolbar-group']}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className={styles['toolbar-button']} title="More Tools">
-                  <MoreHorizontal size={16} />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem 
-                  onClick={() => editor.chain().focus().setHorizontalRule().run()}
-                >
-                  <Minus className="h-4 w-4 mr-2" />
-                  Horizontal Rule
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => editor.chain().focus().insertContent('™').run()}
-                >
-                  <Type className="h-4 w-4 mr-2" />
-                  Typography
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          {/* AI Features moved into main overflow; no separate trigger here */}
         </div>
 
         {/* Right side - Document Actions */}
         {(onSave || onDownload) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <div className={styles['toolbar-separator']} />
+          <div ref={rightActionsRef} style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: '0 0 auto', whiteSpace: 'nowrap', marginLeft: 8 }}>
+            <div className={styles['toolbar-separator']} style={{ marginLeft: 8, marginRight: 8 }} />
             <div className={styles['toolbar-group']}>
               {onSave && (
                 <button
