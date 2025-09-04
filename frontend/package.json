@@ -107,7 +107,7 @@
     "exceljs": "^4.4.0",
     "framer-motion": "^12.23.12",
     "handsontable": "^16.0.1",
-    "hyperformula": "^2.7.1",
+    "hyperformula": "^3.0.1",
     "html-docx-js": "^0.3.1",
     "html-to-docx": "^1.8.0",
     "js-yaml": "^4.1.0",
