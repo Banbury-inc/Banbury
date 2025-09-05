@@ -876,7 +876,7 @@ const Workspaces = (): JSX.Element => {
                 
                 {/* Assistant Panel */}
                 {!isAssistantPanelCollapsed && (
-                  <Allotment.Pane minSize={300} preferredSize={400} maxSize={600}>
+                  <Allotment.Pane minSize={300} preferredSize={400}>
                     <div className="h-full bg-black border-l border-gray-800 flex flex-col relative">
                       {/* Collapse button for assistant panel - positioned on left border */}
                       <button

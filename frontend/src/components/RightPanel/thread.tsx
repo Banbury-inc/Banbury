@@ -816,7 +816,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         backgroundColor: 'transparent',
       }}
     >
-      <ThreadPrimitive.Viewport className={cn(styles.darkScrollbar, "relative flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto min-h-0") } style={{ height: '100%', maxHeight: '100%' }}>
+      <ThreadPrimitive.Viewport className={cn(styles.darkScrollbar, "relative flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden min-h-0") } style={{ height: '100%', maxHeight: '100%' }}>
         {loadedMessagesBuffer ? null : <ThreadWelcome />}
 
         {/* Fallback buffer messages (shown only if runtime hasn't hydrated yet) */}
@@ -826,7 +826,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
               <div key={message.id || index} className="mx-auto max-w-[var(--thread-max-width)] px-[var(--thread-padding-x)]">
                 {message.role === 'user' ? (
                   <div className="mx-auto grid w-full max-w-[var(--thread-max-width)] auto-rows-auto text-sm grid-cols-[minmax(72px,1fr)_auto] gap-y-1 py-4 [&:where(>*)]:col-start-2">
-                    <div className="bg-muted text-foreground col-start-2 rounded-3xl px-5 py-2.5 break-words">
+                    <div className="bg-muted text-foreground col-start-2 rounded-3xl px-5 py-2.5 break-words overflow-x-auto max-w-full">
                       <div className="whitespace-pre-wrap">
                         {Array.isArray(message.content)
                           ? message.content.map((part: any) => part.type === 'text' ? part.text : '').join('')
@@ -836,7 +836,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
                   </div>
                 ) : (
                   <div className="relative mx-auto grid w-full max-w-[var(--thread-max-width)] grid-cols-[1fr] grid-rows-[auto_1fr] py-1">
-                    <div className="text-white col-start-1 row-start-1 leading-none break-words text-sm">
+                    <div className="text-white col-start-1 row-start-1 leading-none break-words text-sm overflow-x-auto max-w-full">
                       <div className="whitespace-pre-wrap">
                         {Array.isArray(message.content)
                           ? message.content.map((part: any) => part.type === 'text' ? part.text : '').join('')
@@ -1641,7 +1641,7 @@ const AssistantMessage: FC = () => {
         animate={{ y: 0, opacity: 1 }}
         data-role="assistant"
       >
-        <div className="text-white col-start-1 row-start-1 leading-none break-words text-sm">
+        <div className="text-white col-start-1 row-start-1 leading-none break-words text-sm overflow-x-auto max-w-full">
           <MessagePrimitive.Content
             components={{
               Text: MarkdownText,
@@ -1758,7 +1758,7 @@ const UserMessage: FC = () => {
       >
         <UserActionBar />
 
-        <div className="bg-muted text-foreground col-start-2 rounded-3xl px-5 py-2.5 break-words">
+        <div className="bg-muted text-foreground col-start-2 rounded-3xl px-5 py-2.5 break-words overflow-x-auto max-w-full">
           <MessagePrimitive.Content components={{ Text: MarkdownText }} />
           
           {/* Display attached files */}
