@@ -36,6 +36,12 @@ export function NavSidebar({ onLogout }: NavSidebarProps) {
       path: '/workspaces'
     },
     {
+      id: 'task-studio',
+      icon: Brain,
+      label: 'Task Studio',
+      path: '/task-studio'
+    },
+    {
       id: 'knowledge',
       icon: Brain,
       label: 'Knowledge',
