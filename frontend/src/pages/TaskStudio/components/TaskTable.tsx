@@ -1,9 +1,33 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '../../../components/ui/button'
 import { Card } from '../../../components/ui/card'
 import { Badge } from '../../../components/ui/badge'
 import { Task, TaskStatus } from '../types'
 import { taskHandlers } from '../handlers/taskHandlers'
+
+// Simple checkbox component
+interface CheckboxProps {
+  checked?: boolean
+  onCheckedChange?: (checked: boolean) => void
+  className?: string
+  ref?: React.Ref<HTMLInputElement>
+}
+
+const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
+  ({ className, checked, onCheckedChange, ...props }, ref) => {
+    return (
+      <input
+        type="checkbox"
+        ref={ref}
+        checked={checked}
+        onChange={(e) => onCheckedChange?.(e.target.checked)}
+        className={`h-3 w-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${className || ''}`}
+        {...props}
+      />
+    )
+  }
+)
+Checkbox.displayName = "Checkbox"
 
 interface TaskTableProps {
   refreshTrigger: number
@@ -13,6 +37,7 @@ export function TaskTable({ refreshTrigger }: TaskTableProps) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<TaskStatus | 'all'>('all')
+  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set())
 
   const loadTasks = async () => {
     setLoading(true)
@@ -54,6 +79,36 @@ export function TaskTable({ refreshTrigger }: TaskTableProps) {
     }
   }
 
+  const handleBatchDelete = async () => {
+    if (selectedTasks.size === 0) return
+    
+    const taskCount = selectedTasks.size
+    if (!confirm(`Are you sure you want to delete ${taskCount} task${taskCount > 1 ? 's' : ''}?`)) {
+      return
+    }
+
+    try {
+      await taskHandlers.batchDeleteTasks(Array.from(selectedTasks))
+      setSelectedTasks(new Set()) // Clear selection
+      loadTasks() // Refresh the list
+    } catch (error) {
+      console.error('Failed to delete tasks:', error)
+      alert('Failed to delete tasks. Please try again.')
+    }
+  }
+
+  const handleSelectTask = (taskId: string, checked: boolean) => {
+    setSelectedTasks(prev => {
+      const newSet = new Set(prev)
+      if (checked) {
+        newSet.add(taskId)
+      } else {
+        newSet.delete(taskId)
+      }
+      return newSet
+    })
+  }
+
   const getStatusBadgeVariant = (status: TaskStatus) => {
     switch (status) {
       case 'scheduled':
@@ -85,6 +140,22 @@ export function TaskTable({ refreshTrigger }: TaskTableProps) {
   }
 
   const filteredTasks = filter === 'all' ? tasks : tasks.filter(task => task.status === filter)
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTasks(new Set(filteredTasks.map(task => task.id)))
+    } else {
+      setSelectedTasks(new Set())
+    }
+  }
+
+  const isAllSelected = filteredTasks.length > 0 && filteredTasks.every(task => selectedTasks.has(task.id))
+  const isIndeterminate = selectedTasks.size > 0 && selectedTasks.size < filteredTasks.length
+
+  // Clear selections when filter changes
+  useEffect(() => {
+    setSelectedTasks(new Set())
+  }, [filter])
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -118,7 +189,23 @@ export function TaskTable({ refreshTrigger }: TaskTableProps) {
   return (
     <Card className="p-6 w-full h-full flex flex-col rounded-none">
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
-        <h2 className="text-xl font-semibold">Tasks</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-semibold">Tasks</h2>
+          {selectedTasks.size > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {selectedTasks.size} selected
+              </span>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleBatchDelete}
+              >
+                Delete Selected
+              </Button>
+            </div>
+          )}
+        </div>
         
         <div className="flex gap-2">
           <Button
@@ -161,6 +248,15 @@ export function TaskTable({ refreshTrigger }: TaskTableProps) {
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b">
+                <th className="text-left p-3 font-medium w-12">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={handleSelectAll}
+                    ref={(el: HTMLInputElement | null) => {
+                      if (el) el.indeterminate = isIndeterminate
+                    }}
+                  />
+                </th>
                 <th className="text-left p-3 font-medium">Title</th>
                 <th className="text-left p-3 font-medium">Status</th>
                 <th className="text-left p-3 font-medium">Priority</th>
@@ -173,6 +269,12 @@ export function TaskTable({ refreshTrigger }: TaskTableProps) {
             <tbody>
               {filteredTasks.map((task) => (
                 <tr key={task.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <td className="p-3">
+                    <Checkbox
+                      checked={selectedTasks.has(task.id)}
+                      onCheckedChange={(checked: boolean) => handleSelectTask(task.id, checked)}
+                    />
+                  </td>
                   <td className="p-3">
                     <div>
                       <div className="font-medium">{task.title}</div>

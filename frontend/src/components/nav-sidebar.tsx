@@ -1,4 +1,4 @@
-import { Home, FolderOpen, LogOut, Settings, UserStarIcon, Brain} from "lucide-react"
+import { Home, FolderOpen, LogOut, Settings, UserStarIcon, Brain, Workflow} from "lucide-react"
 import Image from 'next/image'
 import { useRouter } from "next/router"
 import { useState, useEffect } from "react"
@@ -37,7 +37,7 @@ export function NavSidebar({ onLogout }: NavSidebarProps) {
     },
     {
       id: 'task-studio',
-      icon: Brain,
+      icon: Workflow,
       label: 'Task Studio',
       path: '/task-studio'
     },

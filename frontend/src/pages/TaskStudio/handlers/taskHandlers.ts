@@ -116,6 +116,18 @@ export const taskHandlers = {
     }
   },
 
+  // Batch delete multiple tasks by calling individual delete for each
+  batchDeleteTasks: async (taskIds: string[]): Promise<void> => {
+    try {
+      // Delete each task individually
+      const deletePromises = taskIds.map(taskId => taskHandlers.deleteTask(taskId))
+      await Promise.all(deletePromises)
+    } catch (error) {
+      console.error('Error batch deleting tasks:', error)
+      throw new Error('Failed to delete tasks')
+    }
+  },
+
   // Start a task (change status to running)
   startTask: async (taskId: string): Promise<Task> => {
     try {
