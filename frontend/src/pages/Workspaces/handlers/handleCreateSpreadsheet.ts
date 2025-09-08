@@ -1,5 +1,4 @@
 import { CONFIG } from '../../../config/config';
-import * as XLSX from 'xlsx';
 
 interface UserInfo {
   username: string;
@@ -88,18 +87,40 @@ export const handleCreateSpreadsheet = async (
       ? `${spreadsheetName}.xlsx`
       : `New Spreadsheet ${new Date().toISOString().split('T')[0]}.xlsx`;
 
-    // Create workbook and worksheet
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.aoa_to_sheet(data);
+    // Create workbook and worksheet using ExcelJS (same as the loader expects)
+    const ExcelJSImport = await import('exceljs');
+    const ExcelJS = (ExcelJSImport as any).default || ExcelJSImport;
     
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Sheet1');
+    
+    // Add the data to the worksheet
+    data.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        const excelCell = worksheet.getCell(rowIndex + 1, colIndex + 1);
+        excelCell.value = cell;
+      });
+    });
+    
+    // Auto-fit columns
+    worksheet.columns.forEach((column: any) => {
+      if (column && column.eachCell) {
+        let maxLength = 0;
+        column.eachCell({ includeEmpty: false }, (cell: any) => {
+          const columnLength = cell.value ? String(cell.value).length : 0;
+          if (columnLength > maxLength) {
+            maxLength = columnLength;
+          }
+        });
+        column.width = Math.min(maxLength + 2, 50); // Set max width to 50
+      }
+    });
 
-    // Generate XLSX file as buffer
-    const xlsxBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    
-    // Create XLSX blob
-    const blob = new Blob([xlsxBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    // Generate XLSX buffer and create blob
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
 
     // Upload spreadsheet using the uploadToS3 function
     
