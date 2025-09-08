@@ -445,6 +445,7 @@ export class ApiService {
       // Ensure token is loaded
       this.loadAuthToken();
       
+      console.log('[downloadS3File] Downloading file:', fileId, 'fileName:', fileName);
       const response = await axios({
         method: 'get',
         url: `${this.baseURL}/files/download_s3_file/${encodeURIComponent(fileId)}/`,
@@ -454,8 +455,51 @@ export class ApiService {
         }
       });
 
+      console.log('[downloadS3File] Response status:', response.status);
+      console.log('[downloadS3File] Response headers:', response.headers);
+      
       // Preserve server-provided content-type for correct handling (e.g., XLSX)
       const incomingBlob = response.data as Blob;
+      console.log('[downloadS3File] Blob size:', incomingBlob.size, 'type:', incomingBlob.type);
+      
+      // Debug: Check if the response is actually small enough to be an error
+      if (incomingBlob.size < 1000) {
+        try {
+          const text = await incomingBlob.text();
+          console.log('[downloadS3File] Small response, content:', text.substring(0, 200));
+          
+          // Check if it's a JSON response with a URL
+          try {
+            const json = JSON.parse(text);
+            if (json.url || json.download_url || json.presigned_url) {
+              const downloadUrl = json.url || json.download_url || json.presigned_url;
+              console.log('[downloadS3File] Got presigned URL, following redirect:', downloadUrl);
+              
+              // Download from the presigned URL
+              const realFileResponse = await axios({
+                method: 'get',
+                url: downloadUrl,
+                responseType: 'blob'
+              });
+              
+              const realBlob = realFileResponse.data as Blob;
+              console.log('[downloadS3File] Real file downloaded, size:', realBlob.size);
+              
+              const url = window.URL.createObjectURL(realBlob);
+              return {
+                success: true,
+                blob: realBlob,
+                url,
+                fileName
+              };
+            }
+          } catch (jsonError) {
+            // Not JSON or no URL field
+          }
+        } catch (e) {
+          console.log('[downloadS3File] Could not read blob as text');
+        }
+      }
       const serverType = (response.headers && (response.headers['content-type'] || (response.headers as any).get?.('content-type'))) || '';
       const type = (incomingBlob && (incomingBlob as any).type) || serverType || 'application/octet-stream';
       const blob = (incomingBlob && (incomingBlob as any).type)

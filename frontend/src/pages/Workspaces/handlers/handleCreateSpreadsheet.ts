@@ -144,8 +144,12 @@ export const handleCreateSpreadsheet = async (
       variant: "success",
     });
     
-    // Trigger sidebar refresh after successful spreadsheet creation
-    triggerSidebarRefresh();
+    // Add a small delay before refreshing to ensure S3 has processed the file
+    setTimeout(() => {
+      console.log('[handleCreateSpreadsheet] Triggering sidebar refresh after delay');
+      // Trigger sidebar refresh after successful spreadsheet creation
+      triggerSidebarRefresh();
+    }, 1000);
   } catch (error) {
     // Check if it's a storage limit error
     if (error instanceof Error && error.message.includes('STORAGE_LIMIT_EXCEEDED')) {

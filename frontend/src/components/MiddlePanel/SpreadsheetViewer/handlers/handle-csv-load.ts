@@ -48,6 +48,27 @@ export function createCSVLoadHandler({
         const wb = new ExcelJS.Workbook()
         const ab = await blob.arrayBuffer()
         console.log('parseXlsx: ArrayBuffer size:', ab.byteLength)
+        
+        // Check if this might be an error response instead of XLSX
+        if (ab.byteLength < 1000) {
+          const decoder = new TextDecoder()
+          const text = decoder.decode(ab)
+          console.log('parseXlsx: Small file, checking if it\'s text:', text.substring(0, 200))
+          
+          // Check if it's JSON error
+          try {
+            const json = JSON.parse(text)
+            console.error('parseXlsx: Received JSON error response:', json)
+            throw new Error(json.error || json.message || 'Server returned an error response instead of XLSX file')
+          } catch (jsonError) {
+            // Not JSON, might be HTML or plain text error
+            if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+              console.error('parseXlsx: Received HTML error page')
+              throw new Error('Server returned an HTML error page instead of XLSX file')
+            }
+          }
+        }
+        
         await wb.xlsx.load(ab)
         const ws = wb.worksheets[0]
         const maxRow = ws.actualRowCount || ws.rowCount || 0
