@@ -1060,7 +1060,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
   // Spreadsheet creation handlers
   const handleCreateSpreadsheet = () => {
     setIsCreatingSpreadsheet(true)
-    setNewSpreadsheetName('New Spreadsheet.csv')
+    setNewSpreadsheetName('New Spreadsheet.xlsx')
   }
 
   // Focus spreadsheet input when creating
@@ -1085,11 +1085,11 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
       return
     }
     // Extract filename without extension for the handler
-    const filenameWithoutExtension = name.replace(/\.csv$/, '')
+    const filenameWithoutExtension = name.replace(/\.xlsx$/, '')
     
     // Close input immediately and fire request in background
     setIsCreatingSpreadsheet(false)
-    setNewSpreadsheetName('New Spreadsheet.csv')
+    setNewSpreadsheetName('New Spreadsheet.xlsx')
     setIsCreatingSpreadsheetPending(true)
     setPendingSpreadsheetName(name)
     
@@ -1111,7 +1111,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
       handleCreateSpreadsheetSubmit()
     } else if (e.key === 'Escape') {
       setIsCreatingSpreadsheet(false)
-      setNewSpreadsheetName('New Spreadsheet.csv')
+      setNewSpreadsheetName('New Spreadsheet.xlsx')
     }
   }
 

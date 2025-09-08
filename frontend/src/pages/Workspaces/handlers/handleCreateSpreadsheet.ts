@@ -1,4 +1,5 @@
 import { CONFIG } from '../../../config/config';
+import * as XLSX from 'xlsx';
 
 interface UserInfo {
   username: string;
@@ -73,20 +74,32 @@ export const handleCreateSpreadsheet = async (
   setUploading(true);
 
   try {
-    // Create simple CSV content with headers and sample data
-    const csvContent = `Name,Email,Phone,Department
-John Doe,john.doe@example.com,555-0101,Engineering
-Jane Smith,jane.smith@example.com,555-0102,Marketing
-Bob Johnson,bob.johnson@example.com,555-0103,Sales
-Alice Brown,alice.brown@example.com,555-0104,HR`;
+    // Create simple spreadsheet data with headers and sample data
+    const data = [
+      ['Name', 'Email', 'Phone', 'Department'],
+      ['John Doe', 'john.doe@example.com', '555-0101', 'Engineering'],
+      ['Jane Smith', 'jane.smith@example.com', '555-0102', 'Marketing'],
+      ['Bob Johnson', 'bob.johnson@example.com', '555-0103', 'Sales'],
+      ['Alice Brown', 'alice.brown@example.com', '555-0104', 'HR']
+    ];
 
     // Generate filename - use provided name or default
     const fileName = spreadsheetName 
-      ? `${spreadsheetName}.csv`
-      : `New Spreadsheet ${new Date().toISOString().split('T')[0]}.csv`;
+      ? `${spreadsheetName}.xlsx`
+      : `New Spreadsheet ${new Date().toISOString().split('T')[0]}.xlsx`;
 
-    // Create CSV blob
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet(data);
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+    // Generate XLSX file as buffer
+    const xlsxBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    
+    // Create XLSX blob
+    const blob = new Blob([xlsxBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
     // Upload spreadsheet using the uploadToS3 function
     
