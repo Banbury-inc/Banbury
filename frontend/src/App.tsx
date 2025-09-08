@@ -19,6 +19,7 @@ import FileDownload from './pages/Filedownload';
 import { trackPageView } from './services/trackingService';
 import './index.css';
 import API from './components/API';
+import TaskStudio from './components/TaskStudio';
 
 const SitemapRedirect = () => {
   const navigate = useNavigate();
@@ -85,6 +86,7 @@ const App = (): JSX.Element => {
                 <Route path='/features' element={<Features />} />
                 <Route path='/filedownload/:username/:file_id' element={<FileDownload />} />
                 <Route path='/api' element={<API />} />
+                <Route path='/task-studio' element={<TaskStudio />} />
                 <Route path='/news' element={<News />} />
                 <Route path='/news/:postId' element={<News />} />
                 <Route path='/terms_of_use' element={<Terms_of_use />} />

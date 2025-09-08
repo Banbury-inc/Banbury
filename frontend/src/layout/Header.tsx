@@ -96,6 +96,7 @@ const Header = (): JSX.Element => {
           {/* <CustomButton href='/Research' text='Research' /> */}
           <CustomButton href='/News' text='News' />
           <CustomButton href='/api' text='API' />
+          <CustomButton href='/task-studio' text='Task Studio' />
         </Box>
 
         <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
