@@ -722,7 +722,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
   
   // Spreadsheet creation state
   const [isCreatingSpreadsheet, setIsCreatingSpreadsheet] = useState(false)
-  const [newSpreadsheetName, setNewSpreadsheetName] = useState('New Spreadsheet.csv')
+  const [newSpreadsheetName, setNewSpreadsheetName] = useState('New Spreadsheet.xlsx')
   const [isCreatingSpreadsheetPending, setIsCreatingSpreadsheetPending] = useState(false)
   const [pendingSpreadsheetName, setPendingSpreadsheetName] = useState<string | null>(null)
   const spreadsheetInputRef = useRef<HTMLInputElement | null>(null)

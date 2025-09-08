@@ -806,6 +806,98 @@ const createFileTool = tool(
         resolvedType = 'text/csv';
         break;
       }
+      case 'xlsx': {
+        console.log('[create_file] XLSX case - input content type:', typeof bodyContent);
+        console.log('[create_file] XLSX case - input content length:', bodyContent?.length);
+        console.log('[create_file] XLSX case - input content sample:', bodyContent?.substring ? bodyContent.substring(0, 100) : 'Not a string');
+        
+        // For XLSX files, convert plain text content to proper XLSX format using ExcelJS
+        const ExcelJSImport = await import('exceljs');
+        const ExcelJS = (ExcelJSImport as any).default || ExcelJSImport;
+        
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Sheet1');
+        
+        // Parse the content as CSV-like data or create simple data structure
+        let data: any[][];
+        try {
+          // Try to parse as CSV first
+          const lines = bodyContent.trim().split('\n');
+          data = lines.map(line => {
+            // Simple CSV parsing - split by comma and handle quoted values
+            const cells = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+              const char = line[i];
+              if (char === '"' && (i === 0 || line[i-1] === ',')) {
+                inQuotes = true;
+              } else if (char === '"' && inQuotes && (i === line.length - 1 || line[i+1] === ',')) {
+                inQuotes = false;
+              } else if (char === ',' && !inQuotes) {
+                cells.push(current.trim());
+                current = '';
+              } else {
+                current += char;
+              }
+            }
+            cells.push(current.trim());
+            return cells;
+          });
+          
+          // If it doesn't look like CSV data (less than 2 rows or very uneven columns), create a simple structure
+          if (data.length < 2 || data.some(row => row.length === 1 && !data[0].includes(','))) {
+            data = [
+              ['Content'],
+              [bodyContent]
+            ];
+          }
+        } catch {
+          // Fallback: create simple single-cell data
+          data = [
+            ['Content'],
+            [bodyContent]
+          ];
+        }
+        
+        // Add the data to the worksheet
+        data.forEach((row, rowIndex) => {
+          row.forEach((cell, colIndex) => {
+            const excelCell = worksheet.getCell(rowIndex + 1, colIndex + 1);
+            excelCell.value = cell || '';
+          });
+        });
+        
+        // Auto-fit columns
+        worksheet.columns.forEach((column: any) => {
+          if (column && column.eachCell) {
+            let maxLength = 0;
+            column.eachCell({ includeEmpty: false }, (cell: any) => {
+              const columnLength = cell.value ? String(cell.value).length : 0;
+              if (columnLength > maxLength) {
+                maxLength = columnLength;
+              }
+            });
+            column.width = Math.min(maxLength + 2, 50); // Set max width to 50
+          }
+        });
+
+        // Generate XLSX buffer
+        const buffer = await workbook.xlsx.writeBuffer();
+        console.log('[create_file] XLSX buffer created, size:', buffer.byteLength);
+        
+        // Create blob directly here since we have binary data
+        const xlsxBlob = new Blob([buffer], { 
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        });
+        console.log('[create_file] XLSX blob created, size:', xlsxBlob.size, 'type:', xlsxBlob.type);
+        
+        // We'll handle this case specially after the switch
+        bodyContent = xlsxBlob;
+        resolvedType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        break;
+      }
       case 'md': {
         resolvedType = 'text/markdown';
         break;
@@ -820,7 +912,13 @@ const createFileTool = tool(
       }
     }
 
-    const fileBlob = new Blob([bodyContent], { type: resolvedType });
+    // If bodyContent is already a Blob (e.g., for XLSX), use it directly
+    const fileBlob = bodyContent instanceof Blob 
+      ? bodyContent 
+      : new Blob([bodyContent], { type: resolvedType });
+    
+    console.log('[create_file] Final blob size:', fileBlob.size, 'type:', fileBlob.type, 'fileName:', input.fileName);
+    
     const formData = new FormData();
     formData.append('file', fileBlob, input.fileName);
     formData.append('device_name', 'web-editor');

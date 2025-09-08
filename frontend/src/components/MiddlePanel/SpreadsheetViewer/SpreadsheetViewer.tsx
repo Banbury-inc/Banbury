@@ -61,16 +61,21 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
 
       try {
         // Download the spreadsheet file content
+        console.log('SpreadsheetViewer: Downloading file:', currentFile.file_id, currentFile.name);
         const result = await ApiService.downloadS3File(currentFile.file_id, currentFile.name);
+        console.log('SpreadsheetViewer: Download result:', result);
         if (result.success && result.url) {
           currentUrl = result.url;
+          console.log('SpreadsheetViewer: Blob URL created:', currentUrl, 'Blob size:', result.blob?.size, 'type:', result.blob?.type);
           // Avoid setting a new blob URL if it's unchanged to prevent re-renders
           setDocumentUrl(prev => (prev === result.url ? prev : result.url));
           setDocumentBlob(result.blob);
         } else {
+          console.error('SpreadsheetViewer: Download failed, no URL in result');
           setError('Failed to load spreadsheet content');
         }
       } catch (err) {
+        console.error('SpreadsheetViewer: Download error:', err);
         setError('Failed to load spreadsheet content');
       } finally {
         setLoading(false);

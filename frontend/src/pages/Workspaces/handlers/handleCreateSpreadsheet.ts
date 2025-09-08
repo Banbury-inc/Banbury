@@ -1,5 +1,4 @@
 import { CONFIG } from '../../../config/config';
-import * as XLSX from 'xlsx';
 
 interface UserInfo {
   username: string;
@@ -69,6 +68,7 @@ export const handleCreateSpreadsheet = async (
   triggerSidebarRefresh: () => void,
   spreadsheetName?: string
 ) => {
+  console.log('[handleCreateSpreadsheet] Starting spreadsheet creation, name:', spreadsheetName);
   if (!userInfo?.username) return;
 
   setUploading(true);
@@ -88,27 +88,54 @@ export const handleCreateSpreadsheet = async (
       ? `${spreadsheetName}.xlsx`
       : `New Spreadsheet ${new Date().toISOString().split('T')[0]}.xlsx`;
 
-    // Create workbook and worksheet
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.aoa_to_sheet(data);
+    // Create workbook and worksheet using ExcelJS (same as the loader expects)
+    const ExcelJSImport = await import('exceljs');
+    const ExcelJS = (ExcelJSImport as any).default || ExcelJSImport;
     
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Sheet1');
+    
+    // Add the data to the worksheet
+    data.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        const excelCell = worksheet.getCell(rowIndex + 1, colIndex + 1);
+        excelCell.value = cell;
+      });
+    });
+    
+    // Auto-fit columns
+    worksheet.columns.forEach((column: any) => {
+      if (column && column.eachCell) {
+        let maxLength = 0;
+        column.eachCell({ includeEmpty: false }, (cell: any) => {
+          const columnLength = cell.value ? String(cell.value).length : 0;
+          if (columnLength > maxLength) {
+            maxLength = columnLength;
+          }
+        });
+        column.width = Math.min(maxLength + 2, 50); // Set max width to 50
+      }
+    });
 
-    // Generate XLSX file as buffer
-    const xlsxBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    // Generate XLSX buffer and create blob
+    const buffer = await workbook.xlsx.writeBuffer();
+    console.log('[handleCreateSpreadsheet] XLSX buffer created, size:', buffer.byteLength);
     
-    // Create XLSX blob
-    const blob = new Blob([xlsxBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const blob = new Blob([buffer], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    console.log('[handleCreateSpreadsheet] Blob created, size:', blob.size, 'type:', blob.type);
 
     // Upload spreadsheet using the uploadToS3 function
+    console.log('[handleCreateSpreadsheet] Uploading to S3...');
     
-    await uploadToS3(
+    const uploadResult = await uploadToS3(
       blob,
       userInfo.username,
       fileName,
       ''
     );
+    console.log('[handleCreateSpreadsheet] Upload result:', uploadResult);
     
     // Show success toast
     toast({
@@ -117,8 +144,12 @@ export const handleCreateSpreadsheet = async (
       variant: "success",
     });
     
-    // Trigger sidebar refresh after successful spreadsheet creation
-    triggerSidebarRefresh();
+    // Add a small delay before refreshing to ensure S3 has processed the file
+    setTimeout(() => {
+      console.log('[handleCreateSpreadsheet] Triggering sidebar refresh after delay');
+      // Trigger sidebar refresh after successful spreadsheet creation
+      triggerSidebarRefresh();
+    }, 1000);
   } catch (error) {
     // Check if it's a storage limit error
     if (error instanceof Error && error.message.includes('STORAGE_LIMIT_EXCEEDED')) {
