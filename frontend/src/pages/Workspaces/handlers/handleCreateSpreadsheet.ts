@@ -106,8 +106,8 @@ export const handleCreateSpreadsheet = async (
     await uploadToS3(
       blob,
       userInfo.username,
-      `spreadsheets/${fileName}`,
-      'spreadsheets'
+      fileName,
+      ''
     );
     
     // Show success toast

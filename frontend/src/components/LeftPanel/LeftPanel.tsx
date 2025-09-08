@@ -1191,7 +1191,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
     setUploadingFolder(true)
     try {
       const fileArray = Array.from(files)
-      await ApiService.uploadToS3(fileArray[0], fileArray[0].name, 'web-editor', `uploads/${fileArray[0].name}`, 'uploads')
+      await ApiService.uploadToS3(fileArray[0], fileArray[0].name, 'web-editor', fileArray[0].name, '')
       fetchUserFiles()
     } catch (error) {
       alert('Failed to upload file. Please try again.')
@@ -1216,7 +1216,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
       const firstFile = fileArray[0]
       const folderName = firstFile.webkitRelativePath.split('/')[0]
       
-      await ApiService.uploadFolder(fileArray, folderName, 'web-editor', 'uploads')
+      await ApiService.uploadFolder(fileArray, folderName, 'web-editor', '')
       fetchUserFiles()
     } catch (error) {
       alert('Failed to upload folder. Please try again.')
@@ -1467,13 +1467,13 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
                 try {
                   // Upload individual files
                   for (const file of files) {
-                    await ApiService.uploadToS3(file, file.name, 'web-editor', `uploads/${file.name}`, 'uploads')
+                    await ApiService.uploadToS3(file, file.name, 'web-editor', file.name, '')
                   }
                   
                   // Upload folder contents
                   if (folders.length > 0) {
                     const folderName = `uploaded_folder_${Date.now()}`
-                    await ApiService.uploadFolder(folders, folderName, 'web-editor', 'uploads')
+                    await ApiService.uploadFolder(folders, folderName, 'web-editor', '')
                   }
                   
                   fetchUserFiles()

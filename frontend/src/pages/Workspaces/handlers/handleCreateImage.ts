@@ -110,7 +110,7 @@ export async function handleCreateImage(
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
     const fileName = `${baseName} ${timestamp}.png`
 
-    await uploadToS3(blob, userInfo.username, `${folder}/${fileName}`, folder)
+    await uploadToS3(blob, userInfo.username, fileName, '')
 
     toast({
       title: 'Image created successfully',

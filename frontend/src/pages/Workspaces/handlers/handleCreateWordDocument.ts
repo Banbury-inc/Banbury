@@ -117,8 +117,8 @@ Welcome to your new Word document!`;
     await uploadToS3(
       blob,
       userInfo.username,
-      `documents/${fileName}`,
-      'documents'
+      fileName,
+      ''
     );
     
     // Show success toast
