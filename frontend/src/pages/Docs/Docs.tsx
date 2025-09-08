@@ -6,6 +6,7 @@ import { trackPageView } from '../../services/trackingService';
 import WhatIsBanburyTab from './components/WhatIsBanburyTab';
 import FeaturesTab from './components/FeaturesTab';
 import UsingBanburyTab from './components/UsingBanbury';
+import TaskStudioTab from './components/TaskStudioTab';
 
 const Docs = (): JSX.Element => {
   const [activeSection, setActiveSection] = useState<string>('what-is-banbury');
@@ -77,8 +78,12 @@ const Docs = (): JSX.Element => {
               <UsingBanburyTab />
             )}
 
+            {activeSection === 'task-studio' && (
+              <TaskStudioTab />
+            )}
+
             {/* Default Tab - Show when no specific tab is selected */}
-            {!['what-is-banbury', 'features', 'using-banbury'].includes(activeSection) && (
+            {!['what-is-banbury', 'features', 'using-banbury', 'task-studio'].includes(activeSection) && (
               <WhatIsBanburyTab />
             )}
           </Box>

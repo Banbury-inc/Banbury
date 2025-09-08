@@ -29,6 +29,7 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps): JSX.
         { id: 'quick-start', title: 'What is Banbury?', href: '#quick-start' },
         { id: 'features', title: 'Features', href: '#features' },
         { id: 'using-banbury', title: 'Using Banbury', href: '#using-banbury' },
+        { id: 'task-studio', title: 'Task Studio', href: '#task-studio' },
       ]
     },
   ];
