@@ -24,6 +24,7 @@ import {
   FileCog,
   Upload,
   Plus,
+  Cloud,
 } from "lucide-react"
 import { useRouter } from 'next/router'
 import { useState, useEffect, useCallback, useRef } from 'react'
@@ -31,6 +32,7 @@ import { toggleFileSelection, collectSelectedFileItems } from "./handlers/handle
 
 import { EmailTab } from "./EmailTab"
 import { CalendarTab } from "./CalendarTab"
+import { GoogleDriveTab } from "./GoogleDriveTab"
 import { Button } from "../ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
 import { ApiService } from "../../services/apiService"
@@ -732,7 +734,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
   const [isCreatingNotebookPending, setIsCreatingNotebookPending] = useState(false)
   const [pendingNotebookName, setPendingNotebookName] = useState<string | null>(null)
   const notebookInputRef = useRef<HTMLInputElement | null>(null)
-  const [activeTab, setActiveTab] = useState<'files' | 'email' | 'calendar'>('files')
+  const [activeTab, setActiveTab] = useState<'files' | 'email' | 'calendar' | 'drive'>('files')
   const [uploadingFolder, setUploadingFolder] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const folderInputRef = useRef<HTMLInputElement | null>(null)
@@ -1286,19 +1288,32 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
                Email
              </div>
            </button>
-                       <button
-              onClick={() => setActiveTab('calendar')}
-              className={`flex-1 px-3 py-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
-                activeTab === 'calendar'
-                  ? 'text-white bg-zinc-800 shadow-sm'
-                  : 'text-gray-400 hover:text-gray-300 hover:bg-zinc-800/50'
-              }`}
-            >
-             <div className="flex items-center justify-center gap-2">
-               <CalendarIcon className="h-4 w-4" />
-               Calendar
-             </div>
-           </button>
+                      <button
+             onClick={() => setActiveTab('calendar')}
+             className={`flex-1 px-3 py-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
+               activeTab === 'calendar'
+                 ? 'text-white bg-zinc-800 shadow-sm'
+                 : 'text-gray-400 hover:text-gray-300 hover:bg-zinc-800/50'
+             }`}
+           >
+            <div className="flex items-center justify-center gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              Calendar
+            </div>
+          </button>
+                      <button
+             onClick={() => setActiveTab('drive')}
+             className={`flex-1 px-3 py-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
+               activeTab === 'drive'
+                 ? 'text-white bg-zinc-800 shadow-sm'
+                 : 'text-gray-400 hover:text-gray-300 hover:bg-zinc-800/50'
+             }`}
+           >
+            <div className="flex items-center justify-center gap-2">
+              <Cloud className="h-4 w-4" />
+              Drive
+            </div>
+          </button>
          </div>
         
                  {/* Tab Content Header */}
@@ -1672,6 +1687,12 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
            <CalendarTab 
              onOpenCalendarApp={onOpenCalendar}
              onEventSelect={onEventSelect}
+           />
+         )}
+                 {activeTab === 'drive' && (
+           <GoogleDriveTab 
+             onFileSelect={onFileSelect}
+             selectedFile={selectedFile}
            />
          )}
       </div>
