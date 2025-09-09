@@ -15,7 +15,9 @@ import NotebookLabViewer from '../../../components/MiddlePanel/NotebookViewer/No
 import { CONFIG } from '../../../config/config';
 import { PDFViewer } from '../../../components/MiddlePanel/PDFViewer';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import { isNotebookFile } from './fileTypeUtils';
+import { isNotebookFile, isTldrawFile } from './fileTypeUtils';
+import DrawioViewer from '../../../components/MiddlePanel/CanvasViewer/DrawioViewer';
+import TldrawViewer from '../../../components/MiddlePanel/CanvasViewer/TldrawViewer';
 
 interface UserInfo {
   username: string;
@@ -87,6 +89,8 @@ interface RenderPanelProps {
   isVideoFile: (fileName: string) => boolean;
   isCodeFile: (fileName: string) => boolean;
   isBrowserFile: (fileName: string) => boolean;
+  isDrawioFile: (fileName: string) => boolean;
+  isTldrawFile: (fileName: string) => boolean;
   setPanelLayout: React.Dispatch<React.SetStateAction<any>>;
   onSplitPreview?: (direction: 'horizontal' | 'vertical' | null, position: { x: number; y: number }) => void;
 }
@@ -110,6 +114,8 @@ export const renderPanel = ({
   isVideoFile,
   isCodeFile,
   isBrowserFile,
+  isDrawioFile,
+  isTldrawFile,
   setPanelLayout,
   onSplitPreview
 }: RenderPanelProps) => {
@@ -272,6 +278,28 @@ export const renderPanel = ({
                 )
               } else if (isCodeFile(file.name)) {
                 return <IDE file={file} userInfo={userInfo} onSaveComplete={triggerSidebarRefresh} />;
+              } else if (isTldrawFile(file.name)) {
+                // Use S3 URL if available, otherwise fall back to file path
+                const fileUrl = file.s3_url || file.path;
+                return (
+                  <TldrawViewer
+                    fileUrl={fileUrl}
+                    fileName={file.name}
+                    fileId={file.file_id}
+                    isEmbedded={false}
+                  />
+                );
+              } else if (isDrawioFile(file.name)) {
+                // Keep draw.io support for existing files
+                const fileUrl = file.s3_url || file.path;
+                return (
+                  <DrawioViewer
+                    fileUrl={fileUrl}
+                    fileName={file.name}
+                    fileId={file.file_id}
+                    isEmbedded={false}
+                  />
+                );
               } else {
                 return (
                   <div className="h-full flex items-center justify-center">

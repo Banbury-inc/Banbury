@@ -45,6 +45,16 @@ export const isNotebookFile = (fileName: string): boolean => {
   return fileName.toLowerCase().endsWith('.ipynb');
 };
 
+export const isDrawioFile = (fileName: string): boolean => {
+  const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+  return extension === '.drawio' || (extension === '.xml' && fileName.toLowerCase().includes('drawio'));
+};
+
+export const isTldrawFile = (fileName: string): boolean => {
+  const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+  return extension === '.tldraw' || extension === '.tldr' || (extension === '.json' && fileName.toLowerCase().includes('tldraw'));
+};
+
 export const isViewableFile = (fileName: string): boolean => {
   return isImageFile(fileName) || 
          isPdfFile(fileName) || 
@@ -53,5 +63,7 @@ export const isViewableFile = (fileName: string): boolean => {
          isVideoFile(fileName) || 
          isCodeFile(fileName) || 
          isBrowserFile(fileName) ||
-         isNotebookFile(fileName);
+         isNotebookFile(fileName) ||
+         isDrawioFile(fileName) ||
+         isTldrawFile(fileName);
 };

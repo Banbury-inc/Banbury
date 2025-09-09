@@ -39,6 +39,8 @@ import { extractEmailContent } from '../../utils/emailUtils';
 import { handleCreateSpreadsheet } from './handlers/handleCreateSpreadsheet';
 import { handleCreateWordDocument } from './handlers/handleCreateWordDocument';
 import { handleCreateNotebook } from './handlers/handleCreateNotebook';
+import { handleCreateDrawio } from './handlers/handleCreateDrawio';
+import { handleCreateTldraw } from './handlers/handleCreateTldraw';
 import { handleCreateImage } from './handlers/handleCreateImage';
 import { renderPanel } from './handlers/renderPanel';
 import { handleFileMoved } from './handlers/handleFileMoved';
@@ -52,6 +54,7 @@ import { handleComposeEmail } from './handlers/handleComposeEmail';
 import { loadConversations, saveCurrentConversation, loadConversation, deleteConversation } from './handlers/conversationManagement';
 import { findPanel, getAllTabs, updatePanelActiveTab, addTabToPanel, removeTabFromPanel } from './handlers/panelUtils';
 import { openFileInTab, openEmailInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
+import { isDrawioFile, isTldrawFile } from './handlers/fileTypeUtils';
 
 interface UserInfo {
   username: string;
@@ -211,7 +214,7 @@ const Workspaces = (): JSX.Element => {
   };
 
   const isViewableFile = (fileName: string): boolean => {
-    return isBrowserFile(fileName) || isImageFile(fileName) || isPdfFile(fileName) || isDocumentFile(fileName) || isSpreadsheetFile(fileName) || isVideoFile(fileName) || isCodeFile(fileName)
+    return isBrowserFile(fileName) || isImageFile(fileName) || isPdfFile(fileName) || isDocumentFile(fileName) || isSpreadsheetFile(fileName) || isVideoFile(fileName) || isCodeFile(fileName) || isDrawioFile(fileName) || isTldrawFile(fileName)
   };
 
   const loadConversationsCallback = async () => {
@@ -355,6 +358,8 @@ const Workspaces = (): JSX.Element => {
       isVideoFile,
       isCodeFile,
       isBrowserFile,
+      isDrawioFile,
+      isTldrawFile,
       setPanelLayout,
       onSplitPreview: (direction, position) => {
         // Update drag state with split preview information
@@ -365,7 +370,7 @@ const Workspaces = (): JSX.Element => {
         }));
       }
     });
-  }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmail, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, setPanelLayout]);
+  }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmail, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, isDrawioFile, isTldrawFile, setPanelLayout]);
   
   // Render panel group (recursive for nested splits)
   const renderPanelGroup = useCallback((group: PanelGroup): React.ReactNode => {
@@ -415,6 +420,14 @@ const Workspaces = (): JSX.Element => {
 
   const handleCreateNotebookWrapper = async (notebookName: string) => {
     await handleCreateNotebook(userInfo, setUploading, toast, triggerSidebarRefresh, notebookName);
+  };
+
+  const handleCreateDrawioWrapper = async (diagramName: string) => {
+    await handleCreateDrawio(userInfo, setUploading, toast, triggerSidebarRefresh, diagramName);
+  };
+
+  const handleCreateTldrawWrapper = async (canvasName: string) => {
+    await handleCreateTldraw(userInfo, setUploading, toast, triggerSidebarRefresh, canvasName);
   };
 
   const handleGenerateImage = async () => {
@@ -852,6 +865,8 @@ const Workspaces = (): JSX.Element => {
                           onCreateDocument={handleCreateWordDocumentWrapper}
                           onCreateSpreadsheet={handleCreateSpreadsheetWrapper}
                           onCreateNotebook={handleCreateNotebookWrapper}
+                          onCreateDrawio={handleCreateDrawioWrapper}
+                          onCreateTldraw={handleCreateTldrawWrapper}
                           onGenerateImage={handleGenerateImage}
                           onCreateFolder={handleCreateFolder}
                           onOpenCalendar={() => openCalendarInTabCallback(activePanelId)}

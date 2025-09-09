@@ -27,6 +27,8 @@ import { useState, useEffect, useRef } from "react";
 import { ChatTiptapComposer } from "../ChatTiptapComposer";
 import { DocumentAITool } from "../DocumentAITool";
 import { DocxAITool } from "../DocxAITool";
+import { DrawioAITool } from "../MiddlePanel/CanvasViewer/DrawioAITool";
+import DrawioViewerModal from "../MiddlePanel/CanvasViewer/DrawioViewerModal";
 import { FileAttachment } from "../file-attachment";
 import { FileAttachmentDisplay } from "../file-attachment-display";
 import { MarkdownText } from "./markdown-text";
@@ -56,6 +58,7 @@ import { useToast } from "../ui/use-toast";
 import styles from "../../styles/scrollbar.module.css";
 import { cn } from "../../utils";
 import { FileSystemItem } from "../../utils/fileTreeUtils";
+import { createHandleDrawioFileView } from "./handlers/handle-drawio-file-view";
 
 import type { FC } from "react";
 
@@ -86,6 +89,8 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   const { toast } = useToast();
   const [attachedFiles, setAttachedFiles] = useState<FileSystemItem[]>([]);
   const [attachedEmails, setAttachedEmails] = useState<any[]>([]);
+  const [drawioModalOpen, setDrawioModalOpen] = useState(false);
+  const [selectedDrawioFile, setSelectedDrawioFile] = useState<FileSystemItem | null>(null);
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true);
   const [toolPreferences, setToolPreferences] = useState<{ web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean; browser: boolean; x_api: boolean }>(() => {
     try {
@@ -139,6 +144,16 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
 
   const handleEmailRemove = (emailId: string) => {
     setAttachedEmails(prev => prev.filter(email => email.id !== emailId));
+  };
+
+  const handleDrawioFileView = createHandleDrawioFileView({
+    setSelectedDrawioFile,
+    setDrawioModalOpen,
+  });
+
+  const handleDrawioModalClose = () => {
+    setDrawioModalOpen(false);
+    setSelectedDrawioFile(null);
   };
 
   const toggleWebSearch = () => {
@@ -879,6 +894,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         toolPreferences={toolPreferences}
         onUpdateToolPreferences={(prefs) => setToolPreferences(prefs)}
         attachmentPayloads={attachmentPayloads}
+        onFileView={handleDrawioFileView}
       />
 
       {/* Conversation Dialogs */}
@@ -896,6 +912,13 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         conversations={conversations}
         onLoadConversation={loadConversation}
         onDeleteConversation={deleteConversation}
+      />
+
+      {/* Draw.io Viewer Modal */}
+      <DrawioViewerModal
+        isOpen={drawioModalOpen}
+        onClose={handleDrawioModalClose}
+        file={selectedDrawioFile}
       />
     </ThreadPrimitive.Root>
   );
@@ -1024,9 +1047,10 @@ interface ComposerProps {
   onUpdateToolPreferences: (prefs: { web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean; browser: boolean; x_api: boolean }) => void;
   attachmentPayloads: Record<string, { fileData: string; mimeType: string }>;
   onSend?: () => void;
+  onFileView?: (file: FileSystemItem) => void;
 }
 
-const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onSend }) => {
+const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onSend, onFileView }) => {
   const composer = useComposerRuntime();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -1236,8 +1260,9 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAtta
             <FileAttachmentDisplay 
               files={attachedFiles}
               emails={attachedEmails}
-              onFileClick={(file) => onFileRemove(file.file_id!)}
-              onEmailClick={(emailId) => onEmailRemove(emailId)}
+              onFileClick={(file) => handleFileRemove(file.file_id!)}
+              onEmailClick={(emailId) => handleEmailRemove(emailId)}
+              onFileView={onFileView}
             />
           </div>
         )}
@@ -1645,12 +1670,13 @@ const AssistantMessage: FC = () => {
           <MessagePrimitive.Content
             components={{
               Text: MarkdownText,
-              tools: { 
+                tools: { 
                 by_name: {
                   web_search: WebSearchTool,
                   tiptap_ai: TiptapAITool,
                   sheet_ai: SheetAITool,
                   docx_ai: DocxAITool,
+                  drawio_ai: DrawioAITool,
                   document_ai: DocumentAITool,
                   browser: BrowserTool,
                 },

@@ -24,6 +24,7 @@ import {
   FileCog,
   Upload,
   Plus,
+  Network,
 } from "lucide-react"
 import { useRouter } from 'next/router'
 import { useState, useEffect, useCallback, useRef } from 'react'
@@ -60,6 +61,8 @@ interface AppSidebarProps {
   onCreateDocument?: (documentName: string) => void
   onCreateSpreadsheet?: (spreadsheetName: string) => void
   onCreateNotebook?: (notebookName: string) => void
+  onCreateDrawio?: (diagramName: string) => void
+  onCreateTldraw?: (drawingName: string) => void
   onCreateFolder?: () => void
   onGenerateImage?: () => void
   onEventSelect?: (event: any) => void
@@ -173,6 +176,16 @@ const isDataFile = (fileName: string): boolean => {
   return dataExtensions.includes(extension)
 }
 
+const isDrawioFile = (fileName: string): boolean => {
+  const extension = getFileExtension(fileName)
+  return extension === '.drawio' || (extension === '.xml' && fileName.toLowerCase().includes('drawio'))
+}
+
+const isTldrawFile = (fileName: string): boolean => {
+  const extension = getFileExtension(fileName)
+  return extension === '.tldraw' || extension === '.tldr' || (extension === '.json' && fileName.toLowerCase().includes('tldraw'))
+}
+
 const isExecutableFile = (fileName: string): boolean => {
   const executableExtensions = ['.exe', '.msi', '.app', '.dmg', '.deb', '.rpm', '.pkg', '.sh', '.bat', '.cmd', '.ps1', '.vbs', '.jar', '.war', '.ear']
   const extension = getFileExtension(fileName)
@@ -203,6 +216,8 @@ const isViewableFile = (fileName: string): boolean => {
 
 // Function to get the appropriate icon component and color for a file type
 const getFileIcon = (fileName: string): { icon: any, color: string } => {
+  if (isTldrawFile(fileName)) return { icon: Network, color: 'text-purple-400' }
+  if (isDrawioFile(fileName)) return { icon: Network, color: 'text-blue-400' }
   if (isImageFile(fileName)) return { icon: FileImage, color: 'text-green-400' }
   if (isVideoFile(fileName)) return { icon: FileVideo, color: 'text-red-400' }
   if (isAudioFile(fileName)) return { icon: FileAudio, color: 'text-blue-400' }
@@ -701,7 +716,7 @@ function FileTreeItem({
   )
 }
 
-export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, onRefreshComplete, refreshTrigger, onFileDeleted, onFileRenamed, onFileMoved, onFolderCreated, onFolderRenamed, onFolderDeleted, triggerRootFolderCreation, onEmailSelect, onComposeEmail, onCreateDocument, onCreateSpreadsheet, onCreateNotebook, onCreateFolder, onGenerateImage, onEventSelect, onOpenCalendar }: AppSidebarProps) {
+export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, onRefreshComplete, refreshTrigger, onFileDeleted, onFileRenamed, onFileMoved, onFolderCreated, onFolderRenamed, onFolderDeleted, triggerRootFolderCreation, onEmailSelect, onComposeEmail, onCreateDocument, onCreateSpreadsheet, onCreateNotebook, onCreateDrawio, onCreateTldraw, onCreateFolder, onGenerateImage, onEventSelect, onOpenCalendar }: AppSidebarProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [fileSystem, setFileSystem] = useState<FileSystemItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -732,6 +747,21 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
   const [isCreatingNotebookPending, setIsCreatingNotebookPending] = useState(false)
   const [pendingNotebookName, setPendingNotebookName] = useState<string | null>(null)
   const notebookInputRef = useRef<HTMLInputElement | null>(null)
+  
+  // Draw.io diagram creation state
+  const [isCreatingDrawio, setIsCreatingDrawio] = useState(false)
+  const [newDrawioName, setNewDrawioName] = useState('New Diagram.drawio')
+  const [isCreatingDrawioPending, setIsCreatingDrawioPending] = useState(false)
+  const [pendingDrawioName, setPendingDrawioName] = useState<string | null>(null)
+  const drawioInputRef = useRef<HTMLInputElement | null>(null)
+  
+  // Tldraw canvas creation state
+  const [isCreatingTldraw, setIsCreatingTldraw] = useState(false)
+  const [newTldrawName, setNewTldrawName] = useState('New Canvas.tldraw')
+  const [isCreatingTldrawPending, setIsCreatingTldrawPending] = useState(false)
+  const [pendingTldrawName, setPendingTldrawName] = useState<string | null>(null)
+  const tldrawInputRef = useRef<HTMLInputElement | null>(null)
+  
   const [activeTab, setActiveTab] = useState<'files' | 'email' | 'calendar'>('files')
   const [uploadingFolder, setUploadingFolder] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -1169,6 +1199,112 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
     }
   }
 
+  // Draw.io diagram creation handlers
+  const handleCreateDrawio = () => {
+    setIsCreatingDrawio(true)
+    setNewDrawioName('New Diagram.drawio')
+  }
+
+  useEffect(() => {
+    if (isCreatingDrawio && drawioInputRef.current) {
+      const timeoutId = setTimeout(() => {
+        if (drawioInputRef.current) {
+          drawioInputRef.current.focus()
+          selectFilenameWithoutExtension(drawioInputRef.current)
+        }
+      }, 10)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [isCreatingDrawio])
+
+  const handleCreateDrawioSubmit = async () => {
+    const name = newDrawioName.trim()
+    if (name === '') {
+      setIsCreatingDrawio(false)
+      return
+    }
+    const filenameWithoutExtension = name.replace(/\.drawio$/, '')
+    setIsCreatingDrawio(false)
+    setNewDrawioName('New Diagram.drawio')
+    setIsCreatingDrawioPending(true)
+    setPendingDrawioName(name)
+    
+    if (onCreateDrawio) {
+      try {
+        await onCreateDrawio(filenameWithoutExtension)
+      } catch (error) {
+        console.error('Failed to create draw.io diagram:', error)
+      } finally {
+        setIsCreatingDrawioPending(false)
+        setPendingDrawioName(null)
+      }
+    } else {
+      setIsCreatingDrawioPending(false)
+      setPendingDrawioName(null)
+    }
+  }
+
+  const handleCreateDrawioKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleCreateDrawioSubmit()
+    else if (e.key === 'Escape') {
+      setIsCreatingDrawio(false)
+      setNewDrawioName('New Diagram.drawio')
+    }
+  }
+
+  // Tldraw canvas creation handlers
+  const handleCreateTldraw = () => {
+    setIsCreatingTldraw(true)
+    setNewTldrawName('New Canvas.tldraw')
+  }
+
+  useEffect(() => {
+    if (isCreatingTldraw && tldrawInputRef.current) {
+      const timeoutId = setTimeout(() => {
+        if (tldrawInputRef.current) {
+          tldrawInputRef.current.focus()
+          selectFilenameWithoutExtension(tldrawInputRef.current)
+        }
+      }, 10)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [isCreatingTldraw])
+
+  const handleCreateTldrawSubmit = async () => {
+    const name = newTldrawName.trim()
+    if (name === '') {
+      setIsCreatingTldraw(false)
+      return
+    }
+    const filenameWithoutExtension = name.replace(/\.tldraw$/, '')
+    setIsCreatingTldraw(false)
+    setNewTldrawName('New Canvas.tldraw')
+    setIsCreatingTldrawPending(true)
+    setPendingTldrawName(name)
+    
+    if (onCreateTldraw) {
+      try {
+        await onCreateTldraw(filenameWithoutExtension)
+      } catch (error) {
+        console.error('Failed to create tldraw canvas:', error)
+      } finally {
+        setIsCreatingTldrawPending(false)
+        setPendingTldrawName(null)
+      }
+    } else {
+      setIsCreatingTldrawPending(false)
+      setPendingTldrawName(null)
+    }
+  }
+
+  const handleCreateTldrawKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleCreateTldrawSubmit()
+    else if (e.key === 'Escape') {
+      setIsCreatingTldraw(false)
+      setNewTldrawName('New Canvas.tldraw')
+    }
+  }
+
   // Handle file upload
   const handleFileUpload = () => {
     if (fileInputRef.current) {
@@ -1347,20 +1483,27 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
                      <FileText size={20} className="mr-2" />
                      Document
                    </DropdownMenuItem>
-                   <DropdownMenuItem 
-                     onSelect={handleCreateSpreadsheet}
-                     className="text-white hover:bg-zinc-700 focus:bg-zinc-700"
-                   >
-                     <FileSpreadsheet size={20} className="mr-2" />
-                     Spreadsheet
-                   </DropdownMenuItem>
-                   <DropdownMenuItem 
-                     onSelect={onCreateFolder}
-                     className="text-white hover:bg-zinc-700 focus:bg-zinc-700"
-                   >
-                     <Folder size={20} className="mr-2" />
-                     Folder
-                   </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onSelect={handleCreateSpreadsheet}
+                    className="text-white hover:bg-zinc-700 focus:bg-zinc-700"
+                  >
+                    <FileSpreadsheet size={20} className="mr-2" />
+                    Spreadsheet
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onSelect={handleCreateTldraw}
+                    className="text-white hover:bg-zinc-700 focus:bg-zinc-700"
+                  >
+                    <Network size={20} className="mr-2" />
+                    Canvas
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onSelect={onCreateFolder}
+                    className="text-white hover:bg-zinc-700 focus:bg-zinc-700"
+                  >
+                    <Folder size={20} className="mr-2" />
+                    Folder
+                  </DropdownMenuItem>
                  </DropdownMenuContent>
                </DropdownMenu>
                <Button
@@ -1625,6 +1768,60 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
                 <div className="w-3" />
                 <RefreshCw className="h-4 w-4 animate-spin" />
                 <span className="text-sm truncate min-w-0 flex-1">{pendingNotebookName}</span>
+                <span className="text-xs text-gray-400">Creating...</span>
+              </div>
+            )}
+
+            {/* Root level draw.io diagram creation */}
+            {isCreatingDrawio && (
+              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300" style={{ paddingLeft: '12px' }}>
+                <div className="w-3" />
+                <Network className="h-4 w-4" />
+                <input
+                  type="text"
+                  value={newDrawioName}
+                  onChange={(e) => setNewDrawioName(e.target.value)}
+                  onKeyDown={handleCreateDrawioKeyDown}
+                  onBlur={handleCreateDrawioSubmit}
+                  className="text-sm bg-zinc-700 text-white px-1 py-0 rounded border-none outline-none flex-1"
+                  ref={drawioInputRef}
+                  onFocus={(e) => selectFilenameWithoutExtension(e.currentTarget)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            )}
+            {isCreatingDrawioPending && pendingDrawioName && (
+              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300" style={{ paddingLeft: '12px' }}>
+                <div className="w-3" />
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                <span className="text-sm truncate min-w-0 flex-1">{pendingDrawioName}</span>
+                <span className="text-xs text-gray-400">Creating...</span>
+              </div>
+            )}
+
+            {/* Root level tldraw canvas creation */}
+            {isCreatingTldraw && (
+              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300" style={{ paddingLeft: '12px' }}>
+                <div className="w-3" />
+                <Network className="h-4 w-4 text-purple-400" />
+                <input
+                  type="text"
+                  value={newTldrawName}
+                  onChange={(e) => setNewTldrawName(e.target.value)}
+                  onKeyDown={handleCreateTldrawKeyDown}
+                  onBlur={handleCreateTldrawSubmit}
+                  className="text-sm bg-zinc-700 text-white px-1 py-0 rounded border-none outline-none flex-1"
+                  ref={tldrawInputRef}
+                  onFocus={(e) => selectFilenameWithoutExtension(e.currentTarget)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            )}
+            {isCreatingTldrawPending && pendingTldrawName && (
+              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300" style={{ paddingLeft: '12px' }}>
+                <div className="w-3" />
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                <span className="text-sm truncate min-w-0 flex-1">{pendingTldrawName}</span>
                 <span className="text-xs text-gray-400">Creating...</span>
               </div>
             )}
