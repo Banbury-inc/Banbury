@@ -1,19 +1,19 @@
+import React from 'react';
 import CloudIcon from '@mui/icons-material/Cloud';
 import DevicesIcon from '@mui/icons-material/Devices';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
-import { Box, Typography, Container, Grid, Paper } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { Box, Container, Grid } from '@mui/material';
 import Image from 'next/image';
-import NextLink from 'next/link';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
-import AppImage from '../assets/images/app_image.png';
+import AppImage from '../assets/images/Workspaces.png';
 import { Button } from '../components/ui/button';
 import { determineOS } from '../handlers/determineOS';
+import { handleDownload } from './handlers/home';
 // Tracking handled globally in pages/_app.tsx via routeTracking handler
 
 const Home = (): JSX.Element => {
-  const theme = useTheme();
   const [downloadText, setDownloadText] = useState<string>('Download');
   const [downloadUrl, setDownloadUrl] = useState<string>('');
 
@@ -51,8 +51,9 @@ const Home = (): JSX.Element => {
 
   // Page tracking is handled globally; no local tracking here
 
-  const handleDownload = () => {
-    window.open(downloadUrl, '_blank');
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0 }
   };
 
   return (
@@ -121,41 +122,32 @@ const Home = (): JSX.Element => {
                 maxWidth: { xs: '100%', md: '450px' },
                 ml: { xs: 0, md: 0 }
               }}>
-                <Typography
-                  variant="h1"
-                  sx={{
-                    fontSize: { xs: '2.5rem', sm: '3rem', md: '4rem' },
-                    fontWeight: 600,
-                    lineHeight: { xs: 1.2, md: 1.1 },
-                    color: '#ffffff',
-                    mb: { xs: 3, md: 4 },
-                    letterSpacing: '-0.02em',
-                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  }}
+                <motion.div
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, amount: 0.3 }}
+                  variants={fadeInUp}
+                  transition={{ duration: 0.6, ease: 'easeOut' }}
                 >
-                  Your AI-Powered <br />
-                  <Box component="span" sx={{ 
-                    color: '#a1a1aa',
-                    fontWeight: 500,
-                  }}>
-                    Workflow Engine
-                  </Box>
-                </Typography>
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold leading-tight md:leading-tight text-white mb-6 md:mb-8 tracking-tight font-inter">
+                    Your AI-Powered <br />
+                    <span className="text-zinc-400 font-medium">
+                      Workflow Engine
+                    </span>
+                  </h1>
+                </motion.div>
 
-                <Typography
-                  sx={{
-                    color: '#a1a1aa',
-                    lineHeight: 1.6,
-                    mb: { xs: 4, md: 5 },
-                    maxWidth: '600px',
-                    fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
-                    fontWeight: 400,
-                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    px: { xs: 1, md: 0 }
-                  }}
+                <motion.div
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, amount: 0.3 }}
+                  variants={fadeInUp}
+                  transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
                 >
-                  Transform your business operations with intelligent automation that learns, adapts, and scales with your needs.
-                </Typography>
+                  <p className="text-zinc-400 leading-relaxed mb-8 md:mb-10 max-w-2xl text-base sm:text-lg md:text-xl font-normal font-inter px-2 md:px-0">
+                    Transform your business operations with intelligent automation that learns, adapts, and scales with your needs.
+                  </p>
+                </motion.div>
 
                 <Box sx={{ 
                   display: 'flex', 
@@ -168,7 +160,7 @@ const Home = (): JSX.Element => {
                     variant="default"
                     size="lg"
                     onClick={() => window.location.href = '/dashboard'}
-                    className="min-h-[48px] md:min-h-auto text-base md:text-auto py-2 md:py-auto px-4 md:px-auto"
+                    // className="min-h-[48px] md:min-h-auto text-base md:text-auto py-2 md:py-auto px-4 md:px-auto"
                   >
                     Get Started for Free
                   </Button>
@@ -176,7 +168,7 @@ const Home = (): JSX.Element => {
                     variant="outline"
                     size="lg"
                     onClick={() => window.location.href = '/features'}
-                    className="min-h-[48px] md:min-h-auto text-base md:text-auto py-2 md:py-auto px-4 md:px-auto"
+                    // className="min-h-[48px] md:min-h-auto text-base md:text-auto py-2 md:py-auto px-4 md:px-auto"
                   >
                     Watch Demo
                   </Button>
@@ -205,7 +197,7 @@ const Home = (): JSX.Element => {
                   transform: 'translate(-50%, -50%)',
                   width: { xs: '100%', md: '100%' },
                   height: '90%',
-                  background: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.03) 0%, transparent 70%)',
+                  background: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.03) 0%, transparent 100%)',
                   borderRadius: '50%',
                   filter: 'blur(60px)',
                   zIndex: 0,
@@ -264,6 +256,20 @@ const Home = (): JSX.Element => {
                     pointerEvents: 'none',
                   }}
                 />
+                
+                {/* Bottom fade-to-black overlay */}
+                {/* <Box
+                  sx={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: '45%',
+                    background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 60%, #000000 100%)',
+                    borderRadius: '0 0 16px 16px',
+                    pointerEvents: 'none',
+                  }}
+                /> */}
               </Box>
             </Grid>
 
@@ -609,28 +615,20 @@ const Home = (): JSX.Element => {
             {stats.map((stat, index) => (
               <Grid item xs={6} md={3} key={index}>
                 <Box sx={{ textAlign: 'center' }}>
-                  <Typography
-                    sx={{
-                      fontSize: { xs: '1.75rem', sm: '2.25rem', md: '3rem' },
-                      fontWeight: 600,
-                      color: '#ffffff',
-                      mb: 1,
-                      letterSpacing: '-0.025em',
-                      fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    }}
+                  <motion.div
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, amount: 0.3 }}
+                    variants={fadeInUp}
+                    transition={{ duration: 0.5, ease: 'easeOut', delay: index * 0.08 }}
                   >
-                    {stat.value}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
-                      color: '#a1a1aa',
-                      fontWeight: 400,
-                      fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    }}
-                  >
-                    {stat.label}
-                  </Typography>
+                    <div className="text-3xl sm:text-4xl md:text-5xl font-semibold text-white mb-2 tracking-tight font-inter">
+                      {stat.value}
+                    </div>
+                    <div className="text-xs sm:text-sm md:text-base text-zinc-400 font-normal font-inter">
+                      {stat.label}
+                    </div>
+                  </motion.div>
                 </Box>
               </Grid>
             ))}
@@ -643,32 +641,28 @@ const Home = (): JSX.Element => {
         <Container maxWidth="lg" sx={{ px: { xs: 3, md: 2 } }}>
           {/* Section Header */}
           <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
-            <Typography
-              sx={{
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.75rem' },
-                fontWeight: 600,
-                color: '#ffffff',
-                mb: { xs: 2, md: 3 },
-                letterSpacing: '-0.02em',
-                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-              }}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={fadeInUp}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
             >
-              Why Choose Banbury?
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: { xs: '1rem', sm: '1.05rem', md: '1.125rem' },
-                color: '#a1a1aa',
-                maxWidth: '600px',
-                mx: 'auto',
-                lineHeight: 1.6,
-                fontWeight: 400,
-                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                px: { xs: 2, md: 0 }
-              }}
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-white mb-4 md:mb-6 tracking-tight font-inter">
+                Why Choose Banbury?
+              </h2>
+            </motion.div>
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={fadeInUp}
+              transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
             >
-              Experience the power of AI-driven automation with features designed for modern businesses
-            </Typography>
+              <p className="text-base sm:text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed font-normal font-inter px-4 md:px-0">
+                Experience the power of AI-driven automation with features designed for modern businesses
+              </p>
+            </motion.div>
           </Box>
 
           <Grid container spacing={4}>
@@ -710,32 +704,30 @@ const Home = (): JSX.Element => {
                   </Box>
 
                   {/* Title */}
-                  <Typography
-                    sx={{
-                      mb: 2,
-                      fontWeight: 600,
-                      color: '#ffffff',
-                      fontSize: { xs: '1.125rem', md: '1.25rem' },
-                      letterSpacing: '-0.01em',
-                      fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    }}
+                  <motion.div
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, amount: 0.2 }}
+                    variants={fadeInUp}
+                    transition={{ duration: 0.5, ease: 'easeOut', delay: 0.05 }}
                   >
-                    {feature.title}
-                  </Typography>
+                    <h3 className="mb-4 font-semibold text-white text-lg md:text-xl tracking-tight font-inter">
+                      {feature.title}
+                    </h3>
+                  </motion.div>
 
                   {/* Description */}
-                  <Typography
-                    sx={{
-                      color: '#a1a1aa',
-                      lineHeight: 1.6,
-                      mb: 3,
-                      fontSize: { xs: '0.9rem', md: '0.95rem' },
-                      fontWeight: 400,
-                      fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    }}
+                  <motion.div
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, amount: 0.2 }}
+                    variants={fadeInUp}
+                    transition={{ duration: 0.5, ease: 'easeOut', delay: 0.12 }}
                   >
-                    {feature.description}
-                  </Typography>
+                    <p className="text-zinc-400 leading-relaxed mb-6 text-sm md:text-base font-normal font-inter">
+                      {feature.description}
+                    </p>
+                  </motion.div>
 
                   {/* Highlight Badge */}
                   <Box
@@ -753,15 +745,9 @@ const Home = (): JSX.Element => {
                       transition: 'all 0.3s ease',
                     }}
                   >
-                    <Typography
-                      sx={{
-                        color: '#3b82f6',
-                        fontSize: { xs: '0.8rem', md: '0.85rem' },
-                        fontWeight: 600,
-                      }}
-                    >
+                    <span className="text-blue-500 text-xs md:text-sm font-semibold">
                       {feature.highlight}
-                    </Typography>
+                    </span>
                   </Box>
                 </Box>
               </Grid>
@@ -780,33 +766,28 @@ const Home = (): JSX.Element => {
       >
         <Container maxWidth="md" sx={{ px: { xs: 3, md: 2 } }}>
           <Box sx={{ textAlign: 'center' }}>
-            <Typography
-              sx={{
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.75rem' },
-                fontWeight: 600,
-                mb: { xs: 3, md: 4 },
-                color: '#ffffff',
-                letterSpacing: '-0.02em',
-                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-              }}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={fadeInUp}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
             >
-              Ready to Transform Your Workflow?
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' },
-                color: '#a1a1aa',
-                mb: { xs: 5, md: 6 },
-                lineHeight: 1.6,
-                maxWidth: '600px',
-                mx: 'auto',
-                fontWeight: 400,
-                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                px: { xs: 2, md: 0 }
-              }}
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-6 md:mb-8 text-white tracking-tight font-inter">
+                Ready to Transform Your Workflow?
+              </h2>
+            </motion.div>
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={fadeInUp}
+              transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
             >
-              Join Banbury to automate your processes and boost productivity by 300%.
-            </Typography>
+              <p className="text-base sm:text-lg md:text-xl text-zinc-400 mb-10 md:mb-12 leading-relaxed max-w-2xl mx-auto font-normal font-inter px-4 md:px-0">
+                Join Banbury to automate your processes and boost productivity by 300%.
+              </p>
+            </motion.div>
             
             <Box sx={{ 
               display: 'flex', 
@@ -824,6 +805,7 @@ const Home = (): JSX.Element => {
                 style={{
                   background: 'rgba(255, 255, 255, 0.1)',
                   border: 'none',
+                  color: '#ffffff',
                   borderRadius: '16px',
                   transition: 'all 0.3s ease',
                 }}
@@ -833,7 +815,7 @@ const Home = (): JSX.Element => {
               <Button
                 variant="outline"
                 size="lg"
-                onClick={handleDownload}
+                onClick={() => handleDownload({ url: downloadUrl })}
                 className="rounded-2xl py-2.5 md:py-3 px-4 md:px-6 text-base md:text-xl font-medium min-h-[48px] md:min-h-auto hover:-translate-y-0.5"
                 style={{
                   borderRadius: '16px',
@@ -846,7 +828,7 @@ const Home = (): JSX.Element => {
                   transition: 'all 0.3s ease',
                 }}
               >
-                Watch Demo
+                {downloadText}
               </Button>
             </Box>
           </Box>

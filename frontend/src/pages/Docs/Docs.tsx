@@ -1,4 +1,4 @@
-import { Box, Typography, Paper, Container } from '@mui/material';
+import Box from '@mui/material/Box';
 import { useEffect, useState } from 'react';
 
 import DocsSidebar from './components/DocsSidebar';
@@ -7,8 +7,16 @@ import WhatIsBanburyTab from './components/WhatIsBanburyTab';
 import FeaturesTab from './components/FeaturesTab';
 import UsingBanburyTab from './components/UsingBanbury';
 import TaskStudioTab from './components/TaskStudioTab';
+import KnowledgeGraphTab from './components/KnowledgeGraphTab';
+import IntegrationsTab from './components/IntegrationsTab';
+import GmailTab from './components/GmailTab';
+import GoogleDocsTab from './components/GoogleDocsTab';
+import GoogleSheetsTab from './components/GoogleSheetsTab';
+import OutlookTab from './components/OutlookTab';
+import XTab from './components/XTab';
+import MemoriesTab from './components/MemoriesTab';
 
-const Docs = (): JSX.Element => {
+const Docs = () => {
   const [activeSection, setActiveSection] = useState<string>('what-is-banbury');
 
   // Track page visit when component mounts
@@ -82,8 +90,40 @@ const Docs = (): JSX.Element => {
               <TaskStudioTab />
             )}
 
+            {activeSection === 'knowledge-graph' && (
+              <KnowledgeGraphTab />
+            )}
+
+            {activeSection === 'memories' && (
+              <MemoriesTab />
+            )}
+
+            {activeSection === 'integrations' && (
+              <IntegrationsTab />
+            )}
+
+            {activeSection === 'gmail' && (
+              <GmailTab />
+            )}
+
+            {activeSection === 'google-docs' && (
+              <GoogleDocsTab />
+            )}
+
+            {activeSection === 'google-sheets' && (
+              <GoogleSheetsTab />
+            )}
+
+            {activeSection === 'outlook' && (
+              <OutlookTab />
+            )}
+
+            {activeSection === 'x' && (
+              <XTab />
+            )}
+
             {/* Default Tab - Show when no specific tab is selected */}
-            {!['what-is-banbury', 'features', 'using-banbury', 'task-studio'].includes(activeSection) && (
+            {!['what-is-banbury', 'features', 'using-banbury', 'task-studio', 'knowledge-graph', 'memories', 'integrations', 'gmail', 'google-docs', 'google-sheets', 'outlook', 'x'].includes(activeSection) && (
               <WhatIsBanburyTab />
             )}
           </Box>

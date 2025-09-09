@@ -1,4 +1,6 @@
 import { Box, Typography, Paper, List, ListItem, ListItemText, Chip } from '@mui/material';
+import Image from 'next/image';
+import TaskStudioImg from '../../../assets/images/Task_Studio.png';
 
 const TaskStudioTab = (): JSX.Element => {
   return (
@@ -28,6 +30,20 @@ const TaskStudioTab = (): JSX.Element => {
         Task Studio is Banbury's comprehensive task management interface that allows you to create, schedule, monitor, and manage tasks within your workspace. It provides powerful features for both individual and recurring task management.
       </Typography>
 
+      <Box sx={{ mb: 4 }}>
+        <Image
+          src={TaskStudioImg}
+          alt="Knowledge graph visualization"
+          style={{
+            width: '100%',
+            height: 'auto',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            backgroundColor: '#0f0f0f'
+          }}
+          priority
+        />
+      </Box>
       {/* Getting Started Section */}
       <Paper
         sx={{

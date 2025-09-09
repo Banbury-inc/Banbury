@@ -88,7 +88,7 @@ interface KnowledgeGraphData {
   timestamp: string;
 }
 
-const Knowledge = (): JSX.Element => {
+const Knowledge = () => {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [knowledgeGraph, setKnowledgeGraph] = useState<KnowledgeGraphData | null>(null)
@@ -136,26 +136,26 @@ const Knowledge = (): JSX.Element => {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-black">
+      <div className="flex h-screen bg-gradient-to-b from-black to-zinc-950">
         <NavSidebar onLogout={handleLogout} />
         <div className="flex-1 ml-16 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          <div className="h-10 w-10 rounded-full border-2 border-zinc-800 border-t-blue-500 animate-spin"></div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen bg-black">
+    <div className="flex h-screen bg-gradient-to-b from-black to-zinc-950">
       <NavSidebar onLogout={handleLogout} />
-      <div className="flex-1 ml-16 flex flex-col">
+      <div className="flex-1 ml-16 flex flex-col min-w-0">
         {/* Main Content */}
         <div className="flex-1 flex">
           {/* Knowledge Graph Visualization */}
           <div className="flex-1">
-            <div className="bg-zinc-900 h-full overflow-hidden">
+            <div className="h-full overflow-hidden bg-zinc-900/60 supports-[backdrop-filter]:bg-zinc-900/40 backdrop-blur border-r border-zinc-800/60">
               {error && (
-                <div className="absolute top-4 left-4 right-4 z-10 p-3 bg-red-900/20 border border-red-800 text-red-300 rounded-lg">
+                <div className="absolute top-4 left-4 right-4 z-20 p-3 bg-red-900/30 border border-red-800/70 text-red-200 rounded-md shadow-lg">
                   <strong>Error:</strong> {error}
                 </div>
               )}
@@ -163,21 +163,21 @@ const Knowledge = (): JSX.Element => {
               {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                    <div className="h-8 w-8 rounded-full border-2 border-zinc-700 border-t-blue-500 animate-spin mx-auto mb-3"></div>
                     <p className="text-zinc-400 text-sm">Loading knowledge graph...</p>
                   </div>
                 </div>
               ) : searchResults ? (
                 // Search Results View
                 <div className="h-full flex flex-col">
-                  <div className="flex items-center justify-between p-3 border-b border-zinc-800 bg-zinc-900/50">
+                  <div className="sticky top-0 z-10 flex items-center justify-between p-3 border-b border-zinc-800/60 bg-zinc-900/60 supports-[backdrop-filter]:bg-zinc-900/40 backdrop-blur">
                     <h3 className="text-sm font-medium text-white">
                       Search Results
                     </h3>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-white border-zinc-600 hover:bg-zinc-800 text-xs h-7 px-2"
+                      className="text-white border-zinc-700 hover:bg-zinc-800/60 text-xs h-7 px-2"
                       onClick={() => {
                         setSearchResults(null)
                       }}
@@ -187,7 +187,7 @@ const Knowledge = (): JSX.Element => {
                     </Button>
                   </div>
                   
-                  <div className="flex-1 relative">
+                  <div className="flex-1 relative min-h-0">
                     <KnowledgeGraphVisualizer
                       data={searchResults}
                       onNodeClick={setSelectedNode}
@@ -199,13 +199,13 @@ const Knowledge = (): JSX.Element => {
               ) : knowledgeGraph ? (
                 // Full Knowledge Graph View
                 <div className="h-full flex flex-col">
-                  <div className="flex items-center justify-between p-3 border-b border-zinc-800 bg-zinc-900/50">
+                  <div className="sticky top-0 z-10 flex items-center justify-between p-3 border-b border-zinc-800/60 bg-zinc-900/60 supports-[backdrop-filter]:bg-zinc-900/40 backdrop-blur">
                     <h3 className="text-sm font-medium text-white">Knowledge Graph</h3>
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-white border-zinc-600 hover:bg-zinc-800 text-xs h-7 px-2"
+                        className="text-white border-zinc-700 hover:bg-zinc-800/60 text-xs h-7 px-2"
                         onClick={loadKnowledgeGraph}
                       >
                         <RefreshCw className="h-3 w-3 mr-1" />
@@ -214,7 +214,7 @@ const Knowledge = (): JSX.Element => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-white border-zinc-600 hover:bg-zinc-800 text-xs h-7 px-2"
+                        className="text-white border-zinc-700 hover:bg-zinc-800/60 text-xs h-7 px-2"
                       >
                         <Upload className="h-3 w-3 mr-1" />
                         Import
@@ -222,7 +222,7 @@ const Knowledge = (): JSX.Element => {
                     </div>
                   </div>
                   
-                  <div className="flex-1 relative">
+                  <div className="flex-1 relative min-h-0">
                     <KnowledgeGraphVisualizer
                       data={knowledgeGraph}
                       onNodeClick={setSelectedNode}
@@ -244,7 +244,7 @@ const Knowledge = (): JSX.Element => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-white border-zinc-600 hover:bg-zinc-800 text-xs h-7 px-2"
+                        className="text-white border-zinc-700 hover:bg-zinc-800/60 text-xs h-7 px-2"
                         onClick={loadKnowledgeGraph}
                       >
                         <RefreshCw className="h-3 w-3 mr-1" />
@@ -258,8 +258,8 @@ const Knowledge = (): JSX.Element => {
           </div>
 
           {/* Sidebar - Node Details */}
-          <div className="w-80 border-l border-zinc-800 p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">Node Details</h3>
+          <div className="w-80 border-l border-zinc-800/60 bg-zinc-950/40 supports-[backdrop-filter]:bg-zinc-950/30 backdrop-blur p-6 overflow-y-auto min-w-0">
+            <h3 className="text-base font-semibold text-white tracking-tight mb-4">Node Details</h3>
             {selectedNode ? (
               <div className="space-y-4">
                 {'name' in selectedNode ? (
@@ -284,7 +284,7 @@ const Knowledge = (): JSX.Element => {
                         <label className="block text-sm font-medium text-zinc-400 mb-1">Labels</label>
                         <div className="flex flex-wrap gap-1">
                           {selectedNode.labels.map((label, index) => (
-                            <span key={index} className="px-2 py-1 bg-blue-900/50 text-blue-300 text-xs rounded">
+                            <span key={index} className="px-2 py-0.5 bg-blue-900/50 text-blue-300 text-xs rounded">
                               {label}
                             </span>
                           ))}
@@ -293,7 +293,7 @@ const Knowledge = (): JSX.Element => {
                     )}
                     <div>
                       <label className="block text-sm font-medium text-zinc-400 mb-1">Summary</label>
-                      <p className="text-white text-sm">{selectedNode.summary}</p>
+                      <p className="text-white/90 text-sm leading-relaxed">{selectedNode.summary}</p>
                     </div>
                     {selectedNode.created_at && (
                       <div>
@@ -310,10 +310,11 @@ const Knowledge = (): JSX.Element => {
                     {selectedNode.attributes && Object.keys(selectedNode.attributes).length > 0 && (
                       <div>
                         <label className="block text-sm font-medium text-zinc-400 mb-1">Attributes</label>
-                        <div className="text-white text-sm">
+                        <div className="text-white text-sm grid grid-cols-1 gap-y-1">
                           {Object.entries(selectedNode.attributes).map(([key, value]) => (
-                            <div key={key} className="mb-1">
-                              <span className="text-zinc-400">{key}:</span> {String(value)}
+                            <div key={key} className="flex justify-between gap-3">
+                              <span className="text-zinc-400 truncate">{key}</span>
+                              <span className="truncate">{String(value)}</span>
                             </div>
                           ))}
                         </div>
@@ -325,7 +326,7 @@ const Knowledge = (): JSX.Element => {
                   <>
                     <div>
                       <label className="block text-sm font-medium text-zinc-400 mb-1">Fact</label>
-                      <p className="text-white">{selectedNode.fact}</p>
+                      <p className="text-white/90 leading-relaxed">{selectedNode.fact}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-zinc-400 mb-1">Confidence</label>
@@ -342,7 +343,7 @@ const Knowledge = (): JSX.Element => {
                         <label className="block text-sm font-medium text-zinc-400 mb-1">Labels</label>
                         <div className="flex flex-wrap gap-1">
                           {selectedNode.labels.map((label, index) => (
-                            <span key={index} className="px-2 py-1 bg-yellow-900/50 text-yellow-300 text-xs rounded">
+                            <span key={index} className="px-2 py-0.5 bg-yellow-900/50 text-yellow-300 text-xs rounded">
                               {label}
                             </span>
                           ))}
@@ -374,10 +375,11 @@ const Knowledge = (): JSX.Element => {
                     {selectedNode.attributes && Object.keys(selectedNode.attributes).length > 0 && (
                       <div>
                         <label className="block text-sm font-medium text-zinc-400 mb-1">Attributes</label>
-                        <div className="text-white text-sm">
+                        <div className="text-white text-sm grid grid-cols-1 gap-y-1">
                           {Object.entries(selectedNode.attributes).map(([key, value]) => (
-                            <div key={key} className="mb-1">
-                              <span className="text-zinc-400">{key}:</span> {String(value)}
+                            <div key={key} className="flex justify-between gap-3">
+                              <span className="text-zinc-400 truncate">{key}</span>
+                              <span className="truncate">{String(value)}</span>
                             </div>
                           ))}
                         </div>
@@ -418,10 +420,11 @@ const Knowledge = (): JSX.Element => {
                     {selectedNode.metadata && Object.keys(selectedNode.metadata).length > 0 && (
                       <div>
                         <label className="block text-sm font-medium text-zinc-400 mb-1">Metadata</label>
-                        <div className="text-white text-sm">
+                        <div className="text-white text-sm grid grid-cols-1 gap-y-1">
                           {Object.entries(selectedNode.metadata).map(([key, value]) => (
-                            <div key={key} className="mb-1">
-                              <span className="text-zinc-400">{key}:</span> {String(value)}
+                            <div key={key} className="flex justify-between gap-3">
+                              <span className="text-zinc-400 truncate">{key}</span>
+                              <span className="truncate">{String(value)}</span>
                             </div>
                           ))}
                         </div>

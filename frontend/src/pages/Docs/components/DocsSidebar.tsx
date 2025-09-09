@@ -19,7 +19,7 @@ interface DocsSidebarProps {
 }
 
 const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps): JSX.Element => {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['getting-started']));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['getting-started', 'contextual-knowledge', 'automating-workflows', 'integrations']));
 
   const sections: SidebarSection[] = [
     {
@@ -29,7 +29,33 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps): JSX.
         { id: 'quick-start', title: 'What is Banbury?', href: '#quick-start' },
         { id: 'features', title: 'Features', href: '#features' },
         { id: 'using-banbury', title: 'Using Banbury', href: '#using-banbury' },
+      ]
+    },
+    {
+      id: 'contextual-knowledge',
+      title: 'Contextual Knowledge',
+      items: [
+        { id: 'knowledge-graph', title: 'Knowledge Graph', href: '#knowledge-graph' },
+        { id: 'memories', title: 'Memories', href: '#memories' },
+      ]
+    },
+    {
+      id: 'automating-workflows',
+      title: 'Automating Workflows',
+      items: [
         { id: 'task-studio', title: 'Task Studio', href: '#task-studio' },
+      ]
+    },
+    {
+      id: 'integrations',
+      title: 'Integrations',
+      items: [
+        { id: 'integrations', title: 'Overview', href: '#integrations' },
+        { id: 'gmail', title: 'Gmail', href: '#gmail' },
+        { id: 'google-docs', title: 'Google Docs', href: '#google-docs' },
+        { id: 'google-sheets', title: 'Google Sheets', href: '#google-sheets' },
+        { id: 'outlook', title: 'Outlook', href: '#outlook' },
+        { id: 'x', title: 'X (Twitter)', href: '#x' },
       ]
     },
   ];
