@@ -86,6 +86,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   const { toast } = useToast();
   const [attachedFiles, setAttachedFiles] = useState<FileSystemItem[]>([]);
   const [attachedEmails, setAttachedEmails] = useState<any[]>([]);
+  const [manuallyRemovedFiles, setManuallyRemovedFiles] = useState<Set<string>>(new Set());
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true);
   const [toolPreferences, setToolPreferences] = useState<{ web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean; browser: boolean; x_api: boolean }>(() => {
     try {
@@ -131,6 +132,8 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
 
   const handleFileRemove = (fileId: string) => {
     setAttachedFiles(prev => prev.filter(file => file.file_id !== fileId));
+    // Track this file as manually removed to prevent auto-reattachment
+    setManuallyRemovedFiles(prev => new Set([...prev, fileId]));
   };
 
   const handleEmailAttach = (email: any) => {
@@ -458,8 +461,10 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     if (selectedFile && selectedFile.file_id) {
       // Check if the file is already attached
       const isAlreadyAttached = attachedFiles.some(f => f.file_id === selectedFile.file_id);
+      // Check if the file was manually removed by the user
+      const wasManuallyRemoved = manuallyRemovedFiles.has(selectedFile.file_id);
       
-      if (!isAlreadyAttached) {
+      if (!isAlreadyAttached && !wasManuallyRemoved) {
         // Only attach if it's a viewable file type (aligned with Workspaces)
         const isViewableFile = (fileName: string): boolean => {
           const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'];
@@ -480,7 +485,23 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         }
       }
     }
-  }, [selectedFile, attachedFiles]);
+  }, [selectedFile, attachedFiles, manuallyRemovedFiles]);
+
+  // Clear manual removal tracking when selectedFile changes to a different file
+  useEffect(() => {
+    if (selectedFile && selectedFile.file_id) {
+      setManuallyRemovedFiles(prev => {
+        const newSet = new Set(prev);
+        // Remove all file IDs except the current one from manual removal tracking
+        for (const fileId of newSet) {
+          if (fileId !== selectedFile.file_id) {
+            newSet.delete(fileId);
+          }
+        }
+        return newSet;
+      });
+    }
+  }, [selectedFile?.file_id]);
 
   // Auto-attach the selected email from Email tab
   useEffect(() => {
