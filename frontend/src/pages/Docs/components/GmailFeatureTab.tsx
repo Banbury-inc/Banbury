@@ -1,6 +1,8 @@
 import { Box, Typography } from '@mui/material';
+import Image from 'next/image';
+import gmailImage from '../../../assets/images/gmail.png';
 
-export default function FeaturesTab() {
+export default function GmailFeatureTab() {
   return (
     <Box>
       <Typography
@@ -12,95 +14,72 @@ export default function FeaturesTab() {
           fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         }}
       >
-        Banbury's Features
+        Gmail
       </Typography>
-      <Typography
-        sx={{
-          fontSize: '1rem',
-          color: '#a1a1aa',
-          mb: 4,
-          lineHeight: 1.7,
-          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        }}
-      >
-        Banbury is an Enterprise AI Analyst that works as a remote artificial employee within organizations. This guide highlights two important aspects of Banbury's interaction with your data:
-      </Typography>
-
-      {/* What can Banbury see? */}
-      <Box sx={{ mb: 6 }}>
+      
+      {/* Visibility */}
+      <Box sx={{ mb: 4 }}>
         <Typography
           sx={{
-            fontSize: { xs: '1.25rem', md: '1.5rem' },
+            fontSize: '1rem',
             fontWeight: 600,
-            mb: 3,
+            mb: 2,
             color: '#ffffff',
             fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           }}
         >
-          1. <strong>What can Banbury see?</strong>
+          • <strong>Visibility:</strong>
         </Typography>
         <Typography
           sx={{
-            fontSize: '1rem',
+            fontSize: '0.9rem',
             color: '#a1a1aa',
-            mb: 4,
-            lineHeight: 1.7,
+            mb: 2,
+            lineHeight: 1.6,
             fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            pl: 2,
           }}
         >
-          Banbury has visibility into different asset types, allowing it to understand and interpret a wide array of data. For example, Banbury can read documents and spreadsheets, view the contents of folders, and even browse the web to gather information.
+          • Banbury can view and understand the contents of your Gmail messages, including email threads, attachments, and metadata.
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: '0.9rem',
+            color: '#a1a1aa',
+            mb: 2,
+            lineHeight: 1.6,
+            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            pl: 2,
+          }}
+        >
+          • Access to email content, sender information, timestamps, and conversation threads.
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: '0.9rem',
+            color: '#a1a1aa',
+            mb: 0,
+            lineHeight: 1.6,
+            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            pl: 2,
+          }}
+        >
+          • Read and analyze email attachments and embedded content.
         </Typography>
       </Box>
 
-      {/* What can Banbury do? */}
-      <Box sx={{ mb: 6 }}>
+      {/* Actions */}
+      <Box>
         <Typography
           sx={{
-            fontSize: { xs: '1.25rem', md: '1.5rem' },
+            fontSize: '1rem',
             fontWeight: 600,
-            mb: 3,
+            mb: 2,
             color: '#ffffff',
             fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           }}
         >
-          2. <strong>What can Banbury do?</strong>
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: '1rem',
-            color: '#a1a1aa',
-            mb: 4,
-            lineHeight: 1.7,
-            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          }}
-        >
-          Beyond just viewing, Banbury can perform a multitude of actions on top of your assets to manage your workspace efficiently. It can create and edit documents & spreadsheets and share assets with others, among other capabilities.
-        </Typography>
-      </Box>
-
-      {/* Feature Overview */}
-      <Box sx={{ mb: 6 }}>
-        <Typography
-          sx={{
-            fontSize: { xs: '1.25rem', md: '1.5rem' },
-            fontWeight: 600,
-            mb: 3,
-            color: '#ffffff',
-            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          }}
-        >
-          <strong>Available Features</strong>
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: '1rem',
-            color: '#a1a1aa',
-            mb: 4,
-            lineHeight: 1.7,
-            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          }}
-        >
-          Explore the specific capabilities of each feature by selecting them from the sidebar:
+          • <strong>Actions - Banbury can:</strong>
         </Typography>
         <Box sx={{ pl: 2 }}>
           <Typography
@@ -112,7 +91,7 @@ export default function FeaturesTab() {
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             }}
           >
-            • <strong>Docs</strong> - Create, edit, and manage documents
+            • Compose and send new emails.
           </Typography>
           <Typography
             sx={{
@@ -123,7 +102,7 @@ export default function FeaturesTab() {
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             }}
           >
-            • <strong>Spreadsheets</strong> - Work with spreadsheet data and formulas
+            • Reply to and forward existing emails.
           </Typography>
           <Typography
             sx={{
@@ -134,7 +113,7 @@ export default function FeaturesTab() {
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             }}
           >
-            • <strong>Folders</strong> - Organize and analyze folder contents
+            • Organize emails by creating and managing labels.
           </Typography>
           <Typography
             sx={{
@@ -145,7 +124,7 @@ export default function FeaturesTab() {
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             }}
           >
-            • <strong>Browse</strong> - Web browsing and automation capabilities
+            • Search and filter emails based on content, sender, or date.
           </Typography>
           <Typography
             sx={{
@@ -156,7 +135,7 @@ export default function FeaturesTab() {
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             }}
           >
-            • <strong>Calendar</strong> - Manage events and calendar data
+            • Schedule emails to be sent at specific times.
           </Typography>
           <Typography
             sx={{
@@ -167,7 +146,7 @@ export default function FeaturesTab() {
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             }}
           >
-            • <strong>Canvas</strong> - Create and manage visual canvas elements
+            • Manage email drafts and templates.
           </Typography>
           <Typography
             sx={{
@@ -178,9 +157,70 @@ export default function FeaturesTab() {
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             }}
           >
-            • <strong>Gmail</strong> - Manage emails and automate communication
+            • Set up automated email responses and filters.
           </Typography>
         </Box>
+      </Box>
+
+      <Box sx={{ mb: 4, mt: 4 }}>
+        <Image
+          src={gmailImage}
+          alt="Gmail Image"
+          style={{
+            width: '100%',
+            height: 'auto',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            backgroundColor: '#0f0f0f'
+          }}
+          priority
+        />
+      </Box>
+      <Box sx={{
+        p: 3,
+        mt: 4,
+        background: 'rgba(255,255,255,0.02)',
+        borderRadius: '20px',
+        border: '1px solid rgba(255,255,255,0.08)',
+        position: 'relative',
+        overflow: 'hidden',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        <Typography
+          sx={{
+            fontSize: '1rem',
+            fontWeight: 600,
+            mb: 2,
+            color: '#ffffff',
+            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          }}
+        >
+          Gmail Integration
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: '0.9rem',
+            color: '#a1a1aa',
+            mb: 2,
+            lineHeight: 1.6,
+            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          }}
+        >
+          Banbury's Gmail integration allows for seamless email management and automation. Whether you need to analyze email patterns, respond to customer inquiries, or organize your inbox, Banbury can handle it all with intelligent automation.
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: '0.9rem',
+            color: '#a1a1aa',
+            mb: 0,
+            lineHeight: 1.6,
+            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          }}
+        >
+          Connect your Gmail account to get started with intelligent email management powered by AI.
+        </Typography>
       </Box>
     </Box>
   );

@@ -19,16 +19,29 @@ interface DocsSidebarProps {
 }
 
 const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps): JSX.Element => {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['getting-started', 'contextual-knowledge', 'automating-workflows', 'integrations']));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
   const sections: SidebarSection[] = [
     {
       id: 'getting-started',
       title: 'Getting Started',
       items: [
-        { id: 'quick-start', title: 'What is Banbury?', href: '#quick-start' },
-        { id: 'features', title: 'Features', href: '#features' },
+        { id: 'what-is-banbury', title: 'What is Banbury?', href: '#what-is-banbury' },
         { id: 'using-banbury', title: 'Using Banbury', href: '#using-banbury' },
+      ]
+    },
+    {
+      id: 'features',
+      title: 'Features',
+      items: [
+        { id: 'features', title: 'Overview', href: '#features' },
+        { id: 'gmail-feature', title: 'Gmail', href: '#gmail-feature' },
+        { id: 'docs-feature', title: 'Docs', href: '#docs-feature' },
+        { id: 'spreadsheets-feature', title: 'Spreadsheets', href: '#spreadsheets-feature' },
+        { id: 'calendar-feature', title: 'Calendar', href: '#calendar-feature' },
+        { id: 'folders-feature', title: 'Folders', href: '#folders-feature' },
+        { id: 'browse-feature', title: 'Browse', href: '#browse-feature' },
+        { id: 'canvas-feature', title: 'Canvas', href: '#canvas-feature' },
       ]
     },
     {

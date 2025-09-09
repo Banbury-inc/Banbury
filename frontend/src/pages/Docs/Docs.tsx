@@ -15,6 +15,13 @@ import GoogleSheetsTab from './components/GoogleSheetsTab';
 import OutlookTab from './components/OutlookTab';
 import XTab from './components/XTab';
 import MemoriesTab from './components/MemoriesTab';
+import DocsFeatureTab from './components/DocsFeatureTab';
+import SpreadsheetsFeatureTab from './components/SpreadsheetsFeatureTab';
+import FoldersFeatureTab from './components/FoldersFeatureTab';
+import BrowseFeatureTab from './components/BrowseFeatureTab';
+import CalendarFeatureTab from './components/CalendarFeatureTab';
+import CanvasFeatureTab from './components/CanvasFeatureTab';
+import GmailFeatureTab from './components/GmailFeatureTab';
 
 const Docs = () => {
   const [activeSection, setActiveSection] = useState<string>('what-is-banbury');
@@ -122,8 +129,37 @@ const Docs = () => {
               <XTab />
             )}
 
+            {activeSection === 'docs-feature' && (
+              <DocsFeatureTab />
+            )}
+
+            {activeSection === 'spreadsheets-feature' && (
+              <SpreadsheetsFeatureTab />
+            )}
+
+            {activeSection === 'calendar-feature' && (
+              <CalendarFeatureTab />
+            )}
+
+            {activeSection === 'folders-feature' && (
+              <FoldersFeatureTab />
+            )}
+
+            {activeSection === 'browse-feature' && (
+              <BrowseFeatureTab />
+            )}
+
+
+            {activeSection === 'canvas-feature' && (
+              <CanvasFeatureTab />
+            )}
+
+            {activeSection === 'gmail-feature' && (
+              <GmailFeatureTab />
+            )}
+
             {/* Default Tab - Show when no specific tab is selected */}
-            {!['what-is-banbury', 'features', 'using-banbury', 'task-studio', 'knowledge-graph', 'memories', 'integrations', 'gmail', 'google-docs', 'google-sheets', 'outlook', 'x'].includes(activeSection) && (
+            {!['what-is-banbury', 'features', 'using-banbury', 'task-studio', 'knowledge-graph', 'memories', 'integrations', 'gmail', 'google-docs', 'google-sheets', 'outlook', 'x', 'docs-feature', 'spreadsheets-feature', 'folders-feature', 'browse-feature', 'calendar-feature', 'canvas-feature', 'gmail-feature'].includes(activeSection) && (
               <WhatIsBanburyTab />
             )}
           </Box>
