@@ -21,6 +21,8 @@ export interface MeetingSession {
   transcriptionText?: string
   participants: MeetingParticipant[]
   metadata: MeetingMetadata
+  // Recall AI specific fields
+  recallBot?: RecallBot
 }
 
 export interface MeetingParticipant {
@@ -43,6 +45,9 @@ export interface MeetingMetadata {
   autoJoin: boolean
   autoLeave: boolean
   maxDuration: number
+  // Recall AI specific settings
+  recordingMode?: 'speaker_view' | 'gallery_view' | 'shared_screen'
+  botName?: string
 }
 
 export interface TranscriptionSegment {
@@ -107,4 +112,58 @@ export interface MeetingAgentStatus {
   totalRecordingTime: number
   lastActivity?: Date
   systemHealth: 'healthy' | 'degraded' | 'offline'
+}
+
+// Recall AI specific interfaces
+export interface RecallBot {
+  id: string
+  status: 'joining' | 'active' | 'recording' | 'leaving' | 'completed' | 'failed'
+  meetingUrl: string
+  joinUrl?: string
+  recordingStatus: 'not_started' | 'recording' | 'processing' | 'completed' | 'failed'
+  transcriptionStatus: 'not_started' | 'processing' | 'completed' | 'failed'
+  createdAt: Date
+  joinedAt?: Date
+  leftAt?: Date
+  metadata: RecallBotMetadata
+  videoUrl?: string
+  audioUrl?: string
+  transcriptUrl?: string
+  chatMessagesUrl?: string
+}
+
+export interface RecallBotMetadata {
+  meeting_title?: string
+  bot_name?: string
+  recording_mode: 'speaker_view' | 'gallery_view' | 'shared_screen'
+  transcription_options: {
+    provider: 'meeting_captions' | 'recall'
+    language?: string
+  }
+  real_time_transcription?: {
+    destination_url?: string
+    partial_results?: boolean
+  }
+  automatic_leave?: {
+    waiting_room_timeout?: number
+    noone_joined_timeout?: number
+    everyone_left_timeout?: number
+  }
+}
+
+export interface RecallBotResponse {
+  success: boolean
+  bot?: RecallBot
+  message: string
+}
+
+export interface RecallWebhookEvent {
+  event: 'bot.status_change' | 'bot.recording_ready' | 'bot.transcription_ready'
+  data: {
+    bot_id: string
+    status?: string
+    recording_url?: string
+    transcription_url?: string
+    meeting_metadata?: any
+  }
 }

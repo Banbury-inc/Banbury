@@ -136,6 +136,24 @@ export function VideoPlayerDialog({
   // Download recording
   const handleDownload = async () => {
     try {
+      // Use Recall video URL if available
+      if (session.recallBot?.videoUrl) {
+        const link = document.createElement('a')
+        link.href = session.recallBot.videoUrl
+        link.download = `${session.title || 'meeting'}_recall_recording.mp4`
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        
+        toast({
+          title: 'Download Started',
+          description: 'Your Recall recording download has started'
+        })
+        return
+      }
+      
+      // Fallback to our service for non-Recall recordings
       const result = await MeetingAgentService.downloadRecording(session.id)
       if (result.success && result.downloadUrl) {
         const link = document.createElement('a')
@@ -214,9 +232,16 @@ export function VideoPlayerDialog({
       setIsPlaying(false)
       setStreamUrl(null)
       
-      // Get secure stream URL
+      // Get video URL - prioritize Recall video URL
       const fetchStreamUrl = async () => {
         try {
+          // If we have a Recall bot video URL, use it directly
+          if (session.recallBot?.videoUrl) {
+            setStreamUrl(session.recallBot.videoUrl)
+            return
+          }
+          
+          // Otherwise, try to get secure stream URL from our service
           const result = await MeetingAgentService.getVideoStreamUrl(session.id)
           if (result.success && result.streamUrl) {
             setStreamUrl(result.streamUrl)
@@ -233,7 +258,7 @@ export function VideoPlayerDialog({
       
       fetchStreamUrl()
     }
-  }, [open, session.id, videoUrl])
+  }, [open, session.id, videoUrl, session.recallBot?.videoUrl])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -243,10 +268,18 @@ export function VideoPlayerDialog({
             <DialogTitle className="text-white flex items-center gap-2">
               <Video className="h-5 w-5" />
               {session.title || 'Untitled Meeting'}
+              {session.recallBot?.videoUrl && (
+                <Badge variant="outline" className="bg-blue-600/20 border-blue-500/30 text-blue-300 text-xs">
+                  Recall AI
+                </Badge>
+              )}
             </DialogTitle>
             <DialogDescription className="text-zinc-400">
               {session.platform.name} • {new Date(session.startTime).toLocaleString()}
               {session.duration && ` • ${Math.round(session.duration / 60)} minutes`}
+              {session.recallBot?.videoUrl && (
+                <span className="text-blue-400"> • Recorded by Recall AI</span>
+              )}
             </DialogDescription>
           </DialogHeader>
         </div>

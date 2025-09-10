@@ -27,6 +27,8 @@ import { MeetingSessionCard } from './components/MeetingSessionCard'
 import { MeetingAgentSettings } from './components/MeetingAgentSettings'
 import { AgentStatusCard } from './components/AgentStatusCard'
 import { VideoPlayerDialog } from './components/VideoPlayerDialog'
+import { RecallBotCard } from './components/RecallBotCard'
+import { TranscriptionDialog } from './components/TranscriptionDialog'
 import { MeetingAgentService } from '../../services/meetingAgentService'
 import { MeetingSession, MeetingAgentStatus } from '../../types/meeting-types'
 import { useToast } from '../../components/ui/use-toast'
@@ -41,6 +43,7 @@ export default function MeetingAgent() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [videoPlayerSession, setVideoPlayerSession] = useState<MeetingSession | null>(null)
+  const [transcriptionSession, setTranscriptionSession] = useState<MeetingSession | null>(null)
   const { toast } = useToast()
 
   // Handle logout
@@ -80,7 +83,7 @@ export default function MeetingAgent() {
     loadData()
   }, [loadData])
 
-  // Handle joining a meeting
+  // Handle joining a meeting with Recall AI
   const handleJoinMeeting = async (meetingUrl: string, settings: any) => {
     try {
       const result = await MeetingAgentService.joinMeeting({
@@ -92,7 +95,7 @@ export default function MeetingAgent() {
       if (result.success) {
         toast({
           title: 'Success',
-          description: result.message
+          description: `${result.message}${result.recallBotId ? ` (Bot ID: ${result.recallBotId})` : ''}`
         })
         setIsJoinDialogOpen(false)
         loadData() // Refresh data
@@ -367,19 +370,36 @@ export default function MeetingAgent() {
                                         <span className="text-xs text-red-300 font-medium">REC</span>
                                       </div>
                                     )}
+                                    {session.recallBot && (
+                                      <Badge variant="outline" className="text-xs bg-blue-600/20 border-blue-500/30 text-blue-300">
+                                        Recall Bot: {session.recallBot.id.slice(0, 8)}...
+                                      </Badge>
+                                    )}
                                   </div>
-                                  <p className="text-sm text-zinc-400">
-                                    {session.platform.name} • {new Date(session.startTime).toLocaleString()}
-                                  </p>
+                                  <div className="flex items-center gap-2 text-sm text-zinc-400">
+                                    <span>{session.platform.name}</span>
+                                    <span>•</span>
+                                    <span>{new Date(session.startTime).toLocaleString()}</span>
+                                    {session.recallBot && (
+                                      <>
+                                        <span>•</span>
+                                        <span className="text-blue-400">
+                                          Bot: {session.recallBot.status}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Badge variant={getStatusBadgeVariant(session.status)}>
                                   {session.status}
                                 </Badge>
-                                {session.status === 'completed' && (
+                                {/* Show play button for completed sessions OR if we have video URL */}
+                                {(session.status === 'completed' || session.recallBot?.videoUrl || session.recordingUrl) && (
                                   <div className="flex gap-1">
-                                    {session.recordingUrl && (
+                                    {/* Use Recall video URL if available, otherwise fall back to recordingUrl */}
+                                    {(session.recallBot?.videoUrl || session.recordingUrl) && (
                                       <>
                                         <Button 
                                           size="sm" 
@@ -390,6 +410,80 @@ export default function MeetingAgent() {
                                         >
                                           <Play className="h-3 w-3" />
                                         </Button>
+                                      </>
+                                    )}
+                                    
+                                    {/* Show processing button only when recording is actually still processing */}
+                                    {session.recallBot && 
+                                     !session.recallBot.videoUrl && 
+                                     !session.recordingUrl && 
+                                     session.recallBot.recordingStatus !== 'completed' && 
+                                     session.recallBot.recordingStatus !== 'failed' && (
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline"
+                                        className="bg-yellow-600/20 border-yellow-500/30 text-yellow-300 h-8 w-8 p-0"
+                                        title="Recording Processing... (Click to check)"
+                                        onClick={async () => {
+                                          toast({
+                                            title: 'Recording Status',
+                                            description: `Recording status: ${session.recallBot?.recordingStatus}. Please check back in a few minutes.`
+                                          })
+                                          // Refresh data to check for updates
+                                          loadData()
+                                        }}
+                                      >
+                                        <Clock className="h-3 w-3" />
+                                      </Button>
+                                    )}
+
+                                    {/* Show message when recording is completed but no video URL yet */}
+                                    {session.recallBot && 
+                                     !session.recallBot.videoUrl && 
+                                     !session.recordingUrl && 
+                                     session.recallBot.recordingStatus === 'completed' && (
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline"
+                                        className="bg-blue-600/20 border-blue-500/30 text-blue-300 h-8 w-8 p-0"
+                                        title="Recording completed - URL should be available soon"
+                                        onClick={async () => {
+                                          toast({
+                                            title: 'Recording Ready',
+                                            description: 'Recording is completed! Refreshing to get the video URL...'
+                                          })
+                                          // Refresh data to get the video URL
+                                          loadData()
+                                        }}
+                                      >
+                                        <CheckCircle className="h-3 w-3" />
+                                      </Button>
+                                    )}
+
+                                    {/* Show error when recording failed */}
+                                    {session.recallBot && 
+                                     !session.recallBot.videoUrl && 
+                                     !session.recordingUrl && 
+                                     session.recallBot.recordingStatus === 'failed' && (
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline"
+                                        className="bg-red-600/20 border-red-500/30 text-red-300 h-8 w-8 p-0"
+                                        title="Recording failed"
+                                        onClick={() => {
+                                          toast({
+                                            title: 'Recording Failed',
+                                            description: 'The recording failed to process. Please try again.',
+                                            variant: 'destructive'
+                                          })
+                                        }}
+                                      >
+                                        <AlertCircle className="h-3 w-3" />
+                                      </Button>
+                                    )}
+
+                                    {/* Download button - show for any session with video/recording URL */}
+                                    {(session.recallBot?.videoUrl || session.recordingUrl) && (
                                         <Button 
                                           size="sm" 
                                           variant="outline" 
@@ -397,14 +491,25 @@ export default function MeetingAgent() {
                                           title="Download Recording"
                                           onClick={async () => {
                                             try {
-                                              const result = await MeetingAgentService.downloadRecording(session.id)
-                                              if (result.success && result.downloadUrl) {
+                                              // Use Recall video URL if available
+                                              if (session.recallBot?.videoUrl) {
                                                 const link = document.createElement('a')
-                                                link.href = result.downloadUrl
-                                                link.download = `${session.title || 'meeting'}_recording.mp4`
+                                                link.href = session.recallBot.videoUrl
+                                                link.download = `${session.title || 'meeting'}_recall_recording.mp4`
+                                                link.target = '_blank'
                                                 document.body.appendChild(link)
                                                 link.click()
                                                 document.body.removeChild(link)
+                                              } else {
+                                                const result = await MeetingAgentService.downloadRecording(session.id)
+                                                if (result.success && result.downloadUrl) {
+                                                  const link = document.createElement('a')
+                                                  link.href = result.downloadUrl
+                                                  link.download = `${session.title || 'meeting'}_recording.mp4`
+                                                  document.body.appendChild(link)
+                                                  link.click()
+                                                  document.body.removeChild(link)
+                                                }
                                               }
                                             } catch (error) {
                                               toast({
@@ -417,18 +522,47 @@ export default function MeetingAgent() {
                                         >
                                           <Download className="h-3 w-3" />
                                         </Button>
-                                      </>
                                     )}
-                                    {session.transcriptionText && (
+                                    {/* Transcription button - show for any session that might have transcription */}
+                                    {(session.recallBot?.transcriptUrl || session.transcriptionText || session.status === 'completed') && (
                                       <Button 
                                         size="sm" 
                                         variant="outline" 
                                         className="text-white border-zinc-600 h-8 w-8 p-0"
-                                        title="Download Transcription"
+                                        title="View Transcription"
+                                        onClick={() => setTranscriptionSession(session)}
                                       >
                                         <FileText className="h-3 w-3" />
                                       </Button>
                                     )}
+                                    {/* Add chat messages button if available */}
+                                    {session.recallBot?.chatMessagesUrl && (
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        className="text-white border-zinc-600 h-8 w-8 p-0"
+                                        title="View Chat Messages"
+                                        onClick={() => window.open(session.recallBot!.chatMessagesUrl, '_blank')}
+                                      >
+                                        💬
+                                      </Button>
+                                    )}
+                                    {/* Debug button - temporary */}
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost"
+                                      className="text-zinc-400 hover:text-white h-8 w-8 p-0"
+                                      title="Debug Session Data"
+                                      onClick={() => {
+                                        console.log('Session data:', session)
+                                        toast({
+                                          title: 'Session Debug',
+                                          description: `Status: ${session.status}, Has recallBot: ${!!session.recallBot}, Has videoUrl: ${!!session.recallBot?.videoUrl}, Has recordingUrl: ${!!session.recordingUrl}`
+                                        })
+                                      }}
+                                    >
+                                      🐛
+                                    </Button>
                                   </div>
                                 )}
                                 {(session.status === 'active' || session.status === 'recording') && (
@@ -478,12 +612,36 @@ export default function MeetingAgent() {
                           {sessions
                             .filter(s => ['active', 'recording', 'joining', 'processing'].includes(s.status))
                             .map((session) => (
-                              <MeetingSessionCard
-                                key={session.id}
-                                session={session}
-                                onLeave={() => handleLeaveMeeting(session.id)}
-                                onRefresh={loadData}
-                              />
+                              <div key={session.id} className="space-y-3">
+                                <MeetingSessionCard
+                                  session={session}
+                                  onLeave={() => handleLeaveMeeting(session.id)}
+                                  onRefresh={loadData}
+                                />
+                                {/* Show Recall Bot details if available */}
+                                {session.recallBot && (
+                                  <RecallBotCard
+                                    bot={session.recallBot}
+                                    onStop={async () => {
+                                      try {
+                                        await MeetingAgentService.stopRecallBot(session.recallBot!.id)
+                                        toast({
+                                          title: 'Success',
+                                          description: 'Recall bot stopped successfully'
+                                        })
+                                        loadData()
+                                      } catch (error) {
+                                        toast({
+                                          title: 'Error',
+                                          description: 'Failed to stop Recall bot',
+                                          variant: 'destructive'
+                                        })
+                                      }
+                                    }}
+                                    onRefresh={loadData}
+                                  />
+                                )}
+                              </div>
                             ))}
                         </div>
                       )}
@@ -541,14 +699,25 @@ export default function MeetingAgent() {
               />
 
               {/* Video Player Dialog */}
-              {videoPlayerSession && videoPlayerSession.recordingUrl && (
+              {videoPlayerSession && (videoPlayerSession.recallBot?.videoUrl || videoPlayerSession.recordingUrl) && (
                 <VideoPlayerDialog
                   open={!!videoPlayerSession}
                   onOpenChange={(open) => {
                     if (!open) setVideoPlayerSession(null)
                   }}
                   session={videoPlayerSession}
-                  videoUrl={videoPlayerSession.recordingUrl}
+                  videoUrl={videoPlayerSession.recallBot?.videoUrl || videoPlayerSession.recordingUrl || ''}
+                />
+              )}
+
+              {/* Transcription Dialog */}
+              {transcriptionSession && (
+                <TranscriptionDialog
+                  open={!!transcriptionSession}
+                  onOpenChange={(open) => {
+                    if (!open) setTranscriptionSession(null)
+                  }}
+                  session={transcriptionSession}
                 />
               )}
           </div>

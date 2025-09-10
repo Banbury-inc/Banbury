@@ -210,6 +210,31 @@ export function MeetingJoinDialog({ open, onOpenChange, onJoin }: MeetingJoinDia
                 </Select>
               </div>
 
+              {/* Recording Mode (Recall AI specific) */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Recording Mode</Label>
+                  <p className="text-sm text-muted-foreground">
+                    How the meeting should be recorded
+                  </p>
+                </div>
+                <Select
+                  value={settings.recordingMode || 'speaker_view'}
+                  onValueChange={(value: 'speaker_view' | 'gallery_view' | 'shared_screen') =>
+                    setSettings(prev => ({ ...prev, recordingMode: value }))
+                  }
+                >
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="speaker_view">Speaker View</SelectItem>
+                    <SelectItem value="gallery_view">Gallery View</SelectItem>
+                    <SelectItem value="shared_screen">Shared Screen</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Recording Toggle */}
               <div className="flex items-center justify-between">
                 <div>

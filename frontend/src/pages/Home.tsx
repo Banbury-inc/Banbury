@@ -61,13 +61,13 @@ const Home = (): JSX.Element => {
       {/* Hero Section */}
       <Box
         sx={{
-          minHeight: { xs: '100vh', md: '85vh' },
+          minHeight: { xs: '100vh', lg: '85vh' },
           display: 'flex',
           alignItems: 'flex-start',
           position: 'relative',
           overflow: 'visible',
-          pt: { xs: 4, sm: 6, md: 8 },
-          pb: { xs: 4, md: 0 },
+          pt: { xs: 4, sm: 6, lg: 8 },
+          pb: { xs: 4, lg: 0 },
           background: '#000000',
           '&::before': {
             content: '""',
@@ -88,39 +88,40 @@ const Home = (): JSX.Element => {
       >
         <Container maxWidth={false} sx={{ 
           overflow: 'visible', 
-          px: { xs: 3, sm: 4, md: 0 }, 
-          width: { xs: '100%', md: '80%' },
+          px: { xs: 3, sm: 4, lg: 0 }, 
+          width: { xs: '100%', lg: '85%' },
           mx: 'auto'
         }}>
           <Grid 
             container 
-            spacing={0} 
+            spacing={{ xs: 2, sm: 4, lg: 4, xl: 6 }} 
             alignItems="center"
             justifyContent="flex-start"
             sx={{ 
               position: 'relative',
-              minHeight: { xs: '80vh', md: '70vh' },
+              minHeight: { xs: '80vh', lg: '70vh' },
               overflow: 'visible',
               width: '100%'
             }}
           >
             {/* Text Content - Left Side */}
-            <Grid item xs={12} md={4} sx={{ 
+            <Grid item xs={12} sm={12} lg={5} xl={5} sx={{ 
               position: 'relative', 
               zIndex: 2, 
               display: 'flex', 
               alignItems: 'center', 
-              justifyContent: { xs: 'center', md: 'flex-start' },
-              pl: { xs: 0, md: 2 },
-              order: { xs: 1, md: 1 }
+              justifyContent: { xs: 'center', sm: 'center', lg: 'flex-start', xl: 'flex-start' },
+              pl: { xs: 0, lg: 2, xl: 2 },
+              pr: { xs: 0, lg: 3, xl: 3 },
+              order: { xs: 1, sm: 1, lg: 1, xl: 1 }
             }}>
               <Box sx={{ 
-                pr: { md: 6 }, 
-                mb: { xs: 6, md: 0 }, 
-                pt: { xs: 2, md: 4 },
-                textAlign: { xs: 'center', md: 'left' },
-                maxWidth: { xs: '100%', md: '450px' },
-                ml: { xs: 0, md: 0 }
+                pr: { lg: 6, xl: 6 }, 
+                mb: { xs: 6, sm: 6, lg: 0, xl: 0 }, 
+                pt: { xs: 2, sm: 2, lg: 4, xl: 4 },
+                textAlign: { xs: 'center', sm: 'center', lg: 'left', xl: 'left' },
+                maxWidth: { xs: '100%', sm: '100%', lg: '450px', xl: '500px' },
+                ml: { xs: 0, sm: 0, lg: 0, xl: 0 }
               }}>
                 <motion.div
                   initial="hidden"
@@ -177,16 +178,16 @@ const Home = (): JSX.Element => {
             </Grid>
 
             {/* Image - Right Side */}
-            <Grid item xs={12} md={5} sx={{ 
+            <Grid item xs={12} sm={12} lg={7} xl={7} sx={{ 
               position: 'relative',
-              height: { xs: '300px', sm: '350px', md: '500px' },
+              height: { xs: '300px', sm: '350px', lg: '500px', xl: '600px' },
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              padding: { xs: 0, md: 0 },
+              justifyContent: { xs: 'center', sm: 'center', lg: 'flex-start', xl: 'flex-start' },
+              padding: { xs: 0, lg: 0, xl: 0 },
               overflow: 'visible',
-              order: { xs: 2, md: 2 },
-              mb: { xs: 4, md: 0 }
+              order: { xs: 2, sm: 2, lg: 2, xl: 2 },
+              mb: { xs: 4, sm: 4, lg: 0, xl: 0 }
             }}>
               {/* Gradient backdrop for depth */}
               <Box
@@ -206,24 +207,15 @@ const Home = (): JSX.Element => {
               
               {/* Main image container with enhanced styling */}
               <Box sx={{ 
-                position: 'absolute',
-                left: { xs: '50%', md: '0%' },
-                right: { xs: '-50%', md: '-60%' },
-                top: '50%',
-                transform: { 
-                  xs: 'translateX(-50%) translateY(-50%) perspective(1000px) rotateY(-5deg) rotateX(1deg)',
-                  md: 'translateY(-50%) perspective(1000px) rotateY(-5deg) rotateX(1deg)'
-                },
-                width: { xs: '100%', sm: '120%', md: '150%' },
+                position: 'relative',
+                width: { xs: '100%', sm: '90%', lg: '120%', xl: '110%' },
                 height: 'auto',
                 zIndex: 2,
                 transformOrigin: 'center center',
+                transform: 'perspective(1000px) rotateY(-5deg) rotateX(1deg)',
                 transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
                 '&:hover': {
-                  transform: { 
-                    xs: 'translateX(-50%) translateY(-50%) perspective(1000px) rotateY(-2deg) rotateX(0.5deg) scale(1.02)',
-                    md: 'translateY(-50%) perspective(1000px) rotateY(-2deg) rotateX(0.5deg) scale(1.02)'
-                  },
+                  transform: 'perspective(1000px) rotateY(-2deg) rotateX(0.5deg) scale(1.02)',
                 }
               }}>
                 <Image

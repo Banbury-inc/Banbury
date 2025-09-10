@@ -7,7 +7,10 @@ import {
   MeetingAgentConfig,
   MeetingSummary,
   TranscriptionSegment,
-  MeetingPlatform
+  MeetingPlatform,
+  RecallBot,
+  RecallBotResponse,
+  RecallBotMetadata
 } from '../types/meeting-types'
 
 export class MeetingAgentService {
@@ -84,21 +87,28 @@ export class MeetingAgentService {
   }
 
   /**
-   * Start a meeting session by joining a meeting URL
+   * Start a meeting session by joining a meeting URL using Recall AI
    */
   static async joinMeeting(request: MeetingJoinRequest): Promise<{
     success: boolean
     sessionId?: string
+    recallBotId?: string
     message: string
   }> {
     try {
       const response = await ApiService.post<{
         success: boolean
         sessionId?: string
+        recall_bot_id?: string
         message: string
       }>(`${this.baseEndpoint}/join/`, request)
       
-      return response
+      return {
+        success: response.success,
+        sessionId: response.sessionId,
+        recallBotId: response.recall_bot_id,
+        message: response.message
+      }
     } catch (error) {
       console.error('Failed to join meeting:', error)
       throw error
@@ -479,6 +489,105 @@ export class MeetingAgentService {
     pollUpdates()
     
     // Return cleanup function
+    return () => {
+      isActive = false
+    }
+  }
+
+  /**
+   * Get Recall bot information
+   */
+  static async getRecallBot(botId: string): Promise<RecallBot> {
+    try {
+      const response = await ApiService.get<RecallBot>(
+        `${this.baseEndpoint}/recall-bot/${botId}/`
+      )
+      return response
+    } catch (error) {
+      console.error('Failed to fetch recall bot:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Create a new Recall bot for a meeting
+   */
+  static async createRecallBot(
+    meetingUrl: string,
+    metadata: Partial<RecallBotMetadata>
+  ): Promise<RecallBotResponse> {
+    try {
+      const response = await ApiService.post<RecallBotResponse>(
+        `${this.baseEndpoint}/recall-bot/create/`,
+        {
+          meeting_url: meetingUrl,
+          bot_name: metadata.bot_name || 'Meeting Recorder',
+          recording_mode: metadata.recording_mode || 'speaker_view',
+          transcription_options: metadata.transcription_options || {
+            provider: 'recall',
+            language: 'en'
+          },
+          automatic_leave: metadata.automatic_leave || {
+            waiting_room_timeout: 1200,
+            noone_joined_timeout: 1200,
+            everyone_left_timeout: 30
+          }
+        }
+      )
+      return response
+    } catch (error) {
+      console.error('Failed to create recall bot:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Stop a Recall bot
+   */
+  static async stopRecallBot(botId: string): Promise<{
+    success: boolean
+    message: string
+  }> {
+    try {
+      const response = await ApiService.post<{
+        success: boolean
+        message: string
+      }>(`${this.baseEndpoint}/recall-bot/${botId}/stop/`, {})
+      
+      return response
+    } catch (error) {
+      console.error('Failed to stop recall bot:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get real-time Recall bot status updates
+   */
+  static subscribeToRecallBotUpdates(
+    botId: string,
+    onUpdate: (bot: RecallBot) => void,
+    onError: (error: Error) => void
+  ): () => void {
+    let isActive = true
+    
+    const pollBotStatus = async () => {
+      if (!isActive) return
+      
+      try {
+        const bot = await this.getRecallBot(botId)
+        onUpdate(bot)
+      } catch (error) {
+        onError(error as Error)
+      }
+      
+      if (isActive) {
+        setTimeout(pollBotStatus, 3000) // Poll every 3 seconds
+      }
+    }
+    
+    pollBotStatus()
+    
     return () => {
       isActive = false
     }
