@@ -76,27 +76,32 @@ export class ApiService {
    */
   static async login(username: string, password: string) {
     try {
-      // Use the getuserinfo4 endpoint which handles authentication and token generation
-      const response = await this.get<{
-        result: string;
-        token?: string;
-        username?: string;
-        message?: string;
-      }>(`/authentication/getuserinfo4/${encodeURIComponent(username)}/${encodeURIComponent(password)}/`);
+      type LoginResponse =
+        | { success?: boolean; token?: string; user?: { username?: string; email?: string }; message?: string; username?: string }
+        | { result?: string; token?: string; username?: string; message?: string };
 
-      if (response.result === 'success' && response.token) {
-        // Set auth token globally
-        this.setAuthToken(response.token, response.username || username);
-        
+      const response = await this.post<LoginResponse>('/authentication/login_api/', {
+        username,
+        password,
+      });
+
+      const token = (response as any)?.token;
+      const success = (response as any)?.success === true || (response as any)?.result === 'success';
+      const resolvedUsername =
+        (response as any)?.user?.username || (response as any)?.username || username;
+      const message = (response as any)?.message;
+
+      if (success && token) {
+        this.setAuthToken(token, resolvedUsername);
         return {
           success: true,
-          token: response.token,
-          username: response.username || username,
-          message: response.message || 'Login successful'
+          token,
+          username: resolvedUsername,
+          message: message || 'Login successful',
         };
-      } else {
-        throw new Error(response.message || 'Invalid username or password');
       }
+
+      throw new Error(message || 'Invalid username or password');
     } catch (error) {
       throw this.enhanceError(error, 'Login failed');
     }
@@ -213,6 +218,8 @@ export class ApiService {
           message = 'Authentication service is not available. Please try again later.';
         } else if (status === 401 || status === 403) {
           message = 'Invalid username or password. Please check your credentials and try again.';
+        } else if (status === 405) {
+          message = 'Login request method not allowed; please update and try again.';
         } else if (status === 500) {
           message = 'Server error occurred during login. Please try again later.';
         } else if (!status) {

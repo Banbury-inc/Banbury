@@ -40,10 +40,7 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import DownloadIcon from '@mui/icons-material/Download';
 import GoogleIcon from '@mui/icons-material/Google';
 import { ApiService } from '../services/apiService';
-import { CONFIG } from '../config/config';
 
-// Google OAuth configuration
-const GOOGLE_OAUTH_REDIRECT_URI = `${window.location.origin}/auth/callback`;
 
 interface UserInfo {
   username: string;
@@ -157,24 +154,13 @@ const Dashboard = (): JSX.Element => {
     try {
       setLoading(true);
       
-      // Get the Google OAuth URL from the backend
-      const response = await fetch(`${CONFIG.url}/authentication/google/?redirect_uri=${encodeURIComponent(GOOGLE_OAUTH_REDIRECT_URI)}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.authUrl) {
-          // Redirect to Google OAuth
-          window.location.href = data.authUrl;
-        } else {
-          setError('Failed to initiate Google OAuth');
-        }
+      const { AUTH_CONFIG } = await import('../services/authConfig');
+      const result = await ApiService.initiateGoogleAuth(AUTH_CONFIG.redirectUri);
+      
+      if (result.success && result.authUrl) {
+        window.location.href = result.authUrl;
       } else {
-        setError('Failed to connect to authentication server');
+        setError('Failed to initiate Google OAuth');
       }
     } catch (err) {
       console.error('Google OAuth error:', err);

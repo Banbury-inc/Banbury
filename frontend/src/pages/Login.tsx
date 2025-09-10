@@ -80,13 +80,7 @@ const Login = (): JSX.Element => {
 
   const handleGoogleLogin = async () => {
     try {
-      // Check if current domain is allowed for OAuth
-      if (!AUTH_CONFIG.isAllowedDomain()) {
-        setError(AUTH_CONFIG.getRedirectUriError());
-        return;
-      }
-
-      const redirectUri = AUTH_CONFIG.getRedirectUri();
+      const redirectUri = AUTH_CONFIG.redirectUri;
       
       const result = await ApiService.initiateGoogleAuth(redirectUri);
       
