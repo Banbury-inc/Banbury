@@ -29,6 +29,7 @@ const Login = (): JSX.Element => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [showRetryButton, setShowRetryButton] = useState(false);
 
   // Check API connectivity on component mount
   useEffect(() => {
@@ -65,7 +66,7 @@ const Login = (): JSX.Element => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, retryCount = 0) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -79,7 +80,27 @@ const Login = (): JSX.Element => {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      
+      // Check if this is a server error that might benefit from a retry
+      const isServerError = errorMessage.includes('server') || 
+                           errorMessage.includes('temporarily unavailable') ||
+                           errorMessage.includes('technical difficulties');
+      
+      // Retry up to 2 times for server errors with exponential backoff
+      if (isServerError && retryCount < 2) {
+        const retryDelay = Math.pow(2, retryCount) * 1000; // 1s, 2s
+        setError(`${errorMessage} Retrying in ${retryDelay / 1000} seconds...`);
+        setShowRetryButton(false);
+        
+        setTimeout(() => {
+          handleSubmit(e, retryCount + 1);
+        }, retryDelay);
+        
+        return;
+      }
+      
       setError(errorMessage);
+      setShowRetryButton(isServerError); // Show retry button for server errors
     } finally {
       setLoading(false);
     }
@@ -139,6 +160,15 @@ const Login = (): JSX.Element => {
                 <p className="text-red-400/70 text-xs mt-1">
                   Note: This may be due to server connectivity issues.
                 </p>
+              )}
+              {showRetryButton && (
+                <button
+                  onClick={(e) => handleSubmit(e, 0)}
+                  disabled={loading}
+                  className="mt-2 text-xs text-red-300 hover:text-red-200 underline disabled:opacity-50"
+                >
+                  Try again
+                </button>
               )}
             </div>
           )}

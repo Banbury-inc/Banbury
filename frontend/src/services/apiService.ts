@@ -107,6 +107,13 @@ export class ApiService {
   }
 
   /**
+   * Helper method to check if an error is an Axios error
+   */
+  private static isAxiosError(error: any): error is AxiosError {
+    return error && error.isAxiosError === true;
+  }
+
+  /**
    * Authentication specific requests
    */
   static async login(username: string, password: string) {
@@ -133,6 +140,33 @@ export class ApiService {
         throw new Error(response.message || 'Invalid username or password');
       }
     } catch (error) {
+      // Try fallback authentication endpoints if the primary fails
+      if (this.isAxiosError(error) && error.response?.status >= 500) {
+        try {
+          console.log('Primary login endpoint failed, trying fallback...');
+          const fallbackResponse = await this.get<{
+            result: string;
+            token?: string;
+            username?: string;
+            message?: string;
+          }>(`/users/getuserinfo3/${encodeURIComponent(username)}/${encodeURIComponent(password)}/`);
+
+          if (fallbackResponse.result === 'success' && fallbackResponse.token) {
+            this.setAuthToken(fallbackResponse.token, fallbackResponse.username || username);
+            
+            return {
+              success: true,
+              token: fallbackResponse.token,
+              username: fallbackResponse.username || username,
+              message: fallbackResponse.message || 'Login successful (fallback)'
+            };
+          }
+        } catch (fallbackError) {
+          console.log('Fallback login endpoint also failed:', fallbackError);
+          // Continue with original error handling
+        }
+      }
+      
       throw this.enhanceError(error, 'Login failed');
     }
   }
@@ -1097,13 +1131,19 @@ export class ApiService {
       // Handle authentication-specific errors with user-friendly messages
       if (context === 'Login failed') {
         if (status === 404) {
-          message = 'Authentication service is not available. Please try again later.';
+          message = 'Authentication service is not available. The server may be experiencing issues. Please try again in a few minutes.';
         } else if (status === 401 || status === 403) {
           message = 'Invalid username or password. Please check your credentials and try again.';
-        } else if (status === 500) {
-          message = 'Server error occurred during login. Please try again later.';
+        } else if (status === 500 || status === 502 || status === 503) {
+          message = 'The authentication server is temporarily unavailable. This is usually resolved quickly. Please try again in a moment.';
+        } else if (status === 429) {
+          message = 'Too many login attempts. Please wait a few minutes before trying again.';
         } else if (!status) {
-          message = 'Unable to connect to the authentication server. Please check your internet connection.';
+          message = 'Unable to connect to the authentication server. Please check your internet connection and try again.';
+        } else if (status >= 400 && status < 500) {
+          message = 'There was an issue with your login request. Please check your credentials and try again.';
+        } else if (status >= 500) {
+          message = 'The server is experiencing technical difficulties. Please try again in a few minutes.';
         }
       }
       
