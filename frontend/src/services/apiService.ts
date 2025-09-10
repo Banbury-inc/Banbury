@@ -251,7 +251,7 @@ export class ApiService {
   }
 
   /**
-   * Track page views
+   * Track page views (legacy method)
    */
   static async trackPageView(path: string, ipAddress: string) {
     try {
@@ -267,7 +267,34 @@ export class ApiService {
   }
 
   /**
-   * Get site visitor analytics
+   * Track page views with enhanced data
+   */
+  static async trackPageViewEnhanced(trackingData: {
+    path: string;
+    ip_address: string;
+    page_title?: string;
+    referrer_source?: string;
+    campaign_id?: string;
+    content_type?: string;
+    user_agent?: string;
+  }) {
+    try {
+      await this.post('/authentication/add_site_visitor_info_enhanced/', {
+        ...trackingData,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      // Fallback to legacy tracking if enhanced endpoint fails
+      try {
+        await this.trackPageView(trackingData.path, trackingData.ip_address);
+      } catch (fallbackError) {
+        console.debug('Both enhanced and legacy page tracking failed:', error, fallbackError);
+      }
+    }
+  }
+
+  /**
+   * Get site visitor analytics (legacy)
    */
   static async getSiteVisitorInfo(limit: number = 100, days: number = 30) {
     try {
@@ -275,6 +302,19 @@ export class ApiService {
       return response;
     } catch (error) {
       console.error('Failed to fetch visitor data:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get enhanced site visitor analytics with referrer and campaign data
+   */
+  static async getSiteVisitorInfoEnhanced(limit: number = 100, days: number = 30) {
+    try {
+      const response = await this.get(`/authentication/get_site_visitor_info_enhanced/?limit=${limit}&days=${days}`);
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch enhanced visitor data:', error);
       throw error;
     }
   }

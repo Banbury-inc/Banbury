@@ -18,7 +18,10 @@ import {
   MoreVertical,
   Eye,
   Trash2,
-  Share2
+  Share2,
+  Upload,
+  Cloud,
+  Monitor
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -29,6 +32,8 @@ import {
 import { MeetingSession } from '../../../types/meeting-types'
 import { MeetingAgentService } from '../../../services/meetingAgentService'
 import { useToast } from '../../../components/ui/use-toast'
+import { RecordingUploadDialog } from './RecordingUploadDialog'
+import { VideoPlayerDialog } from './VideoPlayerDialog'
 
 interface MeetingSessionCardProps {
   session: MeetingSession
@@ -38,6 +43,8 @@ interface MeetingSessionCardProps {
 
 export function MeetingSessionCard({ session, onLeave, onRefresh }: MeetingSessionCardProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
+  const [isVideoPlayerOpen, setIsVideoPlayerOpen] = useState(false)
   const { toast } = useToast()
 
   // Calculate duration
@@ -63,14 +70,16 @@ export function MeetingSessionCard({ session, onLeave, onRefresh }: MeetingSessi
   const getStatusColor = () => {
     switch (session.status) {
       case 'active':
-      case 'recording':
         return 'bg-green-500'
+      case 'recording':
+        return 'bg-red-500 animate-pulse'  // Red and pulsing for recording
       case 'completed':
         return 'bg-blue-500'
       case 'failed':
         return 'bg-red-500'
       case 'joining':
       case 'transcribing':
+      case 'processing':
         return 'bg-yellow-500'
       default:
         return 'bg-gray-500'
@@ -81,12 +90,15 @@ export function MeetingSessionCard({ session, onLeave, onRefresh }: MeetingSessi
   const getStatusVariant = () => {
     switch (session.status) {
       case 'active':
-      case 'recording':
         return 'default'
+      case 'recording':
+        return 'destructive'  // Red for recording
       case 'completed':
         return 'secondary'
       case 'failed':
         return 'destructive'
+      case 'processing':
+        return 'outline'
       default:
         return 'outline'
     }
@@ -266,6 +278,20 @@ ${transcriptionData.segments.map(segment =>
                   <Eye className="h-4 w-4 mr-2" />
                   View Meeting URL
                 </DropdownMenuItem>
+                {/* Watch Recording option for completed sessions with recordings */}
+                {session.status === 'completed' && session.recordingUrl && (
+                  <DropdownMenuItem onClick={() => setIsVideoPlayerOpen(true)}>
+                    <Monitor className="h-4 w-4 mr-2" />
+                    Watch Recording
+                  </DropdownMenuItem>
+                )}
+                {/* Upload Recording option for sessions without recordings */}
+                {(session.status === 'active' || session.status === 'completed') && !session.recordingUrl && (
+                  <DropdownMenuItem onClick={() => setIsUploadDialogOpen(true)}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Recording
+                  </DropdownMenuItem>
+                )}
                 {session.status === 'completed' && (
                   <DropdownMenuItem onClick={handleGenerateSummary} disabled={isLoading}>
                     <FileText className="h-4 w-4 mr-2" />
@@ -335,25 +361,49 @@ ${transcriptionData.segments.map(segment =>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 pt-2">
-          {session.status === 'active' && onLeave && (
+          {(session.status === 'active' || session.status === 'recording') && onLeave && (
             <Button size="sm" variant="destructive" onClick={onLeave}>
               <Square className="h-3 w-3 mr-1" />
-              Leave Meeting
+              {session.status === 'recording' ? 'Stop Recording & Leave' : 'Leave Meeting'}
+            </Button>
+          )}
+
+          {/* Upload Recording Button - show for active and completed sessions without recordings */}
+          {(session.status === 'active' || session.status === 'completed') && !session.recordingUrl && (
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => setIsUploadDialogOpen(true)}
+              className="text-white border-zinc-600 hover:bg-zinc-700"
+            >
+              <Upload className="h-3 w-3 mr-1" />
+              Upload Recording
             </Button>
           )}
 
           {session.status === 'completed' && (
             <>
               {session.recordingUrl && (
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={handleDownloadRecording}
-                  disabled={isLoading}
-                >
-                  <Download className="h-3 w-3 mr-1" />
-                  Recording
-                </Button>
+                <>
+                  <Button 
+                    size="sm" 
+                    variant="default" 
+                    onClick={() => setIsVideoPlayerOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Play className="h-3 w-3 mr-1" />
+                    Watch
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={handleDownloadRecording}
+                    disabled={isLoading}
+                  >
+                    <Download className="h-3 w-3 mr-1" />
+                    Download
+                  </Button>
+                </>
               )}
               
               {session.transcriptionText && (
@@ -370,9 +420,17 @@ ${transcriptionData.segments.map(segment =>
             </>
           )}
 
-          {(session.status === 'joining' || session.status === 'transcribing') && (
+          {session.status === 'recording' && (
+            <Badge variant="destructive" className="animate-pulse bg-red-600">
+              <div className="w-2 h-2 bg-white rounded-full mr-1"></div>
+              Recording...
+            </Badge>
+          )}
+
+          {(session.status === 'joining' || session.status === 'transcribing' || session.status === 'processing') && (
             <Badge variant="outline" className="animate-pulse">
-              {session.status === 'joining' ? 'Joining...' : 'Processing...'}
+              {session.status === 'joining' ? 'Joining...' : 
+               session.status === 'processing' ? 'Processing...' : 'Transcribing...'}
             </Badge>
           )}
         </div>
@@ -399,6 +457,32 @@ ${transcriptionData.segments.map(segment =>
           </div>
         )}
       </CardContent>
+      
+      {/* Recording Upload Dialog */}
+      <RecordingUploadDialog
+        open={isUploadDialogOpen}
+        onOpenChange={setIsUploadDialogOpen}
+        sessionId={session.id}
+        sessionTitle={session.title}
+        onUploadComplete={() => {
+          // Refresh the session data to show the new recording
+          onRefresh?.()
+          toast({
+            title: 'Recording Uploaded',
+            description: 'Your meeting recording has been saved successfully'
+          })
+        }}
+      />
+
+      {/* Video Player Dialog */}
+      {session.recordingUrl && (
+        <VideoPlayerDialog
+          open={isVideoPlayerOpen}
+          onOpenChange={setIsVideoPlayerOpen}
+          session={session}
+          videoUrl={session.recordingUrl}
+        />
+      )}
     </Card>
   )
 }

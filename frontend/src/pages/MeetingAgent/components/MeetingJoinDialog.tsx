@@ -174,6 +174,17 @@ export function MeetingJoinDialog({ open, onOpenChange, onJoin }: MeetingJoinDia
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Auto-Recording Notice */}
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/30 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <Video className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Automatic Recording</span>
+                </div>
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  Recording will start automatically when the agent joins and upload to cloud storage when the meeting ends.
+                </p>
+              </div>
+
               {/* Recording Quality */}
               <div className="flex items-center justify-between">
                 <div>

@@ -19,12 +19,14 @@ import {
   Clock,
   AlertCircle,
   CheckCircle,
-  Activity
+  Activity,
+  Play
 } from 'lucide-react'
 import { MeetingJoinDialog } from './components/MeetingJoinDialog'
 import { MeetingSessionCard } from './components/MeetingSessionCard'
 import { MeetingAgentSettings } from './components/MeetingAgentSettings'
 import { AgentStatusCard } from './components/AgentStatusCard'
+import { VideoPlayerDialog } from './components/VideoPlayerDialog'
 import { MeetingAgentService } from '../../services/meetingAgentService'
 import { MeetingSession, MeetingAgentStatus } from '../../types/meeting-types'
 import { useToast } from '../../components/ui/use-toast'
@@ -38,6 +40,7 @@ export default function MeetingAgent() {
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [videoPlayerSession, setVideoPlayerSession] = useState<MeetingSession | null>(null)
   const { toast } = useToast()
 
   // Handle logout
@@ -134,14 +137,16 @@ export default function MeetingAgent() {
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'active':
-      case 'recording':
         return 'default'
+      case 'recording':
+        return 'destructive'  // Red for recording
       case 'completed':
         return 'secondary'
       case 'failed':
         return 'destructive'
       case 'joining':
       case 'transcribing':
+      case 'processing':
         return 'outline'
       default:
         return 'outline'
@@ -152,14 +157,16 @@ export default function MeetingAgent() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active':
-      case 'recording':
         return <Video className="h-4 w-4" />
+      case 'recording':
+        return <Video className="h-4 w-4 text-red-500" />
       case 'completed':
         return <CheckCircle className="h-4 w-4" />
       case 'failed':
         return <AlertCircle className="h-4 w-4" />
       case 'joining':
       case 'transcribing':
+      case 'processing':
         return <Activity className="h-4 w-4" />
       default:
         return <Clock className="h-4 w-4" />
@@ -215,7 +222,17 @@ export default function MeetingAgent() {
                   AI agent that joins meetings to record and transcribe conversations
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                {/* Recording Indicator */}
+                {sessions.some(s => s.status === 'recording') && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-red-600/20 border border-red-500/30 rounded-lg">
+                    <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    <span className="text-red-300 text-sm font-medium">
+                      {sessions.filter(s => s.status === 'recording').length} Recording
+                    </span>
+                  </div>
+                )}
+                
                 <Button 
                   onClick={() => setIsJoinDialogOpen(true)}
                   className="bg-zinc-800 hover:bg-zinc-700 text-white"
@@ -342,7 +359,15 @@ export default function MeetingAgent() {
                               <div className="flex items-center gap-3">
                                 {getStatusIcon(session.status)}
                                 <div>
-                                  <p className="font-medium text-white">{session.title || 'Untitled Meeting'}</p>
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium text-white">{session.title || 'Untitled Meeting'}</p>
+                                    {session.status === 'recording' && (
+                                      <div className="flex items-center gap-1 px-2 py-1 bg-red-600/20 border border-red-500/30 rounded-full">
+                                        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                                        <span className="text-xs text-red-300 font-medium">REC</span>
+                                      </div>
+                                    )}
+                                  </div>
                                   <p className="text-sm text-zinc-400">
                                     {session.platform.name} • {new Date(session.startTime).toLocaleString()}
                                   </p>
@@ -355,25 +380,72 @@ export default function MeetingAgent() {
                                 {session.status === 'completed' && (
                                   <div className="flex gap-1">
                                     {session.recordingUrl && (
-                                      <Button size="sm" variant="outline" className="text-white border-zinc-600">
-                                        <Download className="h-3 w-3" />
-                                      </Button>
+                                      <>
+                                        <Button 
+                                          size="sm" 
+                                          variant="default"
+                                          className="bg-blue-600 hover:bg-blue-700 text-white h-8 w-8 p-0"
+                                          title="Watch Recording"
+                                          onClick={() => setVideoPlayerSession(session)}
+                                        >
+                                          <Play className="h-3 w-3" />
+                                        </Button>
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline" 
+                                          className="text-white border-zinc-600 h-8 w-8 p-0"
+                                          title="Download Recording"
+                                          onClick={async () => {
+                                            try {
+                                              const result = await MeetingAgentService.downloadRecording(session.id)
+                                              if (result.success && result.downloadUrl) {
+                                                const link = document.createElement('a')
+                                                link.href = result.downloadUrl
+                                                link.download = `${session.title || 'meeting'}_recording.mp4`
+                                                document.body.appendChild(link)
+                                                link.click()
+                                                document.body.removeChild(link)
+                                              }
+                                            } catch (error) {
+                                              toast({
+                                                title: 'Download Failed',
+                                                description: 'Failed to download recording',
+                                                variant: 'destructive'
+                                              })
+                                            }
+                                          }}
+                                        >
+                                          <Download className="h-3 w-3" />
+                                        </Button>
+                                      </>
                                     )}
                                     {session.transcriptionText && (
-                                      <Button size="sm" variant="outline" className="text-white border-zinc-600">
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        className="text-white border-zinc-600 h-8 w-8 p-0"
+                                        title="Download Transcription"
+                                      >
                                         <FileText className="h-3 w-3" />
                                       </Button>
                                     )}
                                   </div>
                                 )}
-                                {session.status === 'active' && (
-                                  <Button 
-                                    size="sm" 
-                                    variant="destructive"
-                                    onClick={() => handleLeaveMeeting(session.id)}
-                                  >
-                                    Leave
-                                  </Button>
+                                {(session.status === 'active' || session.status === 'recording') && (
+                                  <>
+                                    <Button 
+                                      size="sm" 
+                                      variant="destructive"
+                                      onClick={() => handleLeaveMeeting(session.id)}
+                                    >
+                                      {session.status === 'recording' ? 'Stop & Leave' : 'Leave'}
+                                    </Button>
+                                  </>
+                                )}
+                                {session.status === 'processing' && (
+                                  <Badge variant="outline" className="animate-pulse">
+                                    Processing...
+                                  </Badge>
                                 )}
                               </div>
                             </div>
@@ -396,7 +468,7 @@ export default function MeetingAgent() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      {sessions.filter(s => ['active', 'recording', 'joining'].includes(s.status)).length === 0 ? (
+                      {sessions.filter(s => ['active', 'recording', 'joining', 'processing'].includes(s.status)).length === 0 ? (
                         <div className="text-center py-8 text-zinc-400">
                           <VideoOff className="h-12 w-12 mx-auto mb-4" />
                           <p>No active sessions</p>
@@ -404,7 +476,7 @@ export default function MeetingAgent() {
                       ) : (
                         <div className="space-y-4">
                           {sessions
-                            .filter(s => ['active', 'recording', 'joining'].includes(s.status))
+                            .filter(s => ['active', 'recording', 'joining', 'processing'].includes(s.status))
                             .map((session) => (
                               <MeetingSessionCard
                                 key={session.id}
@@ -467,6 +539,18 @@ export default function MeetingAgent() {
                 onOpenChange={setIsJoinDialogOpen}
                 onJoin={handleJoinMeeting}
               />
+
+              {/* Video Player Dialog */}
+              {videoPlayerSession && videoPlayerSession.recordingUrl && (
+                <VideoPlayerDialog
+                  open={!!videoPlayerSession}
+                  onOpenChange={(open) => {
+                    if (!open) setVideoPlayerSession(null)
+                  }}
+                  session={videoPlayerSession}
+                  videoUrl={videoPlayerSession.recordingUrl}
+                />
+              )}
           </div>
         </div>
       </div>

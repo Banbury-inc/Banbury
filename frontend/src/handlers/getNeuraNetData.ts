@@ -6,18 +6,55 @@ interface Server extends Document {
   total_number_of_requests?: number;
 }
 
-// Function to get the MongoDB client
+// Singleton MongoDB client manager
+class MongoDBManager {
+  private static instance: MongoDBManager;
+  private client: MongoClient | null = null;
+  private readonly uri = 'mongodb+srv://mmills6060:Dirtballer6060@banbury.fx0xcqk.mongodb.net/?retryWrites=true&w=majority';
+
+  private constructor() {}
+
+  public static getInstance(): MongoDBManager {
+    if (!MongoDBManager.instance) {
+      MongoDBManager.instance = new MongoDBManager();
+    }
+    return MongoDBManager.instance;
+  }
+
+  public async getClient(): Promise<MongoClient> {
+    if (!this.client) {
+      this.client = new MongoClient(this.uri, {
+        maxPoolSize: 10,
+        minPoolSize: 2,
+        maxIdleTimeMS: 30000,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+        connectTimeoutMS: 10000,
+      });
+      await this.client.connect();
+    }
+    return this.client;
+  }
+
+  public async closeConnection(): Promise<void> {
+    if (this.client) {
+      await this.client.close();
+      this.client = null;
+    }
+  }
+}
+
+// Get MongoDB client instance
 async function getClient(): Promise<MongoClient> {
-  const uri = 'mongodb+srv://mmills6060:Dirtballer6060@banbury.fx0xcqk.mongodb.net/?retryWrites=true&w=majority';
-  const client = new MongoClient(uri);
-  await client.connect();
-  return client;
+  const manager = MongoDBManager.getInstance();
+  return manager.getClient();
 }
 
 // Function to get total data processed
 export async function getTotalDataProcessed(): Promise<number | null> {
+  let client: MongoClient | null = null;
   try {
-    const client = await getClient();
+    client = await getClient();
     const myColl: Collection<Server> = client.db('myDatabase').collection('server');
     const result = await myColl.findOne({ total_data_processed: { $exists: true } });
 
@@ -32,12 +69,14 @@ export async function getTotalDataProcessed(): Promise<number | null> {
     console.error('Error fetching total data processed:', error);
     return null;
   }
+  // Note: Connection remains open for reuse
 }
 
 // Function to get total requests processed
 export async function getTotalRequestsProcessed(): Promise<number | null> {
+  let client: MongoClient | null = null;
   try {
-    const client = await getClient();
+    client = await getClient();
     const myColl: Collection<Server> = client.db('myDatabase').collection('server');
     const result = await myColl.findOne({ total_number_of_requests: { $exists: true } });
 
@@ -52,6 +91,13 @@ export async function getTotalRequestsProcessed(): Promise<number | null> {
     console.error('Error fetching total requests processed:', error);
     return null;
   }
+  // Note: Connection remains open for reuse
+}
+
+// Function to close MongoDB connection when application shuts down
+export async function closeMongoDBConnection(): Promise<void> {
+  const manager = MongoDBManager.getInstance();
+  await manager.closeConnection();
 }
 
 // Helper function to format bytes (if needed, similar to Rust's format_bytes function)

@@ -152,6 +152,13 @@ interface VisitorData {
   country: string
   path?: string
   client_timestamp?: string
+  // Enhanced tracking fields
+  page_title?: string
+  referrer_source?: string
+  campaign_id?: string
+  content_type?: string
+  user_agent?: string
+  tracking_version?: string
 }
 
 interface VisitorStats {
@@ -440,37 +447,62 @@ export default function Admin() {
   const loadVisitorData = async (days: number = 30) => {
     setVisitorLoading(true)
     try {
-      const response = await ApiService.getSiteVisitorInfo(100, days) as any
-      console.log('Visitor data response:', response)
-      if (response.result === 'success') {
-        setVisitorData(response.visitors || [])
-        setVisitorPage(1)
-        
-        // Process daily stats to ensure proper sorting and today's data inclusion
-        let processedDailyStats = response.daily_stats || []
-        
-        // Sort by date to ensure chronological order
-        processedDailyStats = processedDailyStats.sort((a: any, b: any) => {
-          return new Date(a.date).getTime() - new Date(b.date).getTime()
-        })
-        
-        console.log('Raw daily stats from API:', response.daily_stats)
-        console.log('Processed and sorted daily stats:', processedDailyStats)
-        
-        const stats = {
-          ...response.summary,
-          country_stats: response.country_stats || [],
-          city_stats: response.city_stats || [],
-          hourly_stats: response.hourly_stats || [],
-          daily_stats: processedDailyStats
-        }
-        console.log('Final visitor stats:', stats)
-        setVisitorStats(stats)
+      const response = await ApiService.getSiteVisitorInfoEnhanced(100, days) as any
+      console.log('Enhanced visitor data response:', response)
+      
+      // Enhanced API returns data in a different format
+      setVisitorData(response.visitors || [])
+      setVisitorPage(1)
+      
+      // Process enhanced visitor stats
+      const stats = {
+        total_visitors: response.summary?.total_visitors || 0,
+        recent_visitors: response.summary?.total_visitors || 0, // Enhanced API doesn't split this
+        period_days: response.summary?.date_range_days || days,
+        country_stats: Object.entries(response.summary?.referrer_breakdown || {}).map(([country, count]) => ({
+          _id: country,
+          count: count as number
+        })),
+        city_stats: [],
+        hourly_stats: [],
+        daily_stats: [] // Enhanced API doesn't provide daily breakdown yet
       }
+      
+      console.log('Processed enhanced visitor stats:', stats)
+      setVisitorStats(stats)
     } catch (error) {
-      console.error('Failed to load visitor data:', error)
-      setVisitorData([])
-      setVisitorStats(null)
+      console.error('Enhanced visitor data failed, falling back to legacy:', error)
+      
+      // Fallback to legacy API
+      try {
+        const legacyResponse = await ApiService.getSiteVisitorInfo(100, days) as any
+        console.log('Legacy visitor data response:', legacyResponse)
+        if (legacyResponse.result === 'success') {
+          setVisitorData(legacyResponse.visitors || [])
+          setVisitorPage(1)
+          
+          // Process daily stats to ensure proper sorting and today's data inclusion
+          let processedDailyStats = legacyResponse.daily_stats || []
+          
+          // Sort by date to ensure chronological order
+          processedDailyStats = processedDailyStats.sort((a: any, b: any) => {
+            return new Date(a.date).getTime() - new Date(b.date).getTime()
+          })
+          
+          const stats = {
+            ...legacyResponse.summary,
+            country_stats: legacyResponse.country_stats || [],
+            city_stats: legacyResponse.city_stats || [],
+            hourly_stats: legacyResponse.hourly_stats || [],
+            daily_stats: processedDailyStats
+          }
+          setVisitorStats(stats)
+        }
+      } catch (legacyError) {
+        console.error('Failed to load legacy visitor data:', legacyError)
+        setVisitorData([])
+        setVisitorStats(null)
+      }
     } finally {
       setVisitorLoading(false)
     }
@@ -1345,6 +1377,101 @@ export default function Admin() {
               {/* Overview Tab */}
               {analyticsSubTab === 'overview' && (
                 <div className="space-y-6">
+                  {/* Enhanced Tracking Summary */}
+                  {visitorData.some(v => v.tracking_version) && (
+                    <Card className="bg-zinc-900 border-zinc-700 mb-4">
+                      <CardHeader>
+                        <CardTitle className="text-white">Enhanced Tracking Summary</CardTitle>
+                        <CardDescription className="text-zinc-400">Insights from social media and campaign tracking</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div>
+                            <h4 className="text-white font-medium mb-3">Traffic Sources</h4>
+                            <div className="space-y-2">
+                              {(() => {
+                                const sourceStats: Record<string, number> = {}
+                                visitorData.forEach(visitor => {
+                                  const source = visitor.referrer_source || 'Direct'
+                                  sourceStats[source] = (sourceStats[source] || 0) + 1
+                                })
+                                return Object.entries(sourceStats)
+                                  .sort(([,a], [,b]) => b - a)
+                                  .slice(0, 5)
+                                  .map(([source, count]) => (
+                                    <div key={source} className="flex items-center justify-between">
+                                      <div className="flex items-center gap-3">
+                                        <div className={`w-3 h-3 rounded-full ${
+                                          source === 'twitter' ? 'bg-blue-500' :
+                                          source === 'facebook' ? 'bg-blue-600' :
+                                          source === 'google' ? 'bg-green-500' :
+                                          source === 'linkedin' ? 'bg-purple-500' :
+                                          'bg-zinc-500'
+                                        }`}></div>
+                                        <span className="text-white capitalize">{source}</span>
+                                      </div>
+                                      <span className="text-zinc-400 font-medium">{count}</span>
+                                    </div>
+                                  ))
+                              })()}
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h4 className="text-white font-medium mb-3">Content Types</h4>
+                            <div className="space-y-2">
+                              {(() => {
+                                const contentStats: Record<string, number> = {}
+                                visitorData.forEach(visitor => {
+                                  const content = visitor.content_type || 'Unknown'
+                                  contentStats[content] = (contentStats[content] || 0) + 1
+                                })
+                                return Object.entries(contentStats)
+                                  .sort(([,a], [,b]) => b - a)
+                                  .slice(0, 5)
+                                  .map(([content, count]) => (
+                                    <div key={content} className="flex items-center justify-between">
+                                      <span className="text-white">{content.replace('_', ' ')}</span>
+                                      <span className="text-zinc-400 font-medium">{count}</span>
+                                    </div>
+                                  ))
+                              })()}
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h4 className="text-white font-medium mb-3">Active Campaigns</h4>
+                            <div className="space-y-2">
+                              {(() => {
+                                const campaignStats: Record<string, number> = {}
+                                visitorData.forEach(visitor => {
+                                  if (visitor.campaign_id) {
+                                    const campaign = visitor.campaign_id.length > 15 
+                                      ? `${visitor.campaign_id.substring(0, 15)}...` 
+                                      : visitor.campaign_id
+                                    campaignStats[campaign] = (campaignStats[campaign] || 0) + 1
+                                  }
+                                })
+                                const campaigns = Object.entries(campaignStats)
+                                  .sort(([,a], [,b]) => b - a)
+                                  .slice(0, 5)
+                                
+                                return campaigns.length > 0 ? campaigns.map(([campaign, count]) => (
+                                  <div key={campaign} className="flex items-center justify-between">
+                                    <span className="text-white text-sm font-mono truncate flex-1" title={campaign}>{campaign}</span>
+                                    <span className="text-zinc-400 font-medium ml-2">{count}</span>
+                                  </div>
+                                )) : (
+                                  <div className="text-zinc-500 text-sm">No active campaigns</div>
+                                )
+                              })()}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                 <Card className="bg-zinc-900 border-zinc-700">
                   <CardHeader className="pb-2">
@@ -2091,8 +2218,10 @@ export default function Admin() {
                           <tr className="border-b border-zinc-700">
                             <th className="text-left py-3 px-4 text-zinc-300 font-medium">IP Address</th>
                             <th className="text-left py-3 px-4 text-zinc-300 font-medium">Page</th>
+                            <th className="text-left py-3 px-4 text-zinc-300 font-medium">Source</th>
+                            <th className="text-left py-3 px-4 text-zinc-300 font-medium">Campaign</th>
+                            <th className="text-left py-3 px-4 text-zinc-300 font-medium">Content Type</th>
                             <th className="text-left py-3 px-4 text-zinc-300 font-medium">Location</th>
-                            <th className="text-left py-3 px-4 text-zinc-300 font-medium">Country</th>
                             <th className="text-left py-3 px-4 text-zinc-300 font-medium">Time</th>
                           </tr>
                         </thead>
@@ -2108,19 +2237,62 @@ export default function Admin() {
                               <td className="py-3 px-4">
                                 <span className="text-white font-mono text-sm">{visitor.ip_address}</span>
                               </td>
-                              <td className="py-3 px-4 max-w-[360px]">
-                                <span className="text-zinc-300 text-sm font-mono truncate inline-block max-w-full" title={visitor.path || 'Unknown'}>
-                                  {visitor.path || 'Unknown'}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 max-w-[200px]">
                                 <div>
-                                  <div className="text-white">{visitor.city}</div>
-                                  <div className="text-zinc-400 text-sm">{visitor.region}</div>
+                                  <div className="text-white text-sm font-medium truncate" title={visitor.page_title || visitor.path || 'Unknown'}>
+                                    {visitor.page_title || (visitor.path ? visitor.path.split('?')[0] : 'Unknown')}
+                                  </div>
+                                  {visitor.path && visitor.path !== visitor.page_title && (
+                                    <div className="text-zinc-500 text-xs font-mono truncate" title={visitor.path}>
+                                      {visitor.path}
+                                    </div>
+                                  )}
                                 </div>
                               </td>
                               <td className="py-3 px-4">
-                                <span className="text-zinc-300">{visitor.country}</span>
+                                {visitor.referrer_source ? (
+                                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                    visitor.referrer_source === 'twitter' ? 'bg-blue-900/50 text-blue-300' :
+                                    visitor.referrer_source === 'facebook' ? 'bg-blue-800/50 text-blue-200' :
+                                    visitor.referrer_source === 'google' ? 'bg-green-900/50 text-green-300' :
+                                    visitor.referrer_source === 'linkedin' ? 'bg-purple-900/50 text-purple-300' :
+                                    'bg-zinc-700/50 text-zinc-300'
+                                  }`}>
+                                    {visitor.referrer_source}
+                                  </span>
+                                ) : (
+                                  <span className="text-zinc-500 text-xs">Direct</span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4 max-w-[120px]">
+                                {visitor.campaign_id ? (
+                                  <span className="text-zinc-300 text-xs font-mono truncate inline-block max-w-full" title={visitor.campaign_id}>
+                                    {visitor.campaign_id.length > 12 ? `${visitor.campaign_id.substring(0, 12)}...` : visitor.campaign_id}
+                                  </span>
+                                ) : (
+                                  <span className="text-zinc-500 text-xs">-</span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4">
+                                {visitor.content_type ? (
+                                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                    visitor.content_type === 'landing_page' ? 'bg-green-900/50 text-green-300' :
+                                    visitor.content_type === 'dashboard' ? 'bg-blue-900/50 text-blue-300' :
+                                    visitor.content_type === 'auth_page' ? 'bg-yellow-900/50 text-yellow-300' :
+                                    visitor.content_type === 'features_page' ? 'bg-purple-900/50 text-purple-300' :
+                                    'bg-zinc-700/50 text-zinc-300'
+                                  }`}>
+                                    {visitor.content_type.replace('_', ' ')}
+                                  </span>
+                                ) : (
+                                  <span className="text-zinc-500 text-xs">Unknown</span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4">
+                                <div>
+                                  <div className="text-white text-sm">{visitor.city}</div>
+                                  <div className="text-zinc-400 text-xs">{visitor.region}, {visitor.country}</div>
+                                </div>
                               </td>
                               <td className="py-3 px-4 text-zinc-400 text-sm">
                                 {convertToEasternTime(visitor.time)}

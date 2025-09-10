@@ -11,7 +11,7 @@ export interface MeetingSession {
   title: string
   platform: MeetingPlatform
   meetingUrl: string
-  status: 'scheduled' | 'joining' | 'active' | 'recording' | 'transcribing' | 'completed' | 'failed'
+  status: 'scheduled' | 'joining' | 'active' | 'recording' | 'transcribing' | 'processing' | 'completed' | 'failed'
   startTime: Date
   endTime?: Date
   duration?: number

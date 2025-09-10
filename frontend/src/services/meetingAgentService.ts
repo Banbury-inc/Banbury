@@ -1,4 +1,5 @@
 import { ApiService } from './apiService'
+import { CONFIG } from '../config/config'
 import {
   MeetingSession,
   MeetingJoinRequest,
@@ -259,6 +260,108 @@ export class MeetingAgentService {
       return response
     } catch (error) {
       console.error('Failed to download recording:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get video stream URL for viewing recordings
+   */
+  static async getVideoStreamUrl(sessionId: string): Promise<{
+    success: boolean
+    streamUrl?: string
+    expiresIn?: number
+    message: string
+  }> {
+    try {
+      const response = await ApiService.get<{
+        success: boolean
+        stream_url?: string
+        expires_in?: number
+        message: string
+      }>(`${this.baseEndpoint}/sessions/${sessionId}/recording/stream/`)
+      
+      return {
+        success: response.success,
+        streamUrl: response.stream_url,
+        expiresIn: response.expires_in,
+        message: response.message
+      }
+    } catch (error) {
+      console.error('Failed to get video stream URL:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Upload meeting recording to S3
+   */
+  static async uploadRecordingToS3(
+    sessionId: string,
+    recordingFile: File,
+    onProgress?: (progress: number) => void
+  ): Promise<{
+    success: boolean
+    recordingUrl?: string
+    fileSize?: number
+    s3Key?: string
+    message: string
+  }> {
+    try {
+      const formData = new FormData()
+      formData.append('recording', recordingFile)
+
+      // Create XMLHttpRequest for progress tracking
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+
+        // Track upload progress
+        if (onProgress) {
+          xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+              const progress = (event.loaded / event.total) * 100
+              onProgress(progress)
+            }
+          })
+        }
+
+        xhr.addEventListener('load', () => {
+          try {
+            const response = JSON.parse(xhr.responseText)
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(response)
+            } else {
+              reject(new Error(response.message || 'Upload failed'))
+            }
+          } catch (error) {
+            reject(new Error('Invalid response from server'))
+          }
+        })
+
+        xhr.addEventListener('error', () => {
+          reject(new Error('Network error during upload'))
+        })
+
+        xhr.addEventListener('abort', () => {
+          reject(new Error('Upload was cancelled'))
+        })
+
+        // Get auth token
+        const token = localStorage.getItem('authToken')
+        if (!token) {
+          reject(new Error('Authentication required'))
+          return
+        }
+
+        // Configure request
+        xhr.open('POST', `${CONFIG.url}${this.baseEndpoint}/sessions/${sessionId}/recording/upload/`)
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+        
+        // Send request
+        xhr.send(formData)
+      })
+    } catch (error) {
+      console.error('Failed to upload recording:', error)
       throw error
     }
   }
