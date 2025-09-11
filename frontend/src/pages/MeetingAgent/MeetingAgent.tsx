@@ -867,13 +867,24 @@ export default function MeetingAgent() {
                                                     Recording
                                                   </h4>
                                                   <div className="bg-black rounded-lg p-3 h-80 flex items-center justify-center border border-border">
-                                                    <video 
-                                                      controls 
-                                                      className="w-full rounded max-h-full"
-                                                      src={session.recallBot?.videoUrl || session.recordingUrl}
-                                                    >
-                                                      Your browser does not support the video tag.
-                                                    </video>
+                                                    {(() => {
+                                                      const videoUrl = session.recallBot?.videoUrl || session.recordingUrl;
+                                                      console.log(`MeetingAgent Video URL for session ${session.id}:`, {
+                                                        recallBotVideoUrl: session.recallBot?.videoUrl,
+                                                        recordingUrl: session.recordingUrl,
+                                                        finalVideoUrl: videoUrl,
+                                                        sessionTitle: session.title
+                                                      });
+                                                      return (
+                                                        <video 
+                                                          controls 
+                                                          className="w-full rounded max-h-full"
+                                                          src={videoUrl}
+                                                        >
+                                                          Your browser does not support the video tag.
+                                                        </video>
+                                                      );
+                                                    })()}
                                                   </div>
                                                 </div>
                                               )}

@@ -628,6 +628,97 @@ export class ApiService {
   }
 
   /**
+   * Get presigned URL for a file without downloading the content
+   * Useful for Recall AI videos and other files that should be streamed directly
+   */
+  static async getPresignedUrl(fileId: string): Promise<{
+    success: boolean;
+    url?: string;
+    error?: string;
+  }> {
+    try {
+      // Ensure token is loaded
+      this.loadAuthToken();
+      
+      console.log('[getPresignedUrl] Getting presigned URL for file:', fileId);
+      
+      const response = await axios({
+        method: 'get',
+        url: `${this.baseURL}/files/download_s3_file/${encodeURIComponent(fileId)}/`,
+        responseType: 'json',
+        headers: {
+          'Authorization': axios.defaults.headers.common['Authorization']
+        }
+      });
+      
+      console.log('[getPresignedUrl] Backend response:', response.data);
+      
+      // Check if it's a JSON response with a URL
+      if (response.data && (response.data.url || response.data.download_url || response.data.presigned_url)) {
+        const presignedUrl = response.data.url || response.data.download_url || response.data.presigned_url;
+        console.log('[getPresignedUrl] Got presigned URL:', presignedUrl);
+        
+        return {
+          success: true,
+          url: presignedUrl
+        };
+      } else {
+        console.log('[getPresignedUrl] No presigned URL in response, data:', response.data);
+        return {
+          success: false,
+          error: 'No presigned URL found in response'
+        };
+      }
+    } catch (error) {
+      console.error('[getPresignedUrl] Error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to get presigned URL'
+      };
+    }
+  }
+
+  /**
+   * Get video stream URL for Recall AI videos
+   * This uses the backend to proxy the video content to avoid CORS issues
+   */
+  static async getVideoStreamUrl(fileId: string): Promise<{
+    success: boolean;
+    url?: string;
+    error?: string;
+  }> {
+    try {
+      // Ensure token is loaded
+      this.loadAuthToken();
+      
+      console.log('[getVideoStreamUrl] Getting video stream for file:', fileId);
+      
+      // Use the existing downloadS3File method which handles the backend proxy
+      const result = await this.downloadS3File(fileId, 'video.mp4');
+      
+      if (result.success && result.url) {
+        console.log('[getVideoStreamUrl] Video stream URL created:', result.url);
+        return {
+          success: true,
+          url: result.url
+        };
+      } else {
+        console.error('[getVideoStreamUrl] Failed to get video stream from backend');
+        return {
+          success: false,
+          error: 'Failed to get video stream from backend'
+        };
+      }
+    } catch (error) {
+      console.error('[getVideoStreamUrl] Error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to get video stream'
+      };
+    }
+  }
+
+  /**
    * Alias for backend download from S3 endpoint semantics. Prefer this in callers.
    */
   static async downloadFromS3(fileId: string, fileName: string) {
