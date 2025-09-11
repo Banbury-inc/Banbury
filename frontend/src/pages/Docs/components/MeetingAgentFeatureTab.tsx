@@ -1,4 +1,5 @@
 import { Box, Typography } from '@mui/material';
+import meetingsImage from '../../../assets/images/meetings.png';
 
 export default function MeetingAgentFeatureTab() {
   return (
@@ -12,46 +13,12 @@ export default function MeetingAgentFeatureTab() {
           fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         }}
       >
-        Meeting Agent
+       Meetings 
       </Typography>
+      
       
       {/* Overview */}
       <Box sx={{ mb: 4 }}>
-        <Typography
-          sx={{
-            fontSize: '1rem',
-            fontWeight: 600,
-            mb: 2,
-            color: '#ffffff',
-            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          }}
-        >
-          • <strong>Overview:</strong>
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: '0.9rem',
-            color: '#a1a1aa',
-            mb: 2,
-            lineHeight: 1.6,
-            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            pl: 2,
-          }}
-        >
-          • Intelligent meeting recording and transcription powered by Recall AI integration.
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: '0.9rem',
-            color: '#a1a1aa',
-            mb: 2,
-            lineHeight: 1.6,
-            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            pl: 2,
-          }}
-        >
-          • Automated meeting bot that can join video calls and capture comprehensive meeting data.
-        </Typography>
         <Typography
           sx={{
             fontSize: '0.9rem',
@@ -62,10 +29,25 @@ export default function MeetingAgentFeatureTab() {
             pl: 2,
           }}
         >
-          • Real-time meeting management with participant tracking and session monitoring.
+          Banbury's Meeting Agent provides intelligent meeting recording and transcription powered by Recall AI integration. It features an automated meeting bot that can join video calls and capture comprehensive meeting data, along with real-time meeting management capabilities such as participant tracking and session monitoring.
         </Typography>
       </Box>
 
+      {/* Meeting Agent Image */}
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
+        <Box
+          component="img"
+          src={meetingsImage.src}
+          alt="Meeting Agent Interface"
+          sx={{
+            maxWidth: '100%',
+            height: 'auto',
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        />
+      </Box>
       {/* Core Features */}
       <Box sx={{ mb: 4 }}>
         <Typography
