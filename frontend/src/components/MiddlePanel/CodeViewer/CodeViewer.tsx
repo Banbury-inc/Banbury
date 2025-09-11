@@ -90,11 +90,6 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file, userInfo }) => {
 
   useEffect(() => {
     const fetchFileContent = async () => {
-      if (!file.file_id || !userInfo?.username) {
-        setError('File or user information not available');
-        setLoading(false);
-        return;
-      }
 
       try {
         setLoading(true);

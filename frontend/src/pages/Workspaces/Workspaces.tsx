@@ -194,7 +194,9 @@ const Workspaces = (): JSX.Element => {
   const isVideoFile = (fileName: string): boolean => {
     const videoExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v', '.3gp', '.ogv']
     const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    return videoExtensions.includes(extension)
+    const isVideo = videoExtensions.includes(extension)
+    console.log('isVideoFile check:', fileName, 'extension:', extension, 'isVideo:', isVideo);
+    return isVideo
   };
 
   const isCodeFile = (fileName: string): boolean => {
@@ -234,11 +236,14 @@ const Workspaces = (): JSX.Element => {
   };
 
   const handleFileSelect = useCallback((file: FileSystemItem) => {
+    console.log('handleFileSelect called with file:', file.name, 'isViewableFile:', isViewableFile(file.name));
     if (!isViewableFile(file.name)) {
-    setSelectedFile(file);
+      console.log('File not viewable, setting selectedFile:', file.name);
+      setSelectedFile(file);
       return;
     }
     
+    console.log('File is viewable, opening in tab:', file.name);
     openFileInTabCallback(file, activePanelId);
   }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout, setSelectedFile]);
   
@@ -339,6 +344,7 @@ const Workspaces = (): JSX.Element => {
   
   // Render a single panel - using extracted function
   const renderPanelWrapper = useCallback((panel: Panel) => {
+    console.log('renderPanelWrapper called with userInfo:', userInfo);
     return renderPanel({
       panel,
       activePanelId,
@@ -503,15 +509,19 @@ const Workspaces = (): JSX.Element => {
 
 
   useEffect(() => {
+    console.log('useEffect running - checking auth and fetching user');
     // Ensure dark mode is enabled
     window.localStorage.setItem('themeMode', 'dark');
     
     const checkAuthAndFetchUser = async () => {
       try {
+        console.log('checkAuthAndFetchUser called');
         setLoading(true);
         
         // Validate token first using ApiService
+        console.log('Validating token...');
         const isValidToken = await ApiService.validateToken();
+        console.log('Token validation result:', isValidToken);
 
         if (!isValidToken) {
           // Token is invalid, redirect to login
@@ -528,10 +538,13 @@ const Workspaces = (): JSX.Element => {
           last_name: '',
           picture: null
         };
+        console.log('Setting userInfo in useEffect:', basicUserInfo);
         setUserInfo(basicUserInfo);
       } catch (err) {
+        console.log('Error in checkAuthAndFetchUser:', err);
         // Still try to show basic info if we have some stored data
         const username = localStorage.getItem('authUsername') || localStorage.getItem('username');
+        console.log('Username from localStorage:', username);
         if (username) {
           const basicUserInfo: UserInfo = {
             username: username,
@@ -540,6 +553,7 @@ const Workspaces = (): JSX.Element => {
             last_name: '',
             picture: null
           };
+          console.log('Setting userInfo in catch block:', basicUserInfo);
           setUserInfo(basicUserInfo);
         } else {
           router.push('/login');

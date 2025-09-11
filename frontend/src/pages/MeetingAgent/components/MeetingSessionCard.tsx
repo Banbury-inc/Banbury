@@ -440,11 +440,16 @@ ${transcriptionData.segments.map(segment =>
           <div className="pt-2 border-t">
             <p className="text-sm font-medium mb-2">Participants</p>
             <div className="space-y-1">
-              {session.participants.slice(0, 3).map((participant) => (
-                <div key={participant.id} className="flex items-center justify-between text-sm">
-                  <span>{participant.name}</span>
+              {session.participants.slice(0, 3).map((participant, index) => (
+                <div key={participant.id || index} className="flex items-center justify-between text-sm">
+                  <span>
+                    {typeof participant === 'string' 
+                      ? participant 
+                      : participant.name || participant.email || (participant as any).displayName || (participant as any).userName || participant.id || 'Unknown'
+                    }
+                  </span>
                   <Badge variant="outline" size="sm">
-                    {participant.role}
+                    {typeof participant === 'object' && participant.role ? participant.role : 'participant'}
                   </Badge>
                 </div>
               ))}

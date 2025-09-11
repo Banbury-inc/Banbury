@@ -187,17 +187,12 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
 
   // Load file content
   const loadFileContent = useCallback(async (fileItem: FileSystemItem) => {
-    if (!fileItem.file_id || !userInfo?.username) {
-      setError('File or user information not available');
-      setLoading(false);
-      return;
-    }
 
     try {
       setLoading(true);
       setError(null);
 
-      const downloadResult = await ApiService.downloadS3File(fileItem.file_id, fileItem.name);
+      const downloadResult = await ApiService.downloadS3File(fileItem.file_id || '', fileItem.name);
       
       if (!downloadResult.success) {
         throw new Error('Failed to download file');
@@ -257,7 +252,7 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
       await ApiService.uploadToS3(
         blob,
         tab.file.name,
-        userInfo?.username || 'web-editor',
+        userInfo?.username || 'web-editor' || '',
         tab.file.path,
         'uploads'
       );

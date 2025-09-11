@@ -233,6 +233,7 @@ export const renderPanel = ({
             // Handle file tabs
             if (activeTab.type === 'file') {
               const file = activeTab.file;
+              console.log('Rendering file tab:', file.name, 'file type:', file.name.split('.').pop());
               
               // Browser session virtual file
               if (isBrowserFile(file.name)) {
@@ -263,6 +264,8 @@ export const renderPanel = ({
                   />
                 );
               } else if (isVideoFile(file.name)) {
+                console.log('Rendering VideoViewer for file:', file.name);
+                console.log('userInfo in renderPanel:', userInfo);
                 return <VideoViewer file={file} userInfo={userInfo} />;
               } else if (isNotebookFile(file.name)) {
                 const useLab = !!CONFIG.jupyterUrl

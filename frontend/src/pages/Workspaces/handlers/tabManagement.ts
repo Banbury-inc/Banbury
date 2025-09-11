@@ -56,9 +56,12 @@ export const openFileInTab = (
   setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>,
   setSelectedFile: React.Dispatch<React.SetStateAction<FileSystemItem | null>>
 ) => {
+  console.log('openFileInTab called with file:', file.name, 'targetPanelId:', targetPanelId);
+  
   // Check if file is already open in any panel
   const allTabs = getAllTabs(panelLayout);
   const existingTab = allTabs.find(tab => tab.type === 'file' && tab.filePath === file.path);
+  console.log('existingTab found:', existingTab ? existingTab.id : 'none');
   
   if (existingTab) {
     // Find which panel contains this tab and switch to it
@@ -84,6 +87,7 @@ export const openFileInTab = (
   
   // Create new tab
   const tabId = `${file.path}_${Date.now()}`;
+  console.log('Creating new tab with ID:', tabId);
   
   // Safely extract file extension with null checks
   const fileName = file.name || 'Unknown File';
@@ -100,10 +104,15 @@ export const openFileInTab = (
     type: 'file'
   };
   
+  console.log('New tab created:', newTab);
+  console.log('Adding tab to panel:', targetPanelId);
+  
   // Add tab to the target panel
   setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab));
   setActivePanelId(targetPanelId);
   setSelectedFile(file);
+  
+  console.log('Tab added successfully');
 };
 
 // Open email in a new tab within specified panel

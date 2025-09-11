@@ -13,6 +13,7 @@ interface VideoViewerProps {
 }
 
 export function VideoViewer({ file, userInfo }: VideoViewerProps) {
+  console.log('VideoViewer component mounted with file:', file.name, 'file_id:', file.file_id);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,34 +33,36 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
     let currentUrl: string | null = null;
 
     const fetchVideoUrl = async () => {
-      if (!userInfo?.username) {
-        setError('User information not available');
-        setLoading(false);
-        return;
-      }
+      console.log('fetchVideoUrl called for file:', file.name, 'file_id:', file.file_id);
 
       const fetchKey = `${file.file_id}_${file.last_modified}`;
       if (lastFetchKeyRef.current === fetchKey) {
+        console.log('Duplicate fetch prevented for key:', fetchKey);
         return; // Prevent duplicate fetches
       }
       lastFetchKeyRef.current = fetchKey;
 
       try {
+        console.log('Starting video download for file_id:', file.file_id);
         setLoading(true);
         setError(null);
 
         const result = await ApiService.downloadS3File(file.file_id || '', file.name);
+        console.log('Video download result:', result);
         
         if (result.success && result.url) {
+          console.log('Video URL obtained successfully:', result.url);
           currentUrl = result.url;
           setVideoUrl(currentUrl);
         } else {
+          console.log('Failed to get video download URL, result:', result);
           throw new Error('Failed to get video download URL');
         }
       } catch (err) {
         console.error('Error fetching video URL:', err);
         setError(err instanceof Error ? err.message : 'Failed to load video');
       } finally {
+        console.log('Video fetch completed, setting loading to false');
         setLoading(false);
       }
     };

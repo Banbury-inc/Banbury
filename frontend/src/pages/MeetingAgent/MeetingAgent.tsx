@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { Button } from '../../components/ui/button'
-import { TooltipProvider } from '../../components/ui/tooltip'
+import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '../../components/ui/tooltip'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs'
@@ -22,7 +22,10 @@ import {
   Activity,
   Play,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Square,
+  RefreshCw,
+  Trash2
 } from 'lucide-react'
 import { MeetingJoinDialog } from './components/MeetingJoinDialog'
 import { MeetingSessionCard } from './components/MeetingSessionCard'
@@ -37,6 +40,8 @@ import { useToast } from '../../components/ui/use-toast'
 import { NavSidebar } from '../../components/nav-sidebar'
 
 export default function MeetingAgent() {
+  console.log('MeetingAgent component rendered at:', new Date().toISOString())
+  
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [sessions, setSessions] = useState<MeetingSession[]>([])
@@ -58,6 +63,7 @@ export default function MeetingAgent() {
   }>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
   const { toast } = useToast()
+  const hasInitialLoad = useRef(false)
 
   // Skeleton component for table rows
   const TableSkeleton = () => (
@@ -203,10 +209,6 @@ export default function MeetingAgent() {
 
       await Promise.all(deletePromises)
 
-      toast({
-        title: 'Success',
-        description: `Successfully deleted ${selectedSessions.size} meeting session(s)`
-      })
 
       setSelectedSessions(new Set())
       loadData() // Refresh data
@@ -220,16 +222,20 @@ export default function MeetingAgent() {
     }
   }
 
+
   // Load initial data
   const loadData = useCallback(async () => {
+    console.log('loadData called at:', new Date().toISOString())
     try {
       setIsLoading(true)
       setError(null)
 
+      console.log('Making API calls...')
       const [statusResult, sessionsResult] = await Promise.all([
         MeetingAgentService.getAgentStatus(),
         MeetingAgentService.getMeetingSessions(20, 0)
       ])
+      console.log('API calls completed')
 
       setAgentStatus(statusResult)
       setSessions(sessionsResult.sessions)
@@ -243,6 +249,25 @@ export default function MeetingAgent() {
           participants: session.participants,
           participantsLength: session.participants?.length
         })
+        
+        // Debug participant data structure
+        if (session.participants && session.participants.length > 0) {
+          console.log(`Session ${index} participants detail:`, session.participants)
+          session.participants.forEach((participant, pIndex) => {
+            console.log(`  Participant ${pIndex}:`, {
+              id: participant.id,
+              name: participant.name,
+              email: participant.email,
+              role: participant.role,
+              joinTime: participant.joinTime,
+              leaveTime: participant.leaveTime,
+              duration: participant.duration,
+              fullObject: participant
+            })
+          })
+        } else {
+          console.log(`Session ${index} has no participants or empty array`)
+        }
       })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load meeting agent data'
@@ -255,7 +280,7 @@ export default function MeetingAgent() {
     } finally {
       setIsLoading(false)
     }
-  }, [toast])
+  }, [])
 
   // Refresh only sessions data
   const refreshSessions = useCallback(async () => {
@@ -273,12 +298,27 @@ export default function MeetingAgent() {
           participants: session.participants,
           participantsLength: session.participants?.length
         })
+        
+        // Debug participant data structure
+        if (session.participants && session.participants.length > 0) {
+          console.log(`Session ${index} participants detail:`, session.participants)
+          session.participants.forEach((participant, pIndex) => {
+            console.log(`  Participant ${pIndex}:`, {
+              id: participant.id,
+              name: participant.name,
+              email: participant.email,
+              role: participant.role,
+              joinTime: participant.joinTime,
+              leaveTime: participant.leaveTime,
+              duration: participant.duration,
+              fullObject: participant
+            })
+          })
+        } else {
+          console.log(`Session ${index} has no participants or empty array`)
+        }
       })
 
-      toast({
-        title: 'Success',
-        description: 'Sessions refreshed successfully'
-      })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to refresh sessions'
       toast({
@@ -289,11 +329,18 @@ export default function MeetingAgent() {
     } finally {
       setIsRefreshing(false)
     }
-  }, [toast])
+  }, [])
 
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    if (!hasInitialLoad.current) {
+      console.log('useEffect triggered for loadData - first time')
+      hasInitialLoad.current = true
+      loadData()
+    } else {
+      console.log('useEffect triggered for loadData - skipping duplicate call')
+    }
+  }, [])
+
 
   // Handle joining a meeting with Recall AI
   const handleJoinMeeting = async (meetingUrl: string, settings: any) => {
@@ -327,12 +374,14 @@ export default function MeetingAgent() {
   // Handle leaving a meeting
   const handleLeaveMeeting = async (sessionId: string) => {
     try {
+      console.log(`Attempting to leave meeting session: ${sessionId}`)
       const result = await MeetingAgentService.leaveMeeting(sessionId)
       
       if (result.success) {
+        console.log(`Successfully left meeting session: ${sessionId}`)
         toast({
           title: 'Success',
-          description: result.message
+          description: `${result.message} S3 upload will be triggered automatically.`
         })
         loadData() // Refresh data
       } else {
@@ -340,6 +389,104 @@ export default function MeetingAgent() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to leave meeting'
+      console.error(`Failed to leave meeting session ${sessionId}:`, err)
+      toast({
+        title: 'Error',
+        description: `${errorMessage}. S3 upload may not have been triggered.`,
+        variant: 'destructive'
+      })
+    }
+  }
+
+
+  // Handle leaving all active meetings
+  const handleLeaveAllMeetings = async () => {
+    const activeSessions = sessions.filter(s => ['active', 'recording'].includes(s.status))
+    
+    if (activeSessions.length === 0) {
+      toast({
+        title: 'No Active Meetings',
+        description: 'There are no active meetings to leave',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to leave ${activeSessions.length} active meeting(s)? This will stop all recordings and remove the bot from the meetings.`
+    )
+
+    if (!confirmed) return
+
+    try {
+      const leavePromises = activeSessions.map(session => 
+        MeetingAgentService.leaveMeeting(session.id)
+      )
+
+      await Promise.all(leavePromises)
+
+      toast({
+        title: 'Success',
+        description: `Successfully left ${activeSessions.length} meeting(s)`
+      })
+
+      loadData() // Refresh data
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to leave meetings'
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Handle bulk S3 upload
+  const handleBulkS3Upload = async () => {
+    try {
+      console.log('Starting bulk S3 upload for all sessions...')
+      const result = await MeetingAgentService.checkAndUploadSessions()
+      
+      if (result.success) {
+        console.log(`Bulk S3 upload completed: ${result.uploaded_count} uploaded, ${result.failed_count} failed`)
+        toast({
+          title: 'Bulk Upload Complete',
+          description: `Uploaded ${result.uploaded_count} sessions, ${result.failed_count} failed`
+        })
+        loadData() // Refresh data
+      } else {
+        throw new Error(result.message || 'Bulk upload failed')
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to perform bulk S3 upload'
+      console.error(`Bulk S3 upload failed: ${errorMessage}`)
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Handle updating session URLs from bot
+  const handleUpdateSessionUrls = async (sessionId: string) => {
+    try {
+      console.log(`Updating URLs for session: ${sessionId}`)
+      const result = await MeetingAgentService.updateSessionUrls(sessionId)
+      
+      if (result.success) {
+        console.log(`Session URLs updated: video=${!!result.video_url}, transcript=${!!result.transcript_url}`)
+        toast({
+          title: 'URLs Updated',
+          description: `Found video: ${!!result.video_url}, transcript: ${!!result.transcript_url}`
+        })
+        loadData() // Refresh data
+      } else {
+        throw new Error(result.message || 'Failed to update URLs')
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update session URLs'
+      console.error(`Update URLs failed: ${errorMessage}`)
       toast({
         title: 'Error',
         description: errorMessage,
@@ -423,6 +570,7 @@ export default function MeetingAgent() {
               {/* Dashboard Content */}
               {activeTab === 'dashboard' && (
                 <div className="flex-1 flex flex-col h-full">
+                  
                   {/* Recent Sessions Table */}
                   <Card className="bg-black border-border flex-1 flex flex-col h-full">
                     <CardHeader className="border-b border-border">
@@ -432,29 +580,69 @@ export default function MeetingAgent() {
                           <CardTitle className="text-foreground">Meetings</CardTitle>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={refreshSessions}
-                            disabled={isRefreshing}
-                          >
-                            {isRefreshing ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                            ) : (
-                              <Activity className="h-4 w-4 mr-2" />
-                            )}
-                            {isRefreshing ? 'Refreshing...' : 'Refresh'}
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={handleBulkDelete}
-                            disabled={selectedSessions.size === 0}
-                            className="text-red-400 border-red-600 hover:bg-red-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <AlertCircle className="h-4 w-4 mr-2" />
-                            Delete Selected ({selectedSessions.size})
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={refreshSessions}
+                                disabled={isRefreshing}
+                                className="h-8 w-8 p-0"
+                              >
+                                {isRefreshing ? (
+                                  <RefreshCw className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Refresh sessions</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={handleBulkS3Upload}
+                                className="h-8 px-3 text-blue-400 border-blue-600 hover:bg-blue-600 hover:text-white"
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Upload to S3
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Upload all completed meetings to S3</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          {sessions.filter(s => ['active', 'recording'].includes(s.status)).length > 0 && (
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={handleLeaveAllMeetings}
+                              className="text-white bg-red-600 hover:bg-red-700"
+                            >
+                              <Square className="h-4 w-4 mr-2" />
+                              Leave All Meetings ({sessions.filter(s => ['active', 'recording'].includes(s.status)).length})
+                            </Button>
+                          )}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={handleBulkDelete}
+                                disabled={selectedSessions.size === 0}
+                                className="h-8 w-8 p-0 text-red-400 border-red-600 hover:bg-red-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Delete Selected ({selectedSessions.size})</p>
+                            </TooltipContent>
+                          </Tooltip>
                           <Button 
                             onClick={() => setIsJoinDialogOpen(true)}
                             size="sm"
@@ -532,12 +720,12 @@ export default function MeetingAgent() {
                                 <TableSkeleton />
                               ) : (
                                 sessions.map((session) => (
-                                <>
-                                  <tr 
-                                    key={session.id} 
-                                    className="border-b border-border hover:bg-muted/50 transition-colors cursor-pointer"
-                                    onClick={() => toggleRowExpansion(session.id)}
-                                  >
+                                  <>
+                                    <tr 
+                                      key={session.id} 
+                                      className="border-b border-border hover:bg-muted/50 transition-colors cursor-pointer"
+                                      onClick={() => toggleRowExpansion(session.id)}
+                                    >
                                     <td className="py-3 px-4 w-12">
                                       <Button
                                         variant="ghost"
@@ -628,7 +816,14 @@ export default function MeetingAgent() {
                                                     {session.participants ? session.participants.length : 0}
                                                     {session.participants && session.participants.length > 0 && (
                                                       <span className="text-muted-foreground text-xs ml-2">
-                                                        ({session.participants.map(p => p.name || p.email || 'Unknown').join(', ')})
+                                                        ({session.participants.map(p => {
+                                                          // Handle different participant data structures
+                                                          if (typeof p === 'string') return p
+                                                          if (typeof p === 'object' && p !== null) {
+                                                            return p.name || p.email || (p as any).displayName || (p as any).userName || p.id || 'Unknown'
+                                                          }
+                                                          return 'Unknown'
+                                                        }).join(', ')})
                                                       </span>
                                                     )}
                                                   </p>
@@ -643,13 +838,25 @@ export default function MeetingAgent() {
                                                       <span className="text-muted-foreground font-medium text-xs">Recording Status</span>
                                                       <p className="text-foreground font-medium mt-1 capitalize">{session.recallBot.recordingStatus}</p>
                                                     </div>
+                                                    <div className="md:col-span-2">
+                                                      <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleUpdateSessionUrls(session.id)}
+                                                        className="text-blue-400 border-blue-600 hover:bg-blue-600 hover:text-white"
+                                                      >
+                                                        <RefreshCw className="h-4 w-4 mr-2" />
+                                                        Update URLs from Bot
+                                                      </Button>
+                                                    </div>
                                                   </>
                                                 )}
                                               </div>
                                             </div>
                                           </div>
 
-                                          {/* Video and Transcript Side by Side */}
+
+                                          {/* Video and Transcriipt Side by Side */}
                                           {((session.recallBot?.videoUrl || session.recordingUrl) || (session.recallBot?.transcriptUrl || session.transcriptionText)) && (
                                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                               {/* Video Section */}
@@ -758,8 +965,8 @@ export default function MeetingAgent() {
                                       </td>
                                     </tr>
                                   )}
-                                </>
-                              ))
+                                  </>
+                                ))
                               )}
                             </tbody>
                           </table>
@@ -813,10 +1020,6 @@ export default function MeetingAgent() {
                                     onStop={async () => {
                                       try {
                                         await MeetingAgentService.stopRecallBot(session.recallBot!.id)
-                                        toast({
-                                          title: 'Success',
-                                          description: 'Recall bot stopped successfully'
-                                        })
                                         loadData()
                                       } catch (error) {
                                         toast({

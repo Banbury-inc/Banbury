@@ -4,9 +4,34 @@ import { AUTH_CONFIG } from './authConfig';
 import { CONFIG } from '../config/config';
 
 // Configure axios defaults
-axios.defaults.timeout = 10000; // 10 second timeout
+axios.defaults.timeout = 30000; // 30 second timeout
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 axios.defaults.headers.common['Accept'] = 'application/json';
+
+// Add request interceptor for debugging
+axios.interceptors.request.use(
+  (config) => {
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    console.log('Request headers:', config.headers);
+    return config;
+  },
+  (error) => {
+    console.log('API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for debugging
+axios.interceptors.response.use(
+  (response) => {
+    console.log(`API Response: ${response.status} ${response.config.url}`);
+    return response;
+  },
+  (error) => {
+    console.log(`API Response Error: ${error.response?.status} ${error.config?.url}`, error.message);
+    return Promise.reject(error);
+  }
+);
 
 // API service for centralized HTTP requests
 export class ApiService {
@@ -48,9 +73,13 @@ export class ApiService {
     // Check if we're in a browser environment
     if (typeof window !== 'undefined' && window.localStorage) {
       const token = localStorage.getItem('authToken');
+      console.log('Loading auth token:', token ? 'Token found' : 'No token found');
       if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        console.log('Auth token set in axios headers');
       }
+    } else {
+      console.log('No auth token available - not in browser environment');
     }
   }
 
@@ -519,14 +548,58 @@ export class ApiService {
       this.loadAuthToken();
       
       console.log('[downloadS3File] Downloading file:', fileId, 'fileName:', fileName);
-      const response = await axios({
-        method: 'get',
-        url: `${this.baseURL}/files/download_s3_file/${encodeURIComponent(fileId)}/`,
-        responseType: 'blob', // Important for file downloads
-        headers: {
-          'Authorization': axios.defaults.headers.common['Authorization']
+      
+      // First try to get the response as JSON to check if it's a URL redirect
+      let response;
+      try {
+        response = await axios({
+          method: 'get',
+          url: `${this.baseURL}/files/download_s3_file/${encodeURIComponent(fileId)}/`,
+          responseType: 'json', // Try JSON first
+          headers: {
+            'Authorization': axios.defaults.headers.common['Authorization']
+          }
+        });
+        
+        // Check if it's a JSON response with a URL (for Recall AI files)
+        if (response.data && (response.data.url || response.data.download_url || response.data.presigned_url)) {
+          const downloadUrl = response.data.url || response.data.download_url || response.data.presigned_url;
+          console.log('[downloadS3File] Got presigned URL, following redirect:', downloadUrl);
+          
+          // Download from the presigned URL using fetch to avoid axios interceptors
+          console.log('[downloadS3File] Downloading from S3 URL:', downloadUrl);
+          const realFileResponse = await fetch(downloadUrl, {
+            method: 'GET',
+            // Don't include any Authorization headers
+          });
+          
+          if (!realFileResponse.ok) {
+            throw new Error(`Failed to download from S3: ${realFileResponse.status} ${realFileResponse.statusText}`);
+          }
+          
+          const realBlob = await realFileResponse.blob();
+          console.log('[downloadS3File] Real file downloaded, size:', realBlob.size);
+          
+          const url = window.URL.createObjectURL(realBlob);
+          return {
+            success: true,
+            blob: realBlob,
+            url,
+            fileName
+          };
         }
-      });
+      } catch (jsonError) {
+        // If JSON parsing fails, try as blob
+        console.log('[downloadS3File] JSON response failed, trying blob:', jsonError);
+        response = await axios({
+          method: 'get',
+          url: `${this.baseURL}/files/download_s3_file/${encodeURIComponent(fileId)}/`,
+          responseType: 'blob', // Important for file downloads
+          headers: {
+            'Authorization': axios.defaults.headers.common['Authorization']
+          }
+        });
+      }
 
       console.log('[downloadS3File] Response status:', response.status);
       console.log('[downloadS3File] Response headers:', response.headers);
@@ -535,44 +608,6 @@ export class ApiService {
       const incomingBlob = response.data as Blob;
       console.log('[downloadS3File] Blob size:', incomingBlob.size, 'type:', incomingBlob.type);
       
-      // Debug: Check if the response is actually small enough to be an error
-      if (incomingBlob.size < 1000) {
-        try {
-          const text = await incomingBlob.text();
-          console.log('[downloadS3File] Small response, content:', text.substring(0, 200));
-          
-          // Check if it's a JSON response with a URL
-          try {
-            const json = JSON.parse(text);
-            if (json.url || json.download_url || json.presigned_url) {
-              const downloadUrl = json.url || json.download_url || json.presigned_url;
-              console.log('[downloadS3File] Got presigned URL, following redirect:', downloadUrl);
-              
-              // Download from the presigned URL
-              const realFileResponse = await axios({
-                method: 'get',
-                url: downloadUrl,
-                responseType: 'blob'
-              });
-              
-              const realBlob = realFileResponse.data as Blob;
-              console.log('[downloadS3File] Real file downloaded, size:', realBlob.size);
-              
-              const url = window.URL.createObjectURL(realBlob);
-              return {
-                success: true,
-                blob: realBlob,
-                url,
-                fileName
-              };
-            }
-          } catch (jsonError) {
-            // Not JSON or no URL field
-          }
-        } catch (e) {
-          console.log('[downloadS3File] Could not read blob as text');
-        }
-      }
       const serverType = (response.headers && (response.headers['content-type'] || (response.headers as any).get?.('content-type'))) || '';
       const type = (incomingBlob && (incomingBlob as any).type) || serverType || 'application/octet-stream';
       const blob = (incomingBlob && (incomingBlob as any).type)

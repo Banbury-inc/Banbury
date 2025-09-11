@@ -137,12 +137,14 @@ export class MeetingAgentService {
         params.append('status', status)
       }
 
+      console.log('Making API call to:', `${this.baseEndpoint}/sessions/?${params.toString()}`)
       const response = await ApiService.get<{
         sessions: MeetingSession[]
         total: number
         hasMore: boolean
       }>(`${this.baseEndpoint}/sessions/?${params.toString()}`)
       
+      console.log('API response received:', response)
       return response
     } catch (error) {
       console.error('Failed to fetch meeting sessions:', error)
@@ -590,6 +592,297 @@ export class MeetingAgentService {
     
     return () => {
       isActive = false
+    }
+  }
+
+  /**
+   * Upload meeting transcript to S3
+   */
+  static async uploadTranscriptToS3(
+    sessionId: string,
+    transcriptContent: string,
+    fileName: string = 'transcript.txt',
+    onProgress?: (progress: number) => void
+  ): Promise<{
+    success: boolean
+    transcriptUrl?: string
+    fileSize?: number
+    s3Key?: string
+    message: string
+  }> {
+    try {
+      // Create a text file from the transcript content
+      const transcriptBlob = new Blob([transcriptContent], { type: 'text/plain' })
+      const transcriptFile = new File([transcriptBlob], fileName, {
+        type: 'text/plain'
+      })
+
+      // Use the general upload_to_s3 endpoint
+      return await this.uploadFileToS3(transcriptFile, 'meeting-agent', `meetings/${sessionId}/`, '', onProgress)
+    } catch (error) {
+      console.error('Failed to upload transcript:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Upload any file to S3 using the general upload endpoint
+   */
+  static async uploadFileToS3(
+    file: File,
+    deviceName: string,
+    filePath: string = '',
+    fileParent: string = '',
+    onProgress?: (progress: number) => void
+  ): Promise<{
+    success: boolean
+    fileUrl?: string
+    fileSize?: number
+    s3Key?: string
+    message: string
+  }> {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('device_name', deviceName)
+      formData.append('file_path', filePath)
+      formData.append('file_parent', fileParent)
+
+      // Get username from localStorage
+      const username = localStorage.getItem('username')
+      if (!username) {
+        throw new Error('Username not found')
+      }
+
+      // Create XMLHttpRequest for progress tracking
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+
+        // Track upload progress
+        if (onProgress) {
+          xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+              const progress = (event.loaded / event.total) * 100
+              onProgress(progress)
+            }
+          })
+        }
+
+        xhr.addEventListener('load', () => {
+          try {
+            const response = JSON.parse(xhr.responseText)
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve({
+                success: true,
+                fileUrl: response.file_url,
+                fileSize: response.file_info?.file_size,
+                s3Key: response.file_info?.s3_key,
+                message: 'Upload successful'
+              })
+            } else {
+              reject(new Error(response.error || 'Upload failed'))
+            }
+          } catch (error) {
+            reject(new Error('Invalid response from server'))
+          }
+        })
+
+        xhr.addEventListener('error', () => {
+          reject(new Error('Network error during upload'))
+        })
+
+        xhr.addEventListener('abort', () => {
+          reject(new Error('Upload was cancelled'))
+        })
+
+        // Get auth token
+        const token = localStorage.getItem('token')
+        if (!token) {
+          reject(new Error('Authentication required'))
+          return
+        }
+
+        // Configure request
+        xhr.open('POST', `${CONFIG.url}/files/upload_to_s3/${username}/`)
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+        
+        // Send request
+        xhr.send(formData)
+      })
+    } catch (error) {
+      console.error('Failed to upload file to S3:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Upload meeting assets (video and transcript) to S3
+   */
+  static async uploadMeetingAssetsToS3(
+    sessionId: string,
+    videoFile?: File,
+    transcriptContent?: string,
+    onProgress?: (progress: { videoProgress: number; transcriptProgress: number; isUploading: boolean }) => void
+  ): Promise<{
+    success: boolean
+    videoUrl?: string
+    transcriptUrl?: string
+    message: string
+    errors?: string[]
+  }> {
+    try {
+      const results: { videoUrl?: string; transcriptUrl?: string; errors: string[] } = {
+        errors: []
+      }
+
+      const uploadPromises: Promise<any>[] = []
+
+      // Upload video if provided
+      if (videoFile) {
+        uploadPromises.push(
+          this.uploadRecordingToS3(sessionId, videoFile, (progress) => {
+            onProgress?.({ videoProgress: progress, transcriptProgress: 0, isUploading: true })
+          }).then(result => {
+            if (result.success) {
+              results.videoUrl = result.recordingUrl
+            } else {
+              results.errors.push(`Video upload failed: ${result.message}`)
+            }
+          }).catch(error => {
+            results.errors.push(`Video upload error: ${error.message}`)
+          })
+        )
+      }
+
+      // Upload transcript if provided
+      if (transcriptContent) {
+        uploadPromises.push(
+          this.uploadTranscriptToS3(sessionId, transcriptContent, `${sessionId}_transcript.txt`, (progress) => {
+            onProgress?.({ videoProgress: videoFile ? 100 : 0, transcriptProgress: progress, isUploading: true })
+          }).then(result => {
+            if (result.success) {
+              results.transcriptUrl = result.recordingUrl
+            } else {
+              results.errors.push(`Transcript upload failed: ${result.message}`)
+            }
+          }).catch(error => {
+            results.errors.push(`Transcript upload error: ${error.message}`)
+          })
+        )
+      }
+
+      // Wait for all uploads to complete
+      await Promise.allSettled(uploadPromises)
+
+      onProgress?.({ videoProgress: 100, transcriptProgress: 100, isUploading: false })
+
+      const hasAnySuccess = results.videoUrl || results.transcriptUrl
+      const successMessage = hasAnySuccess ? 
+        `Successfully uploaded ${results.videoUrl ? 'video' : ''}${results.videoUrl && results.transcriptUrl ? ' and ' : ''}${results.transcriptUrl ? 'transcript' : ''}` :
+        'Upload failed'
+
+      return {
+        success: hasAnySuccess,
+        videoUrl: results.videoUrl,
+        transcriptUrl: results.transcriptUrl,
+        message: successMessage,
+        errors: results.errors.length > 0 ? results.errors : undefined
+      }
+    } catch (error) {
+      console.error('Failed to upload meeting assets:', error)
+      onProgress?.({ videoProgress: 0, transcriptProgress: 0, isUploading: false })
+      throw error
+    }
+  }
+
+  /**
+   * Manually trigger S3 upload for a completed meeting
+   */
+  static async triggerS3Upload(sessionId: string): Promise<{
+    success: boolean
+    message: string
+    videoUrl?: string
+    transcriptUrl?: string
+  }> {
+    try {
+      const response = await ApiService.post<{
+        success: boolean
+        message: string
+        video_url?: string
+        transcript_url?: string
+      }>(`${this.baseEndpoint}/sessions/${sessionId}/trigger-s3-upload/`, {})
+      
+      return {
+        success: response.success,
+        message: response.message,
+        videoUrl: response.video_url,
+        transcriptUrl: response.transcript_url
+      }
+    } catch (error) {
+      console.error('Failed to trigger S3 upload:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Check and upload all sessions that need S3 upload
+   */
+  static async checkAndUploadSessions(): Promise<{
+    success: boolean
+    message: string
+    uploaded_count: number
+    failed_count: number
+    results: Array<{
+      session_id: string
+      success: boolean
+      message: string
+      error?: string
+    }>
+  }> {
+    try {
+      const response = await ApiService.post<{
+        success: boolean
+        message: string
+        uploaded_count: number
+        failed_count: number
+        results: Array<{
+          session_id: string
+          success: boolean
+          message: string
+          error?: string
+        }>
+      }>(`${this.baseEndpoint}/check-and-upload-sessions/`, {})
+      
+      return response
+    } catch (error) {
+      console.error('Error checking and uploading sessions:', error)
+      throw new Error('Failed to check and upload sessions')
+    }
+  }
+
+  /**
+   * Update session URLs from Recall AI bot data
+   */
+  static async updateSessionUrls(sessionId: string): Promise<{
+    success: boolean
+    message: string
+    video_url?: string
+    transcript_url?: string
+    audio_url?: string
+  }> {
+    try {
+      const response = await ApiService.post<{
+        success: boolean
+        message: string
+        video_url?: string
+        transcript_url?: string
+        audio_url?: string
+      }>(`${this.baseEndpoint}/sessions/${sessionId}/update-urls/`, {})
+      
+      return response
+    } catch (error) {
+      console.error('Error updating session URLs:', error)
+      throw new Error('Failed to update session URLs')
     }
   }
 
