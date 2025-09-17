@@ -220,16 +220,6 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
             <h1 className="text-white text-lg font-semibold truncate">
               {getHeader('Subject') || '(No Subject)'}
             </h1>
-            <div className="flex items-center gap-4 text-xs text-zinc-400 mt-1">
-              <div className="flex items-center gap-1">
-                <User className="h-3 w-3" />
-                <span className="truncate">{getHeader('From')}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                <span>{formatDate(email.internalDate)}</span>
-              </div>
-            </div>
           </div>
         </div>
         

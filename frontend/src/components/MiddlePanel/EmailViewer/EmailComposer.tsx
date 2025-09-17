@@ -6,7 +6,6 @@ import {
   ArrowLeft
 } from 'lucide-react'
 import { useState, useCallback, useEffect } from 'react'
-
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { useToast } from '../../ui/use-toast'
@@ -283,19 +282,19 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200">
+      <div className="flex items-center justify-between px-6 py-3 bg-zinc-800 border-b border-zinc-700">
         <div className="flex items-center gap-3">
           {onBack && (
             <Button
               variant="ghost"
               size="sm"
               onClick={onBack}
-              className="text-slate-500 hover:bg-slate-100 hover:text-slate-700 p-1 h-8 w-8 rounded-md transition-colors duration-200"
+              className="text-zinc-400 hover:bg-slate-100 hover:text-slate-700 p-1 h-8 w-8 rounded-md transition-colors duration-200"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
           )}
-          <h1 className="text-zinc-900 text-lg font-semibold">
+          <h1 className="text-white text-lg font-semibold">
             {replyTo ? 'Reply' : 'New Message'}
           </h1>
         </div>
@@ -305,7 +304,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
             variant="ghost"
             size="sm"
             onClick={handleSaveDraft}
-            className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 px-3 py-1.5 rounded-md transition-colors duration-200"
+            className="text-zinc-400 hover:text-slate-700 hover:bg-slate-100 px-3 py-1.5 rounded-md transition-colors duration-200"
             disabled={sending}
           >
             <Save className="h-4 w-4 mr-2" />
@@ -316,7 +315,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
             disabled={
               sending || parseRecipients(form.to).length === 0 || !form.subject || isContentEmpty(form.body)
             }
-            className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-1.5 rounded-md transition-colors duration-200 disabled:bg-slate-300 disabled:text-slate-500"
+            className="bg-white hover:bg-slate-700 text-black px-4 py-1.5 rounded-md transition-colors duration-200 disabled:bg-slate-300 disabled:text-slate-500"
           >
             <Send className="h-4 w-4 mr-2" />
             {sending ? 'Sending...' : 'Send'}
@@ -328,10 +327,10 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-500">
         <div className="w-full">
           {/* Recipients */}
-          <div className="px-6 py-4 border-b border-gray-200 bg-white">
+          <div className="px-6 py-4 border-b border-zinc-700 bg-zinc-800">
             <div className="space-y-4">
               <div>
-                <label className="text-slate-700 text-sm font-medium mb-2 block">To</label>
+                <label className="text-zinc-400 text-sm font-medium mb-2 block">To</label>
                 <RecipientChipsInput
                   value={form.to}
                   onChange={(next) => setForm(prev => ({ ...prev, to: next }))}
@@ -343,7 +342,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
               </div>
               
               <div>
-                <label className="text-slate-700 text-sm font-medium mb-2 block">Subject</label>
+                <label className="text-zinc-400 text-sm font-medium mb-2 block">Subject</label>
                 <Input
                   value={form.subject}
                   onChange={(e) => setForm(prev => ({ ...prev, subject: e.target.value }))}
