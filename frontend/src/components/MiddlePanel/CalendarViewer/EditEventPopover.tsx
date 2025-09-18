@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Save, Trash2, X } from 'lucide-react'
+import { Save, Trash2, X, Edit3 } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { CalendarService, CalendarEvent } from '../../../services/calendarService'
+import { FormattedText } from '../../../utils/textFormatter'
 
 interface EditEventPopoverProps {
   isOpen: boolean
@@ -19,6 +20,7 @@ export function EditEventPopover({ isOpen, position, event, onClose, onSaved, on
   const [deleting, setDeleting] = useState(false)
   const [attendees, setAttendees] = useState<string[]>([])
   const [newAttendee, setNewAttendee] = useState('')
+  const [isEditingDescription, setIsEditingDescription] = useState(false)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const descRef = useRef<HTMLTextAreaElement | null>(null)
   const [measuredWidth, setMeasuredWidth] = useState<number>(380)
@@ -68,6 +70,7 @@ export function EditEventPopover({ isOpen, position, event, onClose, onSaved, on
     setIsAllDay(!!event.start?.date)
     setAttendees(event.attendees?.map(a => a.email || a.displayName || '') || [])
     setNewAttendee('')
+    setIsEditingDescription(false)
   }, [isOpen, event])
 
   useEffect(() => {
@@ -217,18 +220,42 @@ export function EditEventPopover({ isOpen, position, event, onClose, onSaved, on
             placeholder="Location"
           />
         </div>
-        <textarea
-          ref={descRef}
-          value={formData.description || ''}
-          onChange={(e) => {
-            e.currentTarget.style.height = 'auto'
-            e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`
-            handleInputChange('description', e.target.value)
-          }}
-          rows={2}
-          className="w-full px-2 py-1.5 bg-zinc-700 border border-zinc-600 rounded text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none overflow-hidden"
-          placeholder="Description"
-        />
+        <div className="relative">
+          {!isEditingDescription ? (
+            <div className="w-full px-2 py-1.5 bg-zinc-700 border border-zinc-600 rounded text-sm text-white min-h-[2.5rem] max-h-32 overflow-y-auto">
+              {formData.description ? (
+                <FormattedText 
+                  text={formData.description} 
+                  className="text-sm text-white leading-relaxed"
+                />
+              ) : (
+                <span className="text-slate-400">No description</span>
+              )}
+            </div>
+          ) : (
+            <textarea
+              ref={descRef}
+              value={formData.description || ''}
+              onChange={(e) => {
+                e.currentTarget.style.height = 'auto'
+                e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`
+                handleInputChange('description', e.target.value)
+              }}
+              rows={2}
+              className="w-full px-2 py-1.5 bg-zinc-700 border border-zinc-600 rounded text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none overflow-hidden"
+              placeholder="Description"
+            />
+          )}
+          <Button
+            type="button"
+            onClick={() => setIsEditingDescription(!isEditingDescription)}
+            variant="ghost"
+            size="sm"
+            className="absolute top-1 right-1 h-6 w-6 p-0 text-slate-400 hover:text-slate-200 hover:bg-zinc-600"
+          >
+            <Edit3 className="h-3 w-3" />
+          </Button>
+        </div>
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-medium text-slate-300">Guests</span>
