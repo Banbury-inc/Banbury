@@ -549,66 +549,62 @@ export class ApiService {
       
       console.log('[downloadS3File] Downloading file:', fileId, 'fileName:', fileName);
       
-      // First try to get the response as JSON to check if it's a URL redirect
-      let response;
-      try {
-        response = await axios({
-          method: 'get',
-          url: `${this.baseURL}/files/download_s3_file/${encodeURIComponent(fileId)}/`,
-          responseType: 'json', // Try JSON first
-          headers: {
-            'Authorization': axios.defaults.headers.common['Authorization']
-          }
-        });
-        
-        // Check if it's a JSON response with a URL (for Recall AI files)
-        if (response.data && (response.data.url || response.data.download_url || response.data.presigned_url)) {
-          const downloadUrl = response.data.url || response.data.download_url || response.data.presigned_url;
-          console.log('[downloadS3File] Got presigned URL, following redirect:', downloadUrl);
-          
-          // Download from the presigned URL using fetch to avoid axios interceptors
-          console.log('[downloadS3File] Downloading from S3 URL:', downloadUrl);
-          const realFileResponse = await fetch(downloadUrl, {
-            method: 'GET',
-            // Don't include any Authorization headers
-          });
-          
-          if (!realFileResponse.ok) {
-            throw new Error(`Failed to download from S3: ${realFileResponse.status} ${realFileResponse.statusText}`);
-          }
-          
-          const realBlob = await realFileResponse.blob();
-          console.log('[downloadS3File] Real file downloaded, size:', realBlob.size);
-          
-          const url = window.URL.createObjectURL(realBlob);
-          return {
-            success: true,
-            blob: realBlob,
-            url,
-            fileName
-          };
+      // Always request as blob first
+      const response = await axios({
+        method: 'get',
+        url: `${this.baseURL}/files/download_s3_file/${encodeURIComponent(fileId)}/`,
+        responseType: 'blob', // Important for file downloads
+        headers: {
+          'Authorization': axios.defaults.headers.common['Authorization']
         }
-      } catch (jsonError) {
-        // If JSON parsing fails, try as blob
-        console.log('[downloadS3File] JSON response failed, trying blob:', jsonError);
-        response = await axios({
-          method: 'get',
-          url: `${this.baseURL}/files/download_s3_file/${encodeURIComponent(fileId)}/`,
-          responseType: 'blob', // Important for file downloads
-          headers: {
-            'Authorization': axios.defaults.headers.common['Authorization']
-          }
-        });
-      }
+      });
 
       console.log('[downloadS3File] Response status:', response.status);
       console.log('[downloadS3File] Response headers:', response.headers);
+      
+      // Check if this might be a JSON response with a presigned URL (for Recall AI files)
+      const contentType = response.headers['content-type'] || '';
+      if (contentType.includes('application/json')) {
+        try {
+          const text = await response.data.text();
+          const jsonData = JSON.parse(text);
+          
+          if (jsonData && (jsonData.url || jsonData.download_url || jsonData.presigned_url)) {
+            const downloadUrl = jsonData.url || jsonData.download_url || jsonData.presigned_url;
+            console.log('[downloadS3File] Got presigned URL, following redirect:', downloadUrl);
+            
+            // Download from the presigned URL using fetch to avoid axios interceptors
+            console.log('[downloadS3File] Downloading from S3 URL:', downloadUrl);
+            const realFileResponse = await fetch(downloadUrl, {
+              method: 'GET',
+              // Don't include any Authorization headers
+            });
+            
+            if (!realFileResponse.ok) {
+              throw new Error(`Failed to download from S3: ${realFileResponse.status} ${realFileResponse.statusText}`);
+            }
+            
+            const realBlob = await realFileResponse.blob();
+            console.log('[downloadS3File] Real file downloaded, size:', realBlob.size);
+            
+            const url = window.URL.createObjectURL(realBlob);
+            return {
+              success: true,
+              blob: realBlob,
+              url,
+              fileName
+            };
+          }
+        } catch (jsonError) {
+          console.log('[downloadS3File] Failed to parse as JSON, treating as blob:', jsonError);
+        }
+      }
       
       // Preserve server-provided content-type for correct handling (e.g., XLSX)
       const incomingBlob = response.data as Blob;
       console.log('[downloadS3File] Blob size:', incomingBlob.size, 'type:', incomingBlob.type);
       
-      const serverType = (response.headers && (response.headers['content-type'] || (response.headers as any).get?.('content-type'))) || '';
+      const serverType = contentType || '';
       const type = (incomingBlob && (incomingBlob as any).type) || serverType || 'application/octet-stream';
       const blob = (incomingBlob && (incomingBlob as any).type)
         ? incomingBlob
