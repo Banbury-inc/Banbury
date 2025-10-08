@@ -20,6 +20,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { FontFamily } from '@tiptap/extension-font-family';
 import { Insertion, Deletion } from '../../../extensions/TrackChanges';
 import { Button } from '../../../components/ui/button';
+import { useTheme } from '@mui/material/styles';
 import {
   Bold,
   Italic,
@@ -93,6 +94,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
   saving = false,
   canSave = false
 }) => {
+  const theme = useTheme();
   const { setEditor, aiBridge, registerAICommands, aiCommands } = useTiptapAIContext();
   const [selection, setSelection] = useState<{ from: number; to: number; text: string } | null>(null);
   const [selectedFont, setSelectedFont] = useState<string | null>(null);
@@ -473,7 +475,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
   return (
     <div className={cn(styles['simple-tiptap-container'], className)}>
       {/* Toolbar */}
-      <div className={styles['simple-tiptap-toolbar']} ref={toolbarRef} style={{ flexWrap: 'nowrap', border: 'none' }}>
+      <div className={cn(styles['simple-tiptap-toolbar'], theme.palette.mode === 'light' && styles['light-mode'])} ref={toolbarRef} style={{ flexWrap: 'nowrap', border: 'none' }}>
         {/* Left side toolbar items */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: 0 }}>
           {/* Responsive icon buttons */}

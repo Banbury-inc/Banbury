@@ -845,8 +845,8 @@ const Workspaces = (): JSX.Element => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white"></div>
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-zinc-900 dark:border-white"></div>
       </div>
     );
   }
@@ -858,7 +858,7 @@ const Workspaces = (): JSX.Element => {
       <TiptapAIProvider>
         <ClaudeRuntimeProvider>
           <div 
-            className="flex h-screen bg-black"
+            className="flex h-screen bg-white dark:bg-black"
             onClick={(e) => {
               // Check if the click is outside any CSV editor
               const target = e.target as HTMLElement;
@@ -890,7 +890,7 @@ const Workspaces = (): JSX.Element => {
                       {/* Collapse button for file sidebar - positioned on right border */}
                       <button
                         onClick={() => setIsFileSidebarCollapsed(true)}
-                        className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-white hover:bg-zinc-700 hover:text-white bg-black border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black shadow-lg burger-button"
+                        className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-lg burger-button"
                         title="Collapse file sidebar"
                       >
                         <Menu className="h-3 w-3" />
@@ -927,12 +927,12 @@ const Workspaces = (): JSX.Element => {
                 
                 {/* Main Content Panel */}
                 <Allotment.Pane minSize={300}>
-                  <main className="h-full relative border-0">
+                  <main className="h-full bg-white dark:bg-black relative border-0">
                     {/* Expand button for file sidebar when collapsed - positioned on left border */}
                     {isFileSidebarCollapsed && (
                       <button
                         onClick={() => setIsFileSidebarCollapsed(false)}
-                        className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-white hover:bg-zinc-700 hover:text-white bg-black border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black shadow-lg burger-button"
+                        className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-lg burger-button"
                         title="Expand file sidebar"
                       >
                         <Menu className="h-3 w-3" />
@@ -942,7 +942,7 @@ const Workspaces = (): JSX.Element => {
                     {isAssistantPanelCollapsed && (
                       <button
                         onClick={() => setIsAssistantPanelCollapsed(false)}
-                        className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-white hover:bg-zinc-700 hover:text-white bg-black border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black shadow-lg burger-button"
+                        className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-lg burger-button"
                         title="Expand assistant panel"
                       >
                         <Menu className="h-3 w-3" />
@@ -955,21 +955,21 @@ const Workspaces = (): JSX.Element => {
                 {/* Assistant Panel */}
                 {!isAssistantPanelCollapsed && (
                   <Allotment.Pane minSize={300} preferredSize={400}>
-                    <div className="h-full bg-black border-l border-gray-800 flex flex-col relative">
+                    <div className="h-full bg-white dark:bg-black border-l border-zinc-200 dark:border-gray-800 flex flex-col relative">
                       {/* Collapse button for assistant panel - positioned on left border */}
                       <button
                         onClick={() => setIsAssistantPanelCollapsed(true)}
-                        className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-white hover:bg-zinc-700 hover:text-white bg-black border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black shadow-lg burger-button"
+                        className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 bg-white dark:bg-black border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-lg burger-button"
                         title="Collapse assistant panel"
                       >
                         <Menu className="h-3 w-3" />
                       </button>
                       {/* Conversation Management Dropdown */}
-                      <div className="bg-black px-4 py-2 flex items-center justify-end gap-2">
+                      <div className="bg-white dark:bg-black px-4 py-2 flex items-center justify-end gap-2 border-b border-zinc-200 dark:border-zinc-800">
                         <div className="flex items-center gap-2">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <button className="h-8 px-3 text-white hover:bg-zinc-700 hover:text-white bg-black transition-colors rounded-md flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black">
+                              <button className="h-8 px-3 text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 bg-white dark:bg-black transition-colors rounded-md flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black border border-zinc-200 dark:border-zinc-700">
                                 <TimerReset className="h-3 w-3" />
                                 <ChevronDown className="h-3 w-3" />
                               </button>
@@ -1021,12 +1021,12 @@ const Workspaces = (): JSX.Element => {
                                 // Dispatch an event to clear the conversation and show welcome message
                                 window.dispatchEvent(new CustomEvent('clear-conversation', {}));
                               }}
-                              className="h-8 w-8 text-white hover:bg-zinc-700 hover:text-white bg-black transition-colors rounded-md flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black"
+                              className="h-8 w-8 text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 bg-white dark:bg-black transition-colors rounded-md flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black border border-zinc-200 dark:border-zinc-700"
                             >
                               <Plus className="h-3 w-3" />
                             </button>
                             {/* Custom CSS tooltip */}
-                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
+                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none border border-zinc-200 dark:border-zinc-700">
                               Clear Conversation
                             </div>
                           </div>
@@ -1086,8 +1086,8 @@ const Workspaces = (): JSX.Element => {
         {/* Conversation Dialogs */}
         {saveDialogOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-96">
-              <h3 className="text-lg font-semibold text-white mb-4">Save Conversation</h3>
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-6 w-96">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Save Conversation</h3>
               <input
                 type="text"
                 placeholder="Enter conversation title..."
@@ -1119,10 +1119,10 @@ const Workspaces = (): JSX.Element => {
         
         {showConversationDialog && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-96 max-h-96 overflow-y-auto">
-              <h3 className="text-lg font-semibold text-white mb-4">Load Conversation</h3>
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-6 w-96 max-h-96 overflow-y-auto">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Load Conversation</h3>
               {isLoadingConversations ? (
-                <div className="text-white text-center py-4">Loading conversations...</div>
+                <div className="text-zinc-900 dark:text-white text-center py-4">Loading conversations...</div>
               ) : conversations.length === 0 ? (
                 <div className="text-white text-center py-4">No saved conversations found.</div>
               ) : (

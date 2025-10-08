@@ -280,12 +280,12 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
   }, [])
 
   return (
-    <div className="h-full flex flex-col bg-zinc-800">
+    <div className="h-full flex flex-col bg-white dark:bg-zinc-800">
       {/* Email Form */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-600 scrollbar-track-zinc-800 hover:scrollbar-thumb-zinc-500">
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-600 scrollbar-track-zinc-100 dark:scrollbar-track-zinc-800 hover:scrollbar-thumb-zinc-400 dark:hover:scrollbar-thumb-zinc-500">
         <div className="w-full">
           {/* Recipients */}
-          <div className="px-2 py-2 border-b border-zinc-700 bg-zinc-800/50">
+          <div className="px-2 py-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
             <div className="space-y-2">
               <div className="flex items-center">
                 <div className="flex-1">
@@ -315,11 +315,11 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
 
                     {/* Attachments */}
           {attachments.length > 0 && (
-            <div className="px-6 py-4 border-b border-zinc-700 bg-zinc-800/50">
+            <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
               <div className="flex items-center gap-2 mb-3">
-                <Paperclip className="h-4 w-4 text-zinc-300" />
-                <span className="text-sm font-semibold text-zinc-200">Attachments</span>
-                <span className="text-xs text-zinc-500 bg-zinc-700/50 px-2 py-0.5 rounded-full">
+                <Paperclip className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
+                <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Attachments</span>
+                <span className="text-xs text-zinc-600 dark:text-zinc-500 bg-zinc-200 dark:bg-zinc-700/50 px-2 py-0.5 rounded-full">
                   {attachments.length}
                 </span>
               </div>
@@ -327,15 +327,15 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
                 {attachments.map((file, index) => (
                   <div 
                     key={index}
-                    className="flex items-center justify-between p-3 bg-zinc-800 hover:bg-zinc-750 rounded-lg border border-zinc-700 hover:border-zinc-600 transition-all group"
+                    className="flex items-center justify-between p-3 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 transition-all group"
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="flex-shrink-0 w-8 h-8 bg-blue-600/20 rounded-lg flex items-center justify-center">
-                        <Paperclip className="h-4 w-4 text-blue-400" />
+                      <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-600/20 rounded-lg flex items-center justify-center">
+                        <Paperclip className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-zinc-200 truncate">{file.name}</p>
-                        <p className="text-xs text-zinc-500 mt-0.5">
+                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{file.name}</p>
+                        <p className="text-xs text-zinc-600 dark:text-zinc-500 mt-0.5">
                           {(file.size / 1024).toFixed(1)} KB
                         </p>
                       </div>
@@ -344,7 +344,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
                       variant="ghost"
                       size="sm"
                       onClick={() => removeAttachment(index)}
-                      className="text-zinc-400 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                      className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -379,7 +379,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
           </div>
 
           {/* Attachment Button and Action Buttons */}
-          <div className="px-2 py-2 bg-white border-t border-zinc-200">
+          <div className="px-2 py-2 bg-white dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700">
             <div className="flex items-center flex-wrap gap-3">
               <Button
                 variant="primary"
@@ -417,7 +417,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
                 className="hidden"
               />
               {attachments.length > 0 && (
-                <span className="text-xs text-zinc-400 bg-zinc-700/50 px-3 py-1.5 rounded-md flex-shrink-0">
+                <span className="text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-zinc-700/50 px-3 py-1.5 rounded-md flex-shrink-0">
                   {attachments.length} file{attachments.length !== 1 ? 's' : ''} attached
                 </span>
               )}

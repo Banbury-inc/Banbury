@@ -2,6 +2,7 @@ import { File, ChevronDown, ChevronRight, X, Mail, Network, Eye, PaintbrushIcon 
 import React, { useState } from 'react';
 
 import { Button } from './ui/button';
+import { Typography } from './ui/typography';
 import { cn } from '../utils';
 import { FileSystemItem } from '../utils/fileTreeUtils';
 import { isDrawioFile } from './MiddlePanel/CanvasViewer/handlers/drawio-viewer-handlers';
@@ -42,12 +43,12 @@ export const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
         ) : (
           <ChevronRight className="h-4 w-4 text-zinc-400" />
         )}
-        <span className="text-sm text-zinc-300 font-medium">
+        <Typography variant="small" flex-1>
           {totalCount} Attachment{totalCount > 1 ? 's' : ''}
           {fileCount > 0 && emailCount > 0 && (
-            <span className="text-zinc-500 ml-1">({fileCount} file{fileCount>1?'s':''}, {emailCount} email{emailCount>1?'s':''})</span>
+            <Typography variant="small" className="text-zinc-500 ml-1">({fileCount} file{fileCount>1?'s':''}, {emailCount} email{emailCount>1?'s':''})</Typography>
           )}
-        </span>
+        </Typography>
       </div>
 
       {/* File list */}
@@ -68,9 +69,9 @@ export const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
                 ) : (
                   <File className="h-4 w-4 text-zinc-400 flex-shrink-0" />
                 )}
-                <span className="text-sm text-zinc-300 truncate flex-1" title={file.name}>
+                <Typography variant="small" flex-1 title={file.name}>
                   {file.name}
-                </span>
+                </Typography>
                 
                 {/* Action buttons */}
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -117,9 +118,9 @@ export const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
                 className="flex items-center gap-2 py-1 px-2 hover:bg-zinc-700 rounded group"
               >
                 <Mail className="h-4 w-4 text-zinc-400 flex-shrink-0" />
-                <span className="text-sm text-zinc-300 truncate flex-1" title={`${subject}${from ? ' — ' + from : ''}`}>
+                <Typography variant="small" className="truncate flex-1" title={`${subject}${from ? ' — ' + from : ''}`}>
                   {subject}
-                </span>
+                </Typography>
                 <Button
                   variant="ghost"
                   size="sm"

@@ -38,7 +38,7 @@ interface TabsProps {
 
 const DragPreview = ({ label }: { label: string }) => (
   <div
-    className="bg-[#1e1e1e] text-white w-24 h-8 px-3 py-2 rounded-md flex items-center gap-2 shadow-lg border border-[#333]"
+    className="bg-zinc-100 dark:bg-[#1e1e1e] text-zinc-900 dark:text-white w-24 h-8 px-3 py-2 rounded-md flex items-center gap-2 shadow-lg border border-zinc-300 dark:border-[#333]"
   >
     <div className="w-4 h-4 flex items-center justify-center">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -75,9 +75,8 @@ export const TabComponent = ({ label, isActive, onClick, onClose, style, isNew, 
       min-w-[140px]
       border-0
       ${isActive 
-        ? 'text-white bg-zinc-800 border-0' 
-        : 'text-gray-400 hover:text-gray-300 hover:bg-zinc-800/50 border-0'}
-      hover:text-white 
+        ? 'text-zinc-900 dark:text-white bg-zinc-200 dark:bg-zinc-800 border-0' 
+        : 'text-zinc-600 dark:text-gray-400 hover:text-zinc-800 dark:hover:text-gray-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 border-0'}
       focus:outline-none
       z-[9999]
     `}
@@ -231,7 +230,7 @@ export const Tabs: React.FC<TabsProps> = ({
             
             if (mousePosition) {
               // Check if mouse is within the main content area (middle panel)
-              const mainElement = document.querySelector('main.h-full.bg-black.relative');
+              const mainElement = document.querySelector('main.h-full');
               let isInMiddlePanel = false;
               let direction: 'horizontal' | 'vertical' | null = null;
               let previewPosition = mousePosition;
@@ -360,7 +359,7 @@ export const Tabs: React.FC<TabsProps> = ({
   }, [tabs, onReorder]);
 
   return (
-    <div ref={containerRef} className="flex items-center group bg-black px-2 pt-2 border-0 gap-1">
+    <div ref={containerRef} className="flex items-center group bg-white dark:bg-black px-2 pt-2 border-0 gap-1">
       <style>
         {`
           .tab {
@@ -392,7 +391,7 @@ export const Tabs: React.FC<TabsProps> = ({
         <button
           onClick={() => onTabAdd?.()}
           data-testid="new-tab-button"
-          className="px-3 py-2 text-sm font-medium rounded-t-lg transition-all duration-200 text-gray-400 hover:text-gray-300 hover:bg-zinc-800/50 z-[9999]"
+          className="px-3 py-2 text-sm font-medium rounded-t-lg transition-all duration-200 text-zinc-600 dark:text-gray-400 hover:text-zinc-800 dark:hover:text-gray-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 z-[9999]"
         >
           <AddIcon size={14} />
         </button>

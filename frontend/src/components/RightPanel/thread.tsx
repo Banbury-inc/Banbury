@@ -922,7 +922,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
                   </div>
                 ) : (
                   <div className="relative mx-auto grid w-full max-w-[var(--thread-max-width)] grid-cols-[1fr] grid-rows-[auto_1fr] py-1">
-                    <div className="text-white col-start-1 row-start-1 leading-none break-words text-sm overflow-x-auto max-w-full">
+                    <div className="text-zinc-900 dark:text-white col-start-1 row-start-1 leading-none break-words text-sm overflow-x-auto max-w-full">
                       <div className="whitespace-pre-wrap">
                         {Array.isArray(message.content)
                           ? message.content.map((part: any) => part.type === 'text' ? part.text : '').join('')
@@ -1332,7 +1332,7 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAtta
       <div className="relative flex w-full flex-col">
         {/* Display attachments (files + emails) above the composer */}
         {(attachedFiles.length > 0 || attachedEmails.length > 0) && (
-          <div className="bg-zinc-800 border-b border-zinc-700 rounded-t-2xl px-2 py-0.5">
+          <div className="bg-zinc-200 dark:bg-zinc-800 border-b border-zinc-300 dark:border-zinc-700 rounded-t-2xl px-2 py-0.5">
             <FileAttachmentDisplay 
               files={attachedFiles}
               emails={attachedEmails}
@@ -1351,20 +1351,20 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAtta
             exit={{ opacity: 0, y: -5 }}
             className="w-full"
           >
-            <div className="bg-zinc-800 backdrop-blur-sm border-b border-zinc-700 px-2 py-2">
+            <div className="bg-zinc-200 dark:bg-zinc-800 backdrop-blur-sm border-b border-zinc-300 dark:border-zinc-700 px-2 py-2">
               <div className="space-y-1">
                 {/* Dropdown header */}
                 <div className="flex items-center justify-between gap-2">
                   <div 
-                    className="flex items-center gap-2 cursor-pointer hover:bg-zinc-700 p-1 rounded flex-1"
+                    className="flex items-center gap-2 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700 p-1 rounded flex-1"
                     onClick={() => setIsPendingChangesExpanded(!isPendingChangesExpanded)}
                   >
                     {isPendingChangesExpanded ? (
-                      <ChevronDown className="h-4 w-4 text-zinc-400" />
+                      <ChevronDown className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
                     ) : (
-                      <ChevronRightIcon className="h-4 w-4 text-zinc-400" />
+                      <ChevronRightIcon className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
                     )}
-                    <span className="text-sm text-zinc-300 font-medium">
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300 font-medium">
                       {pendingChanges.length} File{pendingChanges.length !== 1 ? 's' : ''}
                     </span>
                   </div>
@@ -1374,14 +1374,14 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAtta
                       size="sm"
                       variant="primary"
                       onClick={onRejectAll}
-                      className="text-zinc-400 border-zinc-700 hover:text-zinc-300 h-7 text-xs px-2 mr-2"
+                      className="text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 h-7 text-xs px-2 mr-2"
                     >
                       Reject all
                     </Button>
                     <Button
                       size="sm"
                       onClick={onAcceptAll}
-                      className="bg-zinc-600 hover:bg-zinc-700 text-white border-0 h-7 text-xs px-2"
+                      className="bg-zinc-300 dark:bg-zinc-600 hover:bg-zinc-400 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white border-0 h-7 text-xs px-2"
                     >
                       Accept all
                     </Button>
@@ -1395,23 +1395,23 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAtta
                       const getIcon = () => {
                         switch (change.type) {
                           case 'document':
-                            return <FileText className="h-4 w-4 text-blue-400 flex-shrink-0" />;
+                            return <FileText className="h-4 w-4 text-blue-500 dark:text-blue-400 flex-shrink-0" />;
                           case 'spreadsheet':
-                            return <Table className="h-4 w-4 text-green-400 flex-shrink-0" />;
+                            return <Table className="h-4 w-4 text-green-500 dark:text-green-400 flex-shrink-0" />;
                           case 'canvas':
-                            return <PaintbrushIcon className="h-4 w-4 text-purple-400 flex-shrink-0" />;
+                            return <PaintbrushIcon className="h-4 w-4 text-purple-500 dark:text-purple-400 flex-shrink-0" />;
                           default:
-                            return <File className="h-4 w-4 text-zinc-400 flex-shrink-0" />;
+                            return <File className="h-4 w-4 text-zinc-500 dark:text-zinc-400 flex-shrink-0" />;
                         }
                       };
 
                       return (
                         <div
                           key={change.id}
-                          className="flex items-center gap-2 py-1 px-2 hover:bg-zinc-700 rounded"
+                          className="flex items-center gap-2 py-1 px-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded"
                         >
                           {getIcon()}
-                          <span className="text-sm text-zinc-300 truncate flex-1" title={change.description}>
+                          <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate flex-1" title={change.description}>
                             {change.description}
                           </span>
                         </div>
@@ -1437,7 +1437,7 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAtta
           />
 
           {/* Visible Tiptap editor with @ mention for files */}
-          <div className={`bg-zinc-800 border-0 ${(attachedFiles.length > 0 || attachedEmails.length > 0 || pendingChanges.length > 0) ? 'border-t-0 rounded-t-none' : 'border-t rounded-t-2xl'}`}>
+          <div className={`bg-zinc-200 dark:bg-zinc-800 border-0 ${(attachedFiles.length > 0 || attachedEmails.length > 0 || pendingChanges.length > 0) ? 'border-t-0 rounded-t-none' : 'border-t border-zinc-300 dark:border-zinc-700 rounded-t-2xl'}`}>
             <ChatTiptapComposer
               hiddenInputRef={inputRef}
               userInfo={userInfo}
@@ -1583,7 +1583,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
   };
 
   return (
-    <div className="bg-zinc-800 border-0 relative flex items-center justify-between rounded-b-2xl p-2">
+    <div className="bg-zinc-200 dark:bg-zinc-800 border-0 relative flex items-center justify-between rounded-b-2xl p-2">
       <div className="flex items-center gap-2">
         <FileAttachment
           onFileAttach={onFileAttach}
@@ -1666,7 +1666,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           size="xsm"
           className={`h-8 w-8 ${
             isRecording
-              ? "bg-red-600 text-white hover:bg-red-700"
+              ? "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:text-white dark:hover:bg-red-700"
               : ""
           }`}
           onClick={isRecording ? stopRecording : startRecording}
@@ -1681,7 +1681,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           size="xsm"
           className={`${
             isWebSearchEnabled 
-              ? "bg-blue-600 hover:bg-blue-700 text-white" 
+              ? "bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white" 
               : ""
           }`}
           onClick={onToggleWebSearch}
@@ -1699,8 +1699,8 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           size="xsm"
           className={`${
             hasText 
-              ? 'cursor-pointer bg-white text-black' 
-              : 'opacity-50 bg-white text-black cursor-not-allowed'
+              ? 'cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100' 
+              : 'opacity-50 bg-zinc-300 dark:bg-zinc-600 text-zinc-500 dark:text-zinc-400 cursor-not-allowed'
           }`}
           title="Send"
           aria-label="Send message"
@@ -1829,7 +1829,7 @@ const AssistantMessage: FC = () => {
         animate={{ y: 0, opacity: 1 }}
         data-role="assistant"
       >
-        <div className="text-white col-start-1 row-start-1 leading-none break-words text-sm overflow-x-auto max-w-full">
+        <div className="text-zinc-900 dark:text-white col-start-1 row-start-1 leading-none break-words text-sm overflow-x-auto max-w-full">
           <MessagePrimitive.Content
             components={{
               Text: MarkdownText,
@@ -2108,14 +2108,14 @@ const SaveConversationDialog: FC<SaveConversationDialogProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-zinc-800 rounded-lg p-6 w-full max-w-md mx-4">
-        <h3 className="text-lg font-semibold mb-4">Save Conversation</h3>
+      <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 w-full max-w-md mx-4 shadow-xl border border-zinc-200 dark:border-zinc-700">
+        <h3 className="text-lg font-semibold mb-4 text-zinc-900 dark:text-white">Save Conversation</h3>
         <input
           type="text"
           placeholder="Enter conversation title..."
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
-          className="w-full p-2 bg-zinc-700 border border-zinc-600 rounded text-white mb-4"
+          className="w-full p-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
           autoFocus
         />
         <div className="flex justify-end gap-2">
@@ -2150,22 +2150,22 @@ const LoadConversationDialog: FC<LoadConversationDialogProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-zinc-800 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden flex flex-col">
-        <h3 className="text-lg font-semibold mb-4">Load Conversation</h3>
+      <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden flex flex-col shadow-xl border border-zinc-200 dark:border-zinc-700">
+        <h3 className="text-lg font-semibold mb-4 text-zinc-900 dark:text-white">Load Conversation</h3>
         
         <div className="flex-1 overflow-y-auto">
           {conversations.length === 0 ? (
-            <p className="text-zinc-400 text-center py-8">No saved conversations found.</p>
+            <p className="text-zinc-600 dark:text-zinc-400 text-center py-8">No saved conversations found.</p>
           ) : (
             <div className="space-y-2">
               {conversations.map((conversation) => (
                 <div
                   key={conversation._id}
-                  className="flex items-center justify-between p-3 bg-zinc-700 rounded hover:bg-zinc-600"
+                  className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-700 rounded hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium truncate">{conversation.title}</h4>
-                    <p className="text-sm text-zinc-400">
+                    <h4 className="font-medium truncate text-zinc-900 dark:text-white">{conversation.title}</h4>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
                       {new Date(conversation.updated_at).toLocaleDateString()}
                     </p>
                   </div>
@@ -2195,7 +2195,7 @@ const LoadConversationDialog: FC<LoadConversationDialogProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => onDeleteConversation(conversation._id)}
-                      className="text-red-400 hover:text-red-300"
+                      className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                     >
                       <Trash2 className="h-4 w-4" />
                     </TooltipIconButton>

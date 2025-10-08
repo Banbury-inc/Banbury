@@ -423,7 +423,7 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
     autofocus: true,
     editorProps: {
       attributes: {
-        class: 'min-h-16 w-full resize-none bg-transparent px-4 pt-2 pb-3 text-base text-zinc-200 outline-none',
+        class: 'min-h-16 w-full resize-none bg-transparent px-4 pt-2 pb-3 text-base text-zinc-900 dark:text-zinc-200 outline-none',
         'aria-label': placeholder,
         role: 'textbox',
         style: 'color-scheme: dark;',

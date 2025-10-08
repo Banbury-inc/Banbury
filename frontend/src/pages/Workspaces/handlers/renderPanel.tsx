@@ -140,13 +140,13 @@ export const renderPanel = ({
       key={panel.id}
       data-panel-id={panel.id}
       className={`h-full flex flex-col relative ${
-        isActive ? 'ring-2 ring-blue-500' : 'ring-1 ring-gray-700'
+        isActive ? 'ring-2 ring-blue-500' : 'ring-1 ring-zinc-300 dark:ring-gray-700'
       }`}
       onClick={() => setActivePanelId(panel.id)}
     >
       {/* Panel Tab Bar (Olympus Tabs) */}
       {panel.tabs.length > 0 && (
-        <div className="bg-black border-0 min-h-[40px] flex items-end">
+        <div className="bg-white dark:bg-black border-0 min-h-[40px] flex items-end">
           <div className="flex items-end flex-1">
             <OlympusTabs
               tabs={panel.tabs.map<OlympusTab>((t) => ({ 
@@ -390,8 +390,8 @@ export const renderPanel = ({
                     return (
                       <div className="h-full flex items-center justify-center">
                         <div className="text-center max-w-md">
-                          <Typography variant="h3" className="text-xl font-semibold text-white mb-2">File Type Not Supported</Typography>
-                          <Typography variant="p" className="text-gray-400">
+                          <Typography variant="h3" className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">File Type Not Supported</Typography>
+                          <Typography variant="p" className="text-zinc-600 dark:text-gray-400">
                             Preview for this file type is not available yet.
                           </Typography>
                         </div>
@@ -427,8 +427,8 @@ export const renderPanel = ({
         ) : (
           <div className="h-full flex items-center justify-center">
             <div className="text-center max-w-md">
-              <Typography variant="h2" className="text-2xl font-bold text-white mb-4">Welcome to Workspaces</Typography>
-              <Typography variant="p" className="text-gray-300 mb-4">
+              <Typography variant="h2" className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Welcome to Workspaces</Typography>
+              <Typography variant="p" className="text-zinc-600 dark:text-gray-300 mb-4">
                 This panel is ready for files. Select a file from the sidebar to open it here.
               </Typography>
             </div>

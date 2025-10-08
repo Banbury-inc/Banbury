@@ -1,10 +1,23 @@
-import { FolderOpen, LogOut, Settings, UserStarIcon, Brain, Workflow, Video} from "lucide-react"
+import { FolderOpen, LogOut, Settings, UserStarIcon, Brain, Workflow, Video, Crown} from "lucide-react"
 import Image from 'next/image'
 import { useRouter } from "next/router"
 import { useState, useEffect } from "react"
 
 import { Button } from "./ui/button"
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar"
+import { Badge } from "./ui/badge"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "./ui/dropdown-menu"
+import { SettingsModal } from "./SettingsModal"
+import { ApiService } from "../services/apiService"
 import BanburyLogo from "../assets/images/Logo.png"
+import { Typography } from "./ui/typography"
 
 interface NavSidebarProps {
   onLogout?: () => void
@@ -13,14 +26,58 @@ interface NavSidebarProps {
 export function NavSidebar({ onLogout }: NavSidebarProps) {
   const router = useRouter()
   const [username, setUsername] = useState<string>('')
+  const [userPicture, setUserPicture] = useState<string | null>(null)
+  const [userInitials, setUserInitials] = useState<string>('U')
+  const [subscription, setSubscription] = useState<string>('free')
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   useEffect(() => {
-    // Get username from localStorage
+    // Get user info from localStorage
     if (typeof window !== 'undefined') {
       const storedUsername = localStorage.getItem('username')
+      const storedPicture = localStorage.getItem('userPicture')
+      const storedFirstName = localStorage.getItem('userFirstName')
+      const storedLastName = localStorage.getItem('userLastName')
+      const storedEmail = localStorage.getItem('userEmail')
+      
       setUsername(storedUsername || '')
+      setUserPicture(storedPicture)
+      
+      // Generate initials
+      if (storedFirstName && storedLastName) {
+        setUserInitials(`${storedFirstName[0]}${storedLastName[0]}`.toUpperCase())
+      } else if (storedFirstName) {
+        setUserInitials(storedFirstName[0].toUpperCase())
+      } else if (storedEmail) {
+        setUserInitials(storedEmail[0].toUpperCase())
+      } else if (storedUsername) {
+        setUserInitials(storedUsername[0].toUpperCase())
+      }
+      
+      // Load subscription status
+      loadSubscription()
     }
   }, [])
+
+  const loadSubscription = async () => {
+    try {
+      const response = await ApiService.get('/billing/check-payment-status/') as any
+      if (response.subscription) {
+        setSubscription(response.subscription)
+      }
+    } catch (error) {
+      console.error('Error loading subscription:', error)
+      // Keep default 'free' status on error
+    }
+  }
+
+  function handleSettingsOpenChange(open: boolean) {
+    setSettingsOpen(open)
+    // Refresh subscription when closing settings modal
+    if (!open) {
+      loadSubscription()
+    }
+  }
 
   const navItems = [
     {
@@ -48,12 +105,6 @@ export function NavSidebar({ onLogout }: NavSidebarProps) {
       label: 'Knowledge',
       path: '/knowledge'
     },
-    {
-      id: 'settings',
-      icon: Settings,
-      label: 'Settings',
-      path: '/settings'
-    },
     // Only include admin item if user is mmills or mmills6060@gmail.com
     ...(username === 'mmills' || username === 'mmills6060@gmail.com' ? [{
       id: 'admin',
@@ -66,17 +117,17 @@ export function NavSidebar({ onLogout }: NavSidebarProps) {
   const isActive = (path: string) => router.pathname === path
 
   return (
-    <div className="fixed left-0 top-0 z-40 flex h-full w-16 flex-col bg-black border-r border-zinc-300 dark:border-zinc-600">
+    <div className="fixed left-0 top-0 z-40 flex h-full w-16 flex-col bg-white dark:bg-black border-r border-zinc-300 dark:border-zinc-600">
       <div className="flex flex-1 flex-col items-center gap-4 py-4">
         {/* Logo/Brand */}
         <div 
-          className="flex h-8 w-8 items-center justify-center rounded-lg p-1 cursor-pointer hover:bg-zinc-700 transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-lg p-1 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
           onClick={() => router.push('/')}
         >
           <Image 
             src={BanburyLogo} 
             alt="Banbury Logo" 
-            className="h-full w-full object-contain"
+            className="h-full w-full object-contain invert dark:invert-0"
             width={32}
             height={32}
             priority
@@ -94,10 +145,10 @@ export function NavSidebar({ onLogout }: NavSidebarProps) {
                   size="icon"
                   onClick={() => router.push(item.path)}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-5 w-5 text-zinc-500 dark:text-white" />
                 </Button>
                 {/* Custom CSS tooltip for testing */}
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 z-50 top-1/2 -translate-y-1/2">
+                <div className="absolute left-full ml-2 px-2 py-1 bg-zinc-900 dark:bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 z-50 top-1/2 -translate-y-1/2">
                   {item.label}
                 </div>
               </div>
@@ -106,25 +157,55 @@ export function NavSidebar({ onLogout }: NavSidebarProps) {
         </nav>
       </div>
       
-      {/* Footer with Logout Button */}
+      {/* Footer with User Avatar */}
       {onLogout && (
         <div className="flex items-center justify-center pb-4">
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 text-white hover:bg-zinc-700 hover:text-white transition-colors peer"
-              onClick={onLogout}
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
-            {/* Custom CSS tooltip for testing */}
-            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 z-50 top-1/2 -translate-y-1/2">
-              Logout
-            </div>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center justify-center rounded-full hover:ring-2 hover:ring-zinc-400 dark:hover:ring-zinc-600 transition-all focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-500">
+                <Avatar className="h-10 w-10 cursor-pointer">
+                  {userPicture && (
+                    <AvatarImage src={userPicture} alt={username || 'User'} />
+                  )}
+                  <AvatarFallback className="bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white">
+                    {userInitials}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" align="end" className="w-56">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <Typography variant="p">{username}</Typography>
+                  <div className="flex items-center gap-2 mt-1">
+                    {subscription === 'pro' ? (
+                      <Badge variant="default" className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0">
+                        <Crown className="mr-1 h-3 w-3" />
+                        Pro
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">
+                        Free
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-zinc-200 dark:bg-zinc-700" />
+              <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 py-2">
+                <Settings className="mr-2 h-4 w-4" />
+                <Typography variant="small">Settings</Typography>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onLogout} className="cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 text-red-500 py-2">
+                <LogOut className="mr-2 h-4 w-4" />
+                <Typography variant="small">Logout</Typography>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
+      
+      <SettingsModal open={settingsOpen} onOpenChange={handleSettingsOpenChange} />
     </div>
   )
 }

@@ -19,6 +19,11 @@
   margin-top: -1px;
 }
 
+/* Light mode toolbar */
+.simple-tiptap-toolbar.light-mode {
+  background: #e4e4e7;
+}
+
 .toolbar-group {
   display: flex;
   align-items: center;
@@ -30,6 +35,10 @@
   height: 24px;
   background: #e2e8f0;
   margin: 0 4px;
+}
+
+.light-mode .toolbar-separator {
+  background: #cbd5e1;
 }
 
 .toolbar-button {
@@ -51,6 +60,18 @@
   /* color: #f3f4f6; */
 }
 
+/* Light mode toolbar buttons */
+.light-mode .toolbar-button {
+  border-radius: 4px;
+  background: transparent;
+  color: #000000;
+}
+
+.light-mode .toolbar-button:hover:not(:disabled) {
+  background: #bdbdbf;
+  color: #27272a;
+}
+
 .toolbar-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -69,6 +90,13 @@
   color: #f3f4f6;
   font-size: 14px;
   cursor: pointer;
+}
+
+/* Light mode toolbar select */
+.light-mode .toolbar-select {
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #334155;
 }
 
 .toolbar-select:focus {

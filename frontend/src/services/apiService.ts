@@ -205,7 +205,7 @@ export class ApiService {
       const response = await this.get<{
         success: boolean;
         token?: string;
-        user?: { username: string; email: string };
+        user?: { username: string; email: string; picture?: any; first_name?: string; last_name?: string };
         error?: string;
         details?: any;
       }>(qs);
@@ -213,9 +213,24 @@ export class ApiService {
       if (response.success && response.token && response.user) {
         // Set auth token globally
         this.setAuthToken(response.token, response.user.username);
-        // Store email separately
+        // Store email and profile picture separately
         if (typeof window !== 'undefined' && window.localStorage) {
           localStorage.setItem('userEmail', response.user.email);
+          if (response.user.picture) {
+            // Handle both base64 object and URL string formats
+            if (typeof response.user.picture === 'object' && response.user.picture.data) {
+              const pictureUrl = `data:${response.user.picture.content_type};base64,${response.user.picture.data}`;
+              localStorage.setItem('userPicture', pictureUrl);
+            } else if (typeof response.user.picture === 'string') {
+              localStorage.setItem('userPicture', response.user.picture);
+            }
+          }
+          if (response.user.first_name) {
+            localStorage.setItem('userFirstName', response.user.first_name);
+          }
+          if (response.user.last_name) {
+            localStorage.setItem('userLastName', response.user.last_name);
+          }
         }
         
         return {

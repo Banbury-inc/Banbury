@@ -137,14 +137,14 @@ export const TiptapAITool: React.FC<TiptapAIToolProps> = (props) => {
 
   if (rejected) {
     return (
-      <div className="w-full max-w-2xl bg-zinc-800 border border-zinc-700 rounded-lg overflow-hidden">
+      <div className="w-full max-w-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg overflow-hidden">
         <div className="p-2">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <FileText className="h-4 w-4 text-white stroke-[2.5] flex-shrink-0" />
+              <FileText className="h-4 w-4 text-zinc-900 dark:text-white stroke-[2.5] flex-shrink-0" />
               <Typography
                 variant="muted"
-                className="text-white truncate"
+                className="text-zinc-900 dark:text-white truncate"
               >
                 Document
               </Typography>
@@ -161,14 +161,14 @@ export const TiptapAITool: React.FC<TiptapAIToolProps> = (props) => {
 
   if (applied) {
     return (
-      <div className="w-full max-w-2xl bg-zinc-800 border border-zinc-700 rounded-lg overflow-hidden">
+      <div className="w-full max-w-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg overflow-hidden">
         <div className="p-2">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <FileText className="h-4 w-4 text-white stroke-[2.5] flex-shrink-0" />
+              <FileText className="h-4 w-4 text-zinc-900 dark:text-white stroke-[2.5] flex-shrink-0" />
               <Typography
                 variant="muted"
-                className="text-white truncate"
+                className="text-zinc-900 dark:text-white truncate"
               >
                 Document
               </Typography>
@@ -184,14 +184,14 @@ export const TiptapAITool: React.FC<TiptapAIToolProps> = (props) => {
   }
 
   return (
-    <div className="w-full max-w-2xl bg-zinc-800 border border-zinc-700 rounded-lg overflow-hidden">
+    <div className="w-full max-w-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg overflow-hidden">
       <div className="p-2 space-y-2">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <FileText className="h-4 w-4 text-white stroke-[2.5] flex-shrink-0" />
+            <FileText className="h-4 w-4 text-zinc-900 dark:text-white stroke-[2.5] flex-shrink-0" />
             <Typography
               variant="muted"
-              className="text-white truncate"
+              className="text-zinc-900 dark:text-white truncate"
             >
               Document
             </Typography>
@@ -202,7 +202,7 @@ export const TiptapAITool: React.FC<TiptapAIToolProps> = (props) => {
               variant="primary" 
               size="xsm" 
               onClick={handleAcceptAll}
-              className="bg-green-600 hover:bg-green-700 text-white border border-zinc-700 p-2"
+              className="bg-green-600 hover:bg-green-700 text-white border border-zinc-300 dark:border-zinc-700 p-2"
             >
               <Check className="h-4 w-4" />
             </Button>
@@ -211,7 +211,7 @@ export const TiptapAITool: React.FC<TiptapAIToolProps> = (props) => {
               variant="primary" 
               size="xsm" 
               onClick={handleReject}
-              className="bg-red-600 hover:bg-red-700 text-white border border-zinc-700 p-2"
+              className="bg-red-600 hover:bg-red-700 text-white border border-zinc-300 dark:border-zinc-700 p-2"
             >
               <X className="h-4 w-4" />
             </Button>

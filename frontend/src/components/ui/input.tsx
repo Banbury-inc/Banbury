@@ -11,7 +11,7 @@ const inputVariants = cva(
         default: "dark:bg-input/30 md:text-sm",
         ghost: "border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:border-0",
         outline: "bg-background dark:bg-input/20 dark:border-input",
-        primary: "w-full pl-8 pr-3 py-1 bg-zinc-800 border-0 rounded-md text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm",
+        primary: "w-full pl-8 pr-3 py-1 bg-zinc-200 dark:bg-zinc-800 border-0 rounded-md text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm",
         primaryBlack: "bg-zinc-800/50 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder-zinc-500 hover:border-zinc-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all"
       },
       inputSize: {

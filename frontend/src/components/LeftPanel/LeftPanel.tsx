@@ -261,10 +261,10 @@ function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFi
         {children}
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="min-w-[160px] bg-zinc-800 rounded-md p-1 shadow-lg border border-zinc-700 z-50">
+        <ContextMenu.Content className="min-w-[160px] bg-white dark:bg-zinc-800 rounded-md p-1 shadow-lg border border-zinc-300 dark:border-zinc-700 z-50">
           {onUploadFile && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-2 py-1.5 text-sm text-white hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
               onSelect={onUploadFile}
             >
               <FilePlus className="w-4 h-4" />
@@ -273,7 +273,7 @@ function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFi
           )}
           {onUploadFolder && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-2 py-1.5 text-sm text-white hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
               onSelect={onUploadFolder}
             >
               <FolderPlus className="w-4 h-4" />
@@ -282,7 +282,7 @@ function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFi
           )}
           {isFolder && onNewFolder && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-2 py-1.5 text-sm text-white hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
               onSelect={onNewFolder}
             >
               <FolderPlus className="w-4 h-4" />
@@ -290,7 +290,7 @@ function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFi
             </ContextMenu.Item>
           )}
           <ContextMenu.Item 
-            className="flex items-center gap-2 px-2 py-1.5 text-sm text-white hover:bg-zinc-700 rounded cursor-pointer outline-none"
+            className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
             onSelect={onRename}
           >
             <Edit2 className="w-4 h-4" />
@@ -298,7 +298,7 @@ function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFi
           </ContextMenu.Item>
           {onDelete && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-2 py-1.5 text-sm text-red-400 hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-2 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
               onSelect={onDelete}
             >
               <Trash2 className="w-4 h-4" />
@@ -571,7 +571,7 @@ function FileTreeItem({
     isRenaming ? (
       <div
         className={`w-full flex items-center gap-2 text-left px-3 py-2 min-w-0 ${
-          (isSelected || isMultiSelected) ? 'bg-zinc-800 text-white' : 'text-zinc-300'
+          (isSelected || isMultiSelected) ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white' : 'text-zinc-700 dark:text-zinc-300'
         }`}
         style={{ paddingLeft: `${(level * 12) + 12}px` }}
       >
@@ -588,7 +588,7 @@ function FileTreeItem({
           onChange={(e) => setNewName(e.target.value)}
           onBlur={handleRenameSubmit}
           onKeyDown={handleKeyDown}
-          className="text-sm bg-zinc-700 text-white px-1 py-0 rounded border-none outline-none flex-1"
+          className="text-sm bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white px-1 py-0 rounded border-none outline-none flex-1"
           autoFocus
           ref={inputRef}
           onFocus={(e) => selectFilenameWithoutExtension(e.currentTarget)}
@@ -604,9 +604,9 @@ function FileTreeItem({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`w-full flex items-center gap-2 text-left px-3 py-2 min-w-0 hover:bg-zinc-800 hover:text-white transition-colors ${
-          (isSelected || isMultiSelected) ? 'bg-zinc-800 text-white' : 'text-zinc-300'
-        } ${isDragged ? 'opacity-50' : ''} ${isDropTarget ? 'bg-zinc-700 ring-2 ring-blue-500' : ''}`}
+        className={`w-full flex items-center gap-2 text-left px-3 py-2 min-w-0 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors ${
+          (isSelected || isMultiSelected) ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white' : 'text-zinc-700 dark:text-zinc-300'
+        } ${isDragged ? 'opacity-50' : ''} ${isDropTarget ? 'bg-zinc-300 dark:bg-zinc-700 ring-2 ring-blue-500' : ''}`}
         style={{ paddingLeft: `${(level * 12) + 12}px` }}
       >
         {hasChildren && (
@@ -1136,11 +1136,11 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
       if (response.files) {
         // If pageToken exists, append to existing files; otherwise replace
         if (pageToken) {
-          setDriveFiles(prev => [...prev, ...response.files])
-          console.log('Loaded', response.files.length, 'more Drive files')
+          setDriveFiles(prev => [...prev, ...(response.files || [])])
+          console.log('Loaded', response.files?.length || 0, 'more Drive files')
         } else {
-          setDriveFiles(response.files)
-          console.log('Successfully loaded', response.files.length, 'Drive files')
+          setDriveFiles(response.files || [])
+          console.log('Successfully loaded', response.files?.length || 0, 'Drive files')
         }
         
         // Store the next page token for pagination
@@ -1732,10 +1732,10 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
   }
 
   return (
-    <div className="h-full w-full bg-black border-r border-zinc-300 dark:border-zinc-600 flex flex-col relative z-10 border-0">
+    <div className="h-full w-full bg-white dark:bg-black border-r border-zinc-200 dark:border-zinc-600 flex flex-col relative z-10">
       {/* Search Bar - Above tabs */}
       {onFileSelect && (
-        <div className="px-4 py-2 bg-black border-zinc-700">
+        <div className="px-4 py-2 bg-white dark:bg-black border-zinc-200 dark:border-zinc-700">
           <InlineFileSearch
            onFileSelect={onFileSelect}
             onEmailSelect={onEmailSelect} />
@@ -1750,8 +1750,8 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
               onClick={() => setActiveTab('files')}
               className={`flex-1 px-3 py-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
                 activeTab === 'files'
-                  ? 'text-white bg-zinc-800 shadow-sm'
-                  : 'text-gray-400 hover:text-gray-300 hover:bg-zinc-800/50'
+                  ? 'text-zinc-900 dark:text-white bg-zinc-200 dark:bg-zinc-800 shadow-sm'
+                  : 'text-zinc-600 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-gray-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
               }`}
             >
              <div className="flex items-center justify-center gap-2">
@@ -1763,8 +1763,8 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
               onClick={() => setActiveTab('email')}
               className={`flex-1 px-3 py-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
                 activeTab === 'email'
-                  ? 'text-white bg-zinc-800 shadow-sm'
-                  : 'text-gray-400 hover:text-gray-300 hover:bg-zinc-800/50'
+                  ? 'text-zinc-900 dark:text-white bg-zinc-200 dark:bg-zinc-800 shadow-sm'
+                  : 'text-zinc-600 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-gray-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
               }`}
             >
              <div className="flex items-center justify-center gap-2">
@@ -1776,8 +1776,8 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
               onClick={() => setActiveTab('calendar')}
               className={`flex-1 px-3 py-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
                 activeTab === 'calendar'
-                  ? 'text-white bg-zinc-800 shadow-sm'
-                  : 'text-gray-400 hover:text-gray-300 hover:bg-zinc-800/50'
+                  ? 'text-zinc-900 dark:text-white bg-zinc-200 dark:bg-zinc-800 shadow-sm'
+                  : 'text-zinc-600 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-gray-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
               }`}
             >
              <div className="flex items-center justify-center gap-2">
@@ -1789,8 +1789,8 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
         
                  {/* Tab Content Header */}
         {activeTab === 'files' && (
-          <div className="flex flex-col bg-zinc-800">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700">
+          <div className="flex flex-col bg-zinc-200 dark:bg-zinc-800 ">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
               <div className="flex items-center gap-4">
                 {/* File View Mode Navigation */}
                 <div className="flex gap-1">
@@ -1798,21 +1798,21 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
                     onClick={() => handleFileViewModeChange('local')}
                     className={`px-3 py-1 rounded transition-colors ${
                       fileViewMode === 'local'
-                        ? 'bg-white text-black'
-                        : 'hover:bg-zinc-700'
+                        ? 'bg-zinc-800 dark:bg-white text-white dark:text-black'
+                        : 'hover:bg-zinc-200 dark:hover:bg-zinc-700'
                     }`}
                   >
-                    <Typography variant="small" className={`text-xs font-medium ${fileViewMode === 'local' ? 'text-black' : 'text-gray-300'}`}>Local</Typography>
+                    <Typography variant="small" className={`text-xs font-medium ${fileViewMode === 'local' ? 'text-white dark:text-black' : 'text-zinc-700 dark:text-gray-300'}`}>Local</Typography>
                   </button>
                   <button
                     onClick={() => handleFileViewModeChange('drive')}
                     className={`px-3 py-1 rounded transition-colors ${
                       fileViewMode === 'drive'
-                        ? 'bg-white text-black'
-                        : 'hover:bg-zinc-700'
+                        ? 'bg-zinc-800 dark:bg-white text-white dark:text-black'
+                        : 'hover:bg-zinc-200 dark:hover:bg-zinc-700'
                     }`}
                   >
-                    <Typography variant="small" className={`text-xs font-medium ${fileViewMode === 'drive' ? 'text-black' : 'text-gray-300'}`}>Google Drive</Typography>
+                    <Typography variant="small" className={`text-xs font-medium ${fileViewMode === 'drive' ? 'text-white dark:text-black' : 'text-zinc-700 dark:text-gray-300'}`}>Google Drive</Typography>
                   </button>
                 </div>
               </div>
@@ -1824,7 +1824,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
                  disabled={fileViewMode === 'local' ? loading : driveLoading}
                  title="Refresh"
                >
-                <RefreshCw className={`h-3 w-3 ${(fileViewMode === 'local' ? loading : driveLoading) ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-3 w-3 text-zinc-900 dark:text-white ${(fileViewMode === 'local' ? loading : driveLoading) ? 'animate-spin' : ''}`} />
                </Button>
                {fileViewMode === 'local' && (
                <DropdownMenu>
@@ -1841,54 +1841,54 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
                  <DropdownMenuContent
                    align="start"
                    side="bottom"
-                   sideOffset={8}
-                   avoidCollisions={true}
-                   sticky="always"
-                   className="bg-zinc-800 border-zinc-600 text-white shadow-xl min-w-[160px]"
-                   style={{ zIndex: 999999 }}
-                 >
-                   <DropdownMenuItem 
-                     onSelect={handleFileUpload}
-                     className="text-white hover:bg-zinc-700 focus:bg-zinc-700"
-                   >
-                     <FilePlus size={20} className="mr-2" />
-                     Upload File
-                   </DropdownMenuItem>
-                   <DropdownMenuItem
-                     onSelect={handleFolderUpload}
-                     className="text-white hover:bg-zinc-700 focus:bg-zinc-700"
-                   >
-                     <FolderPlus size={20} className="mr-2" />
-                     Upload Folder
-                   </DropdownMenuItem>
-                   <div className="h-px bg-zinc-600 my-1 mx-2" />
-                   <DropdownMenuItem
-                     onSelect={handleCreateDocument}
-                     className="text-white hover:bg-zinc-700 focus:bg-zinc-700"
-                   >
-                     <FileText size={20} className="mr-2" />
-                     Document
-                   </DropdownMenuItem>
+                  sideOffset={8}
+                  avoidCollisions={true}
+                  sticky="always"
+                  className="bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white shadow-xl min-w-[160px]"
+                  style={{ zIndex: 999999 }}
+                >
+                  <DropdownMenuItem 
+                    onSelect={handleFileUpload}
+                    className="text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 focus:bg-zinc-100 dark:focus:bg-zinc-700 py-2"
+                  >
+                    <FilePlus size={20} className="mr-2" />
+                    <Typography variant="small">Upload File</Typography>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={handleFolderUpload}
+                    className="text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 focus:bg-zinc-100 dark:focus:bg-zinc-700 py-2"
+                  >
+                    <FolderPlus size={20} className="mr-2" />
+                    <Typography variant="small">Upload Folder</Typography>
+                  </DropdownMenuItem>
+                  <div className="h-px bg-zinc-300 dark:bg-zinc-600 my-1 mx-2" />
+                  <DropdownMenuItem
+                    onSelect={handleCreateDocument}
+                    className="text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 focus:bg-zinc-100 dark:focus:bg-zinc-700 py-2"
+                  >
+                    <FileText size={20} className="mr-2" />
+                    <Typography variant="small">Document</Typography>
+                  </DropdownMenuItem>
                   <DropdownMenuItem 
                     onSelect={handleCreateSpreadsheet}
-                    className="text-white hover:bg-zinc-700 focus:bg-zinc-700"
+                    className="text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 focus:bg-zinc-100 dark:focus:bg-zinc-700 py-2"
                   >
                     <FileSpreadsheet size={20} className="mr-2" />
-                    Spreadsheet
+                    <Typography variant="small">Spreadsheet</Typography>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onSelect={handleCreateTldraw}
-                    className="text-white hover:bg-zinc-700 focus:bg-zinc-700"
+                    className="text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 focus:bg-zinc-100 dark:focus:bg-zinc-700 py-2"
                   >
                     <Network size={20} className="mr-2" />
-                    Canvas
+                    <Typography variant="small">Canvas</Typography>
                   </DropdownMenuItem>
                    <DropdownMenuItem 
                     onSelect={onCreateFolder}
-                    className="text-white hover:bg-zinc-700 focus:bg-zinc-700"
+                    className="text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 focus:bg-zinc-100 dark:focus:bg-zinc-700 py-2"
                   >
                     <Folder size={20} className="mr-2" />
-                    Folder
+                    <Typography variant="small">Folder</Typography>
                   </DropdownMenuItem>
                  </DropdownMenuContent>
                </DropdownMenu>
@@ -2024,20 +2024,20 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
               <>
                 {loading && !fileSystem.length && (
                   <div className="flex items-center gap-2 px-3 py-2">
-                    <RefreshCw className="h-4 w-4 animate-spin text-gray-400" />
+                    <RefreshCw className="h-4 w-4 animate-spin text-zinc-500 dark:text-gray-400" />
                     <Typography variant="muted">Loading files...</Typography>
                   </div>
                 )}
                 
                 {error && (
                   <div className="px-3 py-2">
-                    <Typography variant="small" className="text-red-500">{error}</Typography>
+                    <Typography variant="small" className="text-red-600 dark:text-red-500">{error}</Typography>
                   </div>
                 )}
                 
                 {uploadingFolder && (
                   <div className="flex items-center gap-2 px-3 py-2">
-                    <RefreshCw className="h-4 w-4 animate-spin text-gray-400" />
+                    <RefreshCw className="h-4 w-4 animate-spin text-zinc-500 dark:text-gray-400" />
                     <Typography variant="muted">Uploading folder...</Typography>
                   </div>
                 )}
@@ -2055,16 +2055,16 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
               <>
                 {checkingDriveAccess && (
                   <div className="flex items-center justify-center h-full px-3 py-8">
-                    <RefreshCw className="h-4 w-4 animate-spin mr-2 text-gray-400" />
+                    <RefreshCw className="h-4 w-4 animate-spin mr-2 text-zinc-500 dark:text-gray-400" />
                     <Typography variant="muted">Checking Google Drive access...</Typography>
                   </div>
                 )}
                 
                 {!checkingDriveAccess && driveAvailable === false && (
                   <div className="flex flex-col items-center justify-center px-4 py-8">
-                    <Folder className="h-12 w-12 mb-4 opacity-50 text-gray-400" />
+                    <Folder className="h-12 w-12 mb-4 opacity-50 text-zinc-500 dark:text-gray-400" />
                     <Typography variant="h3" className="mb-2 text-center">Google Drive Access Required</Typography>
-                    <Typography variant="small" className="text-center mb-4 max-w-md text-gray-400">
+                    <Typography variant="small" className="text-center mb-4 max-w-md text-zinc-600 dark:text-gray-400">
                       To view your Google Drive files, you need to grant Drive access to your Google account.
                     </Typography>
                     <Button
@@ -2078,14 +2078,14 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
 
                 {!checkingDriveAccess && driveAvailable && driveLoading && !driveFiles.length && (
                   <div className="flex items-center gap-2 px-3 py-2">
-                    <RefreshCw className="h-4 w-4 animate-spin text-gray-400" />
+                    <RefreshCw className="h-4 w-4 animate-spin text-zinc-500 dark:text-gray-400" />
                     <Typography variant="muted">Loading Google Drive files...</Typography>
                   </div>
                 )}
                 
                 {!checkingDriveAccess && driveAvailable && driveError && (
                   <div className="px-3 py-2">
-                    <Typography variant="small" className="text-red-500">{driveError}</Typography>
+                    <Typography variant="small" className="text-red-600 dark:text-red-500">{driveError}</Typography>
                   </div>
                 )}
                 
@@ -2099,7 +2099,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
 
             {/* Root level folder creation - only for local files */}
             {fileViewMode === 'local' && isCreatingRootFolder && (
-              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300" style={{ paddingLeft: '12px' }}>
+              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-700 dark:text-zinc-300" style={{ paddingLeft: '12px' }}>
                 <div className="w-3" />
                 <Folder className="h-4 w-4" />
                 <input
@@ -2108,7 +2108,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
                   onChange={(e) => setNewRootFolderName(e.target.value)}
                   onKeyDown={handleCreateRootFolderKeyDown}
                   onBlur={handleCreateRootFolderSubmit}
-                  className="text-sm bg-zinc-700 text-white px-1 py-0 rounded border-none outline-none flex-1"
+                  className="text-sm bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white px-1 py-0 rounded border-none outline-none flex-1"
                   ref={rootFolderInputRef}
                   onFocus={(e) => selectFilenameWithoutExtension(e.currentTarget)}
                   onClick={(e) => e.stopPropagation()}
@@ -2116,7 +2116,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
               </div>
             )}
             {fileViewMode === 'local' && isCreatingRootFolderPending && pendingRootFolderName && (
-              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300" style={{ paddingLeft: '12px' }}>
+              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-700 dark:text-zinc-300" style={{ paddingLeft: '12px' }}>
                 <div className="w-3" />
                 <RefreshCw className="h-4 w-4 animate-spin" />
                 <Typography variant="small" className="truncate min-w-0 flex-1">{pendingRootFolderName}</Typography>
@@ -2126,7 +2126,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
 
             {/* Root level document creation - only for local files */}
             {fileViewMode === 'local' && isCreatingDocument && (
-              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300" style={{ paddingLeft: '12px' }}>
+              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-700 dark:text-zinc-300" style={{ paddingLeft: '12px' }}>
                 <div className="w-3" />
                 <FileText className="h-4 w-4" />
                 <input
@@ -2135,7 +2135,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
                   onChange={(e) => setNewDocumentName(e.target.value)}
                   onKeyDown={handleCreateDocumentKeyDown}
                   onBlur={handleCreateDocumentSubmit}
-                  className="text-sm bg-zinc-700 text-white px-1 py-0 rounded border-none outline-none flex-1"
+                  className="text-sm bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white px-1 py-0 rounded border-none outline-none flex-1"
                   ref={documentInputRef}
                   onFocus={(e) => selectFilenameWithoutExtension(e.currentTarget)}
                   onClick={(e) => e.stopPropagation()}
@@ -2143,7 +2143,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
               </div>
             )}
             {fileViewMode === 'local' && isCreatingDocumentPending && pendingDocumentName && (
-              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300" style={{ paddingLeft: '12px' }}>
+              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-700 dark:text-zinc-300" style={{ paddingLeft: '12px' }}>
                 <div className="w-3" />
                 <RefreshCw className="h-4 w-4 animate-spin" />
                 <Typography variant="small" className="truncate min-w-0 flex-1">{pendingDocumentName}</Typography>
@@ -2153,7 +2153,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
 
             {/* Root level spreadsheet creation - only for local files */}
             {fileViewMode === 'local' && isCreatingSpreadsheet && (
-              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300" style={{ paddingLeft: '12px' }}>
+              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-700 dark:text-zinc-300" style={{ paddingLeft: '12px' }}>
                 <div className="w-3" />
                 <FileSpreadsheet className="h-4 w-4" />
                 <input
@@ -2162,7 +2162,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
                   onChange={(e) => setNewSpreadsheetName(e.target.value)}
                   onKeyDown={handleCreateSpreadsheetKeyDown}
                   onBlur={handleCreateSpreadsheetSubmit}
-                  className="text-sm bg-zinc-700 text-white px-1 py-0 rounded border-none outline-none flex-1"
+                  className="text-sm bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white px-1 py-0 rounded border-none outline-none flex-1"
                   ref={spreadsheetInputRef}
                   onFocus={(e) => selectFilenameWithoutExtension(e.currentTarget)}
                   onClick={(e) => e.stopPropagation()}
@@ -2170,7 +2170,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
               </div>
             )}
             {fileViewMode === 'local' && isCreatingSpreadsheetPending && pendingSpreadsheetName && (
-              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300" style={{ paddingLeft: '12px' }}>
+              <div className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-700 dark:text-zinc-300" style={{ paddingLeft: '12px' }}>
                 <div className="w-3" />
                 <RefreshCw className="h-4 w-4 animate-spin" />
                 <Typography variant="small" className="truncate min-w-0 flex-1">{pendingSpreadsheetName}</Typography>
@@ -2318,7 +2318,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
             {/* Loading more Drive files indicator */}
             {fileViewMode === 'drive' && isLoadingMoreDrive && (
               <div className="flex items-center gap-2 px-3 py-2">
-                <RefreshCw className="h-4 w-4 animate-spin text-gray-400" />
+                <RefreshCw className="h-4 w-4 animate-spin text-zinc-500 dark:text-gray-400" />
                 <Typography variant="muted">Loading more files...</Typography>
               </div>
             )}

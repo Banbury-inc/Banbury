@@ -124,11 +124,11 @@ export function ImageViewer({ file, userInfo }: ImageViewerProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#27272a]">
+    <div className="h-full flex flex-col bg-white dark:bg-zinc-900">
       {/* Header with file info and actions */}
 
       {/* Image display area */}
-      <div className="flex-1 flex justify-center overflow-auto bg-[#27272a] p-6">
+      <div className="flex-1 flex justify-center overflow-auto bg-white dark:bg-zinc-900 p-6">
         {imageUrl ? (
           <Image
             src={imageUrl}

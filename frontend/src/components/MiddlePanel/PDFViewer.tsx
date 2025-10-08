@@ -186,7 +186,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full bg-[#27272a]">
+      <div className="flex items-center justify-center h-full bg-white dark:bg-zinc-900">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <p className="text-muted-foreground">Loading PDF...</p>
@@ -197,7 +197,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full bg-[#27272a]">
+      <div className="flex items-center justify-center h-full bg-white dark:bg-zinc-900">
         <div className="flex flex-col items-center gap-4 text-center">
           <AlertCircle className="h-12 w-12 text-destructive" />
           <div>
@@ -210,11 +210,11 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#27272a]">
+    <div className="h-full flex flex-col bg-white dark:bg-zinc-900">
 
       {/* PDF Controls */}
       {pdfUrl && !loading && !error && (
-        <div className="flex items-center justify-between p-3 bg-[#27272a] border-b border-zinc-700">
+        <div className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border-b border-zinc-300 dark:border-zinc-700">
           <div className="flex items-center gap-3">
             <Button
               variant="default"
@@ -281,7 +281,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
       )}
 
       {/* PDF display area */}
-      <div className="flex-1 flex justify-center overflow-auto bg-blackp-6">
+      <div className="flex-1 flex justify-center overflow-auto bg-white dark:bg-zinc-900 p-6">
         {pdfUrl ? (
           <div className="flex flex-col items-center">
             <Document
@@ -323,7 +323,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
             </Document>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full bg-[#27272a]">
+          <div className="flex items-center justify-center h-full bg-white dark:bg-zinc-900">
             <div className="text-center">
               <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">PDF URL not available</p>

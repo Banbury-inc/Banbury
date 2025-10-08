@@ -235,7 +235,7 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full bg-[#27272a]">
+      <div className="flex items-center justify-center h-full bg-white dark:bg-zinc-900">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <p className="text-muted-foreground">Loading video...</p>
@@ -246,7 +246,7 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full bg-[#27272a]">
+      <div className="flex items-center justify-center h-full bg-white dark:bg-zinc-900">
         <div className="flex flex-col items-center gap-4 text-center max-w-md">
           <AlertCircle className="h-12 w-12 text-destructive" />
           <div>
@@ -296,9 +296,9 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#27272a]">
+    <div className="h-full flex flex-col bg-white dark:bg-zinc-900">
       {/* Video display area */}
-      <div className="flex-1 flex justify-center overflow-auto bg-[#27272a] p-6 relative">
+      <div className="flex-1 flex justify-center overflow-auto bg-white dark:bg-zinc-900 p-6 relative">
         {videoUrl ? (
           <div className="w-full h-full flex items-center justify-center">
             {isRecallVideo ? (

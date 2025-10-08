@@ -47,6 +47,7 @@ import {
   ListItem,
   ListItemText
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { Button } from '../../../../components/ui/button';
 import styles from '../../../../styles/SimpleTiptapEditor.module.css';
 // Import custom SVG icons
@@ -140,12 +141,16 @@ interface CSVEditorToolbarProps {
   saving?: boolean;
   canSave?: boolean;
   
+  // Theme
+  lightMode?: boolean;
+  
   // Help dialog
   setHelpDialogOpen: (open: boolean) => void;
 }
 
 const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
   handleUndo,
+  lightMode: lightModeProp = true,
   handleRedo,
   onOpenChartEditor,
   handleCurrencyFormat,
@@ -178,6 +183,10 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
   canSave = false,
   setHelpDialogOpen,
 }) => {
+  // Use theme to determine light/dark mode
+  const theme = useTheme();
+  const lightMode = theme.palette.mode === 'light';
+  
   // Toolbar-specific state
   const [visibleButtons, setVisibleButtons] = useState<string[]>([]);
   const [overflowAnchorEl, setOverflowAnchorEl] = useState<null | HTMLElement>(null);
@@ -394,7 +403,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
         data-role="csv-toolbar"
         sx={{ 
           borderBottom: 'none',
-          backgroundColor: '#27272a',
+          backgroundColor: lightMode ? '#e4e4e7' : '#27272a',
           display: 'flex',
           alignItems: 'center',
           gap: 0.5,
@@ -416,13 +425,12 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
             return (
               <React.Fragment key={button.id}>
                 {showDividerBefore() && (
-                  <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: '#3f3f46' }} />
+                  <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: lightMode ? '#cbd5e1' : '#3f3f46' }} />
                 )}
                 <Button
                   variant="primary"
                   size="xsm"
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                    console.log('Button clicked:', button.id);
                     try {
                       // For handlers that need event parameters, pass them through
                       if (button.id === 'textColor' || button.id === 'fillColor' || button.id === 'borders' || button.id === 'alignment') {
@@ -436,6 +444,9 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
                   }}
                   title={button.title}
                   className={styles['toolbar-button']}
+                  style={{
+                    color: lightMode ? '#000000' : undefined,
+                  }}
                 >
                   {button.icon}
                 </Button>
@@ -450,13 +461,13 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
                        sx={{
                          width: 24,
                          height: 24,
-                         color: '#9ca3af',
+                         color: lightMode ? '#64748b' : '#9ca3af',
                          borderRadius: '2px 0 0 2px',
-                         border: '1px solid #3f3f46',
+                         border: lightMode ? '1px solid #cbd5e1' : '1px solid #3f3f46',
                          borderRight: 'none',
                          '&:hover': {
                            backgroundColor: '#e2e8f0',
-                           color: '#475569',
+                           color: lightMode ? '#334155' : '#475569',
                          },
                        }}
                      >
@@ -483,8 +494,9 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
                        sx={{
                          '& .MuiOutlinedInput-root': {
                            height: '24px',
-                           border: '1px solid #3f3f46',
+                           border: lightMode ? '1px solid #cbd5e1' : '1px solid #3f3f46',
                            borderRadius: 0,
+                           backgroundColor: lightMode ? 'white' : 'transparent',
                            '& fieldset': {
                              border: 'none',
                            },
@@ -497,7 +509,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
                          },
                          '& .MuiInputBase-input': {
                            padding: 0,
-                           color: '#f3f4f6',
+                           color: lightMode ? '#334155' : '#f3f4f6',
                            '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
                              WebkitAppearance: 'none',
                              margin: 0,
@@ -515,13 +527,13 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
                        sx={{
                          width: 24,
                          height: 24,
-                         color: '#9ca3af',
+                         color: lightMode ? '#64748b' : '#9ca3af',
                          borderRadius: '0 2px 2px 0',
-                         border: '1px solid #3f3f46',
+                         border: lightMode ? '1px solid #cbd5e1' : '1px solid #3f3f46',
                          borderLeft: 'none',
                          '&:hover': {
                            backgroundColor: '#e2e8f0',
-                           color: '#475569',
+                           color: lightMode ? '#334155' : '#475569',
                          },
                        }}
                      >
@@ -538,13 +550,16 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
         {/* Overflow Button */}
         {toolbarButtons.some(button => !visibleButtons.includes(button.id)) && (
           <>
-            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: '#3f3f46' }} />
+            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: lightMode ? '#cbd5e1' : '#3f3f46' }} />
             <Button
               variant="primary"
               size="xsm"
               onClick={handleOverflowClick}
               title="More tools"
               className={styles['toolbar-button']}
+              style={{
+                color: lightMode ? '#64748b' : undefined,
+              }}
             >
               <MoreVert sx={{ fontSize: 16 }} />
             </Button>
@@ -554,7 +569,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
         {/* Document Actions - Save and Download */}
         {(onSaveDocument || onDownloadDocument) && (
           <>
-            <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: '#3f3f46' }} />
+            <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: lightMode ? '#cbd5e1' : '#3f3f46' }} />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto' }}>
               {onSaveDocument && (
                 <Button
@@ -564,6 +579,9 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
                   disabled={saving || !canSave}
                   title="Save spreadsheet (Ctrl+S)"
                   className={styles['toolbar-button']}
+                  style={{
+                    color: lightMode ? '#64748b' : undefined,
+                  }}
                 >
                   <Save sx={{ fontSize: 16 }} />
                 </Button>
@@ -575,6 +593,9 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
                   onClick={onDownloadDocument}
                   title="Download spreadsheet"
                   className={styles['toolbar-button']}
+                  style={{
+                    color: lightMode ? '#64748b' : undefined,
+                  }}
                 >
                   <Download sx={{ fontSize: 16 }} />
                 </Button>
@@ -585,6 +606,9 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
                 onClick={handleOpenHelpDialog}
                 title="Keyboard shortcuts (F1)"
                 className={styles['toolbar-button']}
+                style={{
+                  color: lightMode ? '#64748b' : undefined,
+                }}
               >
                 <Help sx={{ fontSize: 16 }} />
               </Button>
@@ -606,8 +630,8 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
             maxHeight: '400px',
             overflow: 'auto',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #3f3f46',
-            backgroundColor: '#27272a',
+            border: lightMode ? '1px solid #cbd5e1' : '1px solid #3f3f46',
+            backgroundColor: lightMode ? 'white' : '#27272a',
           }
         }}
       >
@@ -656,7 +680,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
         onClose={handleTextColorClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        PaperProps={{ sx: { minWidth: '220px', p: 1, backgroundColor: '#27272a', border: '1px solid #3f3f46' } }}
+        PaperProps={{ sx: { minWidth: '220px', p: 1, backgroundColor: lightMode ? 'white' : '#27272a', border: lightMode ? '1px solid #cbd5e1' : '1px solid #3f3f46' } }}
       >
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(10, 18px)', gap: '6px', p: 1 }} onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => e.preventDefault()}>
           {['#000000','#333333','#666666','#999999','#CCCCCC','#FFFFFF',
@@ -687,7 +711,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
         onClose={handleBackgroundColorClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        PaperProps={{ sx: { minWidth: '220px', p: 1, backgroundColor: '#27272a', border: '1px solid #3f3f46' } }}
+        PaperProps={{ sx: { minWidth: '220px', p: 1, backgroundColor: lightMode ? 'white' : '#27272a', border: lightMode ? '1px solid #cbd5e1' : '1px solid #3f3f46' } }}
       >
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(10, 18px)', gap: '6px', p: 1 }} onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => e.preventDefault()}>
           {['#000000','#333333','#666666','#999999','#CCCCCC','#FFFFFF',
@@ -716,7 +740,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
         onClose={handleBorderClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        PaperProps={{ sx: { minWidth: '260px', border: '1px solid #3f3f46', backgroundColor: '#27272a', p: 1 } }}
+        PaperProps={{ sx: { minWidth: '260px', border: lightMode ? '1px solid #cbd5e1' : '1px solid #3f3f46', backgroundColor: lightMode ? 'white' : '#27272a', p: 1 } }}
       >
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 40px)', gap: 1, p: 1 }}>
           <IconButton size="small" onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => e.preventDefault()} onClick={() => applyBordersOption('all')} title="All borders"><BorderAll sx={{ fontSize: 18 }} /></IconButton>
@@ -756,8 +780,8 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
           sx: {
             minWidth: '120px',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #3f3f46',
-            backgroundColor: '#27272a',
+            border: lightMode ? '1px solid #cbd5e1' : '1px solid #3f3f46',
+            backgroundColor: lightMode ? 'white' : '#27272a',
           }
         }}
       >

@@ -133,7 +133,7 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file, userInfo }) => {
 
   if (error) {
     return (
-      <div className="h-full flex items-center justify-center bg-[#27272a]">
+      <div className="h-full flex items-center justify-center bg-white dark:bg-zinc-900">
         <div className="text-center max-w-md">
           <h3 className="text-xl font-semibold text-white mb-2">Error Loading File</h3>
           <p className="text-gray-400 mb-4">{error}</p>

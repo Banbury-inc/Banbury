@@ -369,7 +369,7 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full bg-[#27272a]">
+      <div className="flex items-center justify-center h-full bg-white dark:bg-zinc-900">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <p className="text-muted-foreground">Loading document...</p>
@@ -380,7 +380,7 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full bg-white dark:bg-zinc-900">
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="h-12 w-12 rounded-full border-2 border-destructive flex items-center justify-center text-destructive font-bold">!</div>
           <div>
@@ -393,9 +393,9 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#27272a] border-0">
+    <div className="h-full flex flex-col bg-white dark:bg-zinc-900 border-0">
       {/* Document display area with TiptapWordEditor */}
-      <div className="flex-1 overflow-hidden border-0 bg-[#27272a]">
+      <div className="flex-1 overflow-hidden border-0 bg-white dark:bg-zinc-900">
         {documentUrl ? (
           <WordViewer
             src={documentUrl}

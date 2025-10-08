@@ -357,7 +357,7 @@ const InlineFileSearch: React.FC<InlineFileSearchProps> = ({ onFileSelect, onEma
   return (
     <div className="inline-search-container relative w-full">
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-zinc-400 h-3 w-3" />
+        <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-zinc-400 bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 h-3 w-3" />
         <Input
           type="text"
           value={query}
@@ -374,7 +374,7 @@ const InlineFileSearch: React.FC<InlineFileSearchProps> = ({ onFileSelect, onEma
               setLoadingEmails(false);
               setShowResults(false);
             }}
-            className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-zinc-400 hover:text-white"
+            className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-zinc-400 dark:text-zinc-400 hover:text-white"
           >
             <X className="h-3 w-3" />
           </button>
@@ -383,7 +383,7 @@ const InlineFileSearch: React.FC<InlineFileSearchProps> = ({ onFileSelect, onEma
 
       {/* Search Results Dropdown */}
       {showResults && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900 border border-zinc-700 rounded-md shadow-xl z-50 max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900 dark:bg-zinc-900 border border-zinc-700 dark:border-zinc-700 rounded-md shadow-xl z-50 max-h-96 overflow-y-auto">
           {loading && (
             <div className="p-4 text-center text-zinc-400">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>

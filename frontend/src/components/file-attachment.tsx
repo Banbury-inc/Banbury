@@ -92,8 +92,8 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
         <div key={item.id}>
           <div
             className={cn(
-              "flex items-center gap-2 px-3 py-2 hover:bg-zinc-800 cursor-pointer transition-colors",
-              item.type === 'file' ? 'text-zinc-300' : 'text-zinc-400'
+              "flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors",
+              item.type === 'file' ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-500 dark:text-zinc-400'
             )}
             style={{ paddingLeft: `${(level * 12) + 12}px` }}
             onClick={() => {
@@ -134,23 +134,23 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
             size="xsm"
             title="Attach file"
           >
-            <Paperclip className="h-4 w-4" />
+            <Paperclip className="h-4 w-4 text-zinc-700 dark:text-zinc-300" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className="w-80 max-h-96 overflow-hidden bg-zinc-900 border-zinc-700"
+          className="w-80 max-h-96 overflow-hidden bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700"
           style={{ zIndex: 999999 }}
           side="top"
           align="start"
         >
           <div className="p-3 border-b border-zinc-700">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-400" />
               <Input
                 placeholder="Search files..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-zinc-800 border-zinc-600 text-white text-sm"
+                className="pl-10 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white text-sm"
                 autoFocus
               />
             </div>
@@ -158,11 +158,11 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
           
           <div className="overflow-y-auto max-h-80">
             {loading ? (
-              <div className="flex items-center justify-center p-4 text-zinc-400">
+              <div className="flex items-center justify-center p-4 text-zinc-600 dark:text-zinc-400">
                 Loading files...
               </div>
             ) : fileSystem.length === 0 ? (
-              <div className="flex items-center justify-center p-4 text-zinc-400">
+              <div className="flex items-center justify-center p-4 text-zinc-600 dark:text-zinc-400">
                 No files found
               </div>
             ) : (
@@ -177,14 +177,14 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
           {attachedFiles.map((file) => (
             <div
               key={file.file_id}
-              className="flex items-center gap-2 p-2 bg-zinc-800 rounded-md border border-zinc-700"
+              className="flex items-center gap-2 p-2 bg-zinc-100 dark:bg-zinc-800 rounded-md border border-zinc-300 dark:border-zinc-700"
             >
-              <File className="h-4 w-4 text-zinc-400" />
-              <span className="text-sm text-zinc-300 truncate flex-1">{file.name}</span>
+              <File className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+              <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate flex-1">{file.name}</span>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 text-zinc-400 hover:text-red-400"
+                className="h-6 w-6 p-0 text-zinc-500 dark:text-zinc-400 hover:text-red-400"
                 onClick={() => onFileRemove(file.file_id!)}
                 title="Remove file"
               >

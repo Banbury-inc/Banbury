@@ -39,7 +39,7 @@ const Layout = ({ children }: Props): JSX.Element => {
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
-        background: '#000000',
+        background: theme.palette.background.default,
       }}
     >
       <Header />
@@ -66,12 +66,18 @@ const Layout = ({ children }: Props): JSX.Element => {
               size='small'
               aria-label='scroll back to top'
               sx={{
-                backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                color: '#ffffff',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                backgroundColor: theme.palette.mode === 'dark' 
+                  ? 'rgba(255, 255, 255, 0.08)' 
+                  : 'rgba(0, 0, 0, 0.04)',
+                color: theme.palette.text.primary,
+                border: theme.palette.mode === 'dark'
+                  ? '1px solid rgba(255, 255, 255, 0.1)'
+                  : '1px solid rgba(0, 0, 0, 0.1)',
                 backdropFilter: 'blur(10px)',
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                  backgroundColor: theme.palette.mode === 'dark'
+                    ? 'rgba(255, 255, 255, 0.12)'
+                    : 'rgba(0, 0, 0, 0.08)',
                   transform: 'translateY(-2px)',
                 },
               }}
