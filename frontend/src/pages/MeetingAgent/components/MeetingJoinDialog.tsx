@@ -10,7 +10,7 @@ import {
 } from '../../../components/ui/dialog'
 import { Input } from '../../../components/ui/old-input'
 import { Label } from '../../../components/ui/label'
-import { Switch } from '../../../components/ui/switch'
+import { Switch } from '../../../components/ui/old-switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/old-select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card'
 import { Badge } from '../../../components/ui/badge'

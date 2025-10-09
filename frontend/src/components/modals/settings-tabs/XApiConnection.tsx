@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Twitter } from 'lucide-react'
-import { Button } from './ui/button'
-import { useToast } from './ui/use-toast'
-import { CONFIG } from '../config/config'
+import { Button } from '../../ui/button'
+import { useToast } from '../../ui/use-toast'
+import { CONFIG } from '../../../config/config'
 import { 
   checkXConnectionStatus, 
   initiateXOAuth, 
   disconnectXAccount, 
   type XApiConnectionStatus 
-} from './handlers/x-api-connection'
+} from '../../handlers/x-api-connection'
 
 export const XApiConnection = () => {
   const { toast } = useToast()

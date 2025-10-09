@@ -14,7 +14,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "./ui/dropdown-menu"
-import { SettingsModal } from "./SettingsModal"
+import { SettingsModal } from "./modals/SettingsModal"
 import { ApiService } from "../services/apiService"
 import BanburyLogo from "../assets/images/Logo.png"
 import { Typography } from "./ui/typography"
