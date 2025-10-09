@@ -11,7 +11,7 @@ import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
+import { Input } from '../components/ui/old-input';
 import { Label } from '../components/ui/label';
 import { CONFIG } from '../config/config';
 import { ApiService } from '../services/apiService';

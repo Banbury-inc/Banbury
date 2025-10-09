@@ -4,7 +4,7 @@ import { Button } from '../../components/ui/button'
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '../../components/ui/tooltip'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/old-tabs'
 import { 
   Video, 
   VideoOff, 

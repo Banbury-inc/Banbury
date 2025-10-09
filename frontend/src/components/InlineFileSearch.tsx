@@ -3,7 +3,7 @@ import { Search, X, File, FileImage, FileVideo, FileAudio, FileText, FileSpreads
 import { ApiService } from '../services/apiService';
 import { FileSystemItem } from '../utils/fileTreeUtils';
 import { useToast } from './ui/use-toast';
-import { Input } from './ui/input';
+import { Input } from './ui/old-input';
 
 interface InlineFileSearchProps {
   onFileSelect: (file: FileSystemItem) => void;
@@ -357,12 +357,12 @@ const InlineFileSearch: React.FC<InlineFileSearchProps> = ({ onFileSelect, onEma
   return (
     <div className="inline-search-container relative w-full">
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-zinc-400 bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 h-3 w-3" />
         <Input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           variant="primary"
+          placeholder="Search files..."
         />
         {query && (
           <button
@@ -376,7 +376,7 @@ const InlineFileSearch: React.FC<InlineFileSearchProps> = ({ onFileSelect, onEma
             }}
             className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-zinc-400 dark:text-zinc-400 hover:text-white"
           >
-            <X className="h-3 w-3" />
+            <X className="h-4 w-4" />
           </button>
         )}
       </div>

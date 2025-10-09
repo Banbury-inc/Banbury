@@ -475,19 +475,18 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
   return (
     <div className={cn(styles['simple-tiptap-container'], className)}>
       {/* Toolbar */}
-      <div className={cn(styles['simple-tiptap-toolbar'], theme.palette.mode === 'light' && styles['light-mode'])} ref={toolbarRef} style={{ flexWrap: 'nowrap', border: 'none' }}>
+      <div ref={toolbarRef} className="flex bg-accent items-center px-3 py-2 gap-1 border-b">
         {/* Left side toolbar items */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: 0 }}>
+        <div className="flex items-center gap-1 flex-1 min-w-0">
           {/* Responsive icon buttons */}
-          <div className={styles['toolbar-group']}>
+          <div className="flex items-center">
             {toolbarButtons.map((btn) => (
               visibleButtons.includes(btn.id) ? (
                 <Button
                   variant="primary"
-                  size="xsm"
+                  size="icon"
                   key={btn.id}
                   onClick={btn.onClick}
-                  className={styles['toolbar-button']}
                   title={btn.title}
                 >
                   {btn.icon}
@@ -498,9 +497,9 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
             {toolbarButtons.some(b => !visibleButtons.includes(b.id)) && (
               <DropdownMenu open={overflowOpen} onOpenChange={setOverflowOpen}>
                 <DropdownMenuTrigger asChild>
-                  <button className={styles['toolbar-button']} title="More tools">
+                  <Button variant="ghost" size="icon-sm" title="More tools">
                     <MoreHorizontal size={16} />
-                  </button>
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
                   {toolbarButtons.filter(b => !visibleButtons.includes(b.id)).map(b => (
@@ -528,24 +527,21 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
             )}
           </div>
 
-          <div className={styles['toolbar-separator']} />
+          <div className="w-px h-6 bg-border mx-1" />
 
           {/* Headings */}
-          <div className={styles['toolbar-group']}>
+          <div className="flex items-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button 
-                  className={styles['toolbar-button']}
-                  title="Headings"
-                >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Button variant="ghost" size="sm" title="Headings" className="gap-1">
+                  <span className="flex items-center gap-1">
                     {editor.isActive('heading', { level: 1 }) && 'H1'}
                     {editor.isActive('heading', { level: 2 }) && 'H2'}
                     {editor.isActive('heading', { level: 3 }) && 'H3'}
                     {!editor.isActive('heading') && 'H'}
                     <ChevronDown size={12} />
                   </span>
-                </button>
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
                 <DropdownMenuItem 
@@ -576,12 +572,12 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
             </DropdownMenu>
           </div>
 
-          <div className={styles['toolbar-separator']} />
+          <div className="w-px h-6 bg-border mx-1" />
 
           {/* Font family */}
-          <div className={styles['toolbar-group']}>
+          <div className="flex items-center">
             <select
-              className={styles['toolbar-select']}
+              className="px-2 py-1 text-sm border rounded-md bg-background cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
               aria-label="Font family"
               value={selectedFont ?? ''}
               onChange={(e) => {
@@ -605,18 +601,19 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
             </select>
           </div>
 
-          <div className={styles['toolbar-separator']} />
+          <div className="w-px h-6 bg-border mx-1" />
 
           {/* Image and Link */}
-          <div className={styles['toolbar-group']}>
+          <div className="flex items-center gap-1">
             <DropdownMenu open={isImageMenuOpen} onOpenChange={setIsImageMenuOpen}>
               <DropdownMenuTrigger asChild>
-                <button
-                  className={styles['toolbar-button']}
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   title="Add Image"
                 >
                   <ImageIcon size={16} />
-                </button>
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-96 p-0 bg-zinc-900/95 backdrop-blur-sm border border-zinc-700/50 shadow-2xl rounded-xl overflow-hidden">
                 {/* Header */}
@@ -732,27 +729,27 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            <button onClick={setLink} className={styles['toolbar-button']} title="Add Link">
+            <Button onClick={setLink} variant="ghost" size="icon-sm" title="Add Link">
               <LinkIcon size={16} />
-            </button>
+            </Button>
           </div>
 
-          <div className={styles['toolbar-separator']} />
+          <div className="w-px h-6 bg-border mx-1" />
 
           {/* AI Features moved into main overflow; no separate trigger here */}
         </div>
 
         {/* Right side - Document Actions */}
         {(onSave || onDownload) && (
-          <div ref={rightActionsRef} style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: '0 0 auto', whiteSpace: 'nowrap', marginLeft: 8 }}>
-            <div className={styles['toolbar-separator']} style={{ marginLeft: 8, marginRight: 8 }} />
-            <div className={styles['toolbar-group']}>
+          <div ref={rightActionsRef} className="flex items-center gap-1 flex-shrink-0 whitespace-nowrap ml-2">
+            <div className="w-px h-6 bg-border mx-2" />
+            <div className="flex items-center gap-1">
               {onSave && (
                 <Button
-                  variant="primary"
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={onSave}
                   disabled={saving || !canSave}
-                  className={styles['toolbar-button']}
                   title="Save document"
                 >
                   <Save size={16} />
@@ -760,9 +757,9 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
               )}
               {onDownload && (
                 <Button
-                  variant="primary"
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={onDownload}
-                  className={styles['toolbar-button']}
                   title="Download document"
                 >
                   <Download size={16} />

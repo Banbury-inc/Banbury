@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { useState, useCallback, useEffect } from 'react'
 import { Button } from '../../ui/button'
-import { Input } from '../../ui/input'
+import { Input } from '../../ui/old-input'
 import { useToast } from '../../ui/use-toast'
 import { EmailService } from '../../../services/emailService'
 import { EmailTiptapEditor } from './EmailTiptapEditor'
@@ -379,11 +379,11 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
           </div>
 
           {/* Attachment Button and Action Buttons */}
-          <div className="px-2 py-2 bg-white dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700">
+          <div className="px-2 py-2 bg-white border-t border-zinc-200 dark:border-zinc-700">
             <div className="flex items-center flex-wrap gap-3">
               <Button
                 variant="primary"
-                size="xsm"
+                size="icon-sm"
                 onClick={handleSend}
                 disabled={
                   sending || parseRecipients(form.to).length === 0 || !form.subject || isContentEmpty(form.body)
@@ -395,7 +395,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
               </Button>
               <Button
                 variant="primaryonWhite"
-                size="xsm"
+                size="icon-sm"
                 onClick={handleSaveDraft}
                 disabled={sending}
               >
@@ -403,7 +403,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
               </Button>
               <Button
                 variant="primaryonWhite"
-                size="xsm"
+                size="icon-sm"
                 onClick={() => document.getElementById('attachment-input')?.click()}
                 disabled={sending}
               >

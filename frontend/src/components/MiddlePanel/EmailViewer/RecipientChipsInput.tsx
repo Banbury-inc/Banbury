@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
-import { Input } from '../../ui/input'
+import { Input } from '../../ui/old-input'
 
 interface SuggestionItem {
   label: string

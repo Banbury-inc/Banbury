@@ -122,6 +122,7 @@
     "mammoth": "^1.10.0",
     "mongodb": "^6.8.0",
     "next": "^14.2.7",
+    "next-themes": "^0.4.6",
     "os-browserify": "^0.3.0",
     "pdfjs-dist": "^5.4.54",
     "react": "^18.2.0",

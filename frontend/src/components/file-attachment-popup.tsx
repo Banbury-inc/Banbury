@@ -2,7 +2,7 @@ import { File, Search, ChevronRight, Check } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
-import { Input } from './ui/input';
+import { Input } from './ui/old-input';
 import { ApiService } from '../services/apiService';
 import { cn } from '../utils';
 import { FileSystemItem } from '../utils/fileTreeUtils';

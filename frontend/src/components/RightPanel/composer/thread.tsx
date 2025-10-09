@@ -30,20 +30,20 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
-import { ChatTiptapComposer } from "../ChatTiptapComposer";
-import { DocumentAITool } from "../DocumentAITool";
-import { DocxAITool } from "../DocxAITool";
-import { TldrawAITool } from "../TldrawAITool";
-import { DrawioAITool } from "../MiddlePanel/CanvasViewer/DrawioAITool";
-import DrawioViewerModal from "../MiddlePanel/CanvasViewer/DrawioViewerModal";
-import { FileAttachment } from "../file-attachment";
-import { FileAttachmentDisplay } from "../file-attachment-display";
-import { MarkdownText } from "./markdown-text";
-import { SheetAITool } from "../SheetAITool";
-import { TiptapAITool } from "../TiptapAITool";
-import { ToolFallback } from "./tool-fallback";
-import { TooltipIconButton } from "./tooltip-icon-button";
-import { Button } from "../ui/button";
+import { ChatTiptapComposer } from "../../ChatTiptapComposer";
+import { DocumentAITool } from "../../DocumentAITool";
+import { DocxAITool } from "../../DocxAITool";
+import { TldrawAITool } from "../../TldrawAITool";
+import { DrawioAITool } from "../../MiddlePanel/CanvasViewer/DrawioAITool";
+import DrawioViewerModal from "../../MiddlePanel/CanvasViewer/DrawioViewerModal";
+import { FileAttachment } from "../../file-attachment";
+import { FileAttachmentDisplay } from "../../file-attachment-display";
+import { MarkdownText } from "../markdown-text";
+import { SheetAITool } from "../../SheetAITool";
+import { TiptapAITool } from "../../TiptapAITool";
+import { ToolFallback } from "../tool-fallback";
+import { TooltipIconButton } from "../tooltip-icon-button";
+import { Button } from "../../ui/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -52,24 +52,24 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuItem,
-} from "../ui/dropdown-menu";
-import { WebSearchTool } from "./web-search-result";
-import { toggleXTool, type ToolPreferences as XToolPrefs } from "./handlers/toggle-x-tool";
-import { handleDocxAIResponse } from "./handlers/handle-docx-ai-response";
-import { handleTldrawAIResponse } from "./handlers/handle-tldraw-ai-response";
-import { ToolUI } from "./ToolUI";
-import { BrowserTool } from "../MiddlePanel/BrowserViewer/BrowserTool";
-import { ApiService } from "../../services/apiService";
-import { extractEmailContent } from "../../utils/emailUtils";
-import { ConversationService } from "../../services/conversationService";
-import { useToast } from "../ui/use-toast";
-import styles from "../../styles/scrollbar.module.css";
-import { cn } from "../../utils";
-import { FileSystemItem } from "../../utils/fileTreeUtils";
-import { createHandleDrawioFileView } from "./handlers/handle-drawio-file-view";
+} from "../../ui/dropdown-menu";
+import { WebSearchTool } from "../web-search-result";
+import { toggleXTool, type ToolPreferences as XToolPrefs } from "../handlers/toggle-x-tool";
+import { handleDocxAIResponse } from "../handlers/handle-docx-ai-response";
+import { handleTldrawAIResponse } from "../handlers/handle-tldraw-ai-response";
+import { ToolUI } from "../ToolUI";
+import { BrowserTool } from "../../MiddlePanel/BrowserViewer/BrowserTool";
+import { ApiService } from "../../../services/apiService";
+import { extractEmailContent } from "../../../utils/emailUtils";
+import { ConversationService } from "../../../services/conversationService";
+import { useToast } from "../../ui/use-toast";
+import styles from "../../../styles/scrollbar.module.css";
+import { cn } from "../../../utils";
+import { FileSystemItem } from "../../../utils/fileTreeUtils";
+import { createHandleDrawioFileView } from "../handlers/handle-drawio-file-view";
 
 import type { FC } from "react";
-import { Typography } from "../ui/typography";
+import { Typography } from "../../ui/typography";
 
 
 // Destructure Assistant UI primitives from namespace import to avoid named import type issues
@@ -1049,64 +1049,6 @@ const ThreadWelcome: FC = () => {
   );
 };
 
-const ThreadWelcomeSuggestions: FC = () => {
-  return (
-    <div className="grid w-full gap-2 sm:grid-cols-2">
-      {[
-        {
-          title: "What are the advantages",
-          label: "of using Assistant Cloud?",
-          action: "What are the advantages of using Assistant Cloud?",
-        },
-        {
-          title: "Write code to",
-          label: `demonstrate topological sorting`,
-          action: `Write code to demonstrate topological sorting`,
-        },
-        {
-          title: "Help me write an essay",
-          label: `about AI chat applications`,
-          action: `Help me write an essay about AI chat applications`,
-        },
-        {
-          title: "What is the weather",
-          label: "in San Francisco?",
-          action: "What is the weather in San Francisco?",
-        },
-      ].map((suggestedAction, index) => (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          transition={{ delay: 0.05 * index }}
-          key={`suggested-action-${suggestedAction.title}-${index}`}
-          className="[&:nth-child(n+3)]:hidden sm:[&:nth-child(n+3)]:block"
-        >
-          <ThreadPrimitive.Suggestion
-            prompt={suggestedAction.action}
-            method="replace"
-            autoSend
-            asChild
-          >
-            <Button
-              variant="ghost"
-              className="dark:hover:bg-accent/60 h-auto w-full flex-1 flex-wrap items-start justify-start gap-1 rounded-xl border px-4 py-3.5 text-left text-sm sm:flex-col"
-              aria-label={suggestedAction.action}
-            >
-              <span className="font-medium">
-                {suggestedAction.title}
-              </span>
-              <p className="text-muted-foreground">
-                {suggestedAction.label}
-              </p>
-            </Button>
-          </ThreadPrimitive.Suggestion>
-        </motion.div>
-      ))}
-    </div>
-  );
-};
-
 interface ComposerProps {
   attachedFiles: FileSystemItem[];
   attachedEmails: any[];
@@ -1443,7 +1385,7 @@ const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAtta
           />
 
           {/* Visible Tiptap editor with @ mention for files */}
-          <div className={`bg-zinc-200 dark:bg-zinc-800 border-0 ${(attachedFiles.length > 0 || attachedEmails.length > 0 || pendingChanges.length > 0) ? 'border-t-0 rounded-t-none' : 'border-t border-zinc-300 dark:border-zinc-700 rounded-t-2xl'}`}>
+          <div className={`bg-accent border-0 ${(attachedFiles.length > 0 || attachedEmails.length > 0 || pendingChanges.length > 0) ? 'border-t-0 rounded-t-none' : 'border-t border-zinc-300 dark:border-zinc-700 rounded-t-2xl'}`}>
             <ChatTiptapComposer
               hiddenInputRef={inputRef}
               userInfo={userInfo}
@@ -1591,7 +1533,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
 
   return (
     <div className="bg-zinc-200 dark:bg-zinc-800 border-0 relative flex items-center justify-between rounded-b-2xl p-2">
-      <div className="flex items-center gap-2">
+      <div className="flex pl-4 items-center gap-2">
         <FileAttachment
           onFileAttach={onFileAttach}
           attachedFiles={[]}
@@ -1602,11 +1544,12 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           <DropdownMenuTrigger asChild>
             <Button
               variant="primary"
+              size="icon"
+              className="h-8 w-8"
               title="Tools"
               aria-label="Tools"
-              size="xsm"
             >
-              <Wrench className="h-4 w-4" />
+              <Wrench height={16} width={16} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" className="w-56">
@@ -1670,7 +1613,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         </DropdownMenu>
         <Button
           variant="primary"
-          size="xsm"
+          size="icon"
           className={`h-8 w-8 ${
             isRecording
               ? "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:text-white dark:hover:bg-red-700"
@@ -1681,12 +1624,12 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           aria-label={isRecording ? "Stop recording" : "Start voice input"}
           disabled={!(typeof window !== 'undefined' && (((window as any).SpeechRecognition) || ((window as any).webkitSpeechRecognition)))}
         >
-          {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          {isRecording ? <MicOff height={16} width={16} /> : <Mic height={16} width={16} />}
         </Button>
         <Button
           variant="primary"
-          size="xsm"
-          className={`${
+          size="icon"
+          className={`h-8 w-8 ${
             isWebSearchEnabled 
               ? "bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white" 
               : ""
@@ -1695,7 +1638,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           title={isWebSearchEnabled ? "Disable web search" : "Enable web search"}
           aria-label={isWebSearchEnabled ? "Disable web search" : "Enable web search"}
         >
-          <Globe className="h-4 w-4" />
+          <Globe height={16} width={16} />
         </Button>
       </div>
 
@@ -1703,7 +1646,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         <Button
           type="button"
           variant="primary"
-          size="xsm"
+          size="icon"
           className={`${
             hasText 
               ? 'cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100' 
@@ -1714,7 +1657,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           onClick={handleSendFromButton}
           disabled={!hasText}
         >
-          <ChevronRightIcon />
+          <ChevronRightIcon height={16} width={16} />
         </Button>
       </ThreadPrimitive.If>
 
@@ -1723,11 +1666,11 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           <Button
             type="button"
             variant="primary"
-            size="xsm"
+            size="icon"
             title="Stop generating"
             aria-label="Stop generating"
           >
-            <Square size={20} />
+            <Square height={16} width={16} />
           </Button>
         </ComposerPrimitive.Cancel>
       </ThreadPrimitive.If>

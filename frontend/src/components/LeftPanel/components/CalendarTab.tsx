@@ -1,11 +1,11 @@
 import { Calendar, Plus, RefreshCw, Search, Settings, Clock, MapPin, Users } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { CalendarService, CalendarEvent, ListEventsResponse } from '../../services/calendarService'
-import { ScopeService } from '../../services/scopeService'
-import { CreateEventPopover } from '../MiddlePanel/CalendarViewer/CreateEventPopover'
+import { Button } from '../../ui/button'
+import { Input } from '../../ui/old-input'
+import { Typography } from '../../ui/typography'
+import { CalendarService, CalendarEvent, ListEventsResponse } from '../../../services/calendarService'
+import { ScopeService } from '../../../services/scopeService'
+import { CreateEventPopover } from '../../MiddlePanel/CalendarViewer/CreateEventPopover'
 
 interface CalendarTabProps {
   onOpenCalendarApp?: () => void
@@ -127,40 +127,43 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect, onCreateEvent }:
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 bg-zinc-200 dark:bg-zinc-800">
-        <h2 className="text-gray-800 dark:text-gray-200 text-sm font-medium">Calendar</h2>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 px-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-zinc-300/50 dark:hover:bg-zinc-700/50"
-            onClick={() => {
-              if (onOpenCalendarApp) {
-                onOpenCalendarApp()
-              } else if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('calendar-open', { detail: { view: 'month' } }))
-              }
-            }}
-          >
-            Open Calendar
-          </Button>
-          <Button
-            variant="primary"
-            size="xsm"
-            onClick={() => loadEvents(undefined, searchQuery)}
-            disabled={loading}
-          >
-            <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
-          <Button
-            variant="primary"
-            size="xsm"
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={handleCreateEvent}
-            title="Create Event"
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
+      <div className="flex flex-col bg-background">
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <div className="flex items-center gap-4">
+            <Typography variant="small" className="font-medium">Calendar</Typography>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (onOpenCalendarApp) {
+                  onOpenCalendarApp()
+                } else if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('calendar-open', { detail: { view: 'month' } }))
+                }
+              }}
+            >
+              Open Calendar
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => loadEvents(undefined, searchQuery)}
+              disabled={loading}
+              title="Refresh"
+            >
+              <RefreshCw className={`${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button
+              variant="default"
+              size="icon"
+              onClick={handleCreateEvent}
+              title="Create Event"
+            >
+              <Plus />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -181,18 +184,18 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect, onCreateEvent }:
 
       <div className="flex-1 overflow-hidden">
         {checkingAccess ? (
-          <div className="flex items-center justify-center h-full text-gray-600 dark:text-gray-400">
-            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-            Checking Calendar access...
+          <div className="flex items-center justify-center h-full">
+            <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" />
+            <Typography variant="muted">Checking Calendar access...</Typography>
           </div>
         ) : calendarAvailable === false ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-600 dark:text-gray-400 p-4">
-            <Calendar className="h-12 w-12 mb-4 opacity-50" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Google Calendar Access Required</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-4 max-w-md">
+          <div className="flex flex-col items-center justify-center h-full p-4">
+            <Calendar className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" />
+            <Typography variant="h3" className="mb-2">Google Calendar Access Required</Typography>
+            <Typography variant="small" className="text-center mb-4 max-w-md text-muted-foreground">
               To use calendar features, you need to grant Calendar access to your Google account.
-            </p>
-            <Button onClick={requestCalendarAccess} className="bg-blue-600 hover:bg-blue-700 text-white">
+            </Typography>
+            <Button onClick={requestCalendarAccess} variant="default">
               <Settings className="h-4 w-4 mr-2" />
               Activate Calendar Access
             </Button>
@@ -200,19 +203,21 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect, onCreateEvent }:
         ) : (
           <div className="h-full flex flex-col">
             {error && (
-              <div className="p-4 text-red-600 dark:text-red-400 text-sm bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded m-2">{error}</div>
+              <div className="p-4 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded m-2">
+                <Typography variant="small" className="text-red-700 dark:text-red-400">{error}</Typography>
+              </div>
             )}
             {loading && events.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-gray-600 dark:text-gray-400">
-                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                Loading events...
+              <div className="flex items-center justify-center h-full">
+                <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" />
+                <Typography variant="muted">Loading events...</Typography>
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto" onScroll={onScroll}>
                 {events.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-600 dark:text-gray-400 p-4">
-                    <Calendar className="h-12 w-12 mb-4 opacity-50" />
-                    <p className="text-sm mb-2">No events found in the selected range</p>
+                  <div className="flex flex-col items-center justify-center h-full p-4">
+                    <Calendar className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" />
+                    <Typography variant="small" className="mb-2 text-muted-foreground">No events found in the selected range</Typography>
                   </div>
                 ) : (
                   events.map((ev) => {
@@ -220,18 +225,24 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect, onCreateEvent }:
                       <div
                         key={ev.id}
                         onClick={() => handleSelect(ev)}
-                        className="group p-3 border-b border-zinc-300 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 transition-colors"
+                        className="group p-3 border-b border-zinc-300 dark:border-zinc-700 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{ev.summary || '(No title)'}</div>
-                            <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 flex flex-wrap items-center gap-3">
-                              <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {formatDateTime(ev.start)} → {formatDateTime(ev.end)}</span>
+                            <Typography variant="small" className="font-medium truncate">{ev.summary || '(No title)'}</Typography>
+                            <div className="mt-1 flex flex-wrap items-center gap-3">
+                              <Typography variant="muted" className="flex items-center gap-1 text-xs">
+                                <Clock className="h-3 w-3" /> {formatDateTime(ev.start)} → {formatDateTime(ev.end)}
+                              </Typography>
                               {ev.location && (
-                                <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {ev.location}</span>
+                                <Typography variant="muted" className="flex items-center gap-1 text-xs">
+                                  <MapPin className="h-3 w-3" /> {ev.location}
+                                </Typography>
                               )}
                               {ev.attendees && ev.attendees.length > 0 && (
-                                <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {ev.attendees.length}</span>
+                                <Typography variant="muted" className="flex items-center gap-1 text-xs">
+                                  <Users className="h-3 w-3" /> {ev.attendees.length}
+                                </Typography>
                               )}
                             </div>
                           </div>
@@ -242,9 +253,9 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect, onCreateEvent }:
                 )}
 
                 {isLoadingMore && (
-                  <div className="flex items-center justify-center py-4 text-gray-600 dark:text-gray-400">
-                    <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                    Loading more events...
+                  <div className="flex items-center justify-center py-4">
+                    <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" />
+                    <Typography variant="muted">Loading more events...</Typography>
                   </div>
                 )}
               </div>

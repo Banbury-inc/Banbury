@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Button } from '../../../ui/button'
-import { Input } from '../../../ui/input'
+import { Input } from '../../../ui/old-input'
 import { Label } from '../../../ui/label'
 import type { ChartDefinition, ChartType, ChartDataRange } from '../types/chart-types'
 

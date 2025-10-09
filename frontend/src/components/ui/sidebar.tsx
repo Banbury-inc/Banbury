@@ -4,7 +4,7 @@ import { PanelLeftIcon } from "lucide-react"
 import * as React from "react"
 
 import { Button } from "./button"
-import { Input } from "./input"
+import { Input } from "./old-input"
 import { Separator } from "./separator"
 import {
   Sheet,

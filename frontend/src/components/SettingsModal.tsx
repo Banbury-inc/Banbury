@@ -1,5 +1,6 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import { useTheme } from 'next-themes'
 import { 
   User, 
   Link,
@@ -32,7 +33,6 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { useToast } from './ui/use-toast'
 import { Toaster } from './ui/toaster'
 import { Switch } from './ui/switch'
-import ColorModeContext from '../utils/ColorModeContext'
 import { Typography } from './ui/typography'
 
 // Initialize Stripe
@@ -199,7 +199,7 @@ function CheckoutForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const colorMode = useContext(ColorModeContext)
+  const { theme, setTheme } = useTheme()
   const [loading, setLoading] = useState(true)
   const [userInfo, setUserInfo] = useState<any>(null)
   const [scopeActivated, setScopeActivated] = useState(false)
@@ -210,7 +210,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [cancelLoading, setCancelLoading] = useState(false)
-  const [isDarkMode, setIsDarkMode] = useState(true)
+  const [isDarkMode, setIsDarkMode] = useState(theme === 'dark')
 
   const settingsTabs = [
     {
@@ -368,7 +368,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
   function handleThemeToggle(checked: boolean) {
     setIsDarkMode(checked)
-    colorMode.toggleColorMode()
+    setTheme(checked ? 'dark' : 'light')
   }
 
   return (

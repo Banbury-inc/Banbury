@@ -27,7 +27,7 @@ import { useState, useEffect } from 'react'
 import { NavSidebar } from '../components/nav-sidebar'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
-import { Input } from '../components/ui/input'
+import { Input } from '../components/ui/old-input'
 import { Label } from '../components/ui/label'
 import { ApiService } from '../services/apiService'
 import { 

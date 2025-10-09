@@ -2,7 +2,7 @@ import { ArrowLeft, Reply, Forward, Trash2, Archive, Star, Clock, User, Mail, Pa
 import { useEffect, useMemo, useState, useCallback } from "react"
 
 import { Button } from "../../ui/button"
-import { Input } from "../../ui/input"
+import { Input } from "../../ui/old-input"
 import { EmailService } from "../../../services/emailService"
 import { extractEmailContent, hasAttachments, formatFileSize, cleanHtmlContent } from "../../../utils/emailUtils"
 import { useToast } from "../../ui/use-toast"
@@ -488,7 +488,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
           {onBack && (
             <Button
               variant="primary"
-              size="xsm"
+              size="icon-sm"
               onClick={onBack}
             >
               <ArrowLeft className="h-3 w-3" />
@@ -503,25 +503,25 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
         
         {/* Compact Actions */}
         <div className="flex items-center gap-1">
-          <Button variant="primary" size="xsm" onClick={handleReply} disabled={actionLoading}>
+          <Button variant="primary" size="icon-sm" onClick={handleReply} disabled={actionLoading}>
             <Reply className="h-3 w-3" />
           </Button>
-          <Button variant="primary" size="xsm" onClick={handleForward} disabled={actionLoading}>
+          <Button variant="primary" size="icon-sm" onClick={handleForward} disabled={actionLoading}>
             <Forward className="h-3 w-3" />
           </Button>
-          <Button variant="primary" size="xsm" onClick={handleArchive} disabled={actionLoading}>
+          <Button variant="primary" size="icon-sm" onClick={handleArchive} disabled={actionLoading}>
             <Archive className="h-3 w-3" />
           </Button>
           <Button 
             variant="primary" 
-            size="xsm" 
+            size="icon-sm" 
             className={`${isStarred ? 'text-yellow-400 hover:text-yellow-500' : ''}`}
             onClick={handleToggleStar}
             disabled={actionLoading}
           >
             <Star className="h-3 w-3" fill={isStarred ? 'currentColor' : 'none'} />
           </Button>
-          <Button variant="primary" size="xsm" className="h-8 w-8" onClick={handleDelete} disabled={actionLoading}>
+          <Button variant="primary" size="icon-sm" className="h-8 w-8" onClick={handleDelete} disabled={actionLoading}>
             <Trash2 className="h-3 w-3" />
           </Button>
         </div>
@@ -569,14 +569,14 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                                 <div className="flex items-center gap-1">
                                   <Button
                                     variant="primaryonWhite"
-                                    size="xsm"
+                                    size="icon-sm"
                                     title="Star email"
                                   >
                                     <Star className="h-3 w-3" />
                                   </Button>
                                   <Button
                                     variant="primaryonWhite"
-                                    size="xsm"
+                                    size="icon-sm"
                                     title="Reply"
                                     onClick={() => {
                                       setReplyForm({
@@ -591,7 +591,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                                   </Button>
                                   <Button
                                     variant="primaryonWhite"
-                                    size="xsm"
+                                    size="icon-sm"
                                     title="More options"
                                   >
                                     <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
@@ -681,7 +681,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                 </div>
                 <Button
                   variant="primaryonWhite"
-                  size="xsm"
+                  size="icon-sm"
                   onClick={handleCancelReply}
                 >
                   <X className="h-4 w-4" />
@@ -734,7 +734,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                 <textarea
                   value={replyForm.body}
                   onChange={(e) => setReplyForm(prev => ({ ...prev, body: e.target.value }))}
-                  className="w-full min-h-32 border-0 shadow-none text-gray-900 resize-none focus:ring-0 focus:outline-none focus:border-0 p-0"
+                  className="w-full min-h-32 border-0 shadow-none bg-transparent text-gray-900 resize-none focus:ring-0 focus:outline-none focus:border-0 p-0"
                   placeholder="Compose email..."
                   disabled={sendingReply}
                 />
@@ -745,7 +745,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                 <div className="flex items-center flex-wrap gap-3">
                   <Button
                     variant="primary"
-                    size="xsm"
+                    size="icon-sm"
                     onClick={handleSendReply}
                     disabled={sendingReply || !replyForm.body.trim()}
                     className="bg-blue-600 hover:bg-blue-700 text-white flex-shrink-0 w-auto px-2"
@@ -755,7 +755,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                   </Button>
                   <Button
                     variant="primaryonWhite"
-                    size="xsm"
+                    size="icon-sm"
                     onClick={handleSaveReplyDraft}
                     disabled={sendingReply}
                   >
@@ -763,7 +763,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                   </Button>
                   <Button
                     variant="primaryonWhite"
-                    size="xsm"
+                    size="icon-sm"
                     onClick={() => document.getElementById('reply-attachment-input')?.click()}
                     disabled={sendingReply}
                   >

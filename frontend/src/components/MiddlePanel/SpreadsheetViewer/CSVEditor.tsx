@@ -21,7 +21,7 @@ import { createFormulaSuggestionHandlers } from './handlers/handle-formula-sugge
 import CSVEditorToolbar from './components/CSVEditorToolbar';
 import { SheetTabs } from './components/SheetTabs';
 import { Button } from '../../ui/button'
-import { Input } from '../../ui/input'
+import { Input } from '../../ui/old-input'
 import { Label } from '../../ui/label'
 import { Separator } from '../../ui/separator'
 import { ArrowUpward, ArrowDownward, BorderAll as BorderAllIcon, Delete as DeleteIcon } from '@mui/icons-material';

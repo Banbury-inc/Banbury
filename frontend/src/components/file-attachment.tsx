@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { Input } from './ui/input';
+import { Input } from './ui/old-input';
 import { ApiService } from '../services/apiService';
 import { cn } from '../utils';
 import { FileSystemItem } from '../utils/fileTreeUtils';
@@ -131,10 +131,12 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
         <DropdownMenuTrigger asChild>
           <Button
             variant="primary"
-            size="xsm"
+            size="icon"
+            className="h-8 w-8"
             title="Attach file"
+            aria-label="Attach file"
           >
-            <Paperclip className="h-4 w-4 text-zinc-700 dark:text-zinc-300" />
+            <Paperclip height={16} width={16} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent

@@ -5,7 +5,7 @@ import { ApiService } from '../services/apiService';
 import { FileSystemItem } from '../utils/fileTreeUtils';
 import { useToast } from './ui/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from './tiptap-ui-primitive/popover/popover';
-import { Input } from './ui/input';
+import { Input } from './ui/old-input';
 
 interface FileSearchPopoverProps {
   onFileSelect: (file: FileSystemItem) => void;
