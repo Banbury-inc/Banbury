@@ -10,7 +10,7 @@ import Privacy_Policy from './components/Privacy_Policy';
 import Terms_of_use from './components/Terms_of_use';
 import { ThemeProvider } from './components/ThemeProvider';
 import Layout from './layout/Layout';
-import Admin from './pages/Admin';
+import Admin from './pages/Admin/Admin';
 import AuthCallback from './pages/AuthCallback';
 import FileDownload from './pages/Filedownload';
 import Home from './pages/Home';
