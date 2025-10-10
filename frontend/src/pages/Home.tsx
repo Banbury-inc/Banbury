@@ -1540,10 +1540,8 @@ const Home = (): JSX.Element => {
                       borderRadius: '20px',
                       overflow: 'hidden',
                       border: '1px solid rgba(59, 130, 246, 0.2)',
-                      boxShadow: '0 20px 60px rgba(59, 130, 246, 0.15)',
                       '&:hover': {
                         transform: 'scale(1.02)',
-                        boxShadow: '0 30px 80px rgba(59, 130, 246, 0.25)',
                       },
                     }}
                   >
@@ -1595,7 +1593,6 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1615,7 +1612,6 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1769,11 +1765,9 @@ const Home = (): JSX.Element => {
                       borderRadius: '20px',
                       overflow: 'hidden',
                       border: '1px solid rgba(249, 115, 22, 0.2)',
-                      boxShadow: '0 20px 60px rgba(249, 115, 22, 0.15)',
                       transition: 'all 0.4s ease',
                       '&:hover': {
                         transform: 'scale(1.02)',
-                        boxShadow: '0 30px 80px rgba(249, 115, 22, 0.25)',
                       },
                     }}
                   >
@@ -1807,7 +1801,6 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1827,7 +1820,6 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1847,7 +1839,6 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1884,12 +1875,9 @@ const Home = (): JSX.Element => {
                       position: 'relative',
                       borderRadius: '20px',
                       overflow: 'hidden',
-                      border: '1px solid rgba(34, 197, 94, 0.2)',
-                      boxShadow: '0 20px 60px rgba(34, 197, 94, 0.15)',
                       transition: 'all 0.4s ease',
                       '&:hover': {
                         transform: 'scale(1.02)',
-                        boxShadow: '0 30px 80px rgba(34, 197, 94, 0.25)',
                       },
                     }}
                   >
@@ -1924,7 +1912,6 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1944,7 +1931,6 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1964,7 +1950,6 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -2002,11 +1987,9 @@ const Home = (): JSX.Element => {
                       borderRadius: '20px',
                       overflow: 'hidden',
                       border: '1px solid rgba(139, 92, 246, 0.2)',
-                      boxShadow: '0 20px 60px rgba(139, 92, 246, 0.15)',
                       transition: 'all 0.4s ease',
                       '&:hover': {
                         transform: 'scale(1.02)',
-                        boxShadow: '0 30px 80px rgba(139, 92, 246, 0.25)',
                       },
                     }}
                   >
@@ -2040,7 +2023,6 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -2060,7 +2042,6 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -2118,11 +2099,9 @@ const Home = (): JSX.Element => {
                       borderRadius: '20px',
                       overflow: 'hidden',
                       border: '1px solid rgba(14, 165, 233, 0.2)',
-                      boxShadow: '0 20px 60px rgba(14, 165, 233, 0.15)',
                       transition: 'all 0.4s ease',
                       '&:hover': {
                         transform: 'scale(1.02)',
-                        boxShadow: '0 30px 80px rgba(14, 165, 233, 0.25)',
                       },
                     }}
                   >
