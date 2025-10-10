@@ -8,12 +8,12 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 import AppImage from '../assets/images/Workspaces.png';
-import EmailDemo from '../assets/images/email.png';
+import EmailDemo from '../assets/images/email_demo.png';
 import CalendarDemo from '../assets/images/calendar_demo.mp4';
 import SpreadsheetDemo from '../assets/images/spreadsheet_demo.mp4';
 import BrowserDemo from '../assets/images/browser-automation-demo.mp4';
-import TaskStudio from '../assets/images/Task_Studio.png';
-import Chatbox from '../assets/images/Chatbox2.png';
+import TaskCreationDemo from '../assets/images/task-creation-demo.mp4';
+import DiffViewDemo from '../assets/images/diff-view.mp4';
 import { Button } from '../components/ui/button';
 import { determineOS } from '../handlers/determineOS';
 import { handleDownload } from './handlers/home';
@@ -1541,7 +1541,6 @@ const Home = (): JSX.Element => {
                       overflow: 'hidden',
                       border: '1px solid rgba(59, 130, 246, 0.2)',
                       boxShadow: '0 20px 60px rgba(59, 130, 246, 0.15)',
-                      transition: 'all 0.4s ease',
                       '&:hover': {
                         transform: 'scale(1.02)',
                         boxShadow: '0 30px 80px rgba(59, 130, 246, 0.25)',
@@ -1894,17 +1893,19 @@ const Home = (): JSX.Element => {
                       },
                     }}
                   >
-                    <Image
-                      src={TaskStudio}
-                      alt="Task automation studio"
-                      width={800}
-                      height={500}
+                    <video
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
                       style={{
                         width: '100%',
                         height: 'auto',
                         display: 'block',
                       }}
-                    />
+                    >
+                      <source src={TaskCreationDemo} type="video/mp4" />
+                    </video>
                   </Box>
                 </Grid>
                 <Grid item xs={12} md={6}>
@@ -2000,23 +2001,28 @@ const Home = (): JSX.Element => {
                       position: 'relative',
                       borderRadius: '20px',
                       overflow: 'hidden',
+                      border: '1px solid rgba(139, 92, 246, 0.2)',
+                      boxShadow: '0 20px 60px rgba(139, 92, 246, 0.15)',
                       transition: 'all 0.4s ease',
                       '&:hover': {
                         transform: 'scale(1.02)',
+                        boxShadow: '0 30px 80px rgba(139, 92, 246, 0.25)',
                       },
                     }}
                   >
-                    <Image
-                      src={Chatbox}
-                      alt="AI assistant demo"
-                      width={800}
-                      height={500}
+                    <video
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
                       style={{
                         width: '100%',
                         height: 'auto',
                         display: 'block',
                       }}
-                    />
+                    >
+                      <source src={DiffViewDemo} type="video/mp4" />
+                    </video>
                   </Box>
                 </Grid>
                 <Grid item xs={12} md={6}>
