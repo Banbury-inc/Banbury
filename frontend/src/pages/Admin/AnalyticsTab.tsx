@@ -103,7 +103,47 @@ interface ConversationsAnalytics {
   error?: string
 }
 
+interface FileTypeStats {
+  file_type: string
+  category: string
+  count: number
+  size: number
+}
+
+interface CategoryStats {
+  category: string
+  count: number
+  size: number
+}
+
+interface DailyFileStats {
+  date: string
+  count: number
+  by_category: Record<string, number>
+}
+
+interface FileTypeAnalytics {
+  result: string
+  summary: {
+    total_files: number
+    total_storage: number
+    recent_files: number
+    recent_storage: number
+    unique_file_types: number
+    unique_categories: number
+    period_days: number
+    most_common_type: string | null
+    most_common_category: string | null
+  }
+  file_type_stats: FileTypeStats[]
+  category_stats: CategoryStats[]
+  recent_file_type_stats: FileTypeStats[]
+  recent_category_stats: CategoryStats[]
+  daily_stats: DailyFileStats[]
+}
+
 interface AnalyticsTabProps {
+  analyticsSubTab: string
   visitorData: VisitorData[]
   visitorStats: VisitorStats | null
   visitorLoading: boolean
@@ -125,6 +165,10 @@ interface AnalyticsTabProps {
   dashboardVisitLoading: boolean
   workspaceVisitStats: any
   workspaceVisitLoading: boolean
+  fileTypeAnalytics: FileTypeAnalytics | null
+  fileTypeLoading: boolean
+  excludedUsers: string[]
+  setExcludedUsers: (users: string[]) => void
   loadVisitorData: (days: number) => Promise<void>
   loadLoginData: (days: number) => Promise<void>
   loadScopesAnalytics: () => Promise<void>
@@ -132,10 +176,12 @@ interface AnalyticsTabProps {
   loadConversationUsers: (days: number) => Promise<void>
   loadDashboardVisitStats: () => Promise<void>
   loadWorkspaceVisitStats: () => Promise<void>
+  loadFileTypeAnalytics: (days: number, usersToExclude?: string[]) => Promise<void>
   convertToEasternTime: (timestamp: string) => string
 }
 
 export function AnalyticsTab({
+  analyticsSubTab,
   visitorData,
   visitorStats,
   visitorLoading,
@@ -157,6 +203,10 @@ export function AnalyticsTab({
   dashboardVisitLoading,
   workspaceVisitStats,
   workspaceVisitLoading,
+  fileTypeAnalytics,
+  fileTypeLoading,
+  excludedUsers,
+  setExcludedUsers,
   loadVisitorData,
   loadLoginData,
   loadScopesAnalytics,
@@ -164,9 +214,9 @@ export function AnalyticsTab({
   loadConversationUsers,
   loadDashboardVisitStats,
   loadWorkspaceVisitStats,
+  loadFileTypeAnalytics,
   convertToEasternTime
 }: AnalyticsTabProps) {
-  const [analyticsSubTab, setAnalyticsSubTab] = useState<string>('overview')
   const [visitorIpExclusions, setVisitorIpExclusions] = useState<string[]>([])
   const [visitorIpInput, setVisitorIpInput] = useState<string>('')
   const [visitorLocationExclusions, setVisitorLocationExclusions] = useState<string[]>([])
@@ -175,6 +225,7 @@ export function AnalyticsTab({
   const [expandedConversation, setExpandedConversation] = useState<string | null>(null)
   const [conversationDetails, setConversationDetails] = useState<any>(null)
   const [conversationDetailsLoading, setConversationDetailsLoading] = useState(false)
+  const [userExclusionInput, setUserExclusionInput] = useState<string>('')
 
   const getFilteredVisitors = () => {
     if (!visitorData || visitorData.length === 0) return []
@@ -270,6 +321,9 @@ export function AnalyticsTab({
   const homePageStats = getPageSpecificStats(path => path === '/' || path === '/home' || path.startsWith('/?'))
   const docsPageStats = getPageSpecificStats(path => path === '/docs' || path.startsWith('/docs/') || path.startsWith('/docs?'))
   const workspacesPageStats = getPageSpecificStats(path => path === '/workspaces' || path.startsWith('/workspaces/') || path.startsWith('/workspaces?'))
+  const authPageStats = getPageSpecificStats(path => path === '/login' || path.startsWith('/login') || path === '/auth/callback' || path.startsWith('/auth/callback'))
+  const taskStudioPageStats = getPageSpecificStats(path => path === '/task-studio' || path.startsWith('/task-studio/') || path.startsWith('/task-studio?'))
+  const meetingsPageStats = getPageSpecificStats(path => path === '/meeting-agent' || path.startsWith('/meeting-agent/') || path.startsWith('/meeting-agent?'))
 
   const loadConversationDetails = async (conversationId: string) => {
     setConversationDetailsLoading(true)
@@ -327,10 +381,47 @@ export function AnalyticsTab({
     setVisitorLocationFilter('')
   }
 
+  const addUserExclusion = async () => {
+    if (userExclusionInput.trim() && !excludedUsers.includes(userExclusionInput.trim())) {
+      const newExcludedUsers = [...excludedUsers, userExclusionInput.trim()]
+      setExcludedUsers(newExcludedUsers)
+      setUserExclusionInput('')
+      // Reload data with new exclusions
+      await loadFileTypeAnalytics(30, newExcludedUsers)
+    }
+  }
+
+  const removeUserExclusion = async (userToRemove: string) => {
+    const newExcludedUsers = excludedUsers.filter(user => user !== userToRemove)
+    setExcludedUsers(newExcludedUsers)
+    // Reload data with updated exclusions
+    await loadFileTypeAnalytics(30, newExcludedUsers)
+  }
+
+  const clearUserExclusions = async () => {
+    setExcludedUsers([])
+    await loadFileTypeAnalytics(30, [])
+  }
+
+  const getPageTitle = () => {
+    switch (analyticsSubTab) {
+      case 'overview':
+        return 'Analytics Overview'
+      case 'visitors':
+        return 'Site Visitors'
+      case 'conversations':
+        return 'AI Conversations'
+      case 'filetypes':
+        return 'File Types Analytics'
+      default:
+        return 'Analytics'
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-white">Site Analytics</h1>
+        <h1 className="text-2xl font-bold text-white">{getPageTitle()}</h1>
         <div className="flex gap-2">
           <select 
             onChange={(e) => {
@@ -340,6 +431,7 @@ export function AnalyticsTab({
               loadScopesAnalytics()
               loadConversationsAnalytics(days, conversationUserFilter)
               loadConversationUsers(days)
+              loadFileTypeAnalytics(days)
             }}
             className="bg-zinc-800 text-white border border-zinc-600 rounded px-3 py-2"
             defaultValue="30"
@@ -356,34 +448,12 @@ export function AnalyticsTab({
             loadConversationUsers(30)
             loadDashboardVisitStats()
             loadWorkspaceVisitStats()
+            loadFileTypeAnalytics(30)
           }} variant="outline" className="text-white border-zinc-600">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
         </div>
-      </div>
-
-      {/* Analytics Sub-tabs */}
-      <div className="border-b border-zinc-700">
-        <nav className="flex space-x-8">
-          {[
-            { id: 'overview', label: 'Overview' },
-            { id: 'visitors', label: 'Visitors' },
-            { id: 'conversations', label: 'AI Conversations' }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setAnalyticsSubTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                analyticsSubTab === tab.id
-                  ? 'border-blue-500 text-blue-400'
-                  : 'border-transparent text-zinc-400 hover:text-white hover:border-zinc-300'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
       </div>
       
       {/* Overview Tab */}
@@ -741,115 +811,6 @@ export function AnalyticsTab({
         </Card>
           </div>
 
-          {/* Google Scopes Analytics Section */}
-      <Card className="bg-zinc-900 border-zinc-700 mb-4">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="text-white">Google OAuth Scopes Analytics</CardTitle>
-              <CardDescription className="text-zinc-400">Analysis of Google permissions granted by users</CardDescription>
-            </div>
-            <Button 
-              onClick={() => loadScopesAnalytics()} 
-              variant="outline" 
-              size="sm"
-              className="text-white border-zinc-600 hover:bg-zinc-800"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {scopesLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-            </div>
-          ) : scopesAnalytics ? (
-            <div className="space-y-6">
-              {/* Summary Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-white">{scopesAnalytics.summary.total_google_users}</div>
-                  <div className="text-zinc-400 text-sm">Google Users</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-white">{scopesAnalytics.summary.users_with_scopes}</div>
-                  <div className="text-zinc-400 text-sm">With Scopes</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-white">{scopesAnalytics.summary.unique_scopes}</div>
-                  <div className="text-zinc-400 text-sm">Unique Scopes</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-white">{scopesAnalytics.summary.average_scopes_per_user}</div>
-                  <div className="text-zinc-400 text-sm">Avg per User</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-white truncate" title={scopesAnalytics.summary.most_common_scope}>
-                    {scopesAnalytics.summary.most_common_scope ? 
-                      scopesAnalytics.summary.most_common_scope.split('/').pop() : 'N/A'}
-                  </div>
-                  <div className="text-zinc-400 text-sm">Most Common</div>
-                </div>
-              </div>
-
-              {/* Scope Categories and Top Scopes */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-white font-medium mb-3">Scope Categories</h4>
-                  <div className="space-y-2">
-                    {scopesAnalytics.category_stats.slice(0, 6).map((category, index) => (
-                      <div key={category.category} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-4 h-4 bg-purple-500 rounded" style={{
-                            backgroundColor: ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#6366f1'][index % 6]
-                          }}></div>
-                          <span className="text-white">{category.category}</span>
-                        </div>
-                        <span className="text-zinc-400 font-medium">{category.count} users</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-white font-medium mb-3">Top Scopes</h4>
-                  <div className="space-y-2">
-                    {scopesAnalytics.scope_stats.slice(0, 6).map((scope, index) => (
-                      <div key={scope.scope} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-6 h-6 bg-zinc-700 rounded-full flex items-center justify-center text-xs text-white">
-                            {index + 1}
-                          </div>
-                          <span className="text-white text-sm truncate" title={scope.scope}>
-                            {scope.scope.includes('userinfo.email') ? 'User Email' :
-                             scope.scope.includes('userinfo.profile') ? 'User Profile' :
-                             scope.scope.includes('gmail') ? 'Gmail Access' :
-                             scope.scope.includes('drive') ? 'Google Drive' :
-                             scope.scope.includes('calendar') ? 'Google Calendar' : 
-                             scope.scope.split('/').pop() || scope.scope}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-zinc-400 font-medium">{scope.count}</div>
-                          <div className="text-zinc-500 text-xs">{scope.percentage}%</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center py-8 text-zinc-400">
-              <div className="text-center">
-                <div>No Google scopes data available</div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       <Card className="bg-zinc-900 border-zinc-700 mb-4">
         <CardHeader>
           <div className="flex justify-between items-center">
@@ -969,7 +930,7 @@ export function AnalyticsTab({
       </Card>
 
       {/* Page-Specific Visitors Over Time Graphs */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         {/* Home Page Visitors */}
         <Card className="bg-zinc-900 border-zinc-700">
           <CardHeader>
@@ -1244,6 +1205,288 @@ export function AnalyticsTab({
             ) : (
               <div className="flex items-center justify-center py-6 text-zinc-400 text-xs">
                 No workspaces page data
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Login / Auth Page Visitors */}
+        <Card className="bg-zinc-900 border-zinc-700">
+          <CardHeader>
+            <CardTitle className="text-white text-base">Login / Auth Visitors</CardTitle>
+            <CardDescription className="text-zinc-400 text-xs">
+              Daily trends for login and auth pages
+              {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ' (filtered)'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {visitorLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+              </div>
+            ) : authPageStats.length > 0 ? (
+              <div className="w-full h-48 p-3">
+                <ChartContainer
+                  config={{
+                    visitors: {
+                      label: "Auth Visitors",
+                      color: "#f59e0b",
+                    },
+                  }}
+                  className="w-full h-full !flex-none"
+                >
+                  <AreaChart 
+                    data={authPageStats}
+                    margin={{ top: 5, right: 5, left: 5, bottom: 20 }}
+                  >
+                    <defs>
+                      <linearGradient id="authGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#9ca3af"
+                      fontSize={8}
+                      type="category"
+                      scale="point"
+                      tickFormatter={(value) => {
+                        const date = new Date(value + 'T12:00:00')
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={40}
+                    />
+                    <YAxis 
+                      stroke="#9ca3af"
+                      fontSize={8}
+                      tickFormatter={(value) => value.toLocaleString()}
+                      width={30}
+                    />
+                    <ChartTooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null
+                        const date = new Date(label + 'T12:00:00')
+                        return (
+                          <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-2 shadow-lg">
+                            <div className="text-white font-medium text-xs">
+                              {date.toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric' 
+                              })}
+                            </div>
+                            <div className="text-amber-400 text-xs">
+                              {payload[0].value} visitors
+                            </div>
+                          </div>
+                        )
+                      }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="count" 
+                      stroke="#f59e0b" 
+                      strokeWidth={2}
+                      fill="url(#authGradient)"
+                      fillOpacity={1}
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-6 text-zinc-400 text-xs">
+                No auth page data
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Task Studio Page Visitors */}
+        <Card className="bg-zinc-900 border-zinc-700">
+          <CardHeader>
+            <CardTitle className="text-white text-base">Task Studio Visitors</CardTitle>
+            <CardDescription className="text-zinc-400 text-xs">
+              Daily trends for task studio page
+              {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ' (filtered)'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {visitorLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+              </div>
+            ) : taskStudioPageStats.length > 0 ? (
+              <div className="w-full h-48 p-3">
+                <ChartContainer
+                  config={{
+                    visitors: {
+                      label: "Task Studio Visitors",
+                      color: "#ec4899",
+                    },
+                  }}
+                  className="w-full h-full !flex-none"
+                >
+                  <AreaChart 
+                    data={taskStudioPageStats}
+                    margin={{ top: 5, right: 5, left: 5, bottom: 20 }}
+                  >
+                    <defs>
+                      <linearGradient id="taskStudioGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#ec4899" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#9ca3af"
+                      fontSize={8}
+                      type="category"
+                      scale="point"
+                      tickFormatter={(value) => {
+                        const date = new Date(value + 'T12:00:00')
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={40}
+                    />
+                    <YAxis 
+                      stroke="#9ca3af"
+                      fontSize={8}
+                      tickFormatter={(value) => value.toLocaleString()}
+                      width={30}
+                    />
+                    <ChartTooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null
+                        const date = new Date(label + 'T12:00:00')
+                        return (
+                          <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-2 shadow-lg">
+                            <div className="text-white font-medium text-xs">
+                              {date.toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric' 
+                              })}
+                            </div>
+                            <div className="text-pink-400 text-xs">
+                              {payload[0].value} visitors
+                            </div>
+                          </div>
+                        )
+                      }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="count" 
+                      stroke="#ec4899" 
+                      strokeWidth={2}
+                      fill="url(#taskStudioGradient)"
+                      fillOpacity={1}
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-6 text-zinc-400 text-xs">
+                No task studio data
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Meetings Page Visitors */}
+        <Card className="bg-zinc-900 border-zinc-700">
+          <CardHeader>
+            <CardTitle className="text-white text-base">Meetings Visitors</CardTitle>
+            <CardDescription className="text-zinc-400 text-xs">
+              Daily trends for meetings page
+              {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ' (filtered)'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {visitorLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+              </div>
+            ) : meetingsPageStats.length > 0 ? (
+              <div className="w-full h-48 p-3">
+                <ChartContainer
+                  config={{
+                    visitors: {
+                      label: "Meetings Visitors",
+                      color: "#6366f1",
+                    },
+                  }}
+                  className="w-full h-full !flex-none"
+                >
+                  <AreaChart 
+                    data={meetingsPageStats}
+                    margin={{ top: 5, right: 5, left: 5, bottom: 20 }}
+                  >
+                    <defs>
+                      <linearGradient id="meetingsGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#9ca3af"
+                      fontSize={8}
+                      type="category"
+                      scale="point"
+                      tickFormatter={(value) => {
+                        const date = new Date(value + 'T12:00:00')
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={40}
+                    />
+                    <YAxis 
+                      stroke="#9ca3af"
+                      fontSize={8}
+                      tickFormatter={(value) => value.toLocaleString()}
+                      width={30}
+                    />
+                    <ChartTooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null
+                        const date = new Date(label + 'T12:00:00')
+                        return (
+                          <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-2 shadow-lg">
+                            <div className="text-white font-medium text-xs">
+                              {date.toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric' 
+                              })}
+                            </div>
+                            <div className="text-indigo-400 text-xs">
+                              {payload[0].value} visitors
+                            </div>
+                          </div>
+                        )
+                      }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="count" 
+                      stroke="#6366f1" 
+                      strokeWidth={2}
+                      fill="url(#meetingsGradient)"
+                      fillOpacity={1}
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-6 text-zinc-400 text-xs">
+                No meetings page data
               </div>
             )}
           </CardContent>
@@ -1999,6 +2242,476 @@ export function AnalyticsTab({
           )}
         </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* File Types Tab */}
+      {analyticsSubTab === 'filetypes' && (
+        <div className="space-y-6">
+          {fileTypeLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+            </div>
+          ) : fileTypeAnalytics ? (
+            <>
+              {/* User Filter Section */}
+              <Card className="bg-zinc-900 border-zinc-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Filter by User</CardTitle>
+                  <CardDescription className="text-zinc-400">Exclude specific users from file type analytics</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="user-exclusion" className="text-white text-sm mb-2 block">
+                        Exclude Users (username or email)
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="user-exclusion"
+                          type="text"
+                          placeholder="Enter username or email to exclude..."
+                          value={userExclusionInput}
+                          onChange={(e) => setUserExclusionInput(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && addUserExclusion()}
+                          className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                        />
+                        <Button 
+                          onClick={addUserExclusion}
+                          variant="outline"
+                          className="text-white border-zinc-600 hover:bg-zinc-800"
+                        >
+                          Add
+                        </Button>
+                      </div>
+                      {excludedUsers.length > 0 && (
+                        <div className="mt-2">
+                          <div className="flex justify-between items-center mb-1">
+                            <div className="text-zinc-400 text-xs">Excluded Users:</div>
+                            <button
+                              onClick={clearUserExclusions}
+                              className="text-xs text-red-400 hover:text-red-300"
+                            >
+                              Clear All
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {excludedUsers.map((user) => (
+                              <span
+                                key={user}
+                                className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
+                              >
+                                {user}
+                                <button
+                                  onClick={() => removeUserExclusion(user)}
+                                  className="text-red-400 hover:text-red-200 ml-1"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="bg-zinc-900 border-zinc-700">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-zinc-400">Total Files</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-white">
+                      {fileTypeAnalytics.summary.total_files.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-zinc-500 mt-1">
+                      {fileTypeAnalytics.summary.recent_files.toLocaleString()} in last {fileTypeAnalytics.summary.period_days} days
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-zinc-900 border-zinc-700">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-zinc-400">Total Storage</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-white">
+                      {(fileTypeAnalytics.summary.total_storage / (1024 ** 3)).toFixed(2)} GB
+                    </div>
+                    <div className="text-xs text-zinc-500 mt-1">
+                      {(fileTypeAnalytics.summary.recent_storage / (1024 ** 3)).toFixed(2)} GB recent
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-zinc-900 border-zinc-700">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-zinc-400">File Types</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-white">
+                      {fileTypeAnalytics.summary.unique_file_types}
+                    </div>
+                    <div className="text-xs text-zinc-500 mt-1">
+                      Most common: {fileTypeAnalytics.summary.most_common_type || 'N/A'}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-zinc-900 border-zinc-700">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-zinc-400">Categories</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-white">
+                      {fileTypeAnalytics.summary.unique_categories}
+                    </div>
+                    <div className="text-xs text-zinc-500 mt-1">
+                      Most common: {fileTypeAnalytics.summary.most_common_category || 'N/A'}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* File Types by Category */}
+              <Card className="bg-zinc-900 border-zinc-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Files by Category</CardTitle>
+                  <CardDescription className="text-zinc-400">
+                    Distribution of files across different categories
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {fileTypeAnalytics.category_stats.slice(0, 10).map((category, index) => {
+                      const percentage = (category.count / fileTypeAnalytics.summary.total_files) * 100
+                      return (
+                        <div key={index} className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-white font-medium">{category.category}</span>
+                            <span className="text-zinc-400">
+                              {category.count} files ({percentage.toFixed(1)}%)
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs text-zinc-500">
+                            <span>Storage: {(category.size / (1024 ** 2)).toFixed(2)} MB</span>
+                            <span>{((category.size / fileTypeAnalytics.summary.total_storage) * 100).toFixed(1)}% of total</span>
+                          </div>
+                          <div className="w-full bg-zinc-800 rounded-full h-2">
+                            <div
+                              className="bg-blue-500 h-2 rounded-full"
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+    </div>
+  )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Top File Types */}
+              <Card className="bg-zinc-900 border-zinc-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Top File Types</CardTitle>
+                  <CardDescription className="text-zinc-400">
+                    Most common file extensions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-zinc-800 sticky top-0">
+                        <tr>
+                          <th className="text-left p-3 text-white text-sm font-medium">File Type</th>
+                          <th className="text-left p-3 text-white text-sm font-medium">Category</th>
+                          <th className="text-right p-3 text-white text-sm font-medium">Count</th>
+                          <th className="text-right p-3 text-white text-sm font-medium">Total Size</th>
+                          <th className="text-right p-3 text-white text-sm font-medium">Avg Size</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {fileTypeAnalytics.file_type_stats.slice(0, 20).map((fileType, index) => (
+                          <tr key={index} className="border-b border-zinc-700">
+                            <td className="p-3 text-white">.{fileType.file_type}</td>
+                            <td className="p-3 text-zinc-400">{fileType.category}</td>
+                            <td className="p-3 text-right text-zinc-300">{fileType.count.toLocaleString()}</td>
+                            <td className="p-3 text-right text-zinc-300">
+                              {(fileType.size / (1024 ** 2)).toFixed(2)} MB
+                            </td>
+                            <td className="p-3 text-right text-zinc-300">
+                              {(fileType.size / fileType.count / 1024).toFixed(2)} KB
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Daily Upload Trends */}
+              <Card className="bg-zinc-900 border-zinc-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Daily Upload Trends</CardTitle>
+                  <CardDescription className="text-zinc-400">
+                    Total file uploads over the last {fileTypeAnalytics.summary.period_days} days
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {fileTypeAnalytics.daily_stats.length > 0 ? (
+                    <div className="h-64">
+                      <ChartContainer
+                        config={{
+                          total: {
+                            label: 'Total Uploads',
+                            color: '#3b82f6'
+                          }
+                        }}
+                        className="h-full w-full"
+                      >
+                        <AreaChart data={fileTypeAnalytics.daily_stats}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <XAxis 
+                            dataKey="date" 
+                            stroke="#9ca3af"
+                            tick={{ fill: '#9ca3af' }}
+                            angle={-45}
+                            textAnchor="end"
+                            height={80}
+                          />
+                          <YAxis 
+                            stroke="#9ca3af"
+                            tick={{ fill: '#9ca3af' }}
+                          />
+                          <ChartTooltip />
+                          <Area 
+                            type="monotone" 
+                            dataKey="count" 
+                            stroke="#3b82f6" 
+                            fill="#3b82f6" 
+                            fillOpacity={0.3}
+                          />
+                        </AreaChart>
+                      </ChartContainer>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-zinc-400">
+                      No daily upload data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* File Types Over Time by Category - Stacked Area Chart */}
+              <Card className="bg-zinc-900 border-zinc-700">
+                <CardHeader>
+                  <CardTitle className="text-white">File Types Over Time by Category</CardTitle>
+                  <CardDescription className="text-zinc-400">
+                    Breakdown of uploads by category over the last {fileTypeAnalytics.summary.period_days} days
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {fileTypeAnalytics.daily_stats.length > 0 ? (
+                    <>
+                      <div className="h-80">
+                        <ChartContainer
+                          config={{
+                            Images: { label: 'Images', color: '#3b82f6' },
+                            Videos: { label: 'Videos', color: '#8b5cf6' },
+                            Audio: { label: 'Audio', color: '#ec4899' },
+                            Documents: { label: 'Documents', color: '#10b981' },
+                            Spreadsheets: { label: 'Spreadsheets', color: '#f59e0b' },
+                            Presentations: { label: 'Presentations', color: '#ef4444' },
+                            Archives: { label: 'Archives', color: '#6366f1' },
+                            Code: { label: 'Code', color: '#14b8a6' },
+                            Other: { label: 'Other', color: '#64748b' }
+                          }}
+                          className="h-full w-full"
+                        >
+                          <AreaChart 
+                            data={fileTypeAnalytics.daily_stats.map(stat => ({
+                              date: stat.date,
+                              Images: stat.by_category.Images || 0,
+                              Videos: stat.by_category.Videos || 0,
+                              Audio: stat.by_category.Audio || 0,
+                              Documents: stat.by_category.Documents || 0,
+                              Spreadsheets: stat.by_category.Spreadsheets || 0,
+                              Presentations: stat.by_category.Presentations || 0,
+                              Archives: stat.by_category.Archives || 0,
+                              Code: stat.by_category.Code || 0,
+                              Other: stat.by_category.Other || 0
+                            }))}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                            <XAxis 
+                              dataKey="date" 
+                              stroke="#9ca3af"
+                              tick={{ fill: '#9ca3af', fontSize: 11 }}
+                              angle={-45}
+                              textAnchor="end"
+                              height={80}
+                            />
+                            <YAxis 
+                              stroke="#9ca3af"
+                              tick={{ fill: '#9ca3af' }}
+                            />
+                            <ChartTooltip />
+                            <Area type="monotone" dataKey="Images" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.8} />
+                            <Area type="monotone" dataKey="Videos" stackId="1" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.8} />
+                            <Area type="monotone" dataKey="Audio" stackId="1" stroke="#ec4899" fill="#ec4899" fillOpacity={0.8} />
+                            <Area type="monotone" dataKey="Documents" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.8} />
+                            <Area type="monotone" dataKey="Spreadsheets" stackId="1" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.8} />
+                            <Area type="monotone" dataKey="Presentations" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.8} />
+                            <Area type="monotone" dataKey="Archives" stackId="1" stroke="#6366f1" fill="#6366f1" fillOpacity={0.8} />
+                            <Area type="monotone" dataKey="Code" stackId="1" stroke="#14b8a6" fill="#14b8a6" fillOpacity={0.8} />
+                            <Area type="monotone" dataKey="Other" stackId="1" stroke="#64748b" fill="#64748b" fillOpacity={0.8} />
+                          </AreaChart>
+                        </ChartContainer>
+                      </div>
+                      
+                      {/* Legend */}
+                      <div className="mt-4 flex flex-wrap gap-4 justify-center">
+                        {[
+                          { name: 'Images', color: '#3b82f6' },
+                          { name: 'Videos', color: '#8b5cf6' },
+                          { name: 'Audio', color: '#ec4899' },
+                          { name: 'Documents', color: '#10b981' },
+                          { name: 'Spreadsheets', color: '#f59e0b' },
+                          { name: 'Presentations', color: '#ef4444' },
+                          { name: 'Archives', color: '#6366f1' },
+                          { name: 'Code', color: '#14b8a6' },
+                          { name: 'Other', color: '#64748b' }
+                        ].map((category) => (
+                          <div key={category.name} className="flex items-center gap-2">
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ backgroundColor: category.color }}
+                            ></div>
+                            <span className="text-xs text-zinc-400">{category.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8 text-zinc-400">
+                      No daily upload data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Individual Category Trends */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {fileTypeAnalytics.category_stats.slice(0, 4).map((category, index) => {
+                  const categoryData = fileTypeAnalytics.daily_stats.map(stat => ({
+                    date: stat.date,
+                    count: stat.by_category[category.category] || 0
+                  })).filter(d => d.count > 0)
+                  
+                  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#ef4444']
+                  const color = colors[index % colors.length]
+                  
+                  return categoryData.length > 0 ? (
+                    <Card key={category.category} className="bg-zinc-900 border-zinc-700">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-white text-sm">{category.category} Uploads</CardTitle>
+                        <CardDescription className="text-zinc-400 text-xs">
+                          {category.count} total files
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-32">
+                          <ChartContainer
+                            config={{
+                              count: {
+                                label: category.category,
+                                color: color
+                              }
+                            }}
+                            className="h-full w-full"
+                          >
+                            <AreaChart data={categoryData}>
+                              <XAxis 
+                                dataKey="date" 
+                                stroke="#9ca3af"
+                                tick={{ fill: '#9ca3af', fontSize: 10 }}
+                                hide
+                              />
+                              <YAxis 
+                                stroke="#9ca3af"
+                                tick={{ fill: '#9ca3af', fontSize: 10 }}
+                                width={30}
+                              />
+                              <ChartTooltip />
+                              <Area 
+                                type="monotone" 
+                                dataKey="count" 
+                                stroke={color}
+                                fill={color}
+                                fillOpacity={0.3}
+                              />
+                            </AreaChart>
+                          </ChartContainer>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : null
+                })}
+              </div>
+
+              {/* Recent File Type Activity */}
+              <Card className="bg-zinc-900 border-zinc-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Recent Activity (Last {fileTypeAnalytics.summary.period_days} Days)</CardTitle>
+                  <CardDescription className="text-zinc-400">
+                    File types uploaded in the selected time period
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {fileTypeAnalytics.recent_category_stats.length > 0 ? (
+                      fileTypeAnalytics.recent_category_stats.map((category, index) => {
+                        const percentage = (category.count / fileTypeAnalytics.summary.recent_files) * 100
+                        return (
+                          <div key={index} className="space-y-1">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-white font-medium">{category.category}</span>
+                              <span className="text-zinc-400">
+                                {category.count} files ({percentage.toFixed(1)}%)
+                              </span>
+                            </div>
+                            <div className="w-full bg-zinc-800 rounded-full h-2">
+                              <div
+                                className="bg-green-500 h-2 rounded-full"
+                                style={{ width: `${percentage}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <div className="text-center py-4 text-zinc-400">
+                        No recent file activity
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <Card className="bg-zinc-900 border-zinc-700">
+              <CardContent className="pt-6">
+                <div className="text-center py-8 text-zinc-400">
+                  No file type analytics available
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>

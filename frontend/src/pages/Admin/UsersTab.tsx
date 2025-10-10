@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Users, CheckCircle, XCircle, Settings2 } from 'lucide-react'
+import { Users, Settings2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Button } from '../../components/ui/button'
 import {
@@ -29,19 +29,9 @@ interface User {
   lastAiMessageAt?: string
   loginCount?: number
   lastLoginDate?: string
-  dashboardVisitCount?: number
-  lastDashboardVisitDate?: string
   workspaceVisitCount?: number
   lastWorkspaceVisitDate?: string
   preferredAuthMethod?: string
-  googleScopes?: string[]
-  scopeCount?: number
-  hasEmailScope?: boolean
-  hasProfileScope?: boolean
-  hasGmailScope?: boolean
-  hasDriveScope?: boolean
-  hasCalendarScope?: boolean
-  hasContactsScope?: boolean
 }
 
 interface UsersTabProps {
@@ -65,16 +55,8 @@ const COLUMNS: ColumnConfig[] = [
   { key: 'aiMessages', label: 'AI Messages', defaultVisible: true },
   { key: 'logins', label: 'Logins', defaultVisible: true },
   { key: 'lastLogin', label: 'Last Login', defaultVisible: true },
-  { key: 'dashboardVisits', label: 'Dashboard Visits', defaultVisible: false },
-  { key: 'lastDashboardVisit', label: 'Last Dashboard Visit', defaultVisible: false },
-  { key: 'workspaceVisits', label: 'Workspace Visits', defaultVisible: false },
-  { key: 'lastWorkspaceVisit', label: 'Last Workspace Visit', defaultVisible: false },
-  { key: 'emailScope', label: 'Email Scope', defaultVisible: false },
-  { key: 'profileScope', label: 'Profile Scope', defaultVisible: false },
-  { key: 'gmailScope', label: 'Gmail Scope', defaultVisible: false },
-  { key: 'driveScope', label: 'Drive Scope', defaultVisible: false },
-  { key: 'calendarScope', label: 'Calendar Scope', defaultVisible: false },
-  { key: 'contactsScope', label: 'Contacts Scope', defaultVisible: false },
+  { key: 'workspaceVisits', label: 'Workspace Visits', defaultVisible: true },
+  { key: 'lastWorkspaceVisit', label: 'Last Workspace Visit', defaultVisible: true },
   { key: 'auth', label: 'Auth Method', defaultVisible: true },
   { key: 'created', label: 'Created', defaultVisible: true },
 ]
@@ -84,10 +66,19 @@ const STORAGE_KEY = 'usersTab-visibleColumns'
 export function UsersTab({ users, convertToEasternTime, formatBytes }: UsersTabProps) {
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(() => {
     const stored = localStorage.getItem(STORAGE_KEY)
+    const defaultColumns = new Set(COLUMNS.filter(col => col.defaultVisible).map(col => col.key))
+    
     if (stored) {
-      return new Set(JSON.parse(stored))
+      const savedColumns = new Set<string>(JSON.parse(stored) as string[])
+      // Merge: add any new default columns that aren't in saved preferences
+      COLUMNS.forEach(col => {
+        if (col.defaultVisible && !savedColumns.has(col.key)) {
+          savedColumns.add(col.key)
+        }
+      })
+      return savedColumns
     }
-    return new Set(COLUMNS.filter(col => col.defaultVisible).map(col => col.key))
+    return defaultColumns
   })
 
   useEffect(() => {
@@ -175,35 +166,11 @@ export function UsersTab({ users, convertToEasternTime, formatBytes }: UsersTabP
                   {isColumnVisible('lastLogin') && (
                     <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Last Login</th>
                   )}
-                  {isColumnVisible('dashboardVisits') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Dashboard Visits</th>
-                  )}
-                  {isColumnVisible('lastDashboardVisit') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Last Dashboard Visit</th>
-                  )}
                   {isColumnVisible('workspaceVisits') && (
                     <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Workspace Visits</th>
                   )}
                   {isColumnVisible('lastWorkspaceVisit') && (
                     <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Last Workspace Visit</th>
-                  )}
-                  {isColumnVisible('emailScope') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs" title="Email Scope">Email</th>
-                  )}
-                  {isColumnVisible('profileScope') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs" title="Profile Scope">Profile</th>
-                  )}
-                  {isColumnVisible('gmailScope') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs" title="Gmail Scope">Gmail</th>
-                  )}
-                  {isColumnVisible('driveScope') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs" title="Drive Scope">Drive</th>
-                  )}
-                  {isColumnVisible('calendarScope') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs" title="Calendar Scope">Calendar</th>
-                  )}
-                  {isColumnVisible('contactsScope') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs" title="Contacts Scope">Contacts</th>
                   )}
                   {isColumnVisible('auth') && (
                     <th className="text-center py-2 px-2 text-zinc-300 font-medium text-xs">Auth</th>
@@ -272,16 +239,6 @@ export function UsersTab({ users, convertToEasternTime, formatBytes }: UsersTabP
                         {user.lastLoginDate ? convertToEasternTime(user.lastLoginDate) : 'Never'}
                       </td>
                     )}
-                    {isColumnVisible('dashboardVisits') && (
-                      <td className="py-2 px-1 text-center">
-                        <span className="text-white font-medium text-sm">{user.dashboardVisitCount?.toLocaleString() || 0}</span>
-                      </td>
-                    )}
-                    {isColumnVisible('lastDashboardVisit') && (
-                      <td className="py-2 px-1 text-center text-zinc-400 text-xs">
-                        {user.lastDashboardVisitDate ? convertToEasternTime(user.lastDashboardVisitDate) : 'Never'}
-                      </td>
-                    )}
                     {isColumnVisible('workspaceVisits') && (
                       <td className="py-2 px-1 text-center">
                         <span className="text-white font-medium text-sm">{user.workspaceVisitCount?.toLocaleString() || 0}</span>
@@ -290,72 +247,6 @@ export function UsersTab({ users, convertToEasternTime, formatBytes }: UsersTabP
                     {isColumnVisible('lastWorkspaceVisit') && (
                       <td className="py-2 px-1 text-center text-zinc-400 text-xs">
                         {user.lastWorkspaceVisitDate ? convertToEasternTime(user.lastWorkspaceVisitDate) : 'Never'}
-                      </td>
-                    )}
-                    {isColumnVisible('emailScope') && (
-                      <td className="py-2 px-1 text-center">
-                        {user.hasEmailScope ? (
-                          <CheckCircle className="h-3 w-3 text-green-400 mx-auto" />
-                        ) : user.auth_method === 'google_oauth' ? (
-                          <XCircle className="h-3 w-3 text-red-400 mx-auto" />
-                        ) : (
-                          <span className="text-zinc-600 text-xs">-</span>
-                        )}
-                      </td>
-                    )}
-                    {isColumnVisible('profileScope') && (
-                      <td className="py-2 px-1 text-center">
-                        {user.hasProfileScope ? (
-                          <CheckCircle className="h-3 w-3 text-green-400 mx-auto" />
-                        ) : user.auth_method === 'google_oauth' ? (
-                          <XCircle className="h-3 w-3 text-red-400 mx-auto" />
-                        ) : (
-                          <span className="text-zinc-600 text-xs">-</span>
-                        )}
-                      </td>
-                    )}
-                    {isColumnVisible('gmailScope') && (
-                      <td className="py-2 px-1 text-center">
-                        {user.hasGmailScope ? (
-                          <CheckCircle className="h-3 w-3 text-green-400 mx-auto" />
-                        ) : user.auth_method === 'google_oauth' ? (
-                          <XCircle className="h-3 w-3 text-red-400 mx-auto" />
-                        ) : (
-                          <span className="text-zinc-600 text-xs">-</span>
-                        )}
-                      </td>
-                    )}
-                    {isColumnVisible('driveScope') && (
-                      <td className="py-2 px-1 text-center">
-                        {user.hasDriveScope ? (
-                          <CheckCircle className="h-3 w-3 text-green-400 mx-auto" />
-                        ) : user.auth_method === 'google_oauth' ? (
-                          <XCircle className="h-3 w-3 text-red-400 mx-auto" />
-                        ) : (
-                          <span className="text-zinc-600 text-xs">-</span>
-                        )}
-                      </td>
-                    )}
-                    {isColumnVisible('calendarScope') && (
-                      <td className="py-2 px-1 text-center">
-                        {user.hasCalendarScope ? (
-                          <CheckCircle className="h-3 w-3 text-green-400 mx-auto" />
-                        ) : user.auth_method === 'google_oauth' ? (
-                          <XCircle className="h-3 w-3 text-red-400 mx-auto" />
-                        ) : (
-                          <span className="text-zinc-600 text-xs">-</span>
-                        )}
-                      </td>
-                    )}
-                    {isColumnVisible('contactsScope') && (
-                      <td className="py-2 px-1 text-center">
-                        {user.hasContactsScope ? (
-                          <CheckCircle className="h-3 w-3 text-green-400 mx-auto" />
-                        ) : user.auth_method === 'google_oauth' ? (
-                          <XCircle className="h-3 w-3 text-red-400 mx-auto" />
-                        ) : (
-                          <span className="text-zinc-600 text-xs">-</span>
-                        )}
                       </td>
                     )}
                     {isColumnVisible('auth') && (

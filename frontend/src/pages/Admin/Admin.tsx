@@ -2,7 +2,11 @@ import {
   Users, 
   Activity, 
   RefreshCw,
-  BarChart3
+  BarChart3,
+  BarChart,
+  Eye,
+  MessageSquare,
+  FileType
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
@@ -180,6 +184,45 @@ interface ConversationsAnalytics {
   error?: string
 }
 
+interface FileTypeStats {
+  file_type: string
+  category: string
+  count: number
+  size: number
+}
+
+interface CategoryStats {
+  category: string
+  count: number
+  size: number
+}
+
+interface DailyFileStats {
+  date: string
+  count: number
+  by_category: Record<string, number>
+}
+
+interface FileTypeAnalytics {
+  result: string
+  summary: {
+    total_files: number
+    total_storage: number
+    recent_files: number
+    recent_storage: number
+    unique_file_types: number
+    unique_categories: number
+    period_days: number
+    most_common_type: string | null
+    most_common_category: string | null
+  }
+  file_type_stats: FileTypeStats[]
+  category_stats: CategoryStats[]
+  recent_file_type_stats: FileTypeStats[]
+  recent_category_stats: CategoryStats[]
+  daily_stats: DailyFileStats[]
+}
+
 export default function Admin() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -209,6 +252,9 @@ export default function Admin() {
   const [dashboardVisitLoading, setDashboardVisitLoading] = useState(false)
   const [workspaceVisitStats, setWorkspaceVisitStats] = useState<any>(null)
   const [workspaceVisitLoading, setWorkspaceVisitLoading] = useState(false)
+  const [fileTypeAnalytics, setFileTypeAnalytics] = useState<FileTypeAnalytics | null>(null)
+  const [fileTypeLoading, setFileTypeLoading] = useState(false)
+  const [excludedUsers, setExcludedUsers] = useState<string[]>([])
 
   useEffect(() => {
     // Check if user is authorized (mmills only)
@@ -233,7 +279,7 @@ export default function Admin() {
 
   // Load visitor, login, scopes, and conversations data when analytics tab is selected
   useEffect(() => {
-        if (activeTab === 'analytics' && !visitorLoading && !loginLoading && !scopesLoading && !conversationsLoading && !usersLoading && !dashboardVisitLoading && !workspaceVisitLoading) {
+        if ((activeTab === 'analytics-overview' || activeTab === 'analytics-visitors' || activeTab === 'analytics-conversations') && !visitorLoading && !loginLoading && !scopesLoading && !conversationsLoading && !usersLoading && !dashboardVisitLoading && !workspaceVisitLoading) {
           loadVisitorData(30)
           loadLoginData(30)
           loadScopesAnalytics()
@@ -241,6 +287,10 @@ export default function Admin() {
           loadConversationUsers(30)
           loadDashboardVisitStats()
           loadWorkspaceVisitStats()
+        }
+        
+        if (activeTab === 'analytics-filetypes' && !fileTypeLoading) {
+          loadFileTypeAnalytics(30)
         }
   }, [activeTab])
 
@@ -290,7 +340,7 @@ export default function Admin() {
     }
 
     // Load visitor data if analytics tab is active
-    if (activeTab === 'analytics') {
+    if (activeTab === 'analytics-overview' || activeTab === 'analytics-visitors' || activeTab === 'analytics-conversations') {
       await loadVisitorData(30)
     }
 
@@ -540,11 +590,30 @@ export default function Admin() {
     }
   }
 
+  const loadFileTypeAnalytics = async (days: number = 30, usersToExclude: string[] = excludedUsers) => {
+    setFileTypeLoading(true)
+    try {
+      const response = await ApiService.getFileTypeAnalytics(days, 10000, usersToExclude) as FileTypeAnalytics
+      console.log('File type analytics response:', response)
+      if (response.result === 'success') {
+        setFileTypeAnalytics(response)
+      }
+    } catch (error) {
+      console.error('Failed to load file type analytics:', error)
+      setFileTypeAnalytics(null)
+    } finally {
+      setFileTypeLoading(false)
+    }
+  }
+
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity },
     { id: 'users', label: 'Users', icon: Users },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 }
+    { id: 'analytics-overview', label: 'Analytics Overview', icon: BarChart },
+    { id: 'analytics-visitors', label: 'Visitors', icon: Eye },
+    { id: 'analytics-conversations', label: 'AI Conversations', icon: MessageSquare },
+    { id: 'analytics-filetypes', label: 'File Types', icon: FileType }
   ]
 
   if (loading) {
@@ -628,8 +697,9 @@ export default function Admin() {
             />
           )}
 
-          {activeTab === 'analytics' && (
+          {(activeTab === 'analytics-overview' || activeTab === 'analytics-visitors' || activeTab === 'analytics-conversations' || activeTab === 'analytics-filetypes') && (
             <AnalyticsTab 
+              analyticsSubTab={activeTab === 'analytics-overview' ? 'overview' : activeTab === 'analytics-visitors' ? 'visitors' : activeTab === 'analytics-conversations' ? 'conversations' : 'filetypes'}
               visitorData={visitorData}
               visitorStats={visitorStats}
               visitorLoading={visitorLoading}
@@ -651,6 +721,10 @@ export default function Admin() {
               dashboardVisitLoading={dashboardVisitLoading}
               workspaceVisitStats={workspaceVisitStats}
               workspaceVisitLoading={workspaceVisitLoading}
+              fileTypeAnalytics={fileTypeAnalytics}
+              fileTypeLoading={fileTypeLoading}
+              excludedUsers={excludedUsers}
+              setExcludedUsers={setExcludedUsers}
               loadVisitorData={loadVisitorData}
               loadLoginData={loadLoginData}
               loadScopesAnalytics={loadScopesAnalytics}
@@ -658,6 +732,7 @@ export default function Admin() {
               loadConversationUsers={loadConversationUsers}
               loadDashboardVisitStats={loadDashboardVisitStats}
               loadWorkspaceVisitStats={loadWorkspaceVisitStats}
+              loadFileTypeAnalytics={loadFileTypeAnalytics}
               convertToEasternTime={convertToEasternTime}
             />
                         )}

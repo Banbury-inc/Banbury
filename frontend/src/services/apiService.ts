@@ -423,6 +423,20 @@ export class ApiService {
   }
 
   /**
+   * Get file type analytics
+   */
+  static async getFileTypeAnalytics(days: number = 30, limit: number = 1000, excludedUsers: string[] = []) {
+    try {
+      const excludedUsersParam = excludedUsers.length > 0 ? `&excluded_users=${excludedUsers.join(',')}` : '';
+      const response = await this.get(`/analytics/get_file_type_analytics/?days=${days}&limit=${limit}${excludedUsersParam}`);
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch file type analytics:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get all conversations analytics (admin only)
    */
   static async getConversationsAnalytics(limit: number = 50, offset: number = 0, days: number = 30, userFilter: string = '') {
