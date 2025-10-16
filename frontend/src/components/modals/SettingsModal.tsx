@@ -8,6 +8,7 @@ import {
   XCircle,
   X,
   Palette,
+  Video,
 } from 'lucide-react'
 
 import { Button } from '../ui/button'
@@ -29,7 +30,8 @@ import {
   ProfileTab, 
   AppearanceTab, 
   SubscriptionTab, 
-  ConnectionsTab 
+  ConnectionsTab,
+  MeetingAgentTab
 } from './settings-tabs'
 
 // Initialize Stripe
@@ -219,6 +221,11 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       id: 'appearance',
       label: 'Appearance',
       icon: Palette,
+    },
+    {
+      id: 'meeting-agent',
+      label: 'Meeting Agent',
+      icon: Video,
     },
     {
       id: 'connections',
@@ -419,6 +426,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   isDarkMode={isDarkMode}
                   onThemeToggle={handleThemeToggle}
                 />
+              )}
+
+              {activeTab === 'meeting-agent' && (
+                <MeetingAgentTab />
               )}
 
               {activeTab === 'subscription' && (

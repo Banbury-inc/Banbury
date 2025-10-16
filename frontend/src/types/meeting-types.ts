@@ -48,6 +48,7 @@ export interface MeetingMetadata {
   // Recall AI specific settings
   recordingMode?: 'speaker_view' | 'gallery_view' | 'shared_screen'
   botName?: string
+  profilePictureUrl?: string
 }
 
 export interface TranscriptionSegment {
@@ -88,6 +89,8 @@ export interface MeetingAgentConfig {
   apiCredentials: Record<string, string>
   webhookUrl?: string
   notificationSettings: NotificationSettings
+  profilePictureUrl?: string
+  botName?: string
 }
 
 export interface NotificationSettings {

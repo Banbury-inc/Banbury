@@ -949,4 +949,89 @@ export class MeetingAgentService {
       }
     }
   }
+
+  /**
+   * Get bot settings (profile picture and bot name)
+   */
+  static async getBotSettings(): Promise<{
+    profilePictureUrl?: string
+    botName?: string
+  }> {
+    try {
+      const response = await ApiService.get<{
+        profilePictureUrl?: string
+        botName?: string
+      }>(`${this.baseEndpoint}/bot-settings/`)
+      
+      return response
+    } catch (error) {
+      console.error('Failed to fetch bot settings:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Update bot settings (profile picture and bot name)
+   */
+  static async updateBotSettings(settings: {
+    profilePictureUrl?: string
+    botName?: string
+  }): Promise<{
+    success: boolean
+    message: string
+  }> {
+    try {
+      const response = await ApiService.post<{
+        success: boolean
+        message: string
+      }>(`${this.baseEndpoint}/bot-settings/`, settings)
+      
+      return response
+    } catch (error) {
+      console.error('Failed to update bot settings:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Upload profile picture for meeting bot
+   */
+  static async uploadProfilePicture(file: File): Promise<{
+    success: boolean
+    imageUrl: string
+    message: string
+  }> {
+    try {
+      // Get username for file path
+      const username = localStorage.getItem('username') || 'unknown'
+      
+      // Generate unique filename
+      const timestamp = Date.now()
+      const extension = file.name.split('.').pop()
+      const filename = `profile-${timestamp}.${extension}`
+      const filePath = `meeting-agent/profile-pictures/${filename}`
+      
+      // Upload to S3
+      const uploadResult = await ApiService.uploadToS3(
+        file,
+        filename,
+        'meeting-agent',
+        filePath,
+        'meeting-agent/profile-pictures'
+      )
+      
+      if (uploadResult.success) {
+        return {
+          success: true,
+          imageUrl: uploadResult.file_url || '',
+          message: 'Profile picture uploaded successfully'
+        }
+      } else {
+        throw new Error('Failed to upload profile picture to S3')
+      }
+    } catch (error) {
+      console.error('Failed to upload profile picture:', error)
+      throw error
+    }
+  }
 }
