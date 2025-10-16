@@ -20,7 +20,7 @@ import { DocxAITool } from "./components/DocxAITool";
 import { TldrawAITool } from "./components/TldrawAITool";
 import { DrawioAITool } from "../../MiddlePanel/CanvasViewer/DrawioAITool";
 import DrawioViewerModal from "../../MiddlePanel/CanvasViewer/DrawioViewerModal";
-import { FileAttachmentDisplay } from "../../file-attachment-display";
+import { FileAttachmentDisplay } from "./components/file-attachment-display";
 import { MarkdownText } from "../markdown-text";
 import { SheetAITool } from "./components/SheetAITool";
 import { TiptapAITool } from "./components/TiptapAITool";

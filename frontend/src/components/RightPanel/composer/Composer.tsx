@@ -1,24 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as AssistantUI from "@assistant-ui/react";
-import { motion } from "framer-motion";
 import {
-  ChevronDown,
   ChevronRightIcon,
-  ChevronUp,
   Square,
   Globe,
   Wrench,
   Mic,
   MicOff,
-  File,
-  FileText,
-  Table,
-  PaintbrushIcon,
 } from "lucide-react";
 
 import { ChatTiptapComposer } from "../../ChatTiptapComposer";
 import { FileAttachment } from "./components/file-attachment";
-import { FileAttachmentDisplay } from "../../file-attachment-display";
+import { FileAttachmentDisplay } from "./components/file-attachment-display";
+import { PendingChangesBar } from "./components/pending-changes-bar";
 import { Button } from "../../ui/button";
 import {
   DropdownMenu,
@@ -67,7 +61,6 @@ interface ComposerProps {
 export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll }) => {
   const composer = useComposerRuntime();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const [isPendingChangesExpanded, setIsPendingChangesExpanded] = useState(false);
 
   // Add attachments to the composer when files or emails are attached
   useEffect(() => {
@@ -282,85 +275,11 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
         )}
 
         {/* Global Accept/Reject Bar */}
-        {pendingChanges.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            className="w-full"
-          >
-            <div className="bg-zinc-200 dark:bg-zinc-800 backdrop-blur-sm border-b border-zinc-300 dark:border-zinc-700 px-2 py-2">
-              <div className="space-y-1">
-                {/* Dropdown header */}
-                <div className="flex items-center justify-between gap-2">
-                  <div 
-                    className="flex items-center gap-2 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700 p-1 rounded flex-1"
-                    onClick={() => setIsPendingChangesExpanded(!isPendingChangesExpanded)}
-                  >
-                    {isPendingChangesExpanded ? (
-                      <ChevronDown className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-                    ) : (
-                      <ChevronRightIcon className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-                    )}
-                    <span className="text-sm text-zinc-700 dark:text-zinc-300 font-medium">
-                      {pendingChanges.length} File{pendingChanges.length !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      onClick={onRejectAll}
-                      className="text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 h-7 text-xs px-2 mr-2"
-                    >
-                      Reject all
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={onAcceptAll}
-                      className="bg-zinc-300 dark:bg-zinc-600 hover:bg-zinc-400 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white border-0 h-7 text-xs px-2"
-                    >
-                      Accept all
-                    </Button>
-                  </div>
-                </div>
-
-                {/* File list */}
-                {isPendingChangesExpanded && (
-                  <div className="ml-6 space-y-1">
-                    {pendingChanges.map((change) => {
-                      const getIcon = () => {
-                        switch (change.type) {
-                          case 'document':
-                            return <FileText className="h-4 w-4 text-blue-500 dark:text-blue-400 flex-shrink-0" />;
-                          case 'spreadsheet':
-                            return <Table className="h-4 w-4 text-green-500 dark:text-green-400 flex-shrink-0" />;
-                          case 'canvas':
-                            return <PaintbrushIcon className="h-4 w-4 text-purple-500 dark:text-purple-400 flex-shrink-0" />;
-                          default:
-                            return <File className="h-4 w-4 text-zinc-500 dark:text-zinc-400 flex-shrink-0" />;
-                        }
-                      };
-
-                      return (
-                        <div
-                          key={change.id}
-                          className="flex items-center gap-2 py-1 px-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded"
-                        >
-                          {getIcon()}
-                          <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate flex-1" title={change.description}>
-                            {change.description}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
+        <PendingChangesBar
+          pendingChanges={pendingChanges}
+          onAcceptAll={onAcceptAll}
+          onRejectAll={onRejectAll}
+        />
 
         <ComposerPrimitive.Root className="relative flex w-full flex-col rounded-2xl">
           {/* Hidden native input to keep @assistant-ui runtime in sync */}

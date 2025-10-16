@@ -1,12 +1,10 @@
 import { File, ChevronDown, ChevronRight, X, Mail, Network, Eye, PaintbrushIcon } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Button } from './ui/button';
-import { Typography } from './ui/typography';
-import { cn } from '../utils';
-import { FileSystemItem } from '../utils/fileTreeUtils';
-import { isDrawioFile } from './MiddlePanel/CanvasViewer/handlers/drawio-viewer-handlers';
-import { isTldrawFile } from '../pages/Workspaces/handlers/fileTypeUtils';
+import { Button } from '../../../ui/button';
+import { FileSystemItem } from '../../../../utils/fileTreeUtils';
+import { isDrawioFile } from '../../../MiddlePanel/CanvasViewer/handlers/drawio-viewer-handlers';
+import { isTldrawFile } from '../../../../pages/Workspaces/handlers/fileTypeUtils';
 
 interface FileAttachmentDisplayProps {
   files: FileSystemItem[];
@@ -32,23 +30,24 @@ export const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
   if (totalCount === 0) return null;
 
   return (
-    <div className="space-y-1">
-      {/* Dropdown header */}
-      <div 
-        className="flex items-center gap-2 cursor-pointer hover:bg-zinc-700 p-0 rounded"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
+    <div className="px-2 py-2">
+      <div className="space-y-1">
+        {/* Dropdown header */}
+        <div 
+          className="flex items-center gap-2 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700 p-1 rounded"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
         {isExpanded ? (
-          <ChevronDown className="h-4 w-4 text-zinc-400" />
+          <ChevronDown className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
         ) : (
-          <ChevronRight className="h-4 w-4 text-zinc-400" />
+          <ChevronRight className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
         )}
-        <Typography variant="small" flex-1>
+        <span className="text-sm text-zinc-700 dark:text-zinc-300 font-medium">
           {totalCount} Attachment{totalCount > 1 ? 's' : ''}
           {fileCount > 0 && emailCount > 0 && (
-            <Typography variant="small" className="text-zinc-500 ml-1">({fileCount} file{fileCount>1?'s':''}, {emailCount} email{emailCount>1?'s':''})</Typography>
+            <span className="text-sm text-zinc-500 dark:text-zinc-400 ml-1">({fileCount} file{fileCount>1?'s':''}, {emailCount} email{emailCount>1?'s':''})</span>
           )}
-        </Typography>
+        </span>
       </div>
 
       {/* File list */}
@@ -60,26 +59,26 @@ export const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
             return (
               <div
                 key={file.file_id}
-                className="flex items-center gap-2 py-1 px-2 hover:bg-zinc-700 rounded group"
+                className="flex items-center gap-2 py-1 px-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded"
               >
                 {isDiagram ? (
-                  <Network className="h-4 w-4 text-blue-400 flex-shrink-0" />
+                  <Network className="h-4 w-4 text-blue-500 dark:text-blue-400 flex-shrink-0" />
                 ) : isCanvas ? (
-                  <PaintbrushIcon className="h-4 w-4 text-purple-400 flex-shrink-0" />
+                  <PaintbrushIcon className="h-4 w-4 text-purple-500 dark:text-purple-400 flex-shrink-0" />
                 ) : (
-                  <File className="h-4 w-4 text-zinc-400 flex-shrink-0" />
+                  <File className="h-4 w-4 text-zinc-500 dark:text-zinc-400 flex-shrink-0" />
                 )}
-                <Typography variant="small" flex-1 title={file.name}>
+                <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate flex-1" title={file.name}>
                   {file.name}
-                </Typography>
+                </span>
                 
                 {/* Action buttons */}
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
                   {(isDiagram || isCanvas) && onFileView && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className={`h-5 w-5 p-0 text-zinc-400 ${
+                      className={`h-5 w-5 p-0 text-muted-foreground ${
                         isDiagram ? 'hover:text-blue-400' : 'hover:text-purple-400'
                       }`}
                       onClick={(e) => {
@@ -94,7 +93,7 @@ export const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-5 w-5 p-0 text-zinc-400 hover:text-red-400"
+                    className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
                     onClick={(e) => {
                       e.stopPropagation();
                       onFileClick?.(file);
@@ -115,29 +114,34 @@ export const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
             return (
               <div
                 key={email.id}
-                className="flex items-center gap-2 py-1 px-2 hover:bg-zinc-700 rounded group"
+                className="flex items-center gap-2 py-1 px-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded"
               >
-                <Mail className="h-4 w-4 text-zinc-400 flex-shrink-0" />
-                <Typography variant="small" className="truncate flex-1" title={`${subject}${from ? ' — ' + from : ''}`}>
+                <Mail className="h-4 w-4 text-zinc-500 dark:text-zinc-400 flex-shrink-0" />
+                <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate flex-1" title={`${subject}${from ? ' — ' + from : ''}`}>
                   {subject}
-                </Typography>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-red-400"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEmailClick?.(email.id);
-                  }}
-                  title="Remove email"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
+                </span>
+                
+                {/* Action buttons */}
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEmailClick?.(email.id);
+                    }}
+                    title="Remove email"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             );
           })}
         </div>
       )}
+      </div>
     </div>
   );
 };

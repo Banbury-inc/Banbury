@@ -1,6 +1,6 @@
 import { ToolCallMessagePartComponent } from "@assistant-ui/react";
 import { Wrench } from "lucide-react";
-import ToolCallCard from "./ToolCallCard";
+import ToolCallCard from "./ToolCallCard"
 
 export const ToolFallback: ToolCallMessagePartComponent = ({
   toolName,
