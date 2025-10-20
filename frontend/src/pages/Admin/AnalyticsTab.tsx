@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Filter } from 'lucide-react'
 import { XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts'
 import { ChartContainer, ChartTooltip } from '../../components/ui/chart'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Input } from '../../components/ui/old-input'
 import { Label } from '../../components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
 import { ApiService } from '../../services/apiService'
 import { 
   getTotalPages, 
@@ -433,133 +434,149 @@ export function AnalyticsTab({
       {analyticsSubTab === 'overview' && (
         <div className="space-y-6">
           {/* Filter Section */}
-          <Card className="bg-zinc-900 border-zinc-700">
-            <CardHeader>
-              <CardTitle className="text-white">Filter Analytics Data</CardTitle>
-              <CardDescription className="text-zinc-400">Filter all visitor analytics by IP address or location</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="overview-ip-exclusion" className="text-white text-sm mb-2 block">
-                    Exclude IP Addresses
-                  </Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="overview-ip-exclusion"
-                      type="text"
-                      placeholder="Enter IP address to exclude..."
-                      value={visitorIpInput}
-                      onChange={(e) => setVisitorIpInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addIpExclusion()}
-                      className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
-                    />
-                    <Button 
-                      onClick={addIpExclusion}
-                      variant="outline"
-                      className="text-white border-zinc-600 hover:bg-zinc-800"
-                    >
-                      Add
-                    </Button>
-                  </div>
-                  {visitorIpExclusions.length > 0 && (
-                    <div className="mt-2">
-                      <div className="text-zinc-400 text-xs mb-1">Excluded IPs:</div>
-                      <div className="flex flex-wrap gap-2">
-                        {visitorIpExclusions.map((ip) => (
-                          <span
-                            key={ip}
-                            className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
-                          >
-                            {ip}
-                            <button
-                              onClick={() => removeIpExclusion(ip)}
-                              className="text-red-400 hover:text-red-200 ml-1"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="overview-location-exclusion" className="text-white text-sm mb-2 block">
-                    Exclude Locations (City, Region, or Country)
-                  </Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="overview-location-exclusion"
-                      type="text"
-                      placeholder="Enter location to exclude..."
-                      value={visitorLocationInput}
-                      onChange={(e) => setVisitorLocationInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addLocationExclusion()}
-                      className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
-                    />
-                    <Button 
-                      onClick={addLocationExclusion}
-                      variant="outline"
-                      className="text-white border-zinc-600 hover:bg-zinc-800"
-                    >
-                      Add
-                    </Button>
-                  </div>
-                  {visitorLocationExclusions.length > 0 && (
-                    <div className="mt-2">
-                      <div className="text-zinc-400 text-xs mb-1">Excluded Locations:</div>
-                      <div className="flex flex-wrap gap-2">
-                        {visitorLocationExclusions.map((location) => (
-                          <span
-                            key={location}
-                            className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
-                          >
-                            {location}
-                            <button
-                              onClick={() => removeLocationExclusion(location)}
-                              className="text-red-400 hover:text-red-200 ml-1"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="overview-location-filter" className="text-white text-sm mb-2 block">
-                    Location Filter (City, Region, Country)
-                  </Label>
-                  <Input
-                    id="overview-location-filter"
-                    type="text"
-                    placeholder="Enter location to filter..."
-                    value={visitorLocationFilter}
-                    onChange={(e) => setVisitorLocationFilter(e.target.value)}
-                    className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2 mt-4">
+          <div className="flex gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
                 <Button 
-                  onClick={clearAllFilters}
-                  variant="outline"
+                  variant="outline" 
                   className="text-white border-zinc-600 hover:bg-zinc-800"
                 >
-                  Clear All Filters
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filter Analytics Data
+                  {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
+                    <span className="ml-2 bg-blue-500 text-white px-2 py-0.5 rounded text-xs">
+                      {visitorIpExclusions.length + visitorLocationExclusions.length + (visitorLocationFilter ? 1 : 0)}
+                    </span>
+                  )}
                 </Button>
-                {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
-                  <div className="text-zinc-400 text-sm flex items-center">
-                    Showing {getFilteredVisitors().length} of {visitorData.length} visitors
-                    {visitorIpExclusions.length > 0 && ` (${visitorIpExclusions.length} IPs excluded)`}
-                    {visitorLocationExclusions.length > 0 && ` (${visitorLocationExclusions.length} locations excluded)`}
+              </PopoverTrigger>
+              <PopoverContent className="w-96 bg-zinc-900 border-zinc-700 max-h-[80vh] overflow-y-auto">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-white font-semibold mb-1">Filter Analytics Data</h3>
+                    <p className="text-zinc-400 text-sm">Filter all visitor analytics by IP address or location</p>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  <div>
+                    <Label htmlFor="overview-ip-exclusion" className="text-white text-sm mb-2 block">
+                      Exclude IP Addresses
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="overview-ip-exclusion"
+                        type="text"
+                        placeholder="Enter IP address to exclude..."
+                        value={visitorIpInput}
+                        onChange={(e) => setVisitorIpInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addIpExclusion()}
+                        className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                      />
+                      <Button 
+                        onClick={addIpExclusion}
+                        variant="outline"
+                        size="sm"
+                        className="text-white border-zinc-600 hover:bg-zinc-800"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    {visitorIpExclusions.length > 0 && (
+                      <div className="mt-2">
+                        <div className="text-zinc-400 text-xs mb-1">Excluded IPs:</div>
+                        <div className="flex flex-wrap gap-2">
+                          {visitorIpExclusions.map((ip) => (
+                            <span
+                              key={ip}
+                              className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
+                            >
+                              {ip}
+                              <button
+                                onClick={() => removeIpExclusion(ip)}
+                                className="text-red-400 hover:text-red-200 ml-1"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="overview-location-exclusion" className="text-white text-sm mb-2 block">
+                      Exclude Locations (City, Region, or Country)
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="overview-location-exclusion"
+                        type="text"
+                        placeholder="Enter location to exclude..."
+                        value={visitorLocationInput}
+                        onChange={(e) => setVisitorLocationInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addLocationExclusion()}
+                        className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                      />
+                      <Button 
+                        onClick={addLocationExclusion}
+                        variant="outline"
+                        size="sm"
+                        className="text-white border-zinc-600 hover:bg-zinc-800"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    {visitorLocationExclusions.length > 0 && (
+                      <div className="mt-2">
+                        <div className="text-zinc-400 text-xs mb-1">Excluded Locations:</div>
+                        <div className="flex flex-wrap gap-2">
+                          {visitorLocationExclusions.map((location) => (
+                            <span
+                              key={location}
+                              className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
+                            >
+                              {location}
+                              <button
+                                onClick={() => removeLocationExclusion(location)}
+                                className="text-red-400 hover:text-red-200 ml-1"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="overview-location-filter" className="text-white text-sm mb-2 block">
+                      Location Filter (City, Region, Country)
+                    </Label>
+                    <Input
+                      id="overview-location-filter"
+                      type="text"
+                      placeholder="Enter location to filter..."
+                      value={visitorLocationFilter}
+                      onChange={(e) => setVisitorLocationFilter(e.target.value)}
+                      className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2 pt-2">
+                    <Button 
+                      onClick={clearAllFilters}
+                      variant="outline"
+                      className="w-full text-white border-zinc-600 hover:bg-zinc-800"
+                    >
+                      Clear All Filters
+                    </Button>
+                    {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
+                      <div className="text-zinc-400 text-xs text-center">
+                        Showing {getFilteredVisitors().length} of {visitorData.length} visitors
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
 
           {/* Enhanced Tracking Summary */}
           {getFilteredVisitors().some(v => v.tracking_version) && (
@@ -1722,133 +1739,149 @@ export function AnalyticsTab({
       {analyticsSubTab === 'visitors' && (
         <div className="space-y-6">
           {/* Visitor Filters */}
-          <Card className="bg-zinc-900 border-zinc-700">
-            <CardHeader>
-              <CardTitle className="text-white">Filter Visitors</CardTitle>
-              <CardDescription className="text-zinc-400">Filter visitors by IP address or location</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="ip-exclusion" className="text-white text-sm mb-2 block">
-                    Exclude IP Addresses
-                  </Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="ip-exclusion"
-                      type="text"
-                      placeholder="Enter IP address to exclude..."
-                      value={visitorIpInput}
-                      onChange={(e) => setVisitorIpInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addIpExclusion()}
-                      className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
-                    />
-                    <Button 
-                      onClick={addIpExclusion}
-                      variant="outline"
-                      className="text-white border-zinc-600 hover:bg-zinc-800"
-                    >
-                      Add
-                    </Button>
-                  </div>
-                  {visitorIpExclusions.length > 0 && (
-                    <div className="mt-2">
-                      <div className="text-zinc-400 text-xs mb-1">Excluded IPs:</div>
-                      <div className="flex flex-wrap gap-2">
-                        {visitorIpExclusions.map((ip) => (
-                          <span
-                            key={ip}
-                            className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
-                          >
-                            {ip}
-                            <button
-                              onClick={() => removeIpExclusion(ip)}
-                              className="text-red-400 hover:text-red-200 ml-1"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="location-exclusion" className="text-white text-sm mb-2 block">
-                    Exclude Locations (City, Region, or Country)
-                  </Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="location-exclusion"
-                      type="text"
-                      placeholder="Enter location to exclude..."
-                      value={visitorLocationInput}
-                      onChange={(e) => setVisitorLocationInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addLocationExclusion()}
-                      className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
-                    />
-                    <Button 
-                      onClick={addLocationExclusion}
-                      variant="outline"
-                      className="text-white border-zinc-600 hover:bg-zinc-800"
-                    >
-                      Add
-                    </Button>
-                  </div>
-                  {visitorLocationExclusions.length > 0 && (
-                    <div className="mt-2">
-                      <div className="text-zinc-400 text-xs mb-1">Excluded Locations:</div>
-                      <div className="flex flex-wrap gap-2">
-                        {visitorLocationExclusions.map((location) => (
-                          <span
-                            key={location}
-                            className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
-                          >
-                            {location}
-                            <button
-                              onClick={() => removeLocationExclusion(location)}
-                              className="text-red-400 hover:text-red-200 ml-1"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="location-filter" className="text-white text-sm mb-2 block">
-                    Location Filter (City, Region, Country)
-                  </Label>
-                  <Input
-                    id="location-filter"
-                    type="text"
-                    placeholder="Enter location to filter..."
-                    value={visitorLocationFilter}
-                    onChange={(e) => setVisitorLocationFilter(e.target.value)}
-                    className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2 mt-4">
+          <div className="flex gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
                 <Button 
-                  onClick={clearAllFilters}
-                  variant="outline"
+                  variant="outline" 
                   className="text-white border-zinc-600 hover:bg-zinc-800"
                 >
-                  Clear All Filters
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filter Visitors
+                  {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
+                    <span className="ml-2 bg-blue-500 text-white px-2 py-0.5 rounded text-xs">
+                      {visitorIpExclusions.length + visitorLocationExclusions.length + (visitorLocationFilter ? 1 : 0)}
+                    </span>
+                  )}
                 </Button>
-                {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
-                  <div className="text-zinc-400 text-sm flex items-center">
-                    Showing {getFilteredVisitors().length} of {visitorData.length} visitors
-                    {visitorIpExclusions.length > 0 && ` (${visitorIpExclusions.length} IPs excluded)`}
-                    {visitorLocationExclusions.length > 0 && ` (${visitorLocationExclusions.length} locations excluded)`}
+              </PopoverTrigger>
+              <PopoverContent className="w-96 bg-zinc-900 border-zinc-700 max-h-[80vh] overflow-y-auto">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-white font-semibold mb-1">Filter Visitors</h3>
+                    <p className="text-zinc-400 text-sm">Filter visitors by IP address or location</p>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  <div>
+                    <Label htmlFor="ip-exclusion" className="text-white text-sm mb-2 block">
+                      Exclude IP Addresses
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="ip-exclusion"
+                        type="text"
+                        placeholder="Enter IP address to exclude..."
+                        value={visitorIpInput}
+                        onChange={(e) => setVisitorIpInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addIpExclusion()}
+                        className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                      />
+                      <Button 
+                        onClick={addIpExclusion}
+                        variant="outline"
+                        size="sm"
+                        className="text-white border-zinc-600 hover:bg-zinc-800"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    {visitorIpExclusions.length > 0 && (
+                      <div className="mt-2">
+                        <div className="text-zinc-400 text-xs mb-1">Excluded IPs:</div>
+                        <div className="flex flex-wrap gap-2">
+                          {visitorIpExclusions.map((ip) => (
+                            <span
+                              key={ip}
+                              className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
+                            >
+                              {ip}
+                              <button
+                                onClick={() => removeIpExclusion(ip)}
+                                className="text-red-400 hover:text-red-200 ml-1"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="location-exclusion" className="text-white text-sm mb-2 block">
+                      Exclude Locations (City, Region, or Country)
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="location-exclusion"
+                        type="text"
+                        placeholder="Enter location to exclude..."
+                        value={visitorLocationInput}
+                        onChange={(e) => setVisitorLocationInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addLocationExclusion()}
+                        className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                      />
+                      <Button 
+                        onClick={addLocationExclusion}
+                        variant="outline"
+                        size="sm"
+                        className="text-white border-zinc-600 hover:bg-zinc-800"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    {visitorLocationExclusions.length > 0 && (
+                      <div className="mt-2">
+                        <div className="text-zinc-400 text-xs mb-1">Excluded Locations:</div>
+                        <div className="flex flex-wrap gap-2">
+                          {visitorLocationExclusions.map((location) => (
+                            <span
+                              key={location}
+                              className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
+                            >
+                              {location}
+                              <button
+                                onClick={() => removeLocationExclusion(location)}
+                                className="text-red-400 hover:text-red-200 ml-1"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="location-filter" className="text-white text-sm mb-2 block">
+                      Location Filter (City, Region, Country)
+                    </Label>
+                    <Input
+                      id="location-filter"
+                      type="text"
+                      placeholder="Enter location to filter..."
+                      value={visitorLocationFilter}
+                      onChange={(e) => setVisitorLocationFilter(e.target.value)}
+                      className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2 pt-2">
+                    <Button 
+                      onClick={clearAllFilters}
+                      variant="outline"
+                      className="w-full text-white border-zinc-600 hover:bg-zinc-800"
+                    >
+                      Clear All Filters
+                    </Button>
+                    {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
+                      <div className="text-zinc-400 text-xs text-center">
+                        Showing {getFilteredVisitors().length} of {visitorData.length} visitors
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
 
           <Card className="bg-zinc-900 border-zinc-700">
             <CardHeader>
@@ -2025,68 +2058,85 @@ export function AnalyticsTab({
           ) : fileTypeAnalytics ? (
             <>
               {/* User Filter Section */}
-              <Card className="bg-zinc-900 border-zinc-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Filter by User</CardTitle>
-                  <CardDescription className="text-zinc-400">Exclude specific users from file type analytics</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="user-exclusion" className="text-white text-sm mb-2 block">
-                        Exclude Users (username or email)
-                      </Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="user-exclusion"
-                          type="text"
-                          placeholder="Enter username or email to exclude..."
-                          value={userExclusionInput}
-                          onChange={(e) => setUserExclusionInput(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && addUserExclusion()}
-                          className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
-                        />
-                        <Button 
-                          onClick={addUserExclusion}
-                          variant="outline"
-                          className="text-white border-zinc-600 hover:bg-zinc-800"
-                        >
-                          Add
-                        </Button>
-                      </div>
+              <div className="flex gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="text-white border-zinc-600 hover:bg-zinc-800"
+                    >
+                      <Filter className="h-4 w-4 mr-2" />
+                      Filter by User
                       {excludedUsers.length > 0 && (
-                        <div className="mt-2">
-                          <div className="flex justify-between items-center mb-1">
-                            <div className="text-zinc-400 text-xs">Excluded Users:</div>
-                            <button
-                              onClick={clearUserExclusions}
-                              className="text-xs text-red-400 hover:text-red-300"
-                            >
-                              Clear All
-                            </button>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {excludedUsers.map((user) => (
-                              <span
-                                key={user}
-                                className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
-                              >
-                                {user}
-                                <button
-                                  onClick={() => removeUserExclusion(user)}
-                                  className="text-red-400 hover:text-red-200 ml-1"
-                                >
-                                  ×
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
+                        <span className="ml-2 bg-blue-500 text-white px-2 py-0.5 rounded text-xs">
+                          {excludedUsers.length}
+                        </span>
                       )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-96 bg-zinc-900 border-zinc-700 max-h-[80vh] overflow-y-auto">
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-white font-semibold mb-1">Filter by User</h3>
+                        <p className="text-zinc-400 text-sm">Exclude specific users from file type analytics</p>
+                      </div>
+                      <div>
+                        <Label htmlFor="user-exclusion" className="text-white text-sm mb-2 block">
+                          Exclude Users (username or email)
+                        </Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="user-exclusion"
+                            type="text"
+                            placeholder="Enter username or email to exclude..."
+                            value={userExclusionInput}
+                            onChange={(e) => setUserExclusionInput(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && addUserExclusion()}
+                            className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                          />
+                          <Button 
+                            onClick={addUserExclusion}
+                            variant="outline"
+                            size="sm"
+                            className="text-white border-zinc-600 hover:bg-zinc-800"
+                          >
+                            Add
+                          </Button>
+                        </div>
+                        {excludedUsers.length > 0 && (
+                          <div className="mt-2">
+                            <div className="flex justify-between items-center mb-1">
+                              <div className="text-zinc-400 text-xs">Excluded Users:</div>
+                              <button
+                                onClick={clearUserExclusions}
+                                className="text-xs text-red-400 hover:text-red-300"
+                              >
+                                Clear All
+                              </button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {excludedUsers.map((user) => (
+                                <span
+                                  key={user}
+                                  className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
+                                >
+                                  {user}
+                                  <button
+                                    onClick={() => removeUserExclusion(user)}
+                                    className="text-red-400 hover:text-red-200 ml-1"
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </PopoverContent>
+                </Popover>
+              </div>
 
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

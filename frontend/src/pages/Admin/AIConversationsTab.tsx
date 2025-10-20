@@ -1,8 +1,9 @@
 import { useState, Fragment } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Filter } from 'lucide-react'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Label } from '../../components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
 import { ApiService } from '../../services/apiService'
 
 interface ConversationData {
@@ -83,58 +84,76 @@ export function AIConversationsTab({
   return (
     <div className="space-y-6">
       {/* User Filter */}
-      <Card className="bg-zinc-900 border-zinc-700">
-        <CardHeader>
-          <CardTitle className="text-white">Filter Conversations</CardTitle>
-          <CardDescription className="text-zinc-400">Filter conversations by username</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4 items-end">
-            <div className="flex-1">
-              <Label htmlFor="user-filter" className="text-white text-sm mb-2 block">
-                Select User
-              </Label>
-              <select
-                id="user-filter"
-                value={conversationUserFilter}
-                onChange={(e) => setConversationUserFilter(e.target.value)}
-                className="w-full bg-zinc-800 text-white border border-zinc-600 rounded px-3 py-2 focus:border-blue-500 focus:outline-none"
-              >
-                <option value="">All Users</option>
-                {usersLoading ? (
-                  <option disabled>Loading users...</option>
-                ) : (
-                  conversationUsers.map((username) => (
-                    <option key={username} value={username}>
-                      {username}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
+      <div className="flex gap-2">
+        <Popover>
+          <PopoverTrigger asChild>
             <Button 
-              onClick={() => loadConversationsAnalytics(30, conversationUserFilter)}
-              variant="outline"
+              variant="outline" 
               className="text-white border-zinc-600 hover:bg-zinc-800"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Apply Filter
+              <Filter className="h-4 w-4 mr-2" />
+              Filter Conversations
+              {conversationUserFilter && (
+                <span className="ml-2 bg-blue-500 text-white px-2 py-0.5 rounded text-xs">
+                  1
+                </span>
+              )}
             </Button>
-            {conversationUserFilter && (
-              <Button 
-                onClick={() => {
-                  setConversationUserFilter('')
-                  loadConversationsAnalytics(30, '')
-                }}
-                variant="outline"
-                className="text-white border-zinc-600 hover:bg-zinc-800"
-              >
-                Clear
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 bg-zinc-900 border-zinc-700">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-white font-semibold mb-1">Filter Conversations</h3>
+                <p className="text-zinc-400 text-sm">Filter conversations by username</p>
+              </div>
+              <div>
+                <Label htmlFor="user-filter" className="text-white text-sm mb-2 block">
+                  Select User
+                </Label>
+                <select
+                  id="user-filter"
+                  value={conversationUserFilter}
+                  onChange={(e) => setConversationUserFilter(e.target.value)}
+                  className="w-full bg-zinc-800 text-white border border-zinc-600 rounded px-3 py-2 focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="">All Users</option>
+                  {usersLoading ? (
+                    <option disabled>Loading users...</option>
+                  ) : (
+                    conversationUsers.map((username) => (
+                      <option key={username} value={username}>
+                        {username}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => loadConversationsAnalytics(30, conversationUserFilter)}
+                  variant="outline"
+                  className="flex-1 text-white border-zinc-600 hover:bg-zinc-800"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Apply
+                </Button>
+                {conversationUserFilter && (
+                  <Button 
+                    onClick={() => {
+                      setConversationUserFilter('')
+                      loadConversationsAnalytics(30, '')
+                    }}
+                    variant="outline"
+                    className="flex-1 text-white border-zinc-600 hover:bg-zinc-800"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
 
       <Card className="bg-zinc-900 border-zinc-700">
         <CardHeader>
