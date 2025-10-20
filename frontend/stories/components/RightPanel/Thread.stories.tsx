@@ -1321,3 +1321,488 @@ export const ProcessingLargeFile: Story = {
   },
 }
 
+// =============================================================================
+// Pending Changes / Accept-Deny States
+// =============================================================================
+
+export const WithPendingDocumentEdit: Story = {
+  name: "✏️ Pending Document Edit",
+  decorators: [
+    (Story) => {
+      const initialMessages = [
+        {
+          id: "msg-1",
+          role: "user",
+          content: [{ type: "text", text: "Can you improve the introduction section of this document?" }],
+        },
+        {
+          id: "msg-2",
+          role: "assistant",
+          content: [
+            {
+              type: "tool-call",
+              toolName: "docx_ai",
+              args: {
+                file_id: "file-doc",
+                file_name: "report.docx",
+                operations: [
+                  {
+                    type: "replaceText",
+                    target: "Introduction",
+                    replacement: "Executive Summary",
+                  },
+                ],
+              },
+              result: {
+                success: true,
+                message: "Document changes prepared",
+              },
+            },
+            {
+              type: "text",
+              text: "I've prepared improvements to your introduction section:\n\n**Proposed Changes:**\n- Enhanced opening paragraph for better engagement\n- Added key statistics upfront\n- Improved flow and readability\n- Strengthened call-to-action\n\n**Please review the changes** using the pending changes bar below. You can accept or reject these modifications.",
+            },
+          ],
+        },
+      ]
+
+      return (
+        <ThreadWrapper initialMessages={initialMessages}>
+          <Story />
+        </ThreadWrapper>
+      )
+    },
+  ],
+  args: {
+    userInfo: {
+      username: "writer",
+      email: "writer@example.com",
+    },
+    selectedFile: {
+      id: "file-doc",
+      name: "report.docx",
+      path: "/documents/report.docx",
+      type: "file",
+      file_id: "file-doc",
+      size: 524288,
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Thread showing AI-suggested document edits awaiting user approval.",
+      },
+    },
+  },
+}
+
+export const WithMultiplePendingChanges: Story = {
+  name: "✏️✏️ Multiple Pending Changes",
+  decorators: [
+    (Story) => {
+      const initialMessages = [
+        {
+          id: "msg-1",
+          role: "user",
+          content: [{ type: "text", text: "Update the document formatting and add charts to the spreadsheet" }],
+        },
+        {
+          id: "msg-2",
+          role: "assistant",
+          content: [
+            {
+              type: "tool-call",
+              toolName: "docx_ai",
+              args: {
+                file_id: "file-doc",
+                operations: ["formatting updates"],
+              },
+              result: { success: true },
+            },
+            {
+              type: "tool-call",
+              toolName: "sheet_ai",
+              args: {
+                file_id: "file-sheet",
+                operations: ["add charts"],
+              },
+              result: { success: true },
+            },
+            {
+              type: "text",
+              text: "I've prepared changes for both files:\n\n**Document Changes:**\n- Applied consistent heading styles\n- Updated font formatting\n- Adjusted margins and spacing\n\n**Spreadsheet Changes:**\n- Added revenue trend chart\n- Created expense breakdown pie chart\n- Inserted quarterly comparison graph\n\n**Review and approve** each change using the pending changes bar below.",
+            },
+          ],
+        },
+      ]
+
+      return (
+        <ThreadWrapper initialMessages={initialMessages}>
+          <Story />
+        </ThreadWrapper>
+      )
+    },
+  ],
+  args: {
+    userInfo: {
+      username: "analyst",
+      email: "analyst@example.com",
+    },
+    selectedFile: {
+      id: "file-doc",
+      name: "report.docx",
+      path: "/documents/report.docx",
+      type: "file",
+      file_id: "file-doc",
+      size: 524288,
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Thread showing multiple AI tool suggestions across different file types.",
+      },
+    },
+  },
+}
+
+export const WithCanvasChanges: Story = {
+  name: "🎨 Pending Canvas Changes",
+  decorators: [
+    (Story) => {
+      const initialMessages = [
+        {
+          id: "msg-1",
+          role: "user",
+          content: [{ type: "text", text: "Add annotations to highlight the key components in this diagram" }],
+        },
+        {
+          id: "msg-2",
+          role: "assistant",
+          content: [
+            {
+              type: "tool-call",
+              toolName: "tldraw_ai",
+              args: {
+                canvas_id: "canvas-1",
+                operations: [
+                  { type: "addShape", shapeType: "annotation" },
+                  { type: "addShape", shapeType: "arrow" },
+                ],
+              },
+              result: {
+                success: true,
+                shapes_added: 5,
+              },
+            },
+            {
+              type: "text",
+              text: "I've created annotations for your diagram:\n\n**Added Elements:**\n- ✅ 3 text annotations highlighting key areas\n- ✅ 2 arrow indicators pointing to important components\n- ✅ Color-coded sections for better organization\n\n**Preview the changes** in your canvas and approve when ready.",
+            },
+          ],
+        },
+      ]
+
+      return (
+        <ThreadWrapper initialMessages={initialMessages}>
+          <Story />
+        </ThreadWrapper>
+      )
+    },
+  ],
+  args: {
+    userInfo: {
+      username: "designer",
+      email: "designer@example.com",
+    },
+    selectedFile: {
+      id: "file-canvas",
+      name: "system-architecture.tldraw",
+      path: "/diagrams/system-architecture.tldraw",
+      type: "file",
+      file_id: "file-canvas",
+      size: 204800,
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Thread showing AI-suggested canvas/drawing modifications.",
+      },
+    },
+  },
+}
+
+export const WithSpreadsheetSuggestions: Story = {
+  name: "📊 Pending Spreadsheet Changes",
+  decorators: [
+    (Story) => {
+      const initialMessages = [
+        {
+          id: "msg-1",
+          role: "user",
+          content: [{ type: "text", text: "Calculate the profit margins for each product and add conditional formatting" }],
+        },
+        {
+          id: "msg-2",
+          role: "assistant",
+          content: [
+            {
+              type: "tool-call",
+              toolName: "sheet_ai",
+              args: {
+                file_id: "file-spreadsheet",
+                operations: [
+                  { type: "addFormula", formula: "=(Revenue - Cost) / Revenue" },
+                  { type: "addFormatting", range: "E2:E50" },
+                ],
+              },
+              result: {
+                success: true,
+                rows_updated: 48,
+                formulas_added: 48,
+              },
+            },
+            {
+              type: "text",
+              text: "I've prepared spreadsheet updates:\n\n**Calculations Added:**\n- Profit margin formula applied to all products (48 rows)\n- Average margin: 23.4%\n- Top performer: Product A (38% margin)\n- Lowest: Product F (12% margin)\n\n**Formatting Applied:**\n- Green highlights for margins > 25%\n- Yellow for 15-25%\n- Red for < 15%\n\n**Review the changes** before applying them to your spreadsheet.",
+            },
+          ],
+        },
+      ]
+
+      return (
+        <ThreadWrapper initialMessages={initialMessages}>
+          <Story />
+        </ThreadWrapper>
+      )
+    },
+  ],
+  args: {
+    userInfo: {
+      username: "analyst",
+      email: "analyst@data.com",
+    },
+    selectedFile: {
+      id: "file-spreadsheet",
+      name: "product-analysis.xlsx",
+      path: "/data/product-analysis.xlsx",
+      type: "file",
+      file_id: "file-spreadsheet",
+      size: 1048576,
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Thread showing AI-suggested spreadsheet calculations and formatting.",
+      },
+    },
+  },
+}
+
+export const WithComplexDocumentRevisions: Story = {
+  name: "📝 Complex Document Revisions",
+  decorators: [
+    (Story) => {
+      const initialMessages = [
+        {
+          id: "msg-1",
+          role: "user",
+          content: [{ type: "text", text: "Restructure this document to follow a more logical flow and add section summaries" }],
+        },
+        {
+          id: "msg-2",
+          role: "assistant",
+          content: [
+            {
+              type: "tool-call",
+              toolName: "docx_ai",
+              args: {
+                file_id: "file-complex-doc",
+                operations: [
+                  { type: "reorder", sections: ["intro", "methodology", "results", "discussion"] },
+                  { type: "insertText", location: "end_of_section", text: "Summary text..." },
+                ],
+              },
+              result: {
+                success: true,
+                sections_reordered: 4,
+                summaries_added: 4,
+              },
+            },
+            {
+              type: "text",
+              text: "I've restructured your document with major improvements:\n\n**Structure Changes:**\n- ✅ Reordered sections for better logical flow\n- ✅ Moved methodology before results\n- ✅ Added executive summary at the beginning\n- ✅ Reorganized discussion section\n\n**Content Additions:**\n- ✅ Section summaries for each major part\n- ✅ Transition paragraphs between sections\n- ✅ Key takeaways highlighted\n\n**This is a significant revision** - please review carefully before accepting.",
+            },
+          ],
+        },
+      ]
+
+      return (
+        <ThreadWrapper initialMessages={initialMessages}>
+          <Story />
+        </ThreadWrapper>
+      )
+    },
+  ],
+  args: {
+    userInfo: {
+      username: "editor",
+      email: "editor@publishing.com",
+    },
+    selectedFile: {
+      id: "file-complex-doc",
+      name: "research-paper.docx",
+      path: "/documents/research-paper.docx",
+      type: "file",
+      file_id: "file-complex-doc",
+      size: 2097152,
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Thread showing complex, multi-step document revisions awaiting approval.",
+      },
+    },
+  },
+}
+
+export const AfterAcceptingChanges: Story = {
+  name: "✅ After Accepting Changes",
+  decorators: [
+    (Story) => {
+      const initialMessages = [
+        {
+          id: "msg-1",
+          role: "user",
+          content: [{ type: "text", text: "Fix the grammar in this document" }],
+        },
+        {
+          id: "msg-2",
+          role: "assistant",
+          content: [
+            {
+              type: "tool-call",
+              toolName: "docx_ai",
+              args: {
+                file_id: "file-grammar",
+                operations: [{ type: "grammarCheck" }],
+              },
+              result: { success: true, corrections: 15 },
+            },
+            {
+              type: "text",
+              text: "I've corrected 15 grammar issues in your document. The changes have been applied!\n\n**Corrections Made:**\n- Subject-verb agreement (5 instances)\n- Punctuation (6 instances)\n- Sentence structure (3 instances)\n- Word usage (1 instance)\n\n✅ **Changes successfully applied** to your document.",
+            },
+          ],
+        },
+      ]
+
+      return (
+        <ThreadWrapper initialMessages={initialMessages}>
+          <Story />
+        </ThreadWrapper>
+      )
+    },
+  ],
+  args: {
+    userInfo: {
+      username: "writer",
+      email: "writer@example.com",
+    },
+    selectedFile: {
+      id: "file-grammar",
+      name: "draft.docx",
+      path: "/documents/draft.docx",
+      type: "file",
+      file_id: "file-grammar",
+      size: 307200,
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Thread showing the state after user has accepted AI suggestions.",
+      },
+    },
+  },
+}
+
+export const AfterRejectingChanges: Story = {
+  name: "❌ After Rejecting Changes",
+  decorators: [
+    (Story) => {
+      const initialMessages = [
+        {
+          id: "msg-1",
+          role: "user",
+          content: [{ type: "text", text: "Make this document more formal" }],
+        },
+        {
+          id: "msg-2",
+          role: "assistant",
+          content: [
+            {
+              type: "tool-call",
+              toolName: "docx_ai",
+              args: {
+                file_id: "file-formal",
+                operations: [{ type: "changeStyle", style: "formal" }],
+              },
+              result: { success: true },
+            },
+            {
+              type: "text",
+              text: "I prepared formal style changes, but you rejected them.\n\n❌ **Changes discarded** - your document remains unchanged.\n\nWould you like me to try a different approach or make specific adjustments instead?",
+            },
+          ],
+        },
+        {
+          id: "msg-3",
+          role: "user",
+          content: [{ type: "text", text: "Can you make it slightly more formal but keep the friendly tone?" }],
+        },
+        {
+          id: "msg-4",
+          role: "assistant",
+          content: [
+            {
+              type: "text",
+              text: "Good idea! I'll balance professionalism with approachability. Let me prepare revised changes that maintain warmth while elevating the tone...",
+            },
+          ],
+        },
+      ]
+
+      return (
+        <ThreadWrapper initialMessages={initialMessages}>
+          <Story />
+        </ThreadWrapper>
+      )
+    },
+  ],
+  args: {
+    userInfo: {
+      username: "writer",
+      email: "writer@example.com",
+    },
+    selectedFile: {
+      id: "file-formal",
+      name: "blog-post.docx",
+      path: "/documents/blog-post.docx",
+      type: "file",
+      file_id: "file-formal",
+      size: 409600,
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Thread showing the state after user has rejected AI suggestions with follow-up.",
+      },
+    },
+  },
+}
+
