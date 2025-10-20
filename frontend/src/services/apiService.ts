@@ -485,6 +485,16 @@ export class ApiService {
     }
   }
 
+  static async getConversationAdmin(conversationId: string) {
+    try {
+      const response = await this.get(`/conversations/admin/${conversationId}/`);
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch conversation (admin):', error);
+      throw error;
+    }
+  }
+
   /**
    * Get user's S3 cloud files
    */
