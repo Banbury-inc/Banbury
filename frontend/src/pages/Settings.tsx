@@ -19,6 +19,7 @@ import {
 import { Button } from '../components/ui/button'
 import { ScopeManager } from '../components/modals/settings-tabs/ScopeManager'
 import { XApiConnection } from '../components/modals/settings-tabs/XApiConnection'
+import { SlackConnection } from '../components/modals/settings-tabs/SlackConnection'
 import { ApiService } from '../services/apiService'
 import { NavSidebar } from '../components/nav-sidebar'
 import { loadStripe } from '@stripe/stripe-js'
@@ -247,6 +248,17 @@ const Settings = (): JSX.Element => {
         title: "X Account Connected",
         description: "Successfully connected to your X account!",
       })
+      // Remove the query parameter
+      router.replace('/settings', undefined, { shallow: true })
+    }
+
+    // Check if Slack connection was successful
+    if (router.query.slack_connected === 'true') {
+      toast({
+        title: "Slack Workspace Connected",
+        description: "Successfully connected to your Slack workspace!",
+      })
+      setActiveTab('connections')
       // Remove the query parameter
       router.replace('/settings', undefined, { shallow: true })
     }
@@ -808,6 +820,15 @@ const Settings = (): JSX.Element => {
                     // You could show a success message or refresh the page
                   }}
                 />
+              </div>
+
+              {/* Slack Integration */}
+              <div className="p-6 bg-zinc-900 rounded-lg">
+                <h2 className="text-lg font-semibold mb-4 flex items-center text-white">
+                  <Link className="h-5 w-5 mr-2" />
+                  Slack Integration
+                </h2>
+                <SlackConnection />
               </div>
 
               {/* X API Integration */}

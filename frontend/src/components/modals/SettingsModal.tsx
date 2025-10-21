@@ -267,6 +267,15 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       setActiveTab('connections')
       router.replace(router.pathname, undefined, { shallow: true })
     }
+
+    if (router.query.slack_connected === 'true') {
+      toast({
+        title: "Slack Workspace Connected",
+        description: "Successfully connected to your Slack workspace!",
+      })
+      setActiveTab('connections')
+      router.replace(router.pathname, undefined, { shallow: true })
+    }
   }, [router.query.scopeActivated, router.query.x_connected])
 
   async function loadUserInfo() {
