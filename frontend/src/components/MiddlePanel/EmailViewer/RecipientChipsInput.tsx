@@ -178,7 +178,7 @@ export function RecipientChipsInput({ value, onChange, placeholder, disabled, cl
   return (
     <div className={`relative ${className || ''}`} ref={wrapperRef}>
       <div
-        className={`flex flex-wrap items-center gap-2 w-full rounded-lg border px-4 py-[9px] text-sm transition-all focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500/50 focus-within:border-blue-500 bg-zinc-800/50 border-zinc-700 hover:border-zinc-600 ${
+        className={`flex flex-wrap items-center gap-2 w-full rounded-lg border px-4 py-[9px] text-sm transition-all focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/50 focus-within:border-primary bg-background border-border hover:border-border/80 ${
           disabled ? 'opacity-50 pointer-events-none' : ''
         }`}
         onClick={() => inputRef.current?.focus()}
@@ -186,7 +186,7 @@ export function RecipientChipsInput({ value, onChange, placeholder, disabled, cl
         {tokens.map((t, idx) => (
           <span
             key={`${t}-${idx}`}
-            className="inline-flex items-center gap-1.5 max-w-full rounded-md bg-blue-600/20 text-blue-300 border border-blue-500/30 px-2.5 py-0.5 hover:bg-blue-600/30 transition-colors"
+            className="inline-flex items-center gap-1.5 max-w-full rounded-md bg-primary/20 text-primary border border-primary/30 px-2.5 py-0.5 hover:bg-primary/30 transition-colors"
             title={t}
           >
             <span className="truncate text-sm font-medium">
@@ -198,7 +198,7 @@ export function RecipientChipsInput({ value, onChange, placeholder, disabled, cl
                 e.stopPropagation()
                 removeTokenAt(idx)
               }}
-              className="text-blue-400 hover:text-blue-200 hover:bg-blue-500/20 rounded p-0.5 transition-colors"
+              className="text-primary hover:text-primary-foreground hover:bg-primary/20 rounded p-0.5 transition-colors"
               aria-label={`Remove ${t}`}
             >
               <X className="h-3 w-3" />
@@ -224,20 +224,20 @@ export function RecipientChipsInput({ value, onChange, placeholder, disabled, cl
           }}
           placeholder={inputPlaceholder}
           disabled={disabled}
-          className="flex-1 min-w-[120px] text-white placeholder-zinc-500 bg-transparent border-0 ring-0 focus-visible:ring-0 h-auto p-0 text-sm"
+          className="flex-1 min-w-[120px] text-foreground placeholder-muted-foreground bg-transparent border-0 ring-0 focus-visible:ring-0 h-auto p-0 text-sm"
         />
       </div>
 
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute z-50 mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-800 shadow-xl overflow-hidden">
+        <div className="absolute z-50 mt-2 w-full rounded-lg border border-border bg-popover shadow-xl overflow-hidden">
           <ul className="max-h-64 overflow-auto py-1">
             {suggestions.map((s, i) => (
               <li
                 key={`${s.value}-${i}`}
                 className={`px-4 py-2.5 cursor-pointer transition-colors ${
                   i === highlightIndex 
-                    ? 'bg-blue-600/20 border-l-2 border-blue-500' 
-                    : 'hover:bg-zinc-700/50 border-l-2 border-transparent'
+                    ? 'bg-primary/20 border-l-2 border-primary' 
+                    : 'hover:bg-accent border-l-2 border-transparent'
                 }`}
                 onMouseEnter={() => setHighlightIndex(i)}
                 onMouseDown={(e) => {
@@ -247,8 +247,8 @@ export function RecipientChipsInput({ value, onChange, placeholder, disabled, cl
                 title={s.value}
               >
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-zinc-100 font-medium text-sm">{s.label}</span>
-                  <span className="text-zinc-400 text-xs">{s.value}</span>
+                  <span className="text-foreground font-medium text-sm">{s.label}</span>
+                  <span className="text-muted-foreground text-xs">{s.value}</span>
                 </div>
               </li>
             ))}

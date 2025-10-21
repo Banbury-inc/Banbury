@@ -273,7 +273,6 @@ export function FilesTab({
       
       // Debug: Check if auth token exists
       const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
-      console.log('Auth token exists:', !!token)
       if (!token) {
         console.error('No auth token found in localStorage!')
         setDriveAvailable(false)
@@ -315,30 +314,24 @@ export function FilesTab({
     try {
       // Debug: Check auth token before making request
       const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
-      console.log('fetchDriveFiles - Auth token exists:', !!token, 'pageToken:', pageToken)
       
       if (!token) {
         throw new Error('No authentication token found')
       }
       
       // Fetch root-level files with pagination
-      console.log('Fetching Drive root files...')
       const response = await DriveService.listRootFiles(100, pageToken)
-      console.log('Drive files response:', response)
       
       if (response.files) {
         // If pageToken exists, append to existing files; otherwise replace
         if (pageToken) {
           setDriveFiles(prev => [...prev, ...(response.files || [])])
-          console.log('Loaded', response.files?.length || 0, 'more Drive files')
         } else {
           setDriveFiles(response.files || [])
-          console.log('Successfully loaded', response.files?.length || 0, 'Drive files')
         }
         
         // Store the next page token for pagination
         setDriveNextPageToken(response.nextPageToken)
-        console.log('Next page token:', response.nextPageToken)
       }
     } catch (error: any) {
       console.error('Failed to load Drive files:', error)
@@ -370,7 +363,6 @@ export function FilesTab({
   // Load more Google Drive files for infinite scroll
   const loadMoreDriveFiles = useCallback(() => {
     if (driveNextPageToken && !isLoadingMoreDrive) {
-      console.log('Loading more Drive files with token:', driveNextPageToken)
       fetchDriveFiles(driveNextPageToken)
     }
   }, [driveNextPageToken, isLoadingMoreDrive, fetchDriveFiles])

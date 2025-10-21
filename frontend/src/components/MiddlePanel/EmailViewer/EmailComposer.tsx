@@ -157,6 +157,11 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
         console.log('Setting signature:', response.signature)
         const cleanedSignature = cleanSignature(response.signature)
         setSignature(cleanedSignature)
+        
+        // For new emails (not replies), automatically add signature to the body
+        if (!replyTo && isContentEmpty(form.body)) {
+          setForm(prev => ({ ...prev, body: cleanedSignature }))
+        }
       } else {
         console.log('No signature available or error:', response)
       }
@@ -166,7 +171,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
     } finally {
       setLoadingSignature(false)
     }
-  }, [form.body, isContentEmpty, cleanSignature])
+  }, [isContentEmpty, cleanSignature, replyTo])
 
   const handleSend = useCallback(async () => {
     const normalizedTo = normalizeRecipients(form.to)
@@ -196,21 +201,16 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
           attachments: attachmentsPayload
         })
       } else {
-        // Use sendMessageWithSignature for new emails to automatically include signature
+        // Use regular sendMessage since the signature is already visible and editable in the composer
         const attachmentsPayload = await Promise.all(attachments.map(async (file) => ({
           filename: file.name,
           mimeType: file.type || 'application/octet-stream',
           content: await file.arrayBuffer().then((buf) => arrayBufferToBase64(buf))
         })))
-        // If the user already inserted the signature into the body, remove it before
-        // calling the endpoint that appends the signature to avoid duplication.
-        const bodyWithoutSignature = signature && form.body.includes(signature)
-          ? form.body.replace(signature, '')
-          : form.body
-        await EmailService.sendMessageWithSignature({
+        await EmailService.sendMessage({
           to: normalizedTo,
           subject: form.subject,
-          body: bodyWithoutSignature,
+          body: form.body,
           attachments: attachmentsPayload
         })
       }
@@ -280,33 +280,34 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
   }, [])
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-zinc-800">
+    <div className="h-full flex flex-col bg-accent">
       {/* Email Form */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-600 scrollbar-track-zinc-100 dark:scrollbar-track-zinc-800 hover:scrollbar-thumb-zinc-400 dark:hover:scrollbar-thumb-zinc-500">
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-background hover:scrollbar-thumb-muted-foreground">
         <div className="w-full">
           {/* Recipients */}
-          <div className="px-2 py-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
-            <div className="space-y-2">
-              <div className="flex items-center">
+          <div className="px-4 py-3 border-b border-border bg-background/50">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-muted-foreground min-w-[60px]">To:</span>
                 <div className="flex-1">
                   <RecipientChipsInput
                     value={form.to}
                     onChange={(next) => setForm(prev => ({ ...prev, to: next }))}
-                    placeholder="To"
+                    placeholder="Add recipients"
                     disabled={sending}
                     loadSuggestions={loadRecipientSuggestions}
                   />
                 </div>
               </div>
               
-              <div className="flex items-center">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-muted-foreground min-w-[60px]">Subject:</span>
                 <div className="flex-1">
                   <Input
                     value={form.subject}
                     onChange={(e) => setForm(prev => ({ ...prev, subject: e.target.value }))}
-                    variant="primaryBlack"
-                    placeholder="Subject"
-                    className="placeholder:text-sm"
+                    placeholder="Add subject"
+                    className="bg-background border-border focus:border-primary focus:ring-1 focus:ring-primary/20 placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
@@ -315,11 +316,11 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
 
                     {/* Attachments */}
           {attachments.length > 0 && (
-            <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+            <div className="px-6 py-4 border-b border-border bg-muted/50">
               <div className="flex items-center gap-2 mb-3">
-                <Paperclip className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
-                <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Attachments</span>
-                <span className="text-xs text-zinc-600 dark:text-zinc-500 bg-zinc-200 dark:bg-zinc-700/50 px-2 py-0.5 rounded-full">
+                <Paperclip className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-semibold text-foreground">Attachments</span>
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                   {attachments.length}
                 </span>
               </div>
@@ -327,15 +328,15 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
                 {attachments.map((file, index) => (
                   <div 
                     key={index}
-                    className="flex items-center justify-between p-3 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 transition-all group"
+                    className="flex items-center justify-between p-3 bg-background hover:bg-accent rounded-lg border border-border hover:border-border/80 transition-all group"
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-600/20 rounded-lg flex items-center justify-center">
-                        <Paperclip className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Paperclip className="h-4 w-4 text-primary" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{file.name}</p>
-                        <p className="text-xs text-zinc-600 dark:text-zinc-500 mt-0.5">
+                        <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
                           {(file.size / 1024).toFixed(1)} KB
                         </p>
                       </div>
@@ -344,7 +345,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
                       variant="ghost"
                       size="sm"
                       onClick={() => removeAttachment(index)}
-                      className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -356,7 +357,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
 
           {/* Message Body */}
           <div className="w-full">
-            <div className="bg-white overflow-hidden">
+            <div className="bg-background overflow-hidden">
               <EmailTiptapEditor
                 value={form.body}
                 onChange={(value) => setForm(prev => ({ ...prev, body: value }))}
@@ -365,6 +366,15 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
                 disabled={sending}
                 onInsertSignature={() => {
                   const currentBody = form.body
+                  // Check if signature is already in the body to prevent duplicates
+                  if (signature && currentBody.includes(signature)) {
+                    toast({
+                      title: "Signature already present",
+                      description: "The signature is already in your email.",
+                      variant: "default",
+                    })
+                    return
+                  }
                   // If body is empty or just whitespace, replace with signature
                   // Otherwise, append signature with proper spacing
                   const newBody = isContentEmpty(currentBody)
@@ -379,35 +389,39 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
           </div>
 
           {/* Attachment Button and Action Buttons */}
-          <div className="px-2 py-2 bg-white border-t border-zinc-200 dark:border-zinc-700">
+          <div className="px-4 py-3 bg-accent border-t border-border">
             <div className="flex items-center flex-wrap gap-3">
               <Button
-                variant="primary"
-                size="icon-sm"
+                variant="default"
+                size="sm"
                 onClick={handleSend}
                 disabled={
                   sending || parseRecipients(form.to).length === 0 || !form.subject || isContentEmpty(form.body)
                 }
-                className="bg-blue-600 hover:bg-blue-700 text-white flex-shrink-0 w-auto px-2"
+                className="flex-shrink-0 w-auto px-4 bg-primary hover:bg-primary/90 text-primary-foreground"
               >
-                <Send className="h-4 w-10" />
+                <Send className="h-4 w-4 mr-2" />
                 {sending ? 'Sending...' : 'Send'}
               </Button>
               <Button
-                variant="primaryonWhite"
-                size="icon-sm"
+                variant="secondary"
+                size="sm"
                 onClick={handleSaveDraft}
                 disabled={sending}
+                className="bg-background/80 hover:bg-background border-border"
               >
-                <Save className="h-4 w-10" />
+                <Save className="h-4 w-4 mr-2" />
+                Save draft
               </Button>
               <Button
-                variant="primaryonWhite"
-                size="icon-sm"
+                variant="secondary"
+                size="sm"
                 onClick={() => document.getElementById('attachment-input')?.click()}
                 disabled={sending}
+                className="bg-background/80 hover:bg-background border-border"
               >
-                <Paperclip className="h-4 w-10" />
+                <Paperclip className="h-4 w-4 mr-2" />
+                Attach
               </Button>
               <input
                 id="attachment-input"
@@ -417,7 +431,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
                 className="hidden"
               />
               {attachments.length > 0 && (
-                <span className="text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-zinc-700/50 px-3 py-1.5 rounded-md flex-shrink-0">
+                <span className="text-xs text-muted-foreground bg-background/60 px-3 py-1.5 rounded-md flex-shrink-0">
                   {attachments.length} file{attachments.length !== 1 ? 's' : ''} attached
                 </span>
               )}

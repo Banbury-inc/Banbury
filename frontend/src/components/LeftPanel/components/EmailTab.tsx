@@ -79,44 +79,6 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
     }
   }, [])
 
-  // Extract message body content
-  const extractMessageBody = useCallback((payload: any): string => {
-    if (!payload) return ''
-    
-    // If payload has body data, decode it
-    if (payload.body?.data) {
-      try {
-        return atob(payload.body.data.replace(/-/g, '+').replace(/_/g, '/'))
-      } catch (e) {
-        return ''
-      }
-    }
-    
-    // If payload has parts, look for text content
-    if (payload.parts) {
-      for (const part of payload.parts) {
-        if (part.mimeType === 'text/plain' && part.body?.data) {
-          try {
-            return atob(part.body.data.replace(/-/g, '+').replace(/_/g, '/'))
-          } catch (e) {
-            continue
-          }
-        }
-        if (part.mimeType === 'text/html' && part.body?.data) {
-          try {
-            const html = atob(part.body.data.replace(/-/g, '+').replace(/_/g, '/'))
-            // Strip HTML tags for plain text display
-            return html.replace(/<[^>]*>/g, '')
-          } catch (e) {
-            continue
-          }
-        }
-      }
-    }
-    
-    return ''
-  }, [])
-
   // Parse Gmail message into readable format
   const parseGmailMessage = useCallback((message: GmailMessage): ParsedEmail => {
     const headers = (message.payload?.headers as GmailHeader[]) || []

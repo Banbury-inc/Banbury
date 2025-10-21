@@ -9,6 +9,7 @@ import {
   X,
   Palette,
   Video,
+  Brain,
 } from 'lucide-react'
 
 import { Button } from '../ui/button'
@@ -31,8 +32,10 @@ import {
   AppearanceTab, 
   SubscriptionTab, 
   ConnectionsTab,
-  MeetingAgentTab
+  MeetingAgentTab,
+  AISettingsTab
 } from './settings-tabs'
+import { handleUpdateProfile } from './handlers/settingsHandlers'
 
 // Initialize Stripe
 const stripePromise = loadStripe('pk_live_51PGNdQJ2FLdDk2RmRpHZE9kX2yHJ9rIiVr5t8JfmV5eB1LyazU2uei7Qe0GdkpTnsMOz69w6hPNsU3KDmbUxyGOx00WxE03DQP')
@@ -223,6 +226,11 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       icon: Palette,
     },
     {
+      id: 'ai-settings',
+      label: 'AI Settings',
+      icon: Brain,
+    },
+    {
       id: 'meeting-agent',
       label: 'Meeting Agent',
       icon: Video,
@@ -287,6 +295,20 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function updateProfile(data: { first_name: string; last_name: string; email: string }) {
+    const result = await handleUpdateProfile(data, (updatedData) => {
+      // Update local state with new data
+      setUserInfo(prev => ({
+        ...prev!,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email
+      }))
+    })
+    
+    return result
   }
 
   async function loadSubscriptionStatus() {
@@ -418,6 +440,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 <ProfileTab 
                   scopeActivated={scopeActivated}
                   userInfo={userInfo}
+                  onUpdateProfile={updateProfile}
                 />
               )}
 
@@ -426,6 +449,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   isDarkMode={isDarkMode}
                   onThemeToggle={handleThemeToggle}
                 />
+              )}
+
+              {activeTab === 'ai-settings' && (
+                <AISettingsTab />
               )}
 
               {activeTab === 'meeting-agent' && (
