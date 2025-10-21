@@ -1,8 +1,7 @@
 import Box from '@mui/material/Box';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 
 import DocsSidebar from './components/DocsSidebar';
-import { trackPageView } from '../../services/trackingService';
 import WhatIsBanburyTab from './components/WhatIsBanburyTab';
 import FeaturesTab from './components/FeaturesTab';
 import UsingBanburyTab from './components/UsingBanbury';
@@ -25,12 +24,11 @@ import GmailFeatureTab from './components/GmailFeatureTab';
 import MeetingAgentFeatureTab from './components/MeetingAgentFeatureTab';
 
 const Docs = () => {
-  const [activeSection, setActiveSection] = useState<string>('what-is-banbury');
+  const router = useRouter();
+  const section = router.query.section as string | undefined;
+  const activeSection = section || 'what-is-banbury';
 
-  // Track page visit when component mounts
-  useEffect(() => {
-    trackPageView('/docs');
-  }, []);
+  // Page tracking is handled globally by routeTracking.ts
 
 
 
@@ -53,7 +51,6 @@ const Docs = () => {
         {/* Sidebar - Fixed position */}
         <DocsSidebar 
           activeSection={activeSection}
-          onSectionChange={setActiveSection}
         />
         
         {/* Content Area - Scrollable with left margin for fixed sidebar */}

@@ -1,5 +1,6 @@
 import { Box, Typography, List, ListItem, ListItemButton, ListItemText } from '@mui/material';
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 
 interface SidebarSection {
   id: string;
@@ -15,61 +16,61 @@ interface SidebarItem {
 
 interface DocsSidebarProps {
   activeSection?: string;
-  onSectionChange?: (sectionId: string) => void;
 }
 
-const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps): JSX.Element => {
+const DocsSidebar = ({ activeSection }: DocsSidebarProps): JSX.Element => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const router = useRouter();
 
   const sections: SidebarSection[] = [
     {
       id: 'getting-started',
       title: 'Getting Started',
       items: [
-        { id: 'what-is-banbury', title: 'What is Banbury?', href: '#what-is-banbury' },
-        { id: 'using-banbury', title: 'Using Banbury', href: '#using-banbury' },
+        { id: 'what-is-banbury', title: 'What is Banbury?', href: '/docs/what-is-banbury' },
+        { id: 'using-banbury', title: 'Using Banbury', href: '/docs/using-banbury' },
       ]
     },
     {
       id: 'features',
       title: 'Features',
       items: [
-        { id: 'features', title: 'Overview', href: '#features' },
-        { id: 'gmail-feature', title: 'Gmail', href: '#gmail-feature' },
-        { id: 'docs-feature', title: 'Docs', href: '#docs-feature' },
-        { id: 'spreadsheets-feature', title: 'Spreadsheets', href: '#spreadsheets-feature' },
-        { id: 'calendar-feature', title: 'Calendar', href: '#calendar-feature' },
-        { id: 'meeting-agent-feature', title: 'Meetings', href: '#meeting-agent-feature' },
-        { id: 'folders-feature', title: 'Folders', href: '#folders-feature' },
-        { id: 'browse-feature', title: 'Browse', href: '#browse-feature' },
-        { id: 'canvas-feature', title: 'Canvas', href: '#canvas-feature' },
+        { id: 'features', title: 'Overview', href: '/docs/features' },
+        { id: 'gmail-feature', title: 'Gmail', href: '/docs/gmail-feature' },
+        { id: 'docs-feature', title: 'Docs', href: '/docs/docs-feature' },
+        { id: 'spreadsheets-feature', title: 'Spreadsheets', href: '/docs/spreadsheets-feature' },
+        { id: 'calendar-feature', title: 'Calendar', href: '/docs/calendar-feature' },
+        { id: 'meeting-agent-feature', title: 'Meetings', href: '/docs/meeting-agent-feature' },
+        { id: 'folders-feature', title: 'Folders', href: '/docs/folders-feature' },
+        { id: 'browse-feature', title: 'Browse', href: '/docs/browse-feature' },
+        { id: 'canvas-feature', title: 'Canvas', href: '/docs/canvas-feature' },
       ]
     },
     {
       id: 'contextual-knowledge',
       title: 'Contextual Knowledge',
       items: [
-        { id: 'knowledge-graph', title: 'Knowledge Graph', href: '#knowledge-graph' },
-        { id: 'memories', title: 'Memories', href: '#memories' },
+        { id: 'knowledge-graph', title: 'Knowledge Graph', href: '/docs/knowledge-graph' },
+        { id: 'memories', title: 'Memories', href: '/docs/memories' },
       ]
     },
     {
       id: 'automating-workflows',
       title: 'Automating Workflows',
       items: [
-        { id: 'task-studio', title: 'Task Studio', href: '#task-studio' },
+        { id: 'task-studio', title: 'Task Studio', href: '/docs/task-studio' },
       ]
     },
     {
       id: 'integrations',
       title: 'Integrations',
       items: [
-        { id: 'integrations', title: 'Overview', href: '#integrations' },
-        { id: 'gmail', title: 'Gmail', href: '#gmail' },
-        { id: 'google-docs', title: 'Google Docs', href: '#google-docs' },
-        { id: 'google-sheets', title: 'Google Sheets', href: '#google-sheets' },
-        { id: 'outlook', title: 'Outlook', href: '#outlook' },
-        { id: 'x', title: 'X (Twitter)', href: '#x' },
+        { id: 'integrations', title: 'Overview', href: '/docs/integrations' },
+        { id: 'gmail', title: 'Gmail', href: '/docs/gmail' },
+        { id: 'google-docs', title: 'Google Docs', href: '/docs/google-docs' },
+        { id: 'google-sheets', title: 'Google Sheets', href: '/docs/google-sheets' },
+        { id: 'outlook', title: 'Outlook', href: '/docs/outlook' },
+        { id: 'x', title: 'X (Twitter)', href: '/docs/x' },
       ]
     },
   ];
@@ -84,10 +85,8 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps): JSX.
     setExpandedSections(newExpanded);
   };
 
-  const handleItemClick = (sectionId: string, itemId: string) => {
-    if (onSectionChange) {
-      onSectionChange(itemId);
-    }
+  const handleItemClick = (itemId: string, href: string) => {
+    router.push(href);
   };
 
   return (
@@ -182,7 +181,7 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps): JSX.
                   {section.items.map((item) => (
                     <ListItem key={item.id} disablePadding>
                       <ListItemButton
-                        onClick={() => handleItemClick(section.id, item.id)}
+                        onClick={() => handleItemClick(item.id, item.href)}
                         sx={{
                           borderRadius: '6px',
                           minHeight: '36px',

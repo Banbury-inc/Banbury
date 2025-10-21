@@ -80,8 +80,8 @@ function getPageMetadata(url: string): { pageTitle: string; contentType: string 
       contentType: 'knowledge_page' 
     },
     '/docs': { 
-      pageTitle: 'Documentation - Banbury', 
-      contentType: 'documentation' 
+      pageTitle: 'Docs - What is Banbury?', 
+      contentType: 'documentation - what is banbury' 
     },
     '/api-docs': { 
       pageTitle: 'API Documentation - Banbury', 
@@ -111,6 +111,12 @@ function getPageMetadata(url: string): { pageTitle: string; contentType: string 
   }
   
   // Check for dynamic routes
+  if (cleanPath.startsWith('/docs/')) {
+    const section = cleanPath.replace('/docs/', '')
+    const { pageTitle, contentType } = getDocsPageMetadata(section)
+    return { pageTitle, contentType }
+  }
+  
   if (cleanPath.startsWith('/news/')) {
     return { 
       pageTitle: 'News Article - Banbury', 
@@ -136,6 +142,59 @@ function getPageMetadata(url: string): { pageTitle: string; contentType: string 
   return { 
     pageTitle: `${cleanPath} - Banbury`, 
     contentType: 'unknown_page' 
+  }
+}
+
+function getDocsPageMetadata(section: string): { pageTitle: string; contentType: string } {
+  const titleMap: Record<string, string> = {
+    'what-is-banbury': 'Docs - What is Banbury?',
+    'using-banbury': 'Docs - Using Banbury',
+    'features': 'Docs - Features Overview',
+    'gmail-feature': 'Docs - Gmail Feature',
+    'docs-feature': 'Docs - Docs Feature',
+    'spreadsheets-feature': 'Docs - Spreadsheets Feature',
+    'calendar-feature': 'Docs - Calendar Feature',
+    'meeting-agent-feature': 'Docs - Meeting Agent Feature',
+    'folders-feature': 'Docs - Folders Feature',
+    'browse-feature': 'Docs - Browse Feature',
+    'canvas-feature': 'Docs - Canvas Feature',
+    'knowledge-graph': 'Docs - Knowledge Graph',
+    'memories': 'Docs - Memories',
+    'task-studio': 'Docs - Task Studio',
+    'integrations': 'Docs - Integrations Overview',
+    'gmail': 'Docs - Gmail Integration',
+    'google-docs': 'Docs - Google Docs Integration',
+    'google-sheets': 'Docs - Google Sheets Integration',
+    'outlook': 'Docs - Outlook Integration',
+    'x': 'Docs - X (Twitter) Integration'
+  }
+
+  const contentTypeMap: Record<string, string> = {
+    'what-is-banbury': 'documentation - what is banbury',
+    'using-banbury': 'documentation - using banbury',
+    'features': 'documentation - features overview',
+    'gmail-feature': 'documentation - gmail feature',
+    'docs-feature': 'documentation - docs feature',
+    'spreadsheets-feature': 'documentation - spreadsheets feature',
+    'calendar-feature': 'documentation - calendar feature',
+    'meeting-agent-feature': 'documentation - meeting agent',
+    'folders-feature': 'documentation - folders feature',
+    'browse-feature': 'documentation - browse feature',
+    'canvas-feature': 'documentation - canvas feature',
+    'knowledge-graph': 'documentation - knowledge graph',
+    'memories': 'documentation - memories',
+    'task-studio': 'documentation - task studio',
+    'integrations': 'documentation - integrations overview',
+    'gmail': 'documentation - gmail integration',
+    'google-docs': 'documentation - google docs integration',
+    'google-sheets': 'documentation - google sheets integration',
+    'outlook': 'documentation - outlook integration',
+    'x': 'documentation - x integration'
+  }
+
+  return {
+    pageTitle: titleMap[section] || `Docs - ${section}`,
+    contentType: contentTypeMap[section] || `documentation - ${section}`
   }
 }
 

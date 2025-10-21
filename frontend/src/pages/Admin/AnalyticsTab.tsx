@@ -324,6 +324,44 @@ export function AnalyticsTab({
   const taskStudioPageStats = getPageSpecificStats(path => path === '/task-studio' || path.startsWith('/task-studio/') || path.startsWith('/task-studio?'))
   const meetingsPageStats = getPageSpecificStats(path => path === '/meeting-agent' || path.startsWith('/meeting-agent/') || path.startsWith('/meeting-agent?'))
 
+  // Get documentation page breakdown by individual pages with time-series data
+  const getDocsPageBreakdown = () => {
+    const filteredVisitors = getFilteredVisitors()
+    const docsPages: Record<string, Record<string, number>> = {}
+    
+    // Collect daily stats for each documentation page
+    filteredVisitors.forEach(visitor => {
+      if (visitor.content_type && visitor.content_type.startsWith('documentation -')) {
+        const pageName = visitor.content_type.replace('documentation - ', '').trim()
+        const date = new Date(visitor.time).toISOString().split('T')[0]
+        
+        if (!docsPages[pageName]) {
+          docsPages[pageName] = {}
+        }
+        docsPages[pageName][date] = (docsPages[pageName][date] || 0) + 1
+      }
+    })
+    
+    // Convert to array format with daily stats for each page
+    return Object.entries(docsPages)
+      .map(([page, dailyStats]) => {
+        const dailyStatsArray = Object.entries(dailyStats)
+          .map(([date, count]) => ({ date, count }))
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        
+        const totalCount = dailyStatsArray.reduce((sum, stat) => sum + stat.count, 0)
+        
+        return {
+          page,
+          totalCount,
+          dailyStats: dailyStatsArray
+        }
+      })
+      .sort((a, b) => b.totalCount - a.totalCount)
+  }
+
+  const docsPageBreakdown = getDocsPageBreakdown()
+
 
   const addIpExclusion = () => {
     if (visitorIpInput.trim() && !visitorIpExclusions.includes(visitorIpInput.trim())) {
@@ -1483,6 +1521,123 @@ export function AnalyticsTab({
         </Card>
       </div>
 
+      {/* Documentation Pages Breakdown */}
+      {docsPageBreakdown.length > 0 && (
+        <div className="mb-4">
+          <h3 className="text-white text-lg font-semibold mb-3">
+            Documentation Pages Breakdown
+            {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
+              <span className="text-zinc-400 text-sm font-normal ml-2">(filtered)</span>
+            )}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {docsPageBreakdown.map(({ page, totalCount, dailyStats }, index) => {
+              // Generate a unique color for each documentation page
+              const colors = [
+                { stroke: '#06b6d4', gradient: 'docsGradient0', stopColor: '#06b6d4' }, // cyan
+                { stroke: '#8b5cf6', gradient: 'docsGradient1', stopColor: '#8b5cf6' }, // purple
+                { stroke: '#f59e0b', gradient: 'docsGradient2', stopColor: '#f59e0b' }, // amber
+                { stroke: '#10b981', gradient: 'docsGradient3', stopColor: '#10b981' }, // green
+                { stroke: '#ef4444', gradient: 'docsGradient4', stopColor: '#ef4444' }, // red
+                { stroke: '#ec4899', gradient: 'docsGradient5', stopColor: '#ec4899' }, // pink
+                { stroke: '#6366f1', gradient: 'docsGradient6', stopColor: '#6366f1' }, // indigo
+                { stroke: '#14b8a6', gradient: 'docsGradient7', stopColor: '#14b8a6' }, // teal
+              ]
+              const colorScheme = colors[index % colors.length]
+              
+              return (
+                <Card key={page} className="bg-zinc-900 border-zinc-700">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-white text-base capitalize">{page}</CardTitle>
+                    </div>
+                    <CardDescription className="text-zinc-400 text-xs">
+                      Documentation page visits over time
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {dailyStats.length > 0 ? (
+                      <div className="w-full h-32">
+                        <ChartContainer
+                          config={{
+                            visitors: {
+                              label: `${page} Visitors`,
+                              color: colorScheme.stroke,
+                            },
+                          }}
+                          className="w-full h-full !flex-none"
+                        >
+                          <AreaChart 
+                            data={dailyStats}
+                            margin={{ top: 5, right: 5, left: 5, bottom: 15 }}
+                          >
+                            <defs>
+                              <linearGradient id={colorScheme.gradient} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={colorScheme.stopColor} stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor={colorScheme.stopColor} stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                            <XAxis 
+                              dataKey="date" 
+                              stroke="#6b7280"
+                              tick={{ fill: '#9ca3af', fontSize: 10 }}
+                              tickFormatter={(value) => {
+                                const date = new Date(value)
+                                return `${date.getMonth() + 1}/${date.getDate()}`
+                              }}
+                            />
+                            <YAxis 
+                              stroke="#6b7280"
+                              tick={{ fill: '#9ca3af', fontSize: 10 }}
+                              width={30}
+                            />
+                            <ChartTooltip 
+                              content={({ active, payload }) => {
+                                if (active && payload && payload.length) {
+                                  const data = payload[0].payload
+                                  return (
+                                    <div className="bg-zinc-800 border border-zinc-700 px-3 py-2 rounded-lg shadow-lg">
+                                      <p className="text-zinc-400 text-xs mb-1">
+                                        {new Date(data.date).toLocaleDateString('en-US', { 
+                                          month: 'short', 
+                                          day: 'numeric',
+                                          year: 'numeric'
+                                        })}
+                                      </p>
+                                      <p className="text-white font-semibold text-sm">
+                                        {data.count} {data.count === 1 ? 'visit' : 'visits'}
+                                      </p>
+                                    </div>
+                                  )
+                                }
+                                return null
+                              }}
+                            />
+                            <Area 
+                              type="monotone" 
+                              dataKey="count" 
+                              stroke={colorScheme.stroke}
+                              strokeWidth={2}
+                              fill={`url(#${colorScheme.gradient})`}
+                              fillOpacity={1}
+                            />
+                          </AreaChart>
+                        </ChartContainer>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center py-4 text-zinc-400 text-xs">
+                        No data available
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <Card className="bg-zinc-900 border-zinc-700 mb-4">
         <CardHeader>
           <div className="flex justify-between items-center">
@@ -2002,6 +2157,7 @@ export function AnalyticsTab({
                             visitor.content_type === 'dashboard' ? 'bg-blue-900/50 text-blue-300' :
                             visitor.content_type === 'auth_page' ? 'bg-yellow-900/50 text-yellow-300' :
                             visitor.content_type === 'features_page' ? 'bg-purple-900/50 text-purple-300' :
+                            visitor.content_type.startsWith('documentation -') ? 'bg-cyan-900/50 text-cyan-300' :
                             'bg-zinc-700/50 text-zinc-300'
                           }`}>
                             {visitor.content_type.replace('_', ' ')}
