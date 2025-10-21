@@ -79,13 +79,13 @@ const Home = (): JSX.Element => {
       {/* Hero Section */}
       <Box
         sx={{
-          minHeight: { xs: '100vh', lg: '85vh' },
+          minHeight: { xs: '70vh', lg: '85vh' },
           display: 'flex',
           alignItems: 'flex-start',
           position: 'relative',
           overflow: 'visible',
           pt: { xs: 4, sm: 6, lg: 8 },
-          pb: { xs: 4, lg: 0 },
+          pb: { xs: 0, lg: 0 },
           background: '#000000',
           '&::before': {
             content: '""',
@@ -95,50 +95,61 @@ const Home = (): JSX.Element => {
             right: 0,
             bottom: 0,
             backgroundImage: `
-              linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
+              linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px)
             `,
             backgroundSize: { xs: '20px 20px', md: '40px 40px' },
-            opacity: 0.4,
+            opacity: 0.25,
+            zIndex: 0,
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: '-10%',
+            right: '-20%',
+            width: '70vw',
+            height: '70vw',
+            background: 'radial-gradient(closest-side, rgba(255,255,255,0.08), rgba(255,255,255,0.03) 35%, rgba(0,0,0,0) 70%)',
+            filter: 'blur(40px)',
             zIndex: 0,
           },
         }}
       >
-        <Container maxWidth={false} sx={{ 
-          overflow: 'visible', 
-          px: { xs: 3, sm: 4, lg: 0 }, 
-          width: { xs: '100%', lg: '85%' },
+        <Container maxWidth={false} sx={{
+          overflow: 'visible',
+          px: { xs: 3, sm: 4, lg: 0 },
+          width: { xs: '100%', lg: '86%' },
           mx: 'auto'
         }}>
           <Grid 
             container 
-            spacing={{ xs: 2, sm: 4, lg: 4, xl: 6 }} 
+            spacing={{ xs: 0, sm: 2, lg: 4, xl: 6 }} 
             alignItems="center"
             justifyContent="flex-start"
             sx={{ 
               position: 'relative',
-              minHeight: { xs: '80vh', lg: '70vh' },
+              minHeight: { xs: '20vh', lg: '70vh' },
               overflow: 'visible',
               width: '100%'
             }}
           >
-            {/* Text Content - Left Side */}
-            <Grid item xs={12} sm={12} lg={5} xl={5} sx={{ 
+            {/* Text Content */}
+            <Grid item xs={12} sm={12} lg={12} xl={12} sx={{ 
               position: 'relative', 
               zIndex: 2, 
               display: 'flex', 
               alignItems: 'center', 
-              justifyContent: { xs: 'center', sm: 'center', lg: 'flex-start', xl: 'flex-start' },
+              justifyContent: 'center',
               pl: { xs: 0, lg: 2, xl: 2 },
               pr: { xs: 0, lg: 3, xl: 3 },
               order: { xs: 1, sm: 1, lg: 1, xl: 1 }
             }}>
-              <Box sx={{ 
-                pr: { lg: 6, xl: 6 }, 
-                mb: { xs: 6, sm: 6, lg: 0, xl: 0 }, 
-                pt: { xs: 2, sm: 2, lg: 4, xl: 4 },
-                textAlign: { xs: 'center', sm: 'center', lg: 'left', xl: 'left' },
-                maxWidth: { xs: '100%', sm: '100%', lg: '450px', xl: '500px' },
+              <Box sx={{
+                pr: { lg: 6, xl: 6 },
+                mb: { xs: 0, sm: 3, lg: 2, xl: 2 },
+                pt: { xs: 2, sm: 2, lg: 3, xl: 4 },
+                textAlign: 'center',
+                maxWidth: { xs: '100%', sm: '100%', lg: '760px', xl: '860px' },
                 ml: { xs: 0, sm: 0, lg: 0, xl: 0 }
               }}>
                 <motion.div
@@ -148,7 +159,7 @@ const Home = (): JSX.Element => {
                   variants={fadeInUp}
                   transition={{ duration: 0.6, ease: 'easeOut' }}
                 >
-                  <Typography variant="h1" className="text-4xl sm:text-5xl md:text-6xl leading-tight md:leading-tight mb-6 md:mb-8">
+                  <Typography variant="h1" className="text-4xl sm:text-5xl md:text-6xl leading-tight md:leading-tight mb-4 md:mb-8">
                     Your AI-Powered <br />
                     <span className="text-zinc-400 font-medium">
                       Workflow Engine
@@ -163,7 +174,7 @@ const Home = (): JSX.Element => {
                   variants={fadeInUp}
                   transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
                 >
-                  <Typography variant="lead" className="text-zinc-400 leading-relaxed mb-8 md:mb-10 max-w-2xl text-base sm:text-lg md:text-xl px-2 md:px-0">
+                  <Typography variant="lead" className="text-zinc-400 leading-relaxed mb-3 md:mb-7 max-w-2xl text-base sm:text-lg md:text-xl px-2 md:px-0">
                     Transform your business operations with intelligent automation that learns, adapts, and scales with your needs.
                   </Typography>
                 </motion.div>
@@ -171,15 +182,22 @@ const Home = (): JSX.Element => {
                 <Box sx={{ 
                   display: 'flex', 
                   flexDirection: { xs: 'column', sm: 'row' }, 
-                  gap: { xs: 2, sm: 3 }, 
-                  mb: 4,
+                  gap: { xs: 1.5, sm: 3 }, 
+                  mb: { xs: 0, md: 0 },
+                  justifyContent: 'center',
                   px: { xs: 2, md: 0 }
                 }}>
                   <Button
                     variant="default"
                     size="lg"
                     onClick={() => window.location.href = '/dashboard'}
-                    // className="min-h-[48px] md:min-h-auto text-base md:text-auto py-2 md:py-auto px-4 md:px-auto"
+                    className="rounded-full px-6 md:px-8"
+                    style={{
+                      borderRadius: 9999,
+                      background: 'rgba(255,255,255,0.1)',
+                      color: '#ffffff',
+                      border: '1px solid rgba(255,255,255,0.18)'
+                    }}
                   >
                     Get Started for Free
                   </Button>
@@ -187,7 +205,13 @@ const Home = (): JSX.Element => {
                     variant="outline"
                     size="lg"
                     onClick={() => window.location.href = '/features'}
-                    // className="min-h-[48px] md:min-h-auto text-base md:text-auto py-2 md:py-auto px-4 md:px-auto"
+                    className="rounded-full px-5 md:px-6"
+                    style={{
+                      borderRadius: 9999,
+                      background: 'transparent',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      color: 'rgba(255,255,255,0.85)'
+                    }}
                   >
                     Watch Demo
                   </Button>
@@ -196,16 +220,18 @@ const Home = (): JSX.Element => {
             </Grid>
 
             {/* Image - Right Side */}
-            <Grid item xs={12} sm={12} lg={7} xl={7} sx={{ 
+            {/* Image - Beneath Hero Text */}
+            <Grid item xs={12} sm={12} lg={12} xl={12} sx={{
               position: 'relative',
-              height: { xs: '300px', sm: '350px', lg: '500px', xl: '600px' },
+              height: { xs: '420px', sm: '520px', lg: '700px', xl: '800px' },
               display: 'flex',
               alignItems: 'center',
-              justifyContent: { xs: 'center', sm: 'center', lg: 'flex-start', xl: 'flex-start' },
+              justifyContent: 'center',
               padding: { xs: 0, lg: 0, xl: 0 },
               overflow: 'visible',
               order: { xs: 2, sm: 2, lg: 2, xl: 2 },
-              mb: { xs: 4, sm: 4, lg: 0, xl: 0 }
+              mt: { xs: -2, sm: -4, lg: -5, xl: -6 },
+              mb: { xs: -8, sm: -10, lg: -16, xl: -20 },
             }}>
               {/* Gradient backdrop for depth */}
               <Box
@@ -214,41 +240,43 @@ const Home = (): JSX.Element => {
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  width: { xs: '100%', md: '100%' },
-                  height: '90%',
-                  background: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.03) 0%, transparent 100%)',
+                  width: { xs: '100%', md: '95%', lg: '90%' },
+                  height: { xs: '80%', lg: '90%' },
+                  background: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 40%, transparent 100%)',
                   borderRadius: '50%',
-                  filter: 'blur(60px)',
+                  filter: 'blur(80px)',
                   zIndex: 0,
                 }}
               />
               
               {/* Main image container with enhanced styling */}
-              <Box sx={{ 
+              <Box sx={{
                 position: 'relative',
-                width: { xs: '100%', sm: '90%', lg: '120%', xl: '110%' },
+                width: { xs: '100%', sm: '95%', lg: '90%', xl: '85%' },
+                maxWidth: '1400px',
+                mx: 'auto',
                 height: 'auto',
                 zIndex: 2,
                 transformOrigin: 'center center',
-                transform: 'perspective(1000px) rotateY(-5deg) rotateX(1deg)',
+                transform: 'perspective(2000px) rotateY(25deg) rotateX(15deg) rotateZ(-5deg) scale(1.05)',
                 transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
                 '&:hover': {
-                  transform: 'perspective(1000px) rotateY(-2deg) rotateX(0.5deg) scale(1.02)',
+                  transform: 'perspective(2000px) rotateY(22deg) rotateX(13deg) rotateZ(-4deg) scale(1.07)',
                 }
               }}>
                 <Image
                   src={'/workspaces-no-background.png'}
                   alt="AI-powered workflow automation platform interface"
-                  width={1600}
-                  height={900}
+                  width={800}
+                  height={450}
                   style={{
                     width: '100%',
                     height: 'auto',
                     borderRadius: '16px',
-                    filter: 'drop-shadow(0 32px 64px rgba(0,0,0,0.8)) drop-shadow(0 8px 32px rgba(255, 255, 255, 0.1))',
-                    backgroundColor: '#0f0f0f',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%)',
+                    filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.7)) drop-shadow(0 15px 30px rgba(0,0,0,0.5)) drop-shadow(-15px 0 25px rgba(0,0,0,0.3))',
+                    backgroundColor: '#0a0a0a',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%)',
                   }}
                   priority
                 />
@@ -261,360 +289,33 @@ const Home = (): JSX.Element => {
                     left: 0,
                     right: 0,
                     height: '40%',
-                    background: 'linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%)',
                     borderRadius: '16px 16px 0 0',
                     pointerEvents: 'none',
                   }}
                 />
                 
                 {/* Bottom fade-to-black overlay */}
-                {/* <Box
+                <Box
                   sx={{
                     position: 'absolute',
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    height: '45%',
-                    background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 60%, #000000 100%)',
+                    height: '70%',
+                    background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.95) 85%, #000000 100%)',
                     borderRadius: '0 0 16px 16px',
                     pointerEvents: 'none',
                   }}
-                /> */}
+                />
               </Box>
             </Grid>
-
-            {/* Dense Floating Particle System - Surrounding the entire hero area */}
-            {/* Left side particles */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '15%',
-                left: '5%',
-                width: { xs: '3px', md: '4px' },
-                height: { xs: '3px', md: '4px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.3)',
-                filter: 'blur(0.5px)',
-                animation: 'float 5s ease-in-out infinite',
-                zIndex: 1,
-                '@keyframes float': {
-                  '0%, 100%': { transform: 'translateY(0px)' },
-                  '50%': { transform: 'translateY(-15px)' },
-                },
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '25%',
-                left: '3%',
-                width: { xs: '4px', md: '6px' },
-                height: { xs: '4px', md: '6px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.2)',
-                filter: 'blur(0.8px)',
-                animation: 'float 7s ease-in-out infinite 1s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '35%',
-                left: '2%',
-                width: { xs: '2px', md: '3px' },
-                height: { xs: '2px', md: '3px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.4)',
-                filter: 'blur(0.3px)',
-                animation: 'float 4s ease-in-out infinite 2s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '50%',
-                left: '4%',
-                width: { xs: '5px', md: '8px' },
-                height: { xs: '5px', md: '8px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.15)',
-                filter: 'blur(1px)',
-                animation: 'float 9s ease-in-out infinite reverse',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '65%',
-                left: '6%',
-                width: { xs: '2px', md: '2px' },
-                height: { xs: '2px', md: '2px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.5)',
-                filter: 'blur(0.2px)',
-                animation: 'float 3s ease-in-out infinite 0.5s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            {/* Right side particles - around and beyond the image */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '12%',
-                right: '2%',
-                width: { xs: '3px', md: '5px' },
-                height: { xs: '3px', md: '5px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.25)',
-                filter: 'blur(0.7px)',
-                animation: 'float 6s ease-in-out infinite reverse 1.5s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '20%',
-                right: '4%',
-                width: { xs: '5px', md: '7px' },
-                height: { xs: '5px', md: '7px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.18)',
-                filter: 'blur(0.9px)',
-                animation: 'float 8s ease-in-out infinite 2.5s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '35%',
-                right: '1%',
-                width: { xs: '3px', md: '4px' },
-                height: { xs: '3px', md: '4px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.35)',
-                filter: 'blur(0.4px)',
-                animation: 'float 5s ease-in-out infinite reverse 4s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '55%',
-                right: '3%',
-                width: { xs: '6px', md: '9px' },
-                height: { xs: '6px', md: '9px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.12)',
-                filter: 'blur(1.2px)',
-                animation: 'float 10s ease-in-out infinite reverse 2s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '70%',
-                right: '5%',
-                width: { xs: '2px', md: '3px' },
-                height: { xs: '2px', md: '3px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.45)',
-                filter: 'blur(0.3px)',
-                animation: 'float 4s ease-in-out infinite 1s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            {/* Top area particles */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '8%',
-                left: '20%',
-                width: { xs: '4px', md: '6px' },
-                height: { xs: '4px', md: '6px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.22)',
-                filter: 'blur(0.8px)',
-                animation: 'float 7s ease-in-out infinite 3.5s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '5%',
-                left: '40%',
-                width: { xs: '3px', md: '5px' },
-                height: { xs: '3px', md: '5px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.28)',
-                filter: 'blur(0.6px)',
-                animation: 'float 6s ease-in-out infinite reverse 0.8s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '10%',
-                right: '35%',
-                width: { xs: '3px', md: '4px' },
-                height: { xs: '3px', md: '4px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.32)',
-                filter: 'blur(0.5px)',
-                animation: 'float 5s ease-in-out infinite 4.2s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            {/* Bottom area particles */}
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: '15%',
-                left: '15%',
-                width: { xs: '5px', md: '8px' },
-                height: { xs: '5px', md: '8px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.16)',
-                filter: 'blur(1px)',
-                animation: 'float 9s ease-in-out infinite reverse 1.8s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: '10%',
-                left: '35%',
-                width: { xs: '2px', md: '2px' },
-                height: { xs: '2px', md: '2px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.6)',
-                filter: 'blur(0.2px)',
-                animation: 'float 3s ease-in-out infinite 2.3s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: '8%',
-                right: '25%',
-                width: { xs: '5px', md: '7px' },
-                height: { xs: '5px', md: '7px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.19)',
-                filter: 'blur(0.9px)',
-                animation: 'float 8s ease-in-out infinite 3.7s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: '12%',
-                right: '15%',
-                width: { xs: '3px', md: '5px' },
-                height: { xs: '3px', md: '5px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.26)',
-                filter: 'blur(0.7px)',
-                animation: 'float 6s ease-in-out infinite 2.8s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            {/* Micro particles for density */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '45%',
-                left: '8%',
-                width: { xs: '1px', md: '1px' },
-                height: { xs: '1px', md: '1px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.7)',
-                animation: 'float 2s ease-in-out infinite 0.3s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '30%',
-                right: '12%',
-                width: { xs: '1px', md: '1px' },
-                height: { xs: '1px', md: '1px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.8)',
-                animation: 'float 2s ease-in-out infinite reverse 1.1s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: '25%',
-                left: '25%',
-                width: { xs: '1px', md: '1px' },
-                height: { xs: '1px', md: '1px' },
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.9)',
-                animation: 'float 2s ease-in-out infinite 1.7s',
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}
-            />
           </Grid>
         </Container>
       </Box>
 
       {/* Integrations Section */}
-      <Box sx={{ py: { xs: 1, md: 1 }, background: '#000000' }}>
+      <Box sx={{ pt: { xs: 8, sm: 10, md: 12, lg: 16 }, pb: { xs: 1, md: 1 }, background: '#000000', position: 'relative', zIndex: 10 }}>
         <Box sx={{ width: '100%' }}>
           {/* Section Header */}
           <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 }, px: { xs: 2, md: 0 } }}>
