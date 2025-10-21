@@ -3,6 +3,7 @@ import { IntegrationInstructions, Repeat, AccountTree } from '@mui/icons-materia
 import Image from 'next/image';
 import DocPageLayout from './DocPageLayout';
 import { Typography } from '../../../components/ui/typography';
+import Workspaces from '../../../assets/images/Workspaces.png';
 
 export default function WhatIsBanburyTab() {
   return (

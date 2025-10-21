@@ -6,8 +6,6 @@ import { Box, Container, Grid } from '@mui/material';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-
-import AppImage from '../assets/images/Workspaces.png';
 import EmailDemo from '../assets/images/email_demo.png';
 import CalendarDemo from '../assets/images/calendar_demo.mp4';
 import SpreadsheetDemo from '../assets/images/spreadsheet_demo.mp4';
@@ -239,7 +237,7 @@ const Home = (): JSX.Element => {
                 }
               }}>
                 <Image
-                  src={AppImage}
+                  src={'/workspaces-no-background.png'}
                   alt="AI-powered workflow automation platform interface"
                   width={1600}
                   height={900}
