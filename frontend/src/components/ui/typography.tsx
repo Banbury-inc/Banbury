@@ -3,7 +3,7 @@ import * as React from "react"
 
 import { cn } from "../../utils"
 
-const typographyVariants = cva("", {
+const typographyVariants = cva("font-mono", {
   variants: {
     variant: {
       h1: "scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl text-black dark:text-white",

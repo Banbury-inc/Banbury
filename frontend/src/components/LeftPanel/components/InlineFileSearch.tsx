@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Search, X, File, FileImage, FileVideo, FileAudio, FileText, FileSpreadsheet, FileBarChart, FileCode, FileArchive, FileJson, FileCog, FileType, Mail } from 'lucide-react';
-import { ApiService } from '../services/apiService';
-import { FileSystemItem } from '../utils/fileTreeUtils';
-import { useToast } from './ui/use-toast';
-import { Input } from './ui/old-input';
+import { ApiService } from '../../../services/apiService';
+import { FileSystemItem } from '../../../utils/fileTreeUtils';
+import { useToast } from '../../ui/use-toast';
+import { Input } from '../../ui/old-input';
 
 interface InlineFileSearchProps {
   onFileSelect: (file: FileSystemItem) => void;

@@ -15,6 +15,7 @@ import BrowserDemo from '../assets/images/browser-automation-demo.mp4';
 import TaskCreationDemo from '../assets/images/task-creation-demo.mp4';
 import DiffViewDemo from '../assets/images/diff-view.mp4';
 import { Button } from '../components/ui/button';
+import { Typography } from '../components/ui/typography';
 import { determineOS } from '../handlers/determineOS';
 import { handleDownload } from './handlers/home';
 import {
@@ -149,12 +150,12 @@ const Home = (): JSX.Element => {
                   variants={fadeInUp}
                   transition={{ duration: 0.6, ease: 'easeOut' }}
                 >
-                  <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold leading-tight md:leading-tight text-white mb-6 md:mb-8 tracking-tight font-inter">
+                  <Typography variant="h1" className="text-4xl sm:text-5xl md:text-6xl leading-tight md:leading-tight mb-6 md:mb-8">
                     Your AI-Powered <br />
                     <span className="text-zinc-400 font-medium">
                       Workflow Engine
                     </span>
-                  </h1>
+                  </Typography>
                 </motion.div>
 
                 <motion.div
@@ -164,9 +165,9 @@ const Home = (): JSX.Element => {
                   variants={fadeInUp}
                   transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
                 >
-                  <p className="text-zinc-400 leading-relaxed mb-8 md:mb-10 max-w-2xl text-base sm:text-lg md:text-xl font-normal font-inter px-2 md:px-0">
+                  <Typography variant="lead" className="text-zinc-400 leading-relaxed mb-8 md:mb-10 max-w-2xl text-base sm:text-lg md:text-xl px-2 md:px-0">
                     Transform your business operations with intelligent automation that learns, adapts, and scales with your needs.
-                  </p>
+                  </Typography>
                 </motion.div>
 
                 <Box sx={{ 
@@ -626,9 +627,9 @@ const Home = (): JSX.Element => {
               variants={fadeInUp}
               transition={{ duration: 0.6, ease: 'easeOut' }}
             >
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-white mb-4 md:mb-6 tracking-tight font-inter">
+              <Typography variant="h2" className="text-3xl sm:text-4xl md:text-5xl mb-4 md:mb-6">
                 Powerful Integrations
-              </h2>
+              </Typography>
             </motion.div>
             <motion.div
               initial="hidden"
@@ -637,9 +638,9 @@ const Home = (): JSX.Element => {
               variants={fadeInUp}
               transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
             >
-              <p className="text-base sm:text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed font-normal font-inter px-4 md:px-0">
+              <Typography variant="lead" className="text-base sm:text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed px-4 md:px-0">
                 Connect with your favorite tools and services. Seamlessly integrate with the platforms you already use to supercharge your workflow.
-              </p>
+              </Typography>
             </motion.div>
           </Box>
 
@@ -1382,9 +1383,9 @@ const Home = (): JSX.Element => {
               variants={fadeInUp}
               transition={{ duration: 0.6, ease: 'easeOut' }}
             >
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-white mb-4 md:mb-6 tracking-tight font-inter">
+              <Typography variant="h2" className="text-3xl sm:text-4xl md:text-5xl mb-4 md:mb-6">
                 Why Choose Banbury?
-              </h2>
+              </Typography>
             </motion.div>
             <motion.div
               initial="hidden"
@@ -1393,9 +1394,9 @@ const Home = (): JSX.Element => {
               variants={fadeInUp}
               transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
             >
-              <p className="text-base sm:text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed font-normal font-inter px-4 md:px-0">
+              <Typography variant="lead" className="text-base sm:text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed px-4 md:px-0">
                 Experience the power of AI-driven automation with features designed for modern businesses
-              </p>
+              </Typography>
             </motion.div>
           </Box>
 
@@ -1445,9 +1446,9 @@ const Home = (): JSX.Element => {
                     variants={fadeInUp}
                     transition={{ duration: 0.5, ease: 'easeOut', delay: 0.05 }}
                   >
-                    <h3 className="mb-4 font-semibold text-white text-lg md:text-xl tracking-tight font-inter">
+                    <Typography variant="h3" className="mb-4 text-lg md:text-xl">
                       {feature.title}
-                    </h3>
+                    </Typography>
                   </motion.div>
 
                   {/* Description */}
@@ -1458,9 +1459,9 @@ const Home = (): JSX.Element => {
                     variants={fadeInUp}
                     transition={{ duration: 0.5, ease: 'easeOut', delay: 0.12 }}
                   >
-                    <p className="text-zinc-400 leading-relaxed mb-6 text-sm md:text-base font-normal font-inter">
+                    <Typography variant="p" className="text-zinc-400 leading-relaxed mb-6 text-sm md:text-base">
                       {feature.description}
-                    </p>
+                    </Typography>
                   </motion.div>
 
                   {/* Highlight Badge */}
@@ -1506,9 +1507,9 @@ const Home = (): JSX.Element => {
               variants={fadeInUp}
               transition={{ duration: 0.6, ease: 'easeOut' }}
             >
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-white mb-4 md:mb-6 tracking-tight font-inter">
+              <Typography variant="h2" className="text-3xl sm:text-4xl md:text-5xl mb-4 md:mb-6">
                 See Banbury in Action
-              </h2>
+              </Typography>
             </motion.div>
             <motion.div
               initial="hidden"
@@ -1517,9 +1518,9 @@ const Home = (): JSX.Element => {
               variants={fadeInUp}
               transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
             >
-              <p className="text-base sm:text-lg md:text-xl text-zinc-400 max-w-3xl mx-auto leading-relaxed font-normal font-inter px-4 md:px-0">
+              <Typography variant="lead" className="text-base sm:text-lg md:text-xl text-zinc-400 max-w-3xl mx-auto leading-relaxed px-4 md:px-0">
                 Discover powerful automation workflows that save hours every day
-              </p>
+              </Typography>
             </motion.div>
           </Box>
 
@@ -1560,12 +1561,12 @@ const Home = (): JSX.Element => {
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Box sx={{ pl: { md: 4 } }}>
-                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-4 tracking-tight font-inter">
+                    <Typography variant="h3" className="text-2xl sm:text-3xl md:text-4xl mb-4">
                       Smart Email Management
-                    </h3>
-                    <p className="text-base md:text-lg text-zinc-400 leading-relaxed mb-6 font-normal font-inter">
+                    </Typography>
+                    <Typography variant="p" className="text-base md:text-lg text-zinc-400 leading-relaxed mb-6">
                       Automatically categorize, prioritize, and respond to emails based on content and context. Set up intelligent filters that route messages to the right team members and draft personalized responses instantly.
-                    </p>
+                    </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'start', gap: 2 }}>
                         <Box
@@ -1674,12 +1675,12 @@ const Home = (): JSX.Element => {
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Box sx={{ pr: { md: 4 } }}>
-                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-4 tracking-tight font-inter">
+                    <Typography variant="h3" className="text-2xl sm:text-3xl md:text-4xl mb-4">
                       Automated Meeting Scheduling
-                    </h3>
-                    <p className="text-base md:text-lg text-zinc-400 leading-relaxed mb-6 font-normal font-inter">
+                    </Typography>
+                    <Typography variant="p" className="text-base md:text-lg text-zinc-400 leading-relaxed mb-6">
                       Schedule meetings across time zones, send automatic reminders, generate meeting agendas, and distribute notes to all attendees without lifting a finger.
-                    </p>
+                    </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'start', gap: 2 }}>
                         <Box
@@ -1788,12 +1789,12 @@ const Home = (): JSX.Element => {
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Box sx={{ pl: { md: 4 } }}>
-                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-4 tracking-tight font-inter">
+                    <Typography variant="h3" className="text-2xl sm:text-3xl md:text-4xl mb-4">
                       Data Sync & Reporting
-                    </h3>
-                    <p className="text-base md:text-lg text-zinc-400 leading-relaxed mb-6 font-normal font-inter">
+                    </Typography>
+                    <Typography variant="p" className="text-base md:text-lg text-zinc-400 leading-relaxed mb-6">
                       Keep your data synchronized across all platforms in real-time. Generate comprehensive reports and distribute them to stakeholders automatically on your preferred schedule.
-                    </p>
+                    </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'start', gap: 2 }}>
                         <Box
@@ -1898,13 +1899,12 @@ const Home = (): JSX.Element => {
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Box sx={{ pr: { md: 4 } }}>
-                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-4 tracking-tight font-inter">
+                    <Typography variant="h3" className="text-2xl sm:text-3xl md:text-4xl mb-4">
                       Schedule Tasks When You're Away
-                      
-                    </h3>
-                    <p className="text-base md:text-lg text-zinc-400 leading-relaxed mb-6 font-normal font-inter">
+                    </Typography>
+                    <Typography variant="p" className="text-base md:text-lg text-zinc-400 leading-relaxed mb-6">
                       Schedule tasks when you're away and let Banbury handle the rest.
-                    </p>
+                    </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'start', gap: 2 }}>
                         <Box
@@ -2010,12 +2010,12 @@ const Home = (): JSX.Element => {
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Box sx={{ pl: { md: 4 } }}>
-                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-4 tracking-tight font-inter">
+                    <Typography variant="h3" className="text-2xl sm:text-3xl md:text-4xl mb-4">
                       Intelligent AI Support
-                    </h3>
-                    <p className="text-base md:text-lg text-zinc-400 leading-relaxed mb-6 font-normal font-inter">
+                    </Typography>
+                    <Typography variant="p" className="text-base md:text-lg text-zinc-400 leading-relaxed mb-6">
                       Chat with your AI assistant to create workflows, get insights, and automate tasks using natural language. Just describe what you want, and let AI do the rest.
-                    </p>
+                    </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'start', gap: 2 }}>
                         <Box
@@ -2122,12 +2122,12 @@ const Home = (): JSX.Element => {
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Box sx={{ pr: { md: 4 } }}>
-                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-4 tracking-tight font-inter">
+                    <Typography variant="h3" className="text-2xl sm:text-3xl md:text-4xl mb-4">
                       Browser Automation
-                    </h3>
-                    <p className="text-base md:text-lg text-zinc-400 leading-relaxed mb-6 font-normal font-inter">
+                    </Typography>
+                    <Typography variant="p" className="text-base md:text-lg text-zinc-400 leading-relaxed mb-6">
                       Automate repetitive web tasks like data entry, form filling, and web scraping. Let Banbury navigate websites and extract information while you focus on important work.
-                    </p>
+                    </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'start', gap: 2 }}>
                         <Box
@@ -2215,9 +2215,9 @@ const Home = (): JSX.Element => {
               variants={fadeInUp}
               transition={{ duration: 0.6, ease: 'easeOut' }}
             >
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-6 md:mb-8 text-white tracking-tight font-inter">
+              <Typography variant="h2" className="text-3xl sm:text-4xl md:text-5xl mb-6 md:mb-8">
                 Ready to Transform Your Workflow?
-              </h2>
+              </Typography>
             </motion.div>
             <motion.div
               initial="hidden"
@@ -2226,9 +2226,9 @@ const Home = (): JSX.Element => {
               variants={fadeInUp}
               transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
             >
-              <p className="text-base sm:text-lg md:text-xl text-zinc-400 mb-10 md:mb-12 leading-relaxed max-w-2xl mx-auto font-normal font-inter px-4 md:px-0">
+              <Typography variant="lead" className="text-base sm:text-lg md:text-xl text-zinc-400 mb-10 md:mb-12 leading-relaxed max-w-2xl mx-auto px-4 md:px-0">
                 Join Banbury to automate your processes and boost productivity by 300%.
-              </p>
+              </Typography>
             </motion.div>
             
             <Box sx={{ 

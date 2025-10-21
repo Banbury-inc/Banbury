@@ -10,8 +10,9 @@ import { EmailTab } from "./components/EmailTab"
 import { CalendarTab } from "./components/CalendarTab"
 import { FilesTab } from "./components/FilesTab/FilesTab"
 import { FileSystemItem } from "../../utils/fileTreeUtils"
-import InlineFileSearch from "../InlineFileSearch"
+import InlineFileSearch from "./components/InlineFileSearch"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/old-tabs"
+import { Typography } from "../ui/typography"
 
 interface AppSidebarProps {
   currentView: 'dashboard' | 'workspaces'
@@ -61,17 +62,32 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="mx-4 mt-2">
-          <TabsTrigger value="files" className="gap-2">
+          <TabsTrigger value="files" className="gap-2 flex items-center">
             <Folder className="h-4 w-4" />
-            Files
+            <Typography
+              variant="small"
+              className="text-sm font-medium"
+            >
+              Files
+            </Typography>
           </TabsTrigger>
-          <TabsTrigger value="email" className="gap-2">
+          <TabsTrigger value="email" className="gap-2 flex items-center">
             <Mail className="h-4 w-4" />
-            Email
+            <Typography
+              variant="small"
+              className="text-sm"
+            >
+              Email
+            </Typography>
           </TabsTrigger>
-          <TabsTrigger value="calendar" className="gap-2">
+          <TabsTrigger value="calendar" className="gap-2 flex items-center">
             <CalendarIcon className="h-4 w-4" />
-            Calendar
+            <Typography
+              variant="small"
+              className="text-sm"
+            >
+              Calendar
+            </Typography>
           </TabsTrigger>
         </TabsList>
 

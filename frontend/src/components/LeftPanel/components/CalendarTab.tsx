@@ -144,7 +144,12 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect, onCreateEvent }:
                 }
               }}
             >
-              Open Calendar
+              <Typography
+                variant="small"
+                className="text-sm font-medium"
+              >
+                Open Calendar
+              </Typography>
             </Button>
             <Button
               variant="outline"

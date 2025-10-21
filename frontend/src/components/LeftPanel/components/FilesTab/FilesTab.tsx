@@ -934,8 +934,22 @@ export function FilesTab({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="local">Local Files</SelectItem>
-                <SelectItem value="drive">Google Drive</SelectItem>
+                <SelectItem value="local">
+                  <Typography
+                    variant="small"
+                    className="text-sm font-medium"
+                  >
+                    Local Files
+                  </Typography>
+                </SelectItem>
+                <SelectItem value="drive">
+                  <Typography
+                    variant="small"
+                    className="text-sm font-medium"
+                  >
+                    Google Drive
+                  </Typography>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
