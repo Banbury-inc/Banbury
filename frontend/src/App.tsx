@@ -13,7 +13,7 @@ import Layout from './layout/Layout';
 import Admin from './pages/Admin/Admin';
 import AuthCallback from './pages/AuthCallback';
 import FileDownload from './pages/Filedownload';
-import Home from './pages/Home';
+import Home from './pages/Home/Home';
 import Knowledge from './pages/Knowledge';
 import Login from './pages/Login';
 import MeetingAgent from './pages/MeetingAgent/MeetingAgent';

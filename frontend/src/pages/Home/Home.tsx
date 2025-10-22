@@ -6,16 +6,17 @@ import { Box, Container, Grid } from '@mui/material';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import EmailDemo from '../assets/images/email_demo.png';
-import CalendarDemo from '../assets/images/calendar_demo.mp4';
-import SpreadsheetDemo from '../assets/images/spreadsheet_demo.mp4';
-import BrowserDemo from '../assets/images/browser-automation-demo.mp4';
-import TaskCreationDemo from '../assets/images/task-creation-demo.mp4';
-import DiffViewDemo from '../assets/images/diff-view.mp4';
-import { Button } from '../components/ui/button';
-import { Typography } from '../components/ui/typography';
-import { determineOS } from '../handlers/determineOS';
-import { handleDownload } from './handlers/home';
+import DemoApp from './components/DemoApp';
+import EmailDemo from '../../assets/images/email_demo.png';
+import CalendarDemo from '../../assets/images/calendar_demo.mp4';
+import SpreadsheetDemo from '../../assets/images/spreadsheet_demo.mp4';
+import BrowserDemo from '../../assets/images/browser-automation-demo.mp4';
+import TaskCreationDemo from '../../assets/images/task-creation-demo.mp4';
+import DiffViewDemo from '../../assets/images/diff-view.mp4';
+import { Button } from '../../components/ui/button';
+import { Typography } from '../../components/ui/typography';
+import { determineOS } from '../../handlers/determineOS';
+import { handleDownload } from '../handlers/home'
 import {
   GmailIcon,
   GoogleDocsIcon,
@@ -28,7 +29,7 @@ import {
   SlackIcon,
   NotionIcon,
   GitHubIcon
-} from '../components/icons';
+} from '../../components/icons';
 // Tracking handled globally in pages/_app.tsx via routeTracking handler
 
 const Home = (): JSX.Element => {
@@ -159,9 +160,9 @@ const Home = (): JSX.Element => {
                   variants={fadeInUp}
                   transition={{ duration: 0.6, ease: 'easeOut' }}
                 >
-                  <Typography variant="h1" className="text-4xl sm:text-5xl md:text-6xl leading-tight md:leading-tight mb-4 md:mb-8">
+                  <Typography variant="h1" className="mb-4 md:mb-8">
                     Your AI-Powered <br />
-                    <span className="text-zinc-400 font-medium">
+                    <span className="text-white">
                       Workflow Engine
                     </span>
                   </Typography>
@@ -219,7 +220,7 @@ const Home = (): JSX.Element => {
               </Box>
             </Grid>
 
-            {/* Image - Right Side */}
+
             {/* Image - Beneath Hero Text */}
             <Grid item xs={12} sm={12} lg={12} xl={12} sx={{
               position: 'relative',
@@ -249,66 +250,7 @@ const Home = (): JSX.Element => {
                 }}
               />
               
-              {/* Main image container with enhanced styling */}
-              <Box sx={{
-                position: 'relative',
-                width: { xs: '100%', sm: '95%', lg: '90%', xl: '85%' },
-                maxWidth: '1400px',
-                mx: 'auto',
-                height: 'auto',
-                zIndex: 2,
-                transformOrigin: 'center center',
-                transform: 'perspective(2000px) rotateY(25deg) rotateX(15deg) rotateZ(-5deg) scale(1.05)',
-                transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-                '&:hover': {
-                  transform: 'perspective(2000px) rotateY(22deg) rotateX(13deg) rotateZ(-4deg) scale(1.07)',
-                }
-              }}>
-                <Image
-                  src={'/workspaces-no-background.png'}
-                  alt="AI-powered workflow automation platform interface"
-                  width={800}
-                  height={450}
-                  style={{
-                    width: '100%',
-                    height: 'auto',
-                    borderRadius: '16px',
-                    filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.7)) drop-shadow(0 15px 30px rgba(0,0,0,0.5)) drop-shadow(-15px 0 25px rgba(0,0,0,0.3))',
-                    backgroundColor: '#0a0a0a',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%)',
-                  }}
-                  priority
-                />
-                
-                {/* Subtle highlight overlay */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: '40%',
-                    background: 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%)',
-                    borderRadius: '16px 16px 0 0',
-                    pointerEvents: 'none',
-                  }}
-                />
-                
-                {/* Bottom fade-to-black overlay */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    height: '70%',
-                    background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.95) 85%, #000000 100%)',
-                    borderRadius: '0 0 16px 16px',
-                    pointerEvents: 'none',
-                  }}
-                />
-              </Box>
+              <DemoApp />
             </Grid>
           </Grid>
         </Container>
