@@ -146,8 +146,8 @@ export const renderPanel = ({
     >
       {/* Panel Tab Bar (Olympus Tabs) */}
       {panel.tabs.length > 0 && (
-        <div className="bg-white dark:bg-black border-0 min-h-[40px] flex items-end">
-          <div className="flex items-end flex-1">
+        <div className="bg-zinc-50 dark:bg-[#252525] border-b border-zinc-200 dark:border-zinc-700 flex items-stretch">
+          <div className="flex items-stretch flex-1">
             <OlympusTabs
               tabs={panel.tabs.map<OlympusTab>((t) => ({ 
                 id: t.id, 

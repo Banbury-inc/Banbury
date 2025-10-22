@@ -391,9 +391,9 @@ export const Tabs: React.FC<TabsProps> = ({
         <button
           onClick={() => onTabAdd?.()}
           data-testid="new-tab-button"
-          className="px-3 py-2 text-sm font-medium rounded-t-lg transition-all duration-200 text-zinc-600 dark:text-gray-400 hover:text-zinc-800 dark:hover:text-gray-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 z-[9999]"
+          className="px-3 py-1.5 text-xs transition-colors duration-150 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-[#2d2d2d] bg-zinc-100 dark:bg-[#252525]"
         >
-          <AddIcon size={14} />
+          <AddIcon size={12} />
         </button>
       )}
       {closestEdge && indicatorPosition !== null && !suppressReorderIndicator && (
