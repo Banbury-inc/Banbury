@@ -3,15 +3,11 @@ import { motion } from "framer-motion";
 import {
   CopyIcon,
   CheckIcon,
-  PencilIcon,
   RefreshCwIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   Volume2,
   VolumeX,
   FolderOpen,
   Trash2,
-  Mail,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -20,7 +16,6 @@ import { DocxAITool } from "./components/DocxAITool";
 import { TldrawAITool } from "./components/TldrawAITool";
 import { DrawioAITool } from "../../MiddlePanel/CanvasViewer/DrawioAITool";
 import DrawioViewerModal from "../../MiddlePanel/CanvasViewer/DrawioViewerModal";
-import { FileAttachmentDisplay } from "./components/file-attachment-display";
 import { MarkdownText } from "../markdown-text";
 import { SheetAITool } from "./components/SheetAITool";
 import { TiptapAITool } from "./components/TiptapAITool";
@@ -40,6 +35,8 @@ import { cn } from "../../../utils";
 import { FileSystemItem } from "../../../utils/fileTreeUtils";
 import { createHandleDrawioFileView } from "../handlers/handle-drawio-file-view";
 import { Composer } from "./Composer";
+import { UserMessage } from "./thread/components/UserMessage";
+import { BranchPicker } from "./thread/components/BranchPicker";
 
 import type { FC } from "react";
 import { Typography } from "../../ui/typography";
@@ -1108,7 +1105,7 @@ const AssistantMessage: FC = () => {
         animate={{ y: 0, opacity: 1 }}
         data-role="assistant"
       >
-        <div className="text-zinc-900 dark:text-white col-start-1 row-start-1 leading-none break-words text-sm overflow-x-auto max-w-full">
+        <div className="text-zinc-900 dark:text-white col-start-1 row-start-1 leading-none break-words text-sm overflow-x-auto max-w-full pb-10">
           <MessagePrimitive.Content
             components={{
               Text: MarkdownText,
@@ -1144,7 +1141,7 @@ const AssistantActionBar: FC = () => {
       hideWhenRunning
       autohide="not-last"
       autohideFloat="single-branch"
-      className="text-muted-foreground data-floating:bg-background col-start-3 row-start-2 mt-3 ml-3 flex gap-1 data-floating:absolute data-floating:mt-2 data-floating:rounded-md data-floating:border data-floating:p-1 data-floating:shadow-sm"
+      className="text-muted-foreground absolute right-0 bottom-0 mt-2 flex gap-1"
     >
       <ActionBarPrimitive.Copy asChild>
         <TooltipIconButton tooltip="Copy">
@@ -1216,81 +1213,6 @@ const VoiceControls: FC = () => {
   );
 };
 
-const UserMessage: FC = () => {
-  return (
-    <MessagePrimitive.Root asChild>
-      <motion.div
-        className="mx-auto grid w-full max-w-[var(--thread-max-width)] auto-rows-auto text-sm grid-cols-[minmax(72px,1fr)_auto] gap-y-1 px-[var(--thread-padding-x)] py-4 [&:where(>*)]:col-start-2"
-        initial={{ y: 5, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        data-role="user"
-      >
-        <UserActionBar />
-
-        <div className="bg-muted text-foreground col-start-2 rounded-3xl px-5 py-2.5 break-words overflow-x-auto max-w-full">
-          <MessagePrimitive.Content components={{ Text: MarkdownText }} />
-          
-          {/* Display attached files */}
-          <MessagePrimitive.Attachments>
-            {(attachments: any[]) => {
-              const fileAttachments = attachments.filter((att: any) => att.type === 'file');
-              const emailAttachments = attachments.filter((att: any) => att.type === 'email');
-              
-              return (
-                <div className="space-y-2">
-                  {fileAttachments.length > 0 && (
-                    <FileAttachmentDisplay 
-                      files={fileAttachments.map((att: any) => ({
-                        id: att.fileId,
-                        file_id: att.fileId,
-                        name: att.fileName,
-                        path: att.filePath,
-                        type: 'file'
-                      }))}
-                    />
-                  )}
-                  
-                  {emailAttachments.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {emailAttachments.map((att: any) => (
-                        <div
-                          key={att.emailId}
-                          className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm"
-                          title={`From: ${att.from}\nSubject: ${att.subject}`}
-                        >
-                          <Mail className="h-3 w-3" />
-                          <span className="truncate max-w-32">{att.subject}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            }}
-          </MessagePrimitive.Attachments>
-        </div>
-
-        <BranchPicker className="col-span-full col-start-1 row-start-3 -mr-1 justify-end" />
-      </motion.div>
-    </MessagePrimitive.Root>
-  );
-};
-
-const UserActionBar: FC = () => {
-  return (
-    <ActionBarPrimitive.Root
-      hideWhenRunning
-      autohide="not-last"
-      className="col-start-1 mt-2.5 mr-3 flex flex-col items-end"
-    >
-      <ActionBarPrimitive.Edit asChild>
-        <TooltipIconButton tooltip="Edit">
-          <PencilIcon />
-        </TooltipIconButton>
-      </ActionBarPrimitive.Edit>
-    </ActionBarPrimitive.Root>
-  );
-};
 
 const EditComposer: FC = () => {
   return (
@@ -1317,56 +1239,6 @@ const EditComposer: FC = () => {
     </div>
   );
 };
-
-const BranchPicker: FC<any> = ({
-  className,
-  ...rest
-}) => {
-  return (
-    <BranchPickerPrimitive.Root
-      hideWhenSingleBranch
-      className={cn("text-muted-foreground inline-flex items-center text-xs", className)}
-      {...rest}
-    >
-      <BranchPickerPrimitive.Previous asChild>
-        <TooltipIconButton tooltip="Previous">
-          <ChevronLeftIcon />
-        </TooltipIconButton>
-      </BranchPickerPrimitive.Previous>
-      <span className="font-medium">
-        <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
-      </span>
-      <BranchPickerPrimitive.Next asChild>
-        <TooltipIconButton tooltip="Next">
-          <ChevronRightIcon />
-        </TooltipIconButton>
-      </BranchPickerPrimitive.Next>
-    </BranchPickerPrimitive.Root>
-  );
-};
-
-const StarIcon = ({ size = 14 }: { size?: number }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 16 16"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M8 0L9.79611 6.20389L16 8L9.79611 9.79611L8 16L6.20389 9.79611L0 8L6.20389 6.20389L8 0Z"
-      fill="currentColor"
-    />
-  </svg>
-);
-
-// Conversation Management Components
-interface ConversationButtonsProps {
-  onSave: () => void;
-  onLoad: () => void;
-  conversations: any[];
-  isLoading: boolean;
-}
 
 interface SaveConversationDialogProps {
   open: boolean;

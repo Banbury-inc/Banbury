@@ -356,6 +356,10 @@ export default function DemoApp() {
   // Setup mocks immediately on first render using lazy initialization
   const [mocksReady] = useState(() => {
     setupDemoMocks()
+    // Set a global flag to indicate demo mode is active
+    if (typeof window !== 'undefined') {
+      (window as any).__DEMO_MODE_ACTIVE__ = true
+    }
     return true
   })
   const [isFileSidebarCollapsed, setIsFileSidebarCollapsed] = useState(false)
@@ -369,6 +373,10 @@ export default function DemoApp() {
   useEffect(() => {
     return () => {
       cleanupDemoMocks()
+      // Clear the global flag when demo mode ends
+      if (typeof window !== 'undefined') {
+        (window as any).__DEMO_MODE_ACTIVE__ = false
+      }
     }
   }, [])
 

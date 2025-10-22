@@ -480,6 +480,23 @@ const Workspaces = (): JSX.Element => {
     // Ensure dark mode is enabled
     window.localStorage.setItem('themeMode', 'dark');
     
+    // Force cleanup of any demo mocks that might still be active
+    if (typeof window !== 'undefined' && (window as any).__DEMO_MODE_ACTIVE__) {
+      console.log('Demo mode still active, forcing cleanup...');
+      // Import and run cleanup if available
+      import('../Home/components/DemoApp').then(module => {
+        // The cleanup function is internal, but we can rely on React's unmount
+        // Just trigger a file refresh after a short delay
+        setTimeout(() => {
+          console.log('Triggering file refresh after demo cleanup');
+          triggerSidebarRefresh();
+        }, 100);
+      }).catch(() => {
+        // If import fails, just continue
+      });
+      (window as any).__DEMO_MODE_ACTIVE__ = false;
+    }
+    
     const checkAuthAndFetchUser = async () => {
       try {
         console.log('checkAuthAndFetchUser called');
@@ -507,6 +524,12 @@ const Workspaces = (): JSX.Element => {
         };
         console.log('Setting userInfo in useEffect:', basicUserInfo);
         setUserInfo(basicUserInfo);
+        
+        // Trigger a file refresh after userInfo is set to ensure real files are loaded
+        setTimeout(() => {
+          console.log('Triggering initial file refresh for workspaces');
+          triggerSidebarRefresh();
+        }, 500);
       } catch (err) {
         console.log('Error in checkAuthAndFetchUser:', err);
         // Still try to show basic info if we have some stored data
@@ -522,6 +545,12 @@ const Workspaces = (): JSX.Element => {
           };
           console.log('Setting userInfo in catch block:', basicUserInfo);
           setUserInfo(basicUserInfo);
+          
+          // Trigger a file refresh here too
+          setTimeout(() => {
+            console.log('Triggering file refresh after error recovery');
+            triggerSidebarRefresh();
+          }, 500);
         } else {
           router.push('/login');
           return;
@@ -546,7 +575,7 @@ const Workspaces = (): JSX.Element => {
     setTimeout(() => {
       trackWorkspaceVisit();
     }, 1000); // Small delay to ensure auth is complete
-  }, [router]);
+  }, [router, triggerSidebarRefresh]);
 
   // Listen for requests to reopen a file (e.g., after save generates a new file id)
   useEffect(() => {
