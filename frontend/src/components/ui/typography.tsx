@@ -6,7 +6,7 @@ import { cn } from "../../utils"
 const typographyVariants = cva("font-mono", {
   variants: {
     variant: {
-      h1: "scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl text-black dark:text-white",
+      h1: "scroll-m-20 text-4xl font-bold tracking-tight lg:text-5xl text-black dark:text-white",
       h2: "scroll-m-20 pb-2 text-2xl font-bold tracking-tight first:mt-0 text-black dark:text-white",
       h3: "scroll-m-20 text-xl font-semibold tracking-tight text-black dark:text-white",
       h4: "scroll-m-20 text-lg font-semibold tracking-tight text-black dark:text-white",
