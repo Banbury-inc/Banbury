@@ -137,7 +137,6 @@ const Workspaces = (): JSX.Element => {
     const videoExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v', '.3gp', '.ogv']
     const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
     const isVideo = videoExtensions.includes(extension)
-    console.log('isVideoFile check:', fileName, 'extension:', extension, 'isVideo:', isVideo);
     return isVideo
   };
 
@@ -201,19 +200,15 @@ const Workspaces = (): JSX.Element => {
           file.mimeType.includes('csv')
         ))
       }
-      console.log('handleFileSelect - Drive file:', file.name, 'mimeType:', file.mimeType, 'viewable:', viewable)
     } else {
       viewable = isViewableFile(file.name)
-      console.log('handleFileSelect - Local file:', file.name, 'viewable:', viewable)
     }
     
     if (!viewable) {
-      console.log('File not viewable, setting selectedFile:', file.name);
       setSelectedFile(file);
       return;
     }
     
-    console.log('File is viewable, opening in tab:', file.name);
     openFileInTabCallback(file, activePanelId);
   }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout, setSelectedFile]);
   
@@ -314,7 +309,6 @@ const Workspaces = (): JSX.Element => {
   
   // Render a single panel - using extracted function
   const renderPanelWrapper = useCallback((panel: Panel) => {
-    console.log('renderPanelWrapper called with userInfo:', userInfo);
     return renderPanel({
       panel,
       activePanelId,
@@ -476,19 +470,16 @@ const Workspaces = (): JSX.Element => {
 
 
   useEffect(() => {
-    console.log('useEffect running - checking auth and fetching user');
     // Ensure dark mode is enabled
     window.localStorage.setItem('themeMode', 'dark');
     
     // Force cleanup of any demo mocks that might still be active
     if (typeof window !== 'undefined' && (window as any).__DEMO_MODE_ACTIVE__) {
-      console.log('Demo mode still active, forcing cleanup...');
       // Import and run cleanup if available
       import('../Home/components/DemoApp').then(module => {
         // The cleanup function is internal, but we can rely on React's unmount
         // Just trigger a file refresh after a short delay
         setTimeout(() => {
-          console.log('Triggering file refresh after demo cleanup');
           triggerSidebarRefresh();
         }, 100);
       }).catch(() => {
@@ -499,13 +490,10 @@ const Workspaces = (): JSX.Element => {
     
     const checkAuthAndFetchUser = async () => {
       try {
-        console.log('checkAuthAndFetchUser called');
         setLoading(true);
         
         // Validate token first using ApiService
-        console.log('Validating token...');
         const isValidToken = await ApiService.validateToken();
-        console.log('Token validation result:', isValidToken);
 
         if (!isValidToken) {
           // Token is invalid, redirect to login
@@ -522,19 +510,15 @@ const Workspaces = (): JSX.Element => {
           last_name: '',
           picture: null
         };
-        console.log('Setting userInfo in useEffect:', basicUserInfo);
         setUserInfo(basicUserInfo);
         
         // Trigger a file refresh after userInfo is set to ensure real files are loaded
         setTimeout(() => {
-          console.log('Triggering initial file refresh for workspaces');
           triggerSidebarRefresh();
         }, 500);
       } catch (err) {
-        console.log('Error in checkAuthAndFetchUser:', err);
         // Still try to show basic info if we have some stored data
         const username = localStorage.getItem('authUsername') || localStorage.getItem('username');
-        console.log('Username from localStorage:', username);
         if (username) {
           const basicUserInfo: UserInfo = {
             username: username,
@@ -543,12 +527,10 @@ const Workspaces = (): JSX.Element => {
             last_name: '',
             picture: null
           };
-          console.log('Setting userInfo in catch block:', basicUserInfo);
           setUserInfo(basicUserInfo);
           
           // Trigger a file refresh here too
           setTimeout(() => {
-            console.log('Triggering file refresh after error recovery');
             triggerSidebarRefresh();
           }, 500);
         } else {
@@ -565,13 +547,11 @@ const Workspaces = (): JSX.Element => {
         await ApiService.trackWorkspaceVisit();
       } catch (error) {
         // Silently fail - don't interrupt user experience
-        console.log('Workspace visit tracking failed:', error);
       }
     };
 
     checkAuthAndFetchUser();
-    
-    // Track workspace visit after authentication is confirmed
+
     setTimeout(() => {
       trackWorkspaceVisit();
     }, 1000); // Small delay to ensure auth is complete

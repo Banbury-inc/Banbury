@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { HumanMessage, SystemMessage, AIMessage, BaseMessage, ToolMessage } from "@langchain/core/messages";
 import { reactAgent } from "./agent/agent";
 import { runWithServerContext } from "../../../../src/assistant/langraph/serverContext";
+import { extractTextFromDocx } from "./handlers/handleExtractTextFromDocx";
+import { extractTextFromXlsx } from "./handlers/handleExtractTextFromXLSX";
 
 // Types following athena-intelligence patterns
 type AssistantUiMessagePart =
@@ -13,80 +15,6 @@ type AssistantUiMessage = {
   role: "system" | "user" | "assistant";
   content: AssistantUiMessagePart[];
 };
-
-// Simple DOCX text extraction function (copied from existing implementation)
-function extractTextFromDocx(buffer: Buffer, fileName: string): string {
-  try {
-    const content = buffer.toString('binary');
-    const xmlMatches = content.match(/<w:t[^>]*>(.*?)<\/w:t>/g);
-    
-    if (xmlMatches) {
-      const extractedText = xmlMatches
-        .map(match => {
-          const textMatch = match.match(/<w:t[^>]*>(.*?)<\/w:t>/);
-          return textMatch ? textMatch[1] : '';
-        })
-        .filter(text => text.trim().length > 0)
-        .join(' ');
-      
-      if (extractedText.trim().length > 0) {
-        return `Document: ${fileName}\n\nExtracted Content:\n${extractedText}`;
-      }
-    }
-    
-    const simpleText = content.replace(/[^\x20-\x7E]/g, ' ').replace(/\s+/g, ' ').trim();
-    const meaningfulText = simpleText.length > 100 ? simpleText.substring(0, 2000) : '';
-    
-    if (meaningfulText) {
-      return `Document: ${fileName}\n\nPartial Content:\n${meaningfulText}`;
-    }
-    
-    return `Document: ${fileName}\n\nThis DOCX file was attached but text extraction was not successful. The document contains ${buffer.length} bytes of data. Please ask the user to provide the key content or specific information from this document.`;
-    
-  } catch (error) {
-    return `Document: ${fileName}\n\nThis DOCX file could not be processed for text extraction. Please ask the user to provide the text content or key information from this document.`;
-  }
-}
-
-// Best-effort XLSX/XLS extraction to CSV-like text for LLM consumption
-function extractTextFromXlsx(buffer: Buffer, fileName: string): string {
-  try {
-    // Lazy require to avoid hard dependency if module is missing
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const XLSX = require('xlsx');
-    const workbook = XLSX.read(buffer, { type: 'buffer' });
-    const sheetNames: string[] = workbook.SheetNames || [];
-    if (!sheetNames.length) {
-      return `Spreadsheet: ${fileName}\n\n(No sheets found)`;
-    }
-
-    const maxSheets = 5; // limit number of sheets to include
-    const maxChars = 150_000; // cap total characters to keep payload manageable
-    let total = '';
-    for (const sheetName of sheetNames.slice(0, maxSheets)) {
-      const sheet = workbook.Sheets[sheetName];
-      if (!sheet) continue;
-      // Convert sheet to CSV
-      const csv = XLSX.utils.sheet_to_csv(sheet, { FS: ',', RS: '\n' });
-      if (csv && csv.trim()) {
-        const section = `Sheet: ${sheetName}\n${csv}\n\n`;
-        if ((total.length + section.length) > maxChars) {
-          total += section.slice(0, Math.max(0, maxChars - total.length));
-          break;
-        }
-        total += section;
-      }
-      if (total.length >= maxChars) break;
-    }
-
-    if (!total.trim()) {
-      return `Spreadsheet: ${fileName}\n\n(Parsed but no tabular content found)`;
-    }
-    return `Spreadsheet: ${fileName}\n\n${total}`;
-  } catch (error) {
-    return `Spreadsheet: ${fileName}\n\nThis spreadsheet could not be parsed. Please provide key details or export a CSV.`;
-  }
-}
 
 function toLangChainMessages(messages: AssistantUiMessage[]): BaseMessage[] {
   const lc: BaseMessage[] = [];
