@@ -27,6 +27,7 @@ import { ThreadScrollToBottom } from "./ThreadScrollToBottom";
 import { handleSend } from "./handlers/handleSend";
 
 import type { FC } from "react";
+import { Typography } from "@/components/ui/typography";
 
 const {
   ComposerPrimitive,
@@ -318,7 +319,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
               <Wrench height={16} width={16} />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" className="w-56">
+          <DropdownMenuContent side="top" align="start" className="w-56 p-2">
             <DropdownMenuLabel>
               Tools
             </DropdownMenuLabel>
@@ -327,53 +328,35 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
               checked={toolPreferences.web_search}
               onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, web_search: Boolean(checked) })}
             >
-              <div className="flex flex-col">
-                <span>Web Search</span>
-                <span className="text-xs text-muted-foreground">Enhanced with content enrichment</span>
-              </div>
+              <Typography variant="small" className="text-xs text-muted-foreground">Web Search</Typography>
             </DropdownMenuCheckboxItem>
 
             <DropdownMenuCheckboxItem
               checked={toolPreferences.read_file}
               onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, read_file: Boolean(checked) })}
             >
-              <div className="flex flex-col">
-                <span>Read File</span>
-                <span className="text-xs text-muted-foreground">Advanced file processing</span>
-              </div>
+              <Typography variant="small" className="text-xs text-muted-foreground">Read File</Typography>
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={toolPreferences.gmail}
               onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, gmail: Boolean(checked) })}
             >
-              <div className="flex flex-col">
-                <span>Gmail Integration</span>
-                <span className="text-xs text-muted-foreground">Read, search, and send emails</span>
-              </div>
+              <Typography variant="small" className="text-xs text-muted-foreground">Gmail</Typography>
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={toolPreferences.browser}
               onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, browser: Boolean(checked) })}
             >
-              <div className="flex flex-col">
-                <span>Browser</span>
-                <span className="text-xs text-muted-foreground">Automated browser sessions</span>
-              </div>
+              <Typography variant="small" className="text-xs text-muted-foreground">Browser</Typography>
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
               checked={toolPreferences.x_api}
               onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, x_api: Boolean(checked) })}
             >
-              <div className="flex flex-col">
-                <span>X (Twitter)</span>
-                <span className="text-xs text-muted-foreground">Enable X API tools</span>
-              </div>
+              <Typography variant="small" className="text-xs text-muted-foreground">X (Twitter)</Typography>
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem checked disabled>
-              <div className="flex flex-col">
-                <span>Memory</span>
-                <span className="text-xs text-muted-foreground">Always enabled</span>
-              </div>
+              <Typography variant="small" className="text-xs text-muted-foreground">Memory</Typography>
             </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
