@@ -2,8 +2,8 @@ import { ChatAnthropic } from "@langchain/anthropic";
 import { HumanMessage, SystemMessage, AIMessage, ToolMessage } from "@langchain/core/messages";
 import { StateGraph, START, END, MessagesAnnotation } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { CONFIG } from "../../config/config";
-import { getServerContextValue } from "./serverContext";
+import { CONFIG } from "../../../../../src/config/config";
+import { getServerContextValue } from "../../../../../src/assistant/langraph/serverContext";
 import type { BaseMessage } from "@langchain/core/messages";
 // Import tools from separate files
 import { webSearchTool } from "./tools/webSearchTool";

@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools"
 import { z } from "zod"
-import { CONFIG } from "../../../config/config"
-import { getServerContextValue } from "../serverContext"
+import { CONFIG } from "../../../../../../src/config/config"
+import { getServerContextValue } from "../../../../../../src/assistant/langraph/serverContext"
 
 // Utility function to truncate Gmail message content to prevent token limit issues
 const truncateGmailResponse = (messages: any[], maxTokensPerMessage: number = 2000, maxTotalMessages: number = 10) => {

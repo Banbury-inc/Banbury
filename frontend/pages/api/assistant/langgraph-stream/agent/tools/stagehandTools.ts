@@ -1,6 +1,6 @@
 import { tool } from "@langchain/core/tools"
 import { z } from "zod"
-import { getServerContextValue } from "../serverContext"
+import { getServerContextValue } from "../../../../../../src/assistant/langraph/serverContext"
 
 // Global toggle helper: "Browser" tool (controls both Browserbase and Stagehand)
 function isBrowserToolEnabled(): boolean {
@@ -29,7 +29,7 @@ export const stagehandCreateSessionTool = tool(
       if (typeof window !== 'undefined') {
         return JSON.stringify({ success: false, error: 'Stagehand can only be created server-side' })
       }
-      const { createStagehandSession } = await import('../../../pages/api/stagehand/_manager')
+      const { createStagehandSession } = await import('../../../../../../src/pages/api/stagehand/_manager')
       const created = await createStagehandSession({ startUrl: input.startUrl, modelName: input.modelName })
       setStagehandSessionId(created.id)
       
@@ -63,7 +63,7 @@ export const stagehandGotoTool = tool(
     if (typeof window !== 'undefined') {
       return JSON.stringify({ success: false, error: 'Stagehand navigation must run server-side' })
     }
-    const { getStagehandSession } = await import('../../../pages/api/stagehand/_manager')
+    const { getStagehandSession } = await import('../../../../../../src/pages/api/stagehand/_manager')
     const instance = getStagehandSession(sessionId)
     if (!instance) return JSON.stringify({ success: false, error: 'Session not found' })
     await instance.page.goto(input.url)
@@ -88,7 +88,7 @@ export const stagehandObserveTool = tool(
     if (typeof window !== 'undefined') {
       return JSON.stringify({ success: false, error: 'Stagehand observe must run server-side' })
     }
-    const { getStagehandSession } = await import('../../../pages/api/stagehand/_manager')
+    const { getStagehandSession } = await import('../../../../../../src/pages/api/stagehand/_manager')
     const instance = getStagehandSession(sessionId)
     if (!instance) return JSON.stringify({ success: false, error: 'Session not found' })
     const suggestions = await instance.page.observe(input.instruction)
@@ -111,7 +111,7 @@ export const stagehandActTool = tool(
     if (typeof window !== 'undefined') {
       return JSON.stringify({ success: false, error: 'Stagehand act must run server-side' })
     }
-    const { getStagehandSession } = await import('../../../pages/api/stagehand/_manager')
+    const { getStagehandSession } = await import('../../../../../../src/pages/api/stagehand/_manager')
     const instance = getStagehandSession(sessionId)
     if (!instance) return JSON.stringify({ success: false, error: 'Session not found' })
     await instance.page.act(input.suggestion)
@@ -136,7 +136,7 @@ export const stagehandExtractTool = tool(
     if (typeof window !== 'undefined') {
       return JSON.stringify({ success: false, error: 'Stagehand extract must run server-side' })
     }
-    const { getStagehandSession } = await import('../../../pages/api/stagehand/_manager')
+    const { getStagehandSession } = await import('../../../../../../src/pages/api/stagehand/_manager')
     const instance = getStagehandSession(sessionId)
     if (!instance) return JSON.stringify({ success: false, error: 'Session not found' })
     const built = z.object(Object.fromEntries(Object.keys(input.schema || {}).map((k) => [k, z.string()])) as Record<string, z.ZodTypeAny>)
@@ -160,7 +160,7 @@ export const stagehandCloseTool = tool(
     if (typeof window !== 'undefined') {
       return JSON.stringify({ success: false, error: 'Stagehand close must run server-side' })
     }
-    const { closeStagehandSession } = await import('../../../pages/api/stagehand/_manager')
+    const { closeStagehandSession } = await import('../../../../../../src/pages/api/stagehand/_manager')
     const ok = await closeStagehandSession(sessionId)
     if (ok) setStagehandSessionId(null)
     return JSON.stringify({ success: ok })

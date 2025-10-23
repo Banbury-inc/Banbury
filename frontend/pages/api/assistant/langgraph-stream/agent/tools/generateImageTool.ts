@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools"
 import { z } from "zod"
-import { CONFIG } from "../../../config/config"
-import { getServerContextValue } from "../serverContext"
+import { CONFIG } from "../../../../../../src/config/config"
+import { getServerContextValue } from "../../../../../../src/assistant/langraph/serverContext"
 
 // Image generation tool using OpenAI Images API, then upload to S3 via Banbury API
 export const generateImageTool = tool(

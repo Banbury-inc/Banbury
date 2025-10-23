@@ -11,7 +11,7 @@ import { EmailService, GmailMessage } from '../../../services/emailService'
 import { CalendarService, CalendarEvent } from '../../../services/calendarService'
 import { ScopeService } from '../../../services/scopeService'
 import { ApiService } from '../../../services/apiService'
-import { DemoRuntimeProvider } from './DemoRuntimeProvider'
+import { DemoRuntimeProvider } from '../../../assistant/DemoRuntimeProvider'
 
 // Mock data
 const mockUserInfo = {

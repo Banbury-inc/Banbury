@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools"
 import { z } from "zod"
-import { CONFIG } from "../../../config/config"
-import { getServerContextValue } from "../serverContext"
+import { CONFIG } from "../../../../../../src/config/config"
+import { getServerContextValue } from "../../../../../../src/assistant/langraph/serverContext"
 
 // Memory management tools (integrated with Zep Cloud and Mem0)
 export const createMemoryTool = tool(

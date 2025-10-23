@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools"
 import { z } from "zod"
-import { CONFIG } from "../../../config/config"
-import { getServerContextValue } from "../serverContext"
+import { CONFIG } from "../../../../../../src/config/config"
+import { getServerContextValue } from "../../../../../../src/assistant/langraph/serverContext"
 
 // Google Calendar tools (proxy to Banbury API). Respects user toolPreferences via server context
 export const calendarListEventsTool = tool(
