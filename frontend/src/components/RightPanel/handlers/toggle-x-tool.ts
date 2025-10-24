@@ -6,6 +6,7 @@ export interface ToolPreferences {
   langgraph_mode: boolean
   browser: boolean
   x_api: boolean
+  slack: boolean
 }
 
 export function toggleXTool({ prefs }: { prefs: ToolPreferences }): ToolPreferences {
@@ -18,6 +19,7 @@ export function toggleXTool({ prefs }: { prefs: ToolPreferences }): ToolPreferen
       langgraph_mode: true,
       browser: false,
       x_api: false,
+      slack: false,
     }
   }
   return { ...prefs, x_api: !prefs.x_api }

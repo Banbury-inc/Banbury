@@ -355,6 +355,12 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
             >
               <Typography variant="small" className="text-xs text-muted-foreground">X (Twitter)</Typography>
             </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={toolPreferences.slack}
+              onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, slack: Boolean(checked) })}
+            >
+              <Typography variant="small" className="text-xs text-muted-foreground">Slack</Typography>
+            </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem checked disabled>
               <Typography variant="small" className="text-xs text-muted-foreground">Memory</Typography>
             </DropdownMenuCheckboxItem>

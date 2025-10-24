@@ -88,6 +88,24 @@ export const ToolUI: React.FC<ToolUIProps> = ({ toolName, args, result }) => {
         />
       );
     
+    // Slack tools
+    case 'slack_list_channels':
+    case 'slack_send_message':
+    case 'slack_get_channel_history':
+    case 'slack_get_thread_replies':
+    case 'slack_search_messages':
+    case 'slack_get_user_info':
+    case 'slack_set_channel_topic':
+    case 'slack_add_reaction':
+      return (
+        <ToolCallCard
+          toolName={toolName}
+          argsText={JSON.stringify(args)}
+          result={result}
+          label={getToolLabel(toolName)}
+        />
+      );
+    
     // Memory tools
     case 'store_memory':
     case 'search_memory':
@@ -162,6 +180,14 @@ function getToolLabel(toolName: string): string {
     'x_api_search_tweets': 'X - Search Tweets',
     'x_api_get_trending_topics': 'X - Trending Topics',
     'x_api_post_tweet': 'X - Post Tweet',
+    'slack_list_channels': 'Slack - List Channels',
+    'slack_send_message': 'Slack - Send Message',
+    'slack_get_channel_history': 'Slack - Get History',
+    'slack_get_thread_replies': 'Slack - Get Thread',
+    'slack_search_messages': 'Slack - Search',
+    'slack_get_user_info': 'Slack - Get User Info',
+    'slack_set_channel_topic': 'Slack - Set Topic',
+    'slack_add_reaction': 'Slack - Add Reaction',
     'store_memory': 'Store Memory',
     'search_memory': 'Search Memory',
     'create_file': 'Create File',

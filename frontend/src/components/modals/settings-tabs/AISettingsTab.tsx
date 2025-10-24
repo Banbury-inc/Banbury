@@ -14,6 +14,7 @@ interface ToolPreferences {
   langgraph_mode: boolean
   browser: boolean
   x_api: boolean
+  slack: boolean
 }
 
 export function AISettingsTab() {
@@ -31,6 +32,7 @@ export function AISettingsTab() {
           langgraph_mode: true,
           browser: typeof parsed.browser === 'boolean' ? parsed.browser : false,
           x_api: typeof parsed.x_api === 'boolean' ? parsed.x_api : false,
+          slack: typeof parsed.slack === 'boolean' ? parsed.slack : false,
         }
       }
     } catch {}
@@ -43,6 +45,7 @@ export function AISettingsTab() {
       langgraph_mode: true,
       browser: false,
       x_api: false,
+      slack: false,
     }
   })
 

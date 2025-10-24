@@ -46,6 +46,25 @@ import {
   xApiGetTrendingTopicsTool,
   xApiPostTweetTool,
 } from "./tools/xApiTools";
+import {
+  slackListChannelsTool,
+  slackSendMessageTool,
+  slackGetChannelHistoryTool,
+  slackGetThreadRepliesTool,
+  slackSearchMessagesTool,
+  slackGetUserInfoTool,
+  slackSetChannelTopicTool,
+  slackAddReactionTool,
+} from "./tools/slackTools";
+import {
+  githubListReposTool,
+  githubGetRepoTool,
+  githubListIssuesTool,
+  githubCreateIssueTool,
+  githubListPullRequestsTool,
+  githubGetFileContentsTool,
+  githubSearchCodeTool,
+} from "./tools/githubTools";
 
 // Define our agent state
 interface AgentState {
@@ -114,6 +133,21 @@ const tools = [
   xApiSearchTweetsTool,
   xApiGetTrendingTopicsTool,
   xApiPostTweetTool,
+  slackListChannelsTool,
+  slackSendMessageTool,
+  slackGetChannelHistoryTool,
+  slackGetThreadRepliesTool,
+  slackSearchMessagesTool,
+  slackGetUserInfoTool,
+  slackSetChannelTopicTool,
+  slackAddReactionTool,
+  githubListReposTool,
+  githubGetRepoTool,
+  githubListIssuesTool,
+  githubCreateIssueTool,
+  githubListPullRequestsTool,
+  githubGetFileContentsTool,
+  githubSearchCodeTool,
   stagehandCreateSessionTool,
   stagehandGotoTool,
   stagehandObserveTool,

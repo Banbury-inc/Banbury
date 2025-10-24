@@ -71,7 +71,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   const [selectedDrawioFile, setSelectedDrawioFile] = useState<FileSystemItem | null>(null);
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true);
   const [pendingChanges, setPendingChanges] = useState<Array<{ id: string; type: string; description: string }>>([]);
-  const [toolPreferences, setToolPreferences] = useState<{ web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean; browser: boolean; x_api: boolean }>(() => {
+  const [toolPreferences, setToolPreferences] = useState<{ web_search: boolean; tiptap_ai: boolean; read_file: boolean; gmail: boolean; langgraph_mode: boolean; browser: boolean; x_api: boolean; slack: boolean }>(() => {
     try {
       const saved = localStorage.getItem("toolPreferences");
       if (saved) {
@@ -87,10 +87,11 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
           langgraph_mode: true,
           browser: mappedBrowser,
           x_api: typeof parsed.x_api === 'boolean' ? parsed.x_api : false,
+          slack: typeof parsed.slack === 'boolean' ? parsed.slack : false,
         };
       }
     } catch {}
-    return { web_search: true, tiptap_ai: true, read_file: true, gmail: true, langgraph_mode: true, browser: false, x_api: false };
+    return { web_search: true, tiptap_ai: true, read_file: true, gmail: true, langgraph_mode: true, browser: false, x_api: false, slack: false };
   });
 
   // Cache of pre-downloaded attachment payloads keyed by fileId

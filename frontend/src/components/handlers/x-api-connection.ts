@@ -8,8 +8,18 @@ export interface XApiConnectionStatus {
 }
 
 export async function checkXConnectionStatus(): Promise<XApiConnectionStatus> {
-  const response = await ApiService.get('/authentication/x_api/connection_status/') as XApiConnectionStatus
-  return response
+  try {
+    const response = await ApiService.get('/authentication/x_api/connection_status/') as XApiConnectionStatus
+    return response
+  } catch (error: any) {
+    // Handle 401 Unauthorized or other errors gracefully - user is not authenticated or not connected
+    if (error?.response?.status === 401 || error?.response?.status === 403) {
+      return { connected: false }
+    }
+    // For other errors, still return not connected but rethrow for logging
+    console.error('Error checking X API connection status:', error)
+    return { connected: false }
+  }
 }
 
 export async function initiateXOAuth({ callbackUrl }: { callbackUrl: string }): Promise<{ authUrl: string }> {
