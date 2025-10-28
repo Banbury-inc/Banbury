@@ -383,7 +383,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
                 )}
                 <Button
                   variant="primary"
-                  size="icon"
+                  size="icon-sm"
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                     try {
                       // For handlers that need event parameters, pass them through
@@ -503,7 +503,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
             <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: '#3f3f46' }} />
             <Button
               variant="primary"
-              size="icon"
+              size="icon-sm"
               onClick={handleOverflowClick}
               title="More tools"
             >
@@ -520,7 +520,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
               {onSaveDocument && (
                 <Button
                   variant="primary"
-                  size="icon"
+                  size="icon-sm"
                   onClick={onSaveDocument}
                   disabled={saving || !canSave}
                   title="Save spreadsheet (Ctrl+S)"
@@ -531,7 +531,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
               {onDownloadDocument && (
                 <Button
                   variant="primary"
-                  size="icon"
+                  size="icon-sm"
                   onClick={onDownloadDocument}
                   title="Download spreadsheet"
                 >
@@ -540,7 +540,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
               )}
               <Button
                 variant="primary"
-                size="icon"
+                size="icon-sm"
                 onClick={handleOpenHelpDialog}
                 title="Keyboard shortcuts (F1)"
               >

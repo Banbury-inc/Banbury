@@ -484,7 +484,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
               visibleButtons.includes(btn.id) ? (
                 <Button
                   variant="primary"
-                  size="icon"
+                  size="icon-sm"
                   key={btn.id}
                   onClick={btn.onClick}
                   title={btn.title}
