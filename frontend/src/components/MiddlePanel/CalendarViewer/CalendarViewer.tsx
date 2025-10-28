@@ -194,10 +194,10 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
       days.push(d)
     }
     return (
-      <div className="flex-1 overflow-auto bg-white dark:bg-zinc-800">
-        <div className="grid grid-cols-7 border-t border-l border-zinc-300 dark:border-zinc-700 h-full">
+      <div className="flex-1 overflow-auto bg-accent">
+        <div className="grid grid-cols-7 border-t border-l border-border h-full">
           {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d) => (
-            <div key={d} className="p-2 text-xs font-medium text-gray-600 dark:text-zinc-400 border-r border-b border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800">{d}</div>
+            <div key={d} className="p-2 text-xs font-medium text-gray-600 dark:text-zinc-400 border-r border-b border-border">{d}</div>
           ))}
           {days.map((d, idx) => {
             const key = d.toISOString().slice(0,10)
@@ -207,7 +207,7 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
             return (
               <div 
                 key={idx} 
-                className={`min-h-[7rem] p-1 border-r border-b border-zinc-300 dark:border-zinc-700 ${isCurrentMonth ? 'bg-white dark:bg-zinc-800' : 'bg-zinc-50 dark:bg-zinc-900'} ${isToday ? 'ring-1 ring-blue-500' : ''} cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700/50 transition-colors`}
+                className={`min-h-[7rem] p-1 border-r border-b border-border ${isCurrentMonth ? 'bg-accent' : 'bg-background'} ${isToday ? 'ring-1 ring-blue-500' : ''} cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700/50 transition-colors`}
                 onClick={(e) => handleDateClick(d, { x: e.clientX, y: e.clientY })}
               >
                 <div className="text-xs text-gray-600 dark:text-zinc-400 mb-1 flex items-center justify-between">
@@ -296,17 +296,17 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
     }
 
     return (
-      <div className="flex-1 bg-zinc-50 dark:bg-zinc-900">
+      <div className="flex-1 bg-accent">
         <div className="flex h-full">
           {/* Time axis */}
-          <div className="w-16 flex-shrink-0 border-r border-zinc-300 dark:border-zinc-700 flex flex-col">
+          <div className="w-16 flex-shrink-0 border-r border-border flex flex-col">
             {/* Timezone indicator */}
-            <div className="h-8 flex items-center justify-center text-xs text-gray-500 dark:text-zinc-400 border-b border-zinc-300 dark:border-zinc-700">
+            <div className="h-8 flex items-center justify-center text-xs text-gray-500 dark:text-zinc-400 border-b border-border">
             </div>
             {/* Time labels */}
             <div className="flex-1 grid grid-rows-23">
               {timeSlots.map((hour) => (
-                <div key={hour} className="flex items-center justify-end pr-2 border-b border-zinc-300 dark:border-zinc-700">
+                <div key={hour} className="flex items-center justify-end pr-2 border-b border-border">
                   <span className="text-xs text-gray-500 dark:text-zinc-400">{formatTimeLabel(hour)}</span>
                 </div>
               ))}
@@ -316,9 +316,9 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
           {/* Calendar grid */}
           <div className="flex-1 flex flex-col">
             {/* Day headers */}
-            <div className="h-8 grid grid-cols-7 border-b border-zinc-300 dark:border-zinc-700">
+            <div className="h-8 grid grid-cols-7 border-b border-border">
               {days.map((d) => (
-                <div key={d.toISOString()} className="p-1 text-center border-r border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800">
+                <div key={d.toISOString()} className="p-1 text-center border-r border-border bg-zinc-100 dark:bg-zinc-800">
                   <div className="text-xs font-medium text-gray-600 dark:text-zinc-400">
                     {d.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()}
                   </div>
@@ -341,7 +341,7 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
               {timeSlots.map((hour) => (
                 <div 
                   key={hour} 
-                  className="col-span-7 border-b border-zinc-300 dark:border-zinc-700"
+                  className="col-span-7 border-b border-border"
                 />
               ))}
               
@@ -349,7 +349,7 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
               {Array.from({ length: 6 }, (_, i) => (
                 <div 
                   key={`col-border-${i}`}
-                  className="absolute top-0 bottom-0 border-r border-zinc-300 dark:border-zinc-700"
+                  className="absolute top-0 bottom-0 border-r border-border"
                   style={{ left: `${((i + 1) / 7) * 100}%` }}
                 />
               ))}
@@ -494,7 +494,7 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
       <div className="flex-1 bg-zinc-50 dark:bg-zinc-900 relative">
         <div className="flex h-full">
           {/* Time axis */}
-          <div className="w-16 flex-shrink-0 border-r border-zinc-300 dark:border-zinc-700 grid grid-rows-23">
+          <div className="w-16 flex-shrink-0 border-r border-border grid grid-rows-23">
             {timeSlots.map((hour) => (
               <div key={hour} className="flex items-center justify-end pr-2 border-b border-zinc-300 dark:border-zinc-700">
                 <span className="text-xs text-gray-500 dark:text-zinc-400">{formatTimeLabel(hour)}</span>
@@ -588,26 +588,26 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
   }
 
   return (
-    <div className="h-full flex flex-col bg-zinc-200 dark:bg-zinc-800">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-300 dark:border-zinc-700">
+    <div className="h-full flex flex-col bg-accent">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
-          <Button variant="primary" size="xsm" onClick={goPrev}>
+          <Button variant="primary" size="icon-sm" onClick={goPrev}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="primary" size="xsm" onClick={goNext}>
+          <Button variant="primary" size="icon-sm" onClick={goNext}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button variant="primary" size="xsm" className="h-8 w-14 px-3 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 hover:text-black text-gray-900 dark:text-white" onClick={goToday}>Today</Button>
+          <Button variant="primary" size="icon-sm" className="h-8 w-14 px-3 bg-accent hover:bg-accent/80 hover:text-white text-gray-900 dark:text-white" onClick={goToday}>Today</Button>
           <div className="ml-3 text-sm font-medium text-gray-900 dark:text-zinc-200 flex items-center gap-2">
             <CalendarIcon className="h-4 w-4" />
             {title}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="primary" size="xsm" className={`h-8 w-14 px-3 ${view==='month' ? 'bg-zinc-200 dark:bg-zinc-700 text-gray-900 dark:text-white border-zinc-300 dark:border-zinc-600' : 'text-gray-600 dark:text-zinc-300 border-zinc-300 dark:border-zinc-600 hover:bg-zinc-300 dark:hover:bg-zinc-800'}`} onClick={() => setView('month')}>Month</Button>
-          <Button variant="primary" size="xsm" className={`h-8 w-14 px-3 ${view==='week' ? 'bg-zinc-200 dark:bg-zinc-700 text-gray-900 dark:text-white border-zinc-300 dark:border-zinc-600' : 'text-gray-600 dark:text-zinc-300 border-zinc-300 dark:border-zinc-600 hover:bg-zinc-300 dark:hover:bg-zinc-800'}`} onClick={() => setView('week')}>Week</Button>
-          <Button variant="primary" size="xsm" className={`h-8 w-14 px-3 ${view==='day' ? 'bg-zinc-200 dark:bg-zinc-700 text-gray-900 dark:text-white border-zinc-300 dark:border-zinc-600' : 'text-gray-600 dark:text-zinc-300 border-zinc-300 dark:border-zinc-600 hover:bg-zinc-300 dark:hover:bg-zinc-800'}`} onClick={() => setView('day')}>Day</Button>
-          <Button variant="primary" size="xsm" onClick={loadEvents} disabled={loading}>
+          <Button variant="primary" size="icon-sm" className={`h-8 w-14 px-3 ${view==='month' ? 'bg-accent text-gray-900 dark:text-white border-border' : 'text-gray-600 dark:text-zinc-300 border-border hover:bg-zinc-300 dark:hover:bg-zinc-800'}`} onClick={() => setView('month')}>Month</Button>
+          <Button variant="primary" size="icon-sm" className={`h-8 w-14 px-3 ${view==='week' ? 'bg-accent text-gray-900 dark:text-white border-border' : 'text-gray-600 dark:text-zinc-300 border-border hover:bg-zinc-300 dark:hover:bg-zinc-800'}`} onClick={() => setView('week')}>Week</Button>
+          <Button variant="primary" size="icon-sm" className={`h-8 w-14 px-3 ${view==='day' ? 'bg-accent text-gray-900 dark:text-white border-border' : 'text-gray-600 dark:text-zinc-300 border-border hover:bg-zinc-300 dark:hover:bg-zinc-800'}`} onClick={() => setView('day')}>Day</Button>
+          <Button variant="primary" size="icon-sm" onClick={loadEvents} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </div>

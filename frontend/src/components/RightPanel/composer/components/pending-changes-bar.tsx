@@ -36,13 +36,13 @@ export const PendingChangesBar: FC<PendingChangesBarProps> = ({
   const getIcon = (type: string) => {
     switch (type) {
       case 'document':
-        return <FileText className="h-4 w-4 text-blue-500 dark:text-blue-400 flex-shrink-0" />;
+        return <FileText className="h-4 w-4 text-blue-500 dark:text-blue-400 flex-shrink-0" strokeWidth={1} />;
       case 'spreadsheet':
-        return <Table className="h-4 w-4 text-green-500 dark:text-green-400 flex-shrink-0" />;
+        return <Table className="h-4 w-4 text-green-500 dark:text-green-400 flex-shrink-0" strokeWidth={1} />;
       case 'canvas':
-        return <PaintbrushIcon className="h-4 w-4 text-purple-500 dark:text-purple-400 flex-shrink-0" />;
+        return <PaintbrushIcon className="h-4 w-4 text-purple-500 dark:text-purple-400 flex-shrink-0" strokeWidth={1} />;
       default:
-        return <File className="h-4 w-4 text-zinc-500 dark:text-zinc-400 flex-shrink-0" />;
+        return <File className="h-4 w-4 text-zinc-500 dark:text-zinc-400 flex-shrink-0" strokeWidth={1} />;
     }
   };
 
@@ -62,9 +62,9 @@ export const PendingChangesBar: FC<PendingChangesBarProps> = ({
               onClick={() => setIsPendingChangesExpanded(!isPendingChangesExpanded)}
             >
               {isPendingChangesExpanded ? (
-                <ChevronDown className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+                <ChevronDown className="h-4 w-4 text-zinc-600 dark:text-zinc-400" strokeWidth={1} />
               ) : (
-                <ChevronRightIcon className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+                <ChevronRightIcon className="h-4 w-4 text-zinc-600 dark:text-zinc-400" strokeWidth={1} />
               )}
               <span className="text-sm text-zinc-700 dark:text-zinc-300 font-medium">
                 {pendingChanges.length} File{pendingChanges.length !== 1 ? 's' : ''}

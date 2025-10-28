@@ -358,7 +358,7 @@ export const Tabs: React.FC<TabsProps> = ({
   }, [tabs, onReorder]);
 
   return (
-    <div ref={containerRef} className="flex items-stretch bg-zinc-100 dark:bg-[#252526] border-b border-zinc-200 dark:border-zinc-900/50">
+    <div ref={containerRef} className="flex items-stretch bg-accent">
       <style>
         {`
           .tab {

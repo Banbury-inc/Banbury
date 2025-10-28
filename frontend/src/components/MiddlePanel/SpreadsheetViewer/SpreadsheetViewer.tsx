@@ -189,8 +189,8 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full bg-[#27272a]">
-        <div className="flex flex-col items-center gap-4 bg-[#27272a]">
+      <div className="flex items-center justify-center h-full bg-accent">
+        <div className="flex flex-col items-center gap-4 bg-accent">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#9ca3af]"></div>
           <p className="text-[#f3f4f6]">Loading spreadsheet...</p>
         </div>

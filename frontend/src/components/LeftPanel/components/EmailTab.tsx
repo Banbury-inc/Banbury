@@ -432,7 +432,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
               disabled={loading}
               title="Refresh"
             >
-              <RefreshCw className={`${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`${loading ? 'animate-spin' : ''}`} strokeWidth={1} />
             </Button>
             <Button
               variant="default"
@@ -470,12 +470,12 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
         {checkingGmailAccess ? (
           <div className="flex items-center justify-center h-full">
-            <RefreshCw className="h-4 w-4 animate-spin mr-2 text-gray-400 dark:text-gray-400" />
+            <RefreshCw className="h-4 w-4 animate-spin mr-2 text-gray-400 dark:text-gray-400" strokeWidth={1} />
             <Typography variant="muted">Checking Gmail access...</Typography>
           </div>
         ) : gmailAvailable === false ? (
           <div className="flex flex-col items-center justify-center h-full p-4">
-            <Mail className="h-12 w-12 mb-4 opacity-50 text-gray-400 dark:text-gray-400" />
+            <Mail className="h-12 w-12 mb-4 opacity-50 text-gray-400 dark:text-gray-400" strokeWidth={1} />
             <Typography variant="h3" className="mb-2">Gmail Access Required</Typography>
             <Typography variant="small" className="text-center mb-4 max-w-md text-gray-500 dark:text-gray-400">
               To use the email features, you need to grant Gmail access to your Google account.
@@ -484,7 +484,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
               onClick={requestGmailAccess}
               variant="default"
             >
-              <Settings className="h-4 w-4 mr-2" />
+              <Settings className="h-4 w-4 mr-2" strokeWidth={1} />
               Activate Gmail Access
             </Button>
           </div>
@@ -499,7 +499,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
                 onClick={() => setComposeOpen(false)}
                 className="text-gray-400 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" strokeWidth={1} />
               </Button>
             </div>
             
@@ -541,7 +541,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
                 variant="default"
                 disabled={!composeForm.to || !composeForm.subject || !composeForm.body}
               >
-                <Send className="h-3 w-3 mr-2" />
+                <Send className="h-4 w-4 mr-2" strokeWidth={1} />
                 Send
               </Button>
               <Button
@@ -573,14 +573,14 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
             )}
             {loading && !parsedMessages.length ? (
               <div className="flex items-center justify-center h-full">
-                <RefreshCw className="h-4 w-4 animate-spin mr-2 text-gray-400 dark:text-gray-400" />
+                <RefreshCw className="h-4 w-4 animate-spin mr-2 text-gray-400 dark:text-gray-400" strokeWidth={1} />
                 <Typography variant="muted">Loading emails...</Typography>
               </div>
             ) : (
               <>
                   {parsedMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full p-4">
-                      <Mail className="h-12 w-12 mb-4 opacity-50 text-gray-400 dark:text-gray-400" />
+                      <Mail className="h-12 w-12 mb-4 opacity-50 text-gray-400 dark:text-gray-400" strokeWidth={1} />
                       <Typography variant="small" className="mb-2 text-gray-500 dark:text-gray-400">
                         {activeTab === 'inbox' ? 'No emails found' : 
                          activeTab === 'sent' ? 'No sent emails found' : 
@@ -616,7 +616,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
                                   {email.isDraft ? 'Draft' : email.from}
                                 </Typography>
                                 {email.hasAttachments && (
-                                  <Paperclip className="h-3 w-3 text-gray-400 dark:text-gray-400 flex-shrink-0" />
+                                  <Paperclip className="h-4 w-4 text-gray-400 dark:text-gray-400 flex-shrink-0" strokeWidth={1} />
                                 )}
                               </div>
                               <Typography variant="small" className={`truncate mb-1 block ${
@@ -643,9 +643,9 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
                                    className="h-6 w-6 p-0 text-gray-400 dark:text-gray-400 hover:text-yellow-400 dark:hover:text-yellow-400"
                                  >
                                    {email.labels.includes('STARRED') ? (
-                                     <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" strokeWidth={1} />
                                    ) : (
-                                     <StarOff className="h-3 w-3" />
+                                     <StarOff className="h-4 w-4" strokeWidth={1} />
                                    )}
                                  </Button>
                                  <Button
@@ -657,7 +657,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
                                    }}
                                    className="h-6 w-6 p-0 text-gray-400 dark:text-gray-400 hover:text-red-400 dark:hover:text-red-400"
                                  >
-                                   <Trash2 className="h-3 w-3" />
+                                   <Trash2 className="h-4 w-4" strokeWidth={1} />
                                  </Button>
                                </div>
                              </div>
@@ -668,7 +668,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
                       {/* Loading indicator for infinite scroll */}
                       {isLoadingMore && (
                         <div className="flex items-center justify-center py-4">
-                          <RefreshCw className="h-4 w-4 animate-spin mr-2 text-gray-400 dark:text-gray-400" />
+                          <RefreshCw className="h-4 w-4 animate-spin mr-2 text-gray-400 dark:text-gray-400" strokeWidth={1} />
                           <Typography variant="muted">Loading more emails...</Typography>
                         </div>
                       )}

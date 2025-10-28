@@ -156,14 +156,14 @@ export function GoogleDriveView({
     >
       {checkingDriveAccess && (
         <div className="flex items-center justify-center h-full px-3 py-8">
-          <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" />
+          <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" strokeWidth={1} />
           <Typography variant="muted">Checking Google Drive access...</Typography>
         </div>
       )}
       
       {!checkingDriveAccess && driveAvailable === false && (
         <div className="flex flex-col items-center justify-center px-4 py-8">
-          <Folder className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" />
+          <Folder className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" strokeWidth={1} />
           <Typography variant="h3" className="mb-2 text-center">Google Drive Access Required</Typography>
           <Typography variant="small" className="text-center mb-4 max-w-md text-muted-foreground">
             To view your Google Drive files, you need to grant Drive access to your Google account.
@@ -179,7 +179,7 @@ export function GoogleDriveView({
 
       {!checkingDriveAccess && driveAvailable && driveLoading && !driveFiles.length && (
         <div className="flex items-center gap-2 px-3 py-2">
-          <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+          <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" strokeWidth={1} />
           <Typography variant="muted">Loading Google Drive files...</Typography>
         </div>
       )}
@@ -224,7 +224,7 @@ export function GoogleDriveView({
       {/* Loading more Drive files indicator */}
       {isLoadingMoreDrive && (
         <div className="flex items-center gap-2 px-3 py-2">
-          <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+          <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" strokeWidth={1} />
           <Typography variant="muted">Loading more files...</Typography>
         </div>
       )}

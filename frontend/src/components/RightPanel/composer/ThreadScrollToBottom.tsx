@@ -15,7 +15,7 @@ export const ThreadScrollToBottom: FC = () => {
         variant="outline"
         className="dark:bg-background dark:hover:bg-accent absolute -top-12 z-10 self-center rounded-full p-4 disabled:invisible pointer-events-auto"
       >
-        <ArrowDownIcon />
+        <ArrowDownIcon strokeWidth={1} />
       </TooltipIconButton>
     </ThreadPrimitive.ScrollToBottom>
   );

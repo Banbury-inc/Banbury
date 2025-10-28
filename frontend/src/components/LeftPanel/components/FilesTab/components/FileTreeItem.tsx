@@ -214,7 +214,7 @@ function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFi
         <ContextMenu.Content className="min-w-[160px] bg-white dark:bg-zinc-800 rounded-md p-1 shadow-lg border border-zinc-300 dark:border-zinc-700 z-50">
           {onUploadFile && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
               onSelect={onUploadFile}
             >
               <FilePlus className="w-4 h-4" />
@@ -223,19 +223,19 @@ function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFi
           )}
           {onUploadFolder && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
               onSelect={onUploadFolder}
             >
-              <FolderPlus className="w-4 h-4" />
+              <FolderPlus className="w-4 h-4" strokeWidth={1} />
               Upload Folder
             </ContextMenu.Item>
           )}
           {isFolder && onNewFolder && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
               onSelect={onNewFolder}
             >
-              <FolderPlus className="w-4 h-4" />
+              <FolderPlus className="w-4 h-4" strokeWidth={1} />
               New Folder
             </ContextMenu.Item>
           )}
@@ -243,15 +243,15 @@ function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFi
             className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
             onSelect={onRename}
           >
-            <Edit2 className="w-4 h-4" />
+            <Edit2 className="w-4 h-4" strokeWidth={1} />
             Rename
           </ContextMenu.Item>
           {onDelete && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-2 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
               onSelect={onDelete}
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" strokeWidth={1} />
               {deleteLabel || 'Delete'}
             </ContextMenu.Item>
           )}
@@ -527,8 +527,8 @@ export function FileTreeItem({
       >
         {hasChildren && (
           isExpanded ? 
-            <ChevronDown className="h-3 w-3" /> : 
-            <ChevronRight className="h-3 w-3" />
+            <ChevronDown className="h-4 w-4" strokeWidth={1} /> : 
+            <ChevronRight className="h-4 w-4" strokeWidth={1} />
         )}
         {!hasChildren && <div className="w-3" />}
         <FileIconComponent className={`h-4 w-4 flex-shrink-0 ${fileIconData.color}`} />
@@ -561,8 +561,8 @@ export function FileTreeItem({
       >
         {hasChildren && (
           isExpanded ? 
-            <ChevronDown className="h-3 w-3" /> : 
-            <ChevronRight className="h-3 w-3" />
+            <ChevronDown className="h-4 w-4" strokeWidth={1} /> : 
+            <ChevronRight className="h-4 w-4" strokeWidth={1} />
         )}
         {!hasChildren && <div className="w-3" />}
         <FileIconComponent className={`h-4 w-4 flex-shrink-0 ${fileIconData.color}`} />
@@ -607,8 +607,8 @@ export function FileTreeItem({
               className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300"
               style={{ paddingLeft: `${((level + 1) * 12) + 12}px` }}
             >
-              <div className="w-3" />
-              <Folder className="h-4 w-4" />
+              <div className="w-4" />
+              <Folder className="h-4 w-4" strokeWidth={1} />
               <input
                 type="text"
                 value={newFolderName}
@@ -628,8 +628,8 @@ export function FileTreeItem({
               className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300"
               style={{ paddingLeft: `${((level + 1) * 12) + 12}px` }}
             >
-              <div className="w-3" />
-              <RefreshCw className="h-4 w-4 animate-spin" />
+              <div className="w-4" />
+              <RefreshCw className="h-4 w-4 animate-spin" strokeWidth={1} />
               <Typography variant="small" className="truncate min-w-0 flex-1">{pendingFolderName}</Typography>
               <Typography variant="muted" className="text-xs">Creating...</Typography>
             </div>

@@ -1200,7 +1200,7 @@ const searchFieldKeyupCallback = useCallback(
   if (loading) {
     return (
       <div style={{ padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
-        <span style={{ marginLeft: 8, color: '#111827' }}>Loading spreadsheet...</span>
+        <span style={{ marginLeft: 8, color: 'var(--accent)' }}>Loading spreadsheet...</span>
       </div>
     );
   }

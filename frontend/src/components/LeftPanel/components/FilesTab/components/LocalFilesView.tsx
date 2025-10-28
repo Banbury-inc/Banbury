@@ -719,7 +719,7 @@ export function LocalFilesView({
           {isDragOver && (
             <div className="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary z-50 flex items-center justify-center">
               <div className="bg-primary text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2">
-                <Upload className="h-4 w-4" />
+                <Upload className="h-4 w-4" strokeWidth={1} />
                 <Typography variant="small" className="font-medium">Drop files or folders here to upload</Typography>
               </div>
             </div>

@@ -139,14 +139,14 @@ export const renderPanel = ({
     <div 
       key={panel.id}
       data-panel-id={panel.id}
-      className={`h-full flex flex-col relative ${
-        isActive ? 'ring-2 ring-blue-500' : 'ring-1 ring-zinc-300 dark:ring-gray-700'
+      className={`h-full flex flex-col relative shadow-soft ${
+        isActive ? 'ring-2 ring-blue-500' : 'ring-1 ring-zinc-300 dark:ring-white/[0.06]'
       }`}
       onClick={() => setActivePanelId(panel.id)}
     >
       {/* Panel Tab Bar (Olympus Tabs) */}
       {panel.tabs.length > 0 && (
-        <div className="bg-zinc-100 dark:bg-[#252526] border-b border-zinc-200 dark:border-zinc-900/50 flex items-stretch">
+        <div className="bg-zinc-100 dark:bg-[#252526] flex items-stretch">
           <div className="flex items-stretch flex-1">
             <OlympusTabs
               tabs={panel.tabs.map<OlympusTab>((t) => ({ 

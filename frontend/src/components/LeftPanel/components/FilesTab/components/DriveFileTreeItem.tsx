@@ -97,9 +97,9 @@ export function DriveFileTreeItem({
           isLoading ? (
             <RefreshCw className="h-3 w-3 animate-spin" />
           ) : isExpanded ? (
-            <ChevronDown className="h-3 w-3" />
+            <ChevronDown className="h-4 w-4" strokeWidth={1} />
           ) : (
-            <ChevronRight className="h-3 w-3" />
+            <ChevronRight className="h-4 w-4" strokeWidth={1} />
           )
         )}
         {!isFolder && <div className="w-3" />}

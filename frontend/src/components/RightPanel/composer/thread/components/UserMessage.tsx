@@ -55,7 +55,7 @@ export const UserMessage: FC = () => {
                               className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm"
                               title={`From: ${att.from}\nSubject: ${att.subject}`}
                             >
-                              <Mail className="h-3 w-3" />
+                              <Mail className="h-4 w-4" strokeWidth={1} />
                               <span className="truncate max-w-32">{att.subject}</span>
                             </div>
                           ))}

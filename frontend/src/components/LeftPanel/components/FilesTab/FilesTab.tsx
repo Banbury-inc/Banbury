@@ -169,42 +169,42 @@ export function FilesTab({
                 }}
               >
                 <SelectTrigger size="sm" className="bg-foreground hover:bg-foreground hover:text-primary-foreground">
-                  <Plus className="h-4 w-4 text-primary-foreground" />
+                  <Plus className="h-4 w-4 text-primary-foreground" strokeWidth={1} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="upload-file">
                     <div className="flex items-center">
-                      <FilePlus size={16} className="mr-2" />
+                      <FilePlus size={16} strokeWidth={1} className="mr-2" />
                       Upload File
                     </div>
                   </SelectItem>
                   <SelectItem value="upload-folder">
                     <div className="flex items-center">
-                      <FolderPlus size={16} className="mr-2" />
+                      <FolderPlus size={16} strokeWidth={1} className="mr-2" />
                       Upload Folder
                     </div>
                   </SelectItem>
                   <SelectItem value="document">
                     <div className="flex items-center">
-                      <FileText size={16} className="mr-2" />
+                      <FileText size={16} strokeWidth={1} className="mr-2" />
                       Document
                     </div>
                   </SelectItem>
                   <SelectItem value="spreadsheet">
                     <div className="flex items-center">
-                      <FileSpreadsheet size={16} className="mr-2" />
+                      <FileSpreadsheet size={16} strokeWidth={1} className="mr-2" />
                       Spreadsheet
                     </div>
                   </SelectItem>
                   <SelectItem value="canvas">
                     <div className="flex items-center">
-                      <Network size={16} className="mr-2" />
+                      <Network size={16} strokeWidth={1} className="mr-2" />
                       Canvas
                     </div>
                   </SelectItem>
                   <SelectItem value="folder">
                     <div className="flex items-center">
-                      <Folder size={16} className="mr-2" />
+                      <Folder size={16} strokeWidth={1} className="mr-2" />
                       Folder
                     </div>
                   </SelectItem>

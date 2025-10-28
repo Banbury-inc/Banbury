@@ -89,7 +89,7 @@ export function SheetTabs({
           title="Add sheet"
           style={{ height: '36px', width: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          <Plus className="h-4 w-4 text-gray-700" />
+          <Plus className="h-4 w-4 text-gray-700" strokeWidth={1} />
         </button>
       )}
       
@@ -99,7 +99,7 @@ export function SheetTabs({
         title="All sheets"
         style={{ height: '36px', width: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        <Menu className="h-4 w-4 text-gray-700" />
+        <Menu className="h-4 w-4 text-gray-700" strokeWidth={1} />
       </button>
       
       {/* Sheet tabs */}

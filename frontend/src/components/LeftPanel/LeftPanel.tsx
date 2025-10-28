@@ -49,47 +49,66 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
   const [activeTab, setActiveTab] = useState<string>('files')
 
   return (
-    <div className="h-full w-full bg-background border-r flex flex-col relative z-10">
+    <div className="h-full w-full bg-background border-r border-zinc-200 dark:border-white/[0.06] flex flex-col relative z-10 shadow-soft left-panel-container">
       {/* Search Bar - Above tabs */}
-      {onFileSelect && (
-        <div className="px-4 py-2 bg-background border-b">
+      {/* {onFileSelect && (
+        <div className="px-4 py-3 bg-background border-b border-zinc-200 dark:border-white/[0.06]">
           <InlineFileSearch
             onFileSelect={onFileSelect}
             onEmailSelect={onEmailSelect} />
         </div>
-      )}
+      )} */}
       
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="mx-4 mt-2">
-          <TabsTrigger value="files" className="gap-2 flex items-center">
-            <Folder className="h-4 w-4" />
+        <TabsList className="mx-4 mt-3 tab-list-responsive">
+          <TabsTrigger value="files" className="flex items-center justify-center min-w-0" title="Files">
+            <Folder className="h-4 w-4 flex-shrink-0" strokeWidth={1} />
             <Typography
               variant="small"
-              className="text-sm font-medium"
+              className="text-sm font-medium ml-2 tab-label"
             >
               Files
             </Typography>
           </TabsTrigger>
-          <TabsTrigger value="email" className="gap-2 flex items-center">
-            <Mail className="h-4 w-4" />
+          <TabsTrigger value="email" className="flex items-center justify-center min-w-0" title="Email">
+            <Mail className="h-4 w-4 flex-shrink-0" strokeWidth={1} />
             <Typography
               variant="small"
-              className="text-sm"
+              className="text-sm ml-2 tab-label"
             >
               Email
             </Typography>
           </TabsTrigger>
-          <TabsTrigger value="calendar" className="gap-2 flex items-center">
-            <CalendarIcon className="h-4 w-4" />
+          <TabsTrigger value="calendar" className="flex items-center justify-center min-w-0" title="Calendar">
+            <CalendarIcon className="h-4 w-4 flex-shrink-0" strokeWidth={1} />
             <Typography
               variant="small"
-              className="text-sm"
+              className="text-sm ml-2 tab-label"
             >
               Calendar
             </Typography>
           </TabsTrigger>
         </TabsList>
+        
+        <style>{`
+          /* Container query setup */
+          .left-panel-container {
+            container-type: inline-size;
+            container-name: left-panel;
+          }
+          
+          /* Hide labels when panel width is less than 240px */
+          @container left-panel (max-width: 240px) {
+            .tab-label {
+              display: none !important;
+            }
+            .tab-list-responsive button {
+              padding-left: 0.5rem;
+              padding-right: 0.5rem;
+            }
+          }
+        `}</style>
 
         {activeTab === 'files' && (
           <TabsContent value="files" className="flex-1 flex flex-col mt-0 overflow-hidden">

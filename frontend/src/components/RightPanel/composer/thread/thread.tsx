@@ -1086,7 +1086,7 @@ const StreamingStatus: FC = () => {
           
           {statusDetails.toolCompleted && (
             <div className="flex items-center text-green-600 dark:text-green-400 text-xs">
-              <CheckIcon className="w-3 h-3 mr-2" />
+              <CheckIcon className="w-4 h-4 mr-2" strokeWidth={1} />
               <span className="font-medium">{statusDetails.toolCompleted.tool}:</span>
               <span className="ml-1">{statusDetails.toolCompleted.message}</span>
             </div>
@@ -1328,7 +1328,7 @@ const LoadConversationDialog: FC<LoadConversationDialogProps> = ({
                       size="sm"
                       onClick={() => onLoadConversation(conversation._id)}
                     >
-                      <FolderOpen className="h-4 w-4" />
+                      <FolderOpen className="h-4 w-4" strokeWidth={1} />
                     </TooltipIconButton>
                     <TooltipIconButton
                       tooltip="Refresh conversation display"
@@ -1340,7 +1340,7 @@ const LoadConversationDialog: FC<LoadConversationDialogProps> = ({
                       }}
                       className="text-blue-400 hover:text-blue-300"
                     >
-                      <RefreshCwIcon className="h-4 w-4" />
+                      <RefreshCwIcon className="h-4 w-4" strokeWidth={1} />
                     </TooltipIconButton>
                     <TooltipIconButton
                       tooltip="Delete conversation"
@@ -1349,7 +1349,7 @@ const LoadConversationDialog: FC<LoadConversationDialogProps> = ({
                       onClick={() => onDeleteConversation(conversation._id)}
                       className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" strokeWidth={1} />
                     </TooltipIconButton>
                   </div>
                 </div>

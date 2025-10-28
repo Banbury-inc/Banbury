@@ -93,15 +93,16 @@
 
 /* Dark theme overrides */
 .dark .allotment > .allotment-separator {
-  background-color: #1f2937 !important; /* Gray-800 */
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
 }
 
 .dark .allotment > .allotment-separator:hover {
-  background-color: #374151 !important; /* Gray-700 */
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .dark .allotment > .allotment-separator > .allotment-separator-grip {
-  background-color: #6b7280 !important; /* Gray-500 */
+  background-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 :root {
@@ -140,22 +141,22 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.195 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.255 0 0);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.255 0 0);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
+  --secondary: oklch(0.319 0 0);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
+  --muted: oklch(0.319 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  --accent: oklch(0.319 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --border: oklch(1 0 0 / 6%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.488 0.243 264.376);
@@ -163,13 +164,13 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
+  --sidebar: oklch(0.255 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.319 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: oklch(1 0 0 / 6%);
   --sidebar-ring: oklch(0.556 0 0);
 }
 :root {
@@ -234,6 +235,15 @@
 
   .btn-download:disabled {
     @apply bg-zinc-800 text-zinc-400;
+  }
+
+  /* Soft shadows for dark mode */
+  .dark .shadow-soft {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.12);
+  }
+
+  .dark .shadow-soft-md {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 }
 

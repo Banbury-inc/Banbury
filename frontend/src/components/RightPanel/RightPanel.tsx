@@ -39,23 +39,23 @@ export function RightPanel({
   onEmailSelect,
 }: RightPanelProps): JSX.Element {
   return (
-    <div className="h-full bg-background border-l border-zinc-200 dark:border-gray-800 flex flex-col relative">
+    <div className="h-full bg-background border-l border-zinc-200 dark:border-white/[0.06] flex flex-col relative shadow-soft">
       {/* Collapse button for assistant panel - positioned on left border */}
       <button
         onClick={onToggleCollapse}
-        className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-lg burger-button"
+        className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
         title="Collapse assistant panel"
       >
-        <Menu className="h-3 w-3" />
+        <Menu className="h-4 w-4" strokeWidth={1} />
       </button>
       {/* Conversation Management Dropdown */}
-      <div className="bg-background dark:bg-background px-4 py-2 flex items-center justify-end gap-2 border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center gap-2">
+      <div className="bg-background dark:bg-background px-4 py-3 flex items-center justify-end gap-3 border-zinc-200 dark:border-white/[0.06]">
+        <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="h-8 px-3 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background dark:bg-background transition-colors rounded-md flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black border border-zinc-200 dark:border-zinc-700">
-                <TimerReset className="h-3 w-3" />
-                <ChevronDown className="h-3 w-3" />
+              <button className="h-8 px-3 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background dark:bg-background transition-colors rounded-md flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black border border-zinc-200 dark:border-white/[0.06]">
+                <TimerReset className="h-4 w-4" strokeWidth={1} />
+                <ChevronDown className="h-4 w-4" strokeWidth={1} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64 max-h-96 overflow-y-auto">
@@ -89,7 +89,7 @@ export function RightPanel({
                         className="opacity-0 group-hover:opacity-100 ml-2 p-1 text-red-400 hover:text-red-300 transition-opacity"
                         title="Delete conversation"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-4 w-4" strokeWidth={1} />
                       </button>
                     </DropdownMenuItem>
                   ))}
@@ -101,12 +101,12 @@ export function RightPanel({
           <div className="relative group">
             <button
               onClick={onClearConversation}
-              className="h-8 w-8 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background dark:bg-background transition-colors rounded-md flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black border border-zinc-200 dark:border-zinc-700"
+              className="h-8 w-8 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background dark:bg-background transition-colors rounded-md flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black border border-zinc-200 dark:border-white/[0.06]"
             >
-              <Plus className="h-3 w-3" />
+              <Plus className="h-4 w-4" strokeWidth={1} />
             </button>
             {/* Custom CSS tooltip */}
-            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-accent dark:bg-accent text-zinc-900 dark:text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none border border-zinc-200 dark:border-zinc-700">
+            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-2 bg-accent dark:bg-accent text-zinc-900 dark:text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none border border-zinc-200 dark:border-white/[0.06]">
               Clear Conversation
             </div>
           </div>

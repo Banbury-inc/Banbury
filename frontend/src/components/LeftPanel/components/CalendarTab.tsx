@@ -158,7 +158,7 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect, onCreateEvent }:
               disabled={loading}
               title="Refresh"
             >
-              <RefreshCw className={`${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`${loading ? 'animate-spin' : ''}`} strokeWidth={1} />
             </Button>
             <Button
               variant="default"
@@ -182,7 +182,7 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect, onCreateEvent }:
             className="flex-1 bg-zinc-100 dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-gray-900 dark:text-white text-sm"
           />
           <Button size="sm" onClick={handleSearch} className="bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-gray-900 dark:text-white h-9 px-3">
-            <Search className="h-3 w-3" />
+            <Search className="h-4 w-4" strokeWidth={1} />
           </Button>
         </div>
       </div> */}
@@ -190,18 +190,18 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect, onCreateEvent }:
       <div className="flex-1 overflow-hidden">
         {checkingAccess ? (
           <div className="flex items-center justify-center h-full">
-            <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" />
+            <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" strokeWidth={1} />
             <Typography variant="muted">Checking Calendar access...</Typography>
           </div>
         ) : calendarAvailable === false ? (
           <div className="flex flex-col items-center justify-center h-full p-4">
-            <Calendar className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" />
+            <Calendar className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" strokeWidth={1} />
             <Typography variant="h3" className="mb-2">Google Calendar Access Required</Typography>
             <Typography variant="small" className="text-center mb-4 max-w-md text-muted-foreground">
               To use calendar features, you need to grant Calendar access to your Google account.
             </Typography>
             <Button onClick={requestCalendarAccess} variant="default">
-              <Settings className="h-4 w-4 mr-2" />
+              <Settings className="h-4 w-4 mr-2" strokeWidth={1} />
               Activate Calendar Access
             </Button>
           </div>
@@ -214,14 +214,14 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect, onCreateEvent }:
             )}
             {loading && events.length === 0 ? (
               <div className="flex items-center justify-center h-full">
-                <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" />
+                <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" strokeWidth={1} />
                 <Typography variant="muted">Loading events...</Typography>
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto" onScroll={onScroll}>
                 {events.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full p-4">
-                    <Calendar className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" />
+                    <Calendar className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" strokeWidth={1} />
                     <Typography variant="small" className="mb-2 text-muted-foreground">No events found in the selected range</Typography>
                   </div>
                 ) : (
@@ -237,16 +237,16 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect, onCreateEvent }:
                             <Typography variant="small" className="font-medium truncate">{ev.summary || '(No title)'}</Typography>
                             <div className="mt-1 flex flex-wrap items-center gap-3">
                               <Typography variant="muted" className="flex items-center gap-1 text-xs">
-                                <Clock className="h-3 w-3" /> {formatDateTime(ev.start)} → {formatDateTime(ev.end)}
+                                <Clock className="h-4 w-4" strokeWidth={1} /> {formatDateTime(ev.start)} → {formatDateTime(ev.end)}
                               </Typography>
                               {ev.location && (
                                 <Typography variant="muted" className="flex items-center gap-1 text-xs">
-                                  <MapPin className="h-3 w-3" /> {ev.location}
+                                  <MapPin className="h-4 w-4" strokeWidth={1} /> {ev.location}
                                 </Typography>
                               )}
                               {ev.attendees && ev.attendees.length > 0 && (
                                 <Typography variant="muted" className="flex items-center gap-1 text-xs">
-                                  <Users className="h-3 w-3" /> {ev.attendees.length}
+                                  <Users className="h-4 w-4" strokeWidth={1} /> {ev.attendees.length}
                                 </Typography>
                               )}
                             </div>
@@ -259,7 +259,7 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect, onCreateEvent }:
 
                 {isLoadingMore && (
                   <div className="flex items-center justify-center py-4">
-                    <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" />
+                    <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" strokeWidth={1} />
                     <Typography variant="muted">Loading more events...</Typography>
                   </div>
                 )}

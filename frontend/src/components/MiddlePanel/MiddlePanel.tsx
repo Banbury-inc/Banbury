@@ -23,20 +23,20 @@ export function MiddlePanel({
       {isFileSidebarCollapsed && (
         <button
           onClick={onToggleFileSidebar}
-          className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-lg burger-button"
+          className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
           title="Expand file sidebar"
         >
-          <Menu className="h-3 w-3" />
+          <Menu className="h-4 w-4" strokeWidth={1} />
         </button>
       )}
       {/* Expand button for assistant panel when collapsed - positioned on right border */}
       {isAssistantPanelCollapsed && (
         <button
           onClick={onToggleAssistantPanel}
-          className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-lg burger-button"
+          className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
           title="Expand assistant panel"
         >
-          <Menu className="h-3 w-3" />
+          <Menu className="h-4 w-4" strokeWidth={1} />
         </button>
       )}
       {renderPanelGroup(panelLayout)}

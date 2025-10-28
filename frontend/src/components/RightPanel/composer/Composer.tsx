@@ -316,7 +316,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
               title="Tools"
               aria-label="Tools"
             >
-              <Wrench height={16} width={16} />
+              <Wrench height={16} width={16} strokeWidth={1} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" className="w-56 p-2">
@@ -379,7 +379,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           aria-label={isRecording ? "Stop recording" : "Start voice input"}
           disabled={!(typeof window !== 'undefined' && (((window as any).SpeechRecognition) || ((window as any).webkitSpeechRecognition)))}
         >
-          {isRecording ? <MicOff height={16} width={16} /> : <Mic height={16} width={16} />}
+          {isRecording ? <MicOff height={16} width={16} strokeWidth={1} /> : <Mic height={16} width={16} strokeWidth={1} />}
         </Button>
         <Button
           variant="primary"
@@ -393,7 +393,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           title={isWebSearchEnabled ? "Disable web search" : "Enable web search"}
           aria-label={isWebSearchEnabled ? "Disable web search" : "Enable web search"}
         >
-          <Globe height={16} width={16} />
+          <Globe height={16} width={16} strokeWidth={1} />
         </Button>
       </div>
 
@@ -412,7 +412,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           onClick={handleSendFromButton}
           disabled={!hasText}
         >
-          <ChevronRightIcon height={16} width={16} />
+          <ChevronRightIcon height={16} width={16} strokeWidth={1} />
         </Button>
       </ThreadPrimitive.If>
 
@@ -426,7 +426,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
             aria-label="Stop generating"
             className="cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100" 
           >
-            <Square height={14} width={14} />
+            <Square height={14} width={14} strokeWidth={1} />
           </Button>
         </ComposerPrimitive.Cancel>
       </ThreadPrimitive.If>

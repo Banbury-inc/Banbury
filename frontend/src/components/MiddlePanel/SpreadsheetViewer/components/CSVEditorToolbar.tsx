@@ -358,7 +358,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
         data-role="csv-toolbar"
         sx={{ 
           borderBottom: 'none',
-          backgroundColor: '#27272a',
+          backgroundColor: 'var(--accent)',
           display: 'flex',
           alignItems: 'center',
           gap: 0.5,

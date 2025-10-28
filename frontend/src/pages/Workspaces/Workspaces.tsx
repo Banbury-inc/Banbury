@@ -835,15 +835,15 @@ const Workspaces = (): JSX.Element => {
               <Allotment>
                 {/* File Sidebar Panel */}
                 {!isFileSidebarCollapsed && (
-                  <Allotment.Pane minSize={250} preferredSize={350} maxSize={500} className="relative z-10">
+                  <Allotment.Pane minSize={200} preferredSize={300} maxSize={400} className="relative z-10">
                     <div className="h-full flex flex-col relative">
                       {/* Collapse button for file sidebar - positioned on right border */}
                       <button
                         onClick={() => setIsFileSidebarCollapsed(true)}
-                        className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-zinc-600 transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-lg burger-button"
+                        className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
                         title="Collapse file sidebar"
                       >
-                        <Menu className="h-3 w-3" />
+                        <Menu className="h-4 w-4" strokeWidth={1} />
                       </button>
                       {/* File Sidebar Content */}
                       <div className="flex-1 overflow-hidden">
@@ -876,7 +876,7 @@ const Workspaces = (): JSX.Element => {
                 )}
                 
                 {/* Main Content Panel */}
-                <Allotment.Pane minSize={300}>
+                <Allotment.Pane minSize={400}>
                   <MiddlePanel
                     isFileSidebarCollapsed={isFileSidebarCollapsed}
                     isAssistantPanelCollapsed={isAssistantPanelCollapsed}
@@ -889,7 +889,7 @@ const Workspaces = (): JSX.Element => {
                 
                 {/* Assistant Panel */}
                 {!isAssistantPanelCollapsed && (
-                  <Allotment.Pane minSize={300} preferredSize={400}>
+                  <Allotment.Pane minSize={280} preferredSize={380} maxSize={500}>
                     <RightPanel
                       userInfo={userInfo}
                       selectedFile={selectedFile}
@@ -913,11 +913,11 @@ const Workspaces = (): JSX.Element => {
           {/* Context Menu */}
           {contextMenu && (
             <div
-              className="fixed bg-zinc-800 border border-zinc-600 rounded-md shadow-lg py-1 z-50"
+              className="fixed bg-zinc-800 border border-white/[0.06] rounded-md shadow-soft-md py-2 z-50"
               style={{ left: contextMenu.x, top: contextMenu.y }}
               onClick={closeContextMenu}
             >
-              <div className="px-3 py-2 text-zinc-400 text-sm border-b border-zinc-600">
+              <div className="px-4 py-2 text-zinc-400 text-sm border-b border-white/[0.06]">
                 Tip: Drag the tab to create a new panel
               </div>
               <button
@@ -927,9 +927,9 @@ const Workspaces = (): JSX.Element => {
                   }
                   closeContextMenu();
                 }}
-                className="w-full px-3 py-2 text-left text-white hover:bg-zinc-700 flex items-center gap-2"
+                className="w-full px-4 py-2 text-left text-white hover:bg-zinc-700 flex items-center gap-2"
               >
-                <X size={16} />
+                <X size={16} strokeWidth={1} />
                 Close Tab
               </button>
         </div>
@@ -948,16 +948,16 @@ const Workspaces = (): JSX.Element => {
         {/* Conversation Dialogs */}
         {saveDialogOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-6 w-96">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.06] rounded-lg p-6 w-96 shadow-soft-md">
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Save Conversation</h3>
               <input
                 type="text"
                 placeholder="Enter conversation title..."
                 value={conversationTitle}
                 onChange={(e) => setConversationTitle(e.target.value)}
-                className="w-full p-2 bg-zinc-800 border border-zinc-600 rounded text-white mb-4"
+                className="w-full p-3 bg-zinc-800 border border-white/[0.06] rounded text-white mb-4"
               />
-              <div className="flex gap-2 justify-end">
+              <div className="flex gap-3 justify-end">
                 <button
                   onClick={() => {
                     setSaveDialogOpen(false);
@@ -981,7 +981,7 @@ const Workspaces = (): JSX.Element => {
         
         {showConversationDialog && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-6 w-96 max-h-96 overflow-y-auto">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.06] rounded-lg p-6 w-96 max-h-96 overflow-y-auto shadow-soft-md">
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Load Conversation</h3>
               {isLoadingConversations ? (
                 <div className="text-zinc-900 dark:text-white text-center py-4">Loading conversations...</div>
@@ -992,7 +992,7 @@ const Workspaces = (): JSX.Element => {
                   {conversations.map((conversation) => (
                     <div
                       key={conversation._id}
-                      className="flex items-center justify-between p-3 bg-zinc-800 rounded border border-zinc-700"
+                      className="flex items-center justify-between p-3 bg-zinc-800 rounded border border-white/[0.06]"
                     >
                       <div className="flex-1">
                         <div className="text-white font-medium">{conversation.title}</div>
@@ -1003,17 +1003,17 @@ const Workspaces = (): JSX.Element => {
                       <div className="flex gap-2">
                         <button
                           onClick={() => loadConversationCallback(conversation._id,)}
-                          className="p-1 text-blue-400 hover:text-blue-300"
+                          className="p-2 text-blue-400 hover:text-blue-300"
                           title="Load conversation"
                         >
-                          <FolderOpen className="h-4 w-4" />
+                          <FolderOpen className="h-4 w-4" strokeWidth={1} />
                         </button>
                         <button
                           onClick={() => deleteConversationCallback(conversation._id)}
-                          className="p-1 text-red-400 hover:text-red-300"
+                          className="p-2 text-red-400 hover:text-red-300"
                           title="Delete conversation"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" strokeWidth={1} />
                         </button>
                       </div>
                     </div>
