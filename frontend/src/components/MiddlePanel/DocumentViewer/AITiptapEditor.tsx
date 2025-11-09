@@ -69,7 +69,7 @@ import { changeSelectionFontFamily } from '../../handlers/editorFont';
 import { insertImageFromBackendFile } from '../../handlers/editorImage';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { ApiService } from '../../../services/apiService';
-import { registerTiptapEditor, unregisterTiptapEditor } from '../../RightPanel/handlers/handle-docx-ai-response';
+import { registerTiptapEditor, unregisterTiptapEditor, isShowingPreview } from '../../RightPanel/handlers/handle-docx-ai-response';
 import { createToolbarHandlers } from './handlers/toolbarHandlers';
  
 
@@ -191,7 +191,8 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
     ],
     content: initialContent,
     onUpdate: ({ editor }) => {
-      if (onContentChange) {
+      // Don't save content changes when showing diff preview
+      if (onContentChange && !isShowingPreview()) {
         onContentChange(editor.getHTML());
       }
     },

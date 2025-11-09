@@ -22,7 +22,29 @@ export const tldrawAiTool = tool(
     canvasData?: any
     note?: string
   }) => {
+    // Construct detailed success message
+    const canvasName = input.canvasName || 'the canvas'
+    const opCount = input.operations?.length || 0
+    const hasCanvasData = Boolean(input.canvasData)
+    
+    let successMessage = `Successfully applied changes to ${canvasName}. `
+    
+    if (hasCanvasData) {
+      successMessage += `The canvas data has been updated. `
+    } else if (opCount > 0) {
+      successMessage += `Applied ${opCount} operation${opCount !== 1 ? 's' : ''} to the canvas. `
+    }
+    
+    successMessage += `The changes have been sent to the frontend editor and will be visible to the user immediately. No further action is required.`
+    
+    if (input.note) {
+      successMessage += ` Note: ${input.note}`
+    }
+    
+    // Return payload for the frontend canvas editor to apply, along with success message
     return {
+      success: true,
+      message: successMessage,
       action: input.action,
       canvasName: input.canvasName,
       operations: input.operations,
@@ -33,7 +55,7 @@ export const tldrawAiTool = tool(
   {
     name: 'tldraw_ai',
     description:
-      'Use this tool to read, edit, and modify tldraw canvas files. You can create shapes, update existing ones, connect elements, and perform various canvas operations.',
+      'Use this tool to read, edit, and modify tldraw canvas files. You can create shapes, update existing ones, connect elements, and perform various canvas operations. IMPORTANT: Call this tool only ONCE per user request. After calling this tool, the changes are immediately applied to the canvas in the frontend. Do not call this tool multiple times for the same edit request.',
     schema: z.object({
       action: z.string().describe("Description of the action performed (e.g. 'Add flowchart shapes', 'Create diagram', 'Update canvas layout', 'Connect elements')"),
       canvasName: z.string().optional().describe('Optional canvas name for context'),

@@ -90,7 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           { messages: allMessages }, 
           { 
             streamMode: "values",
-            recursionLimit: body.recursionLimit || 1000 // Use recursion limit from request or default to 1000
+            recursionLimit: body.recursionLimit || 25 // Use recursion limit from request or default to 25 to prevent infinite loops
           }
         )
 

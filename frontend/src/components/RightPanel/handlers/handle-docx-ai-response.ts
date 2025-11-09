@@ -6,7 +6,7 @@
 import { createStructuredHtmlDiff } from '../../../utils/htmlDiff';
 
 interface DocxOperation {
-  type: 'insertText' | 'replaceText' | 'insertParagraph' | 'replaceParagraph' | 'insertHeading' | 'replaceHeading' | 'insertList' | 'insertTable' | 'formatText' | 'insertImage' | 'setPageSettings';
+  type: 'insertText' | 'replaceText' | 'insertParagraph' | 'replaceParagraph' | 'insertHeading' | 'replaceHeading' | 'insertList' | 'insertTable' | 'formatText' | 'insertImage' | 'setPageSettings' | 'insert';
   [key: string]: any;
 }
 
@@ -22,10 +22,17 @@ interface DocxAIResponse {
 // Global reference to current editor from TiptapAIContext
 let currentTiptapEditor: any = null;
 let originalContent: string | null = null;
+let isPreviewActive: boolean = false;
+let lastAppliedContent: string | null = null;
 
 // Function to be called by TiptapAIContext to register the current editor
 export function setCurrentTiptapEditor(editor: any) {
   currentTiptapEditor = editor;
+}
+
+// Function to check if we're currently showing a preview
+export function isShowingPreview(): boolean {
+  return isPreviewActive;
 }
 
 export function handleDocxAIResponse(payload: DocxAIResponse) {
@@ -46,26 +53,62 @@ export function handleDocxAIResponse(payload: DocxAIResponse) {
   
   
   try {
-    // Store original content if this is a preview
-    if (payload.preview) {
-      originalContent = editorInstance.getHTML();
-    }
-    
     if (payload.htmlContent && payload.htmlContent.trim().length > 0) {
       if (payload.preview) {
+        // Store original content if this is the first preview
+        if (!isPreviewActive) {
+          originalContent = editorInstance.getHTML();
+        }
+        
         // Show diff preview
-        const currentContent = editorInstance.getHTML();
+        const currentContent = originalContent || editorInstance.getHTML();
         const diffHtml = createStructuredHtmlDiff(currentContent, payload.htmlContent);
+        
+        // Mark that we're in preview mode (this prevents saving via isShowingPreview())
+        isPreviewActive = true;
+        
+        // Set the diff content in the editor
         editorInstance.chain().focus().setContent(diffHtml).run();
+        
+        showPreviewFeedback('Preview shown - Review changes before accepting');
       } else {
+        // Prevent double application - check if this content was already applied
+        if (lastAppliedContent === payload.htmlContent) {
+          console.log('Content already applied, skipping duplicate application');
+          return;
+        }
+        
         // Apply changes directly
+        // If we have original content stored, we're coming from a preview
+        // In that case, restore original first, then apply the new content
+        if (isPreviewActive && originalContent) {
+          // Restore original content silently
+          editorInstance.chain().focus().setContent(originalContent, { emitUpdate: false }).run();
+        }
+        
+        // Now apply the new content
         applyHtmlContentToTiptap(editorInstance, payload.htmlContent);
-        originalContent = null; // Clear stored content
+        
+        // Clear preview state
+        originalContent = null;
+        isPreviewActive = false;
+        lastAppliedContent = payload.htmlContent;
+        
+        showSuccessFeedback('Changes applied successfully');
+        
+        // Clear the last applied content after a delay to allow future applications
+        setTimeout(() => {
+          if (lastAppliedContent === payload.htmlContent) {
+            lastAppliedContent = null;
+          }
+        }, 1000);
       }
     } else if (payload.operations && payload.operations.length > 0) {
       // Apply individual operations using Tiptap commands
       applyTiptapOperations(editorInstance, payload.operations);
       originalContent = null;
+      isPreviewActive = false;
+      showSuccessFeedback('Operations applied successfully');
     } else {
       console.warn('No valid content or operations provided in payload');
       showErrorFeedback('No document changes to apply');
@@ -80,9 +123,11 @@ export function handleDocxAIResponse(payload: DocxAIResponse) {
 // Listen for reject events to restore original content
 if (typeof window !== 'undefined') {
   window.addEventListener('docx-ai-response-reject', () => {
-    if (currentTiptapEditor && originalContent) {
+    if (currentTiptapEditor && originalContent && isPreviewActive) {
       currentTiptapEditor.commands.setContent(originalContent);
       originalContent = null;
+      isPreviewActive = false;
+      lastAppliedContent = null;
       showInfoFeedback('Changes rejected - Document restored');
     }
   });
@@ -264,8 +309,26 @@ function applyTiptapOperations(editor: any, operations: DocxOperation[]) {
           // Page settings don't have direct Tiptap equivalents, so we'll skip these
           console.log('Page settings operations are not supported in Tiptap:', operation);
           break;
+        case 'insert':
+          // Handle generic 'insert' operation by trying to determine the best approach
+          // This is a fallback for when the AI uses a generic insert instead of specific types
+          if (operation.text) {
+            // If we have text, insert it as text content
+            insertTextWithTiptap(editor, operation.position || editor.state.selection.from, operation.text);
+          } else if (operation.content) {
+            // If we have HTML content, insert it directly
+            try {
+              const position = operation.position || editor.state.selection.from;
+              editor.chain().focus().insertContentAt(position, operation.content).run();
+            } catch (error) {
+              editor.chain().focus().insertContent(operation.content).run();
+            }
+          } else {
+            console.warn('Generic insert operation without text or content:', operation);
+          }
+          break;
         default:
-          console.warn('Unknown operation type:', operation.type);
+          console.warn('Unknown operation type:', operation.type, 'Full operation:', operation);
       }
     } catch (error) {
       console.error(`Error applying Tiptap operation ${operation.type}:`, error);

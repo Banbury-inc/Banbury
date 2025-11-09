@@ -28,7 +28,6 @@ import {
 import { FileSystemItem } from "../../../utils/fileTreeUtils";
 import { ThreadScrollToBottom } from "./ThreadScrollToBottom";
 import { handleSend } from "./handlers/handleSend";
-import { handleModelProviderChange } from "./handlers/handleModelProviderChange";
 import { 
   getModelDisplayName, 
   AVAILABLE_MODELS, 
@@ -136,7 +135,8 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
         ]
       });
     });
-  }, [attachedFiles, attachedEmails, composer.attachments, attachmentPayloads]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attachedFiles, attachedEmails, attachmentPayloads]);
 
   return (
     <div className="relative mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 px-[var(--thread-padding-x)] pb-4 md:pb-6" style={{ backgroundColor: 'transparent' }}>

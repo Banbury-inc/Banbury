@@ -22,8 +22,29 @@ export const docxAiTool = tool(
     htmlContent?: string
     note?: string
   }) => {
-    // Return payload for the frontend DOCX editor to apply
+    // Construct detailed success message
+    const docName = input.documentName || 'the document'
+    const opCount = input.operations?.length || 0
+    const hasHtmlContent = Boolean(input.htmlContent && input.htmlContent.trim().length > 0)
+    
+    let successMessage = `Successfully applied changes to ${docName}. `
+    
+    if (hasHtmlContent) {
+      successMessage += `The document content has been updated with the new HTML content. `
+    } else if (opCount > 0) {
+      successMessage += `Applied ${opCount} operation${opCount !== 1 ? 's' : ''} to the document. `
+    }
+    
+    successMessage += `The changes have been sent to the frontend editor and will be visible to the user immediately. No further action is required.`
+    
+    if (input.note) {
+      successMessage += ` Note: ${input.note}`
+    }
+    
+    // Return payload for the frontend DOCX editor to apply, along with success message
     return {
+      success: true,
+      message: successMessage,
       action: input.action,
       documentName: input.documentName,
       operations: input.operations || [],
@@ -34,7 +55,7 @@ export const docxAiTool = tool(
   {
     name: 'docx_ai',
     description:
-      'Use this tool to deliver AI-generated DOCX document edits. Provide either a list of operations (preferred) or full htmlContent to replace the document.',
+      'Use this tool to deliver AI-generated DOCX document edits. Provide either a list of operations (preferred) or full htmlContent to replace the document. IMPORTANT: Call this tool only ONCE per user request. After calling this tool, the changes are immediately applied to the document in the frontend. Do not call this tool multiple times for the same edit request.',
     schema: z.object({
       action: z.string().describe("Description of the action performed (e.g. 'Add heading', 'Format text', 'Insert table', 'Restructure document')"),
       documentName: z.string().optional().describe('Optional document name for context'),

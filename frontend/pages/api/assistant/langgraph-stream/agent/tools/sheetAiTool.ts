@@ -17,8 +17,29 @@ export const sheetAiTool = tool(
     csvContent?: string
     note?: string
   }) => {
-    // Return payload for the frontend spreadsheet editor to apply
+    // Construct detailed success message
+    const sheetName = input.sheetName || 'the spreadsheet'
+    const opCount = input.operations?.length || 0
+    const hasCsvContent = Boolean(input.csvContent && input.csvContent.trim().length > 0)
+    
+    let successMessage = `Successfully applied changes to ${sheetName}. `
+    
+    if (hasCsvContent) {
+      successMessage += `The spreadsheet content has been updated with the new CSV content. `
+    } else if (opCount > 0) {
+      successMessage += `Applied ${opCount} operation${opCount !== 1 ? 's' : ''} to the spreadsheet. `
+    }
+    
+    successMessage += `The changes have been sent to the frontend editor and will be visible to the user immediately. No further action is required.`
+    
+    if (input.note) {
+      successMessage += ` Note: ${input.note}`
+    }
+    
+    // Return payload for the frontend spreadsheet editor to apply, along with success message
     return {
+      success: true,
+      message: successMessage,
       action: input.action,
       sheetName: input.sheetName,
       operations: input.operations || [],
@@ -29,7 +50,7 @@ export const sheetAiTool = tool(
   {
     name: 'sheet_ai',
     description:
-      'Use this tool to deliver AI-generated spreadsheet edits. Provide either a list of operations (preferred) or full csvContent to replace the sheet.',
+      'Use this tool to deliver AI-generated spreadsheet edits. Provide either a list of operations (preferred) or full csvContent to replace the sheet. IMPORTANT: Call this tool only ONCE per user request. After calling this tool, the changes are immediately applied to the spreadsheet in the frontend. Do not call this tool multiple times for the same edit request.',
     schema: z.object({
       action: z.string().describe("Description of the action performed (e.g. 'Clean data', 'Normalize columns', 'Apply formula')"),
       sheetName: z.string().optional().describe('Optional sheet name for multi-sheet contexts'),
