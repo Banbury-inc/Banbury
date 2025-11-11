@@ -215,7 +215,10 @@ export function LocalFilesView({
   const clearSelection = () => setSelectedIds(new Set())
 
   const fetchUserFiles = useCallback(async () => {
-    if (!userInfo?.username) return
+    if (!userInfo?.username) {
+      onRefreshComplete?.()
+      return
+    }
     
     setLoading(true)
     setError(null)
@@ -226,13 +229,12 @@ export function LocalFilesView({
       if (result.success) {
         const tree = buildFileTree(result.files)
         setFileSystem(tree)
-        // Call the refresh complete callback if provided
-        onRefreshComplete?.()
       }
     } catch (err) {
       setError('Failed to fetch files')
     } finally {
       setLoading(false)
+      onRefreshComplete?.()
     }
   }, [userInfo?.username, onRefreshComplete])
 

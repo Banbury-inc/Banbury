@@ -8,13 +8,15 @@ import {
   Network,
   Folder,
 } from "lucide-react"
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { LocalFilesView } from "./components/LocalFilesView"
 import { GoogleDriveView } from "./components/GoogleDriveView"
 import { Button } from "../../../ui/button"
 import { FileSystemItem } from "../../../../utils/fileTreeUtils"
 import { Typography } from "../../../ui/typography"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../ui/select"
+import { handleRefreshFiles } from "./handlers/handleRefreshFiles"
+import { handleRefreshComplete } from "./handlers/handleRefreshComplete"
 
 interface FilesTabProps {
   userInfo?: {
@@ -44,7 +46,7 @@ export function FilesTab({
   userInfo,
   onFileSelect,
   selectedFile,
-  onRefreshComplete,
+  onRefreshComplete: externalOnRefreshComplete,
   refreshTrigger,
   onFileDeleted,
   onFileRenamed,
@@ -60,8 +62,14 @@ export function FilesTab({
   onCreateFolder,
 }: FilesTabProps) {
   const [fileViewMode, setFileViewMode] = useState<'local' | 'drive'>('local')
+  const [localRefreshCounter, setLocalRefreshCounter] = useState(0)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const folderInputRef = useRef<HTMLInputElement | null>(null)
+  const effectiveRefreshTrigger = (refreshTrigger ?? 0) + localRefreshCounter
+  const handleLocalRefreshComplete = useCallback(() => {
+    handleRefreshComplete({ setIsRefreshing, onRefreshComplete: externalOnRefreshComplete })
+  }, [externalOnRefreshComplete])
 
   // Handle file upload
   const handleFileUpload = () => {
@@ -137,10 +145,11 @@ export function FilesTab({
             <Button
               variant="outline"
               size="icon"
-              onClick={() => window.location.reload()}
+              onClick={() => handleRefreshFiles({ setRefreshCounter: setLocalRefreshCounter, setIsRefreshing })}
+              disabled={isRefreshing}
               title="Refresh"
             >
-              <RefreshCw />
+              <RefreshCw className={isRefreshing ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
             </Button>
             {fileViewMode === 'local' && (
               <Select
@@ -222,8 +231,8 @@ export function FilesTab({
             userInfo={userInfo}
             onFileSelect={onFileSelect}
             selectedFile={selectedFile}
-            onRefreshComplete={onRefreshComplete}
-            refreshTrigger={refreshTrigger}
+            onRefreshComplete={handleLocalRefreshComplete}
+            refreshTrigger={effectiveRefreshTrigger}
             onFileDeleted={onFileDeleted}
             onFileRenamed={onFileRenamed}
             onFileMoved={onFileMoved}
