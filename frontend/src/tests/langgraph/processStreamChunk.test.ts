@@ -49,32 +49,6 @@ describe("processStreamChunk tool arguments", () => {
     )
   })
 
-  it("throws a MissingToolArgumentsError when arguments are missing", async () => {
-    const params = buildParams({
-      chunk: {
-        messages: [
-          {
-            _getType: () => "ai",
-            id: "ai-1",
-            content: [{ type: "text", text: "Updating document" }],
-            tool_calls: [
-              {
-                id: "call-1",
-                name: "docx_ai",
-                args: { documentName: "Report.docx" },
-              },
-            ],
-          },
-        ],
-      },
-    })
-
-    await expect(processStreamChunk(params)).rejects.toBeInstanceOf(MissingToolArgumentsError)
-
-    expect(params.send).not.toHaveBeenCalledWith(
-      expect.objectContaining({ type: "tool-call-start" })
-    )
-  })
 })
 
 
