@@ -9,6 +9,52 @@ export interface SheetData {
   charts?: any[]
 }
 
+interface ExcelRichTextSegment {
+  text?: string
+}
+
+interface ExcelFormulaValue {
+  formula?: string
+  sharedFormula?: string
+  result?: unknown
+  text?: unknown
+  richText?: ExcelRichTextSegment[]
+  hyperlink?: string
+  address?: string
+}
+
+function normalizeExcelCellValue(value: unknown, depth = 0): string | number | boolean {
+  if (value == null) return ''
+  if (depth > 5) return ''
+  if (value instanceof Date) return value.toISOString()
+  const valueType = typeof value
+  if (valueType === 'string' || valueType === 'number' || valueType === 'boolean') return value as string | number | boolean
+  if (Array.isArray(value)) {
+    const normalized = value.map(item => normalizeExcelCellValue(item, depth + 1)).join('')
+    return normalized
+  }
+  if (valueType === 'object') {
+    const objectValue = value as ExcelFormulaValue
+    if (objectValue.formula && typeof objectValue.formula === 'string') return `=${objectValue.formula}`
+    if (objectValue.sharedFormula && typeof objectValue.sharedFormula === 'string') return `=${objectValue.sharedFormula}`
+    if (Array.isArray(objectValue.richText)) {
+      const richText = objectValue.richText.map(segment => (typeof segment?.text === 'string' ? segment.text : '')).join('')
+      if (richText !== '') return richText
+    }
+    if (objectValue.text !== undefined) {
+      const normalizedText = normalizeExcelCellValue(objectValue.text, depth + 1)
+      if (normalizedText !== '') return normalizedText
+    }
+    if (objectValue.result !== undefined) {
+      const normalizedResult = normalizeExcelCellValue(objectValue.result, depth + 1)
+      if (normalizedResult !== '') return normalizedResult
+    }
+    if (typeof objectValue.hyperlink === 'string' && objectValue.hyperlink !== '') return objectValue.hyperlink
+    if (typeof objectValue.address === 'string' && objectValue.address !== '') return objectValue.address
+  }
+  return ''
+}
+
 export interface CSVLoadHandlerParams {
   src: string
   srcBlob?: Blob
@@ -122,21 +168,12 @@ export function createCSVLoadHandler({
           const rowArr: any[] = []
           for (let c = 1; c <= maxCol; c++) {
             const cell = ws.getCell(r, c) as any
-            let value: any = cell.value
-            // Check for hyperlink
-            const hyperlink = (cell.value && typeof cell.value === 'object' && cell.value.hyperlink) 
-              ? cell.value.hyperlink 
+            const rawValue = cell.value
+            const value = normalizeExcelCellValue(rawValue)
+            const hyperlink = (cell.value && typeof cell.value === 'object' && cell.value.hyperlink)
+              ? cell.value.hyperlink
               : (cell.hyperlink ? cell.hyperlink : null)
-            
-            if (value && typeof value === 'object') {
-              // Prefer preserving formulas when present
-              if (value.formula != null) value = `=${value.formula}`
-              else if (value.text != null) value = value.text
-              else if (value.result != null) value = value.result
-              else if (value.richText) value = value.richText.map((t:any)=>t.text).join('')
-            }
-            
-            // Store hyperlink if present
+
             if (hyperlink) {
               const linkKey = `${r-1}-${c-1}`
               const linkValue = typeof hyperlink === 'string' ? hyperlink : (hyperlink.text || hyperlink.address || hyperlink)
@@ -144,13 +181,11 @@ export function createCSVLoadHandler({
                 loadedLinks[linkKey] = String(linkValue)
               }
             }
-            const wasDate = value instanceof Date
-            if (wasDate) value = (value as Date).toISOString()
-            // Capture checkbox if boolean
+            const wasDate = rawValue instanceof Date
             if (typeof value === 'boolean') {
               nextMeta[`${r-1}-${c-1}`] = { type: 'checkbox' }
             }
-            rowArr.push(value == null ? '' : value)
+            rowArr.push(value)
 
             const key = `${r-1}-${c-1}`
             const classes: string[] = []
