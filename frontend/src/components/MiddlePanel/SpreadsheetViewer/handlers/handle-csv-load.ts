@@ -20,6 +20,7 @@ export interface CSVLoadHandlerParams {
   setData: (data: any[][]) => void
   setCellFormats: (formats: { [k: string]: { className?: string } }) => void
   setCellStyles: (styles: { [k: string]: React.CSSProperties }) => void
+  setCellLinks?: (links: { [k: string]: string }) => void
   pendingCellMetaRef: React.MutableRefObject<any>
   parseCSVWithMeta: (text: string) => { parsed: any[][] }
   setConditionalRulesFromLoad?: (rules: any[]) => void
@@ -37,6 +38,7 @@ export function createCSVLoadHandler({
   setData,
   setCellFormats,
   setCellStyles,
+  setCellLinks,
   pendingCellMetaRef,
   parseCSVWithMeta,
   setConditionalRulesFromLoad,
@@ -100,6 +102,7 @@ export function createCSVLoadHandler({
           const nextFormats: {[k:string]: {className?: string}} = {}
           const nextStyles: {[k:string]: React.CSSProperties} = {}
           const colWidths: {[k:string]: number} = {}
+          let loadedLinks: {[k:string]: string} = {}
           const argbToCss = (argb?: string) => {
             if (!argb) return undefined
             const hex = argb.replace(/^FF/i, '')
@@ -120,12 +123,26 @@ export function createCSVLoadHandler({
           for (let c = 1; c <= maxCol; c++) {
             const cell = ws.getCell(r, c) as any
             let value: any = cell.value
+            // Check for hyperlink
+            const hyperlink = (cell.value && typeof cell.value === 'object' && cell.value.hyperlink) 
+              ? cell.value.hyperlink 
+              : (cell.hyperlink ? cell.hyperlink : null)
+            
             if (value && typeof value === 'object') {
               // Prefer preserving formulas when present
               if (value.formula != null) value = `=${value.formula}`
               else if (value.text != null) value = value.text
               else if (value.result != null) value = value.result
               else if (value.richText) value = value.richText.map((t:any)=>t.text).join('')
+            }
+            
+            // Store hyperlink if present
+            if (hyperlink) {
+              const linkKey = `${r-1}-${c-1}`
+              const linkValue = typeof hyperlink === 'string' ? hyperlink : (hyperlink.text || hyperlink.address || hyperlink)
+              if (linkValue) {
+                loadedLinks[linkKey] = String(linkValue)
+              }
             }
             const wasDate = value instanceof Date
             if (wasDate) value = (value as Date).toISOString()
@@ -210,8 +227,14 @@ export function createCSVLoadHandler({
             cellFormats: nextFormats,
             cellStyles: nextStyles,
             cellMeta: nextMeta,
-            columnWidths: colWidths
-          })
+            columnWidths: colWidths,
+            cellLinks: loadedLinks
+          } as any)
+          
+          // Set links for the first sheet (active sheet)
+          if (sheetIndex === 0 && setCellLinks && Object.keys(loadedLinks).length > 0) {
+            setCellLinks(loadedLinks)
+          }
         }
         
         // Load the first sheet (or all sheets if callback is provided)
@@ -222,6 +245,9 @@ export function createCSVLoadHandler({
           setData(firstSheet.data)
           setCellFormats(firstSheet.cellFormats)
           setCellStyles(firstSheet.cellStyles)
+          if (setCellLinks && (firstSheet as any).cellLinks && Object.keys((firstSheet as any).cellLinks).length > 0) {
+            setCellLinks((firstSheet as any).cellLinks)
+          }
           if (Object.keys(firstSheet.cellMeta).length) {
             pendingCellMetaRef.current = firstSheet.cellMeta
           }
@@ -231,6 +257,9 @@ export function createCSVLoadHandler({
           setData(firstSheet.data)
           setCellFormats(firstSheet.cellFormats)
           setCellStyles(firstSheet.cellStyles)
+          if (setCellLinks && (firstSheet as any).cellLinks && Object.keys((firstSheet as any).cellLinks).length > 0) {
+            setCellLinks((firstSheet as any).cellLinks)
+          }
           if (Object.keys(firstSheet.cellMeta).length) {
             pendingCellMetaRef.current = firstSheet.cellMeta
           }

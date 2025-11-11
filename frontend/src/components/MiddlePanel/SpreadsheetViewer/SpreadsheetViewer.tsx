@@ -32,6 +32,7 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
     cellTypeMeta: {[key: string]: { type: 'dropdown' | 'checkbox' | 'numeric' | 'date' | 'text'; source?: string[]; numericFormat?: { pattern?: string; culture?: string }; dateFormat?: string }};
     columnWidths: {[key: string]: number};
     conditionalFormatting: any[];
+    cellLinks: {[key: string]: string};
   } | null>(null);
   const [allSheets, setAllSheets] = useState<any[]>([]);
   const [activeSheetIndex, setActiveSheetIndex] = useState<number>(0);
@@ -177,6 +178,7 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
         cellTypeMeta: latestFormatting?.cellTypeMeta,
         columnWidths: latestFormatting?.columnWidths,
         conditionalFormatting: latestFormatting?.conditionalFormatting,
+        cellLinks: latestFormatting?.cellLinks,
         allSheets: allSheets.length > 0 ? allSheets : undefined,
         activeSheetIndex
       });

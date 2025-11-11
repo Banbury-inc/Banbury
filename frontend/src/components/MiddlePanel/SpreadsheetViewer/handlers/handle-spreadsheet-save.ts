@@ -20,6 +20,7 @@ interface SaveSpreadsheetParams {
   columnWidths?: {[key: string]: number};
   conditionalFormatting?: any[];
   charts?: any[];
+  cellLinks?: {[key: string]: string};
   allSheets?: SheetData[];
   activeSheetIndex?: number;
 }
@@ -32,7 +33,8 @@ export async function convertToXLSX(
   cellTypeMeta?: {[key: string]: { type: 'dropdown' | 'checkbox' | 'numeric' | 'date' | 'text'; source?: string[]; numericFormat?: { pattern?: string; culture?: string }; dateFormat?: string }},
   columnWidths?: {[key: string]: number},
   conditionalFormatting?: any[],
-  charts?: any[]
+  charts?: any[],
+  cellLinks?: {[key: string]: string}
 ): Promise<Blob> {
   const ExcelJSImport = await import('exceljs');
   const ExcelJS = (ExcelJSImport as any).default || ExcelJSImport;
@@ -75,6 +77,7 @@ export async function convertToXLSX(
       const formats = cellFormats?.[cellKey];
       const styles = cellStyles?.[cellKey];
       const typeMeta = cellTypeMeta?.[cellKey];
+      const link = cellLinks?.[cellKey];
       
       // Apply text formatting
       if (formats?.className) {
@@ -165,6 +168,15 @@ export async function convertToXLSX(
         
         excelDateFormat = formatMap[typeMeta.dateFormat] || 'mm/dd/yyyy';
         excelCell.numFmt = excelDateFormat;
+      }
+      
+      // Apply hyperlink
+      if (link) {
+        excelCell.value = {
+          text: excelCell.value || link,
+          hyperlink: link
+        } as any;
+        excelCell.font = { ...(excelCell.font || {}), underline: true, color: { argb: 'FF0000FF' } };
       }
     });
   });
@@ -382,6 +394,7 @@ export async function handleSpreadsheetSave({
   cellTypeMeta,
   columnWidths,
   conditionalFormatting,
+  cellLinks,
   allSheets,
   activeSheetIndex
 }: SaveSpreadsheetParams): Promise<void> {
@@ -417,7 +430,7 @@ export async function handleSpreadsheetSave({
       console.log('Saving multi-sheet workbook:', updatedSheets.map(s => s.name));
       xlsxBlob = await convertMultiSheetToXLSX(updatedSheets);
     } else {
-      xlsxBlob = await convertToXLSX(latestData, cellFormats, cellStyles, cellTypeMeta, columnWidths, conditionalFormatting);
+      xlsxBlob = await convertToXLSX(latestData, cellFormats, cellStyles, cellTypeMeta, columnWidths, conditionalFormatting, undefined, cellLinks);
     }
     
     // Ensure the filename has .xlsx extension

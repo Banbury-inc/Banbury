@@ -24,7 +24,7 @@ import { Button } from '../../ui/button'
 import { Input } from '../../ui/old-input'
 import { Label } from '../../ui/label'
 import { Separator } from '../../ui/separator'
-import { ArrowUpward, ArrowDownward, BorderAll as BorderAllIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { ArrowUpward, ArrowDownward, BorderAll as BorderAllIcon, Delete as DeleteIcon, Link as LinkIcon, Edit as EditIcon, ContentCopy as CopyIcon, LinkOff as UnlinkIcon } from '@mui/icons-material';
 import { createConditionalFormattingHandlers, computeConditionalFormats } from './handlers/handle-conditional-formatting';
 import { createAddCFRuleHandler } from './handlers/handle-add-cf-rule'
 import type { ConditionalFormattingRule } from './handlers/handle-conditional-formatting';
@@ -33,6 +33,7 @@ import { SpreadsheetChart } from './components/SpreadsheetChart';
 import { ChartEditor } from './components/ChartEditor';
 import { createChartHandlers, extractChartData } from './handlers/handle-charts';
 import type { ChartDefinition } from './types/chart-types';
+import { createLinkHandlers } from './handlers/handle-links';
 // Register all Handsontable modules
 registerAllModules();
 
@@ -51,6 +52,7 @@ interface CSVEditorProps {
     cellTypeMeta: {[key: string]: { type: 'dropdown' | 'checkbox' | 'numeric' | 'date' | 'text'; source?: string[]; numericFormat?: { pattern?: string; culture?: string }; dateFormat?: string }};
     columnWidths: {[key: string]: number};
     conditionalFormatting: ConditionalFormattingRule[];
+    cellLinks: {[key: string]: string};
   }) => void;
   onSaveDocument?: () => void;
   onDownloadDocument?: () => void;
@@ -96,6 +98,10 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   const [conditionalStyleOverlay, setConditionalStyleOverlay] = useState<{[key: string]: React.CSSProperties}>({});
   const [queryResultIndex, setQueryResultIndex] = useState<number>(0);
   
+  // Link state - automatically detected URLs
+  const [cellLinks, setCellLinks] = useState<{[key: string]: string}>({});
+  const [linkPopover, setLinkPopover] = useState<{row: number; col: number; url: string; position: {top: number; left: number}} | null>(null);
+  
   // Chart state
   const [charts, setCharts] = useState<ChartDefinition[]>([]);
   const [isChartEditorOpen, setIsChartEditorOpen] = useState(false);
@@ -139,6 +145,8 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
           const cellFormats: any = {};
           const cellStyles: any = {};
           
+          const loadedLinks: {[key: string]: string} = {};
+          
           Object.entries(metaObj.cells).forEach(([key, cellMeta]: [string, any]) => {
             // Extract type metadata
             if (cellMeta.type) {
@@ -157,7 +165,16 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
             if (cellMeta.styles) {
               cellStyles[key] = cellMeta.styles;
             }
+            
+            // Extract link metadata
+            if (cellMeta.link) {
+              loadedLinks[key] = cellMeta.link;
+            }
           });
+          
+          if (Object.keys(loadedLinks).length > 0) {
+            setCellLinks(loadedLinks);
+          }
           
           // Extract column widths if present
           if (metaObj.columnWidths && typeof metaObj.columnWidths === 'object') {
@@ -406,15 +423,58 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   }, [data, conditionalRules])
 
   const handleDataChange = useCallback(
-    createDataChangeHandler({
-      hotTableRef,
-      setData,
-      onContentChange,
-      setHasChanges,
-      cellTypeMeta,
-      setCellTypeMeta
-    }),
-    []
+    (changes: any, source: string) => {
+      // First call the original handler
+      createDataChangeHandler({
+        hotTableRef,
+        setData,
+        onContentChange,
+        setHasChanges,
+        cellTypeMeta,
+        setCellTypeMeta
+      })(changes, source);
+      
+      // Handle link removal when cell content changes
+      if (source === 'edit' && changes) {
+        const hotInstance = hotTableRef.current?.hotInstance;
+        if (!hotInstance) return;
+        
+        for (const [row, col, oldValue, newValue] of changes) {
+          const cellKey = `${row}-${col}`;
+          const hasLink = cellLinks[cellKey];
+          
+          if (hasLink) {
+            // Check if the new value is still a URL
+            const isStillUrl = isUrl(newValue);
+            
+            if (!isStillUrl) {
+              // Remove the link if the new value is not a URL
+              setCellLinks(prev => {
+                const next = { ...prev };
+                delete next[cellKey];
+                return next;
+              });
+              setHasChanges(true);
+            } else {
+              // Update the link URL if it changed
+              const detectedUrl = isUrl(newValue);
+              if (detectedUrl && detectedUrl !== hasLink) {
+                setCellLinks(prev => ({ ...prev, [cellKey]: detectedUrl }));
+                setHasChanges(true);
+              }
+            }
+          } else {
+            // Check if a new URL was entered
+            const detectedUrl = isUrl(newValue);
+            if (detectedUrl) {
+              setCellLinks(prev => ({ ...prev, [cellKey]: detectedUrl }));
+              setHasChanges(true);
+            }
+          }
+        }
+      }
+    },
+    [cellLinks, setCellLinks, setHasChanges]
   );
 
   const handleUndo = () => {
@@ -526,6 +586,7 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
       setHasChanges
     }), [setHasChanges]
   );
+
   
 const searchFieldKeyupCallback = useCallback(
   (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -601,6 +662,42 @@ const searchFieldKeyupCallback = useCallback(
     toggleCellFormat('ht-underline');
   };
 
+  // Helper function to detect if a value is a URL
+  const isUrl = (value: any): string | null => {
+    if (!value || typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    
+    // More accurate URL detection patterns
+    // Pattern 1: Starts with http:// or https://
+    if (/^https?:\/\/.+/.test(trimmed)) {
+      return trimmed;
+    }
+    
+    // Pattern 2: Starts with www.
+    if (/^www\..+\.[a-z]{2,}/i.test(trimmed)) {
+      return `https://${trimmed}`;
+    }
+    
+    // Pattern 3: Domain pattern (e.g., example.com, subdomain.example.com)
+    // Must have at least one dot and a valid TLD (2+ chars)
+    const domainPattern = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}(\/.*)?$/i;
+    if (domainPattern.test(trimmed) && trimmed.includes('.')) {
+      // Check it's not just a number or single word
+      const parts = trimmed.split('/')[0].split('.');
+      if (parts.length >= 2 && parts[parts.length - 1].length >= 2) {
+        return `https://${trimmed}`;
+      }
+    }
+    
+    // Pattern 4: mailto: links
+    if (/^mailto:.+@.+\..+/.test(trimmed)) {
+      return trimmed;
+    }
+    
+    return null;
+  };
+
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
   const [isEditorFocused, setIsEditorFocused] = useState(true);
 
@@ -622,6 +719,7 @@ const searchFieldKeyupCallback = useCallback(
       setData,
       setCellFormats,
       setCellStyles,
+      setCellLinks,
       pendingCellMetaRef,
       parseCSVWithMeta,
       onSheetsLoaded: (sheets, initialActiveIndex) => {
@@ -950,6 +1048,16 @@ const searchFieldKeyupCallback = useCallback(
         border: 2px solid #ef4444; /* red-500 border for emphasis */
         pointer-events: none;
       }
+      /* Link styling in cells */
+      .handsontable td a {
+        color: #2563eb !important;
+        text-decoration: underline !important;
+        cursor: pointer !important;
+      }
+      .handsontable td a:hover {
+        color: #1d4ed8 !important;
+        text-decoration: underline !important;
+      }
     `;
     document.head.appendChild(styleElement);
     
@@ -968,6 +1076,8 @@ const searchFieldKeyupCallback = useCallback(
       }
       // Disable editor focus when clicking outside
       setIsEditorFocused(false);
+      // Close link popover
+      setLinkPopover(null);
     };
 
     window.addEventListener('workspace-outside-click', handleWorkspaceOutsideClick);
@@ -976,6 +1086,36 @@ const searchFieldKeyupCallback = useCallback(
       window.removeEventListener('workspace-outside-click', handleWorkspaceOutsideClick);
     };
   }, []);
+
+  // Close link popover when clicking outside or pressing Escape
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (linkPopover) {
+        const target = e.target as HTMLElement;
+        const popoverElement = target.closest('[data-link-popover]');
+        const linkElement = target.closest('a');
+        // Don't close if clicking inside popover or on a link element
+        if (!popoverElement && !linkElement) {
+          setLinkPopover(null);
+        }
+      }
+    };
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (linkPopover && e.key === 'Escape') {
+        setLinkPopover(null);
+      }
+    };
+
+    if (linkPopover) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscape);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('keydown', handleEscape);
+      };
+    }
+  }, [linkPopover]);
 
   // Set up keyboard shortcuts
   useEffect(() => {
@@ -1151,6 +1291,7 @@ const searchFieldKeyupCallback = useCallback(
     cellTypeMeta: {[key: string]: any};
     columnWidths: {[key: string]: number};
     conditionalFormatting: ConditionalFormattingRule[];
+    cellLinks: {[key: string]: string};
   } | null>(null);
   const formattingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -1160,7 +1301,8 @@ const searchFieldKeyupCallback = useCallback(
       cellStyles,
       cellTypeMeta,
       columnWidths,
-      conditionalFormatting: conditionalRules
+      conditionalFormatting: conditionalRules,
+      cellLinks
     };
 
     // Only call onFormattingChange if the formatting has actually changed
@@ -1169,7 +1311,8 @@ const searchFieldKeyupCallback = useCallback(
       JSON.stringify(prevFormattingRef.current.cellStyles) !== JSON.stringify(cellStyles) ||
       JSON.stringify(prevFormattingRef.current.cellTypeMeta) !== JSON.stringify(cellTypeMeta) ||
       JSON.stringify(prevFormattingRef.current.columnWidths) !== JSON.stringify(columnWidths) ||
-      JSON.stringify(prevFormattingRef.current.conditionalFormatting) !== JSON.stringify(conditionalRules);
+      JSON.stringify(prevFormattingRef.current.conditionalFormatting) !== JSON.stringify(conditionalRules) ||
+      JSON.stringify(prevFormattingRef.current.cellLinks) !== JSON.stringify(cellLinks);
 
     if (hasChanged && onFormattingChangeRef.current) {
       // Clear any existing timeout
@@ -1184,7 +1327,7 @@ const searchFieldKeyupCallback = useCallback(
         prevFormattingRef.current = currentFormatting;
       }, 100); // 100ms debounce
     }
-  }, [cellFormats, cellStyles, cellTypeMeta, columnWidths, conditionalRules]);
+  }, [cellFormats, cellStyles, cellTypeMeta, columnWidths, conditionalRules, cellLinks]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -1381,14 +1524,32 @@ const searchFieldKeyupCallback = useCallback(
                         } catch {}
                       }
                     }
+                    
+                    // Auto-detect URL from cell value (only for non-checkbox cells)
+                    if (effectiveType !== 'checkbox') {
+                      const detectedUrl = isUrl(value);
+                      if (detectedUrl && !cellLinks[cellKey]) {
+                        setCellLinks(prev => ({ ...prev, [cellKey]: detectedUrl }));
+                      }
+                    }
                   } catch {
                     textRenderer(instance, td, r, c, prop, value, cellProperties);
+                    // Also check for URLs in catch block
+                    const detectedUrl = isUrl(value);
+                    if (detectedUrl && !cellLinks[cellKey]) {
+                      setCellLinks(prev => ({ ...prev, [cellKey]: detectedUrl }));
+                    }
                   }
                   
                   const fmt = cellFormats[cellKey];
                   const sty = cellStyles[cellKey];
                   const cfClass = conditionalClassOverlay[cellKey];
                   const cfStyle = conditionalStyleOverlay[cellKey];
+                  
+                  // Get link URL (from stored links or auto-detected)
+                  const storedLink = cellLinks[cellKey];
+                  const detectedUrl = isUrl(value);
+                  const linkUrl = storedLink || detectedUrl;
                   
                   const existingClasses = td.className ? td.className.split(' ').filter(Boolean) : [];
                   let mergedClasses = [...existingClasses];
@@ -1431,6 +1592,94 @@ const searchFieldKeyupCallback = useCallback(
                         } catch {}
                       }
                     }
+                  }
+                  
+                  // Handle link rendering AFTER all styling is applied
+                  // Check if this is a checkbox cell by checking the meta
+                  const isCheckboxCell = (() => {
+                    try {
+                      const meta = instance.getCellMeta(r, c) || {};
+                      const persisted = cellTypeMeta[cellKey];
+                      const cellType = (persisted && persisted.type) ? persisted.type : meta.type;
+                      return cellType === 'checkbox';
+                    } catch {
+                      return false;
+                    }
+                  })();
+                  
+                  // Check if cell is currently being edited - don't render link during editing
+                  const isEditing = (() => {
+                    try {
+                      const activeEditor = instance.getActiveEditor();
+                      const selected = instance.getSelected();
+                      if (selected && selected.length > 0) {
+                        const [selRow, selCol] = selected[0];
+                        return activeEditor && selRow === r && selCol === c;
+                      }
+                      return false;
+                    } catch {
+                      return false;
+                    }
+                  })();
+                  
+                  // Only render link if not editing and not checkbox
+                  if (linkUrl && !isCheckboxCell && !isEditing) {
+                    // Store the original text content
+                    const cellText = value ? String(value) : linkUrl;
+                    // Clear and create link element
+                    td.innerHTML = '';
+                    const linkElement = document.createElement('a');
+                    linkElement.href = linkUrl;
+                    linkElement.target = '_blank';
+                    linkElement.rel = 'noopener noreferrer';
+                    linkElement.textContent = cellText;
+                    // Use important styles to ensure link is visible
+                    linkElement.style.setProperty('text-decoration', 'underline', 'important');
+                    linkElement.style.setProperty('color', '#2563eb', 'important');
+                    linkElement.style.setProperty('cursor', 'pointer', 'important');
+                    linkElement.style.setProperty('display', 'inline-block', 'important');
+                    linkElement.style.setProperty('width', '100%', 'important');
+                    linkElement.style.setProperty('height', '100%', 'important');
+                    // Preserve any text color from cell styles, but ensure it's still visible as a link
+                    if (sty?.color) {
+                      linkElement.style.setProperty('color', String(sty.color), 'important');
+                    }
+                    linkElement.onclick = (e) => {
+                      e.preventDefault();
+                      // Get cell position for popover
+                      const rect = td.getBoundingClientRect();
+                      const hotInstance = hotTableRef.current?.hotInstance;
+                      if (hotInstance) {
+                        // Select the cell first
+                        hotInstance.selectCell(r, c);
+                        
+                        // Find the scrollable container (handsontable-container-full)
+                        const scrollableContainer = td.closest('.handsontable-container-full') as HTMLElement;
+                        const container = containerRef.current;
+                        
+                        if (container && scrollableContainer) {
+                          const containerRect = container.getBoundingClientRect();
+                          
+                          // Calculate position relative to the container, positioned below the cell
+                          const relativeTop = rect.bottom - containerRect.top + 4;
+                          const relativeLeft = rect.left - containerRect.left;
+                          
+                          // Show popover after a brief delay to allow selection
+                          setTimeout(() => {
+                            setLinkPopover({
+                              row: r,
+                              col: c,
+                              url: linkUrl,
+                              position: {
+                                top: relativeTop,
+                                left: relativeLeft
+                              }
+                            });
+                          }, 10);
+                        }
+                      }
+                    };
+                    td.appendChild(linkElement);
                   }
                   // Add dropdown indicator class for dropdown cells (append after formatting classes)
                   try {
@@ -1530,6 +1779,149 @@ const searchFieldKeyupCallback = useCallback(
               />
             )
           })}
+
+          {/* Link Popover */}
+          {linkPopover && (
+            <div
+              data-link-popover
+              style={{
+                position: 'absolute',
+                top: `${linkPopover.position.top}px`,
+                left: `${linkPopover.position.left}px`,
+                backgroundColor: '#ffffff',
+                border: '1px solid #e5e7eb',
+                borderRadius: 8,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                padding: '8px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                zIndex: 10002,
+                minWidth: 200,
+                maxWidth: 400,
+                pointerEvents: 'auto'
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <LinkIcon sx={{ fontSize: 16, color: '#6b7280' }} />
+              <span
+                style={{
+                  flex: 1,
+                  color: '#2563eb',
+                  textDecoration: 'underline',
+                  fontSize: 13,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  cursor: 'pointer'
+                }}
+                onClick={() => {
+                  window.open(linkPopover.url, '_blank', 'noopener,noreferrer');
+                  setLinkPopover(null);
+                }}
+                title={linkPopover.url}
+              >
+                {linkPopover.url.length > 30 ? `${linkPopover.url.substring(0, 30)}...` : linkPopover.url}
+              </span>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(linkPopover.url);
+                    setLinkPopover(null);
+                  }}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    padding: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    borderRadius: 4
+                  }}
+                  title="Copy link"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <CopyIcon sx={{ fontSize: 16, color: '#6b7280' }} />
+                </button>
+                <button
+                  onClick={() => {
+                    const newUrl = window.prompt('Edit URL:', linkPopover.url);
+                    if (newUrl !== null && newUrl.trim()) {
+                      const cellKey = `${linkPopover.row}-${linkPopover.col}`;
+                      let normalizedUrl = newUrl.trim();
+                      if (!normalizedUrl.match(/^https?:\/\//i)) {
+                        normalizedUrl = `https://${normalizedUrl}`;
+                      }
+                      setCellLinks(prev => ({ ...prev, [cellKey]: normalizedUrl }));
+                      const hotInstance = hotTableRef.current?.hotInstance;
+                      if (hotInstance) {
+                        hotInstance.render();
+                      }
+                    }
+                    setLinkPopover(null);
+                  }}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    padding: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    borderRadius: 4
+                  }}
+                  title="Edit link"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <EditIcon sx={{ fontSize: 16, color: '#6b7280' }} />
+                </button>
+                <button
+                  onClick={() => {
+                    const cellKey = `${linkPopover.row}-${linkPopover.col}`;
+                    setCellLinks(prev => {
+                      const next = { ...prev };
+                      delete next[cellKey];
+                      return next;
+                    });
+                    const hotInstance = hotTableRef.current?.hotInstance;
+                    if (hotInstance) {
+                      hotInstance.render();
+                    }
+                    setLinkPopover(null);
+                    setHasChanges(true);
+                  }}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    padding: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    borderRadius: 4
+                  }}
+                  title="Remove link"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <UnlinkIcon sx={{ fontSize: 16, color: '#6b7280' }} />
+                </button>
+              </div>
+            </div>
+          )}
 
         </div>
       </div>

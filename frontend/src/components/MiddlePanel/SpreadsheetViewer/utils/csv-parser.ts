@@ -93,7 +93,8 @@ function convertToCSVWithMeta(
   cellStyles?: {[key: string]: React.CSSProperties},
   columnWidths?: {[key: string]: number},
   conditionalFormatting?: any[],
-  charts?: any[]
+  charts?: any[],
+  cellLinks?: {[key: string]: string}
 ): string {
   console.log('convert to CSV with meta');
   const hotInstance = hotTableRef.current?.hotInstance;
@@ -138,6 +139,12 @@ function convertToCSVWithMeta(
             cellMeta.styles = styles;
           }
           
+          // Add link metadata
+          const link = cellLinks?.[cellKey];
+          if (link) {
+            cellMeta.link = link;
+          }
+          
           // Only add to meta if there's actual data
           if (Object.keys(cellMeta).length > 0) {
             cellsMeta[cellKey] = cellMeta;
@@ -165,6 +172,14 @@ function convertToCSVWithMeta(
     Object.entries(cellStyles).forEach(([key, styles]) => {
       if (styles && Object.keys(styles).length > 0) {
         cellsMeta[key] = { ...(cellsMeta[key] || {}), styles };
+      }
+    });
+  }
+  
+  if (cellLinks) {
+    Object.entries(cellLinks).forEach(([key, link]) => {
+      if (link) {
+        cellsMeta[key] = { ...(cellsMeta[key] || {}), link };
       }
     });
   }
