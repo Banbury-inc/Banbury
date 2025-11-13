@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { HelmetProvider, Helmet } from 'react-helmet-async';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
 
 import API from './components/API';
 import Features from './components/Features';
@@ -22,15 +21,6 @@ import { trackPageView } from './services/trackingService';
 
 import './index.css';
 
-const SitemapRedirect = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    window.location.href = '/sitemap.xml'; // Directly redirect to the sitemap file in the public directory
-  }, [navigate]);
-
-  return null; // Return null because this component doesn't render anything
-};
 
 const PageTracker = () => {
   const location = useLocation();
@@ -73,7 +63,6 @@ const App = (): JSX.Element => {
             <Route path='/news/:postId' element={<Layout><News /></Layout>} />
             <Route path='/terms_of_use' element={<Layout><Terms_of_use /></Layout>} />
             <Route path='/privacy_policy' element={<Layout><Privacy_Policy /></Layout>} />
-            <Route path='/sitemap' element={<Layout><SitemapRedirect /></Layout>} />
           </Routes>
         </BrowserRouter>
       </ThemeProvider>
