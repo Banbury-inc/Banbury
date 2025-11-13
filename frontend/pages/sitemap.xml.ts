@@ -1,5 +1,5 @@
 import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next'
-import { readFileSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 
 function Sitemap() {
@@ -9,7 +9,18 @@ function Sitemap() {
 export async function getServerSideProps(
   context: GetServerSidePropsContext
 ): Promise<GetServerSidePropsResult<Record<string, never>>> {
-  const sitemapPath = join(process.cwd(), 'public', 'sitemap.xml')
+  const sitemapPath = join(process.cwd(), 'content', 'sitemap.xml')
+
+  if (!existsSync(sitemapPath)) {
+    context.res.statusCode = 404
+    context.res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+    context.res.end('Sitemap not found')
+
+    return {
+      props: {},
+    }
+  }
+
   const sitemapContent = readFileSync(sitemapPath, 'utf-8')
 
   context.res.setHeader('Content-Type', 'application/xml; charset=utf-8')
