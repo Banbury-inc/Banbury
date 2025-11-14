@@ -1,14 +1,14 @@
 import { Box } from '@mui/material';
-import DocPageLayout from './DocPageLayout';
-import { Typography } from '../../../components/ui/typography';
-const spreadsheetDemo = require('../../../assets/images/spreadsheet_demo.mp4');
+import DocPageLayout from '../DocPageLayout';
+import { Typography } from '../../../../components/ui/typography';
+const browserAutomationDemo = require('../../../../assets/images/browser-automation-demo.mp4');
 
-export default function SpreadsheetsFeatureTab() {
+export default function BrowseFeatureTab() {
   return (
     <DocPageLayout>
       <Box>
       <Typography variant="h2" className="mb-3">
-        Spreadsheets
+        Browse
       </Typography>
       
       {/* Visibility */}
@@ -17,7 +17,7 @@ export default function SpreadsheetsFeatureTab() {
           • <strong>Visibility:</strong>
         </Typography>
         <Typography variant="muted" className="mb-2 pl-2">
-          • Banbury can read what's inside a spreadsheet and look at every single cell.
+          • Banbury can browse the web to gather and read information.
         </Typography>
       </Box>
 
@@ -28,13 +28,13 @@ export default function SpreadsheetsFeatureTab() {
         </Typography>
         <Box sx={{ pl: 2 }}>
           <Typography variant="muted" className="mb-1">
-            • Create a new spreadsheet.
+            • Create a new browser session.
           </Typography>
           <Typography variant="muted" className="mb-1">
-            • Edit the contents of a spreadsheet.
+            • Read the output of a website.
           </Typography>
-          <Typography variant="muted">
-            • Rename a spreadsheet.
+          <Typography variant="muted" className="mb-1">
+            • Fill out forms on a website.
           </Typography>
         </Box>
       </Box>
@@ -60,7 +60,7 @@ export default function SpreadsheetsFeatureTab() {
           minHeight: '300px'
         }}>
           <video 
-            src={spreadsheetDemo} 
+            src={browserAutomationDemo} 
             controls 
             muted 
             playsInline 

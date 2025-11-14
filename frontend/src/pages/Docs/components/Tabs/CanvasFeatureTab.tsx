@@ -1,14 +1,15 @@
 import { Box } from '@mui/material';
-import DocPageLayout from './DocPageLayout';
-import { Typography } from '../../../components/ui/typography';
-const browserAutomationDemo = require('../../../assets/images/browser-automation-demo.mp4');
+import Image from 'next/image';
+import DocPageLayout from '../DocPageLayout';
+import { Typography } from '../../../../components/ui/typography';
+const canvasDemo = require('../../../../assets/images/canvas.png');
 
-export default function BrowseFeatureTab() {
+export default function CanvasFeatureTab() {
   return (
     <DocPageLayout>
       <Box>
       <Typography variant="h2" className="mb-3">
-        Browse
+        Canvas
       </Typography>
       
       {/* Visibility */}
@@ -17,7 +18,7 @@ export default function BrowseFeatureTab() {
           • <strong>Visibility:</strong>
         </Typography>
         <Typography variant="muted" className="mb-2 pl-2">
-          • Banbury can browse the web to gather and read information.
+          • Banbury can view and understand the contents of a canvas, including all elements, shapes, text, and layouts.
         </Typography>
       </Box>
 
@@ -28,13 +29,16 @@ export default function BrowseFeatureTab() {
         </Typography>
         <Box sx={{ pl: 2 }}>
           <Typography variant="muted" className="mb-1">
-            • Create a new browser session.
+            • Create a new canvas.
           </Typography>
           <Typography variant="muted" className="mb-1">
-            • Read the output of a website.
+            • Add and modify elements on the canvas.
           </Typography>
           <Typography variant="muted" className="mb-1">
-            • Fill out forms on a website.
+            • Arrange and organize canvas elements.
+          </Typography>
+          <Typography variant="muted">
+            • Rename and manage canvas files.
           </Typography>
         </Box>
       </Box>
@@ -59,18 +63,18 @@ export default function BrowseFeatureTab() {
           flex: 1,
           minHeight: '300px'
         }}>
-          <video 
-            src={browserAutomationDemo} 
-            controls 
-            muted 
-            playsInline 
-            style={{ 
-              width: '100%', 
-              height: '100%', 
-              borderRadius: '12px',
-              objectFit: 'cover'
-            }} 
-          />
+        <Image
+          src={canvasDemo}
+          alt="Canvas Demo"
+          style={{
+            width: '100%',
+            height: 'auto',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            backgroundColor: '#0f0f0f'
+          }}
+          priority
+        />
         </Box>
       </Box>
       </Box>

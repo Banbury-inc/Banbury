@@ -1,6 +1,6 @@
 import { Box, Paper } from '@mui/material'
-import DocPageLayout from './DocPageLayout'
-import { Typography } from '../../../components/ui/typography'
+import DocPageLayout from '../DocPageLayout'
+import { Typography } from '../../../../components/ui/typography'
 
 export default function GoogleSheetsTab() {
   return (

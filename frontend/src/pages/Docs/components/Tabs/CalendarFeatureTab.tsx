@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
-import DocPageLayout from './DocPageLayout';
-import { Typography } from '../../../components/ui/typography';
-const calendarDemo = require('../../../assets/images/calendar_demo.mp4');
+import DocPageLayout from '../DocPageLayout';
+import { Typography } from '../../../../components/ui/typography';
+const calendarDemo = require('../../../../assets/images/calendar_demo.mp4');
 
 export default function CalendarFeatureTab() {
   return (

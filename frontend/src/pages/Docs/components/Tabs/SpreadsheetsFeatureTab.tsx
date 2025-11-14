@@ -1,14 +1,14 @@
 import { Box } from '@mui/material';
-import DocPageLayout from './DocPageLayout';
-import { Typography } from '../../../components/ui/typography';
-const browserAutomationDemo = require('../../../assets/images/browser-automation-demo.mp4');
+import DocPageLayout from '../DocPageLayout';
+import { Typography } from '../../../../components/ui/typography';
+const spreadsheetDemo = require('../../../../assets/images/spreadsheet_demo.mp4');
 
-export default function FoldersFeatureTab() {
+export default function SpreadsheetsFeatureTab() {
   return (
     <DocPageLayout>
       <Box>
       <Typography variant="h2" className="mb-3">
-        Folders
+        Spreadsheets
       </Typography>
       
       {/* Visibility */}
@@ -17,7 +17,7 @@ export default function FoldersFeatureTab() {
           • <strong>Visibility:</strong>
         </Typography>
         <Typography variant="muted" className="mb-2 pl-2">
-          • Banbury can read what's inside a folder and help to understand it better.
+          • Banbury can read what's inside a spreadsheet and look at every single cell.
         </Typography>
       </Box>
 
@@ -28,16 +28,13 @@ export default function FoldersFeatureTab() {
         </Typography>
         <Box sx={{ pl: 2 }}>
           <Typography variant="muted" className="mb-1">
-            • Create a new folder.
+            • Create a new spreadsheet.
           </Typography>
           <Typography variant="muted" className="mb-1">
-            • Move things into and out of a folder.
-          </Typography>
-          <Typography variant="muted" className="mb-1">
-            • Perform an in depth analysis of a folder.
+            • Edit the contents of a spreadsheet.
           </Typography>
           <Typography variant="muted">
-            • Rename a folder.
+            • Rename a spreadsheet.
           </Typography>
         </Box>
       </Box>
@@ -63,7 +60,7 @@ export default function FoldersFeatureTab() {
           minHeight: '300px'
         }}>
           <video 
-            src={browserAutomationDemo} 
+            src={spreadsheetDemo} 
             controls 
             muted 
             playsInline 

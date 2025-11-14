@@ -1,8 +1,8 @@
 import { Box } from '@mui/material';
 import Image from 'next/image';
-import DocPageLayout from './DocPageLayout';
-import { Typography } from '../../../components/ui/typography';
-import gmailImage from '../../../assets/images/gmail.png';
+import DocPageLayout from '../DocPageLayout';
+import { Typography } from '../../../../components/ui/typography';
+import gmailImage from '../../../../assets/images/gmail.png';
 
 export default function GmailFeatureTab() {
   return (

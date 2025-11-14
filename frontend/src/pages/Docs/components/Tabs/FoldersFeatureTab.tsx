@@ -1,14 +1,14 @@
 import { Box } from '@mui/material';
-import DocPageLayout from './DocPageLayout';
-import { Typography } from '../../../components/ui/typography';
-const browserAutomationDemo = require('../../../assets/images/browser-automation-demo.mp4');
+import DocPageLayout from '../DocPageLayout';
+import { Typography } from '../../../../components/ui/typography';
+const browserAutomationDemo = require('../../../../assets/images/browser-automation-demo.mp4');
 
-export default function DocsFeatureTab() {
+export default function FoldersFeatureTab() {
   return (
     <DocPageLayout>
       <Box>
       <Typography variant="h2" className="mb-3">
-        Docs
+        Folders
       </Typography>
       
       {/* Visibility */}
@@ -17,7 +17,7 @@ export default function DocsFeatureTab() {
           • <strong>Visibility:</strong>
         </Typography>
         <Typography variant="muted" className="mb-2 pl-2">
-          • Banbury can read what's inside a document and look at every single page.
+          • Banbury can read what's inside a folder and help to understand it better.
         </Typography>
       </Box>
 
@@ -28,13 +28,16 @@ export default function DocsFeatureTab() {
         </Typography>
         <Box sx={{ pl: 2 }}>
           <Typography variant="muted" className="mb-1">
-            • Create a new document.
+            • Create a new folder.
           </Typography>
           <Typography variant="muted" className="mb-1">
-            • Edit the contents of a document.
+            • Move things into and out of a folder.
+          </Typography>
+          <Typography variant="muted" className="mb-1">
+            • Perform an in depth analysis of a folder.
           </Typography>
           <Typography variant="muted">
-            • Rename a document.
+            • Rename a folder.
           </Typography>
         </Box>
       </Box>

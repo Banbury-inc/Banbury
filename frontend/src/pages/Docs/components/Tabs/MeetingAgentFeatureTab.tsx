@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
-import DocPageLayout from './DocPageLayout';
-import { Typography } from '../../../components/ui/typography';
-import meetingsImage from '../../../assets/images/meetings.png';
+import DocPageLayout from '../DocPageLayout';
+import { Typography } from '../../../../components/ui/typography';
+import meetingsImage from '../../../../assets/images/meetings.png';
 
 export default function MeetingAgentFeatureTab() {
   return (
