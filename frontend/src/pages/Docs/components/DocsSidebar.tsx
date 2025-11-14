@@ -121,13 +121,13 @@ const DocsSidebar = ({ activeSection }: DocsSidebarProps): JSX.Element => {
         },
       }}
     >
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 2 }}>
         <Typography
           sx={{
-            fontSize: '1.1rem',
+            fontSize: '1rem',
             fontWeight: 600,
             color: '#ffffff',
-            mb: 3,
+            mb: 1.5,
             fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           }}
         >
@@ -140,13 +140,14 @@ const DocsSidebar = ({ activeSection }: DocsSidebarProps): JSX.Element => {
               <ListItem
                 disablePadding
                 sx={{
-                  mb: 1,
+                  mb: 0.5,
                 }}
               >
                 <ListItemButton
                   onClick={() => toggleSection(section.id)}
                   sx={{
-                    borderRadius: '8px',
+                    borderRadius: '6px',
+                    py: 0.75,
                     '&:hover': {
                       background: 'rgba(255, 255, 255, 0.05)',
                     },
@@ -159,7 +160,7 @@ const DocsSidebar = ({ activeSection }: DocsSidebarProps): JSX.Element => {
                     primary={section.title}
                     primaryTypographyProps={{
                       sx: {
-                        fontSize: '0.85rem',
+                        fontSize: '0.8rem',
                         fontWeight: 500,
                         color: '#ffffff',
                         fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -169,7 +170,7 @@ const DocsSidebar = ({ activeSection }: DocsSidebarProps): JSX.Element => {
                   <Typography
                     sx={{
                       color: '#a1a1aa',
-                      fontSize: '0.8rem',
+                      fontSize: '0.75rem',
                       transform: expandedSections.has(section.id) ? 'rotate(90deg)' : 'rotate(0deg)',
                       transition: 'transform 0.2s ease',
                     }}
@@ -180,14 +181,15 @@ const DocsSidebar = ({ activeSection }: DocsSidebarProps): JSX.Element => {
               </ListItem>
               
               {expandedSections.has(section.id) && (
-                <List sx={{ pl: 2, pb: 1 }}>
+                <List sx={{ pl: 1.5, pb: 0.5 }}>
                   {section.items.map((item) => (
                     <ListItem key={item.id} disablePadding>
                       <ListItemButton
                         onClick={() => handleItemClick(item.id, item.href)}
                         sx={{
-                          borderRadius: '6px',
-                          minHeight: '36px',
+                          borderRadius: '4px',
+                          minHeight: '28px',
+                          py: 0.5,
                           '&:hover': {
                             background: 'rgba(255, 255, 255, 0.03)',
                           },
@@ -201,7 +203,7 @@ const DocsSidebar = ({ activeSection }: DocsSidebarProps): JSX.Element => {
                           primary={item.title}
                           primaryTypographyProps={{
                             sx: {
-                              fontSize: '0.8rem',
+                              fontSize: '0.75rem',
                               color: activeSection === item.id ? '#ffffff' : '#a1a1aa',
                               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                               fontWeight: activeSection === item.id ? 500 : 400,

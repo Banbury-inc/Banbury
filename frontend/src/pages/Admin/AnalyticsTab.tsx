@@ -221,7 +221,7 @@ export function AnalyticsTab({
 }: AnalyticsTabProps) {
   const [visitorIpExclusions, setVisitorIpExclusions] = useState<string[]>([])
   const [visitorIpInput, setVisitorIpInput] = useState<string>('')
-  const [visitorLocationExclusions, setVisitorLocationExclusions] = useState<string[]>([])
+  const [visitorLocationExclusions, setVisitorLocationExclusions] = useState<string[]>(['New York'])
   const [visitorLocationInput, setVisitorLocationInput] = useState<string>('')
   const [visitorLocationFilter, setVisitorLocationFilter] = useState<string>('')
   const [userExclusionInput, setUserExclusionInput] = useState<string>('')
