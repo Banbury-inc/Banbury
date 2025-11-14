@@ -1870,39 +1870,27 @@ const Home = (): JSX.Element => {
               mb: 6,
               px: { xs: 2, md: 0 }
             }}>
-              <Button
-                variant="default"
-                size="lg"
-                onClick={() => window.location.href = '/dashboard'}
-                className="bg-white/10 border-none px-6 md:px-8 py-2.5 md:py-3 text-base md:text-xl font-semibold rounded-2xl transition-all duration-300 ease-in-out min-h-[48px] md:min-h-auto hover:-translate-y-1 hover:shadow-2xl hover:bg-white/15"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: 'none',
-                  color: '#ffffff',
-                  borderRadius: '16px',
-                  transition: 'all 0.3s ease',
-                }}
-              >
-                Get Started for Free
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => handleDownload({ url: downloadUrl })}
-                className="rounded-2xl py-2.5 md:py-3 px-4 md:px-6 text-base md:text-xl font-medium min-h-[48px] md:min-h-auto hover:-translate-y-0.5"
-                style={{
-                  borderRadius: '16px',
-                  fontWeight: 500,
-                  textTransform: 'none',
-                  borderColor: 'rgba(255,255,255,0.2)',
-                  color: '#ffffff',
-                  backdropFilter: 'blur(10px)',
-                  background: 'rgba(255,255,255,0.05)',
-                  transition: 'all 0.3s ease',
-                }}
-              >
-                {downloadText}
-              </Button>
+                  <Button
+                    variant="default"
+                    size="lg"
+                    onClick={() => window.location.href = '/register'}
+                  >
+                    Get Started for Free
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => window.location.href = '/features'}
+                    className="rounded-full px-5 md:px-6"
+                    style={{
+                      borderRadius: 9999,
+                      background: 'transparent',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      color: 'rgba(255,255,255,0.85)'
+                    }}
+                  >
+                    Watch Demo
+                  </Button>
             </Box>
           </Box>
         </Container>
