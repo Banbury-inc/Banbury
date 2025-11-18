@@ -63,7 +63,7 @@ else
   echo "[1/2] Frontend (prod): install deps and build (Next.js)"
 fi
 if [[ "$RUN_FRONTEND" == "true" ]]; then
-  FRONTEND_DIR="$ROOT_DIR/frontend"
+  FRONTEND_DIR="$ROOT_DIR/packages"
   pushd "$FRONTEND_DIR" >/dev/null
 
   ORIGINAL_CONFIG="src/config/config.ts"
@@ -106,7 +106,7 @@ else
   echo "[2/2] Frontend: start Next.js server on :$FRONTEND_PORT"
 fi
 if [[ "$RUN_FRONTEND" == "true" ]]; then
-  pushd "$ROOT_DIR/frontend" >/dev/null
+  pushd "$ROOT_DIR/packages" >/dev/null
   if [[ "$DEV_MODE" == "true" ]]; then
     npm run next:dev -- --port "$FRONTEND_PORT"
   else

@@ -1,0 +1,35 @@
+module.exports = {
+  roots: ['<rootDir>'],
+  moduleDirectories: ['node_modules', '<rootDir>'],
+  preset: 'ts-jest',
+  testEnvironment: 'jest-environment-jsdom',
+  verbose: true,
+  testEnvironmentOptions: {
+    url: 'http://127.0.0.1:8000/',
+  },
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  moduleNameMapper: {
+    // Handle image imports
+    '\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
+      '<rootDir>/tests/mocks/fileMock.ts',
+
+    // Handle CSS imports (without CSS modules)
+    '\\.(css|less)$': '<rootDir>/tests/mocks/fileMock.css',
+
+    // Handle react-leaflet imports
+    'react-leaflet': '<rootDir>/tests/mocks/fileMock.ts',
+  },
+  transform: {
+    '^.+\\.(ts|tsx|js|jsx)$': ['ts-jest', { 
+      isolatedModules: true,
+      tsconfig: {
+        jsx: 'react-jsx',
+        module: 'commonjs',
+        moduleResolution: 'node',
+        target: 'es6',
+        esModuleInterop: true,
+        allowSyntheticDefaultImports: true
+      }
+    }],
+  },
+};
