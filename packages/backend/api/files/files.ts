@@ -269,7 +269,6 @@ export default class Files {
         kind: file instanceof File ? 'file' : 'document'
       };
 
-      // Add file metadata to database
       const metadataResponse = await ApiService.post(`/files/add_file/${username}/`, fileMetadata);
       
       return {

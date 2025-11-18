@@ -18,7 +18,6 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'r
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../components/ui/chart'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
-
 import { NavSidebar } from '../components/nav-sidebar'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
@@ -311,11 +310,8 @@ export default function Admin() {
   // Debug daily_stats changes
   useEffect(() => {
     if (visitorStats?.daily_stats) {
-      console.log('Daily stats updated:', visitorStats.daily_stats)
-      console.log('Today date:', new Date().toISOString().split('T')[0])
       const today = new Date().toISOString().split('T')[0]
       const todayData = visitorStats.daily_stats.find(stat => stat.date === today)
-      console.log('Today data found:', todayData)
     }
   }, [visitorStats?.daily_stats])
 
@@ -326,20 +322,8 @@ export default function Admin() {
       // Load real users data
       const usersResponse = await ApiService.get('/users/list_all_users/') as any
       if (usersResponse.result === 'success') {
-        console.log('Users response:', usersResponse.users)
         // Debug first user's scope data
         if (usersResponse.users && usersResponse.users.length > 0) {
-          console.log('First user scope data:', {
-            username: usersResponse.users[0].username,
-            auth_method: usersResponse.users[0].auth_method,
-            googleScopes: usersResponse.users[0].googleScopes,
-            hasEmailScope: usersResponse.users[0].hasEmailScope,
-            hasProfileScope: usersResponse.users[0].hasProfileScope,
-            hasGmailScope: usersResponse.users[0].hasGmailScope,
-            hasDriveScope: usersResponse.users[0].hasDriveScope,
-            hasCalendarScope: usersResponse.users[0].hasCalendarScope,
-            hasContactsScope: usersResponse.users[0].hasContactsScope
-          })
         }
         setUsers(usersResponse.users || [])
         setSystemStats(prev => ({
@@ -443,7 +427,6 @@ export default function Admin() {
     setVisitorLoading(true)
     try {
       const response = await ApiService.getSiteVisitorInfoEnhanced(100, days) as any
-      console.log('Enhanced visitor data response:', response)
       
       // Enhanced API returns data in a different format
       setVisitorData(response.visitors || [])

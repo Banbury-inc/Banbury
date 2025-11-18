@@ -1,7 +1,6 @@
 import { Calendar, Plus, RefreshCw, Search, Settings, Clock, MapPin, Users } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '../../ui/button'
-import { Input } from '../../ui/old-input'
 import { Typography } from '../../ui/typography'
 import { CalendarEvent, ListEventsResponse } from '../../../../backend/api/calendar/calendar'
 import { CreateEventPopover } from '../../MiddlePanel/CalendarViewer/CreateEventPopover'

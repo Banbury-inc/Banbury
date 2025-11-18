@@ -5,12 +5,10 @@ import {
 } from "lucide-react"
 import { useRouter } from 'next/router'
 import { useState } from 'react'
-
 import { EmailTab } from "./components/EmailTab"
 import { CalendarTab } from "./components/CalendarTab"
 import { FilesTab } from "./components/FilesTab/FilesTab"
 import { FileSystemItem } from "../../utils/fileTreeUtils"
-import InlineFileSearch from "./components/InlineFileSearch"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/old-tabs"
 import { Typography } from "../ui/typography"
 
