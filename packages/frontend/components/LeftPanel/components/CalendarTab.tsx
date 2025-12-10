@@ -217,7 +217,7 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect, onCreateEvent }:
                 <Typography variant="muted">Loading events...</Typography>
               </div>
             ) : (
-              <div className="flex-1 overflow-y-auto" onScroll={onScroll}>
+              <div className="flex-1 overflow-y-auto bg-background" onScroll={onScroll}>
                 {events.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full p-4">
                     <Calendar className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" strokeWidth={1} />

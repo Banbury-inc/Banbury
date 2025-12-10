@@ -4,6 +4,7 @@ import { Button } from '../../components/ui/button'
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '../../components/ui/tooltip'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'
+import { Typography } from '../../components/ui/typography'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/old-tabs'
 import { 
   Video, 
@@ -240,15 +241,7 @@ export default function MeetingAgent() {
       setAgentStatus(statusResult)
       setSessions(sessionsResult.sessions)
       
-      // Debug: Log session data to see participants
-      console.log('Sessions loaded:', sessionsResult.sessions)
       sessionsResult.sessions.forEach((session, index) => {
-        console.log(`Session ${index}:`, {
-          id: session.id,
-          title: session.title,
-          participants: session.participants,
-          participantsLength: session.participants?.length
-        })
 
        ApiService.MeetingAgent.checkAndUploadSessions() 
         
@@ -537,13 +530,12 @@ export default function MeetingAgent() {
     }
   }
 
-
   if (error) {
     return (
-      <div className="flex h-screen bg-black">
+      <div className="flex h-screen bg-background">
         <NavSidebar onLogout={handleLogout} />
         <div className="flex-1 ml-16 flex items-center justify-center">
-          <Card className="bg-zinc-900 border-zinc-700 max-w-md">
+          <Card className="bg-background border-zinc-700 max-w-md rounded-none">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <AlertCircle className="h-5 w-5 text-red-400" />
@@ -551,7 +543,7 @@ export default function MeetingAgent() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-zinc-400 mb-4">{error}</p>
+              <Typography variant="p" className="text-zinc-400 mb-4">{error}</Typography>
               <Button onClick={loadData} variant="outline" className="text-white border-zinc-600">
                 Try Again
               </Button>
@@ -564,7 +556,7 @@ export default function MeetingAgent() {
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen bg-black">
+      <div className="flex h-screen bg-background">
         <NavSidebar onLogout={handleLogout} />
         <div className="flex-1 ml-16 flex flex-col h-screen overflow-hidden">
           {/* Main Content Area */}
@@ -574,7 +566,7 @@ export default function MeetingAgent() {
                 <div className="flex-1 flex flex-col h-full">
                   
                   {/* Recent Sessions Table */}
-                  <Card className="bg-black border-border flex-1 flex flex-col h-full">
+                  <Card className="bg-background flex-1 flex flex-col h-full rounded-none">
                     <CardHeader className="border-b border-border">
                       <div className='flex items-center justify-between'>
                         <div className="flex items-center gap-2">
@@ -666,10 +658,10 @@ export default function MeetingAgent() {
                         <div className="flex-1 flex items-center justify-center">
                           <div className="text-center py-8 px-6">
                             <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                            <h3 className="text-lg font-semibold text-foreground mb-2">No meeting sessions yet</h3>
-                            <p className="text-muted-foreground mb-4">
+                            <Typography variant="h3" className="text-lg font-semibold text-foreground mb-2">No meeting sessions yet</Typography>
+                            <Typography variant="p" className="text-muted-foreground mb-4">
                               Start recording your meetings by joining a video call.
-                            </p>
+                            </Typography>
                             <Button onClick={() => setIsJoinDialogOpen(true)}>
                               <Plus className="h-4 w-4 mr-2" />
                               Join Meeting
@@ -679,7 +671,7 @@ export default function MeetingAgent() {
                       ) : (
                         <div className="flex-1 overflow-y-auto min-h-0">
                           <table className="w-full">
-                            <thead className="sticky top-0 bg-black z-10 border-b border-border">
+                            <thead className="sticky top-0 bg-background z-10 border-b border-border">
                               <tr>
                                 <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm w-12"></th>
                                 <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm w-12">
@@ -690,7 +682,7 @@ export default function MeetingAgent() {
                                     onClick={(e) => {
                                       e.stopPropagation()
                                     }}
-                                    className="rounded border-input bg-black text-primary focus:ring-ring"
+                                    className="rounded border-input bg-background text-primary focus:ring-ring"
                                   />
                                 </th>
                                 <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm">Meeting</th>
@@ -745,13 +737,13 @@ export default function MeetingAgent() {
                                     </td>
                                     <td className="py-3 px-4">
                                       <div className="flex items-center gap-2">
-                                        <p className="font-medium text-foreground">
+                                        <Typography variant="p" className="font-medium text-foreground">
                                           {session.title || 'Untitled Meeting'}
-                                        </p>
+                                        </Typography>
                                         {session.status === 'recording' && (
                                           <div className="flex items-center gap-1 px-2 py-0.5 bg-destructive/10 border border-destructive/20 rounded-full">
                                             <div className="w-1.5 h-1.5 bg-destructive rounded-full animate-pulse"></div>
-                                            <span className="text-xs text-destructive font-medium">REC</span>
+                                            <Typography variant="small" className="text-xs text-destructive font-medium">REC</Typography>
                                           </div>
                                         )}
                                       </div>
@@ -765,9 +757,9 @@ export default function MeetingAgent() {
                                     <td className="py-3 px-4">
                                       <div className="flex items-center gap-1">
                                         <Users className="h-3 w-3 text-muted-foreground" />
-                                        <span className="text-sm text-muted-foreground">
+                                        <Typography variant="small" className="text-sm text-muted-foreground">
                                           {session.participants ? session.participants.length : 0}
-                                        </span>
+                                        </Typography>
                                       </div>
                                     </td>
                                     <td className="py-3 px-4 text-muted-foreground text-sm">
@@ -784,24 +776,24 @@ export default function MeetingAgent() {
                                         <div className="space-y-4">
                                           {/* Meeting Details */}
                                           <div>
-                                            <h4 className="text-foreground font-medium mb-3 flex items-center gap-2">
+                                            <Typography variant="h4" className="text-foreground font-medium mb-3 flex items-center gap-2">
                                               <Users className="h-4 w-4" />
                                               Meeting Details
-                                            </h4>
+                                            </Typography>
                                             <div className="bg-black rounded-lg p-4 border border-border">
                                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                                 <div>
-                                                  <span className="text-muted-foreground font-medium text-xs">Meeting URL</span>
-                                                  <p className="text-foreground break-all font-mono text-xs bg-muted p-2 rounded mt-1">
+                                                  <Typography variant="small" className="text-muted-foreground font-medium text-xs">Meeting URL</Typography>
+                                                  <Typography variant="p" className="text-foreground break-all font-mono text-xs bg-muted p-2 rounded mt-1">
                                                     {session.meetingUrl}
-                                                  </p>
+                                                  </Typography>
                                                 </div>
                                                 <div>
-                                                  <span className="text-muted-foreground font-medium text-xs">Participants</span>
-                                                  <p className="text-foreground font-medium mt-1">
+                                                  <Typography variant="small" className="text-muted-foreground font-medium text-xs">Participants</Typography>
+                                                  <Typography variant="p" className="text-foreground font-medium mt-1">
                                                     {session.participants ? session.participants.length : 0}
                                                     {session.participants && session.participants.length > 0 && (
-                                                      <span className="text-muted-foreground text-xs ml-2">
+                                                      <Typography variant="small" className="text-muted-foreground text-xs ml-2 inline">
                                                         ({session.participants.map(p => {
                                                           // Handle different participant data structures
                                                           if (typeof p === 'string') return p
@@ -810,19 +802,19 @@ export default function MeetingAgent() {
                                                           }
                                                           return 'Unknown'
                                                         }).join(', ')})
-                                                      </span>
+                                                      </Typography>
                                                     )}
-                                                  </p>
+                                                  </Typography>
                                                 </div>
                                                 {session.recallBot && (
                                                   <>
                                                     <div>
-                                                      <span className="text-muted-foreground font-medium text-xs">Bot Status</span>
-                                                      <p className="text-foreground font-medium mt-1 capitalize">{session.recallBot.status}</p>
+                                                      <Typography variant="small" className="text-muted-foreground font-medium text-xs">Bot Status</Typography>
+                                                      <Typography variant="p" className="text-foreground font-medium mt-1 capitalize">{session.recallBot.status}</Typography>
                                                     </div>
                                                     <div>
-                                                      <span className="text-muted-foreground font-medium text-xs">Status</span>
-                                                      <p className="text-foreground font-medium mt-1 capitalize">{session.recallBot.recordingStatus}</p>
+                                                      <Typography variant="small" className="text-muted-foreground font-medium text-xs">Status</Typography>
+                                                      <Typography variant="p" className="text-foreground font-medium mt-1 capitalize">{session.recallBot.recordingStatus}</Typography>
                                                     </div>
                                                   </>
                                                 )}
@@ -837,10 +829,10 @@ export default function MeetingAgent() {
                                               {/* Video Section */}
                                               {(session.recallBot?.videoUrl || session.recordingUrl) && (
                                                 <div>
-                                                  <h4 className="text-foreground font-medium mb-3 flex items-center gap-2">
+                                                  <Typography variant="h4" className="text-foreground font-medium mb-3 flex items-center gap-2">
                                                     <Video className="h-4 w-4" />
                                                     Recording
-                                                  </h4>
+                                                  </Typography>
                                                   <div className="bg-black rounded-lg p-3 h-80 flex items-center justify-center border border-border">
                                                     {(() => {
                                                       const videoUrl = session.recallBot?.videoUrl || session.recordingUrl;
@@ -867,20 +859,20 @@ export default function MeetingAgent() {
                                               {/* Transcript Section */}
                                               {(session.recallBot?.transcriptUrl || session.transcriptionText || transcriptData[session.id]) && (
                                                 <div>
-                                                  <h4 className="text-foreground font-medium mb-3 flex items-center gap-2">
+                                                  <Typography variant="h4" className="text-foreground font-medium mb-3 flex items-center gap-2">
                                                     <FileText className="h-4 w-4" />
                                                     Transcript
-                                                  </h4>
+                                                  </Typography>
                                                   <div className="bg-black rounded-lg p-3 h-80 overflow-y-auto border border-border">
                                                     {transcriptData[session.id]?.isLoading ? (
                                                       <div className="flex items-center justify-center h-full">
                                                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                                                        <span className="ml-3 text-muted-foreground">Loading transcript...</span>
+                                                        <Typography variant="small" className="ml-3 text-muted-foreground">Loading transcript...</Typography>
                                                       </div>
                                                     ) : transcriptData[session.id]?.error ? (
                                                       <div className="text-center py-6">
                                                         <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
-                                                        <p className="text-destructive mb-4">{transcriptData[session.id].error}</p>
+                                                        <Typography variant="p" className="text-destructive mb-4">{transcriptData[session.id].error}</Typography>
                                                         <Button
                                                           variant="outline"
                                                           onClick={() => fetchTranscript(session.id)}
@@ -893,21 +885,21 @@ export default function MeetingAgent() {
                                                         {transcriptData[session.id].segments.map((segment, index) => (
                                                           <div key={segment.id || index} className="bg-muted/50 rounded-lg p-3 border border-border">
                                                             <div className="flex items-center gap-2 mb-2">
-                                                              <span className="text-primary font-medium text-sm">
+                                                              <Typography variant="small" className="text-primary font-medium text-sm">
                                                                 {segment.speakerName || `Speaker ${segment.speakerId}`}
-                                                              </span>
-                                                              <span className="text-muted-foreground text-xs">
+                                                              </Typography>
+                                                              <Typography variant="small" className="text-muted-foreground text-xs">
                                                                 {Math.floor(segment.startTime / 60)}:{(segment.startTime % 60).toString().padStart(2, '0')}
-                                                              </span>
+                                                              </Typography>
                                                               {segment.confidence && (
-                                                                <span className="text-muted-foreground text-xs">
+                                                                <Typography variant="small" className="text-muted-foreground text-xs">
                                                                   ({Math.round(segment.confidence * 100)}%)
-                                                                </span>
+                                                                </Typography>
                                                               )}
                                                             </div>
-                                                            <p className="text-foreground text-sm">
+                                                            <Typography variant="p" className="text-foreground text-sm">
                                                               {segment.text}
-                                                            </p>
+                                                            </Typography>
                                                           </div>
                                                         ))}
                                                       </div>
@@ -920,7 +912,7 @@ export default function MeetingAgent() {
                                                     ) : session.recallBot?.transcriptUrl ? (
                                                       <div className="text-center py-6">
                                                         <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                                                        <p className="text-foreground font-medium mb-2">Transcript available via Recall AI</p>
+                                                        <Typography variant="p" className="text-foreground font-medium mb-2">Transcript available via Recall AI</Typography>
                                                         <Button
                                                           variant="outline"
                                                           onClick={() => window.open(session.recallBot!.transcriptUrl, '_blank')}
@@ -932,7 +924,7 @@ export default function MeetingAgent() {
                                                     ) : (
                                                       <div className="text-center py-6">
                                                         <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                                                        <p className="text-foreground font-medium mb-2">No transcript available</p>
+                                                        <Typography variant="p" className="text-foreground font-medium mb-2">No transcript available</Typography>
                                                         <Button
                                                           variant="outline"
                                                           onClick={() => fetchTranscript(session.id)}
@@ -966,7 +958,7 @@ export default function MeetingAgent() {
               {/* Active Sessions Content */}
               {activeTab === 'active' && (
                 <div className="flex-1 flex flex-col h-full">
-                  <Card className="bg-black border-border flex-1 flex flex-col h-full">
+                  <Card className="bg-background border-zinc-700 flex-1 flex flex-col h-full rounded-none">
                     <CardHeader className="border-b border-border">
                       <div className="flex items-center gap-2">
                         <Activity className="h-5 w-5 text-foreground" />
@@ -978,10 +970,10 @@ export default function MeetingAgent() {
                         <div className="flex-1 flex items-center justify-center">
                           <div className="text-center py-8 px-6">
                             <VideoOff className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                            <h3 className="text-lg font-semibold text-foreground mb-2">No active sessions</h3>
-                            <p className="text-muted-foreground mb-4">
+                            <Typography variant="h3" className="text-lg font-semibold text-foreground mb-2">No active sessions</Typography>
+                            <Typography variant="p" className="text-muted-foreground mb-4">
                               No meetings are currently being recorded or processed.
-                            </p>
+                            </Typography>
                             <Button onClick={() => setIsJoinDialogOpen(true)}>
                               <Plus className="h-4 w-4 mr-2" />
                               Join Meeting
