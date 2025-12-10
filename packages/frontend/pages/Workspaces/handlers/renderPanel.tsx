@@ -3,6 +3,7 @@ import Image from 'next/image';
 import OlympusTabs, { Tab as OlympusTab } from '../../../components/common/Tabs/Tabs';
 import { DocumentViewer } from '../../../components/MiddlePanel/DocumentViewer/DocumentViewer';
 import { EmailComposer } from '../../../components/MiddlePanel/EmailViewer/EmailComposer';
+import { Typography } from '../../../components/ui/typography';
 import { EmailViewer } from '../../../components/MiddlePanel/EmailViewer/EmailViewer';
 import { ImageViewer } from '../../../components/MiddlePanel/ImageViewer';
 import { CalendarViewer } from '../../../components/MiddlePanel/CalendarViewer/CalendarViewer';
