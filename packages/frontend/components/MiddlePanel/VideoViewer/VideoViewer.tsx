@@ -49,7 +49,7 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
           const url = window.URL.createObjectURL(blob);
           return { success: true, url };
         })
-      : ApiService.downloadS3File(file.file_id || '', file.name);
+      : ApiService.downloadFromS3(file.file_id || '', file.name);
 
     fetchPromise
       .then(result => {
@@ -91,7 +91,7 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
           setVideoUrl(url);
         } else {
           // Handle local/S3 video
-          const result = await ApiService.downloadS3File(file.file_id || '', file.name);
+          const result = await ApiService.downloadFromS3(file.file_id || '', file.name);
           console.log('Video download result:', result);
           
           if (result.success && result.url) {
@@ -132,7 +132,7 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
     }
 
     // Fallback: fetch the URL
-    ApiService.downloadS3File(file.file_id || '', file.name)
+    ApiService.downloadFromS3(file.file_id || '', file.name)
       .then(result => {
         if (result.success && result.url) {
           const a = document.createElement('a');

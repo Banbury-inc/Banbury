@@ -51,7 +51,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
           setPdfUrl(url);
         } else {
           // Handle local/S3 file
-          const result = await ApiService.downloadS3File(file.file_id, file.name);
+          const result = await ApiService.downloadFromS3(file.file_id, file.name);
           if (result.success && result.url) {
             currentUrl = result.url;
             setPdfUrl(result.url);
@@ -87,7 +87,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
         const blob = await ApiService.Drive.getFileBlob(file.file_id);
         url = window.URL.createObjectURL(blob);
       } else {
-        const result = await ApiService.downloadS3File(file.file_id, file.name);
+        const result = await ApiService.downloadFromS3(file.file_id, file.name);
         if (!result.success || !result.url) return;
         url = result.url;
       }

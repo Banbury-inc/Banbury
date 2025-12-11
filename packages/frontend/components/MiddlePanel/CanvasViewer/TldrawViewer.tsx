@@ -257,7 +257,7 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
     } else if (fileId) {
       // Fetch file through API if we have fileId
       try {
-        const result = await ApiService.downloadS3File(fileId, fileName);
+        const result = await ApiService.downloadFromS3(fileId, fileName);
         if (result.success && result.url) {
           const link = document.createElement('a');
           link.href = result.url;
@@ -286,7 +286,7 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
     try {
       setIsLoading(true)
       setError(null)
-      const result = await ApiService.downloadS3File(fileId, fileName)
+      const result = await ApiService.downloadFromS3(fileId, fileName)
       const blob = (result as any)?.blob as Blob | undefined
       if (blob) {
         const text = await blob.text()
@@ -326,7 +326,7 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
 
       try {
         // Download the file content using ApiService
-        const result = await ApiService.downloadS3File(fileId, fileName);
+        const result = await ApiService.downloadFromS3(fileId, fileName);
         if (result?.success) {
           const blob = (result as any).blob as Blob | undefined
           if (blob) {
