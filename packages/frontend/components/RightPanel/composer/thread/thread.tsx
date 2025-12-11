@@ -864,7 +864,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         .filter((f) => f.file_id && (isSpreadsheet(f.name) || isTldrawCanvas(f.name)) && !attachmentPayloads[f.file_id])
         .map(async (f) => {
           try {
-            const res = await ApiService.downloadS3File(f.file_id!, f.name);
+            const res = await ApiService.downloadFromS3(f.file_id!, f.name);
             if (res?.success && res.blob) {
               // Skip embedding if blob exceeds ~600KB to keep request under server limit after base64 overhead
               const approxSize = res.blob.size;
@@ -1014,7 +1014,7 @@ const ThreadWelcome: FC = () => {
               exit={{ opacity: 0, y: 10 }}
               transition={{ delay: 0.5 }}
             >
-              <Typography variant="h2">Hello there!</Typography>
+              <Typography variant="h2" className="text-center">Hello there!</Typography>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -1022,7 +1022,7 @@ const ThreadWelcome: FC = () => {
               exit={{ opacity: 0, y: 10 }}
               transition={{ delay: 0.6 }}
             >
-              <Typography variant="p">How can I help you today?</Typography>
+              <Typography variant="p" className="text-center">How can I help you today?</Typography>
             </motion.div>
           </div>
         </div>

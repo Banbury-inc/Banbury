@@ -1,5 +1,5 @@
 import { Allotment } from 'allotment';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { ClaudeRuntimeProvider } from '../../assistant/ClaudeRuntimeProvider/ClaudeRuntimeProvider';
 import { LeftPanel } from "../../components/LeftPanel/LeftPanel";
@@ -106,6 +106,8 @@ const Workspaces = (): React.ReactNode => {
     dropZone: null,
     dropTargetPanel: null,
   });
+  const dragStateRef = useRef(dragState);
+  dragStateRef.current = dragState;
 
 
 
@@ -175,6 +177,21 @@ const Workspaces = (): React.ReactNode => {
     await deleteConversation(conversationId, loadConversationsCallback);
   };
 
+  const openFileInTabCallback = useCallback((file: FileSystemItem, targetPanelId: string = activePanelId) => {
+    openFileInTab(
+      file,
+      targetPanelId,
+      activePanelId,
+      panelLayout,
+      getAllTabs,
+      updatePanelActiveTab,
+      addTabToPanel,
+      setActivePanelId,
+      setPanelLayout,
+      setSelectedFile
+    );
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout, setSelectedFile]);
+
   const handleFileSelect = useCallback((file: FileSystemItem) => {
     // Check if it's a Drive file
     const isDriveFile = file.path?.startsWith('drive://')
@@ -209,22 +226,7 @@ const Workspaces = (): React.ReactNode => {
     }
     
     openFileInTabCallback(file, activePanelId);
-  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout, setSelectedFile]);
-  
-  const openFileInTabCallback = useCallback((file: FileSystemItem, targetPanelId: string = activePanelId) => {
-    openFileInTab(
-      file,
-      targetPanelId,
-      activePanelId,
-      panelLayout,
-      getAllTabs,
-      updatePanelActiveTab,
-      addTabToPanel,
-      setActivePanelId,
-      setPanelLayout,
-      setSelectedFile
-    );
-  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout, setSelectedFile]);
+  }, [activePanelId, openFileInTabCallback, isViewableFile, setSelectedFile]);
 
   const openEmailInTabCallback = useCallback((email: any, targetPanelId: string = activePanelId) => {
     openEmailInTab(
@@ -339,7 +341,7 @@ const Workspaces = (): React.ReactNode => {
         }));
       }
     });
-  }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmail, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, isDrawioFile, isTldrawFile, setPanelLayout]);
+  }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmailCallback, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, isDrawioFile, isTldrawFile, setPanelLayout, setDragState]);
   
   // Render panel group (recursive for nested splits)
   const renderPanelGroup = useCallback((group: PanelGroup): React.ReactNode => {
@@ -376,7 +378,7 @@ const Workspaces = (): React.ReactNode => {
         />
       </div>
     );
-  }, [renderPanel]);
+  }, [renderPanelWrapper]);
 
   const handleCreateWordDocumentWrapper = async (documentName: string) => {
     await handleCreateWordDocument(userInfo, setUploading, toast, triggerSidebarRefresh, documentName);
@@ -575,7 +577,7 @@ const Workspaces = (): React.ReactNode => {
     };
     window.addEventListener('workspace-reopen-file', handler as EventListener);
     return () => window.removeEventListener('workspace-reopen-file', handler as EventListener);
-  }, [panelLayout, activePanelId, openFileInTabCallback, handleCloseTabCallback]);
+  }, [panelLayout, activePanelId, openFileInTabCallback, handleCloseTabCallback, getAllTabs]);
 
   // Listen for assistant-open-browser events to open a virtual browser tab
   useEffect(() => {
@@ -701,7 +703,7 @@ const Workspaces = (): React.ReactNode => {
 
         // Fallback: compute panel and edge from mouse position when not detected (e.g., dropping over tab header)
         if (!target || !edge || !targetPanelId) {
-          const pos = dragState.currentPosition;
+          const pos = dragStateRef.current.currentPosition;
           if (!pos) {
             // As a last resort, try to use the last mouse move event position via document.elementFromPoint with event-less estimation
             // If not available, abort
@@ -777,7 +779,7 @@ const Workspaces = (): React.ReactNode => {
         });
       },
     });
-      }, [panelLayout, getAllTabs, removeTabFromPanel, splitPanelCallback, dragState, setDragState]);
+      }, [panelLayout, getAllTabs, removeTabFromPanel, splitPanelCallback]);
 
   const handleLogout = () => {
     // Clear all authentication data using ApiService
@@ -876,21 +878,23 @@ const Workspaces = (): React.ReactNode => {
                   </Allotment.Pane>
                 )}
                 
-                {/* Main Content Panel */}
-                <Allotment.Pane minSize={400}>
-                  <MiddlePanel
-                    isFileSidebarCollapsed={isFileSidebarCollapsed}
-                    isAssistantPanelCollapsed={isAssistantPanelCollapsed}
-                    panelLayout={panelLayout}
-                    onToggleFileSidebar={() => setIsFileSidebarCollapsed(false)}
-                    onToggleAssistantPanel={() => setIsAssistantPanelCollapsed(false)}
-                    renderPanelGroup={renderPanelGroup}
-                  />
-                </Allotment.Pane>
+                {/* Main Content Panel - Only show when files are open */}
+                {getAllTabs(panelLayout).length > 0 && (
+                  <Allotment.Pane minSize={400}>
+                    <MiddlePanel
+                      isFileSidebarCollapsed={isFileSidebarCollapsed}
+                      isAssistantPanelCollapsed={isAssistantPanelCollapsed}
+                      panelLayout={panelLayout}
+                      onToggleFileSidebar={() => setIsFileSidebarCollapsed(false)}
+                      onToggleAssistantPanel={() => setIsAssistantPanelCollapsed(false)}
+                      renderPanelGroup={renderPanelGroup}
+                    />
+                  </Allotment.Pane>
+                )}
                 
                 {/* Assistant Panel */}
                 {!isAssistantPanelCollapsed && (
-                  <Allotment.Pane minSize={280} preferredSize={380} maxSize={500}>
+                  <Allotment.Pane minSize={280}>
                     <RightPanel
                       userInfo={userInfo}
                       selectedFile={selectedFile}
@@ -1003,7 +1007,7 @@ const Workspaces = (): React.ReactNode => {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => loadConversationCallback(conversation._id,)}
+                          onClick={() => loadConversationCallback(conversation._id)}
                           className="p-2 text-blue-400 hover:text-blue-300"
                           title="Load conversation"
                         >
