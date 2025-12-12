@@ -68,9 +68,6 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
         recursionLimit: langGraphConfig.recursionLimit, // Add recursion limit
       };
       
-      console.log('[ClaudeRuntimeProvider] Sending request to:', apiEndpoint);
-      console.log('[ClaudeRuntimeProvider] Request body:', JSON.stringify(requestBody).substring(0, 200));
-      
       const res = await fetch(apiEndpoint, {
         method: "POST",
         headers: { 
@@ -80,10 +77,6 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
         body: JSON.stringify(requestBody),
         signal: options.abortSignal,
       });
-
-      console.log('[ClaudeRuntimeProvider] Response status:', res.status);
-      console.log('[ClaudeRuntimeProvider] Response headers:', res.headers);
-      console.log('[ClaudeRuntimeProvider] Response content-type:', res.headers.get('content-type'));
 
       // Check if the response is not ok (e.g., 400, 500 errors)
       if (!res.ok) {
@@ -100,7 +93,6 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
         return;
       }
 
-      console.log('[ClaudeRuntimeProvider] Starting stream processing...');
       yield* processStreamEvents({
         reader,
         contentParts,

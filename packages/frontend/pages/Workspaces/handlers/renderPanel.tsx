@@ -22,6 +22,7 @@ import DrawioViewer from '../../../components/MiddlePanel/CanvasViewer/DrawioVie
 import TldrawViewer from '../../../components/MiddlePanel/CanvasViewer/TldrawViewer';
 import { GoogleDriveViewer } from '../../../components/MiddlePanel/GoogleDriveViewer';
 import BanburyLogo from '../../../assets/images/Logo.png';
+import { Kbd, KbdGroup } from '../../../components/ui/kbd';
 
 interface UserInfo {
   username: string;
@@ -121,6 +122,7 @@ export const renderPanel = ({
   isDrawioFile,
   isTldrawFile,
   setPanelLayout,
+  isMac = false,
   onSplitPreview
 }: RenderPanelProps) => {
   const isActive = panel.id === activePanelId;
@@ -427,15 +429,33 @@ export const renderPanel = ({
             })}
           </>
         ) : (
-          <div className="h-full flex items-center justify-center">
+          <div className="h-full flex flex-col items-center justify-center">
             <Image 
               src={BanburyLogo} 
               alt="Banbury" 
-              className="opacity-20 dark:opacity-15"
+              className="opacity-20 dark:opacity-15 mb-4"
               width={80}
               height={80}
               priority
             />
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm" style={{ color: '#9ca3af' }}>New Agent:</span>
+                <KbdGroup>
+                  <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+                  <span style={{ color: '#9ca3af' }}>+</span>
+                  <Kbd>N</Kbd>
+                </KbdGroup>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm" style={{ color: '#9ca3af' }}>Search files:</span>
+                <KbdGroup>
+                  <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+                  <span style={{ color: '#9ca3af' }}>+</span>
+                  <Kbd>P</Kbd>
+                </KbdGroup>
+              </div>
+            </div>
           </div>
         )}
       </div>

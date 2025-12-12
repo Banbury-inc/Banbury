@@ -86,14 +86,14 @@ function createChatModel(provider: ModelProvider, modelId?: string) {
   if (provider === "openai") {
     return new ChatOpenAI({
       model: actualModelId,
-      apiKey: process.env.OPENAI_API_KEY || "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",
+      apiKey: process.env.OPENAI_API_KEY,
       temperature: 0.2,
     })
   }
 
   return new ChatAnthropic({
     model: actualModelId,
-    apiKey: process.env.ANTHROPIC_API_KEY || "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",
+    apiKey: process.env.ANTHROPIC_API_KEY,
     temperature: 0.2,
   })
 }

@@ -39,6 +39,9 @@ import { loadConversations, saveCurrentConversation, loadConversation, deleteCon
 import { findPanel, getAllTabs, updatePanelActiveTab, addTabToPanel, removeTabFromPanel } from './handlers/panelUtils';
 import { openFileInTab, openEmailInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
 import { isDrawioFile, isTldrawFile } from './handlers/fileTypeUtils';
+import { createKeyboardShortcutHandler } from './handlers/handleKeyboardShortcuts';
+import { Kbd, KbdGroup } from '../../components/ui/kbd';
+import { FileSearchCommand } from '../../components/FileSearchCommand';
 import {
   UserInfo,
   FileTab,
@@ -70,6 +73,8 @@ const Workspaces = (): React.ReactNode => {
   const [activePanelId, setActivePanelId] = useState<string>('main-panel');
   const [isFileSidebarCollapsed, setIsFileSidebarCollapsed] = useState(false);
   const [isAssistantPanelCollapsed, setIsAssistantPanelCollapsed] = useState(false);
+  const [isMac, setIsMac] = useState(false);
+  const [fileSearchOpen, setFileSearchOpen] = useState(false);
   const [panelLayout, setPanelLayout] = useState<PanelGroup>({
     id: 'root',
     type: 'panel',
@@ -367,7 +372,7 @@ const Workspaces = (): React.ReactNode => {
     }
     
     return (
-      <div className="h-full flex items-center justify-center">
+      <div className="h-full flex flex-col items-center justify-center gap-4">
         <Image 
           src={BanburyLogo} 
           alt="Banbury" 
@@ -376,9 +381,46 @@ const Workspaces = (): React.ReactNode => {
           height={80}
           priority
         />
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-sm text-muted-foreground">Create a new agent</p>
+            <KbdGroup>
+              <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+              <span className="text-muted-foreground">+</span>
+              <Kbd>N</Kbd>
+            </KbdGroup>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-sm text-muted-foreground">Search files</p>
+            <KbdGroup>
+              <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+              <span className="text-muted-foreground">+</span>
+              <Kbd>P</Kbd>
+            </KbdGroup>
+          </div>
+        </div>
       </div>
     );
-  }, [renderPanelWrapper]);
+  }, [renderPanelWrapper, isMac]);
+
+  // Detect Mac platform for keyboard shortcut display
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0)
+    }
+  }, []);
+
+  // Register global keyboard shortcuts - use capture phase to ensure they work universally
+  useEffect(() => {
+    const keyboardHandler = createKeyboardShortcutHandler(() => {
+      setFileSearchOpen(true)
+    })
+    // Use capture phase to ensure shortcuts work before other handlers
+    window.addEventListener('keydown', keyboardHandler, true)
+    return () => {
+      window.removeEventListener('keydown', keyboardHandler, true)
+    }
+  }, []);
 
   const handleCreateWordDocumentWrapper = async (documentName: string) => {
     await handleCreateWordDocument(userInfo, setUploading, toast, triggerSidebarRefresh, documentName);
@@ -1083,6 +1125,11 @@ const Workspaces = (): React.ReactNode => {
 
         </ClaudeRuntimeProvider>
       </TiptapAIProvider>
+      <FileSearchCommand 
+        open={fileSearchOpen}
+        onOpenChange={setFileSearchOpen}
+        onFileSelect={handleFileSelect}
+      />
       <Toaster />
     </TooltipProvider>
   );

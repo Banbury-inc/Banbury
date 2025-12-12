@@ -6,7 +6,7 @@ import { getServerContextValue } from "../../../../../../frontend/assistant/lang
 // Image generation tool using OpenAI Images API, then upload to S3 via Banbury API
 export const generateImageTool = tool(
   async (input: { prompt: string; size?: '256x256' | '512x512' | '1024x1024'; folder?: string; fileBaseName?: string }) => {
-    const openaiKey = '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'
+    const openaiKey = process.env.OPENAI_API_KEY
     if (!openaiKey) {
       return JSON.stringify({ ok: false, error: 'OPENAI_API_KEY not configured' })
     }

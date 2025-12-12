@@ -96,7 +96,7 @@ const webSearch: any = tool(
 
 const anthropicModel = new ChatAnthropic({
   model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514",
-  apiKey: "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",
+  apiKey: process.env.ANTHROPIC_API_KEY,
   temperature: 0.2,
 });
 

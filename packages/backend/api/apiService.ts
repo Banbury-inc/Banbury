@@ -668,6 +668,13 @@ export class ApiService {
     return Files.downloadS3File(fileId, fileName)
   }
 
+  /**
+   * Alias for searching S3 files. Prefer this in callers.
+   */
+  static async searchS3Files(query: string) {
+    return Files.searchS3Files(query)
+  }
+
 
 
 

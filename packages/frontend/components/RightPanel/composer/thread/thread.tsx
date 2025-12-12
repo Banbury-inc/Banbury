@@ -10,6 +10,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import Image from "next/image";
+import BanburyLogo from "../../../../assets/images/Logo.png";
 
 import { DocumentAITool } from "../components/DocumentAITool";
 import { DocxAITool } from "../components/DocxAITool";
@@ -22,6 +24,7 @@ import { TiptapAITool } from "../components/TiptapAITool";
 import { ToolFallback } from "../components/tool-fallback";
 import { TooltipIconButton } from "../../tooltip-icon-button";
 import { Button } from "../../../ui/button";
+import { Kbd, KbdGroup } from "../../../ui/kbd";
 import { WebSearchTool } from "../components/web-search-result";
 import { handleDocxAIResponse } from "../../handlers/handle-docx-ai-response";
 import { handleTldrawAIResponse } from "../../handlers/handle-tldraw-ai-response";
@@ -39,7 +42,6 @@ import { BranchPicker } from "./components/BranchPicker";
 import { getDefaultModelForProvider, getModelById } from "../handlers/getModelDisplayName";
 
 import type { FC } from "react";
-import { Typography } from "../../../ui/typography";
 
 
 // Destructure Assistant UI primitives from namespace import to avoid named import type issues
@@ -1002,29 +1004,52 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
 const ThreadWelcome: FC = () => {
   // Always show LangGraph mode as active
   const toolPreferences = { langgraph_mode: true };
+  const [isMac, setIsMac] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0)
+    }
+  }, []);
 
   return (
     <ThreadPrimitive.Empty>
       <div className="mx-auto flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col px-[var(--thread-padding-x)]">
-        <div className="flex w-full flex-grow flex-col items-center justify-center">
-          <div className="flex size-full flex-col justify-center px-8 md:mt-20">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ delay: 0.5 }}
-            >
-              <Typography variant="h2" className="text-center">Hello there!</Typography>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ delay: 0.6 }}
-            >
-              <Typography variant="p" className="text-center">How can I help you today?</Typography>
-            </motion.div>
-          </div>
+        <div className="flex w-full flex-grow flex-col items-center justify-center gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ delay: 0.5 }}
+            className="flex flex-col items-center gap-6"
+          >
+            <Image 
+              src={BanburyLogo} 
+              alt="Banbury" 
+              className="opacity-20 dark:opacity-15"
+              width={160}
+              height={160}
+              priority
+            />
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">New Agent:</span>
+                <KbdGroup>
+                  <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+                  <span className="text-muted-foreground">+</span>
+                  <Kbd>N</Kbd>
+                </KbdGroup>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">Search files:</span>
+                <KbdGroup>
+                  <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+                  <span className="text-muted-foreground">+</span>
+                  <Kbd>P</Kbd>
+                </KbdGroup>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </ThreadPrimitive.Empty>
