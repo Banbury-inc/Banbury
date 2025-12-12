@@ -11,6 +11,7 @@ import { webSearchTool } from "./tools/webSearchTool";
 import { sheetAiTool } from "./tools/sheetAiTool";
 import { docxAiTool } from "./tools/docxAiTool";
 import { tldrawAiTool } from "./tools/tldrawAiTool";
+import { pptxAiTool } from "./tools/pptxAiTool";
 import { generateImageTool } from "./tools/generateImageTool";
 import { createMemoryTool } from "./tools/createMemoryTool";
 import { searchMemoryTool } from "./tools/searchMemoryTool";
@@ -145,6 +146,7 @@ const tools = [
   sheetAiTool,
   docxAiTool,
   tldrawAiTool,
+  pptxAiTool,
   generateImageTool,
   createMemoryTool,
   searchMemoryTool,
@@ -218,11 +220,12 @@ async function agentNode(state: AgentState): Promise<AgentState> {
               const fileName = file.fileName || 'Unknown file'
               const fileType = fileName.toLowerCase().endsWith('.docx') ? 'DOCX document' :
                               fileName.toLowerCase().endsWith('.xlsx') ? 'Excel spreadsheet' :
+                              fileName.toLowerCase().endsWith('.pptx') ? 'PowerPoint presentation' :
                               fileName.toLowerCase().endsWith('.tldraw') ? 'Tldraw canvas' :
                               'file'
               return `- ${fileName} (${fileType})`
             }).join('\n') +
-            "\n\nIMPORTANT: When using docx_ai, sheet_ai, or tldraw_ai tools, you MUST include the actual file name in the documentName/sheetName/canvasName parameter. For example, if the user has attached 'Report.docx', use documentName: 'Report.docx' in your tool call."
+            "\n\nIMPORTANT: When using docx_ai, sheet_ai, pptx_ai, or tldraw_ai tools, you MUST include the actual file name in the documentName/sheetName/presentationName/canvasName parameter. For example, if the user has attached 'Report.docx', use documentName: 'Report.docx' in your tool call. For presentations, use presentationName with the .pptx file name."
         }
       }
       

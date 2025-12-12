@@ -2,6 +2,7 @@ import React from 'react';
 import { ToolCallCard } from './composer/components/ToolCallCard';
 import { SheetAITool } from './composer/components/SheetAITool';
 import { DocxAITool } from './composer/components/DocxAITool';
+import { PptxAITool } from './composer/components/PptxAITool';
 import { WebSearchTool } from './composer/components/web-search-result';
 import { TiptapAITool } from './composer/components/TiptapAITool';
 import { DocumentAITool } from './composer/components/DocumentAITool';
@@ -26,6 +27,9 @@ export const ToolUI: React.FC<ToolUIProps> = ({ toolName, args, result }) => {
     
     case 'tldraw_ai':
       return <TldrawAITool args={args} />;
+    
+    case 'pptx_ai':
+      return <PptxAITool args={args} />;
     
     case 'web_search':
       return <WebSearchTool args={args} result={result} />;
@@ -162,6 +166,7 @@ function getToolLabel(toolName: string): string {
   const labels: Record<string, string> = {
     'sheet_ai': 'AI Spreadsheet',
     'docx_ai': 'AI Document',
+    'pptx_ai': 'AI Presentation',
     'tldraw_ai': 'AI Canvas',
     'web_search': 'Web Search',
     'tiptap_ai': 'AI Text Editor',

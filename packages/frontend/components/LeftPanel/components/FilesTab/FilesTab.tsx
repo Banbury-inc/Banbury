@@ -7,6 +7,7 @@ import {
   Plus,
   Network,
   Folder,
+  Presentation,
 } from "lucide-react"
 import { useState, useRef, useCallback } from 'react'
 import { LocalFilesView } from "./components/LocalFilesView"
@@ -39,6 +40,7 @@ interface FilesTabProps {
   onCreateNotebook?: (notebookName: string) => void
   onCreateDrawio?: (diagramName: string) => void
   onCreateTldraw?: (drawingName: string) => void
+  onCreatePowerpoint?: (presentationName: string) => void
   onCreateFolder?: () => void
 }
 
@@ -59,6 +61,7 @@ export function FilesTab({
   onCreateSpreadsheet,
   onCreateDrawio,
   onCreateTldraw,
+  onCreatePowerpoint,
   onCreateFolder,
 }: FilesTabProps) {
   const [fileViewMode, setFileViewMode] = useState<'local' | 'drive'>('local')
@@ -107,6 +110,12 @@ export function FilesTab({
   const handleCreateTldraw = () => {
     if ((window as any).__handleCreateTldraw) {
       (window as any).__handleCreateTldraw()
+    }
+  }
+
+  const handleCreatePowerpoint = () => {
+    if ((window as any).__handleCreatePowerpoint) {
+      (window as any).__handleCreatePowerpoint()
     }
   }
 
@@ -171,6 +180,9 @@ export function FilesTab({
                     case 'canvas':
                       handleCreateTldraw()
                       break
+                    case 'presentation':
+                      handleCreatePowerpoint()
+                      break
                     case 'folder':
                       onCreateFolder?.()
                       break
@@ -211,6 +223,12 @@ export function FilesTab({
                       Canvas
                     </div>
                   </SelectItem>
+                  <SelectItem value="presentation">
+                    <div className="flex items-center">
+                      <Presentation size={16} strokeWidth={1} className="mr-2" />
+                      Presentation
+                    </div>
+                  </SelectItem>
                   <SelectItem value="folder">
                     <div className="flex items-center">
                       <Folder size={16} strokeWidth={1} className="mr-2" />
@@ -244,6 +262,7 @@ export function FilesTab({
             onCreateSpreadsheet={onCreateSpreadsheet}
             onCreateDrawio={onCreateDrawio}
             onCreateTldraw={onCreateTldraw}
+            onCreatePowerpoint={onCreatePowerpoint}
             fileInputRef={fileInputRef}
             folderInputRef={folderInputRef}
           />

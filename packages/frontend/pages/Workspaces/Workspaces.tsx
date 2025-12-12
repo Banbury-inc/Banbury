@@ -25,6 +25,7 @@ import { handleCreateWordDocument } from './handlers/handleCreateWordDocument';
 import { handleCreateNotebook } from './handlers/handleCreateNotebook';
 import { handleCreateDrawio } from './handlers/handleCreateDrawio';
 import { handleCreateTldraw } from './handlers/handleCreateTldraw';
+import { handleCreatePowerpoint } from './handlers/handleCreatePowerpoint';
 import { handleCreateImage } from './handlers/handleCreateImage';
 import { renderPanel } from './handlers/renderPanel';
 import { handleFileMoved } from './handlers/handleFileMoved';
@@ -38,7 +39,7 @@ import { handleComposeEmail } from './handlers/handleComposeEmail';
 import { loadConversations, saveCurrentConversation, loadConversation, deleteConversation } from './handlers/conversationManagement';
 import { findPanel, getAllTabs, updatePanelActiveTab, addTabToPanel, removeTabFromPanel } from './handlers/panelUtils';
 import { openFileInTab, openEmailInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
-import { isDrawioFile, isTldrawFile } from './handlers/fileTypeUtils';
+import { isDrawioFile, isTldrawFile, isPowerPointFile } from './handlers/fileTypeUtils';
 import { createKeyboardShortcutHandler } from './handlers/handleKeyboardShortcuts';
 import { Kbd, KbdGroup } from '../../components/ui/kbd';
 import { FileSearchCommand } from '../../components/FileSearchCommand';
@@ -163,7 +164,7 @@ const Workspaces = (): React.ReactNode => {
   };
 
   const isViewableFile = (fileName: string): boolean => {
-    return isBrowserFile(fileName) || isImageFile(fileName) || isPdfFile(fileName) || isDocumentFile(fileName) || isSpreadsheetFile(fileName) || isVideoFile(fileName) || isCodeFile(fileName) || isDrawioFile(fileName) || isTldrawFile(fileName)
+    return isBrowserFile(fileName) || isImageFile(fileName) || isPdfFile(fileName) || isDocumentFile(fileName) || isSpreadsheetFile(fileName) || isVideoFile(fileName) || isCodeFile(fileName) || isDrawioFile(fileName) || isTldrawFile(fileName) || isPowerPointFile(fileName)
   };
 
   const loadConversationsCallback = async () => {
@@ -208,7 +209,7 @@ const Workspaces = (): React.ReactNode => {
       if (file.mimeType?.includes('vnd.google-apps')) {
         viewable = true
       } else {
-        // Check other Drive file types (images, PDFs, videos, documents, spreadsheets, etc)
+        // Check other Drive file types (images, PDFs, videos, documents, spreadsheets, presentations, etc)
         viewable = !!(file.mimeType && (
           file.mimeType.includes('image/') ||
           file.mimeType.includes('pdf') ||
@@ -218,7 +219,9 @@ const Workspaces = (): React.ReactNode => {
           file.mimeType.includes('wordprocessingml') ||
           file.mimeType.includes('excel') ||
           file.mimeType.includes('spreadsheetml') ||
-          file.mimeType.includes('csv')
+          file.mimeType.includes('csv') ||
+          file.mimeType.includes('presentationml') ||
+          file.mimeType.includes('ms-powerpoint')
         ))
       }
     } else {
@@ -336,6 +339,7 @@ const Workspaces = (): React.ReactNode => {
       isBrowserFile,
       isDrawioFile,
       isTldrawFile,
+      isPowerPointFile,
       setPanelLayout,
       onSplitPreview: (direction, position) => {
         // Update drag state with split preview information
@@ -346,7 +350,7 @@ const Workspaces = (): React.ReactNode => {
         }));
       }
     });
-  }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmailCallback, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, isDrawioFile, isTldrawFile, setPanelLayout, setDragState]);
+  }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmailCallback, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, isDrawioFile, isTldrawFile, isPowerPointFile, setPanelLayout, setDragState]);
   
   // Render panel group (recursive for nested splits)
   const renderPanelGroup = useCallback((group: PanelGroup): React.ReactNode => {
@@ -440,6 +444,10 @@ const Workspaces = (): React.ReactNode => {
 
   const handleCreateTldrawWrapper = async (canvasName: string) => {
     await handleCreateTldraw(userInfo, setUploading, toast, triggerSidebarRefresh, canvasName);
+  };
+
+  const handleCreatePowerpointWrapper = async (presentationName: string) => {
+    await handleCreatePowerpoint(userInfo, setUploading, toast, triggerSidebarRefresh, presentationName);
   };
 
   const handleGenerateImage = async () => {
@@ -911,6 +919,7 @@ const Workspaces = (): React.ReactNode => {
                           onCreateNotebook={handleCreateNotebookWrapper}
                           onCreateDrawio={handleCreateDrawioWrapper}
                           onCreateTldraw={handleCreateTldrawWrapper}
+                          onCreatePowerpoint={handleCreatePowerpointWrapper}
                           onGenerateImage={handleGenerateImage}
                           onCreateFolder={handleCreateFolder}
                           onOpenCalendar={() => openCalendarInTabCallback(activePanelId)}

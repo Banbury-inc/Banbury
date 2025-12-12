@@ -17,9 +17,10 @@ import NotebookLabViewer from '../../../components/MiddlePanel/NotebookViewer/No
 import { CONFIG } from '../../../config/config';
 import { PDFViewer } from '../../../components/MiddlePanel/PDFViewer';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import { isNotebookFile, isTldrawFile, isDriveImageFile, isDrivePdfFile, isDriveDocumentFile, isDriveSpreadsheetFile, isDriveVideoFile, isDriveCodeFile } from './fileTypeUtils';
+import { isNotebookFile, isTldrawFile, isPowerPointFile, isDriveImageFile, isDrivePdfFile, isDriveDocumentFile, isDriveSpreadsheetFile, isDriveVideoFile, isDriveCodeFile, isDrivePresentationFile } from './fileTypeUtils';
 import DrawioViewer from '../../../components/MiddlePanel/CanvasViewer/DrawioViewer';
 import TldrawViewer from '../../../components/MiddlePanel/CanvasViewer/TldrawViewer';
+import { PowerPointViewer } from '../../../components/MiddlePanel/PowerPointViewer/PowerPointViewer';
 import { GoogleDriveViewer } from '../../../components/MiddlePanel/GoogleDriveViewer';
 import BanburyLogo from '../../../assets/images/Logo.png';
 import { Kbd, KbdGroup } from '../../../components/ui/kbd';
@@ -96,6 +97,7 @@ interface RenderPanelProps {
   isBrowserFile: (fileName: string) => boolean;
   isDrawioFile: (fileName: string) => boolean;
   isTldrawFile: (fileName: string) => boolean;
+  isPowerPointFile: (fileName: string) => boolean;
   setPanelLayout: React.Dispatch<React.SetStateAction<any>>;
   isMac?: boolean;
   onSplitPreview?: (direction: 'horizontal' | 'vertical' | null, position: { x: number; y: number }) => void;
@@ -122,6 +124,7 @@ export const renderPanel = ({
   isBrowserFile,
   isDrawioFile,
   isTldrawFile,
+  isPowerPointFile,
   setPanelLayout,
   isMac = false,
   onSplitPreview
@@ -265,7 +268,18 @@ export const renderPanel = ({
                         )
                       }
                       
-                      // For other Workspace files (Slides, Forms, etc), use GoogleDriveViewer
+                      // Google Slides -> Export as PPTX and use PowerPointViewer
+                      if (mimeType.includes('vnd.google-apps.presentation')) {
+                        return (
+                          <PowerPointViewer 
+                            file={file} 
+                            userInfo={userInfo} 
+                            onSaveComplete={triggerSidebarRefresh}
+                          />
+                        )
+                      }
+                      
+                      // For other Workspace files (Forms, etc), use GoogleDriveViewer
                       return <GoogleDriveViewer file={file} />
                     }
                     
@@ -291,6 +305,15 @@ export const renderPanel = ({
                       // Regular spreadsheets (Excel, CSV) - can be downloaded and edited
                       return (
                         <SpreadsheetViewer 
+                          file={file} 
+                          userInfo={userInfo} 
+                          onSaveComplete={triggerSidebarRefresh}
+                        />
+                      )
+                    } else if (isDrivePresentationFile(mimeType)) {
+                      // Regular presentations (PowerPoint) - can be downloaded and edited
+                      return (
+                        <PowerPointViewer 
                           file={file} 
                           userInfo={userInfo} 
                           onSaveComplete={triggerSidebarRefresh}
@@ -325,6 +348,14 @@ export const renderPanel = ({
                   } else if (isSpreadsheetFile(file.name)) {
                     return (
                       <SpreadsheetViewer 
+                        file={file} 
+                        userInfo={userInfo} 
+                        onSaveComplete={triggerSidebarRefresh}
+                      />
+                    );
+                  } else if (isPowerPointFile(file.name)) {
+                    return (
+                      <PowerPointViewer 
                         file={file} 
                         userInfo={userInfo} 
                         onSaveComplete={triggerSidebarRefresh}

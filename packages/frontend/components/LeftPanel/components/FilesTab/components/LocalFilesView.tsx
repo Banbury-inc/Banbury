@@ -15,6 +15,7 @@ import { Typography } from "../../../../ui/typography"
 import { handleCreateDocumentSubmit } from "../handlers/handleCreateDocumentSubmit"
 import { handleCreateSpreadsheetSubmit } from "../handlers/handleCreateSpreadsheetSubmit"
 import { handleCreateDrawioSubmit as handleCreateDrawioSubmitHandler } from "../handlers/handleCreateDrawioSubmit"
+import { handleCreatePowerpointSubmit } from "../handlers/handleCreatePowerpointSubmit"
 import { handleCreateRootFolderSubmit } from "../handlers/handleCreateRootFolderSubmit"
 
 interface LocalFilesViewProps {
@@ -38,6 +39,7 @@ interface LocalFilesViewProps {
   onCreateNotebook?: (notebookName: string) => void
   onCreateDrawio?: (diagramName: string) => void
   onCreateTldraw?: (drawingName: string) => void
+  onCreatePowerpoint?: (presentationName: string) => void
   fileInputRef: React.RefObject<HTMLInputElement>
   folderInputRef: React.RefObject<HTMLInputElement>
 }
@@ -59,6 +61,7 @@ export function LocalFilesView({
   onCreateSpreadsheet,
   onCreateDrawio,
   onCreateTldraw,
+  onCreatePowerpoint,
   fileInputRef,
   folderInputRef,
 }: LocalFilesViewProps) {
@@ -100,6 +103,13 @@ export function LocalFilesView({
   const [isCreatingTldrawPending, setIsCreatingTldrawPending] = useState(false)
   const [pendingTldrawName, setPendingTldrawName] = useState<string | null>(null)
   const tldrawInputRef = useRef<HTMLInputElement | null>(null)
+  
+  // PowerPoint presentation creation state
+  const [isCreatingPowerpoint, setIsCreatingPowerpoint] = useState(false)
+  const [newPowerpointName, setNewPowerpointName] = useState('New Presentation.pptx')
+  const [isCreatingPowerpointPending, setIsCreatingPowerpointPending] = useState(false)
+  const [pendingPowerpointName, setPendingPowerpointName] = useState<string | null>(null)
+  const powerpointInputRef = useRef<HTMLInputElement | null>(null)
   
   const [uploadingFolder, setUploadingFolder] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
@@ -514,6 +524,43 @@ export function LocalFilesView({
     }
   }
 
+  // PowerPoint presentation creation handlers
+  const handleCreatePowerpoint = () => {
+    setIsCreatingPowerpoint(true)
+    setNewPowerpointName('New Presentation.pptx')
+  }
+
+  useEffect(() => {
+    if (isCreatingPowerpoint && powerpointInputRef.current) {
+      const timeoutId = setTimeout(() => {
+        if (powerpointInputRef.current) {
+          powerpointInputRef.current.focus()
+          selectFilenameWithoutExtension(powerpointInputRef.current)
+        }
+      }, 10)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [isCreatingPowerpoint])
+
+  const handleCreatePowerpointSubmitAction = async () => {
+    await handleCreatePowerpointSubmit({
+      newPowerpointName,
+      setIsCreatingPowerpoint,
+      setNewPowerpointName,
+      setIsCreatingPowerpointPending,
+      setPendingPowerpointName,
+      onCreatePowerpoint,
+    })
+  }
+
+  const handleCreatePowerpointKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleCreatePowerpointSubmitAction()
+    else if (e.key === 'Escape') {
+      setIsCreatingPowerpoint(false)
+      setNewPowerpointName('New Presentation.pptx')
+    }
+  }
+
   // Handle file upload
   const handleFileUpload = () => {
     if (fileInputRef.current) {
@@ -625,7 +672,10 @@ export function LocalFilesView({
     if (onCreateTldraw) {
       (window as any).__handleCreateTldraw = handleCreateTldraw
     }
-  }, [onCreateDocument, onCreateSpreadsheet, onCreateDrawio, onCreateTldraw])
+    if (onCreatePowerpoint) {
+      (window as any).__handleCreatePowerpoint = handleCreatePowerpoint
+    }
+  }, [onCreateDocument, onCreateSpreadsheet, onCreateDrawio, onCreateTldraw, onCreatePowerpoint])
 
   return (
     <div className="h-full overflow-hidden flex flex-col">
@@ -919,6 +969,33 @@ export function LocalFilesView({
               <div className="w-3" />
               <RefreshCw className="h-4 w-4 animate-spin" />
               <Typography variant="xs" className="truncate min-w-0 flex-1">{pendingTldrawName}</Typography>
+              <Typography variant="muted" className="text-xs">Creating...</Typography>
+            </div>
+          )}
+
+          {/* Root level PowerPoint presentation creation */}
+          {isCreatingPowerpoint && (
+            <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
+              <div className="w-3" />
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={newPowerpointName}
+                onChange={(e) => setNewPowerpointName(e.target.value)}
+                onKeyDown={handleCreatePowerpointKeyDown}
+                onBlur={handleCreatePowerpointSubmitAction}
+                className="text-sm bg-muted text-foreground px-1 py-0 rounded border-none outline-none flex-1"
+                ref={powerpointInputRef}
+                onFocus={(e) => selectFilenameWithoutExtension(e.currentTarget)}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          )}
+          {isCreatingPowerpointPending && pendingPowerpointName && (
+            <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
+              <div className="w-3" />
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              <Typography variant="xs" className="truncate min-w-0 flex-1">{pendingPowerpointName}</Typography>
               <Typography variant="muted" className="text-xs">Creating...</Typography>
             </div>
           )}

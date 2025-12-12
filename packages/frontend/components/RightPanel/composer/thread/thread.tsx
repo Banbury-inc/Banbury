@@ -15,6 +15,7 @@ import BanburyLogo from "../../../../assets/images/Logo.png";
 
 import { DocumentAITool } from "../components/DocumentAITool";
 import { DocxAITool } from "../components/DocxAITool";
+import { PptxAITool } from "../components/PptxAITool";
 import { TldrawAITool } from "../components/TldrawAITool";
 import { DrawioAITool } from "../../../MiddlePanel/CanvasViewer/DrawioAITool";
 import DrawioViewerModal from "../../../MiddlePanel/CanvasViewer/DrawioViewerModal";
@@ -491,6 +492,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
           const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'];
           const documentExtensions = ['.docx', '.doc', '.pdf'];
           const spreadsheetExtensions = ['.csv', '.xlsx', '.xls'];
+          const presentationExtensions = ['.pptx', '.ppt'];
           const canvasExtensions = ['.tldraw'];
           const codeExtensions = [
             '.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala',
@@ -499,7 +501,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
             '.md', '.markdown', '.tex', '.rtex', '.bib', '.vue', '.svelte'
           ];
           const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
-          return [...imageExtensions, ...documentExtensions, ...spreadsheetExtensions, ...canvasExtensions, ...codeExtensions].includes(extension);
+          return [...imageExtensions, ...documentExtensions, ...spreadsheetExtensions, ...presentationExtensions, ...canvasExtensions, ...codeExtensions].includes(extension);
         };
         
         if (isViewableFile(selectedFile.name)) {
@@ -822,7 +824,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     }
   }, [toolPreferences, isWebSearchEnabled]);
 
-  // Pre-download spreadsheet and canvas blobs and cache as base64 + mimeType (size-capped)
+  // Pre-download spreadsheet, canvas, and presentation blobs and cache as base64 + mimeType (size-capped)
   useEffect(() => {
     const isSpreadsheet = (fileName: string) => {
       const ext = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
@@ -832,6 +834,11 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     const isTldrawCanvas = (fileName: string) => {
       const ext = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
       return ext === '.tldraw';
+    };
+
+    const isPresentation = (fileName: string) => {
+      const ext = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+      return ['.pptx', '.ppt'].includes(ext);
     };
 
     const blobToBase64 = (blob: Blob): Promise<string> =>
@@ -849,7 +856,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
 
     const fetchMissingPayloads = async () => {
       const tasks = attachedFiles
-        .filter((f) => f.file_id && (isSpreadsheet(f.name) || isTldrawCanvas(f.name)) && !attachmentPayloads[f.file_id])
+        .filter((f) => f.file_id && (isSpreadsheet(f.name) || isTldrawCanvas(f.name) || isPresentation(f.name)) && !attachmentPayloads[f.file_id])
         .map(async (f) => {
           try {
             const res = await ApiService.downloadFromS3(f.file_id!, f.name);
@@ -864,6 +871,10 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
                   mimeType = 'text/csv';
                 } else if (f.name.toLowerCase().endsWith('.tldraw')) {
                   mimeType = 'application/json';
+                } else if (f.name.toLowerCase().endsWith('.pptx')) {
+                  mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+                } else if (f.name.toLowerCase().endsWith('.ppt')) {
+                  mimeType = 'application/vnd.ms-powerpoint';
                 } else {
                   mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
                 }
@@ -1153,6 +1164,7 @@ const AssistantMessage: FC = () => {
                   tiptap_ai: TiptapAITool,
                   sheet_ai: SheetAITool,
                   docx_ai: DocxAITool,
+                  pptx_ai: PptxAITool,
                   tldraw_ai: TldrawAITool,
                   drawio_ai: DrawioAITool,
                   document_ai: DocumentAITool,

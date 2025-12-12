@@ -55,6 +55,11 @@ export const isTldrawFile = (fileName: string): boolean => {
   return extension === '.tldraw' || extension === '.tldr' || (extension === '.json' && fileName.toLowerCase().includes('tldraw'));
 };
 
+export const isPowerPointFile = (fileName: string): boolean => {
+  const presentationExtensions = ['.ppt', '.pptx', '.odp'];
+  return presentationExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
+};
+
 export const isViewableFile = (fileName: string): boolean => {
   return isImageFile(fileName) || 
          isPdfFile(fileName) || 
@@ -65,7 +70,8 @@ export const isViewableFile = (fileName: string): boolean => {
          isBrowserFile(fileName) ||
          isNotebookFile(fileName) ||
          isDrawioFile(fileName) ||
-         isTldrawFile(fileName);
+         isTldrawFile(fileName) ||
+         isPowerPointFile(fileName);
 };
 
 // Google Drive file type detection based on mimeType
@@ -122,6 +128,16 @@ export const isDriveCodeFile = (mimeType?: string, fileName?: string): boolean =
   return false
 }
 
+export const isDrivePresentationFile = (mimeType?: string): boolean => {
+  if (!mimeType) return false
+  // Exclude Google Slides - they should use GoogleDriveViewer
+  if (mimeType.includes('vnd.google-apps')) return false
+  // Only match downloadable presentation formats
+  return mimeType.includes('presentation') ||
+         mimeType.includes('ms-powerpoint') ||
+         mimeType.includes('application/vnd.openxmlformats-officedocument.presentationml')
+}
+
 // Check if file type from Drive can be viewed
 export const isDriveFileViewable = (mimeType?: string, fileName?: string): boolean => {
   if (!mimeType && !fileName) return false
@@ -133,7 +149,8 @@ export const isDriveFileViewable = (mimeType?: string, fileName?: string): boole
          isDriveDocumentFile(mimeType) ||
          isDriveSpreadsheetFile(mimeType) ||
          isDriveVideoFile(mimeType) ||
-         isDriveCodeFile(mimeType, fileName)
+         isDriveCodeFile(mimeType, fileName) ||
+         isDrivePresentationFile(mimeType)
 }
 
 // Extended isViewableFile that handles both local and Drive files

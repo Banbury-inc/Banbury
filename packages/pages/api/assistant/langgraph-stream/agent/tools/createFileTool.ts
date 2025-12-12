@@ -308,6 +308,168 @@ export const createFileTool = tool(
         resolvedType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         break
       }
+      case 'pptx': {
+        // For PPTX files, create a PowerPoint presentation using pptxgenjs
+        const PptxGenJS = (await import('pptxgenjs')).default
+        const pptx = new PptxGenJS()
+        
+        // Set metadata
+        pptx.author = 'Banbury AI'
+        pptx.title = input.fileName.replace(/\.pptx$/i, '')
+        pptx.subject = 'Created with Banbury AI'
+        
+        // Parse content to create slides
+        // Content can be structured as:
+        // - Simple text (create single slide with text)
+        // - Markdown-like format with --- separators for multiple slides
+        // - JSON structure for complex presentations
+        
+        const contentStr = bodyContent.toString().trim()
+        
+        // Check if content is JSON
+        let isJson = false
+        let jsonSlides: any[] = []
+        try {
+          const parsed = JSON.parse(contentStr)
+          if (Array.isArray(parsed)) {
+            isJson = true
+            jsonSlides = parsed
+          }
+        } catch {
+          // Not JSON, proceed with text parsing
+        }
+        
+        if (isJson && jsonSlides.length > 0) {
+          // Create slides from JSON structure
+          for (const slideData of jsonSlides) {
+            const slide = pptx.addSlide()
+            
+            if (slideData.background) {
+              slide.background = { color: slideData.background.replace('#', '') }
+            }
+            
+            if (slideData.title) {
+              slide.addText(slideData.title, {
+                x: 0.5,
+                y: 0.5,
+                w: '90%',
+                h: 1,
+                fontSize: 36,
+                bold: true,
+                color: '363636'
+              })
+            }
+            
+            if (slideData.content) {
+              slide.addText(slideData.content, {
+                x: 0.5,
+                y: 2,
+                w: '90%',
+                h: 4,
+                fontSize: 18,
+                color: '666666'
+              })
+            }
+            
+            if (slideData.bullets && Array.isArray(slideData.bullets)) {
+              const bulletText = slideData.bullets.map((b: string) => ({ text: b, options: { bullet: true } }))
+              slide.addText(bulletText, {
+                x: 0.5,
+                y: 2,
+                w: '90%',
+                h: 4,
+                fontSize: 18,
+                color: '363636'
+              })
+            }
+          }
+        } else {
+          // Parse text content - split by '---' for multiple slides
+          const slideContents = contentStr.split(/\n---\n/).map(s => s.trim()).filter(s => s)
+          
+          for (const slideContent of slideContents) {
+            const slide = pptx.addSlide()
+            
+            // Check for title (first line if it looks like a heading)
+            const lines = slideContent.split('\n')
+            let title = ''
+            let body = slideContent
+            
+            if (lines[0] && (lines[0].startsWith('#') || lines[0].length < 100)) {
+              title = lines[0].replace(/^#+\s*/, '')
+              body = lines.slice(1).join('\n').trim()
+            }
+            
+            if (title) {
+              slide.addText(title, {
+                x: 0.5,
+                y: 0.5,
+                w: '90%',
+                h: 1,
+                fontSize: 36,
+                bold: true,
+                color: '363636',
+                align: 'center'
+              })
+            }
+            
+            if (body) {
+              // Check for bullet points
+              const bulletLines = body.split('\n').filter(l => l.trim().match(/^[-*•]\s/))
+              
+              if (bulletLines.length > 0) {
+                const bulletText = bulletLines.map(l => ({
+                  text: l.replace(/^[-*•]\s*/, ''),
+                  options: { bullet: true }
+                }))
+                slide.addText(bulletText, {
+                  x: 0.5,
+                  y: title ? 2 : 0.5,
+                  w: '90%',
+                  h: 4,
+                  fontSize: 18,
+                  color: '363636'
+                })
+              } else {
+                slide.addText(body, {
+                  x: 0.5,
+                  y: title ? 2 : 0.5,
+                  w: '90%',
+                  h: 4,
+                  fontSize: 18,
+                  color: '666666'
+                })
+              }
+            }
+          }
+          
+          // If no slides were created, create a default one
+          if (slideContents.length === 0) {
+            const slide = pptx.addSlide()
+            slide.addText(input.fileName.replace(/\.pptx$/i, ''), {
+              x: 0.5,
+              y: 2.5,
+              w: '90%',
+              h: 1.5,
+              fontSize: 44,
+              bold: true,
+              color: '363636',
+              align: 'center',
+              valign: 'middle'
+            })
+          }
+        }
+        
+        // Generate PPTX blob
+        const pptxBuffer = await pptx.write({ outputType: 'arraybuffer' }) as ArrayBuffer
+        const pptxBlob = new Blob([pptxBuffer], {
+          type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        })
+        
+        bodyContent = pptxBlob
+        resolvedType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        break
+      }
       case 'md': {
         resolvedType = 'text/markdown'
         break
@@ -358,11 +520,11 @@ export const createFileTool = tool(
   },
   {
     name: 'create_file',
-    description: 'Create a new file in the user\'s cloud workspace. Prefer Microsoft Word (.docx) for documents. Provide file name, full path including the file name, and the file content. For documents (reports, proposals, notes), default to .docx unless the user explicitly asks for another format.',
+    description: 'Create a new file in the user\'s cloud workspace. Prefer Microsoft Word (.docx) for documents, Excel (.xlsx) for spreadsheets, and PowerPoint (.pptx) for presentations. For presentations, content can be plain text (use --- to separate slides), or JSON array of slide objects with title, content, and bullets fields.',
     schema: z.object({
-      fileName: z.string().describe("The new file name. Prefer '.docx' for documents (e.g., 'notes.docx')"),
-      filePath: z.string().describe("Full path including the file name. Prefer '.docx' for documents (e.g., 'projects/alpha/notes.docx')"),
-      content: z.string().describe('The file contents as text'),
+      fileName: z.string().describe("The new file name. Use '.docx' for documents, '.xlsx' for spreadsheets, '.pptx' for presentations"),
+      filePath: z.string().describe("Full path including the file name (e.g., 'presentations/quarterly-report.pptx')"),
+      content: z.string().describe('The file contents as text. For PPTX: use --- to separate slides, or JSON array of {title, content, bullets} objects'),
       contentType: z.string().optional().describe("Optional MIME type, defaults by extension"),
     }),
   }

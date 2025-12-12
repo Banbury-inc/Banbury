@@ -36,13 +36,14 @@ interface AppSidebarProps {
   onCreateNotebook?: (notebookName: string) => void
   onCreateDrawio?: (diagramName: string) => void
   onCreateTldraw?: (drawingName: string) => void
+  onCreatePowerpoint?: (presentationName: string) => void
   onCreateFolder?: () => void
   onGenerateImage?: () => void
   onEventSelect?: (event: any) => void
   onOpenCalendar?: () => void
 }
 
-export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, onRefreshComplete, refreshTrigger, onFileDeleted, onFileRenamed, onFileMoved, onFolderCreated, onFolderRenamed, onFolderDeleted, triggerRootFolderCreation, onEmailSelect, onComposeEmail, onCreateDocument, onCreateSpreadsheet, onCreateNotebook, onCreateDrawio, onCreateTldraw, onCreateFolder, onGenerateImage, onEventSelect, onOpenCalendar }: AppSidebarProps) {
+export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, onRefreshComplete, refreshTrigger, onFileDeleted, onFileRenamed, onFileMoved, onFolderCreated, onFolderRenamed, onFolderDeleted, triggerRootFolderCreation, onEmailSelect, onComposeEmail, onCreateDocument, onCreateSpreadsheet, onCreateNotebook, onCreateDrawio, onCreateTldraw, onCreatePowerpoint, onCreateFolder, onGenerateImage, onEventSelect, onOpenCalendar }: AppSidebarProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<string>('files')
 
@@ -128,6 +129,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
               onCreateNotebook={onCreateNotebook}
               onCreateDrawio={onCreateDrawio}
               onCreateTldraw={onCreateTldraw}
+              onCreatePowerpoint={onCreatePowerpoint}
               onCreateFolder={onCreateFolder}
             />
           </TabsContent>
