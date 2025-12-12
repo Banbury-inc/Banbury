@@ -34,7 +34,6 @@ export function createSaveTldrawHandler({ editorRef, fileId, fileName, onSaved, 
 
       if (onSaved) onSaved(content)
       if (clearUnsaved) clearUnsaved()
-      console.log('[save-tldraw] Saved drawing to S3 successfully')
       return { ok: true, fileId: (res as any)?.file_id, fileName: (res as any)?.file_name }
     } catch (error) {
       console.error('[save-tldraw] Failed to save drawing to S3:', error)

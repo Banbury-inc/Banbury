@@ -25,7 +25,6 @@ export function RecallVideoViewer({ file, userInfo }: RecallVideoViewerProps) {
   const retryVideoLoad = () => {
     if (isRetrying) return; // Prevent multiple simultaneous retries
     
-    console.log('Retrying video load, attempt:', retryCount + 1);
     setRetryCount(prev => prev + 1);
     setError(null);
     setLoading(true);
@@ -33,7 +32,6 @@ export function RecallVideoViewer({ file, userInfo }: RecallVideoViewerProps) {
     
     // For Recall AI videos, get fresh URL from session data
     if (file.s3_url && (file.s3_url.includes('recall.ai') || file.s3_url.includes('recallai'))) {
-      console.log('Retry: Getting fresh Recall AI URL from session data...');
       
       // Get the session ID from file metadata or extract from file path
       let sessionId = (file as any).meeting_session_id || (file as any).session_id;
@@ -44,49 +42,34 @@ export function RecallVideoViewer({ file, userInfo }: RecallVideoViewerProps) {
         const pathParts = file.path.split('/');
         if (pathParts.length >= 3 && pathParts[0] === 'meetings') {
           sessionId = pathParts[1];
-          console.log('Retry: Extracted session ID from file path:', sessionId);
         }
       }
       
       if (sessionId) {
-        console.log('Retry: Getting fresh Recall AI URL from backend...');
         
         ApiService.MeetingAgent.getMeetingSessions(20, 0)
           .then((result: any) => {
-            console.log('RecallVideoViewer Retry: Session response:', result);
             const session = result.sessions.find((session: any) => session.id === sessionId);
 
             if (session) {
-              console.log('RecallVideoViewer Retry: Session found:', session);
               // Use EXACT same logic as MeetingAgent.tsx
               const videoUrl = session.recallBot?.videoUrl || session.recordingUrl;
-              
-              console.log('RecallVideoViewer Retry: Video URL selection (matching MeetingAgent):', {
-                sessionId,
-                recallBotVideoUrl: session.recallBot?.videoUrl,
-                recordingUrl: session.recordingUrl,
-                finalVideoUrl: videoUrl,
-                sessionTitle: session.title
-              });
               
               setVideoUrl(videoUrl);
               setLoading(false);
               setIsRetrying(false);
             } else {
-              console.log('RecallVideoViewer Retry: Session not found, no video available');
               setError('Session not found - no video available');
               setLoading(false);
               setIsRetrying(false);
             }
           })
           .catch((err: any) => {
-            console.log('Retry: Session request error:', err);
             setError('Failed to load session data - no video available');
             setLoading(false);
             setIsRetrying(false);
           });
       } else {
-        console.log('Retry: No session ID found, no video available');
         setError('No session ID found - no video available');
         setLoading(false);
         setIsRetrying(false);
@@ -95,19 +78,15 @@ export function RecallVideoViewer({ file, userInfo }: RecallVideoViewerProps) {
     }
 
     // This should not happen since RecallVideoViewer is only for Recall videos
-    console.log('RecallVideoViewer retry called with non-Recall video, showing error');
     setError('This component is only for Recall AI videos');
     setLoading(false);
     setIsRetrying(false);
   };
 
   useEffect(() => {
-    console.log('RecallVideoViewer useEffect called for file:', file.name, 'file_id:', file.file_id);
-    console.log('File object:', file);
 
     // Check if this is a Recall AI video by looking at the S3 URL
     if (file.s3_url && (file.s3_url.includes('recall.ai') || file.s3_url.includes('recallai'))) {
-      console.log('This is a Recall AI video, getting fresh URL from session data...');
       
       // Get the session ID from file metadata or extract from file path
       let sessionId = (file as any).meeting_session_id || (file as any).session_id;
@@ -118,64 +97,37 @@ export function RecallVideoViewer({ file, userInfo }: RecallVideoViewerProps) {
         const pathParts = file.path.split('/');
         if (pathParts.length >= 3 && pathParts[0] === 'meetings') {
           sessionId = pathParts[1];
-          console.log('Extracted session ID from file path:', sessionId);
         }
       }
       
       if (sessionId) {
         // For Recall AI videos, get the URL directly from JSON response (not as blob)
-        console.log('Getting fresh Recall AI URL from backend...');
-        console.log('Session ID:', sessionId);
 
         ApiService.MeetingAgent.getMeetingSessions(20, 0)
           .then((result: any) => {
-            console.log('RecallVideoViewer Session response:', result);
             const session = result.sessions.find((session: any) => session.id === sessionId);
 
             if (session) {
-              console.log('RecallVideoViewer Session found:', session);
-              console.log('RecallVideoViewer Full session.recallbot:', session.recallbot);
-              
               // Use EXACT same logic as MeetingAgent.tsx
               const videoUrl = session.recallBot?.videoUrl || session.recordingUrl;
-              
-              console.log('RecallVideoViewer Video URL selection (matching MeetingAgent):', {
-                sessionId,
-                recallBotVideoUrl: session.recallBot?.videoUrl,
-                recordingUrl: session.recordingUrl,
-                finalVideoUrl: videoUrl,
-                sessionTitle: session.title
-              });
-              
-              // Log additional session data for debugging
-              console.log('RecallVideoViewer Additional session data:', {
-                hasRecallBot: !!session.recallBot,
-                recallBotStatus: session.recallBot?.status,
-                recordingStatus: session.recallBot?.recordingStatus,
-                recallBotKeys: session.recallBot ? Object.keys(session.recallBot) : 'no recallBot'
-              });
               
               setVideoUrl(videoUrl);
               setLoading(false);
             } else {
-              console.log('RecallVideoViewer Session not found, no video available');
               setError('Session not found - no video available');
               setLoading(false);
             }
           })
           .catch((err: any) => {
-            console.log('Session request error:', err);
             setError('Failed to load session data - no video available');
             setLoading(false);
           });
       } else {
-        console.log('No session ID found, no video available');
         setError('No session ID found - no video available');
         setLoading(false);
       }
     } else {
       // This should not happen since RecallVideoViewer is only for Recall videos
-      console.log('RecallVideoViewer called with non-Recall video, showing error');
       setError('This component is only for Recall AI videos');
       setLoading(false);
     }
@@ -265,17 +217,12 @@ export function RecallVideoViewer({ file, userInfo }: RecallVideoViewerProps) {
         </h4>
         <div className="bg-black rounded-lg p-3 h-80 flex items-center justify-center border border-border">
           {(() => {
-            console.log('RecallVideoViewer Rendering video with URL:', {
-              videoUrl,
-              isRecallVideo
-            });
             return (
               <video 
                 controls 
                 className="w-full rounded max-h-full"
                 src={videoUrl || undefined}
                 onError={(e) => {
-              console.error('Video error:', e);
               const videoElement = e.target as HTMLVideoElement;
               const error = videoElement.error;
               let errorMessage = 'Failed to load video content';

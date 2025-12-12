@@ -389,29 +389,23 @@ export default function DemoApp() {
 
   const handleFileSelect = (file: FileSystemItem) => {
     setSelectedFile(file)
-    console.log('File selected:', file)
   }
 
   const handleEmailSelect = (email: any) => {
     setSelectedEmail(email)
-    console.log('Email selected:', email)
   }
 
   const handleEventSelect = (event: any) => {
-    console.log('Event selected:', event)
   }
 
   const handleLoadConversation = (conversationId: string) => {
-    console.log('Loading conversation:', conversationId)
   }
 
   const handleDeleteConversation = (conversationId: string) => {
     setConversations(conversations.filter(conv => conv._id !== conversationId))
-    console.log('Deleted conversation:', conversationId)
   }
 
   const handleClearConversation = () => {
-    console.log('Clearing conversation')
   }
 
   const handleTabChange = (tabId: string) => {
@@ -713,15 +707,15 @@ export default function DemoApp() {
               selectedFile={selectedFile}
               onEmailSelect={handleEmailSelect}
               onEventSelect={handleEventSelect}
-              onComposeEmail={() => console.log('Compose email')}
-              onCreateDocument={(name) => console.log('Create document:', name)}
-              onCreateSpreadsheet={(name) => console.log('Create spreadsheet:', name)}
-              onCreateNotebook={(name) => console.log('Create notebook:', name)}
-              onCreateDrawio={(name) => console.log('Create diagram:', name)}
-              onCreateTldraw={(name) => console.log('Create drawing:', name)}
-              onCreateFolder={() => console.log('Create folder')}
-              onGenerateImage={() => console.log('Generate image')}
-              onOpenCalendar={() => console.log('Open calendar')}
+              onComposeEmail={() => {}}
+              onCreateDocument={(name) => {}}
+              onCreateSpreadsheet={(name) => {}}
+              onCreateNotebook={(name) => {}}
+              onCreateDrawio={(name) => {}}
+              onCreateTldraw={(name) => {}}
+              onCreateFolder={() => {}}
+              onGenerateImage={() => {}}
+              onOpenCalendar={() => {}}
             />
           </div>
         )}

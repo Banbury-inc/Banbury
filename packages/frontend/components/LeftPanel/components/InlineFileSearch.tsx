@@ -276,13 +276,9 @@ const InlineFileSearch: React.FC<InlineFileSearchProps> = ({ onFileSelect, onEma
     ApiService.searchEmails(searchQuery)
       .then((emailResponse) => {
         if (emailResponse.messages) {
-          console.log('Email search successful:', emailResponse);
-          console.log('Email messages found:', emailResponse.messages.length);
           setEmailResults(emailResponse.messages || []);
         } else {
           setEmailResults([]);
-          console.log('Email search response:', emailResponse);
-          console.log('No messages found or invalid response structure');
         }
       })
       .catch((error) => {

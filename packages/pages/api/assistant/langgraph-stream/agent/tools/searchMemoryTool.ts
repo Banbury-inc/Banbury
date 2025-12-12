@@ -11,8 +11,6 @@ export const searchMemoryTool = tool(
     if (!token) {
       throw new Error("Missing auth token in server context")
     }
-
-    console.log(`Searching memories with query: ${input.query}`)
     
     // Get user information from context (in a real implementation, this would come from auth)
     const userInfo = {

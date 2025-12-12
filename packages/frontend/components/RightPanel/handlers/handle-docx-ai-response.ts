@@ -222,8 +222,6 @@ function findActiveTiptapEditor() {
         return editor;
       }
     }
-  } else {
-    console.log('No editor registry found');
   }
   
   // Strategy 2: Check for common global editor variable names
@@ -426,7 +424,6 @@ function applyTiptapOperations(editor: any, operations: DocxOperation[]) {
           break;
         case 'setPageSettings':
           // Page settings don't have direct Tiptap equivalents, so we'll skip these
-          console.log('Page settings operations are not supported in Tiptap:', operation);
           break;
         case 'insert':
           // Handle generic 'insert' operation by trying to determine the best approach

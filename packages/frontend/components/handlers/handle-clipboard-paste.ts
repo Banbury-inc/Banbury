@@ -55,14 +55,6 @@ export async function handleClipboardPaste({
         const filePath = `pasted-images/${fileName}`
         const fileParent = 'pasted-images'
 
-        console.log('Uploading image to S3:', {
-          fileName,
-          filePath,
-          fileParent,
-          fileSize: file.size,
-          mimeType
-        })
-
         // Upload to S3
         const result = await ApiService.uploadToS3(
           file,
@@ -72,12 +64,8 @@ export async function handleClipboardPaste({
           fileParent
         )
 
-        console.log('Upload result:', result)
-
         if (result.success && result.file_info) {
           const fileId = result.file_info.file_id || `temp-${Date.now()}`
-          
-          console.log('Upload successful, file ID:', fileId)
           
           // Store base64 payload so AI can see the image immediately
           if (onAttachmentPayload && fileId) {

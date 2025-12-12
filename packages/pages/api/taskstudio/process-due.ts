@@ -27,7 +27,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           recursionLimit: 500
         })
       })
-      console.log('streamResp', streamResp)
 
       if (!streamResp.ok || !streamResp.body) {
         const errText = await streamResp.text().catch(() => '')

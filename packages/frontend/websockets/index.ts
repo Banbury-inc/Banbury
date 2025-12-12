@@ -16,7 +16,6 @@ class WebSocketService {
         this.socket.binaryType = 'arraybuffer';
 
         this.socket.onopen = () => {
-          console.log('WebSocket Connected');
           resolve();
         };
 
@@ -30,7 +29,6 @@ class WebSocketService {
         };
 
         this.socket.onclose = () => {
-          console.log('WebSocket Disconnected');
         };
       } else if (this.socket.readyState === WebSocket.OPEN) {
         resolve();

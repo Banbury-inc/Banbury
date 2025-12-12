@@ -97,6 +97,7 @@ interface RenderPanelProps {
   isDrawioFile: (fileName: string) => boolean;
   isTldrawFile: (fileName: string) => boolean;
   setPanelLayout: React.Dispatch<React.SetStateAction<any>>;
+  isMac?: boolean;
   onSplitPreview?: (direction: 'horizontal' | 'vertical' | null, position: { x: number; y: number }) => void;
 }
 
@@ -128,16 +129,6 @@ export const renderPanel = ({
   const isActive = panel.id === activePanelId;
   const isDropTarget = dragState.dropTargetPanel === panel.id;
   const dropZone = isDropTarget ? dragState.dropZone : null;
-  
-  // Debug logging (no hooks in non-component functions)
-  if (dragState.isDragging) {
-    console.log('Panel render debug:', {
-      panelId: panel.id,
-      isDropTarget,
-      dropZone,
-      dragState
-    });
-  }
   
   return (
     <div 
@@ -241,7 +232,6 @@ export const renderPanel = ({
                 // Handle file tabs
                 if (tab.type === 'file') {
                   const file = tab.file;
-                  console.log('Rendering file tab:', file.name, 'file type:', file.name.split('.').pop());
                   
                   // Check if this is a Google Drive file
                   const isDriveFile = file.path?.startsWith('drive://');
@@ -250,16 +240,11 @@ export const renderPanel = ({
                   if (isDriveFile) {
                     const mimeType = file.mimeType
                     
-                    console.log('Rendering Drive file:', file.name, 'mimeType:', mimeType)
-                    
                     // Check for Google Workspace files FIRST (Docs, Sheets, Slides)
                     // Export them to native formats and open in appropriate editors
                     if (mimeType?.includes('vnd.google-apps')) {
-                      console.log('Detected Google Workspace file')
-                      
                       // Google Docs -> Export as DOCX and use DocumentViewer
                       if (mimeType.includes('vnd.google-apps.document')) {
-                        console.log('Google Doc detected, exporting as DOCX')
                         return (
                           <DocumentViewer 
                             file={file} 
@@ -271,7 +256,6 @@ export const renderPanel = ({
                       
                       // Google Sheets -> Export as XLSX and use SpreadsheetViewer
                       if (mimeType.includes('vnd.google-apps.spreadsheet')) {
-                        console.log('Google Sheet detected, exporting as XLSX')
                         return (
                           <SpreadsheetViewer 
                             file={file} 
@@ -282,13 +266,10 @@ export const renderPanel = ({
                       }
                       
                       // For other Workspace files (Slides, Forms, etc), use GoogleDriveViewer
-                      console.log('Other Google Workspace file, using GoogleDriveViewer')
                       return <GoogleDriveViewer file={file} />
                     }
                     
                     // For non-Workspace Drive files, route to appropriate native viewer
-                    console.log('Detected regular Drive file, routing to native viewer')
-                    
                     if (isDriveImageFile(mimeType)) {
                       return <ImageViewer file={file} userInfo={userInfo} />
                     } else if (isDrivePdfFile(mimeType)) {
@@ -317,7 +298,6 @@ export const renderPanel = ({
                       )
                     } else {
                       // Fallback to GoogleDriveViewer for unsupported types
-                      console.log('Unknown Drive file type, using GoogleDriveViewer fallback')
                       return <GoogleDriveViewer file={file} />
                     }
                   }
@@ -351,8 +331,6 @@ export const renderPanel = ({
                       />
                     );
                   } else if (isVideoFile(file.name)) {
-                    console.log('Rendering VideoViewer for file:', file.name);
-                    console.log('userInfo in renderPanel:', userInfo);
                     return <VideoViewer file={file} userInfo={userInfo} />;
                   } else if (isNotebookFile(file.name)) {
                     const useLab = !!CONFIG.jupyterUrl

@@ -24,18 +24,9 @@ let currentTldrawEditor: any = null;
 // Function to be called by TldrawContext to register the current editor
 export function setCurrentTldrawEditor(editor: any) {
   currentTldrawEditor = editor;
-  console.log('Current Tldraw editor updated:', !!editor);
 }
 
 export async function handleTldrawAIResponse(payload: TldrawAIResponse) {
-  console.log('Handling Tldraw AI response:', payload);
-  console.log('Payload details:', {
-    hasCanvasData: !!payload.canvasData,
-    operationsCount: payload.operations?.length || 0,
-    action: payload.action,
-    canvasName: payload.canvasName
-  });
-  
   // Try to get the current tldraw file from attached files
   let currentTldrawFile = null;
   try {
@@ -43,7 +34,6 @@ export async function handleTldrawAIResponse(payload: TldrawAIResponse) {
     currentTldrawFile = attachedFiles.find((file: any) => 
       file.fileName && file.fileName.toLowerCase().endsWith('.tldraw')
     );
-    console.log('Found attached tldraw file:', currentTldrawFile);
   } catch (error) {
     console.warn('Could not get attached tldraw file:', error);
   }
@@ -53,7 +43,6 @@ export async function handleTldrawAIResponse(payload: TldrawAIResponse) {
   
   // Fallback to finding editor in DOM
   if (!editorInstance) {
-    console.log('No editor from context, trying fallback methods...');
     editorInstance = findActiveTldrawEditor();
   }
   
@@ -63,17 +52,12 @@ export async function handleTldrawAIResponse(payload: TldrawAIResponse) {
     return;
   }
   
-  console.log('Found Tldraw editor instance:', editorInstance);
-  console.log('Available editor methods:', Object.getOwnPropertyNames(editorInstance).filter(name => typeof editorInstance[name] === 'function'));
-  
   try {
     if (payload.canvasData) {
       // Replace entire canvas data if provided
-      console.log('Applying full canvas data to Tldraw editor');
       applyCanvasDataToTldraw(editorInstance, payload.canvasData);
     } else if (payload.operations && payload.operations.length > 0) {
       // Apply individual operations using Tldraw API
-      console.log('Applying individual operations to Tldraw editor');
       applyTldrawOperations(editorInstance, payload.operations);
     } else {
       console.warn('No valid canvas data or operations provided in payload');
@@ -97,7 +81,6 @@ function findActiveTldrawEditor() {
     for (let i = editors.length - 1; i >= 0; i--) {
       const editor = editors[i];
       if (editor && typeof editor.createShape === 'function') {
-        console.log('Found active registered tldraw editor');
         return editor;
       }
     }
@@ -105,13 +88,11 @@ function findActiveTldrawEditor() {
   
   // Strategy 2: Try to find editor through DOM elements
   const tldrawElements = document.querySelectorAll('[data-testid="canvas"], .tl-canvas, .tldraw');
-  console.log(`Found ${tldrawElements.length} Tldraw elements in DOM`);
   
   for (let i = 0; i < tldrawElements.length; i++) {
     const element = tldrawElements[i] as HTMLElement;
     const editorInstance = getEditorFromTldrawElement(element);
     if (editorInstance) {
-      console.log('Found tldraw editor instance from DOM element');
       return editorInstance;
     }
   }
@@ -401,7 +382,6 @@ function createShapeWithTldraw(editor: any, operation: any) {
       shapeData.meta = { description: note };
     }
     
-    console.log('Creating shape with data:', shapeData);
     
     // Create the main shape first
     if (typeof editor.createShape === 'function') {
@@ -431,7 +411,6 @@ function createShapeWithTldraw(editor: any, operation: any) {
           }
         };
         
-        console.log('Creating text overlay with data:', textShapeData);
         
         if (typeof editor.createShape === 'function') {
           editor.createShape(textShapeData);
@@ -463,7 +442,6 @@ function updateShapeWithTldraw(editor: any, operation: any) {
     if (color !== undefined) updates['props.color'] = mapHexColorToTldrawColor(color);
     if (note !== undefined) updates['meta.description'] = note;
     
-    console.log('Updating shape with data:', updates);
     
     if (typeof editor.updateShape === 'function') {
       editor.updateShape(updates);
@@ -483,7 +461,6 @@ function updateShapeWithTldraw(editor: any, operation: any) {
 
 function deleteShapeWithTldraw(editor: any, shapeId: string) {
   try {
-    console.log('Deleting shape:', shapeId);
     
     if (typeof editor.deleteShape === 'function') {
       editor.deleteShape(shapeId);
@@ -530,7 +507,6 @@ function connectShapesWithTldraw(editor: any, fromShapeId: string, toShapeId: st
       }
     };
     
-    console.log('Creating arrow connection:', arrowData);
     
     if (typeof editor.createShape === 'function') {
       editor.createShape(arrowData);
@@ -550,7 +526,6 @@ function connectShapesWithTldraw(editor: any, fromShapeId: string, toShapeId: st
 
 function groupShapesWithTldraw(editor: any, shapeIds: string[], groupName?: string) {
   try {
-    console.log('Grouping shapes:', shapeIds);
     
     if (typeof editor.groupShapes === 'function') {
       editor.groupShapes(shapeIds);
@@ -565,7 +540,6 @@ function groupShapesWithTldraw(editor: any, shapeIds: string[], groupName?: stri
 
 function ungroupShapesWithTldraw(editor: any, groupId: string) {
   try {
-    console.log('Ungrouping shapes:', groupId);
     
     if (typeof editor.ungroupShapes === 'function') {
       editor.ungroupShapes([groupId]);
@@ -580,7 +554,6 @@ function ungroupShapesWithTldraw(editor: any, groupId: string) {
 
 function duplicateShapeWithTldraw(editor: any, shapeId: string, offsetX = 20, offsetY = 20) {
   try {
-    console.log('Duplicating shape:', shapeId);
     
     let shape = null;
     if (typeof editor.getShape === 'function') {
@@ -616,7 +589,6 @@ function duplicateShapeWithTldraw(editor: any, shapeId: string, offsetX = 20, of
 
 function setCanvasBackgroundWithTldraw(editor: any, color?: string, pattern?: string) {
   try {
-    console.log('Setting canvas background:', { color, pattern });
     
     // Tldraw doesn't have a direct background setting, but we can create a large background rectangle
     if (color) {
@@ -684,7 +656,6 @@ function setCanvasBackgroundWithTldraw(editor: any, color?: string, pattern?: st
 
 function addAnnotationWithTldraw(editor: any, x: number, y: number, text: string, type = 'comment') {
   try {
-    console.log('Adding annotation:', { x, y, text, type });
     
     const annotationId = `shape:${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
@@ -795,7 +766,6 @@ function showErrorFeedback(message: string) {
 // The user can manually save using the save button in the TldrawViewer
 async function saveCanvasFile(editor: any, canvasName?: string, currentFile?: any) {
   try {
-    console.log('Saving canvas file...');
     
     // Get the current canvas data from the editor
     const canvasData = {
@@ -814,7 +784,6 @@ async function saveCanvasFile(editor: any, canvasName?: string, currentFile?: an
       fileName = currentFile.fileName || fileName;
       filePath = currentFile.filePath || fileName;
       fileId = currentFile.fileId;
-      console.log('Using attached file info:', { fileName, filePath, fileId });
     } else {
       // Fallback: try to get the file info from the current workspace tab
       try {
@@ -824,7 +793,6 @@ async function saveCanvasFile(editor: any, canvasName?: string, currentFile?: an
           if (tabText.endsWith('.tldraw')) {
             fileName = tabText;
             filePath = fileName;
-            console.log('Using active tab info:', { fileName, filePath });
           }
         }
       } catch (error) {
@@ -844,7 +812,6 @@ async function saveCanvasFile(editor: any, canvasName?: string, currentFile?: an
     const uploadResult = await ApiService.uploadToS3(file, fileName, 'web-editor', filePath, '');
     
     if (uploadResult) {
-      console.log('Canvas file saved successfully');
       
       // Dispatch event to refresh the file sidebar
       window.dispatchEvent(new CustomEvent('file-sidebar-refresh'));

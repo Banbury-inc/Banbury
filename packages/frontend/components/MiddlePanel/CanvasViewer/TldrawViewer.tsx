@@ -4,7 +4,6 @@ import { Tldraw, Editor, exportToBlob, TLShapeId, loadSnapshot, getSnapshot } fr
 
 // Import Tldraw CSS
 import 'tldraw/tldraw.css';
-console.log('[TldrawViewer] Tldraw CSS imported via import statement');
 
 import { Button } from '../../ui/button';
 import { Card, CardContent, CardTitle } from '../../ui/card';
@@ -61,7 +60,6 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
     // Register this editor for AI interactions
     registerTldrawEditor(editor);
     setCurrentTldrawEditor(editor);
-    console.log('[TldrawViewer] Registered editor for AI interactions');
     
     // Do not clear loading here; wait for file content to arrive
     
@@ -91,7 +89,6 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
         editor.store.clear()
       }
     } else {
-      console.log('[TldrawViewer] No file content, starting with blank canvas');
     }
 
     // Listen for changes to track unsaved state
@@ -179,31 +176,24 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
 
   // Context toolbar handlers
   const handleEditShapes = useCallback((shapeIds: TLShapeId[]) => {
-    console.log('[TldrawViewer] Edit shapes:', shapeIds);
   }, []);
 
   const handleDuplicateShapes = useCallback((shapeIds: TLShapeId[]) => {
-    console.log('[TldrawViewer] Duplicated shapes:', shapeIds);
   }, []);
 
   const handleDeleteShapes = useCallback((shapeIds: TLShapeId[]) => {
-    console.log('[TldrawViewer] Deleted shapes:', shapeIds);
   }, []);
 
   const handleGroupShapes = useCallback((shapeIds: TLShapeId[]) => {
-    console.log('[TldrawViewer] Grouped shapes:', shapeIds);
   }, []);
 
   const handleUngroupShapes = useCallback((shapeIds: TLShapeId[]) => {
-    console.log('[TldrawViewer] Ungrouped shapes:', shapeIds);
   }, []);
 
   const handleLockShapes = useCallback((shapeIds: TLShapeId[]) => {
-    console.log('[TldrawViewer] Locked shapes:', shapeIds);
   }, []);
 
   const handleUnlockShapes = useCallback((shapeIds: TLShapeId[]) => {
-    console.log('[TldrawViewer] Unlocked shapes:', shapeIds);
   }, []);
 
   // Export drawing as image
@@ -404,14 +394,6 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
   useEffect(() => {
     const checkTldrawElements = () => {
       const tldrawElements = document.querySelectorAll('[data-testid="canvas"], .tldraw, .tldraw__canvas');
-      console.log('[TldrawViewer] Tldraw DOM elements found:', {
-        count: tldrawElements.length,
-        elements: Array.from(tldrawElements).map(el => ({
-          tagName: el.tagName,
-          className: el.className,
-          id: el.id
-        }))
-      });
     };
     
     // Check immediately and after a delay
@@ -423,7 +405,6 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
 
   // Don't render if not a tldraw file
   if (!isTldrawFile()) {
-    console.log('[TldrawViewer] File not recognized as tldraw:', fileName);
     return (
       <Card className={cn('w-full', className)}>
         <CardContent className="p-6">

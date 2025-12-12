@@ -78,7 +78,7 @@ const About = (): JSX.Element => {
           Accept: 'application/json',
         },
       })
-      .catch((error) => console.log(error));
+      .catch(() => {});
   };
 
   useEffect(() => {
@@ -91,7 +91,6 @@ const About = (): JSX.Element => {
         const response = await fetch('/Banbury_API.yaml');
         const text = await response.text();
         const data = yaml.load(text) as APIData;
-        console.log('Parsed API Data:', data);
         setApiData(data);
 
         // Group paths after fetching data

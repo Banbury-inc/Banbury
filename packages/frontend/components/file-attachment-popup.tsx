@@ -55,8 +55,6 @@ export const FileAttachmentPopup: React.FC<FileAttachmentPopupProps> = ({
     if (!blob.type.startsWith('image/') || blob.size <= maxSizeBytes) {
       return blob;
     }
-
-    console.log(`🗜️ Compressing image ${fileName}: ${(blob.size / 1024 / 1024).toFixed(2)}MB → target <${(maxSizeBytes / 1024 / 1024).toFixed(2)}MB`);
     
     // Add to compressing state
     setCompressingFiles(prev => new Set([...Array.from(prev), fileId]));
@@ -82,7 +80,6 @@ export const FileAttachmentPopup: React.FC<FileAttachmentPopupProps> = ({
         const tryCompress = (quality: number) => {
           canvas.toBlob((compressedBlob) => {
             if (compressedBlob) {
-              console.log(`🎯 Compressed to ${(compressedBlob.size / 1024 / 1024).toFixed(2)}MB at quality ${quality}`);
               if (compressedBlob.size <= maxSizeBytes || quality <= 0.1) {
                 resolve(compressedBlob);
               } else {
@@ -129,10 +126,6 @@ export const FileAttachmentPopup: React.FC<FileAttachmentPopupProps> = ({
         const originalSize = result.blob.size;
         const processedBlob = await compressImage(result.blob, file.name, file.file_id || '');
         
-        if (processedBlob.size < originalSize) {
-          console.log(`✅ Image compressed: ${(originalSize / 1024 / 1024).toFixed(2)}MB → ${(processedBlob.size / 1024 / 1024).toFixed(2)}MB`);
-        }
-        
         // Convert blob to base64
         const arrayBuffer = await processedBlob.arrayBuffer();
         const base64Data = btoa(String.fromCharCode(...Array.from(new Uint8Array(arrayBuffer))));
@@ -141,16 +134,10 @@ export const FileAttachmentPopup: React.FC<FileAttachmentPopupProps> = ({
         // Use processed blob type if compression changed the format
         const mimeType = processedBlob.type || result.blob.type || getMimeTypeFromExtension(file.name);
         
-        console.log(`📋 File processing complete:`, {
-          fileName: file.name,
-          originalSize: `${(originalSize / 1024 / 1024).toFixed(2)}MB`,
-          finalSize: `${(processedBlob.size / 1024 / 1024).toFixed(2)}MB`,
-          compressed: processedBlob.size < originalSize,
-          originalType: result.blob.type,
-          finalMimeType: mimeType,
-          base64Length: base64Data.length
-        });
-        
+        return {
+          fileData: base64Data,
+          mimeType
+        };
         return { fileData: base64Data, mimeType };
       }
       

@@ -25,7 +25,7 @@ const Privacy_Policy = (): JSX.Element => {
       },
     }).then((response) => {
       setProducts(response.data);
-    }).catch((error) => console.log(error));
+    }).catch(() => {});
   };
 
 

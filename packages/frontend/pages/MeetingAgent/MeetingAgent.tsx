@@ -41,7 +41,6 @@ import { useToast } from '../../components/ui/use-toast'
 import { NavSidebar } from '../../components/nav-sidebar'
 
 export default function MeetingAgent() {
-  console.log('MeetingAgent component rendered at:', new Date().toISOString())
   
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -226,17 +225,14 @@ export default function MeetingAgent() {
 
   // Load initial data
   const loadData = useCallback(async () => {
-    console.log('loadData called at:', new Date().toISOString())
     try {
       setIsLoading(true)
       setError(null)
 
-      console.log('Making API calls...')
       const [statusResult, sessionsResult] = await Promise.all([
         ApiService.MeetingAgent.getAgentStatus(),
         ApiService.MeetingAgent.getMeetingSessions(20, 0)
       ])
-      console.log('API calls completed')
 
       setAgentStatus(statusResult)
       setSessions(sessionsResult.sessions)
@@ -247,21 +243,9 @@ export default function MeetingAgent() {
         
         // Debug participant data structure
         if (session.participants && session.participants.length > 0) {
-          console.log(`Session ${index} participants detail:`, session.participants)
           session.participants.forEach((participant, pIndex) => {
-            console.log(`  Participant ${pIndex}:`, {
-              id: participant.id,
-              name: participant.name,
-              email: participant.email,
-              role: participant.role,
-              joinTime: participant.joinTime,
-              leaveTime: participant.leaveTime,
-              duration: participant.duration,
-              fullObject: participant
-            })
           })
         } else {
-          console.log(`Session ${index} has no participants or empty array`)
         }
       })
     } catch (err) {
@@ -284,33 +268,12 @@ export default function MeetingAgent() {
       const sessionsResult = await ApiService.MeetingAgent.getMeetingSessions(20, 0)
       setSessions(sessionsResult.sessions)
       
-      // Debug: Log session data to see participants
-      console.log('Sessions refreshed:', sessionsResult.sessions)
       sessionsResult.sessions.forEach((session, index) => {
-        console.log(`Session ${index}:`, {
-          id: session.id,
-          title: session.title,
-          participants: session.participants,
-          participantsLength: session.participants?.length
-        })
-        
         // Debug participant data structure
         if (session.participants && session.participants.length > 0) {
-          console.log(`Session ${index} participants detail:`, session.participants)
           session.participants.forEach((participant, pIndex) => {
-            console.log(`  Participant ${pIndex}:`, {
-              id: participant.id,
-              name: participant.name,
-              email: participant.email,
-              role: participant.role,
-              joinTime: participant.joinTime,
-              leaveTime: participant.leaveTime,
-              duration: participant.duration,
-              fullObject: participant
-            })
           })
         } else {
-          console.log(`Session ${index} has no participants or empty array`)
         }
       })
 
@@ -328,11 +291,8 @@ export default function MeetingAgent() {
 
   useEffect(() => {
     if (!hasInitialLoad.current) {
-      console.log('useEffect triggered for loadData - first time')
       hasInitialLoad.current = true
       loadData()
-    } else {
-      console.log('useEffect triggered for loadData - skipping duplicate call')
     }
   }, [])
 
@@ -369,11 +329,9 @@ export default function MeetingAgent() {
   // Handle leaving a meeting
   const handleLeaveMeeting = async (sessionId: string) => {
     try {
-      console.log(`Attempting to leave meeting session: ${sessionId}`)
       const result = await ApiService.MeetingAgent.leaveMeeting(sessionId)
       
       if (result.success) {
-        console.log(`Successfully left meeting session: ${sessionId}`)
         toast({
           title: 'Success',
           description: `${result.message} S3 upload will be triggered automatically.`
@@ -384,7 +342,6 @@ export default function MeetingAgent() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to leave meeting'
-      console.error(`Failed to leave meeting session ${sessionId}:`, err)
       toast({
         title: 'Error',
         description: `${errorMessage}. S3 upload may not have been triggered.`,
@@ -439,11 +396,9 @@ export default function MeetingAgent() {
   // Handle bulk S3 upload
   const handleBulkS3Upload = async () => {
     try {
-      console.log('Starting bulk S3 upload for all sessions...')
       const result = await ApiService.MeetingAgent.checkAndUploadSessions()
       
       if (result.success) {
-        console.log(`Bulk S3 upload completed: ${result.uploaded_count} uploaded, ${result.failed_count} failed`)
         toast({
           title: 'Bulk Upload Complete',
           description: `Uploaded ${result.uploaded_count} sessions, ${result.failed_count} failed`
@@ -454,7 +409,6 @@ export default function MeetingAgent() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to perform bulk S3 upload'
-      console.error(`Bulk S3 upload failed: ${errorMessage}`)
       toast({
         title: 'Error',
         description: errorMessage,
@@ -466,11 +420,9 @@ export default function MeetingAgent() {
   // Handle updating session URLs from bot
   const handleUpdateSessionUrls = async (sessionId: string) => {
     try {
-      console.log(`Updating URLs for session: ${sessionId}`)
       const result = await ApiService.MeetingAgent.updateSessionUrls(sessionId)
       
       if (result.success) {
-        console.log(`Session URLs updated: video=${!!result.video_url}, transcript=${!!result.transcript_url}`)
         toast({
           title: 'URLs Updated',
           description: `Found video: ${!!result.video_url}, transcript: ${!!result.transcript_url}`
@@ -481,7 +433,6 @@ export default function MeetingAgent() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update session URLs'
-      console.error(`Update URLs failed: ${errorMessage}`)
       toast({
         title: 'Error',
         description: errorMessage,
@@ -860,12 +811,6 @@ export default function MeetingAgent() {
                                                   <div className="bg-black rounded-lg p-3 h-80 flex items-center justify-center border border-border">
                                                     {(() => {
                                                       const videoUrl = session.recallBot?.videoUrl || session.recordingUrl;
-                                                      console.log(`MeetingAgent Video URL for session ${session.id}:`, {
-                                                        recallBotVideoUrl: session.recallBot?.videoUrl,
-                                                        recordingUrl: session.recordingUrl,
-                                                        finalVideoUrl: videoUrl,
-                                                        sessionTitle: session.title
-                                                      });
                                                       return (
                                                         <video 
                                                           controls 

@@ -64,7 +64,6 @@ async function verifyPaymentSuccess(paymentIntentId: string) {
     }) as any
     
     if (response.payment_succeeded) {
-      console.log('Payment verified successfully:', response)
       return response
     } else {
       throw new Error('Payment not successful')

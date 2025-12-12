@@ -141,30 +141,24 @@ function createFormatHandlers({
   };
 
   const handleDropdownFormat = () => {
-    console.log('Dropdown format handler called');
     const hotInstance = hotTableRef.current?.hotInstance;
     if (!hotInstance) {
-      console.log('No hotInstance available');
       return;
     }
     const selected = hotInstance.getSelected();
     if (!selected || selected.length === 0) {
-      console.log('No cells selected - please select cells first');
       alert('Please select cells first before applying dropdown format.');
       return;
     }
     
-    console.log('Selection:', selected[0]);
     const [startRow, startCol, endRow, endCol] = selected[0];
     
     // Collect all unique values from the selected column(s)
     const uniqueValues = new Set<string>();
     const data = hotInstance.getData();
-    console.log('Table data length:', data.length);
     
     // For each column in selection, collect all values from that entire column
     for (let col = startCol; col <= endCol; col++) {
-      console.log(`Processing column ${col}`);
       for (let row = 0; row < data.length; row++) {
         const cellValue = data[row]?.[col];
         if (cellValue != null && cellValue !== '') {
@@ -178,17 +172,14 @@ function createFormatHandlers({
     
     // Convert to sorted array for consistent ordering
     const source = Array.from(uniqueValues).sort();
-    console.log('Generated dropdown source:', source);
     
     // Use batch operation for consistent behavior with other format handlers
     hotInstance.batch(() => {
       const finalSource = source.length > 0 ? source : ['Option 1', 'Option 2', 'Option 3'];
-      console.log('Using dropdown source:', finalSource);
       
       const next: {[key:string]: any} = { ...cellTypeMeta };
       for (let row = startRow; row <= endRow; row++) {
         for (let col = startCol; col <= endCol; col++) {
-          console.log(`Setting dropdown for cell ${row}-${col}`);
           
           // Clear any existing meta that might conflict
           hotInstance.removeCellMeta(row, col, 'type');
@@ -209,7 +200,6 @@ function createFormatHandlers({
       
       setCellTypeMeta(next);
       setHasChanges(true);
-      console.log('Dropdown format applied successfully with batch operation');
     });
   };
 

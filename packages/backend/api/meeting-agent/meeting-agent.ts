@@ -140,14 +140,12 @@ export default class MeetingAgent {
         params.append('status', status)
       }
 
-      console.log('Making API call to:', `${this.baseEndpoint}/sessions/?${params.toString()}`)
       const response = await ApiService.get<{
         sessions: MeetingSession[]
         total: number
         hasMore: boolean
       }>(`${this.baseEndpoint}/sessions/?${params.toString()}`)
       
-      console.log('API response received:', response)
       return response
     } catch (error) {
       console.error('Failed to fetch meeting sessions:', error)

@@ -9,13 +9,9 @@ export function handleToolResult({ evt, contentParts }: HandleToolResultParams):
   const matchingToolCall = toolCalls.find(tc => (tc as any).toolCallId === evt.part.toolCallId)
   if (matchingToolCall) {
     try {
-      console.log('[handleToolResult] Setting result for tool call:', evt.part.toolCallId);
-      console.log('[handleToolResult] Result type:', typeof evt.part.result);
-      console.log('[handleToolResult] Result value:', evt.part.result?.substring ? evt.part.result.substring(0, 100) : evt.part.result);
       (matchingToolCall as any).result = evt.part.result;
       // Mark this tool call as completed for proper message formatting
       (matchingToolCall as any).status = "completed";
-      console.log('[handleToolResult] Successfully set result');
     } catch (error) {
       console.error('[handleToolResult] Error setting result:', error);
       // Try alternative approach - just add the result as a new property

@@ -211,10 +211,9 @@ export default function UsingBanburyTab() {
                     maxWidth: '400px',
                     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
                   }} 
-                  onLoad={() => console.log('Chatbox image loaded successfully')}
+                  onLoad={() => {}}
                   onError={(e) => {
                     console.error('Failed to load Chatbox image:', e);
-                    console.log('Trying to load from:', e.currentTarget.src);
                     e.currentTarget.style.display = 'none';
                   }}
                 />
@@ -310,10 +309,9 @@ export default function UsingBanburyTab() {
                     maxWidth: '400px',
                     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
                   }} 
-                  onLoad={() => console.log('Chatbox2 image loaded successfully')}
+                  onLoad={() => {}}
                   onError={(e) => {
                     console.error('Failed to load Chatbox2 image:', e);
-                    console.log('Trying to load from:', e.currentTarget.src);
                     e.currentTarget.style.display = 'none';
                   }}
                 />
@@ -356,10 +354,9 @@ export default function UsingBanburyTab() {
                     maxWidth: '400px',
                     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
                   }} 
-                  onLoad={() => console.log('Composer with attached file image loaded successfully')}
+                  onLoad={() => {}}
                   onError={(e) => {
                     console.error('Failed to load composer-with-attached-file image:', e);
-                    console.log('Trying to load from:', e.currentTarget.src);
                     e.currentTarget.style.display = 'none';
                   }}
                 />
@@ -402,10 +399,9 @@ export default function UsingBanburyTab() {
                     maxWidth: '400px',
                     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
                   }} 
-                  onLoad={() => console.log('Composer tool toggling image loaded successfully')}
+                  onLoad={() => {}}
                   onError={(e) => {
                     console.error('Failed to load composer-tool-toggling image:', e);
-                    console.log('Trying to load from:', e.currentTarget.src);
                     e.currentTarget.style.display = 'none';
                   }}
                 />

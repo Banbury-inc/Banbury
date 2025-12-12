@@ -25,7 +25,7 @@ const Terms_of_use = (): JSX.Element => {
       },
     }).then((response) => {
       setProducts(response.data);
-    }).catch((error) => console.log(error));
+    }).catch(() => {});
   };
 
 

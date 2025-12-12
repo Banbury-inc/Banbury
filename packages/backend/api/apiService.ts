@@ -119,8 +119,6 @@ export class ApiService {
       if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
-    } else {
-      console.log('No auth token available - not in browser environment');
     }
   }
 
@@ -347,7 +345,6 @@ export class ApiService {
       });
     } catch (error) {
       // Silently fail for tracking - this is non-critical
-      console.debug('Page tracking failed:', error);
     }
   }
 
@@ -373,7 +370,7 @@ export class ApiService {
       try {
         await this.trackPageView(trackingData.path, trackingData.ip_address);
       } catch (fallbackError) {
-        console.debug('Both enhanced and legacy page tracking failed:', error, fallbackError);
+        // Both enhanced and legacy page tracking failed
       }
     }
   }
@@ -583,8 +580,6 @@ export class ApiService {
       // Ensure token is loaded
       this.loadAuthToken();
       
-      console.log('[getPresignedUrl] Getting presigned URL for file:', fileId);
-      
       const response = await axios({
         method: 'get',
         url: `${this.baseURL}/files/download_s3_file/${encodeURIComponent(fileId)}/`,
@@ -594,19 +589,15 @@ export class ApiService {
         }
       });
       
-      console.log('[getPresignedUrl] Backend response:', response.data);
-      
       // Check if it's a JSON response with a URL
       if (response.data && (response.data.url || response.data.download_url || response.data.presigned_url)) {
         const presignedUrl = response.data.url || response.data.download_url || response.data.presigned_url;
-        console.log('[getPresignedUrl] Got presigned URL:', presignedUrl);
         
         return {
           success: true,
           url: presignedUrl
         };
       } else {
-        console.log('[getPresignedUrl] No presigned URL in response, data:', response.data);
         return {
           success: false,
           error: 'No presigned URL found in response'
@@ -634,13 +625,10 @@ export class ApiService {
       // Ensure token is loaded
       this.loadAuthToken();
       
-      console.log('[getVideoStreamUrl] Getting video stream for file:', fileId);
-      
       // Use the existing downloadS3File method which handles the backend proxy
       const result = await Files.downloadS3File(fileId, 'video.mp4');
       
       if (result.success && result.url) {
-        console.log('[getVideoStreamUrl] Video stream URL created:', result.url);
         return {
           success: true,
           url: result.url

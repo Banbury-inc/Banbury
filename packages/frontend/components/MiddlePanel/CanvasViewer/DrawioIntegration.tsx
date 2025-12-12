@@ -67,7 +67,6 @@ export const DrawioIntegration: React.FC<DrawioIntegrationProps> = ({
   useEffect(() => {
     const handleDrawioEvent = (event: CustomEvent) => {
       const { detail } = event;
-      console.log('Draw.io event:', detail);
       // Handle events from DrawioAITool or other components
       // This could trigger refreshing files, showing notifications, etc.
     };

@@ -304,11 +304,9 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
           break
         case 'edit':
           // TODO: Implement draft editing - open in composer
-          console.log('Edit draft:', messageId)
           break
         case 'send':
           // TODO: Implement draft sending
-          console.log('Send draft:', messageId)
           break
       }
       

@@ -380,7 +380,6 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       if (!result.success || !result.conversation) return;
 
       const conversation = result.conversation;
-      console.log('Loading conversation:', conversation);
 
       // Prepare attachments and tool preferences
       if (conversation.metadata?.attachedFiles) {
@@ -532,8 +531,6 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     }
     
     const handleRunEnd = async () => {
-      console.log('🔄 Auto-save triggered');
-      
       // Wait a bit for messages to be processed and added to runtime
       const waitForMessages = async (maxAttempts = 10) => {
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -559,15 +556,12 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         
         // Only auto-save if we have messages
         if (messages.length === 0) {
-          console.log('❌ No messages to save');
           return;
         }
         
         // Find the first user message to use as title
         const firstUserMessage = messages.find((msg: any) => msg.role === 'user');
-        console.log('👤 First user message found:', !!firstUserMessage);
         if (!firstUserMessage) {
-          console.log('❌ No user message found');
           return;
         }
         
@@ -608,10 +602,8 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
           return convTextContent === currentTextContent;
         });
         
-        console.log('🔍 Checking for existing conversation...');
         if (existingConversation) {
-          console.log('📝 Updating existing conversation:', existingConversation._id);
-                  // Update existing conversation
+          // Update existing conversation
         const result = await ApiService.Conversations.updateConversation(existingConversation._id, {
           title,
           messages,
@@ -622,12 +614,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
             lastUpdated: new Date().toISOString()
           }
         });
-          
-          if (result.success) {
-            console.log('Conversation auto-updated:', existingConversation._id);
-          }
         } else {
-          console.log('🆕 Creating new conversation');
           // Create new conversation
           const result = await ApiService.Conversations.saveConversation({
             title,
@@ -641,7 +628,6 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
           });
           
           if (result.success) {
-            console.log('Conversation auto-saved:', result.conversation_id);
             await loadConversations();
           }
         }

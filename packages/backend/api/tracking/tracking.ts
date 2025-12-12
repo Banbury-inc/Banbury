@@ -26,7 +26,6 @@ export default class Tracking {
             ip_address = ipResponse.ip;
         } catch (ipError) {
             // If IP lookup fails, continue with 'Unknown'
-            console.debug('IP lookup failed, continuing without IP tracking');
         }
 
         // Extract referrer information from URL parameters

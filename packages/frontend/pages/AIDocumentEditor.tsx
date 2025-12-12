@@ -66,7 +66,6 @@ export const AIDocumentEditor: React.FC = () => {
 
   const handleExportDocx = () => {
     // This would integrate with a DOCX export library
-    console.log('Exporting to DOCX...');
     // TODO: Implement DOCX export using docx library
   };
 

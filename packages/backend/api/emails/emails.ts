@@ -30,33 +30,22 @@ export default class Emails {
 
   static async searchEmails(query: string): Promise<any> {
     try {
-      console.log('Searching emails with query:', query);
-      
       // First get the message list (basic metadata)
       const listResponse = await ApiService.get<any>(`/authentication/gmail/list_messages/?q=${encodeURIComponent(query)}&maxResults=10`);
       
-      console.log('Gmail API response:', listResponse);
-      
       if (!listResponse.messages || listResponse.messages.length === 0) {
-        console.log('No messages found in response');
         return { messages: [] };
       }
-
-      console.log('Found messages:', listResponse.messages.length);
       
       // Extract message IDs and get full details using batch endpoint
       const messageIds = listResponse.messages.map((msg: any) => msg.id);
-      console.log('Fetching full details for message IDs:', messageIds);
       
       const batchResponse = await ApiService.post<any>('/authentication/gmail/messages/batch', {
         messageIds: messageIds
       });
       
-      console.log('Batch response:', batchResponse);
-      
       // Convert the batch response format to match expected format
       const fullMessages = Object.values(batchResponse.messages || {});
-      console.log('Successfully fetched full details for:', fullMessages.length, 'messages');
       
       return {
         messages: fullMessages,

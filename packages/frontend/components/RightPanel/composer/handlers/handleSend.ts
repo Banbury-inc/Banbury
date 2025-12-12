@@ -134,10 +134,8 @@ export function handleSend({ composer, onSend }: HandleSendParams) {
     const combinedContext = [documentContent, emailDocBlock].filter(Boolean).join('\n\n')
     if (combinedContext) {
       localStorage.setItem('pendingDocumentContext', combinedContext)
-      console.log('[Composer.tsx] DEBUG - BEFORE SEND - SET pendingDocumentContext to:', combinedContext.slice(0, 200))
     } else {
       localStorage.removeItem('pendingDocumentContext')
-      console.log('[Composer.tsx] DEBUG - BEFORE SEND - REMOVED pendingDocumentContext')
     }
   } catch (error) {
     console.error('[Composer.tsx] DEBUG - Error in email merge:', error)

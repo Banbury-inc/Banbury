@@ -63,7 +63,7 @@ const meta: Meta<typeof SpreadsheetViewer> = {
       username: 'testuser',
       email: 'test@example.com'
     },
-    onSaveComplete: () => console.log('Save completed')
+    onSaveComplete: () => {}
   },
   parameters: {
     layout: 'fullscreen'

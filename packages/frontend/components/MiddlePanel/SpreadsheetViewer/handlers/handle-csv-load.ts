@@ -103,18 +103,15 @@ export function createCSVLoadHandler({
       }
       
       const parseXlsx = async (blob: Blob) => {
-        console.log('parseXlsx: Starting to parse XLSX, blob size:', blob.size, 'type:', blob.type)
         const ExcelJSImport = await import('exceljs')
         const ExcelJS = (ExcelJSImport as any).default || ExcelJSImport
         const wb = new ExcelJS.Workbook()
         const ab = await blob.arrayBuffer()
-        console.log('parseXlsx: ArrayBuffer size:', ab.byteLength)
         
         // Check if this might be an error response instead of XLSX
         if (ab.byteLength < 1000) {
           const decoder = new TextDecoder()
           const text = decoder.decode(ab)
-          console.log('parseXlsx: Small file, checking if it\'s text:', text.substring(0, 200))
           
           // Check if it's JSON error
           try {
@@ -319,13 +316,10 @@ export function createCSVLoadHandler({
       }
 
       const needsXlsx = async (name: string, blob?: Blob) => {
-        console.log('needsXlsx: checking name:', name, 'blob type:', blob?.type)
         if (name.toLowerCase().endsWith('.xlsx')) {
-          console.log('needsXlsx: true - file ends with .xlsx')
           return true
         }
         if (blob && /spreadsheetml|officedocument\.spreadsheetml\.sheet/i.test(blob.type)) {
-          console.log('needsXlsx: true - blob type matches xlsx')
           return true
         }
         if (blob) {
@@ -333,20 +327,17 @@ export function createCSVLoadHandler({
             const header = new Uint8Array(await blob.slice(0, 4).arrayBuffer())
             // XLSX is a ZIP: PK\x03\x04
             if (header.length >= 4 && header[0] === 0x50 && header[1] === 0x4b && header[2] === 0x03 && header[3] === 0x04) {
-              console.log('needsXlsx: true - file header is ZIP/XLSX')
               return true
             }
           } catch (e) {
-            console.log('needsXlsx: error checking header:', e)
+            // Error checking header
           }
         }
-        console.log('needsXlsx: false - not an xlsx file')
         return false
       }
 
       if (srcBlob) {
         const isXlsx = await needsXlsx(fileName || '', srcBlob)
-        console.log('handle-csv-load: srcBlob provided, isXlsx:', isXlsx, 'fileName:', fileName)
         if (isXlsx) {
           await parseXlsx(srcBlob)
         } else {

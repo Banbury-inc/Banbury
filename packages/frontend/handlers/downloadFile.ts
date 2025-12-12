@@ -15,7 +15,6 @@ export async function downloadFile(username: string | undefined, fileInfo: any, 
   // Step 3: Checking if device is online
   const online = device_info.online;
   if (!online) {
-    console.log("Device is offline");
     onProgress?.(2, "Device is offline"); // Report error at step 2
     return null;
   }
@@ -46,28 +45,20 @@ export async function downloadFile(username: string | undefined, fileInfo: any, 
         
         const handleFileData = (event: MessageEvent) => {
           // Add detailed logging for all incoming messages
-          console.log("=== WebSocket Message Received ===");
-          console.log("Raw event:", event);
-          console.log("Message type:", typeof event.data);
-          
           const data = event.data;
           
           if (data instanceof ArrayBuffer) {
             // Handle binary chunk
-            console.log("Received binary chunk of size:", data.byteLength, "bytes");
             chunks.push(data);
           } else {
             // Handle potential control messages
             const message = JSON.parse(data);
-            console.log("Received JSON message:", message);
             if (message.message === 'File transfer complete') {
-              console.log("Transfer complete! Total chunks received:", chunks.length);
               // Combine all chunks into a single Blob
               const blob = new Blob(chunks, { type: 'application/octet-stream' });
               webSocketService.removeEventListener('message', handleFileData);
               resolve(blob);
             } else if (message.type === 'transfer-error') {
-              console.log("Transfer error received:", message.error);
               webSocketService.removeEventListener('message', handleFileData);
               reject(new Error(message.error || 'File transfer failed'));
             }
@@ -86,7 +77,6 @@ export async function downloadFile(username: string | undefined, fileInfo: any, 
           file_path: fileInfo.file_path,
           requesting_device_name: device_info.device_name,
         });
-        console.log("Request sent to download file");
       });
 
       const fileBlob = await fileDownloadPromise;

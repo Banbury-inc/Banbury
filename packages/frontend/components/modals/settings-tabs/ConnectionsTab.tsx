@@ -13,9 +13,7 @@ export function ConnectionsTab() {
          Connections 
         </h2>
         <ScopeManager 
-          onFeatureActivated={(feature: string) => {
-            console.log(`Feature activated: ${feature}`)
-          }}
+          onFeatureActivated={() => {}}
         />
       </div>
       <div className="space-y-4">

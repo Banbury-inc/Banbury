@@ -89,7 +89,6 @@ export async function createStagehandSession(options?: {
 
 export function getStagehandSession(id: string): Stagehand | null {
   const sess = sessions.get(id);
-  console.log('getStagehandSession', sess);
   return sess ? sess.instance : null;
 }
 

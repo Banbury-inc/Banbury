@@ -30,7 +30,7 @@ const Services = (): JSX.Element => {
       .then((response) => {
         setServices(response.data);
       })
-      .catch((error) => console.log(error));
+      .catch(() => {});
   };
 
   useEffect(() => {

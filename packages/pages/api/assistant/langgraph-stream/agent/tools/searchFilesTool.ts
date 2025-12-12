@@ -12,8 +12,6 @@ export const searchFilesTool = tool(
     if (!token) {
       throw new Error("Missing auth token in server context")
     }
-
-    console.log(`Searching files with query: ${input.query}`)
     
     const response = await fetch(`${apiBase}/files/search_s3_files/`, {
       method: 'POST',

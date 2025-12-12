@@ -194,7 +194,6 @@ export function useLangGraphAssistant(initialThreadId?: string) {
 
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.log('Request aborted');
         return;
       }
 

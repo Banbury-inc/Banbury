@@ -41,8 +41,6 @@ export default class Debug {
           available: false,
           error: error instanceof Error ? error.message : 'Unknown error'
         };
-
-        console.log(`❌ ${endpoint}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 
@@ -83,15 +81,12 @@ export default class Debug {
             };
           }
         } catch (endpointError) {
-          console.log(`⚠️ Endpoint ${endpoint || 'root'} failed: ${endpointError instanceof Error ? endpointError.message : 'Unknown error'}`);
           continue;
         }
       }
       
       throw new Error('All connectivity tests failed');
     } catch (error) {
-      console.log(`❌ API Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      
       return {
         available: false,
         error: error instanceof Error ? error.message : 'Unknown error'

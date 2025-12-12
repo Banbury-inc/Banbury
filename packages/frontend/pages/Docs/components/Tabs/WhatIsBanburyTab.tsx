@@ -33,10 +33,8 @@ export default function WhatIsBanburyTab() {
                     maxWidth: '100%',
                     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
                   }} 
-                  onLoad={() => console.log('Chatbox image loaded successfully')}
                   onError={(e) => {
                     console.error('Failed to load Chatbox image:', e);
-                    console.log('Trying to load from:', e.currentTarget.src);
                     e.currentTarget.style.display = 'none';
                   }}
                 />

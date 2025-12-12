@@ -81,7 +81,6 @@ export function getDocumentContext(): string {
         
         if (textContent.trim().length > 20) {
           documentContext = `\n\nCurrent document content:\n${textContent}`;
-          console.log('[getDocumentContext] Got current editor content:', documentContext.slice(0, 200));
           return documentContext;
         }
       }
@@ -89,12 +88,9 @@ export function getDocumentContext(): string {
     
     // Fallback: Check localStorage for pending document context (for backwards compatibility)
     documentContext = localStorage.getItem('pendingDocumentContext') || '';
-    console.log('[getDocumentContext] Read pendingDocumentContext from localStorage:', documentContext.slice(0, 200));
     
     if (documentContext) {
       localStorage.removeItem('pendingDocumentContext'); // Clean up after reading
-    } else {
-      console.log('[getDocumentContext] No document context found');
     }
   } catch (error) {
     console.error('[getDocumentContext] Error getting document context:', error);

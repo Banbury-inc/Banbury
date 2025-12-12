@@ -46,8 +46,6 @@ export const downloadFromUrlTool = tool(
     if (!token) {
       throw new Error("Missing auth token in server context")
     }
-
-    console.log(`Downloading file from URL: ${input.url}`)
     
     // Download the file from the URL
     const response = await fetch(input.url)

@@ -426,7 +426,6 @@ export async function handleSpreadsheetSave({
           columnWidths: columnWidths || {}
         };
       }
-      console.log('Saving multi-sheet workbook:', updatedSheets.map(s => s.name));
       xlsxBlob = await convertMultiSheetToXLSX(updatedSheets);
     } else {
       xlsxBlob = await convertToXLSX(latestData, cellFormats, cellStyles, cellTypeMeta, columnWidths, conditionalFormatting, undefined, cellLinks);
@@ -446,13 +445,11 @@ export async function handleSpreadsheetSave({
     
     // Save to Google Drive or S3 depending on file type
     if (isDriveFile && isGoogleSheet) {
-      console.log('SpreadsheetViewer: Saving to Google Drive:', currentFile.file_id);
       await ApiService.Drive.updateFile(
         currentFile.file_id,
         xlsxBlob,
         fileName
       );
-      console.log('SpreadsheetViewer: Google Drive save successful');
       
       // Call the save complete callback to refresh the sidebar
       onSaveComplete?.();

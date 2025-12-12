@@ -28,14 +28,11 @@ export async function uploadMeetingVideoToS3(
     const videoUrl = session.recallBot?.videoUrl || session.recordingUrl
     
     if (!videoUrl) {
-      console.log('No video URL available for session:', session.id)
       return {
         success: false,
         error: 'No video recording available for this session'
       }
     }
-
-    console.log('Attempting to download video from URL:', videoUrl)
 
     // Try to download the video file
     const response = await fetch(videoUrl)
@@ -48,8 +45,6 @@ export async function uploadMeetingVideoToS3(
       type: 'video/mp4'
     })
 
-    console.log('Video file created, size:', videoFile.size)
-
     // Upload to S3 using the general upload endpoint
     const uploadResult = await ApiService.MeetingAgent.uploadFileToS3(
       videoFile,
@@ -58,8 +53,6 @@ export async function uploadMeetingVideoToS3(
       '',
       onProgress
     )
-
-    console.log('Video upload result:', uploadResult)
 
     return {
       success: uploadResult.success,
@@ -86,11 +79,8 @@ export async function uploadMeetingTranscriptToS3(
     let transcriptContent: string
     let fileName: string
 
-    console.log('Starting transcript upload for session:', session.id)
-
     // Check if we have transcript from Recall AI
     if (session.recallBot?.transcriptUrl) {
-      console.log('Using Recall AI transcript URL:', session.recallBot.transcriptUrl)
       // Download transcript from Recall AI
       const response = await fetch(session.recallBot.transcriptUrl)
       if (!response.ok) {
@@ -99,19 +89,16 @@ export async function uploadMeetingTranscriptToS3(
       transcriptContent = await response.text()
       fileName = `${session.id}_transcript.json`
     } else if (session.transcriptionText) {
-      console.log('Using existing transcription text')
       // Use existing transcription text
       transcriptContent = session.transcriptionText
       fileName = `${session.id}_transcript.txt`
     } else {
-      console.log('Fetching transcript from API')
       // Try to fetch transcript from our API
       try {
         const transcriptData = await ApiService.MeetingAgent.getTranscription(session.id)
         transcriptContent = transcriptData.fullText || JSON.stringify(transcriptData.segments, null, 2)
         fileName = `${session.id}_transcript.txt`
       } catch (error) {
-        console.log('No transcript available from API')
         return {
           success: false,
           error: 'No transcript available for this session'
@@ -119,15 +106,11 @@ export async function uploadMeetingTranscriptToS3(
       }
     }
 
-    console.log('Transcript content length:', transcriptContent.length)
-
     // Create a text file from the transcript content
     const transcriptBlob = new Blob([transcriptContent], { type: 'text/plain' })
     const transcriptFile = new File([transcriptBlob], fileName, {
       type: 'text/plain'
     })
-
-    console.log('Transcript file created, size:', transcriptFile.size)
 
     // Upload to S3 using the general upload endpoint
     const uploadResult = await ApiService.MeetingAgent.uploadFileToS3(
@@ -137,8 +120,6 @@ export async function uploadMeetingTranscriptToS3(
       '',
       onProgress
     )
-
-    console.log('Transcript upload result:', uploadResult)
 
     return {
       success: uploadResult.success,
@@ -161,8 +142,6 @@ export async function uploadMeetingAssetsToS3(
   session: MeetingSession,
   onProgress?: (progress: UploadProgress) => void
 ): Promise<UploadResult> {
-  console.log('Starting upload for session:', session.id)
-  
   const progress: UploadProgress = {
     videoProgress: 0,
     transcriptProgress: 0,
@@ -187,8 +166,6 @@ export async function uploadMeetingAssetsToS3(
 
     const videoUpload = videoResult.status === 'fulfilled' ? videoResult.value : { success: false, error: 'Video upload failed' }
     const transcriptUpload = transcriptResult.status === 'fulfilled' ? transcriptResult.value : { success: false, error: 'Transcript upload failed' }
-
-    console.log('Upload results:', { videoUpload, transcriptUpload })
 
     progress.isUploading = false
 
@@ -241,10 +218,6 @@ export async function uploadMeetingAssetsToS3(
  * Checks if a meeting session has ended and bot has left
  */
 export function hasMeetingEnded(session: MeetingSession): boolean {
-  console.log('Checking if meeting ended for session:', session.id)
-  console.log('Session status:', session.status)
-  console.log('Recall bot status:', session.recallBot?.status)
-  
   // Check if the session status indicates it's completed
   const isCompleted = ['completed', 'failed'].includes(session.status)
   
@@ -255,7 +228,6 @@ export function hasMeetingEnded(session: MeetingSession): boolean {
   
   // For testing, let's be more permissive - allow uploads for any session with assets
   const result = isCompleted && botHasLeft
-  console.log('Meeting ended result:', result)
   
   return result
 }
@@ -267,12 +239,7 @@ export function hasUploadableAssets(session: MeetingSession): boolean {
   const hasVideo = !!(session.recallBot?.videoUrl || session.recordingUrl)
   const hasTranscript = !!(session.recallBot?.transcriptUrl || session.transcriptionText)
   
-  console.log('Checking uploadable assets for session:', session.id)
-  console.log('Has video:', hasVideo, 'videoUrl:', session.recallBot?.videoUrl || session.recordingUrl)
-  console.log('Has transcript:', hasTranscript, 'transcriptUrl:', session.recallBot?.transcriptUrl, 'transcriptionText:', !!session.transcriptionText)
-  
   const result = hasVideo || hasTranscript
-  console.log('Has uploadable assets result:', result)
   
   return result
 }

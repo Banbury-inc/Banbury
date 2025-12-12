@@ -28,17 +28,13 @@ export const TldrawContextToolbar = track(({
   // Only show toolbar when in select.idle state
   const showToolbar = editor.isIn('select.idle');
   if (!showToolbar) {
-    console.log('[TldrawContextToolbar] Not showing - editor not in select.idle state');
     return null;
   }
 
   const selectedShapeIds = editor.getSelectedShapeIds();
   if (selectedShapeIds.length === 0) {
-    console.log('[TldrawContextToolbar] Not showing - no shapes selected');
     return null;
   }
-
-  console.log('[TldrawContextToolbar] Showing toolbar for', selectedShapeIds.length, 'selected shapes');
 
   const selectionRotatedPageBounds = editor.getSelectionRotatedPageBounds();
   if (!selectionRotatedPageBounds) return null;

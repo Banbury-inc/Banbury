@@ -36,7 +36,7 @@ const Contact = (): JSX.Element => {
       .then((response) => {
         setContact(response.data);
       })
-      .catch((error) => console.log(error));
+      .catch(() => {});
   };
 
   useEffect(() => {

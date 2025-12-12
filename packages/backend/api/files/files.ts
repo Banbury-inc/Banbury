@@ -192,8 +192,6 @@ export default class Files {
       // Ensure token is loaded
       ApiService.loadAuthToken();
       
-      console.log(`Downloading file from URL: ${url}`);
-      
       // Download the file from the URL
       const response = await fetch(url);
       if (!response.ok) {
@@ -594,8 +592,6 @@ export default class Files {
       // Ensure token is loaded
       ApiService.loadAuthToken();
       
-      console.log('[downloadS3File] Downloading file:', fileId, 'fileName:', fileName);
-      
       // Always request as blob first
       const response = await axios({
         method: 'get',
@@ -615,10 +611,8 @@ export default class Files {
           
           if (jsonData && (jsonData.url || jsonData.download_url || jsonData.presigned_url)) {
             const downloadUrl = jsonData.url || jsonData.download_url || jsonData.presigned_url;
-            console.log('[downloadS3File] Got presigned URL, following redirect:', downloadUrl);
             
             // Download from the presigned URL using fetch to avoid axios interceptors
-            console.log('[downloadS3File] Downloading from S3 URL:', downloadUrl);
             const realFileResponse = await fetch(downloadUrl, {
               method: 'GET',
               // Don't include any Authorization headers
@@ -629,7 +623,6 @@ export default class Files {
             }
             
             const realBlob = await realFileResponse.blob();
-            console.log('[downloadS3File] Real file downloaded, size:', realBlob.size);
             
             const url = window.URL.createObjectURL(realBlob);
             return {
@@ -640,13 +633,12 @@ export default class Files {
             };
           }
         } catch (jsonError) {
-          console.log('[downloadS3File] Failed to parse as JSON, treating as blob:', jsonError);
+          // Failed to parse as JSON, treating as blob
         }
       }
       
       // Preserve server-provided content-type for correct handling (e.g., XLSX)
       const incomingBlob = response.data as Blob;
-      console.log('[downloadS3File] Blob size:', incomingBlob.size, 'type:', incomingBlob.type);
       
       const serverType = contentType || '';
       const type = (incomingBlob && (incomingBlob as any).type) || serverType || 'application/octet-stream';

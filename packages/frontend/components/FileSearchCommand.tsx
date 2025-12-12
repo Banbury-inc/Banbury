@@ -109,16 +109,12 @@ export function FileSearchCommand({ open, onOpenChange, onFileSelect }: FileSear
       // Call the backend endpoint /files/search_s3_files/ to search for files
       const response = await ApiService.searchS3Files(searchQuery)
       
-      console.log('File search response:', response)
-      
       // Backend returns: { result: "success", files: [...], query: "...", total_results: N }
       if (response && response.result === 'success') {
         const files = response.files || []
-        console.log('Files found:', files.length, files)
         setResults(files)
       } else {
         // Handle error response from backend
-        console.log('No success result or error:', response)
         setResults([])
       }
     } catch (error) {

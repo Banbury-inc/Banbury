@@ -40,7 +40,6 @@ export async function mockUpdateFile(
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 800))
   
-  console.log('Mock: Updated Drive file', fileId, fileName)
   return { success: true }
 }
 

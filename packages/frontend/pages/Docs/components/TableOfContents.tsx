@@ -14,9 +14,6 @@ interface TableOfContentsProps {
 export default function TableOfContents({ headings }: TableOfContentsProps) {
   const [activeHeading, setActiveHeading] = useState<string>('')
 
-  // Debug: Log headings received
-  console.log('TableOfContents received headings:', headings)
-
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {

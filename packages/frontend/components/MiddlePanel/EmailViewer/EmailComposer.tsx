@@ -148,12 +148,9 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
   const fetchSignature = useCallback(async () => {
     setLoadingSignature(true)
     try {
-      console.log('Fetching signature...')
       const response = await ApiService.Emails.getSignature()
-      console.log('Signature response:', response)
       
       if (response.result === "success" && response.signature) {
-        console.log('Setting signature:', response.signature)
         const cleanedSignature = cleanSignature(response.signature)
         setSignature(cleanedSignature)
         
@@ -161,8 +158,6 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
         if (!replyTo && isContentEmpty(form.body)) {
           setForm(prev => ({ ...prev, body: cleanedSignature }))
         }
-      } else {
-        console.log('No signature available or error:', response)
       }
     } catch (error) {
       console.warn('Failed to fetch signature:', error)

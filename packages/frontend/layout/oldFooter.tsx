@@ -24,7 +24,7 @@ const Footer = (): JSX.Element => {
       .then((response) => {
         setFooter(response.data);
       })
-      .catch((error) => console.log(error));
+      .catch(() => {});
   };
 
   useEffect(() => {

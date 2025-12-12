@@ -346,16 +346,8 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
         return
       }
 
-      console.log('EmailViewer: Loading email:', {
-        id: email.id,
-        threadId: email.threadId,
-        subject: getHeader('Subject'),
-        from: getHeader('From')
-      })
-
       // If no threadId, try to find related messages by subject or just show single email
       if (!email.threadId) {
-        console.log('No threadId found, attempting to find related emails by subject')
         
         // Try to find related emails by subject
         try {
@@ -363,7 +355,6 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
           if (subject && subject !== 'Unknown') {
             // Remove "Re:" prefix for search
             const cleanSubject = subject.replace(/^Re:\s*/i, '')
-            console.log('Searching for related emails with subject:', cleanSubject)
             
             const searchResult = await ApiService.Emails.listMessages({
               q: `subject:"${cleanSubject}"`,
@@ -371,7 +362,6 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
             })
             
             if (searchResult.messages && searchResult.messages.length > 1) {
-              console.log('Found related emails by subject:', searchResult.messages.length)
               // Load full messages for the related emails
               const messageIds = searchResult.messages.map(m => m.id)
               const batch = await ApiService.Emails.getMessagesBatch(messageIds)
@@ -381,7 +371,6 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                 .sort((a: any, b: any) => Number(a.internalDate || 0) - Number(b.internalDate || 0))
               
               if (fullMessages.length > 1) {
-                console.log('Loaded related emails:', fullMessages.length)
                 setThreadMessages(fullMessages)
                 return
               }
@@ -391,29 +380,24 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
           console.error('Error searching for related emails:', error)
         }
         
-        console.log('No related emails found, showing single email')
         setThreadMessages([email])
         return
       }
       
       try {
         setThreadLoading(true)
-        console.log('Loading thread for threadId:', email.threadId)
         
         // Get thread metadata (ids in the thread)
         const thread: any = await ApiService.Emails.getThread(email.threadId)
-        console.log('Thread response:', thread)
         
         const ids: string[] = (thread?.messages || thread?.thread?.messages || [])
           .map((m: any) => (m.id ? m.id : m.messageId ? m.messageId : m))
           .filter(Boolean)
 
-        console.log('Found message IDs in thread:', ids)
 
         if (ids && ids.length > 1) {
           // Fetch full messages in batch for rendering contents
           const batch = await ApiService.Emails.getMessagesBatch(ids)
-          console.log('Batch response:', batch)
           
           const fullMessages: any[] = ids
             .map((id) => batch?.messages?.[id])
@@ -421,10 +405,8 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
             // Sort by internalDate ascending (oldest first)
             .sort((a: any, b: any) => Number(a.internalDate || 0) - Number(b.internalDate || 0))
           
-          console.log('Full messages loaded:', fullMessages.length)
           setThreadMessages(fullMessages.length > 0 ? fullMessages : [email])
         } else {
-          console.log('Single message in thread or no message IDs found, showing single email')
           setThreadMessages([email])
         }
       } catch (e) {
@@ -436,7 +418,6 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
           if (subject && subject !== 'Unknown') {
             // Remove "Re:" prefix for search
             const cleanSubject = subject.replace(/^Re:\s*/i, '')
-            console.log('Fallback: Searching for related emails with subject:', cleanSubject)
             
             const searchResult = await ApiService.Emails.listMessages({
               q: `subject:"${cleanSubject}"`,
@@ -444,7 +425,6 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
             })
             
             if (searchResult.messages && searchResult.messages.length > 1) {
-              console.log('Fallback: Found related emails by subject:', searchResult.messages.length)
               // Load full messages for the related emails
               const messageIds = searchResult.messages.map(m => m.id)
               const batch = await ApiService.Emails.getMessagesBatch(messageIds)
@@ -454,7 +434,6 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                 .sort((a: any, b: any) => Number(a.internalDate || 0) - Number(b.internalDate || 0))
               
               if (fullMessages.length > 1) {
-                console.log('Fallback: Loaded related emails:', fullMessages.length)
                 setThreadMessages(fullMessages)
                 return
               }
@@ -464,7 +443,6 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
           console.error('Fallback search also failed:', fallbackError)
         }
         
-        console.log('All thread loading methods failed, showing single email')
         setThreadMessages([email])
       } finally {
         setThreadLoading(false)

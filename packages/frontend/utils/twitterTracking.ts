@@ -33,7 +33,6 @@ export function trackTwitterEvent(eventId: string, params: TwitterEventParams = 
   if (typeof window !== 'undefined' && window.twq) {
     try {
       window.twq('event', eventId, params);
-      console.log('Twitter event tracked:', eventId, params);
     } catch (error) {
       console.error('Error tracking Twitter event:', error);
     }

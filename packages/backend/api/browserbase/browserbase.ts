@@ -13,30 +13,22 @@ export default class Browserbase {
 
   static async createSession(startUrl?: string): Promise<{ success: boolean; session?: BrowserbaseSessionResult; error?: string }> {
     try {
-      console.log('[BrowserbaseService] Creating session with startUrl:', startUrl);
-      
       // Prefer backend endpoint (authentication namespace) so allowlist applies
       let respData: any;
       let lastError: any;
       
       try {
-        console.log('[BrowserbaseService] Trying authentication endpoint...');
         respData = await ApiService.post<any>('/authentication/browserbase/session/', { startUrl });
       } catch (e: any) {
-        console.log('[BrowserbaseService] Authentication endpoint failed:', e?.response?.data || e?.message);
         lastError = e;
         
         // Fallback to legacy path if configured
         try {
-          console.log('[BrowserbaseService] Trying fallback endpoint...');
           respData = await ApiService.post<any>('/browserbase/session/', { startUrl });
         } catch (fallbackError: any) {
-          console.log('[BrowserbaseService] Fallback endpoint also failed:', fallbackError?.response?.data || fallbackError?.message);
           throw lastError; // Use the original error
         }
       }
-      
-      console.log('[BrowserbaseService] Response received:', respData);
       
       if (!respData || typeof respData !== 'object') {
         return { success: false, error: 'Invalid response from server' };
@@ -66,16 +58,12 @@ export default class Browserbase {
       
       if (!session.viewerUrl && !session.embedUrl) {
         // If backend is not available or didn't return embed, fallback to webview
-        console.log('[BrowserbaseService] No viewer URL received, using fallback');
         const fallbackUrl = startUrl || 'https://news.google.com';
         return { success: true, session: { id: 'webview-fallback', viewerUrl: fallbackUrl } };
       }
       
-      console.log('[BrowserbaseService] Session created successfully:', session.id);
-      
       // If a custom startUrl was provided and it's not the default, navigate to it
       if (startUrl && startUrl !== 'https://www.google.com') {
-        console.log(`[BrowserbaseService] Navigating to custom start URL: ${startUrl}`);
         const navResult = await this.navigateSession(session.id, startUrl);
         if (!navResult.success) {
           console.warn(`[BrowserbaseService] Failed to navigate to ${startUrl}:`, navResult.error);
@@ -89,7 +77,6 @@ export default class Browserbase {
       
       // Only fallback to direct webview if route is missing (404). Do NOT fallback on 401.
       if (e?.response?.status === 404) {
-        console.log('[BrowserbaseService] 404 error, using webview fallback');
         const fallbackUrl = startUrl || 'https://news.google.com';
         return { success: true, session: { id: 'webview-fallback', viewerUrl: fallbackUrl } };
       }
@@ -102,8 +89,6 @@ export default class Browserbase {
 
   static async navigateSession(sessionId: string, url: string): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      console.log(`[BrowserbaseService] Navigating session ${sessionId} to ${url}`);
-      
       const respData = await ApiService.post<any>('/browserbase/navigate/', {
         sessionId,
         url
@@ -123,8 +108,6 @@ export default class Browserbase {
 
   static async clickElement(sessionId: string, selector: string): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      console.log(`[BrowserbaseService] Clicking element ${selector} in session ${sessionId}`);
-      
       const respData = await ApiService.post<any>('/browserbase/click/', {
         sessionId,
         selector
@@ -144,8 +127,6 @@ export default class Browserbase {
 
   static async takeScreenshot(sessionId: string, fullPage: boolean = false): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      console.log(`[BrowserbaseService] Taking screenshot of session ${sessionId}`);
-      
       const respData = await ApiService.post<any>('/browserbase/screenshot/', {
         sessionId,
         fullPage
@@ -165,8 +146,6 @@ export default class Browserbase {
 
   static async typeText(sessionId: string, selector: string, text: string): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      console.log(`[BrowserbaseService] Typing text into ${selector} in session ${sessionId}`);
-      
       const respData = await ApiService.post<any>('/browserbase/type_text/', {
         sessionId,
         selector,
@@ -187,8 +166,6 @@ export default class Browserbase {
 
   static async getPageContent(sessionId: string): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      console.log(`[BrowserbaseService] Getting page content for session ${sessionId}`);
-      
       const respData = await ApiService.post<any>('/browserbase/get_content/', {
         sessionId
       });
@@ -207,8 +184,6 @@ export default class Browserbase {
 
   static async waitFor(sessionId: string, selector?: string, timeout: number = 5000): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      console.log(`[BrowserbaseService] Waiting in session ${sessionId}`);
-      
       const respData = await ApiService.post<any>('/browserbase/wait_for/', {
         sessionId,
         selector,
@@ -229,8 +204,6 @@ export default class Browserbase {
 
   static async checkSession(sessionId: string): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      console.log(`[BrowserbaseService] Checking session ${sessionId}`);
-      
       const respData = await ApiService.post<any>('/browserbase/check_session/', {
         sessionId
       });

@@ -15,22 +15,14 @@ export function GoogleDriveViewer({ file }: GoogleDriveViewerProps) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Debug logging
-  console.log('GoogleDriveViewer - file:', file)
-  console.log('GoogleDriveViewer - mimeType:', file.mimeType)
-  console.log('GoogleDriveViewer - s3_url:', file.s3_url)
-
   // Check if this is a Google Workspace file using mimeType (more reliable)
   const isWorkspaceFile = file.mimeType?.includes('vnd.google-apps') ||
                           file.s3_url?.includes('docs.google.com') || 
                           file.s3_url?.includes('sheets.google.com') || 
                           file.s3_url?.includes('slides.google.com')
   
-  console.log('GoogleDriveViewer - isWorkspaceFile:', isWorkspaceFile)
-  
   // Get the Drive file ID from path
   const driveFileId = file.path?.replace('drive://', '') || file.file_id || ''
-  console.log('GoogleDriveViewer - driveFileId:', driveFileId)
 
   // Fetch file content for non-Workspace files
   useEffect(() => {
@@ -90,17 +82,14 @@ export function GoogleDriveViewer({ file }: GoogleDriveViewerProps) {
         console.warn('GoogleDriveViewer - URL format unexpected:', url)
       }
       
-      console.log('GoogleDriveViewer - Workspace embed URL:', url)
       return url
     }
     
     // For regular files, use the blob URL
-    console.log('GoogleDriveViewer - Regular file blob URL:', blobUrl)
     return blobUrl
   }
 
   const embedUrl = getEmbedUrl()
-  console.log('GoogleDriveViewer - Final embedUrl:', embedUrl)
 
   const handleRefresh = () => {
     // Revoke old blob URL if exists

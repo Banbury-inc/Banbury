@@ -19,12 +19,10 @@ export default class WebSearch {
    * Searches the web using DuckDuckGo's instant answers API
    */
   static async searchWeb(query: string): Promise<WebSearchResponse> {
-    console.log('WebSearchService: Searching for query:', query);
     
     try {
       // Use DuckDuckGo's instant answers API
       const results = await this.searchDuckDuckGo(query);
-      console.log('WebSearchService: DuckDuckGo results:', results);
       
       if (results.results.length > 0) {
         return results;
@@ -34,7 +32,6 @@ export default class WebSearch {
     }
 
     // Fall back to intelligent results
-    console.log('WebSearchService: Using fallback intelligent results');
     return this.getIntelligentResults(query);
   }
 
@@ -43,7 +40,6 @@ export default class WebSearch {
    */
   private static async searchDuckDuckGo(query: string): Promise<WebSearchResponse> {
     const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
-    console.log('WebSearchService: Fetching from URL:', url);
     
     try {
       const response = await fetch(url, {
@@ -58,7 +54,6 @@ export default class WebSearch {
       }
 
       const data = await response.json();
-      console.log('WebSearchService: Raw DuckDuckGo response:', data);
       
       const results: WebSearchResult[] = [];
       
@@ -108,7 +103,6 @@ export default class WebSearch {
 
       // If no results from DuckDuckGo API, create a basic search result
       if (results.length === 0) {
-        console.log('WebSearchService: No results from DuckDuckGo API, creating fallback');
         results.push({
           title: `Search Results for "${query}"`,
           url: `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
@@ -116,7 +110,6 @@ export default class WebSearch {
         });
       }
 
-      console.log('WebSearchService: Processed results:', results);
       return {
         results: results.slice(0, 5),
         query
@@ -139,7 +132,6 @@ export default class WebSearch {
    * Test method to verify web search is working
    */
   static async testSearch(): Promise<void> {
-    console.log('=== Testing Web Search ===');
     
     const testQueries = [
       'weather today',
@@ -149,16 +141,13 @@ export default class WebSearch {
     ];
     
     for (const query of testQueries) {
-      console.log(`\n--- Testing query: "${query}" ---`);
       try {
         const result = await this.searchWeb(query);
-        console.log('Result:', result);
       } catch (error) {
         console.error('Error:', error);
       }
     }
     
-    console.log('=== Test Complete ===');
   }
 
   /**
@@ -167,9 +156,7 @@ export default class WebSearch {
   static createWebSearchTool() {
     return tool(
       async (input: { query: string }) => {
-        console.log('WebSearchTool: Called with input:', input);
         const result = await this.searchWeb(input.query);
-        console.log('WebSearchTool: Returning result:', result);
         return JSON.stringify(result);
       },
       {

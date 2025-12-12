@@ -35,7 +35,6 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
   const retryVideoLoad = () => {
     if (isRetrying) return; // Prevent multiple simultaneous retries
     
-    console.log('Retrying video load, attempt:', retryCount + 1);
     setRetryCount(prev => prev + 1);
     setError(null);
     setLoading(true);
@@ -70,8 +69,6 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
   };
 
   useEffect(() => {
-    console.log('VideoViewer useEffect called for file:', file.name, 'file_id:', file.file_id);
-    console.log('File object:', file);
 
     setLoading(true);
     setError(null);
@@ -81,24 +78,19 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
     // For regular videos, use the download endpoint
     const fetchRegularVideo = async () => {
       try {
-        console.log('Starting video download for file_id:', file.file_id);
         
         if (isDriveFile) {
           // Handle Google Drive video
           const blob = await ApiService.Drive.getFileBlob(file.file_id || '');
           const url = window.URL.createObjectURL(blob);
-          console.log('Drive video URL obtained successfully:', url);
           setVideoUrl(url);
         } else {
           // Handle local/S3 video
           const result = await ApiService.downloadFromS3(file.file_id || '', file.name);
-          console.log('Video download result:', result);
           
           if (result.success && result.url) {
-            console.log('Video URL obtained successfully:', result.url);
             setVideoUrl(result.url);
           } else {
-            console.log('Failed to get video download URL, result:', result);
             throw new Error('Failed to get video download URL');
           }
         }
@@ -307,9 +299,6 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
                 src={videoUrl}
                 crossOrigin="anonymous"
                 preload="metadata"
-                onLoadStart={() => console.log('Video load started for URL:', videoUrl?.substring(0, 100) + '...')}
-                onLoadedMetadata={() => console.log('Video metadata loaded successfully')}
-                onCanPlay={() => console.log('Video can start playing')}
                 onError={(e) => {
                   console.error('Video error:', e);
                   const videoElement = e.target as HTMLVideoElement;

@@ -297,11 +297,8 @@ export default function Admin() {
   // Debug daily_stats changes
   useEffect(() => {
     if (visitorStats?.daily_stats) {
-      console.log('Daily stats updated:', visitorStats.daily_stats)
-      console.log('Today date:', new Date().toISOString().split('T')[0])
       const today = new Date().toISOString().split('T')[0]
       const todayData = visitorStats.daily_stats.find(stat => stat.date === today)
-      console.log('Today data found:', todayData)
     }
   }, [visitorStats?.daily_stats])
 
@@ -312,21 +309,6 @@ export default function Admin() {
       // Load real users data
       const usersResponse = await ApiService.get('/users/list_all_users/') as any
       if (usersResponse.result === 'success') {
-        console.log('Users response:', usersResponse.users)
-        // Debug first user's scope data
-        if (usersResponse.users && usersResponse.users.length > 0) {
-          console.log('First user scope data:', {
-            username: usersResponse.users[0].username,
-            auth_method: usersResponse.users[0].auth_method,
-            googleScopes: usersResponse.users[0].googleScopes,
-            hasEmailScope: usersResponse.users[0].hasEmailScope,
-            hasProfileScope: usersResponse.users[0].hasProfileScope,
-            hasGmailScope: usersResponse.users[0].hasGmailScope,
-            hasDriveScope: usersResponse.users[0].hasDriveScope,
-            hasCalendarScope: usersResponse.users[0].hasCalendarScope,
-            hasContactsScope: usersResponse.users[0].hasContactsScope
-          })
-        }
         setUsers(usersResponse.users || [])
         setSystemStats({
           totalUsers: usersResponse.total_count || 0,
@@ -351,7 +333,6 @@ export default function Admin() {
     setVisitorLoading(true)
     try {
       const response = await ApiService.getSiteVisitorInfoEnhanced(10000, days) as any
-      console.log('Enhanced visitor data response:', response)
       
       // Enhanced API returns data in a different format
       const visitors = response.visitors || []
@@ -403,7 +384,6 @@ export default function Admin() {
         daily_stats: dailyStatsArray
       }
       
-      console.log('Processed enhanced visitor stats:', stats)
       setVisitorStats(stats)
     } catch (error) {
       console.error('Enhanced visitor data failed, falling back to legacy:', error)
@@ -411,7 +391,6 @@ export default function Admin() {
       // Fallback to legacy API
       try {
         const legacyResponse = await ApiService.getSiteVisitorInfo(10000, days) as any
-        console.log('Legacy visitor data response:', legacyResponse)
         if (legacyResponse.result === 'success') {
           setVisitorData(legacyResponse.visitors || [])
           setVisitorPage(1)
@@ -447,7 +426,6 @@ export default function Admin() {
     setLoginLoading(true)
     try {
       const response = await ApiService.getLoginAnalytics(10000, days) as any
-      console.log('Login analytics response:', response)
       if (response.result === 'success') {
         setLoginData(response.logins || [])
         
@@ -464,7 +442,6 @@ export default function Admin() {
           daily_stats: processedDailyStats,
           top_users_stats: response.top_users_stats || []
         }
-        console.log('Processed login stats:', stats)
         setLoginStats(stats)
       }
     } catch (error) {
@@ -480,7 +457,6 @@ export default function Admin() {
     setScopesLoading(true)
     try {
       const response = await ApiService.getGoogleScopesAnalytics() as any
-      console.log('Google scopes analytics response:', response)
       if (response.result === 'success') {
         setScopesAnalytics(response)
       }
@@ -496,7 +472,6 @@ export default function Admin() {
     setConversationsLoading(true)
     try {
       const response = await ApiService.getConversationsAnalytics(1000, 0, days, userFilter) as ConversationsAnalytics
-      console.log('Conversations analytics response:', response)
       if (response.success) {
         setConversationsAnalytics(response)
       }
@@ -512,7 +487,6 @@ export default function Admin() {
     setUsersLoading(true)
     try {
       const response = await ApiService.getConversationUsers(days) as any
-      console.log('Conversation users response:', response)
       if (response.success) {
         setConversationUsers(response.users || [])
       }
@@ -594,7 +568,6 @@ export default function Admin() {
     setFileTypeLoading(true)
     try {
       const response = await ApiService.getFileTypeAnalytics(days, 10000, usersToExclude) as FileTypeAnalytics
-      console.log('File type analytics response:', response)
       if (response.result === 'success') {
         setFileTypeAnalytics(response)
       }

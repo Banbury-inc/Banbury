@@ -29,7 +29,6 @@ async function verifyPaymentSuccess(paymentIntentId: string) {
     }) as any;
     
     if (response.payment_succeeded) {
-      console.log('Payment verified successfully:', response);
       return response;
     } else {
       throw new Error('Payment not successful');
@@ -227,7 +226,6 @@ export default function Pricing(): JSX.Element {
     try {
       // Check payment status one more time to ensure everything is updated
       const paymentStatus = await checkPaymentStatus();
-      console.log('Final payment status:', paymentStatus);
       
       setShowCheckout(false);
       setClientSecret(null);

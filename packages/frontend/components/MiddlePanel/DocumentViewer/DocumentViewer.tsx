@@ -57,11 +57,9 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
         const isGoogleDoc = currentFile.mimeType?.includes('vnd.google-apps.document');
         
         if (isDriveFile && isGoogleDoc) {
-          console.log('DocumentViewer: Exporting Google Doc as DOCX:', currentFile.file_id);
           // Export Google Doc as DOCX
           const blob = await ApiService.Drive.exportDocAsDocx(currentFile.file_id);
           currentUrl = URL.createObjectURL(blob);
-          console.log('DocumentViewer: Created blob URL for exported DOCX:', currentUrl);
           setDocumentUrl(currentUrl);
           setDocumentBlob(blob);
         } else {
@@ -316,13 +314,11 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
 
       // Save to Google Drive or S3 depending on file type
       if (isDriveFile && isGoogleDoc) {
-        console.log('DocumentViewer: Saving to Google Drive:', currentFile.file_id);
         const driveResult = await ApiService.Drive.updateFile(
           currentFile.file_id,
           fileToUpload,
           currentFile.name
         );
-        console.log('DocumentViewer: Google Drive save result:', driveResult);
         
         // Show success toast
         toast({

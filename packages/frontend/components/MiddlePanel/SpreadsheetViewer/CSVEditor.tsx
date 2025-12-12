@@ -723,7 +723,6 @@ const searchFieldKeyupCallback = useCallback(
       pendingCellMetaRef,
       parseCSVWithMeta,
       onSheetsLoaded: (sheets, initialActiveIndex) => {
-        console.log('Loaded sheets:', sheets.map(s => s.name));
         setAllSheets(sheets);
         setActiveSheetIndex(initialActiveIndex);
       }

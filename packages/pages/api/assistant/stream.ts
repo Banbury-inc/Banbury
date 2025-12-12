@@ -41,7 +41,6 @@ function extractTextFromDocx(buffer: Buffer, fileName: string): string {
     return `Document: ${fileName}\n\nThis DOCX file was attached but text extraction was not successful. The document contains ${buffer.length} bytes of data. Please ask the user to provide the key content or specific information from this document.`;
     
   } catch (error) {
-    console.error('Error extracting text from DOCX:', error);
     return `Document: ${fileName}\n\nThis DOCX file could not be processed for text extraction. Please ask the user to provide the text content or key information from this document.`;
   }
 }
@@ -365,12 +364,10 @@ function toLangChainMessages(messages: AssistantUiMessage[], provider: ModelProv
         // Add file attachments in Anthropic format
         for (const fa of fileAttachments) {
           if (fa.fileData && fa.mimeType) {
-            console.log(`📎 Processing attachment: ${fa.fileName}, Original MIME: ${fa.mimeType}`);
             
             // Normalize MIME type for Anthropic compatibility
             let anthropicMimeType = fa.mimeType;
             const fileExtension = fa.fileName?.split('.').pop()?.toLowerCase();
-            console.log(`🔍 File extension: ${fileExtension}`);
             
             // Handle generic octet-stream based on file extension
             if (fa.mimeType === 'application/octet-stream' && fa.fileName) {
@@ -482,7 +479,6 @@ function toLangChainMessages(messages: AssistantUiMessage[], provider: ModelProv
             ];
             
             if (officeDocumentTypes.includes(anthropicMimeType)) {
-              console.log(`📄 Converting ${fa.fileName} to plain text for Anthropic compatibility`);
               try {
                 const buffer = Buffer.from(fa.fileData, 'base64');
                 anthropicMimeType = 'text/plain';
@@ -491,16 +487,13 @@ function toLangChainMessages(messages: AssistantUiMessage[], provider: ModelProv
                   type: "text",
                   text: textContent
                 });
-                console.log(`✅ Added converted text content (${textContent.length} characters)`);
                 continue;
               } catch (error) {
-                console.error(`⚠️ Failed to convert ${fa.fileName}, falling back to base64 attachment:`, error);
                 anthropicMimeType = 'application/octet-stream';
               }
             }
             
             if (!supportedTypes.includes(anthropicMimeType) && anthropicMimeType !== 'application/pdf') {
-              console.warn(`⚠️ Unsupported MIME type for Anthropic attachments: ${anthropicMimeType}. Converting to plain text.`);
               try {
                 const buffer = Buffer.from(fa.fileData, 'base64');
                 const textContent = buffer.toString('utf8');
@@ -509,7 +502,6 @@ function toLangChainMessages(messages: AssistantUiMessage[], provider: ModelProv
                   type: "text",
                   text: textContent
                 });
-                console.log(`✅ Converted unsupported attachment to text (${textContent.length} characters)`);
                 continue;
               } catch (error) {
                 console.error(`⚠️ Failed to convert unsupported attachment to text:`, error);
@@ -526,7 +518,6 @@ function toLangChainMessages(messages: AssistantUiMessage[], provider: ModelProv
                   data: fa.fileData
                 }
               });
-              console.log(`🖼️ Added as image attachment`);
             } else if (anthropicMimeType === 'application/pdf') {
               // Only PDFs can use document content type
               anthropicContent.push({
@@ -537,7 +528,6 @@ function toLangChainMessages(messages: AssistantUiMessage[], provider: ModelProv
                   data: fa.fileData
                 }
               });
-              console.log(`📄 Added as PDF document attachment`);
             } else {
               // All other files (including converted DOCX) are sent as text content
               const textContent = Buffer.from(fa.fileData, 'base64').toString('utf8');
@@ -545,7 +535,6 @@ function toLangChainMessages(messages: AssistantUiMessage[], provider: ModelProv
                 type: "text",
                 text: textContent
               });
-              console.log(`📝 Added as text content (${textContent.length} characters)`);
             }
           }
         }
@@ -642,14 +631,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const p: any = parts[i];
           if (p?.type === 'file-attachment' && p?.fileId) {
             if (p?.fileData) {
-              console.log(`✅ File already downloaded on frontend: ${p.fileName} (${p.fileData.length} chars)`);
+              // File already downloaded on frontend
             } else if (token) {
               // console.log(`🔄 Attempting to download file: ${p.fileName} (ID: ${p.fileId})`);
               try {
                 // Use the same download endpoint as the frontend file viewers
                 const apiUrl = 'https://www.api.dev.banbury.io';
                 const downloadUrl = `${apiUrl}/files/download_s3_file/${encodeURIComponent(p.fileId)}/`;
-                console.log(`📡 Download URL: ${downloadUrl}`);
                 
                 const resp = await fetch(downloadUrl, {
                   method: 'GET',
@@ -658,13 +646,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   },
                 });
                 
-                console.log(`📥 Download response status: ${resp.status} ${resp.statusText}`);
-                
                 if (resp.ok) {
                   const arrayBuffer = await resp.arrayBuffer();
                   const contentType = resp.headers.get('content-type') || 'application/octet-stream';
-                  
-                  console.log(`✅ File downloaded successfully: ${arrayBuffer.byteLength} bytes, type: ${contentType}`);
                   
                   // Convert to base64 for Anthropic attachment
                   const base64Data = Buffer.from(arrayBuffer).toString('base64');
@@ -673,8 +657,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     fileData: base64Data,
                     mimeType: contentType 
                   } as any;
-                  
-                  console.log(`🔒 File converted to base64: ${base64Data.length} characters`);
                 } else {
                   console.error(`❌ Failed to download file: ${resp.status} ${resp.statusText}`);
                   const errorText = await resp.text();

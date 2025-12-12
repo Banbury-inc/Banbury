@@ -59,10 +59,8 @@ export async function getTotalDataProcessed(): Promise<number | null> {
     const result = await myColl.findOne({ total_data_processed: { $exists: true } });
 
     if (result && result.total_data_processed) {
-      console.log(`Total Data Processed: ${formatBytes(result.total_data_processed)}`);
       return result.total_data_processed;
     } else {
-      console.log("No document found with 'total_data_processed' field.");
       return null;
     }
   } catch (error) {
@@ -81,10 +79,8 @@ export async function getTotalRequestsProcessed(): Promise<number | null> {
     const result = await myColl.findOne({ total_number_of_requests: { $exists: true } });
 
     if (result && result.total_number_of_requests) {
-      console.log(`Total Requests Processed: ${result.total_number_of_requests}`);
       return result.total_number_of_requests;
     } else {
-      console.log("No document found with 'total_number_of_requests' field.");
       return null;
     }
   } catch (error) {

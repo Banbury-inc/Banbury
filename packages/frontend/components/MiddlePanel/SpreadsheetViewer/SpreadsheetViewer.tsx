@@ -67,21 +67,16 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
         const isGoogleSheet = currentFile.mimeType?.includes('vnd.google-apps.spreadsheet');
         
         if (isDriveFile && isGoogleSheet) {
-          console.log('SpreadsheetViewer: Exporting Google Sheet as XLSX:', currentFile.file_id);
           // Export Google Sheet as XLSX
           const blob = await ApiService.Drive.exportSheetAsXlsx(currentFile.file_id);
           currentUrl = URL.createObjectURL(blob);
-          console.log('SpreadsheetViewer: Created blob URL for exported XLSX:', currentUrl, 'Blob size:', blob?.size, 'type:', blob?.type);
           setDocumentUrl(currentUrl);
           setDocumentBlob(blob);
         } else {
           // Download regular file from S3
-          console.log('SpreadsheetViewer: Downloading file:', currentFile.file_id, currentFile.name);
           const result = await ApiService.Files.downloadS3File(currentFile.file_id, currentFile.name);
-          console.log('SpreadsheetViewer: Download result:', result);
           if (result.success && result.url) {
             currentUrl = result.url;
-            console.log('SpreadsheetViewer: Blob URL created:', currentUrl, 'Blob size:', result.blob?.size, 'type:', result.blob?.type);
             // Avoid setting a new blob URL if it's unchanged to prevent re-renders
             setDocumentUrl(prev => (prev === result.url ? prev : result.url));
             setDocumentBlob(result.blob);

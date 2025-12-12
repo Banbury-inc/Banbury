@@ -96,7 +96,6 @@ function convertToCSVWithMeta(
   charts?: any[],
   cellLinks?: {[key: string]: string}
 ): string {
-  console.log('convert to CSV with meta');
   const hotInstance = hotTableRef.current?.hotInstance;
   const cellsMeta: Record<string, any> = {};
   

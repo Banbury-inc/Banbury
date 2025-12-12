@@ -89,10 +89,8 @@ export const updatePanelActiveTab = (layout: PanelGroup, panelId: string, tabId:
 };
 
 export const addTabToPanel = (layout: PanelGroup, panelId: string, tab: WorkspaceTab): PanelGroup => {
-  console.log('addTabToPanel called with panelId:', panelId, 'tab:', tab.fileName, 'layout type:', layout.type);
   
   if (layout.type === 'panel' && layout.panel?.id === panelId) {
-    console.log('Adding tab to panel:', panelId, 'current tabs:', layout.panel.tabs.length);
     return {
       ...layout,
       panel: {
@@ -103,13 +101,11 @@ export const addTabToPanel = (layout: PanelGroup, panelId: string, tab: Workspac
     };
   }
   if (layout.type === 'group' && layout.children) {
-    console.log('Searching in group children for panel:', panelId);
     return {
       ...layout,
       children: layout.children.map(child => addTabToPanel(child, panelId, tab))
     };
   }
-  console.log('Panel not found, returning original layout');
   return layout;
 };
 

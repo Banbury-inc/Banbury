@@ -85,7 +85,6 @@ function separateHtmlContent(html: string): { current: string, quoted: string } 
   for (const pattern of quotedStartPatterns) {
     const match = html.match(pattern)
     if (match) {
-      console.log('Found quoted start pattern:', match[0])
       const index = match.index!
       const current = html.substring(0, index).trim()
       const quoted = html.substring(index).trim()
@@ -98,7 +97,6 @@ function separateHtmlContent(html: string): { current: string, quoted: string } 
   const emptyParagraphPattern = /<p[^>]*><\/p>\s*<p[^>]*>.*?<\/p>/i
   const match = html.match(emptyParagraphPattern)
   if (match) {
-    console.log('Found empty paragraph pattern:', match[0])
     // Find the position of the first empty paragraph
     const emptyPIndex = html.indexOf('<p></p>')
     if (emptyPIndex !== -1) {
@@ -112,7 +110,6 @@ function separateHtmlContent(html: string): { current: string, quoted: string } 
   const specificPattern = /<p[^>]*><br>[^<]*<\/p>\s*<p[^>]*><\/p>\s*<p[^>]*>Hi [^<]+/i
   const specificMatch = html.match(specificPattern)
   if (specificMatch) {
-    console.log('Found specific pattern:', specificMatch[0])
     // Find the position of the empty paragraph that separates current from quoted
     const emptyPIndex = html.indexOf('<p></p>')
     if (emptyPIndex !== -1) {
@@ -184,8 +181,6 @@ export function extractEmailContent(payload: any): EmailContent {
       const { current, quoted } = separateEmailContent(decodedText, 'text')
       content.text = current
       content.quotedText = quoted
-      console.log('content.text', content.text)
-      console.log('content.quotedText', content.quotedText)
     } catch (e) {
       console.error('Failed to decode text content:', e)
     }
@@ -194,12 +189,9 @@ export function extractEmailContent(payload: any): EmailContent {
   if (rootMimeType === 'text/html' && rootBody?.data) {
     try {
       const decodedHtml = decodeBase64Url(rootBody.data)
-      console.log('Original HTML:', decodedHtml)
       const { current, quoted } = separateEmailContent(decodedHtml, 'html')
       content.html = current
       content.quotedHtml = quoted
-      console.log('content.html', content.html)
-      console.log('content.quotedHtml', content.quotedHtml)
     } catch (e) {
       console.error('Failed to decode HTML content:', e)
     }
@@ -211,8 +203,6 @@ export function extractEmailContent(payload: any): EmailContent {
       stack.push(payload.parts[i])
     }
   }
-
-  console.log('stack', stack)
 
   while (stack.length > 0) {
     const part = stack.pop()
@@ -230,8 +220,6 @@ export function extractEmailContent(payload: any): EmailContent {
 
     const mimeType = part.mimeType
     const body = part.body
-
-    console.log('body', body)
 
     if (mimeType === 'text/plain' && body?.data) {
       try {

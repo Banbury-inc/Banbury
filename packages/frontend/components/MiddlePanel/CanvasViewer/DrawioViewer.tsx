@@ -74,14 +74,12 @@ export const DrawioViewer: React.FC<DrawioViewerProps> = ({
     // Prioritize XML content embedding over URL loading to avoid CORS issues
     if (fileContent && !config.url) {
       params.set('xml', encodeURIComponent(fileContent));
-      console.log('[DrawioViewer] Using XML content embedding, content length:', fileContent.length);
     } else {
       // Fallback to URL if no XML content available
       const urlToUse = blobUrl || fileUrl;
       if (urlToUse && !urlToUse.startsWith('blob:')) {
         // Only use non-blob URLs as blob URLs don't work with diagrams.net proxy
         params.set('url', encodeURIComponent(urlToUse));
-        console.log('[DrawioViewer] Using URL method with:', urlToUse);
       } else {
         console.warn('[DrawioViewer] No usable URL or content available for draw.io viewer');
       }
@@ -95,7 +93,6 @@ export const DrawioViewer: React.FC<DrawioViewerProps> = ({
     });
 
     const finalUrl = `${baseUrl}?${params.toString()}`;
-    console.log('[DrawioViewer] Final iframe URL:', finalUrl);
     return finalUrl;
   }, [fileUrl, fileName, blobUrl, fileContent]);
 
@@ -225,7 +222,6 @@ export const DrawioViewer: React.FC<DrawioViewerProps> = ({
             const response = await fetch(result.url);
             const text = await response.text();
             setFileContent(text);
-            console.log('[DrawioViewer] Successfully loaded file content, length:', text.length);
           } catch (textError) {
             // If we can't read as text, just use the blob URL
             console.warn('[DrawioViewer] Could not read file as text:', textError);
@@ -263,11 +259,9 @@ export const DrawioViewer: React.FC<DrawioViewerProps> = ({
 
       try {
         const message = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        console.log('[DrawioViewer] Received message:', message);
 
         switch (message.event) {
           case 'init':
-            console.log('[DrawioViewer] Editor initialized');
             setIsLoading(false);
             // Send the diagram data to the editor
             if (fileContent && iframeRef.current?.contentWindow) {
@@ -278,7 +272,6 @@ export const DrawioViewer: React.FC<DrawioViewerProps> = ({
             }
             break;
           case 'save':
-            console.log('[DrawioViewer] Save requested');
             // Request export of the current diagram
             if (iframeRef.current?.contentWindow) {
               iframeRef.current.contentWindow.postMessage(
@@ -288,21 +281,16 @@ export const DrawioViewer: React.FC<DrawioViewerProps> = ({
             }
             break;
           case 'export':
-            console.log('[DrawioViewer] Diagram exported');
             // Handle the exported diagram data
             const updatedContent = message.data;
             if (updatedContent && fileId) {
               // Here you could save the updated content back to the server
-              console.log('[DrawioViewer] Updated diagram content:', updatedContent.length, 'characters');
               setFileContent(updatedContent);
             }
             break;
           case 'exit':
-            console.log('[DrawioViewer] Editor exit requested');
             setIsEditMode(false);
             break;
-          default:
-            console.log('[DrawioViewer] Unknown message event:', message.event);
         }
       } catch (error) {
         console.warn('[DrawioViewer] Error parsing message:', error);

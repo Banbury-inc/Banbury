@@ -69,7 +69,7 @@ const meta: Meta<typeof DocumentViewer> = {
       username: 'testuser',
       email: 'test@example.com'
     },
-    onSaveComplete: () => console.log('Save completed')
+    onSaveComplete: () => {}
   },
   parameters: {
     layout: 'fullscreen'

@@ -28,7 +28,7 @@ const Hero = (): JSX.Element => {
       .then((response) => {
         setHero(response.data);
       })
-      .catch((error) => console.log(error));
+      .catch(() => {});
   };
 
   useEffect(() => {

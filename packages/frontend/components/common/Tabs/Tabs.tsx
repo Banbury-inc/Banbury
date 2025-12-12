@@ -201,7 +201,6 @@ export const Tabs: React.FC<TabsProps> = ({
         draggable({
           element,
           getInitialData: () => {
-            console.log('Tab draggable init:', { id: tab.id, index, type: 'tab', dragContext });
             return { id: tab.id, index, type: 'tab', ...(dragContext || {}) };
           },
           onGenerateDragPreview: ({ nativeSetDragImage }: { nativeSetDragImage?: (element: Element, x: number, y: number) => void }) => {

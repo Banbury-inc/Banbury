@@ -28,7 +28,6 @@ export default function DocPageLayout({ children }: { children: ReactNode }) {
     const extractHeadings = () => {
       const contentElement = contentRef.current
       if (!contentElement) {
-        console.log('No content element found')
         return
       }
 
@@ -36,18 +35,10 @@ export default function DocPageLayout({ children }: { children: ReactNode }) {
       
       // Find all elements with data-typography-variant attribute
       const typographyElements = contentElement.querySelectorAll('[data-typography-variant]')
-      console.log('Total typography elements:', typographyElements.length)
       
       typographyElements.forEach((element, index) => {
         const variant = element.getAttribute('data-typography-variant')
         const textContent = element.textContent?.trim()
-        
-        console.log(`Element ${index}:`, {
-          variant,
-          textContent: textContent?.substring(0, 50),
-          hasId: !!element.id,
-          id: element.id
-        })
         
         // Only process heading variants (h1, h2, h3, h4)
         const headingVariants = ['h1', 'h2', 'h3', 'h4']
@@ -79,7 +70,6 @@ export default function DocPageLayout({ children }: { children: ReactNode }) {
         }
       })
       
-      console.log('Extracted headings:', extractedHeadings)
       setHeadings(extractedHeadings)
     }
 
