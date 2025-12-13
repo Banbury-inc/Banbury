@@ -73,7 +73,7 @@ export const pptxAiTool = tool(
   {
     name: 'pptx_ai',
     description:
-      'Use this tool to create, edit, and modify PowerPoint presentations. You can create slides, add/update/delete elements (text, shapes, images), reorder slides, set backgrounds, and apply themes. IMPORTANT: Call this tool only ONCE per user request. After calling this tool, the changes are immediately applied to the presentation in the frontend. Do not call this tool multiple times for the same edit request. All position and size values (x, y, width, height) are percentages (0-100).',
+      'Use this tool to create, edit, and modify PowerPoint presentations. You can create slides, add/update/delete elements (text, shapes, images), reorder slides, set backgrounds, and apply themes. IMPORTANT: Call this tool only ONCE per user request. After calling this tool, the changes are immediately applied to the presentation in the frontend. Do not call this tool multiple times for the same edit request. All position and size values (x, y, width, height) are percentages (0-100). NOTE: When you create a new slide with createSlide, it starts completely empty with no default elements. You must add all text, shapes, and other content explicitly using addText, addShape, and addImage operations.',
     schema: z.object({
       action: z.string().describe("Description of the action performed (e.g. 'Create title slide', 'Add content slides', 'Insert diagram', 'Apply corporate theme')"),
       presentationName: z.string().optional().describe('Optional presentation name for context'),

@@ -280,11 +280,14 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     setRedoAvailable(canRedo())
   }, [slides, currentSlideIndex])
 
+  // Track if AI changes have been previewed (to prevent double-apply on accept)
+  const aiPreviewAppliedRef = useRef(false)
+
   // Listen for AI PowerPoint operations
   useEffect(() => {
     const handler = (event: CustomEvent) => {
       const detail = event?.detail || {}
-      const { operations, slidesData } = detail as {
+      const { operations, slidesData, preview } = detail as {
         operations?: Array<{
           type: string
           slideIndex?: number
@@ -297,6 +300,18 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
           theme?: string
         }>
         slidesData?: Slide[]
+        preview?: boolean
+      }
+
+      // If preview is false and we already applied preview, skip (changes already applied)
+      if (preview === false && aiPreviewAppliedRef.current) {
+        aiPreviewAppliedRef.current = false
+        return
+      }
+
+      // Mark preview as applied when it's a preview event
+      if (preview === true) {
+        aiPreviewAppliedRef.current = true
       }
 
       // If full slides data is provided, replace slides
@@ -315,25 +330,13 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
           for (const op of operations) {
             switch (op.type) {
               case 'createSlide': {
+                // AI creates slides with empty elements array
+                // The AI will add its own elements via subsequent addText/addShape/addImage operations
                 const newSlide: Slide = {
                   id: `slide-${Date.now()}`,
                   index: newSlides.length,
-                  elements: [{
-                    id: `text-${Date.now()}`,
-                    type: 'text',
-                    x: 10,
-                    y: 40,
-                    width: 80,
-                    height: 20,
-                    content: 'Click to edit',
-                    fontSize: 44,
-                    fontFace: 'Arial',
-                    color: '363636',
-                    bold: true,
-                    align: 'center',
-                    valign: 'middle',
-                  }],
-                  layout: (op.layout as Slide['layout']) || 'title',
+                  elements: [],
+                  layout: (op.layout as Slide['layout']) || 'blank',
                   background: op.background,
                 }
                 const insertIndex = op.slideIndex ?? newSlides.length
@@ -427,8 +430,17 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
       }
     }
 
+    // Handle reject event to reset preview state
+    const rejectHandler = () => {
+      aiPreviewAppliedRef.current = false
+    }
+
     window.addEventListener('powerpoint-ai-response', handler as EventListener)
-    return () => window.removeEventListener('powerpoint-ai-response', handler as EventListener)
+    window.addEventListener('powerpoint-ai-response-reject', rejectHandler)
+    return () => {
+      window.removeEventListener('powerpoint-ai-response', handler as EventListener)
+      window.removeEventListener('powerpoint-ai-response-reject', rejectHandler)
+    }
   }, [currentSlideIndex, saveToHistory])
 
   // Handle slide selection
