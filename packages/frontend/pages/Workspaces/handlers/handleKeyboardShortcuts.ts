@@ -1,4 +1,11 @@
-export function createKeyboardShortcutHandler(onFileSearchOpen?: () => void) {
+interface KeyboardShortcutCallbacks {
+  onFileSearchOpen?: () => void
+  onToggleFileSidebar?: () => void
+}
+
+export function createKeyboardShortcutHandler(callbacks: KeyboardShortcutCallbacks = {}) {
+  const { onFileSearchOpen, onToggleFileSidebar } = callbacks
+
   return function handleKeyDown(event: KeyboardEvent) {
     // Guard against undefined event.key
     if (!event.key) {
@@ -33,9 +40,25 @@ export function createKeyboardShortcutHandler(onFileSearchOpen?: () => void) {
       // Otherwise, prevent default (override browser print) and open file search
       event.preventDefault()
       event.stopPropagation()
-      if (onFileSearchOpen) {
-        onFileSearchOpen()
-      }
+      onFileSearchOpen?.()
+      return
+    }
+
+    // Check for Ctrl+H (Windows/Linux) or Cmd+H (Mac) to toggle file sidebar
+    // Note: On macOS, Cmd+H may be intercepted by the OS to hide the app
+    if (isCtrl && !event.shiftKey && key === 'h') {
+      event.preventDefault()
+      event.stopPropagation()
+      onToggleFileSidebar?.()
+      return
+    }
+
+    // Fallback: Ctrl+Shift+L (Windows/Linux) or Cmd+Shift+L (Mac) to toggle file sidebar
+    // This ensures the shortcut works even when Cmd+H is intercepted by the OS
+    if (isCtrl && event.shiftKey && key === 'l') {
+      event.preventDefault()
+      event.stopPropagation()
+      onToggleFileSidebar?.()
       return
     }
   }

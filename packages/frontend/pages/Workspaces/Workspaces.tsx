@@ -40,7 +40,7 @@ import { loadConversations, saveCurrentConversation, loadConversation, deleteCon
 import { findPanel, getAllTabs, updatePanelActiveTab, addTabToPanel, removeTabFromPanel } from './handlers/panelUtils';
 import { openFileInTab, openEmailInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
 import { isDrawioFile, isTldrawFile, isPowerPointFile } from './handlers/fileTypeUtils';
-import { createKeyboardShortcutHandler } from './handlers/handleKeyboardShortcuts';
+import { createWorkspacesKeyboardHandler } from './handlers/createWorkspacesKeyboardHandler';
 import { Kbd, KbdGroup } from '../../components/ui/kbd';
 import { FileSearchCommand } from '../../components/FileSearchCommand';
 import {
@@ -402,6 +402,24 @@ const Workspaces = (): React.ReactNode => {
               <Kbd>P</Kbd>
             </KbdGroup>
           </div>
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-sm text-muted-foreground">Toggle file sidebar</p>
+            <div className="flex items-center gap-2">
+              <KbdGroup>
+                <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+                <span className="text-muted-foreground">+</span>
+                <Kbd>H</Kbd>
+              </KbdGroup>
+              <span className="text-xs text-muted-foreground">or</span>
+              <KbdGroup>
+                <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+                <span className="text-muted-foreground">+</span>
+                <Kbd>⇧</Kbd>
+                <span className="text-muted-foreground">+</span>
+                <Kbd>L</Kbd>
+              </KbdGroup>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -416,8 +434,9 @@ const Workspaces = (): React.ReactNode => {
 
   // Register global keyboard shortcuts - use capture phase to ensure they work universally
   useEffect(() => {
-    const keyboardHandler = createKeyboardShortcutHandler(() => {
-      setFileSearchOpen(true)
+    const keyboardHandler = createWorkspacesKeyboardHandler({
+      setFileSearchOpen,
+      setIsFileSidebarCollapsed,
     })
     // Use capture phase to ensure shortcuts work before other handlers
     window.addEventListener('keydown', keyboardHandler, true)

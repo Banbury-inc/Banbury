@@ -464,6 +464,22 @@ export const renderPanel = ({
                   <Kbd>P</Kbd>
                 </KbdGroup>
               </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm" style={{ color: '#9ca3af' }}>Toggle sidebar:</span>
+                <KbdGroup>
+                  <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+                  <span style={{ color: '#9ca3af' }}>+</span>
+                  <Kbd>H</Kbd>
+                </KbdGroup>
+                <span className="text-xs" style={{ color: '#9ca3af' }}>or</span>
+                <KbdGroup>
+                  <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+                  <span style={{ color: '#9ca3af' }}>+</span>
+                  <Kbd>⇧</Kbd>
+                  <span style={{ color: '#9ca3af' }}>+</span>
+                  <Kbd>L</Kbd>
+                </KbdGroup>
+              </div>
             </div>
           </div>
         )}

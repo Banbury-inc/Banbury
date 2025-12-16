@@ -1038,11 +1038,19 @@ const ThreadWelcome: FC = () => {
                 </KbdGroup>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">Search files:</span>
+                <span className="text-sm text-muted-foreground">Search Files:</span>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
                   <span className="text-muted-foreground">+</span>
                   <Kbd>P</Kbd>
+                </KbdGroup>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">Toggle Left Panel:</span>
+                <KbdGroup>
+                  <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+                  <span className="text-muted-foreground">+</span>
+                  <Kbd>H</Kbd>
                 </KbdGroup>
               </div>
             </div>
