@@ -29,7 +29,7 @@ interface PptxOperationAddShape {
 interface PptxOperationAddImage { 
   type: 'addImage'; 
   slideIndex?: number; 
-  element: { x: number; y: number; width: number; height: number; imageUrl: string } 
+  element: { x: number; y: number; width: number; height: number; imageUrl?: string; driveFileId?: string; s3FileId?: string; s3FileName?: string } 
 }
 interface PptxOperationUpdateElement { 
   type: 'updateElement'; 

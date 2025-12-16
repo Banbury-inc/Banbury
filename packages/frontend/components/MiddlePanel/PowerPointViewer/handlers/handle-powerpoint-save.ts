@@ -1,6 +1,7 @@
 import { ApiService } from '../../../../../backend/api/apiService'
 import { FileSystemItem } from '../../../../utils/fileTreeUtils'
-import { Slide, SlideElement } from '../PowerPointViewer'
+import { Slide } from '../PowerPointViewer'
+import { slidesToPptx } from '../utils/pptx-export-utils'
 
 interface ToastFunction {
   (options: {
@@ -26,34 +27,13 @@ export async function handlePowerPointSave({
   if (!currentFile.file_id) return
 
   try {
-    // Import pptxgenjs dynamically
-    const PptxGenJS = (await import('pptxgenjs')).default
-    const pptx = new PptxGenJS()
+    // Convert slides to PPTX
+    const pptx = await slidesToPptx(slides)
 
     // Set metadata
     pptx.author = 'Banbury Editor'
     pptx.title = currentFile.name.replace(/\.pptx$/i, '')
     pptx.subject = 'Edited with Banbury'
-
-    // Convert slides to PPTX format
-    for (const slide of slides) {
-      const pptxSlide = pptx.addSlide()
-
-      // Set background
-      if (slide.background) {
-        pptxSlide.background = { color: slide.background.replace('#', '') }
-      }
-
-      // Add elements
-      for (const element of slide.elements) {
-        addElementToSlide(pptxSlide, element)
-      }
-
-      // Add notes if present
-      if (slide.notes) {
-        pptxSlide.addNotes(slide.notes)
-      }
-    }
 
     // Generate PPTX blob
     const blob = await pptx.write({ outputType: 'blob' }) as Blob
@@ -111,104 +91,6 @@ export async function handlePowerPointSave({
       variant: "destructive",
     })
     throw error
-  }
-}
-
-// Helper function to add element to pptx slide
-function addElementToSlide(pptxSlide: any, element: SlideElement): void {
-  switch (element.type) {
-    case 'text':
-      pptxSlide.addText(element.content || '', {
-        x: `${element.x}%`,
-        y: `${element.y}%`,
-        w: `${element.width}%`,
-        h: `${element.height}%`,
-        fontSize: element.fontSize || 18,
-        fontFace: element.fontFace || 'Arial',
-        color: element.color || '363636',
-        bold: element.bold || false,
-        italic: element.italic || false,
-        align: element.align || 'left',
-        valign: element.valign || 'top',
-      })
-      break
-
-    case 'shape':
-      const shapeTypeMap: Record<string, string> = {
-        rect: 'rect',
-        'round-rect': 'roundRect',
-        ellipse: 'ellipse',
-        circle: 'ellipse',
-        triangle: 'triangle',
-        'right-triangle': 'triangle',
-        diamond: 'diamond',
-        hexagon: 'hexagon',
-        line: 'line',
-        'line-diagonal': 'line',
-        'arrow-right': 'rightArrow',
-        'arrow-left': 'leftArrow',
-        'arrow-up': 'upArrow',
-        'arrow-down': 'downArrow',
-        chevron: 'chevron',
-        heart: 'heart',
-        cloud: 'cloud',
-        'star-5': 'star5',
-        'star-6': 'star6',
-        'star-7': 'star7',
-        'star-8': 'star8',
-        'star-10': 'star10',
-        'star-12': 'star12',
-        'pie-half': 'pie',
-        'pie-quarter': 'pie',
-        'pie-three-quarter': 'pie',
-        cylinder: 'can',
-      }
-      const pptxShape = (shapeTypeMap[element.shapeType || 'rect'] || 'rect') as any
-      pptxSlide.addShape(pptxShape, {
-        x: `${element.x}%`,
-        y: `${element.y}%`,
-        w: `${element.width}%`,
-        h: `${element.height}%`,
-        fill: element.fill ? { color: element.fill.replace('#', '') } : undefined,
-        line: element.stroke ? {
-          color: element.stroke.replace('#', ''),
-          width: element.strokeWidth || 1
-        } : undefined,
-        rotate: element.rotation || 0,
-      })
-      if (element.content) {
-        pptxSlide.addText(element.content, {
-          x: `${element.x}%`,
-          y: `${element.y}%`,
-          w: `${element.width}%`,
-          h: `${element.height}%`,
-          align: 'center',
-          valign: 'middle',
-          color: element.stroke?.replace('#', '') || '363636',
-          fontSize: Math.max(12, (element.fontSize || 18) * 0.5),
-        })
-      }
-      break
-
-    case 'image':
-      if (element.imageUrl) {
-        // Check if it's a data URL or external URL
-        const imageOptions: any = {
-          x: `${element.x}%`,
-          y: `${element.y}%`,
-          w: `${element.width}%`,
-          h: `${element.height}%`,
-        }
-
-        if (element.imageUrl.startsWith('data:')) {
-          imageOptions.data = element.imageUrl
-        } else {
-          imageOptions.path = element.imageUrl
-        }
-
-        pptxSlide.addImage(imageOptions)
-      }
-      break
   }
 }
 

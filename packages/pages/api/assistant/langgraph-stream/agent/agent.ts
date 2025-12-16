@@ -218,14 +218,29 @@ async function agentNode(state: AgentState): Promise<AgentState> {
           attachedFilesContext = "\n\nCurrently attached files:\n" + 
             fileAttachments.map((file: any) => {
               const fileName = file.fileName || 'Unknown file'
+              const fileId = file.fileId || ''
+              const filePath = file.filePath || ''
+              const isDrive = filePath.startsWith('drive://')
+              
               const fileType = fileName.toLowerCase().endsWith('.docx') ? 'DOCX document' :
                               fileName.toLowerCase().endsWith('.xlsx') ? 'Excel spreadsheet' :
                               fileName.toLowerCase().endsWith('.pptx') ? 'PowerPoint presentation' :
                               fileName.toLowerCase().endsWith('.tldraw') ? 'Tldraw canvas' :
+                              fileName.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|svg)$/i) ? 'image' :
                               'file'
-              return `- ${fileName} (${fileType})`
+              
+              let fileInfo = `- ${fileName} (${fileType})`
+              if (fileType === 'image' && fileId) {
+                if (isDrive) {
+                  fileInfo += ` [driveFileId: "${fileId}"]`
+                } else {
+                  fileInfo += ` [s3FileId: "${fileId}", s3FileName: "${fileName}"]`
+                }
+              }
+              return fileInfo
             }).join('\n') +
-            "\n\nIMPORTANT: When using docx_ai, sheet_ai, pptx_ai, or tldraw_ai tools, you MUST include the actual file name in the documentName/sheetName/presentationName/canvasName parameter. For example, if the user has attached 'Report.docx', use documentName: 'Report.docx' in your tool call. For presentations, use presentationName with the .pptx file name."
+            "\n\nIMPORTANT: When using docx_ai, sheet_ai, pptx_ai, or tldraw_ai tools, you MUST include the actual file name in the documentName/sheetName/presentationName/canvasName parameter. For example, if the user has attached 'Report.docx', use documentName: 'Report.docx' in your tool call. For presentations, use presentationName with the .pptx file name." +
+            "\n\nFor IMAGE files: When adding images to presentations using pptx_ai, use the driveFileId or s3FileId shown in brackets above. For example, if you see an image with [driveFileId: \"abc123\"], use { type: 'addImage', element: { x: 10, y: 10, width: 40, height: 30, driveFileId: \"abc123\" } }. For S3 images, include both s3FileId and s3FileName: { type: 'addImage', element: { x: 10, y: 10, width: 40, height: 30, s3FileId: \"xyz789\", s3FileName: \"photo.jpg\" } }. For web images (http/https URLs), use imageUrl."
         }
       }
       

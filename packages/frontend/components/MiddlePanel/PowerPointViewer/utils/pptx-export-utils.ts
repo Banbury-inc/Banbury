@@ -1,0 +1,302 @@
+import { Slide, SlideElement, FillStyle } from '../PowerPointViewer'
+import { generateGradientDataUrl, fillStyleToColorString, normalizeFill } from './fill-utils'
+
+/**
+ * Add element to pptx slide with advanced formatting support
+ */
+export function addElementToPptxSlide(pptxSlide: any, element: SlideElement): void {
+  switch (element.type) {
+    case 'text':
+      // Handle text background fill
+      if (element.textFill) {
+        const fill = normalizeFill(element.textFill)
+        if (fill) {
+          if (fill.kind === 'solid') {
+            // Add a background rectangle
+            pptxSlide.addShape('rect', {
+              x: `${element.x}%`,
+              y: `${element.y}%`,
+              w: `${element.width}%`,
+              h: `${element.height}%`,
+              fill: { color: fill.color.replace('#', '') },
+              line: { type: 'none' },
+            })
+          } else if (fill.kind === 'linearGradient') {
+            // Add gradient as image background
+            const gradientImage = generateGradientDataUrl(
+              fill.startColor,
+              fill.endColor,
+              fill.angleDeg,
+              400,
+              300
+            )
+            pptxSlide.addImage({
+              data: gradientImage,
+              x: `${element.x}%`,
+              y: `${element.y}%`,
+              w: `${element.width}%`,
+              h: `${element.height}%`,
+            })
+          }
+        }
+      }
+
+      // Handle text border
+      if (element.border) {
+        pptxSlide.addShape('rect', {
+          x: `${element.x}%`,
+          y: `${element.y}%`,
+          w: `${element.width}%`,
+          h: `${element.height}%`,
+          fill: { type: 'none' },
+          line: {
+            color: element.border.color.replace('#', ''),
+            width: element.border.width,
+          },
+        })
+      }
+
+      // Add text with highlights if present
+      if (element.highlights && element.highlights.length > 0 && element.content) {
+        // Build rich text array with highlights
+        const content = element.content
+        const parts: Array<{ text: string; options?: any }> = []
+        let lastIndex = 0
+
+        const sortedHighlights = [...element.highlights].sort((a, b) => a.start - b.start)
+
+        for (const highlight of sortedHighlights) {
+          // Add text before highlight
+          if (highlight.start > lastIndex) {
+            parts.push({ text: content.substring(lastIndex, highlight.start) })
+          }
+          // Add highlighted text
+          parts.push({
+            text: content.substring(highlight.start, highlight.end),
+            options: { highlight: highlight.color.replace('#', '') }
+          })
+          lastIndex = highlight.end
+        }
+
+        // Add remaining text
+        if (lastIndex < content.length) {
+          parts.push({ text: content.substring(lastIndex) })
+        }
+
+        pptxSlide.addText(parts, {
+          x: `${element.x}%`,
+          y: `${element.y}%`,
+          w: `${element.width}%`,
+          h: `${element.height}%`,
+          fontSize: element.fontSize || 18,
+          fontFace: element.fontFace || 'Arial',
+          color: element.color || '363636',
+          bold: element.bold || false,
+          italic: element.italic || false,
+          align: element.align || 'left',
+          valign: element.valign || 'top',
+        })
+      } else {
+        // Regular text without highlights
+        pptxSlide.addText(element.content || '', {
+          x: `${element.x}%`,
+          y: `${element.y}%`,
+          w: `${element.width}%`,
+          h: `${element.height}%`,
+          fontSize: element.fontSize || 18,
+          fontFace: element.fontFace || 'Arial',
+          color: element.color || '363636',
+          bold: element.bold || false,
+          italic: element.italic || false,
+          align: element.align || 'left',
+          valign: element.valign || 'top',
+        })
+      }
+      break
+
+    case 'shape':
+      const shapeTypeMap: Record<string, string> = {
+        rect: 'rect',
+        'round-rect': 'roundRect',
+        ellipse: 'ellipse',
+        circle: 'ellipse',
+        triangle: 'triangle',
+        'right-triangle': 'triangle',
+        diamond: 'diamond',
+        hexagon: 'hexagon',
+        line: 'line',
+        'line-diagonal': 'line',
+        'arrow-right': 'rightArrow',
+        'arrow-left': 'leftArrow',
+        'arrow-up': 'upArrow',
+        'arrow-down': 'downArrow',
+        chevron: 'chevron',
+        heart: 'heart',
+        cloud: 'cloud',
+        'star-5': 'star5',
+        'star-6': 'star6',
+        'star-7': 'star7',
+        'star-8': 'star8',
+        'star-10': 'star10',
+        'star-12': 'star12',
+        'pie-half': 'pie',
+        'pie-quarter': 'pie',
+        'pie-three-quarter': 'pie',
+        cylinder: 'can',
+      }
+      const pptxShape = (shapeTypeMap[element.shapeType || 'rect'] || 'rect') as any
+      
+      // Handle gradient fill
+      const fill = normalizeFill(element.fill)
+      if (fill && fill.kind === 'linearGradient') {
+        // Add gradient as image background
+        const gradientImage = generateGradientDataUrl(
+          fill.startColor,
+          fill.endColor,
+          fill.angleDeg,
+          400,
+          300
+        )
+        pptxSlide.addImage({
+          data: gradientImage,
+          x: `${element.x}%`,
+          y: `${element.y}%`,
+          w: `${element.width}%`,
+          h: `${element.height}%`,
+        })
+        // Add shape with transparent fill on top
+        pptxSlide.addShape(pptxShape, {
+          x: `${element.x}%`,
+          y: `${element.y}%`,
+          w: `${element.width}%`,
+          h: `${element.height}%`,
+          fill: { type: 'none' },
+          line: element.stroke ? {
+            color: element.stroke.replace('#', ''),
+            width: element.strokeWidth || 1
+          } : undefined,
+          rotate: element.rotation || 0,
+        })
+      } else {
+        // Regular solid fill
+        const fillColor = fillStyleToColorString(element.fill)
+        pptxSlide.addShape(pptxShape, {
+          x: `${element.x}%`,
+          y: `${element.y}%`,
+          w: `${element.width}%`,
+          h: `${element.height}%`,
+          fill: fillColor ? { color: fillColor.replace('#', '') } : undefined,
+          line: element.stroke ? {
+            color: element.stroke.replace('#', ''),
+            width: element.strokeWidth || 1
+          } : undefined,
+          rotate: element.rotation || 0,
+        })
+      }
+      
+      if (element.content) {
+        pptxSlide.addText(element.content, {
+          x: `${element.x}%`,
+          y: `${element.y}%`,
+          w: `${element.width}%`,
+          h: `${element.height}%`,
+          align: 'center',
+          valign: 'middle',
+          color: element.stroke?.replace('#', '') || '363636',
+          fontSize: Math.max(12, (element.fontSize || 18) * 0.5),
+        })
+      }
+      break
+
+    case 'image':
+      if (element.imageUrl) {
+        // Check if it's a data URL or external URL
+        const imageOptions: any = {
+          x: `${element.x}%`,
+          y: `${element.y}%`,
+          w: `${element.width}%`,
+          h: `${element.height}%`,
+        }
+
+        if (element.imageUrl.startsWith('data:')) {
+          imageOptions.data = element.imageUrl
+        } else {
+          imageOptions.path = element.imageUrl
+        }
+
+        pptxSlide.addImage(imageOptions)
+      }
+      break
+
+    case 'table':
+      if (element.cells && element.cells.length > 0) {
+        const tableData: any[][] = []
+        const borderColor = element.borderColor?.replace('#', '') || 'CCCCCC'
+        
+        for (let rowIndex = 0; rowIndex < element.cells.length; rowIndex++) {
+          const row = element.cells[rowIndex]
+          const rowData: any[] = []
+          const isHeaderRow = element.headerRow && rowIndex === 0
+          
+          for (const cell of row) {
+            rowData.push({
+              text: cell.content || '',
+              options: {
+                fontSize: cell.fontSize || 14,
+                fontFace: cell.fontFace || 'Arial',
+                color: cell.color || '363636',
+                bold: cell.bold || isHeaderRow,
+                italic: cell.italic,
+                align: cell.align || 'left',
+                valign: 'middle',
+              },
+            })
+          }
+          tableData.push(rowData)
+        }
+        
+        if (tableData.length > 0) {
+          pptxSlide.addTable(tableData, {
+            x: `${element.x}%`,
+            y: `${element.y}%`,
+            w: `${element.width}%`,
+            h: `${element.height}%`,
+            border: {
+              type: 'solid',
+              color: borderColor,
+              pt: element.borderWidth || 1,
+            },
+            fill: { color: 'FFFFFF' },
+          })
+        }
+      }
+      break
+  }
+}
+
+/**
+ * Convert slides to PPTX presentation
+ */
+export async function slidesToPptx(slides: Slide[]): Promise<any> {
+  const PptxGenJS = (await import('pptxgenjs')).default
+  const pptx = new PptxGenJS()
+
+  for (const slide of slides) {
+    const pptxSlide = pptx.addSlide()
+
+    if (slide.background) {
+      pptxSlide.background = { color: slide.background.replace('#', '') }
+    }
+
+    for (const element of slide.elements) {
+      addElementToPptxSlide(pptxSlide, element)
+    }
+
+    if (slide.notes) {
+      pptxSlide.addNotes(slide.notes)
+    }
+  }
+
+  return pptx
+}
+

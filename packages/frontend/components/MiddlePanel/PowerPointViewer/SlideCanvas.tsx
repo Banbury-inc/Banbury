@@ -2,19 +2,22 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { Slide, SlideElement } from './PowerPointViewer'
 import { getShapeDefinition, renderShapeSvg } from './shape-catalog'
 import { Move } from 'lucide-react'
+import { fillStyleToCSS } from './utils/fill-utils'
 
 interface SlideCanvasProps {
   slide: Slide
   onUpdateElements: (elements: SlideElement[]) => void
   selectedElementId: string | null
   onSelectElement: (elementId: string | null) => void
+  onTextSelectionChange?: (selection: { start: number; end: number } | null) => void
 }
 
 export function SlideCanvas({ 
   slide, 
   onUpdateElements, 
   selectedElementId,
-  onSelectElement 
+  onSelectElement,
+  onTextSelectionChange
 }: SlideCanvasProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
@@ -39,8 +42,16 @@ export function SlideCanvas({
 
   // Handle canvas click (deselect)
   const handleCanvasClick = useCallback(() => {
+    // Don't deselect if we're editing text
+    const activeElement = document.activeElement
+    if (activeElement?.getAttribute('contenteditable') === 'true') {
+      return
+    }
     onSelectElement(null)
-  }, [onSelectElement])
+    if (onTextSelectionChange) {
+      onTextSelectionChange(null)
+    }
+  }, [onSelectElement, onTextSelectionChange])
 
   // Handle text content change
   const handleTextChange = useCallback((elementId: string, newContent: string) => {
@@ -281,6 +292,7 @@ export function SlideCanvas({
                 onTableCellChange={element.type === 'table' ? (rowIndex, colIndex, content) => handleTableCellChange(element.id, rowIndex, colIndex, content) : undefined}
                 onSelectElement={onSelectElement}
                 onResizeStart={(evt, handle) => handleResizeStart(evt, handle, element.id)}
+                onTextSelectionChange={onTextSelectionChange}
               />
             ))}
 
@@ -310,6 +322,7 @@ function ElementRenderer({
   onTableCellChange,
   onSelectElement,
   onResizeStart,
+  onTextSelectionChange,
 }: {
   element: SlideElement
   isSelected: boolean
@@ -319,6 +332,7 @@ function ElementRenderer({
   onTableCellChange?: (rowIndex: number, colIndex: number, content: string) => void
   onSelectElement: (elementId: string) => void
   onResizeStart: (e: React.MouseEvent, handle: string) => void
+  onTextSelectionChange?: (selection: { start: number; end: number } | null) => void
 }) {
   const baseStyles: React.CSSProperties = {
     position: 'absolute',
@@ -330,12 +344,82 @@ function ElementRenderer({
   }
 
   if (element.type === 'text') {
+    // Render highlighted text if highlights exist
+    const renderTextWithHighlights = () => {
+      if (!element.highlights || element.highlights.length === 0) {
+        return element.content
+      }
+
+      const content = element.content || ''
+      const parts: Array<{ text: string; highlight?: string }> = []
+      let lastIndex = 0
+
+      // Sort highlights by start position
+      const sortedHighlights = [...element.highlights].sort((a, b) => a.start - b.start)
+
+      for (const highlight of sortedHighlights) {
+        // Add text before highlight
+        if (highlight.start > lastIndex) {
+          parts.push({ text: content.substring(lastIndex, highlight.start) })
+        }
+        // Add highlighted text
+        parts.push({
+          text: content.substring(highlight.start, highlight.end),
+          highlight: highlight.color
+        })
+        lastIndex = highlight.end
+      }
+
+      // Add remaining text
+      if (lastIndex < content.length) {
+        parts.push({ text: content.substring(lastIndex) })
+      }
+
+      return (
+        <>
+          {parts.map((part, idx) => (
+            part.highlight ? (
+              <span key={idx} style={{ backgroundColor: part.highlight }}>{part.text}</span>
+            ) : (
+              <span key={idx}>{part.text}</span>
+            )
+          ))}
+        </>
+      )
+    }
+
+    // Handle selection change
+    const handleSelectionChange = () => {
+      if (!onTextSelectionChange) return
+      
+      const selection = window.getSelection()
+      if (!selection || selection.rangeCount === 0) {
+        onTextSelectionChange(null)
+        return
+      }
+
+      const range = selection.getRangeAt(0)
+      const content = element.content || ''
+      
+      // Get text content and calculate offsets
+      const startOffset = Math.min(range.startOffset, content.length)
+      const endOffset = Math.min(range.endOffset, content.length)
+      
+      if (startOffset !== endOffset) {
+        onTextSelectionChange({ start: startOffset, end: endOffset })
+      } else {
+        onTextSelectionChange(null)
+      }
+    }
+
     return (
       <div
-        className={isSelected ? 'border-2 border-muted rounded-sm' : 'border-2 border-primary rounded-sm'}
+        className={isSelected ? 'border-2 border-primary rounded-sm' : 'border-2 border-transparent rounded-sm'}
         style={{
           ...baseStyles,
-          padding: '2px',
+          background: element.textFill ? fillStyleToCSS(element.textFill) : 'transparent',
+          border: element.border ? `${element.border.width}px solid ${element.border.color}` : undefined,
+          padding: '4px',
         }}
         onClick={onClick}
         onMouseDown={onMouseDown}
@@ -355,8 +439,13 @@ function ElementRenderer({
             flexDirection: 'column',
             justifyContent: element.valign === 'top' ? 'flex-start' : element.valign === 'bottom' ? 'flex-end' : 'center',
             minHeight: '1em',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
           }}
           onBlur={(e) => onTextChange(e.currentTarget.textContent || '')}
+          onSelect={handleSelectionChange}
+          onMouseUp={handleSelectionChange}
+          onKeyUp={handleSelectionChange}
           onClick={(e) => {
             e.stopPropagation()
             // Select the element when clicked
@@ -371,7 +460,7 @@ function ElementRenderer({
             // Allow focus for text editing
           }}
         >
-          {element.content}
+          {renderTextWithHighlights()}
         </div>
         {isSelected && (
           <>

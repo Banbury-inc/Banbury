@@ -48,6 +48,41 @@ function generateUniqueId(prefix: 'slide' | 'element'): string {
 }
 
 /**
+ * Normalize bullet-formatted text to ensure each bullet is on its own line.
+ * Detects patterns like "• item • item" and converts to "• item\n• item"
+ */
+function normalizeBulletText(text: string | undefined): string | undefined {
+  if (!text) return text;
+  
+  // Replace inline bullets with newline-separated bullets
+  // Pattern: bullet character followed by text, then another bullet character
+  let normalized = text;
+  
+  // Common bullet patterns: •, -, *, ◦, ▪, ▫
+  const bulletChars = ['•', '-', '*', '◦', '▪', '▫'];
+  
+  for (const bullet of bulletChars) {
+    // Match: "bullet text bullet" and insert newline before second bullet
+    // But don't match if there's already a newline before the bullet
+    const pattern = new RegExp(`([^\\n])\\s*(\\${bullet})\\s+`, 'g');
+    normalized = normalized.replace(pattern, (match, before, bulletChar) => {
+      // If this looks like a bullet at the start of a line, don't add extra newline
+      if (before === bulletChar) return match;
+      return `${before}\n${bulletChar} `;
+    });
+  }
+  
+  // Also handle numbered lists: "1. item 2. item" -> "1. item\n2. item"
+  normalized = normalized.replace(/([^\n])(\d+\.\s+)/g, (match, before, numBullet) => {
+    // Don't add newline if we're at the very start
+    if (!before || before === '\n') return match;
+    return `${before}\n${numBullet}`;
+  });
+  
+  return normalized;
+}
+
+/**
  * Apply PowerPoint AI operations with preview/accept/reject support
  */
 export function handlePptxAIResponse(
@@ -226,14 +261,20 @@ function applyOperations(
         }
 
         if (slideIndex >= 0 && slideIndex < newSlides.length && op.element) {
+          // Normalize bullet text for text elements
+          const elementData = { ...op.element };
+          if (op.type === 'addText' && elementData.content) {
+            elementData.content = normalizeBulletText(elementData.content);
+          }
+          
           const newElement: SlideElement = {
             id: generateUniqueId('element'),
             type: op.type === 'addText' ? 'text' : op.type === 'addShape' ? 'shape' : 'image',
-            x: op.element.x ?? 10,
-            y: op.element.y ?? 10,
-            width: op.element.width ?? 80,
-            height: op.element.height ?? 20,
-            ...op.element,
+            x: elementData.x ?? 10,
+            y: elementData.y ?? 10,
+            width: elementData.width ?? 80,
+            height: elementData.height ?? 20,
+            ...elementData,
           } as SlideElement;
           newSlides[slideIndex].elements.push(newElement);
         }
@@ -245,9 +286,17 @@ function applyOperations(
         if (slideIndex >= 0 && slideIndex < newSlides.length && op.elementId) {
           const elementIndex = newSlides[slideIndex].elements.findIndex(e => e.id === op.elementId);
           if (elementIndex >= 0) {
+            const currentElement = newSlides[slideIndex].elements[elementIndex];
+            const updateData = { ...op.element };
+            
+            // Normalize bullet text for text elements when updating content
+            if (currentElement.type === 'text' && updateData.content) {
+              updateData.content = normalizeBulletText(updateData.content);
+            }
+            
             newSlides[slideIndex].elements[elementIndex] = {
-              ...newSlides[slideIndex].elements[elementIndex],
-              ...op.element,
+              ...currentElement,
+              ...updateData,
             };
           }
         }
@@ -274,6 +323,92 @@ function applyOperations(
 
       case 'applyTheme': {
         // Theme application is a no-op for now (could be extended)
+        break;
+      }
+
+      case 'applyTemplate': {
+        // Apply template to presentation or slide
+        const templateId = (op as any).templateId;
+        const scope = (op as any).scope || 'presentation';
+        
+        if (!templateId) break;
+        
+        if (scope === 'presentation') {
+          // Apply to all slides
+          const { applyTemplateToSlide } = require('../handlers/handle-apply-template');
+          const { getTemplateById, loadTemplates } = require('../templates/loader');
+          
+          // Load templates synchronously (they should be cached)
+          try {
+            const template = getTemplateById(templateId);
+            if (template) {
+              newSlides = newSlides.map(slide => applyTemplateToSlide(slide, template));
+            }
+          } catch (error) {
+            console.error('Error applying template:', error);
+          }
+        } else if (scope === 'slide') {
+          // Apply to current slide only
+          const { applyTemplateToSlide } = require('../handlers/handle-apply-template');
+          const { getTemplateById } = require('../templates/loader');
+          
+          try {
+            const template = getTemplateById(templateId);
+            if (template && newCurrentSlideIndex >= 0 && newCurrentSlideIndex < newSlides.length) {
+              newSlides[newCurrentSlideIndex] = applyTemplateToSlide(
+                newSlides[newCurrentSlideIndex],
+                template
+              );
+            }
+          } catch (error) {
+            console.error('Error applying template to slide:', error);
+          }
+        }
+        break;
+      }
+
+      case 'highlightText': {
+        const slideIndex = op.slideIndex ?? newCurrentSlideIndex;
+        if (slideIndex >= 0 && slideIndex < newSlides.length && op.elementId) {
+          const elementIndex = newSlides[slideIndex].elements.findIndex(e => e.id === op.elementId);
+          if (elementIndex >= 0) {
+            const element = newSlides[slideIndex].elements[elementIndex];
+            if (element.type === 'text' && element.content) {
+              // Find substring occurrences
+              const content = element.content;
+              const substring = op.substring || '';
+              const color = op.color || '#ffff00';
+              const occurrence = op.occurrence;
+              
+              let highlights = element.highlights || [];
+              let index = 0;
+              let count = 0;
+              
+              while ((index = content.indexOf(substring, index)) !== -1) {
+                count++;
+                if (!occurrence || count === occurrence) {
+                  const start = index;
+                  const end = index + substring.length;
+                  
+                  // Remove overlapping highlights
+                  highlights = highlights.filter(h => 
+                    h.end <= start || h.start >= end
+                  );
+                  
+                  highlights.push({ start, end, color });
+                  
+                  if (occurrence) break;
+                }
+                index += substring.length;
+              }
+              
+              newSlides[slideIndex].elements[elementIndex] = {
+                ...element,
+                highlights: highlights.sort((a, b) => a.start - b.start)
+              };
+            }
+          }
+        }
         break;
       }
     }

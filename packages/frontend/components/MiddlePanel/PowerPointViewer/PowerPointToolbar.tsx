@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { SlideElement, Slide } from './PowerPointViewer'
+import { SlideElement, Slide, FillStyle } from './PowerPointViewer'
 import {
   createTextElement,
   createShapeElement,
@@ -14,6 +14,23 @@ import {
   addTableColumn,
   removeTableColumn,
 } from './handlers/powerpoint-toolbar-handlers'
+import {
+  setTextFillSolid,
+  setTextFillGradient,
+  clearTextFill,
+  setShapeFillSolid,
+  setShapeFillGradient,
+  setTextBorder,
+  clearTextBorder,
+  addHighlight,
+  clearAllHighlights,
+} from './handlers/advanced-format-handlers'
+import { fillStyleToColorString } from './utils/fill-utils'
+import {
+  handleLocalImageUpload,
+  resolveWebImageToDataUrl,
+  resolveDriveImageToDataUrl,
+} from './handlers/powerpoint-image-handlers'
 import { Button } from '../../ui/button'
 import {
   DropdownMenu,
@@ -23,7 +40,13 @@ import {
   DropdownMenuSeparator,
 } from '../../ui/dropdown-menu'
 import { Popover, PopoverTrigger, PopoverContent } from '../../ui/popover'
-import { BackgroundPanel, LayoutPanel, ThemePanel, TransitionPanel } from './SlideLayoutSelector'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../ui/dialog'
+import { Input } from '../../ui/input'
+import { Label } from '../../ui/label'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs'
+import { ApiService } from '../../../../backend/api/apiService'
+import type { DriveFile } from '../../../../backend/api/drive/drive'
+import { BackgroundPanel, LayoutPanel, ThemePanel, TransitionPanel, TemplatePanel } from './SlideLayoutSelector'
 import { SlideLayoutType, ThemeType, TransitionType } from './types/slide-layouts'
 import {
   Undo,
@@ -55,6 +78,9 @@ import {
   Layout,
   Columns,
   Rows,
+  Link,
+  Upload,
+  Cloud,
 } from 'lucide-react'
 import { shapeCatalog, renderShapeSvg, getShapeDefinition, ShapeType } from './shape-catalog'
 
@@ -68,9 +94,9 @@ interface ToolbarButton {
   isDropdown?: boolean
   showWhen?: boolean
   isCustom?: boolean
-  customType?: 'dimensions' | 'font-size'
+  customType?: 'dimensions' | 'font-size' | 'font-family'
   isColorPicker?: boolean
-  colorType?: 'text' | 'fill' | 'stroke' | 'background' | 'tableBorder'
+  colorType?: 'text' | 'fill' | 'stroke' | 'background' | 'tableBorder' | 'textBackground' | 'textBorder' | 'highlight'
   active?: boolean
 }
 
@@ -82,6 +108,7 @@ interface PowerPointToolbarProps {
   
   // Selected element
   selectedElement: SlideElement | null
+  textSelection?: { start: number; end: number } | null
   
   // Element handlers
   onAddElement: (element: SlideElement) => void
@@ -94,6 +121,7 @@ interface PowerPointToolbarProps {
   onUpdateSlideBackground: (background: string) => void
   onApplyLayout?: (layout: SlideLayoutType) => void
   onApplyTheme?: (theme: ThemeType) => void
+  onApplyTemplate?: (templateId: string) => void
   onApplyTransition?: (transition: TransitionType) => void
   onPreviousSlide: () => void
   onNextSlide: () => void
@@ -109,6 +137,9 @@ interface PowerPointToolbarProps {
   onDownload: () => void
   saving: boolean
   hasUnsavedChanges: boolean
+  
+  // Current template ID (optional)
+  currentTemplateId?: string
 }
 
 export function PowerPointToolbar({
@@ -116,6 +147,7 @@ export function PowerPointToolbar({
   currentSlideIndex,
   currentSlide,
   selectedElement,
+  textSelection: textSelectionProp,
   onAddElement,
   onUpdateElement,
   onDeleteElement,
@@ -124,6 +156,7 @@ export function PowerPointToolbar({
   onUpdateSlideBackground,
   onApplyLayout,
   onApplyTheme,
+  onApplyTemplate,
   onApplyTransition,
   onPreviousSlide,
   onNextSlide,
@@ -135,6 +168,7 @@ export function PowerPointToolbar({
   onDownload,
   saving,
   hasUnsavedChanges,
+  currentTemplateId,
 }: PowerPointToolbarProps) {
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [visibleButtons, setVisibleButtons] = useState<string[]>([])
@@ -146,11 +180,40 @@ export function PowerPointToolbar({
   const [strokeColorOpen, setStrokeColorOpen] = useState(false)
   const [backgroundColorOpen, setBackgroundColorOpen] = useState(false)
   const [tableBorderColorOpen, setTableBorderColorOpen] = useState(false)
+  const [textBackgroundOpen, setTextBackgroundOpen] = useState(false)
+  const [textBorderColorOpen, setTextBorderColorOpen] = useState(false)
+  const [highlightColorOpen, setHighlightColorOpen] = useState(false)
   const [backgroundPanelOpen, setBackgroundPanelOpen] = useState(false)
   const [layoutPanelOpen, setLayoutPanelOpen] = useState(false)
   const [themePanelOpen, setThemePanelOpen] = useState(false)
+  const [templatePanelOpen, setTemplatePanelOpen] = useState(false)
   const [transitionPanelOpen, setTransitionPanelOpen] = useState(false)
   const canApplySlideSettings = Boolean(onApplyLayout && onApplyTheme && onApplyTransition)
+  
+  // Font selection
+  const [fontDropdownOpen, setFontDropdownOpen] = useState(false)
+  
+  // Use text selection from props (passed from PowerPointViewer)
+  const textSelection = textSelectionProp
+  
+  // Gradient dialog states
+  const [shapeGradientOpen, setShapeGradientOpen] = useState(false)
+  
+  // Gradient state
+  const [gradientStartColor, setGradientStartColor] = useState('#ffffff')
+  const [gradientEndColor, setGradientEndColor] = useState('#000000')
+  const [gradientAngle, setGradientAngle] = useState(90)
+  
+  // Text background tab state
+  const [textBackgroundTab, setTextBackgroundTab] = useState<'solid' | 'gradient'>('solid')
+  
+  // Image insertion dialogs
+  const [urlImageDialogOpen, setUrlImageDialogOpen] = useState(false)
+  const [driveImageDialogOpen, setDriveImageDialogOpen] = useState(false)
+  const [imageUrl, setImageUrl] = useState('')
+  const [imageLoading, setImageLoading] = useState(false)
+  const [driveImages, setDriveImages] = useState<DriveFile[]>([])
+  const [driveLoading, setDriveLoading] = useState(false)
 
   // Element action handlers
   const handleAddText = useCallback(() => {
@@ -161,8 +224,10 @@ export function PowerPointToolbar({
     onAddElement(createShapeElement(shapeType))
   }, [onAddElement])
 
-  const handleAddImage = useCallback(() => {
-    handleImageUpload((imageUrl) => {
+  // Image insertion handlers
+  const handleAddImageFromComputer = useCallback(async () => {
+    try {
+      const dataUrl = await handleLocalImageUpload()
       onAddElement({
         id: `image-${Date.now()}`,
         type: 'image',
@@ -170,10 +235,79 @@ export function PowerPointToolbar({
         y: 10,
         width: 40,
         height: 30,
-        imageUrl,
+        imageUrl: dataUrl,
       })
-    })
+    } catch (error) {
+      // User cancelled or error occurred
+      console.error('Image upload error:', error)
+    }
   }, [onAddElement])
+
+  const handleAddImageFromUrl = useCallback(async () => {
+    if (!imageUrl.trim()) return
+    
+    setImageLoading(true)
+    try {
+      const dataUrl = await resolveWebImageToDataUrl(imageUrl.trim())
+      onAddElement({
+        id: `image-${Date.now()}`,
+        type: 'image',
+        x: 10,
+        y: 10,
+        width: 40,
+        height: 30,
+        imageUrl: dataUrl,
+      })
+      setUrlImageDialogOpen(false)
+      setImageUrl('')
+    } catch (error: any) {
+      alert(error?.message || 'Failed to load image from URL')
+    } finally {
+      setImageLoading(false)
+    }
+  }, [imageUrl, onAddElement])
+
+  const handleAddImageFromDrive = useCallback(async (fileId: string) => {
+    setImageLoading(true)
+    try {
+      const dataUrl = await resolveDriveImageToDataUrl(fileId)
+      onAddElement({
+        id: `image-${Date.now()}`,
+        type: 'image',
+        x: 10,
+        y: 10,
+        width: 40,
+        height: 30,
+        imageUrl: dataUrl,
+      })
+      setDriveImageDialogOpen(false)
+    } catch (error: any) {
+      alert(error?.message || 'Failed to load image from Google Drive')
+    } finally {
+      setImageLoading(false)
+    }
+  }, [onAddElement])
+
+  // Load Drive images when dialog opens
+  useEffect(() => {
+    if (driveImageDialogOpen && driveImages.length === 0) {
+      setDriveLoading(true)
+      ApiService.Drive.listFiles({
+        q: "mimeType contains 'image/' and trashed = false",
+        pageSize: 50,
+        orderBy: 'modifiedTime desc'
+      })
+        .then(response => {
+          setDriveImages(response.files || [])
+        })
+        .catch(error => {
+          console.error('Failed to load Drive images:', error)
+        })
+        .finally(() => {
+          setDriveLoading(false)
+        })
+    }
+  }, [driveImageDialogOpen, driveImages.length])
 
   const handleAddTable = useCallback(() => {
     onAddElement(createTableElement())
@@ -235,10 +369,19 @@ export function PowerPointToolbar({
   // Shape formatting handlers
   const handleFillColorChange = useCallback((color: string) => {
     if (selectedElement?.type === 'shape') {
-      onUpdateElement({ fill: color })
+      const updates = setShapeFillSolid(selectedElement, color)
+      onUpdateElement(updates)
     }
     setFillColorOpen(false)
   }, [selectedElement, onUpdateElement])
+
+  const handleShapeGradientApply = useCallback(() => {
+    if (selectedElement?.type === 'shape') {
+      const updates = setShapeFillGradient(selectedElement, gradientStartColor, gradientEndColor, gradientAngle)
+      onUpdateElement(updates)
+    }
+    setShapeGradientOpen(false)
+  }, [selectedElement, gradientStartColor, gradientEndColor, gradientAngle, onUpdateElement])
 
   const handleStrokeColorChange = useCallback((color: string) => {
     if (selectedElement?.type === 'shape') {
@@ -262,6 +405,76 @@ export function PowerPointToolbar({
   const handleShapeLabelChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (selectedElement?.type !== 'shape') return
     onUpdateElement({ content: e.target.value })
+  }, [selectedElement, onUpdateElement])
+
+  // Advanced formatting handlers
+  const handleFontFaceChange = useCallback((fontFace: string) => {
+    if (selectedElement?.type === 'text') {
+      onUpdateElement({ fontFace })
+    }
+    setFontDropdownOpen(false)
+  }, [selectedElement, onUpdateElement])
+
+  const handleTextBackgroundChange = useCallback((color: string) => {
+    if (selectedElement?.type === 'text') {
+      const updates = setTextFillSolid(selectedElement, color)
+      onUpdateElement(updates)
+    }
+    setTextBackgroundOpen(false)
+  }, [selectedElement, onUpdateElement])
+
+  const handleTextGradientApply = useCallback(() => {
+    if (selectedElement?.type === 'text') {
+      const updates = setTextFillGradient(selectedElement, gradientStartColor, gradientEndColor, gradientAngle)
+      onUpdateElement(updates)
+    }
+    setTextBackgroundOpen(false)
+  }, [selectedElement, gradientStartColor, gradientEndColor, gradientAngle, onUpdateElement])
+
+  const handleClearTextBackground = useCallback(() => {
+    if (selectedElement?.type === 'text') {
+      const updates = clearTextFill(selectedElement)
+      onUpdateElement(updates)
+    }
+  }, [selectedElement, onUpdateElement])
+
+  const handleTextBorderColorChange = useCallback((color: string) => {
+    if (selectedElement?.type === 'text') {
+      const width = selectedElement.border?.width || 1
+      const updates = setTextBorder(selectedElement, color, width)
+      onUpdateElement(updates)
+    }
+    setTextBorderColorOpen(false)
+  }, [selectedElement, onUpdateElement])
+
+  const handleTextBorderWidthChange = useCallback((width: number) => {
+    if (selectedElement?.type === 'text') {
+      const color = selectedElement.border?.color || '#000000'
+      const updates = setTextBorder(selectedElement, color, width)
+      onUpdateElement(updates)
+    }
+  }, [selectedElement, onUpdateElement])
+
+  const handleClearTextBorder = useCallback(() => {
+    if (selectedElement?.type === 'text') {
+      const updates = clearTextBorder(selectedElement)
+      onUpdateElement(updates)
+    }
+  }, [selectedElement, onUpdateElement])
+
+  const handleHighlightColorChange = useCallback((color: string) => {
+    if (selectedElement?.type === 'text' && textSelection) {
+      const updates = addHighlight(selectedElement, textSelection.start, textSelection.end, color)
+      onUpdateElement(updates)
+    }
+    setHighlightColorOpen(false)
+  }, [selectedElement, textSelection, onUpdateElement])
+
+  const handleClearHighlights = useCallback(() => {
+    if (selectedElement?.type === 'text') {
+      const updates = clearAllHighlights(selectedElement)
+      onUpdateElement(updates)
+    }
   }, [selectedElement, onUpdateElement])
 
   // Slide background color handler
@@ -346,17 +559,21 @@ export function PowerPointToolbar({
     { id: 'divider-1', isDivider: true },
     { id: 'text', title: 'Add Text', icon: <Type size={16} />, onClick: handleAddText },
     { id: 'shape', title: 'Add Shape', icon: <Square size={16} />, isDropdown: true },
-    { id: 'image', title: 'Add Image', icon: <Image size={16} />, onClick: handleAddImage },
+    { id: 'image', title: 'Add Image', icon: <Image size={16} />, isDropdown: true },
     { id: 'delete', title: 'Delete Element', icon: <Trash2 size={16} />, onClick: onDeleteElement, disabled: !selectedElement, showWhen: !!selectedElement },
   ]
 
   // Text formatting buttons (shown when text element selected)
   const textFormatButtons: ToolbarButton[] = selectedElement?.type === 'text' ? [
     { id: 'divider-text', isDivider: true },
+    { id: 'font-family', title: 'Font Family', isCustom: true, customType: 'font-family' },
     { id: 'font-size', title: 'Font Size', isCustom: true },
     { id: 'bold', title: 'Bold', icon: <Bold size={16} />, onClick: handleToggleBold, active: selectedElement?.bold },
     { id: 'italic', title: 'Italic', icon: <Italic size={16} />, onClick: handleToggleItalic, active: selectedElement?.italic },
     { id: 'text-color', title: 'Text Color', icon: <Paintbrush size={16} />, isColorPicker: true, colorType: 'text' },
+    { id: 'text-background', title: 'Text Background', isColorPicker: true, colorType: 'textBackground' },
+    { id: 'text-border', title: 'Text Border', isColorPicker: true, colorType: 'textBorder' },
+    { id: 'highlight', title: 'Highlight', isColorPicker: true, colorType: 'highlight' },
     { id: 'divider-align', isDivider: true },
     { id: 'align-left', title: 'Align Left', icon: <AlignLeft size={16} />, onClick: () => handleTextAlign('left'), active: selectedElement?.align === 'left' },
     { id: 'align-center', title: 'Align Center', icon: <AlignCenter size={16} />, onClick: () => handleTextAlign('center'), active: selectedElement?.align === 'center' },
@@ -440,16 +657,24 @@ export function PowerPointToolbar({
   }, [calculateVisible])
 
   // Render color picker dropdown
-  const renderColorPicker = (colorType: 'text' | 'fill' | 'stroke' | 'background' | 'tableBorder', isOpen: boolean, setIsOpen: (open: boolean) => void, currentColor: string) => (
+  const renderColorPicker = (colorType: 'text' | 'fill' | 'stroke' | 'background' | 'tableBorder' | 'textBackground' | 'textBorder' | 'highlight', isOpen: boolean, setIsOpen: (open: boolean) => void, currentColor: string) => (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="primary"
           size="icon-sm"
-          title={colorType === 'text' ? 'Text Color' : colorType === 'fill' ? 'Fill Color' : colorType === 'stroke' ? 'Stroke Color' : 'Background Color'}
+          title={
+            colorType === 'text' ? 'Text Color' : 
+            colorType === 'fill' ? 'Fill Color' : 
+            colorType === 'stroke' ? 'Stroke Color' : 
+            colorType === 'textBackground' ? 'Text Background' :
+            colorType === 'textBorder' ? 'Text Border' :
+            colorType === 'highlight' ? 'Highlight' :
+            'Background Color'
+          }
         >
           <div className="relative">
-            {colorType === 'text' || colorType === 'stroke' ? <Paintbrush size={16} /> : <PaintBucket size={16} />}
+            {colorType === 'text' || colorType === 'stroke' || colorType === 'textBorder' ? <Paintbrush size={16} /> : <PaintBucket size={16} />}
             <div 
               className="absolute bottom-0 left-0 right-0 h-1 rounded-full" 
               style={{ backgroundColor: currentColor }}
@@ -469,6 +694,9 @@ export function PowerPointToolbar({
                 else if (colorType === 'fill') handleFillColorChange(color)
                 else if (colorType === 'stroke') handleStrokeColorChange(color)
                 else if (colorType === 'tableBorder') handleTableBorderColorChange(color)
+                else if (colorType === 'textBackground') handleTextBackgroundChange(color)
+                else if (colorType === 'textBorder') handleTextBorderColorChange(color)
+                else if (colorType === 'highlight') handleHighlightColorChange(color)
                 else handleBackgroundColorChange(color)
               }}
             />
@@ -486,6 +714,9 @@ export function PowerPointToolbar({
               else if (colorType === 'fill') handleFillColorChange(e.target.value)
               else if (colorType === 'stroke') handleStrokeColorChange(e.target.value)
               else if (colorType === 'tableBorder') handleTableBorderColorChange(e.target.value)
+              else if (colorType === 'textBackground') handleTextBackgroundChange(e.target.value)
+              else if (colorType === 'textBorder') handleTextBorderColorChange(e.target.value)
+              else if (colorType === 'highlight') handleHighlightColorChange(e.target.value)
               else handleBackgroundColorChange(e.target.value)
             }}
           />
@@ -530,22 +761,6 @@ export function PowerPointToolbar({
 
         {canApplySlideSettings && (
           <>
-            <Popover open={backgroundPanelOpen} onOpenChange={setBackgroundPanelOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="primary" size="icon-sm" title="Background">
-                  <PaintBucket size={16} />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 max-w-[600px]" align="start">
-                <BackgroundPanel
-                  currentBackground={currentSlide?.background}
-                  onApplyBackground={(background) => {
-                    onUpdateSlideBackground(background)
-                    setBackgroundPanelOpen(false)
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
 
             <Popover open={layoutPanelOpen} onOpenChange={setLayoutPanelOpen}>
               <PopoverTrigger asChild>
@@ -634,9 +849,27 @@ export function PowerPointToolbar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button variant="primary" size="icon-sm" onClick={handleAddImage} title="Add Image">
-          <Image size={16} />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="primary" size="icon-sm" title="Add Image">
+              <Image size={16} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={handleAddImageFromComputer}>
+              <Upload size={16} className="mr-2" />
+              Upload from Computer
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setUrlImageDialogOpen(true)}>
+              <Link size={16} className="mr-2" />
+              From URL
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setDriveImageDialogOpen(true)}>
+              <Cloud size={16} className="mr-2" />
+              From Google Drive
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <Button variant="primary" size="icon-sm" onClick={handleAddTable} title="Add Table">
           <Table size={16} />
@@ -658,6 +891,23 @@ export function PowerPointToolbar({
         {selectedElement?.type === 'text' && (
           <>
             <div className="w-px h-6 bg-border mx-1" />
+            
+            {/* Font Family */}
+            <DropdownMenu open={fontDropdownOpen} onOpenChange={setFontDropdownOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="primary" size="sm" title="Font Family" className="min-w-[100px] justify-between">
+                  <span className="text-xs truncate">{selectedElement.fontFace || 'Arial'}</span>
+                  <ChevronDown size={14} className="ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-48">
+                {['Arial', 'Times New Roman', 'Calibri', 'Georgia', 'Verdana', 'Courier New', 'Comic Sans MS', 'Impact', 'Trebuchet MS', 'Tahoma'].map((font) => (
+                  <DropdownMenuItem key={font} onClick={() => handleFontFaceChange(font)}>
+                    <span style={{ fontFamily: font }}>{font}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             
             {/* Font Size */}
             <div className="flex items-center">
@@ -709,68 +959,163 @@ export function PowerPointToolbar({
             </Button>
 
             {renderColorPicker('text', textColorOpen, setTextColorOpen, toHexColor(selectedElement.color || '363636'))}
+            
+            {/* Text Background with Solid/Gradient Tabs */}
+            <Popover open={textBackgroundOpen} onOpenChange={setTextBackgroundOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="primary"
+                  size="icon-sm"
+                  title="Text Background"
+                >
+                  <div className="relative">
+                    <PaintBucket size={16} />
+                    <div 
+                      className="absolute bottom-0 left-0 right-0 h-1 rounded-full" 
+                      style={{ backgroundColor: fillStyleToColorString(selectedElement.textFill) || '#ffffff' }}
+                    />
+                  </div>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-3">
+                <Tabs value={textBackgroundTab} onValueChange={(v) => setTextBackgroundTab(v as 'solid' | 'gradient')}>
+                  <TabsList className="w-full grid grid-cols-2">
+                    <TabsTrigger value="solid">Solid</TabsTrigger>
+                    <TabsTrigger value="gradient">Gradient</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="solid" className="space-y-3 mt-3">
+                    <div className="grid grid-cols-6 gap-1">
+                      {colorPalette.map((color) => (
+                        <button
+                          key={color}
+                          className="w-6 h-6 rounded border border-border hover:scale-110 transition-transform"
+                          style={{ backgroundColor: color }}
+                          onClick={() => handleTextBackgroundChange(color)}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 pt-2 border-t">
+                      <span className="text-xs text-muted-foreground">Custom:</span>
+                      <input
+                        type="color"
+                        className="w-8 h-6 cursor-pointer border rounded"
+                        value={fillStyleToColorString(selectedElement.textFill) || '#ffffff'}
+                        onChange={(e) => handleTextBackgroundChange(e.target.value)}
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleClearTextBackground} 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                    >
+                      Clear Background
+                    </Button>
+                  </TabsContent>
+                  
+                  <TabsContent value="gradient" className="space-y-3 mt-3">
+                    <div className="space-y-2">
+                      <Label className="text-xs">Start Color</Label>
+                      <input
+                        type="color"
+                        className="w-full h-8 cursor-pointer border rounded"
+                        value={gradientStartColor}
+                        onChange={(e) => setGradientStartColor(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">End Color</Label>
+                      <input
+                        type="color"
+                        className="w-full h-8 cursor-pointer border rounded"
+                        value={gradientEndColor}
+                        onChange={(e) => setGradientEndColor(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Angle: {gradientAngle}°</Label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="360"
+                        step="15"
+                        className="w-full"
+                        value={gradientAngle}
+                        onChange={(e) => setGradientAngle(parseInt(e.target.value))}
+                      />
+                    </div>
+                    <Button onClick={handleTextGradientApply} className="w-full" size="sm">
+                      Apply Gradient
+                    </Button>
+                  </TabsContent>
+                </Tabs>
+              </PopoverContent>
+            </Popover>
+            
+            {/* Text Border with Width */}
+            <div className="flex items-center gap-0">
+              {renderColorPicker('textBorder', textBorderColorOpen, setTextBorderColorOpen, selectedElement.border?.color || '#000000')}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="primary" size="sm" title="Border Width" className="min-w-[60px] ml-1 justify-between">
+                    <span className="text-xs">{selectedElement.border?.width || 1}pt</span>
+                    <ChevronDown size={14} className="ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {[0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 18, 20].map((width) => (
+                    <DropdownMenuItem key={width} onClick={() => handleTextBorderWidthChange(width)}>
+                      <span className="text-xs">{width}pt</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            
+            {renderColorPicker('highlight', highlightColorOpen, setHighlightColorOpen, '#ffff00')}
 
             <div className="w-px h-6 bg-border mx-1" />
 
-            {/* Text Alignment */}
-            <Button
-              variant="primary"
-              size="icon-sm"
-              className={selectedElement.align === 'left' ? 'bg-accent' : ''}
-              onClick={() => handleTextAlign('left')}
-              title="Align Left"
-            >
-              <AlignLeft size={16} />
-            </Button>
-            <Button
-              variant="primary"
-              size="icon-sm"
-              className={selectedElement.align === 'center' ? 'bg-accent' : ''}
-              onClick={() => handleTextAlign('center')}
-              title="Align Center"
-            >
-              <AlignCenter size={16} />
-            </Button>
-            <Button
-              variant="primary"
-              size="icon-sm"
-              className={selectedElement.align === 'right' ? 'bg-accent' : ''}
-              onClick={() => handleTextAlign('right')}
-              title="Align Right"
-            >
-              <AlignRight size={16} />
-            </Button>
-
-            <div className="w-px h-6 bg-border mx-1" />
-
-            {/* Vertical Alignment */}
-            <Button
-              variant="primary"
-              size="icon-sm"
-              className={selectedElement.valign === 'top' ? 'bg-accent' : ''}
-              onClick={() => handleVerticalAlign('top')}
-              title="Align Top"
-            >
-              <AlignVerticalJustifyStart size={16} />
-            </Button>
-            <Button
-              variant="primary"
-              size="icon-sm"
-              className={selectedElement.valign === 'middle' ? 'bg-accent' : ''}
-              onClick={() => handleVerticalAlign('middle')}
-              title="Align Middle"
-            >
-              <AlignVerticalJustifyCenter size={16} />
-            </Button>
-            <Button
-              variant="primary"
-              size="icon-sm"
-              className={selectedElement.valign === 'bottom' ? 'bg-accent' : ''}
-              onClick={() => handleVerticalAlign('bottom')}
-              title="Align Bottom"
-            >
-              <AlignVerticalJustifyEnd size={16} />
-            </Button>
+            {/* Text Alignment Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="primary" size="sm" title="Text Alignment" className="gap-1">
+                  {selectedElement.align === 'left' && <AlignLeft size={16} />}
+                  {selectedElement.align === 'center' && <AlignCenter size={16} />}
+                  {selectedElement.align === 'right' && <AlignRight size={16} />}
+                  {!selectedElement.align && <AlignLeft size={16} />}
+                  <ChevronDown size={14} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => handleTextAlign('left')}>
+                  <AlignLeft size={16} className="mr-2" />
+                  Align Left
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTextAlign('center')}>
+                  <AlignCenter size={16} className="mr-2" />
+                  Align Center
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTextAlign('right')}>
+                  <AlignRight size={16} className="mr-2" />
+                  Align Right
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleVerticalAlign('top')}>
+                  <AlignVerticalJustifyStart size={16} className="mr-2" />
+                  Align Top
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleVerticalAlign('middle')}>
+                  <AlignVerticalJustifyCenter size={16} className="mr-2" />
+                  Align Middle
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleVerticalAlign('bottom')}>
+                  <AlignVerticalJustifyEnd size={16} className="mr-2" />
+                  Align Bottom
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         )}
 
@@ -779,7 +1124,56 @@ export function PowerPointToolbar({
           <>
             <div className="w-px h-6 bg-border mx-1" />
             
-            {renderColorPicker('fill', fillColorOpen, setFillColorOpen, selectedElement.fill || '#4a90d9')}
+            {/* Shape Fill with Gradient */}
+            <div className="flex items-center gap-0">
+              {renderColorPicker('fill', fillColorOpen, setFillColorOpen, fillStyleToColorString(selectedElement.fill) || '#4a90d9')}
+              <Popover open={shapeGradientOpen} onOpenChange={setShapeGradientOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="primary" size="icon-sm" title="Shape Fill Gradient" className="ml-1">
+                    <div className="w-4 h-4" style={{ background: 'linear-gradient(90deg, #ff0000, #0000ff)' }} />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-4">
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm">Gradient Fill</h4>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Start Color</Label>
+                      <input
+                        type="color"
+                        className="w-full h-8 cursor-pointer border rounded"
+                        value={gradientStartColor}
+                        onChange={(e) => setGradientStartColor(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">End Color</Label>
+                      <input
+                        type="color"
+                        className="w-full h-8 cursor-pointer border rounded"
+                        value={gradientEndColor}
+                        onChange={(e) => setGradientEndColor(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Angle: {gradientAngle}°</Label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="360"
+                        step="15"
+                        className="w-full"
+                        value={gradientAngle}
+                        onChange={(e) => setGradientAngle(parseInt(e.target.value))}
+                      />
+                    </div>
+                    <Button onClick={handleShapeGradientApply} className="w-full" size="sm">
+                      Apply Gradient
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+            
             {renderColorPicker('stroke', strokeColorOpen, setStrokeColorOpen, selectedElement.stroke || '#2d5a8c')}
 
             <div className="flex items-center gap-1">
@@ -883,37 +1277,6 @@ export function PowerPointToolbar({
           </>
         )}
 
-        {/* Dimension Controls - shown for any selected element */}
-        {selectedElement && (
-          <>
-            <div className="w-px h-6 bg-border mx-1" />
-            
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-muted-foreground">W:</span>
-              <input
-                type="number"
-                className="w-12 h-7 text-center text-xs border border-border rounded bg-background"
-                value={Math.round(selectedElement.width)}
-                onChange={handleWidthChange}
-                min={1}
-                max={100}
-              />
-              <span className="text-xs text-muted-foreground">%</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-muted-foreground">H:</span>
-              <input
-                type="number"
-                className="w-12 h-7 text-center text-xs border border-border rounded bg-background"
-                value={Math.round(selectedElement.height)}
-                onChange={handleHeightChange}
-                min={1}
-                max={100}
-              />
-              <span className="text-xs text-muted-foreground">%</span>
-            </div>
-          </>
-        )}
 
         {/* Overflow menu for hidden buttons */}
         {visibleButtons.length < allButtons.filter(b => !b.isDivider).length && (
@@ -953,32 +1316,6 @@ export function PowerPointToolbar({
       <div className="flex items-center gap-1 flex-shrink-0 whitespace-nowrap ml-2">
         <div className="w-px h-6 bg-border mx-2" />
 
-        {/* Slide Navigation */}
-        <div className="flex items-center gap-1">
-          <Button
-            variant="primary"
-            size="icon-sm"
-            onClick={onPreviousSlide}
-            disabled={currentSlideIndex === 0}
-            title="Previous Slide"
-          >
-            <ChevronLeft size={16} />
-          </Button>
-          <span className="text-sm text-muted-foreground min-w-[60px] text-center">
-            {currentSlideIndex + 1} / {slides.length}
-          </span>
-          <Button
-            variant="primary"
-            size="icon-sm"
-            onClick={onNextSlide}
-            disabled={currentSlideIndex >= slides.length - 1}
-            title="Next Slide"
-          >
-            <ChevronRight size={16} />
-          </Button>
-        </div>
-
-        <div className="w-px h-6 bg-border mx-1" />
 
         {/* Save & Download */}
         <div className="flex items-center gap-1">
@@ -1005,6 +1342,110 @@ export function PowerPointToolbar({
           </Button>
         </div>
       </div>
+
+      {/* URL Image Dialog */}
+      <Dialog open={urlImageDialogOpen} onOpenChange={setUrlImageDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Image from URL</DialogTitle>
+            <DialogDescription>
+              Enter the URL of an image to add to your slide. The image will be embedded in the presentation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="image-url">Image URL</Label>
+              <Input
+                id="image-url"
+                placeholder="https://example.com/image.jpg"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !imageLoading) {
+                    handleAddImageFromUrl()
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setUrlImageDialogOpen(false)
+                setImageUrl('')
+              }}
+              disabled={imageLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddImageFromUrl}
+              disabled={!imageUrl.trim() || imageLoading}
+            >
+              {imageLoading ? 'Loading...' : 'Add Image'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Google Drive Image Dialog */}
+      <Dialog open={driveImageDialogOpen} onOpenChange={setDriveImageDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Image from Google Drive</DialogTitle>
+            <DialogDescription>
+              Select an image from your Google Drive to add to your slide.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {driveLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <RefreshCw size={24} className="animate-spin text-muted-foreground" />
+              </div>
+            ) : driveImages.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No images found in Google Drive
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                {driveImages.map((file) => (
+                  <button
+                    key={file.id}
+                    onClick={() => handleAddImageFromDrive(file.id)}
+                    disabled={imageLoading}
+                    className="relative aspect-square rounded-lg border-2 border-border hover:border-primary transition-colors overflow-hidden bg-muted disabled:opacity-50"
+                  >
+                    {file.thumbnailLink ? (
+                      <img
+                        src={file.thumbnailLink}
+                        alt={file.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Image size={32} className="text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-background/90 p-2 text-xs truncate">
+                      {file.name}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setDriveImageDialogOpen(false)}
+              disabled={imageLoading}
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { SlidePanel } from './SlidePanel'
 import { SlideCanvas } from './SlideCanvas'
 import { PowerPointToolbar } from './PowerPointToolbar'
 import { handlePowerPointSave } from './handlers/handle-powerpoint-save'
+import { slidesToPptx } from './utils/pptx-export-utils'
 import {
   pushToHistory,
   canUndo,
@@ -15,6 +16,11 @@ import {
   clearHistory,
 } from './handlers/powerpoint-toolbar-handlers'
 import { handlePptxAIResponse, handlePptxAIReject } from './handlers/handle-pptx-ai-response'
+import {
+  resolveWebImageToDataUrl,
+  resolveDriveImageToDataUrl,
+  resolveS3ImageToDataUrl,
+} from './handlers/powerpoint-image-handlers'
 import { Card } from '../../ui/card'
 import { ContextMenuProvider } from '../../ui/context-menu'
 import {
@@ -39,6 +45,33 @@ export interface TableCell {
   backgroundColor?: string
 }
 
+// Fill style types for text boxes and shapes
+export type FillStyle = 
+  | { kind: 'solid'; color: string }
+  | { kind: 'linearGradient'; startColor: string; endColor: string; angleDeg: number }
+
+// Text highlight range
+export interface HighlightRange {
+  start: number
+  end: number
+  color: string
+}
+
+// Border style for text boxes
+export interface BorderStyle {
+  color: string
+  width: number
+}
+
+export type PlaceholderRole =
+  | 'title'
+  | 'subtitle'
+  | 'body'
+  | 'leftColumn'
+  | 'rightColumn'
+  | 'caption'
+  | 'number'
+
 export interface SlideElement {
   id: string
   type: 'text' | 'shape' | 'image' | 'table'
@@ -55,11 +88,14 @@ export interface SlideElement {
   align?: 'left' | 'center' | 'right'
   valign?: 'top' | 'middle' | 'bottom'
   shapeType?: ShapeType
-  fill?: string
+  fill?: string | FillStyle  // Backward compatible: string or FillStyle
   stroke?: string
   strokeWidth?: number
   rotation?: number
   imageUrl?: string
+  driveFileId?: string
+  s3FileId?: string
+  s3FileName?: string
   // Table-specific properties
   rows?: number
   columns?: number
@@ -67,6 +103,12 @@ export interface SlideElement {
   borderColor?: string
   borderWidth?: number
   headerRow?: boolean
+  // New advanced formatting properties
+  textFill?: FillStyle  // Background fill for text boxes
+  border?: BorderStyle  // Border for text boxes
+  highlights?: HighlightRange[]  // Text highlight ranges
+  // Placeholder role for template application
+  placeholder?: PlaceholderRole
 }
 
 export interface Slide {
@@ -93,6 +135,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
   const [slides, setSlides] = useState<Slide[]>([])
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0)
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null)
+  const [textSelection, setTextSelection] = useState<{ start: number; end: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -364,6 +407,73 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     }
   }, [slides, currentSlideIndex, selectedElementId])
 
+  // Resolve image references (driveFileId, s3FileId, web URLs) to data URLs
+  useEffect(() => {
+    const resolveImages = async () => {
+      let hasChanges = false
+      const updatedSlides = await Promise.all(
+        slides.map(async (slide) => {
+          const updatedElements = await Promise.all(
+            slide.elements.map(async (element) => {
+              // Skip if not an image or already has a data URL
+              if (element.type !== 'image') return element
+              if (element.imageUrl && element.imageUrl.startsWith('data:')) return element
+              
+              // Check if we need to resolve an image reference
+              const needsResolution = element.driveFileId || element.s3FileId || 
+                (element.imageUrl && (element.imageUrl.startsWith('http://') || element.imageUrl.startsWith('https://')))
+              
+              if (!needsResolution) return element
+              
+              try {
+                let dataUrl: string | null = null
+                
+                if (element.driveFileId) {
+                  dataUrl = await resolveDriveImageToDataUrl(element.driveFileId)
+                } else if (element.s3FileId) {
+                  // Use stored fileName or fallback
+                  const fileName = element.s3FileName || `image-${element.s3FileId}.jpg`
+                  dataUrl = await resolveS3ImageToDataUrl(element.s3FileId, fileName)
+                } else if (element.imageUrl) {
+                  dataUrl = await resolveWebImageToDataUrl(element.imageUrl)
+                }
+                
+                if (dataUrl) {
+                  hasChanges = true
+                  return {
+                    ...element,
+                    imageUrl: dataUrl,
+                    // Clear the reference fields once resolved
+                    driveFileId: undefined,
+                    s3FileId: undefined,
+                    s3FileName: undefined,
+                  }
+                }
+              } catch (error) {
+                console.error('Failed to resolve image:', error)
+                // Keep the element as-is if resolution fails
+              }
+              
+              return element
+            })
+          )
+          
+          return {
+            ...slide,
+            elements: updatedElements,
+          }
+        })
+      )
+      
+      if (hasChanges) {
+        setSlides(updatedSlides)
+        setHasUnsavedChanges(true)
+      }
+    }
+    
+    resolveImages()
+  }, [slides])
+
   // Handle slide selection
   const handleSlideSelect = useCallback((index: number) => {
     setCurrentSlideIndex(index)
@@ -539,6 +649,32 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     setHasUnsavedChanges(true)
   }, [currentSlideIndex, saveToHistory])
 
+  // Handle applying template to entire presentation
+  const handleApplyTemplate = useCallback(async (templateId: string) => {
+    saveToHistory()
+    
+    // Import the template application handler dynamically
+    const { applyTemplateToPresentation } = await import('./handlers/handle-apply-template')
+    
+    const result = await applyTemplateToPresentation(slides, templateId)
+    
+    if (result.success) {
+      setSlides(result.slides)
+      setHasUnsavedChanges(true)
+      toast({
+        title: "Template applied",
+        description: "The template has been applied to your presentation.",
+        variant: "success",
+      })
+    } else {
+      toast({
+        title: "Failed to apply template",
+        description: result.error || "Unknown error occurred.",
+        variant: "destructive",
+      })
+    }
+  }, [slides, saveToHistory, toast])
+
   // Handle applying transition
   const handleApplyTransition = useCallback((transitionType: TransitionType) => {
     saveToHistory()
@@ -666,135 +802,8 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
   // Handle download
   const handleDownload = useCallback(async () => {
     try {
-      const PptxGenJS = (await import('pptxgenjs')).default
-      const pptx = new PptxGenJS()
-
-      // Convert slides to PPTX
-      for (const slide of slides) {
-        const pptxSlide = pptx.addSlide()
-
-        if (slide.background) {
-          pptxSlide.background = { color: slide.background.replace('#', '') }
-        }
-
-        for (const element of slide.elements) {
-          if (element.type === 'text') {
-            pptxSlide.addText(element.content || '', {
-              x: `${element.x}%`,
-              y: `${element.y}%`,
-              w: `${element.width}%`,
-              h: `${element.height}%`,
-              fontSize: element.fontSize || 18,
-              fontFace: element.fontFace || 'Arial',
-              color: element.color || '363636',
-              bold: element.bold,
-              italic: element.italic,
-              align: element.align || 'left',
-              valign: element.valign || 'top',
-            })
-          } else if (element.type === 'shape') {
-            const shapeTypeMap: Record<string, string> = {
-              rect: 'rect',
-              'round-rect': 'roundRect',
-              ellipse: 'ellipse',
-              circle: 'ellipse',
-              diamond: 'diamond',
-              triangle: 'triangle',
-              'right-triangle': 'triangle',
-              hexagon: 'hexagon',
-              line: 'line',
-              'line-diagonal': 'line',
-              'arrow-right': 'rightArrow',
-              'arrow-left': 'leftArrow',
-              'arrow-up': 'upArrow',
-              'arrow-down': 'downArrow',
-              chevron: 'chevron',
-              heart: 'heart',
-              cloud: 'cloud',
-              'star-5': 'star5',
-              'star-6': 'star6',
-              'star-7': 'star7',
-              'star-8': 'star8',
-              'star-10': 'star10',
-              'star-12': 'star12',
-              'pie-half': 'pie',
-              'pie-quarter': 'pie',
-              'pie-three-quarter': 'pie',
-              cylinder: 'can',
-            }
-            const pptxShape = (shapeTypeMap[element.shapeType || 'rect'] || 'rect') as any
-            pptxSlide.addShape(pptxShape, {
-              x: `${element.x}%`,
-              y: `${element.y}%`,
-              w: `${element.width}%`,
-              h: `${element.height}%`,
-              fill: { color: element.fill?.replace('#', '') || 'FFFFFF' },
-              line: element.stroke ? { color: element.stroke.replace('#', ''), width: element.strokeWidth || 1 } : undefined,
-              rotate: element.rotation || 0,
-            })
-            if (element.content) {
-              pptxSlide.addText(element.content, {
-                x: `${element.x}%`,
-                y: `${element.y}%`,
-                w: `${element.width}%`,
-                h: `${element.height}%`,
-                align: 'center',
-                valign: 'middle',
-                color: element.stroke?.replace('#', '') || '363636',
-                fontSize: Math.max(12, (element.fontSize || 18) * 0.5),
-              })
-            }
-          } else if (element.type === 'image' && element.imageUrl) {
-            pptxSlide.addImage({
-              path: element.imageUrl,
-              x: `${element.x}%`,
-              y: `${element.y}%`,
-              w: `${element.width}%`,
-              h: `${element.height}%`,
-            })
-          } else if (element.type === 'table' && element.cells && element.cells.length > 0) {
-            const tableData: any[][] = []
-            const borderColor = element.borderColor?.replace('#', '') || 'CCCCCC'
-            
-            for (let rowIndex = 0; rowIndex < element.cells.length; rowIndex++) {
-              const row = element.cells[rowIndex]
-              const rowData: any[] = []
-              const isHeaderRow = element.headerRow && rowIndex === 0
-              
-              for (const cell of row) {
-                rowData.push({
-                  text: cell.content || '',
-                  options: {
-                    fontSize: cell.fontSize || 14,
-                    fontFace: cell.fontFace || 'Arial',
-                    color: cell.color || '363636',
-                    bold: cell.bold || isHeaderRow,
-                    italic: cell.italic,
-                    align: cell.align || 'left',
-                    valign: 'middle',
-                  },
-                })
-              }
-              tableData.push(rowData)
-            }
-            
-            if (tableData.length > 0) {
-              pptxSlide.addTable(tableData, {
-                x: `${element.x}%`,
-                y: `${element.y}%`,
-                w: `${element.width}%`,
-                h: `${element.height}%`,
-                border: {
-                  type: 'solid',
-                  color: borderColor,
-                  pt: element.borderWidth || 1,
-                },
-                fill: { color: 'FFFFFF' },
-              })
-            }
-          }
-        }
-      }
+      // Convert slides to PPTX using shared export function
+      const pptx = await slidesToPptx(slides)
 
       // Download
       const blob = await pptx.write({ outputType: 'blob' }) as Blob
@@ -902,6 +911,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
           currentSlideIndex={currentSlideIndex}
           currentSlide={currentSlide}
           selectedElement={selectedElement}
+          textSelection={textSelection}
           onAddElement={handleAddElement}
           onUpdateElement={handleUpdateElement}
           onDeleteElement={handleDeleteElement}
@@ -910,6 +920,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
           onUpdateSlideBackground={handleUpdateSlideBackground}
           onApplyLayout={handleApplyLayout}
           onApplyTheme={handleApplyTheme}
+          onApplyTemplate={handleApplyTemplate}
           onApplyTransition={handleApplyTransition}
           onPreviousSlide={goToPreviousSlide}
           onNextSlide={goToNextSlide}
@@ -955,6 +966,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
                   onUpdateElements={handleUpdateSlide}
                   selectedElementId={selectedElementId}
                   onSelectElement={setSelectedElementId}
+                  onTextSelectionChange={setTextSelection}
                 />
               )}
             </Card>
@@ -966,3 +978,4 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
 }
 
 export default PowerPointViewer
+
