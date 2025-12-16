@@ -4,6 +4,22 @@ import { Button } from '../../../ui/button';
 import { Card, CardContent } from '../../../ui/card';
 import { Typography } from '../../../ui/typography';
 
+// Deterministic hash function to generate stable changeIds
+function generateDeterministicChangeId(changeType: string, displayName: string, args: any): string {
+  // Create a stable string representation of the input
+  const payload = JSON.stringify({ changeType, displayName, args });
+  
+  // Simple hash function (djb2)
+  let hash = 5381;
+  for (let i = 0; i < payload.length; i++) {
+    hash = ((hash << 5) + hash) + payload.charCodeAt(i);
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  
+  // Return positive hex string
+  return `${changeType}-${Math.abs(hash).toString(16)}`;
+}
+
 export interface AIToolCardConfig {
   icon: React.ComponentType<{ className?: string }>;
   displayName: string;
@@ -71,9 +87,9 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
     } else if (onAccept) {
       onAccept();
     } else if (config.eventPrefix) {
-      // Default: dispatch CustomEvent
+      // Default: dispatch CustomEvent with changeId
       window.dispatchEvent(new CustomEvent(`${config.eventPrefix}-response`, { 
-        detail: { ...args, preview: false } 
+        detail: { ...args, preview: false, changeId: changeIdRef.current } 
       }));
     }
     
@@ -95,8 +111,10 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
     } else if (onReject) {
       onReject();
     } else if (config.eventPrefix) {
-      // Default: dispatch reject event
-      window.dispatchEvent(new CustomEvent(`${config.eventPrefix}-response-reject`));
+      // Default: dispatch reject event with changeId
+      window.dispatchEvent(new CustomEvent(`${config.eventPrefix}-response-reject`, {
+        detail: { changeId: changeIdRef.current }
+      }));
     }
     
     setRejected(true);
@@ -114,9 +132,9 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
     } else if (onPreview) {
       onPreview();
     } else if (config.eventPrefix) {
-      // Default: dispatch preview event
+      // Default: dispatch preview event with changeId
       window.dispatchEvent(new CustomEvent(`${config.eventPrefix}-response`, { 
-        detail: { ...args, preview: true } 
+        detail: { ...args, preview: true, changeId: changeIdRef.current } 
       }));
     }
   };
@@ -124,7 +142,8 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
   // Auto-preview or auto-apply on mount
   useEffect(() => {
     if (hasContent && !hasPreviewedRef.current) {
-      const changeId = `${config.changeType}-${Date.now()}-${Math.random()}`;
+      // Generate deterministic changeId based on content
+      const changeId = generateDeterministicChangeId(config.changeType, resolvedDisplayName, args);
       changeIdRef.current = changeId;
       
       window.dispatchEvent(new CustomEvent('ai-change-registered', {

@@ -14,6 +14,7 @@ import {
   redo,
   clearHistory,
 } from './handlers/powerpoint-toolbar-handlers'
+import { handlePptxAIResponse, handlePptxAIReject } from './handlers/handle-pptx-ai-response'
 import { Card } from '../../ui/card'
 import { ContextMenuProvider } from '../../ui/context-menu'
 import {
@@ -280,168 +281,88 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     setRedoAvailable(canRedo())
   }, [slides, currentSlideIndex])
 
-  // Track if AI changes have been previewed (to prevent double-apply on accept)
-  const aiPreviewAppliedRef = useRef(false)
-
   // Listen for AI PowerPoint operations
   useEffect(() => {
     const handler = (event: CustomEvent) => {
       const detail = event?.detail || {}
-      const { operations, slidesData, preview } = detail as {
-        operations?: Array<{
-          type: string
-          slideIndex?: number
-          element?: Partial<SlideElement>
-          elementId?: string
-          layout?: string
-          background?: string
-          fromIndex?: number
-          toIndex?: number
-          theme?: string
-        }>
-        slidesData?: Slide[]
-        preview?: boolean
-      }
+      
+      // Use the new centralized handler
+      const result = handlePptxAIResponse(
+        detail,
+        slides,
+        currentSlideIndex
+      )
 
-      // If preview is false and we already applied preview, skip (changes already applied)
-      if (preview === false && aiPreviewAppliedRef.current) {
-        aiPreviewAppliedRef.current = false
+      // If result is null, it means no changes (idempotent case or accept after preview)
+      if (!result) {
         return
       }
 
-      // Mark preview as applied when it's a preview event
-      if (preview === true) {
-        aiPreviewAppliedRef.current = true
+      // Apply the changes
+      setSlides(result.nextSlides)
+      setCurrentSlideIndex(result.nextCurrentSlideIndex)
+      
+      // Clear selection if selected element no longer exists
+      if (selectedElementId) {
+        const currentSlide = result.nextSlides[result.nextCurrentSlideIndex]
+        const elementExists = currentSlide?.elements.some(e => e.id === selectedElementId)
+        if (!elementExists) {
+          setSelectedElementId(null)
+        }
       }
-
-      // If full slides data is provided, replace slides
-      if (slidesData && Array.isArray(slidesData)) {
-        setSlides(slidesData)
-        setHasUnsavedChanges(true)
-        saveToHistory()
-        return
-      }
-
-      // Apply operations
-      if (operations && Array.isArray(operations)) {
-        setSlides(prevSlides => {
-          let newSlides = [...prevSlides]
-
-          for (const op of operations) {
-            switch (op.type) {
-              case 'createSlide': {
-                // AI creates slides with empty elements array
-                // The AI will add its own elements via subsequent addText/addShape/addImage operations
-                const newSlide: Slide = {
-                  id: `slide-${Date.now()}`,
-                  index: newSlides.length,
-                  elements: [],
-                  layout: (op.layout as Slide['layout']) || 'blank',
-                  background: op.background,
-                }
-                const insertIndex = op.slideIndex ?? newSlides.length
-                newSlides.splice(insertIndex, 0, newSlide)
-                // Update indices
-                newSlides = newSlides.map((s, i) => ({ ...s, index: i }))
-                break
-              }
-
-              case 'deleteSlide': {
-                const deleteIndex = op.slideIndex ?? newSlides.length - 1
-                if (deleteIndex >= 0 && deleteIndex < newSlides.length && newSlides.length > 1) {
-                  newSlides.splice(deleteIndex, 1)
-                  newSlides = newSlides.map((s, i) => ({ ...s, index: i }))
-                }
-                break
-              }
-
-              case 'reorderSlides': {
-                if (op.fromIndex !== undefined && op.toIndex !== undefined) {
-                  const [moved] = newSlides.splice(op.fromIndex, 1)
-                  newSlides.splice(op.toIndex, 0, moved)
-                  newSlides = newSlides.map((s, i) => ({ ...s, index: i }))
-                }
-                break
-              }
-
-              case 'addText':
-              case 'addShape':
-              case 'addImage': {
-                const slideIndex = op.slideIndex ?? currentSlideIndex
-                if (slideIndex >= 0 && slideIndex < newSlides.length && op.element) {
-                  const newElement: SlideElement = {
-                    id: `element-${Date.now()}`,
-                    type: op.type === 'addText' ? 'text' : op.type === 'addShape' ? 'shape' : 'image',
-                    x: op.element.x ?? 10,
-                    y: op.element.y ?? 10,
-                    width: op.element.width ?? 80,
-                    height: op.element.height ?? 20,
-                    ...op.element,
-                  } as SlideElement
-                  newSlides[slideIndex].elements.push(newElement)
-                }
-                break
-              }
-
-              case 'updateElement': {
-                const slideIndex = op.slideIndex ?? currentSlideIndex
-                if (slideIndex >= 0 && slideIndex < newSlides.length && op.elementId) {
-                  const elementIndex = newSlides[slideIndex].elements.findIndex(e => e.id === op.elementId)
-                  if (elementIndex >= 0) {
-                    newSlides[slideIndex].elements[elementIndex] = {
-                      ...newSlides[slideIndex].elements[elementIndex],
-                      ...op.element,
-                    }
-                  }
-                }
-                break
-              }
-
-              case 'deleteElement': {
-                const slideIndex = op.slideIndex ?? currentSlideIndex
-                if (slideIndex >= 0 && slideIndex < newSlides.length && op.elementId) {
-                  newSlides[slideIndex].elements = newSlides[slideIndex].elements.filter(
-                    e => e.id !== op.elementId
-                  )
-                }
-                break
-              }
-
-              case 'setSlideBackground': {
-                const slideIndex = op.slideIndex ?? currentSlideIndex
-                if (slideIndex >= 0 && slideIndex < newSlides.length) {
-                  newSlides[slideIndex].background = op.background
-                }
-                break
-              }
-
-              case 'applyTheme': {
-                // Apply theme colors to all slides
-                // This is a simplified implementation
-                break
-              }
-            }
-          }
-
-          return newSlides
-        })
-        setHasUnsavedChanges(true)
-        saveToHistory()
-      }
+      
+      setHasUnsavedChanges(true)
+      
+      // Save to history with the actual applied slides
+      pushToHistory(result.nextSlides, result.nextCurrentSlideIndex)
+      setUndoAvailable(canUndo())
+      setRedoAvailable(canRedo())
     }
 
-    // Handle reject event to reset preview state
-    const rejectHandler = () => {
-      aiPreviewAppliedRef.current = false
+    // Handle reject event to restore original state
+    const rejectHandler = (event: CustomEvent) => {
+      const detail = event?.detail || {}
+      const changeId = detail.changeId
+      
+      if (!changeId) {
+        console.warn('[PowerPointViewer] Reject event missing changeId')
+        return
+      }
+
+      const result = handlePptxAIReject(changeId, slides, currentSlideIndex)
+      
+      if (!result) {
+        return
+      }
+
+      // Restore original slides
+      setSlides(result.nextSlides)
+      setCurrentSlideIndex(result.nextCurrentSlideIndex)
+      
+      // Clear selection if it no longer exists
+      if (selectedElementId) {
+        const currentSlide = result.nextSlides[result.nextCurrentSlideIndex]
+        const elementExists = currentSlide?.elements.some(e => e.id === selectedElementId)
+        if (!elementExists) {
+          setSelectedElementId(null)
+        }
+      }
+      
+      setHasUnsavedChanges(true)
+      
+      // Save to history
+      pushToHistory(result.nextSlides, result.nextCurrentSlideIndex)
+      setUndoAvailable(canUndo())
+      setRedoAvailable(canRedo())
     }
 
     window.addEventListener('powerpoint-ai-response', handler as EventListener)
-    window.addEventListener('powerpoint-ai-response-reject', rejectHandler)
+    window.addEventListener('powerpoint-ai-response-reject', rejectHandler as EventListener)
     return () => {
       window.removeEventListener('powerpoint-ai-response', handler as EventListener)
-      window.removeEventListener('powerpoint-ai-response-reject', rejectHandler)
+      window.removeEventListener('powerpoint-ai-response-reject', rejectHandler as EventListener)
     }
-  }, [currentSlideIndex, saveToHistory])
+  }, [slides, currentSlideIndex, selectedElementId])
 
   // Handle slide selection
   const handleSlideSelect = useCallback((index: number) => {
