@@ -8,6 +8,12 @@ import {
   Mic,
   MicOff,
   ChevronDown,
+  Search,
+  FileText,
+  Mail,
+  Chrome,
+  MessageSquare,
+  Brain,
 } from "lucide-react";
 
 import { ChatTiptapComposer } from "../../ChatTiptapComposer";
@@ -25,6 +31,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "../../ui/dropdown-menu";
+import { Popover, PopoverTrigger, PopoverContent } from "../../ui/popover";
+import { Check } from "lucide-react";
 import { FileSystemItem } from "../../../utils/fileTreeUtils";
 import { ThreadScrollToBottom } from "./ThreadScrollToBottom";
 import { handleSend } from "./handlers/handleSend";
@@ -451,8 +459,8 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
     <div ref={containerRef} className="bg-accent border-0 relative flex items-center justify-between rounded-b-2xl p-2">
       <div ref={buttonsRef} className="flex pl-4 items-center gap-2">
         {(isMeasuring || visibleButtons.model) && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          <Popover>
+            <PopoverTrigger asChild>
               <Button
                 variant="primary"
                 className="h-8 px-3 gap-1.5 "
@@ -464,42 +472,68 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                 </Typography>
                 <ChevronDown height={16} width={16} strokeWidth={1} />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="start" className="w-56 p-2 max-h-96 overflow-y-auto">
-              <DropdownMenuRadioGroup
-                value={toolPreferences.model_id || getDefaultModelForProvider(toolPreferences.model_provider)}
-                onValueChange={(modelId: string) => {
-                  const selectedModel = getModelById(modelId)
-                  if (selectedModel) {
-                    onUpdateToolPreferences({ 
-                      ...toolPreferences, 
-                      model_id: modelId,
-                      model_provider: selectedModel.provider 
-                    })
-                  }
-                }}
-              >
-                {AVAILABLE_MODELS.filter(m => m.provider === "openai").map(model => (
-                  <DropdownMenuRadioItem key={model.id} value={model.id}>
-                    <div className="flex flex-col gap-0.5">
-                      <Typography variant="small" className="text-xs">
+            </PopoverTrigger>
+            <PopoverContent 
+              side="top" 
+              align="start" 
+              className="w-56 p-0 bg-popover text-popover-foreground border shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 max-h-96 overflow-y-auto"
+            >
+              <div className="p-1 flex flex-col">
+                {AVAILABLE_MODELS.filter(m => m.provider === "openai").map(model => {
+                  const isSelected = (toolPreferences.model_id || getDefaultModelForProvider(toolPreferences.model_provider)) === model.id
+                  return (
+                    <div
+                      key={model.id}
+                      className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => {
+                        const selectedModel = getModelById(model.id)
+                        if (selectedModel) {
+                          onUpdateToolPreferences({ 
+                            ...toolPreferences, 
+                            model_id: model.id,
+                            model_provider: selectedModel.provider 
+                          })
+                        }
+                      }}
+                    >
+                      <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                        {isSelected && <Check className="size-4" />}
+                      </span>
+                      <div className="flex items-center">
                         {model.name}
-                      </Typography>
+                      </div>
                     </div>
-                  </DropdownMenuRadioItem>
-                ))}
-                {AVAILABLE_MODELS.filter(m => m.provider === "anthropic").map(model => (
-                  <DropdownMenuRadioItem key={model.id} value={model.id}>
-                    <div className="flex flex-col gap-0.5">
-                      <Typography variant="small" className="text-xs">
+                  )
+                })}
+                {AVAILABLE_MODELS.filter(m => m.provider === "anthropic").map(model => {
+                  const isSelected = (toolPreferences.model_id || getDefaultModelForProvider(toolPreferences.model_provider)) === model.id
+                  return (
+                    <div
+                      key={model.id}
+                      className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => {
+                        const selectedModel = getModelById(model.id)
+                        if (selectedModel) {
+                          onUpdateToolPreferences({ 
+                            ...toolPreferences, 
+                            model_id: model.id,
+                            model_provider: selectedModel.provider 
+                          })
+                        }
+                      }}
+                    >
+                      <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                        {isSelected && <Check className="size-4" />}
+                      </span>
+                      <div className="flex items-center">
                         {model.name}
-                      </Typography>
+                      </div>
                     </div>
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  )
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
         )}
         {(isMeasuring || visibleButtons.fileAttachment) && (
           <FileAttachment
@@ -510,8 +544,8 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           />
         )}
         {(isMeasuring || visibleButtons.tools) && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          <Popover>
+            <PopoverTrigger asChild>
               <Button
                 variant="primary"
                 size="icon"
@@ -521,54 +555,99 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
               >
                 <Wrench height={16} width={16} strokeWidth={1} />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="start" className="w-56 p-2">
-              <DropdownMenuLabel>
-                Tools
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                checked={toolPreferences.web_search}
-                onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, web_search: Boolean(checked) })}
-              >
-                <Typography variant="small" className="text-xs text-muted-foreground">Web Search</Typography>
-              </DropdownMenuCheckboxItem>
-
-              <DropdownMenuCheckboxItem
-                checked={toolPreferences.read_file}
-                onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, read_file: Boolean(checked) })}
-              >
-                <Typography variant="small" className="text-xs text-muted-foreground">Read File</Typography>
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={toolPreferences.gmail}
-                onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, gmail: Boolean(checked) })}
-              >
-                <Typography variant="small" className="text-xs text-muted-foreground">Gmail</Typography>
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={toolPreferences.browser}
-                onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, browser: Boolean(checked) })}
-              >
-                <Typography variant="small" className="text-xs text-muted-foreground">Browser</Typography>
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={toolPreferences.x_api}
-                onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, x_api: Boolean(checked) })}
-              >
-                <Typography variant="small" className="text-xs text-muted-foreground">X (Twitter)</Typography>
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={toolPreferences.slack}
-                onCheckedChange={(checked: boolean) => onUpdateToolPreferences({ ...toolPreferences, slack: Boolean(checked) })}
-              >
-                <Typography variant="small" className="text-xs text-muted-foreground">Slack</Typography>
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem checked disabled>
-                <Typography variant="small" className="text-xs text-muted-foreground">Memory</Typography>
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </PopoverTrigger>
+            <PopoverContent 
+              side="top" 
+              align="start" 
+              className="w-56 p-0 bg-popover text-popover-foreground border shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+            >
+              <div className="p-1 flex flex-col">
+                <div
+                  className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => onUpdateToolPreferences({ ...toolPreferences, web_search: !toolPreferences.web_search })}
+                >
+                  <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                    {toolPreferences.web_search && <Check className="size-4" />}
+                  </span>
+                  <div className="flex items-center [&_svg]:!text-gray-400">
+                    <Search size={16} strokeWidth={1} className="mr-2" />
+                    Web Search
+                  </div>
+                </div>
+                <div
+                  className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => onUpdateToolPreferences({ ...toolPreferences, read_file: !toolPreferences.read_file })}
+                >
+                  <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                    {toolPreferences.read_file && <Check className="size-4" />}
+                  </span>
+                  <div className="flex items-center [&_svg]:!text-blue-500">
+                    <FileText size={16} strokeWidth={1} className="mr-2" />
+                    Read File
+                  </div>
+                </div>
+                <div
+                  className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => onUpdateToolPreferences({ ...toolPreferences, gmail: !toolPreferences.gmail })}
+                >
+                  <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                    {toolPreferences.gmail && <Check className="size-4" />}
+                  </span>
+                  <div className="flex items-center [&_svg]:!text-red-500">
+                    <Mail size={16} strokeWidth={1} className="mr-2" />
+                    Gmail
+                  </div>
+                </div>
+                <div
+                  className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => onUpdateToolPreferences({ ...toolPreferences, browser: !toolPreferences.browser })}
+                >
+                  <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                    {toolPreferences.browser && <Check className="size-4" />}
+                  </span>
+                  <div className="flex items-center [&_svg]:!text-green-500">
+                    <Chrome size={16} strokeWidth={1} className="mr-2" />
+                    Browser
+                  </div>
+                </div>
+                <div
+                  className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => onUpdateToolPreferences({ ...toolPreferences, x_api: !toolPreferences.x_api })}
+                >
+                  <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                    {toolPreferences.x_api && <Check className="size-4" />}
+                  </span>
+                  <div className="flex items-center [&_svg]:!text-blue-400">
+                    <MessageSquare size={16} strokeWidth={1} className="mr-2" />
+                    X (Twitter)
+                  </div>
+                </div>
+                <div
+                  className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => onUpdateToolPreferences({ ...toolPreferences, slack: !toolPreferences.slack })}
+                >
+                  <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                    {toolPreferences.slack && <Check className="size-4" />}
+                  </span>
+                  <div className="flex items-center [&_svg]:!text-purple-500">
+                    <MessageSquare size={16} strokeWidth={1} className="mr-2" />
+                    Slack
+                  </div>
+                </div>
+                <div
+                  className="relative flex w-full cursor-not-allowed items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none opacity-50 data-[disabled]:pointer-events-none"
+                >
+                  <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                    <Check className="size-4" />
+                  </span>
+                  <div className="flex items-center [&_svg]:!text-yellow-400">
+                    <Brain size={16} strokeWidth={1} className="mr-2" />
+                    Memory
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         )}
         {(isMeasuring || visibleButtons.mic) && (
           <Button
