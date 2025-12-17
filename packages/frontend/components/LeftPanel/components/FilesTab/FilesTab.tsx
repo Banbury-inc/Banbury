@@ -123,8 +123,8 @@ export function FilesTab({
     <div className="h-full flex flex-col overflow-hidden">
       {/* Tab Content Header */}
       <div className="flex flex-col bg-background">
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between px-4 py-3 border-b min-w-0 gap-3">
+          <div className="flex items-center min-w-0 flex-1 overflow-hidden">
             {/* File View Mode Navigation */}
             <Select value={fileViewMode} onValueChange={(value) => setFileViewMode(value as 'local' | 'drive')}>
               <SelectTrigger size="sm">
@@ -150,13 +150,14 @@ export function FilesTab({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleRefreshFiles({ setRefreshCounter: setLocalRefreshCounter, setIsRefreshing })}
               disabled={isRefreshing}
               title="Refresh"
+              className="flex-shrink-0"
             >
               <RefreshCw className={isRefreshing ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
             </Button>
@@ -189,7 +190,7 @@ export function FilesTab({
                   }
                 }}
               >
-                <SelectTrigger size="sm" className="bg-foreground hover:bg-foreground hover:text-primary-foreground">
+                <SelectTrigger size="sm" className="bg-foreground hover:bg-foreground hover:text-primary-foreground flex-shrink-0">
                   <Plus className="h-4 w-4 text-primary-foreground" strokeWidth={1} />
                 </SelectTrigger>
                 <SelectContent>
