@@ -38,7 +38,7 @@ export const FileAttachmentPopup: React.FC<FileAttachmentPopupProps> = ({
     
     setLoading(true);
     try {
-      const result = await ApiService.getUserFiles(userInfo.username);
+      const result = await ApiService.Files.getUserFiles(userInfo.username);
       if (result.success) {
         const tree = buildFileTree(result.files);
         setFileSystem(tree);

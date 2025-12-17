@@ -131,7 +131,7 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
     try {
       setLoading(true);
       if (!userInfo?.username) return;
-      const result = await ApiService.getUserFiles(userInfo.username);
+      const result = await ApiService.Files.getUserFiles(userInfo.username);
       if (result.success) {
         const tree = buildFileTree(result.files);
         const flat = flattenFileTree(tree).filter(f => f.type === 'file');
