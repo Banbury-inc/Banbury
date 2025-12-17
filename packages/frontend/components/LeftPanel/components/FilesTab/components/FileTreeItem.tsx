@@ -214,45 +214,55 @@ function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFi
         <ContextMenu.Content className="min-w-[160px] bg-white dark:bg-zinc-800 rounded-md p-1 shadow-lg border border-zinc-300 dark:border-zinc-700 z-50">
           {onUploadFile && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
               onSelect={onUploadFile}
             >
               <FilePlus className="w-4 h-4" />
-              Upload File
+              <Typography variant="xs" className="text-zinc-900 dark:text-white">
+                Upload File
+              </Typography>
             </ContextMenu.Item>
           )}
           {onUploadFolder && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
               onSelect={onUploadFolder}
             >
               <FolderPlus className="w-4 h-4" strokeWidth={1} />
-              Upload Folder
+              <Typography variant="xs" className="text-zinc-900 dark:text-white">
+                Upload Folder
+              </Typography>
             </ContextMenu.Item>
           )}
           {isFolder && onNewFolder && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
               onSelect={onNewFolder}
             >
               <FolderPlus className="w-4 h-4" strokeWidth={1} />
-              New Folder
+              <Typography variant="xs" className="text-zinc-900 dark:text-white">
+                New Folder
+              </Typography>
             </ContextMenu.Item>
           )}
           <ContextMenu.Item 
-            className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+            className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
             onSelect={onRename}
           >
             <Edit2 className="w-4 h-4" strokeWidth={1} />
-            Rename
+            <Typography variant="xs" className="text-zinc-900 dark:text-white">
+              Rename
+            </Typography>
           </ContextMenu.Item>
           {onDelete && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
               onSelect={onDelete}
             >
               <Trash2 className="w-4 h-4" strokeWidth={1} />
-              {deleteLabel || 'Delete'}
+              <Typography variant="xs" className="text-red-600 dark:text-red-400">
+                {deleteLabel || 'Delete'}
+              </Typography>
             </ContextMenu.Item>
           )}
         </ContextMenu.Content>
