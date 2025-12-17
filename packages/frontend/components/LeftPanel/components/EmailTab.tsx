@@ -422,7 +422,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
   return (
     <div className="h-full flex flex-col">
       {/* Email Tab Header */}
-      <div className="flex flex-col bg-background flex-shrink-0">
+      <div className="flex flex-col bg-card flex-shrink-0">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <div className="flex items-center gap-4">
             {/* Tab Navigation */}

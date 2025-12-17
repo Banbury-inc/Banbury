@@ -88,7 +88,8 @@ export const saveCurrentConversation = async (
 export const loadConversation = async (
   conversationId: string,
   setShowConversationDialog: React.Dispatch<React.SetStateAction<boolean>>,
-  toast: Toast
+  toast: Toast,
+  tabId?: string
 ) => {
   try {
     const result = await ApiService.Conversations.getConversation(conversationId);
@@ -105,8 +106,10 @@ export const loadConversation = async (
         createdAt: msg.createdAt ? new Date(msg.createdAt) : new Date(),
       }));
       
-      // Dispatch to thread component's event handler
-      window.dispatchEvent(new CustomEvent('assistant-load-conversation', { detail: { messages: sanitized } }));
+      // Dispatch to thread component's event handler (with optional tabId for multi-tab support)
+      window.dispatchEvent(new CustomEvent('assistant-load-conversation', { 
+        detail: { messages: sanitized, tabId } 
+      }));
       setShowConversationDialog(false);
     }
   } catch (error) {

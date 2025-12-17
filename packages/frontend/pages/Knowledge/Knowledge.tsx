@@ -136,7 +136,7 @@ const Knowledge = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-background">
+      <div className="flex h-screen bg-card">
         <NavSidebar onLogout={handleLogout} />
         <div className="flex-1 ml-16 flex items-center justify-center">
           <div className="h-10 w-10 rounded-full border-2 border-border border-t-blue-500 animate-spin"></div>
@@ -146,14 +146,14 @@ const Knowledge = () => {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-card">
       <NavSidebar onLogout={handleLogout} />
       <div className="flex-1 ml-16 flex flex-col min-w-0">
         {/* Main Content */}
         <div className="flex-1 flex">
           {/* Knowledge Graph Visualization */}
           <div className="flex-1">
-            <div className="h-full overflow-hidden bg-background border-r border-border">
+            <div className="h-full overflow-hidden bg-card border-r border-border">
               {error && (
                 <div className="absolute top-4 left-4 right-4 z-20 p-3 bg-red-900/30 border border-red-800/70 text-red-200 rounded-md shadow-lg">
                   <strong>Error:</strong> {error}
@@ -170,7 +170,7 @@ const Knowledge = () => {
               ) : searchResults ? (
                 // Search Results View
                 <div className="h-full flex flex-col">
-                  <div className="sticky top-0 z-10 flex items-center justify-between p-3 border-b border-border bg-background">
+                  <div className="sticky top-0 z-10 flex items-center justify-between p-3 border-b border-border bg-card">
                     <h3 className="text-sm font-medium text-white">
                       Search Results
                     </h3>
@@ -199,7 +199,7 @@ const Knowledge = () => {
               ) : knowledgeGraph ? (
                 // Full Knowledge Graph View
                 <div className="h-full flex flex-col">
-                  <div className="sticky top-0 z-10 flex items-center justify-between p-3 border-b border-border bg-background">
+                  <div className="sticky top-0 z-10 flex items-center justify-between p-3 border-b border-border bg-card">
                     <h3 className="text-sm font-medium text-foreground">Knowledge Graph</h3>
                     <div className="flex gap-2">
                       <Button
@@ -248,7 +248,7 @@ const Knowledge = () => {
           </div>
 
           {/* Sidebar - Node Details */}
-          <div className="w-80 border-l border-border bg-background p-6 overflow-y-auto min-w-0">
+          <div className="w-80 border-l border-border bg-card p-6 overflow-y-auto min-w-0">
             <h3 className="text-base font-semibold text-white tracking-tight mb-4">Node Details</h3>
             {selectedNode ? (
               <div className="space-y-4">

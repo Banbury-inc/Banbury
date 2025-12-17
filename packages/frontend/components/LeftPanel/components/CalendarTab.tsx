@@ -126,7 +126,7 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect, onCreateEvent }:
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex flex-col bg-background">
+      <div className="flex flex-col bg-card">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <div className="flex items-center gap-4">
           </div>

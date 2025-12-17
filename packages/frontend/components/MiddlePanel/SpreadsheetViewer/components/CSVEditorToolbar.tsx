@@ -426,9 +426,9 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
       <Box 
         ref={toolbarRef}
         data-role="csv-toolbar"
+        className="bg-card"
         sx={{ 
           borderBottom: 'none',
-          backgroundColor: 'var(--accent)',
           display: 'flex',
           alignItems: 'center',
           gap: 0.5,

@@ -483,10 +483,10 @@ export default function MeetingAgent() {
 
   if (error) {
     return (
-      <div className="flex h-screen bg-background">
+      <div className="flex h-screen bg-card">
         <NavSidebar onLogout={handleLogout} />
         <div className="flex-1 ml-16 flex items-center justify-center">
-          <Card className="bg-background border-zinc-700 max-w-md rounded-none">
+          <Card className="bg-card border-zinc-700 max-w-md rounded-none">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <AlertCircle className="h-5 w-5 text-red-400" />
@@ -507,7 +507,7 @@ export default function MeetingAgent() {
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen bg-background">
+      <div className="flex h-screen bg-card">
         <NavSidebar onLogout={handleLogout} />
         <div className="flex-1 ml-16 flex flex-col h-screen overflow-hidden">
           {/* Main Content Area */}
@@ -517,7 +517,7 @@ export default function MeetingAgent() {
                 <div className="flex-1 flex flex-col h-full">
                   
                   {/* Recent Sessions Table */}
-                  <Card className="bg-background flex-1 flex flex-col h-full rounded-none">
+                  <Card className="bg-card flex-1 flex flex-col h-full rounded-none">
                     <CardHeader className="border-b border-border">
                       <div className='flex items-center justify-between'>
                         <div className="flex items-center gap-2">
@@ -585,7 +585,7 @@ export default function MeetingAgent() {
                       {isLoading ? (
                         <div className="flex-1 overflow-y-auto min-h-0">
                           <table className="w-full">
-                            <thead className="sticky top-0 bg-background border-b border-border">
+                            <thead className="sticky top-0 bg-card border-b border-border">
                               <tr>
                                 <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm w-12">
                                 </th>
@@ -634,7 +634,7 @@ export default function MeetingAgent() {
                       ) : (
                         <div className="flex-1 overflow-y-auto min-h-0">
                           <table className="w-full">
-                            <thead className="sticky top-0 bg-background z-10 border-b border-border">
+                            <thead className="sticky top-0 bg-card z-10 border-b border-border">
                               <tr>
                                 <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm w-12"></th>
                                 <th className="text-left py-3 px-4 text-muted-foreground font-medium text-sm w-12">
@@ -927,7 +927,7 @@ export default function MeetingAgent() {
               {/* Active Sessions Content */}
               {activeTab === 'active' && (
                 <div className="flex-1 flex flex-col h-full">
-                  <Card className="bg-background border-zinc-700 flex-1 flex flex-col h-full rounded-none">
+                  <Card className="bg-card border-zinc-700 flex-1 flex flex-col h-full rounded-none">
                     <CardHeader className="border-b border-border">
                       <div className="flex items-center gap-2">
                         <Activity className="h-5 w-5 text-foreground" />

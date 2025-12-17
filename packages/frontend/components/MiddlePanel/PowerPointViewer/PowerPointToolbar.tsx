@@ -726,7 +726,7 @@ export function PowerPointToolbar({
   )
 
   return (
-    <div ref={toolbarRef} className="flex bg-accent items-center px-3 py-2 gap-1 border-b">
+    <div ref={toolbarRef} className="flex bg-card items-center px-3 py-2 gap-1 border-b">
       {/* Left Section - Element Tools & Formatting */}
       <div className="flex items-center gap-1 flex-1 min-w-0">
         {/* Undo/Redo */}

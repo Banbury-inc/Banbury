@@ -1,11 +1,20 @@
-import { Menu, TimerReset, ChevronDown, Plus, Trash2 } from 'lucide-react'
+import { useState, useCallback, useEffect } from 'react'
+import { Menu, TimerReset, ChevronDown, Trash2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
-import { Thread } from './composer/thread/thread'
+import OlympusTabs, { Tab as OlympusTab } from '../common/Tabs/Tabs'
+import { AiConversationTabPane } from './AiConversationTabPane'
+import {
+  AiTab,
+  createAiTab,
+  createInitialAiTab,
+  getNextActiveTabId,
+  reorderAiTabs,
+} from './handlers/aiTabHandlers'
 
 interface Conversation {
   _id: string
@@ -20,9 +29,9 @@ interface RightPanelProps {
   conversations: Conversation[]
   isLoadingConversations: boolean
   onToggleCollapse: () => void
-  onLoadConversation: (conversationId: string) => void
+  onLoadConversation: (conversationId: string, tabId: string) => void
   onDeleteConversation: (conversationId: string) => void
-  onClearConversation: () => void
+  onClearConversation: (tabId: string) => void
   onEmailSelect: (email: any) => void
   hasCalendarOpen?: boolean
 }
@@ -42,8 +51,77 @@ export function RightPanel({
 }: RightPanelProps): JSX.Element {
   const shouldShowCollapseButton = selectedFile || selectedEmail || hasCalendarOpen
   
+  // AI tabs state
+  const [aiTabs, setAiTabs] = useState<AiTab[]>(() => [createInitialAiTab()])
+  const [activeAiTabId, setActiveAiTabId] = useState<string>(() => aiTabs[0]?.id || '')
+
+  // Update activeAiTabId if the initial tab changes
+  useEffect(() => {
+    if (!activeAiTabId && aiTabs.length > 0) {
+      setActiveAiTabId(aiTabs[0].id)
+    }
+  }, [activeAiTabId, aiTabs])
+
+  // Register/update window delegate for routing assistant-ai-request to active tab
+  useEffect(() => {
+    // Store reference to current active tab for the delegate
+    (window as any).__banburyActiveAiTabId = activeAiTabId
+    return () => {
+      delete (window as any).__banburyActiveAiTabId
+    }
+  }, [activeAiTabId])
+
+  const handleTabAdd = useCallback(() => {
+    const newTab = createAiTab()
+    setAiTabs((prev) => [...prev, newTab])
+    setActiveAiTabId(newTab.id)
+  }, [])
+
+  const handleTabClose = useCallback((tabId: string) => {
+    setAiTabs((prev) => {
+      if (prev.length <= 1) return prev // Don't close last tab
+      
+      const nextActiveId = getNextActiveTabId(prev, tabId)
+      const newTabs = prev.filter((t) => t.id !== tabId)
+      
+      // Update active tab if we're closing the current one
+      setActiveAiTabId((currentActive) => {
+        if (currentActive === tabId) {
+          return nextActiveId || newTabs[0]?.id || ''
+        }
+        return currentActive
+      })
+      
+      return newTabs
+    })
+  }, [])
+
+  const handleTabChange = useCallback((tabId: string) => {
+    setActiveAiTabId(tabId)
+  }, [])
+
+  const handleTabReorder = useCallback((sourceIndex: number, destinationIndex: number) => {
+    setAiTabs((prev) => reorderAiTabs(prev, sourceIndex, destinationIndex))
+  }, [])
+
+  const handleLoadConversationInNewTab = useCallback((conversationId: string, title: string) => {
+    // Create a new tab with the conversation title
+    const newTab = createAiTab(title)
+    setAiTabs((prev) => [...prev, newTab])
+    setActiveAiTabId(newTab.id)
+    
+    // Load the conversation into the new tab (with small delay to allow tab to mount)
+    setTimeout(() => {
+      onLoadConversation(conversationId, newTab.id)
+    }, 50)
+  }, [onLoadConversation])
+
+  const handleClearActiveConversation = useCallback(() => {
+    onClearConversation(activeAiTabId)
+  }, [onClearConversation, activeAiTabId])
+  
   return (
-    <div className="h-full bg-background border-l border-zinc-200 dark:border-white/[0.06] flex flex-col relative shadow-soft">
+    <div className="h-full bg-card border-l border-zinc-200 dark:border-white/[0.06] flex flex-col relative shadow-soft">
       {/* Collapse button for assistant panel - positioned on left border */}
       {shouldShowCollapseButton && (
         <button
@@ -54,17 +132,30 @@ export function RightPanel({
           <Menu className="h-4 w-4" strokeWidth={1} />
         </button>
       )}
-      {/* Conversation Management Dropdown */}
-      <div className="bg-background dark:bg-background px-4 py-3 flex items-center justify-end gap-3 border-zinc-200 dark:border-white/[0.06]">
-        <div className="flex items-center gap-3">
+
+      {/* AI Tabs Bar */}
+      <div className="bg-background flex items-stretch border-b border-zinc-200 dark:border-white/[0.06]">
+        <div className="flex items-stretch flex-1 overflow-x-auto">
+          <OlympusTabs
+            tabs={aiTabs.map<OlympusTab>((t) => ({ id: t.id, label: t.label }))}
+            activeTab={activeAiTabId}
+            onTabChange={handleTabChange}
+            onTabClose={aiTabs.length > 1 ? handleTabClose : undefined}
+            onTabAdd={handleTabAdd}
+            onReorder={handleTabReorder}
+          />
+        </div>
+        
+        {/* Conversation Management Dropdown */}
+        <div className="flex items-center gap-2 px-2 border-l border-zinc-200 dark:border-white/[0.06]">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="h-8 px-3 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background dark:bg-background transition-colors rounded-md flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black border border-zinc-200 dark:border-white/[0.06]">
-                <TimerReset className="h-4 w-4" strokeWidth={1} />
-                <ChevronDown className="h-4 w-4" strokeWidth={1} />
+              <button className="h-7 px-2 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-transparent transition-colors rounded-md flex items-center justify-center gap-1.5 focus:outline-none">
+                <TimerReset className="h-3.5 w-3.5" strokeWidth={1} />
+                <ChevronDown className="h-3 w-3" strokeWidth={1} />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-64 max-h-96 overflow-y-auto">
+            <DropdownMenuContent align="end" className="w-64 max-h-96 overflow-y-auto">
               {isLoadingConversations ? (
                 <div className="px-2 py-2 text-sm text-zinc-400 text-center">
                   Loading conversations...
@@ -81,7 +172,7 @@ export function RightPanel({
                   {conversations.map((conversation) => (
                     <DropdownMenuItem 
                       key={conversation._id}
-                      onClick={() => onLoadConversation(conversation._id)}
+                      onClick={() => handleLoadConversationInNewTab(conversation._id, conversation.title)}
                       className="flex items-center justify-between group"
                     >
                       <div className="flex-1 min-w-0">
@@ -103,31 +194,27 @@ export function RightPanel({
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-          
-          <div className="relative group">
-            <button
-              onClick={onClearConversation}
-              className="h-8 w-8 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background dark:bg-background transition-colors rounded-md flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black border border-zinc-200 dark:border-white/[0.06]"
-            >
-              <Plus className="h-4 w-4" strokeWidth={1} />
-            </button>
-            {/* Custom CSS tooltip */}
-            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-2 bg-accent dark:bg-accent text-zinc-900 dark:text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none border border-zinc-200 dark:border-white/[0.06]">
-              Clear Conversation
-            </div>
-          </div>
         </div>
       </div>
-      {/* Thread Component */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <Thread 
-          userInfo={userInfo} 
-          selectedFile={selectedFile}
-          selectedEmail={selectedEmail}
-          onEmailSelect={onEmailSelect}
-        />
+
+      {/* Thread Components - keep all mounted but hide inactive */}
+      <div className="flex-1 min-h-0 overflow-hidden relative">
+        {aiTabs.map((tab) => (
+          <div
+            key={tab.id}
+            className={`absolute inset-0 ${tab.id === activeAiTabId ? '' : 'hidden'}`}
+          >
+            <AiConversationTabPane
+              tabId={tab.id}
+              userInfo={userInfo}
+              selectedFile={selectedFile}
+              selectedEmail={selectedEmail}
+              onEmailSelect={onEmailSelect}
+              onClearConversation={handleClearActiveConversation}
+            />
+          </div>
+        ))}
       </div>
     </div>
   )
 }
-

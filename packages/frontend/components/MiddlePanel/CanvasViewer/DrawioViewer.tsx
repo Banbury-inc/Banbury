@@ -344,7 +344,7 @@ export const DrawioViewer: React.FC<DrawioViewerProps> = ({
   const containerClasses = cn(
     'draw-io-viewer-container',
     {
-      'fixed inset-0 z-50 bg-background': isFullscreen,
+      'fixed inset-0 z-50 bg-card': isFullscreen,
       'relative': !isFullscreen,
     },
     className
@@ -406,7 +406,7 @@ export const DrawioViewer: React.FC<DrawioViewerProps> = ({
         
         <CardContent className="flex-1 p-0 relative">
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+            <div className="absolute inset-0 flex items-center justify-center bg-card z-10">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <RefreshCw className="h-4 w-4 animate-spin" />
                 <span>Loading diagram...</span>

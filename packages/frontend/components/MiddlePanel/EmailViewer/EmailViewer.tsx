@@ -414,7 +414,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
   }, [email])
 
   return (
-    <div className="h-full flex flex-col bg-accent">
+    <div className="h-full flex flex-col bg-card">
       {/* Compact Header */}
       {!email ? (
         <div className="h-full flex items-center justify-center text-muted-foreground">
@@ -422,7 +422,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
         </div>
       ) : (
         <>
-      <div className="flex items-center justify-between px-3 py-3 bg-accent border-b border-border">
+      <div className="flex items-center justify-between px-3 py-3 bg-card border-b border-border">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {onBack && (
             <Button

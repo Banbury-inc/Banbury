@@ -117,7 +117,7 @@ export function NavSidebar({ onLogout }: NavSidebarProps) {
   const isActive = (path: string) => router.pathname === path
 
   return (
-    <div className="fixed left-0 top-0 z-40 flex h-full w-16 flex-col bg-background border-r border-zinc-300 dark:border-white/[0.06] shadow-soft">
+    <div className="fixed left-0 top-0 z-40 flex h-full w-16 flex-col bg-card border-r border-zinc-300 dark:border-white/[0.06] shadow-soft">
       <div className="flex flex-1 flex-col items-center gap-4 py-4">
         {/* Logo/Brand */}
         <div 

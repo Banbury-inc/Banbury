@@ -877,7 +877,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full bg-accent">
+      <div className="flex items-center justify-center h-full bg-card">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <p className="text-muted-foreground">Loading presentation...</p>
@@ -888,7 +888,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full bg-accent">
+      <div className="flex items-center justify-center h-full bg-card">
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="h-12 w-12 rounded-full border-2 border-destructive flex items-center justify-center text-destructive font-bold">!</div>
           <div>
@@ -904,7 +904,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
 
   return (
     <ContextMenuProvider>
-      <div className="h-full flex flex-col bg-accent">
+      <div className="h-full flex flex-col bg-card">
         {/* Toolbar */}
         <PowerPointToolbar
           slides={slides}

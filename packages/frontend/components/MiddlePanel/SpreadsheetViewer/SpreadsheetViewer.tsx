@@ -184,8 +184,8 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full bg-accent">
-        <div className="flex flex-col items-center gap-4 bg-accent">
+      <div className="flex items-center justify-center h-full bg-card">
+        <div className="flex flex-col items-center gap-4 bg-card">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#9ca3af]"></div>
           <p className="text-[#f3f4f6]">Loading spreadsheet...</p>
         </div>
@@ -208,7 +208,7 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
   }
 
   return (
-    <div className="h-full flex flex-col bg-background relative z-10 isolate">
+    <div className="h-full flex flex-col bg-card relative z-10 isolate">
       <div className="flex-1 flex flex-col overflow-hidden relative z-10">
         {documentUrl ? (
           <div className="h-full flex flex-col relative z-10">

@@ -194,7 +194,7 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
       days.push(d)
     }
     return (
-      <div className="flex-1 overflow-auto bg-accent">
+      <div className="flex-1 overflow-auto bg-card">
         <div className="grid grid-cols-7 border-t border-l border-border h-full">
           {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d) => (
             <div key={d} className="p-2 text-xs font-medium text-gray-600 dark:text-zinc-400 border-r border-b border-border">{d}</div>
@@ -207,7 +207,7 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
             return (
               <div 
                 key={idx} 
-                className={`min-h-[7rem] p-1 border-r border-b border-border ${isCurrentMonth ? 'bg-accent' : 'bg-background'} ${isToday ? 'ring-1 ring-blue-500' : ''} cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700/50 transition-colors`}
+                className={`min-h-[7rem] p-1 border-r border-b border-border ${isCurrentMonth ? 'bg-card' : 'bg-background'} ${isToday ? 'ring-1 ring-blue-500' : ''} cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700/50 transition-colors`}
                 onClick={(e) => handleDateClick(d, { x: e.clientX, y: e.clientY })}
               >
                 <div className="text-xs text-gray-600 dark:text-zinc-400 mb-1 flex items-center justify-between">
@@ -296,7 +296,7 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
     }
 
     return (
-      <div className="flex-1 bg-accent">
+      <div className="flex-1 bg-card">
         <div className="flex h-full">
           {/* Time axis */}
           <div className="w-16 flex-shrink-0 border-r border-border flex flex-col">
@@ -491,7 +491,7 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
     }
 
         return (
-      <div className="flex-1 bg-zinc-50 dark:bg-zinc-900 relative">
+      <div className="flex-1 bg-card relative">
         <div className="flex h-full">
           {/* Time axis */}
           <div className="w-16 flex-shrink-0 border-r border-border grid grid-rows-23">
@@ -588,7 +588,7 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
   }
 
   return (
-    <div className="h-full flex flex-col bg-accent">
+    <div className="h-full flex flex-col bg-card">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
           <Button variant="primary" size="icon-sm" onClick={goPrev}>

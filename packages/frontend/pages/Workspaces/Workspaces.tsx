@@ -175,8 +175,8 @@ const Workspaces = (): React.ReactNode => {
     await saveCurrentConversation(userInfo, conversationTitle, setSaveDialogOpen, setConversationTitle, loadConversationsCallback, toast);
   };
 
-  const loadConversationCallback = async (conversationId: string) => {
-    await loadConversation(conversationId, setShowConversationDialog, toast);
+  const loadConversationCallback = async (conversationId: string, tabId?: string) => {
+    await loadConversation(conversationId, setShowConversationDialog, toast, tabId);
   };
 
   const deleteConversationCallback = async (conversationId: string) => {
@@ -975,8 +975,8 @@ const Workspaces = (): React.ReactNode => {
                       onToggleCollapse={() => setIsAssistantPanelCollapsed(true)}
                       onLoadConversation={loadConversationCallback}
                       onDeleteConversation={deleteConversationCallback}
-                      onClearConversation={() => {
-                        window.dispatchEvent(new CustomEvent('clear-conversation', {}))
+                      onClearConversation={(tabId: string) => {
+                        window.dispatchEvent(new CustomEvent('clear-conversation', { detail: { tabId } }))
                       }}
                       onEmailSelect={handleEmailSelect}
                       hasCalendarOpen={getAllTabs(panelLayout).some(tab => (tab as any).type === 'calendar')}

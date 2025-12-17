@@ -122,7 +122,7 @@ export function FilesTab({
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Tab Content Header */}
-      <div className="flex flex-col bg-background">
+      <div className="flex flex-col bg-card">
         <div className="flex items-center justify-between px-4 py-3 border-b min-w-0 gap-3">
           <div className="flex items-center min-w-0 flex-1 overflow-hidden">
             {/* File View Mode Navigation */}

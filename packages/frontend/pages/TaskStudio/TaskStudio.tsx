@@ -1,9 +1,7 @@
 
 import {
-  Box,
   CircularProgress,
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { NavSidebar } from "../../components/nav-sidebar";
@@ -26,7 +24,6 @@ interface UserInfo {
 
 
 const TaskStudio = (): JSX.Element => {
-  const theme = useTheme();
   const router = useRouter();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -127,23 +124,15 @@ const TaskStudio = (): JSX.Element => {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: theme.palette.mode === 'dark' ? '#0a0a0a' : '#f5f5f5'
-        }}
-      >
+      <div className="flex h-screen bg-card items-center justify-center">
         <CircularProgress size={60} />
-      </Box>
+      </div>
     );
   }
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen">
+      <div className="flex h-screen bg-card">
         {/* Navigation Sidebar */}
         <NavSidebar onLogout={handleLogout} />
         
@@ -164,9 +153,9 @@ const TaskStudio = (): JSX.Element => {
               ? 'w-96 opacity-100' 
               : 'w-0 opacity-0'
           } overflow-hidden`}>
-            <div className="w-96 border-l border-border bg-background flex flex-col h-full">
+            <div className="w-96 border-l border-border bg-card flex flex-col h-full">
               <div className="p-5 border-b border-border flex-shrink-0">
-                <Typography variant="h2" className="text-lg font-semibold text-foreground">Create New Task</Typography>
+                <Typography variant="h2" className="text-lg font-semibold">Create New Task</Typography>
               </div>
               <div className="flex-1 overflow-auto p-6">
                 <TaskScheduler onTaskCreated={handleTaskCreated} />

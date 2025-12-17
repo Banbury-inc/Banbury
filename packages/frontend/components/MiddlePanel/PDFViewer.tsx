@@ -213,7 +213,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
 
       {/* PDF Controls */}
       {pdfUrl && !loading && !error && (
-        <div className="flex items-center justify-between p-3 bg-accent border-b border-border">
+        <div className="flex items-center justify-between p-3 bg-card border-b border-border">
           <div className="flex items-center gap-3">
             <Button
               variant="default"

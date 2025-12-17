@@ -48,7 +48,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
   const [activeTab, setActiveTab] = useState<string>('files')
 
   return (
-    <div className="h-full w-full bg-background border-r border-zinc-200 dark:border-white/[0.06] flex flex-col relative z-10 shadow-soft left-panel-container">
+    <div className="h-full w-full bg-card border-r border-zinc-200 dark:border-white/[0.06] flex flex-col relative z-10 shadow-soft left-panel-container">
       {/* Search Bar - Above tabs */}
       {/* {onFileSelect && (
         <div className="px-4 py-3 bg-background border-b border-zinc-200 dark:border-white/[0.06]">
@@ -60,7 +60,7 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
       
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="mx-4 mt-3 tab-list-responsive">
+        <TabsList className="mx-4 mt-3 tab-list-responsive bg-accent">
           <TabsTrigger value="files" className="flex items-center justify-center min-w-0" title="Files">
             <Folder className="h-4 w-4 flex-shrink-0" strokeWidth={1} />
             <Typography

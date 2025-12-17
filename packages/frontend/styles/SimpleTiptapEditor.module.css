@@ -13,7 +13,7 @@
   align-items: center;
   padding: 8px 12px;
   border: none;
-  background: var(--color-accent);
+  background: var(--color-card);
   flex-wrap: wrap;
   gap: 4px;
   margin-top: -1px;
@@ -21,7 +21,7 @@
 
 /* Light mode toolbar */
 .simple-tiptap-toolbar.light-mode {
-  background: var(--color-accent);
+  background: var(--color-card);
 }
 
 .toolbar-group {

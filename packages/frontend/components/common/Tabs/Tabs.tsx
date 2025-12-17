@@ -74,8 +74,8 @@ export const TabComponent = ({ label, isActive, onClick, onClose, style, isNew, 
       max-w-[240px]
       border-r border-zinc-200/50 dark:border-zinc-800/50
       ${isActive 
-        ? 'text-zinc-900 dark:text-white bg-accent' 
-        : 'text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-[#2d2d2d] hover:bg-accent/50 dark:hover:bg-accent/50 hover:text-zinc-900 dark:hover:text-white'}
+        ? 'text-zinc-900 dark:text-white bg-card' 
+        : 'text-zinc-600 dark:text-zinc-400 bg-background hover:bg-card/50 dark:hover:bg-card/50 hover:text-zinc-900 dark:hover:text-white'}
       focus:outline-none
       group
     `}
@@ -357,7 +357,7 @@ export const Tabs: React.FC<TabsProps> = ({
   }, [tabs, onReorder]);
 
   return (
-    <div ref={containerRef} className="flex items-stretch bg-accent">
+    <div ref={containerRef} className="flex items-stretch bg-background">
       <style>
         {`
           .tab {

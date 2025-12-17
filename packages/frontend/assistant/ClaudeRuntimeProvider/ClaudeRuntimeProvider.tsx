@@ -108,8 +108,13 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
   const runtime = useLocalRuntime(adapter as any);
 
   // Listen for AI requests from Tiptap and auto-send messages
+  // Note: When per-tab AI runtimes are active (RightPanel tabs), they handle this event directly
   useEffect(() => {
     const handleAIRequest = (event: CustomEvent) => {
+      // If there's an active AI tab in RightPanel, let the per-tab handler deal with it
+      const activeTabId = (window as any).__banburyActiveAiTabId;
+      if (activeTabId) return;
+
       const { message } = event.detail;
       
       // Send the message to the runtime
@@ -123,6 +128,10 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
     
     // Also check for pending requests on mount
     const checkPendingRequest = () => {
+      // If there's an active AI tab in RightPanel, let the per-tab handler deal with it
+      const activeTabId = (window as any).__banburyActiveAiTabId;
+      if (activeTabId) return;
+
       try {
         const pending = localStorage.getItem('pendingAIRequest');
         if (pending) {

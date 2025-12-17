@@ -420,7 +420,7 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
   const containerClasses = cn(
     'tldraw-viewer-container h-screen',
     {
-      'fixed inset-0 z-50 bg-background': isFullscreen,
+      'fixed inset-0 z-50 bg-card': isFullscreen,
       'relative': !isFullscreen,
     },
     className
@@ -467,7 +467,7 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
         
         <CardContent className="flex-1 p-0 relative overflow-hidden">
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+            <div className="absolute inset-0 flex items-center justify-center bg-card z-10">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <RefreshCw className="h-4 w-4 animate-spin" />
                 <span>Loading drawing...</span>
@@ -508,6 +508,25 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
                 try {
                   return (
                     <div className="w-full h-full pb-10">
+                      <style>{`
+                        .tl-background {
+                          background-color: hsl(var(--card)) !important;
+                        }
+                        .tlui-style-panel.tlui-style-panel__wrapper {
+                          background-color: hsl(var(--accent)) !important;
+                          color: hsl(var(--accent-foreground)) !important;
+                        }
+                        .tlui-button.tlui-button__menu.tlui-page-menu__trigger {
+                          background-color: hsl(var(--accent)) !important;
+                          color: hsl(var(--accent-foreground)) !important;
+                        }
+                        .tlui-toolbar__tools {
+                          background-color: hsl(var(--accent)) !important;
+                        }
+                        [data-radix-popper-content-wrapper] {
+                          background-color: hsl(var(--accent)) !important;
+                        }
+                      `}</style>
                       <Tldraw onMount={handleEditorMount} inferDarkMode />
 
 

@@ -274,7 +274,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
   }, [])
 
   return (
-    <div className="h-full flex flex-col bg-accent">
+    <div className="h-full flex flex-col bg-card">
       {/* Email Form */}
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-background hover:scrollbar-thumb-muted-foreground">
         <div className="w-full">
@@ -383,7 +383,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
           </div>
 
           {/* Attachment Button and Action Buttons */}
-          <div className="px-4 py-3 bg-accent border-t border-border">
+          <div className="px-4 py-3 bg-card border-t border-border">
             <div className="flex items-center flex-wrap gap-3">
               <Button
                 variant="default"

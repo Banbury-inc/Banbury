@@ -158,7 +158,7 @@ export function TaskTable({ refreshTrigger, showTaskScheduler, onToggleTaskSched
 
   if (loading) {
     return (
-      <Card className="p-6 w-full h-full flex flex-col rounded-none">
+      <Card className="p-6 w-full h-full flex flex-col rounded-none bg-card">
         <div className="flex items-center justify-center flex-1">
           <Typography variant="p" className="text-muted-foreground">Loading tasks...</Typography>
         </div>
@@ -167,7 +167,7 @@ export function TaskTable({ refreshTrigger, showTaskScheduler, onToggleTaskSched
   }
 
   return (
-    <Card className="p-6 w-full h-full flex flex-col rounded-none bg-background">
+    <Card className="p-6 w-full h-full flex flex-col rounded-none bg-card">
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div className="flex items-center gap-4">
           <Typography variant="h2" className="text-lg font-bold text-foreground">Task Studio</Typography>

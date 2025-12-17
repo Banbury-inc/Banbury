@@ -64,9 +64,10 @@ interface ThreadProps {
   selectedFile?: FileSystemItem | null;
   selectedEmail?: any | null;
   onEmailSelect?: (email: any) => void;
+  assistantTabId?: string;
 }
 
-export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail, onEmailSelect }) => {
+export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail, onEmailSelect, assistantTabId }) => {
   const { toast } = useToast();
   const [attachedFiles, setAttachedFiles] = useState<FileSystemItem[]>([]);
   const [attachedEmails, setAttachedEmails] = useState<any[]>([]);
@@ -654,7 +655,14 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   useEffect(() => {
     const handler = async (event: Event) => {
       const customEvent = event as CustomEvent;
+      const eventTabId = customEvent.detail?.tabId;
       const msgs = customEvent.detail?.messages;
+      
+      // If tabId is specified in the event, only handle if it matches this tab
+      if (eventTabId && assistantTabId && eventTabId !== assistantTabId) return;
+      // If this thread has a tabId but event doesn't specify one, ignore (legacy behavior for non-tabbed usage)
+      if (assistantTabId && !eventTabId) return;
+      
       if (!Array.isArray(msgs)) return;
 
       // Optimistic UI: show messages immediately while importing
@@ -677,11 +685,19 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     };
     window.addEventListener('assistant-load-conversation', handler);
     return () => window.removeEventListener('assistant-load-conversation', handler);
-  }, [runtime]);
+  }, [runtime, assistantTabId]);
 
   // Listen for clear-conversation events to reset the conversation
   useEffect(() => {
     const handler = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const eventTabId = customEvent.detail?.tabId;
+      
+      // If tabId is specified in the event, only handle if it matches this tab
+      if (eventTabId && assistantTabId && eventTabId !== assistantTabId) return;
+      // If this thread has a tabId but event doesn't specify one, ignore (legacy behavior for non-tabbed usage)
+      if (assistantTabId && !eventTabId) return;
+      
       // Clear the loaded messages buffer to show welcome message
       setLoadedMessagesBuffer(null);
       // Reset the runtime if available
@@ -693,7 +709,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     };
     window.addEventListener('clear-conversation', handler);
     return () => window.removeEventListener('clear-conversation', handler);
-  }, [runtime]);
+  }, [runtime, assistantTabId]);
 
   // Load conversations on mount
   useEffect(() => {
