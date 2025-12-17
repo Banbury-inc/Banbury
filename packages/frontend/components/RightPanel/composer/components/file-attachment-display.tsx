@@ -59,7 +59,7 @@ export const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
             return (
               <div
                 key={file.file_id}
-                className="flex items-center gap-2 py-1 px-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded"
+                className="group flex items-center gap-2 py-1 px-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded"
               >
                 {isDiagram ? (
                   <Network className="h-4 w-4 text-blue-500 dark:text-blue-400 flex-shrink-0" />
@@ -114,7 +114,7 @@ export const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
             return (
               <div
                 key={email.id}
-                className="flex items-center gap-2 py-1 px-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded"
+                className="group flex items-center gap-2 py-1 px-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded"
               >
                 <Mail className="h-4 w-4 text-zinc-500 dark:text-zinc-400 flex-shrink-0" />
                 <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate flex-1" title={`${subject}${from ? ' — ' + from : ''}`}>
