@@ -12,10 +12,20 @@ interface CalendarViewerProps {
   initialDate?: Date
   initialView?: CalendarView
   onEventClick?: (event: CalendarEvent) => void
+  onDateChange?: () => void
 }
 
-export function CalendarViewer({ initialDate, initialView = 'month', onEventClick }: CalendarViewerProps) {
+export function CalendarViewer({ initialDate, initialView = 'month', onEventClick, onDateChange }: CalendarViewerProps) {
   const [currentDate, setCurrentDate] = useState<Date>(initialDate || new Date())
+
+  // React to external changes in initialDate (e.g., from search jump)
+  useEffect(() => {
+    if (initialDate) {
+      setCurrentDate(initialDate)
+      // Notify parent that we've jumped, so it can clear the jump date
+      onDateChange?.()
+    }
+  }, [initialDate, onDateChange])
   const [view, setView] = useState<CalendarView>(initialView)
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(false)

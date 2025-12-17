@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { FileText, FileImage, FileVideo, FileAudio, FileCode, FileSpreadsheet, FileArchive, FileJson, FileType } from "lucide-react"
+import { FileText, FileImage, FileVideo, FileAudio, FileCode, FileSpreadsheet, FileArchive, FileJson, FileType, Mail, Calendar } from "lucide-react"
 import {
   CommandDialog,
   CommandEmpty,
@@ -12,23 +12,24 @@ import {
 } from "./ui/command"
 import { ApiService } from "../../backend/api/apiService"
 import { FileSystemItem } from "../utils/fileTreeUtils"
+import { CalendarEvent } from "../../backend/api/calendar/calendar"
+import {
+  FileSearchResult,
+  EmailSearchResult,
+  searchFiles,
+  searchEmails,
+  searchCalendarEvents,
+  toFileSystemItem,
+  getEmailLabel,
+  getCalendarLabel,
+} from "./handlers/file-search-command-handlers"
 
 interface FileSearchCommandProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onFileSelect: (file: FileSystemItem) => void
-}
-
-interface SearchResult {
-  file_id: string
-  file_name: string
-  file_path: string
-  file_type: string
-  file_size: number
-  date_uploaded: string
-  date_modified: string
-  s3_url: string
-  device_name: string
+  onEmailSelect?: (email: EmailSearchResult) => void
+  onCalendarEventSelect?: (event: CalendarEvent) => void
 }
 
 function getFileIcon(fileName: string) {
@@ -36,14 +37,14 @@ function getFileIcon(fileName: string) {
   
   switch (extension) {
     case 'pdf':
-      return <FileText className="h-4 w-4 text-red-500" />
+      return <FileText className="h-4 w-4 text-destructive" />
     case 'doc':
     case 'docx':
-      return <FileText className="h-4 w-4 text-blue-500" />
+      return <FileText className="h-4 w-4 text-primary" />
     case 'xls':
     case 'xlsx':
     case 'csv':
-      return <FileSpreadsheet className="h-4 w-4 text-green-500" />
+      return <FileSpreadsheet className="h-4 w-4 text-chart-2" />
     case 'jpg':
     case 'jpeg':
     case 'png':
@@ -51,7 +52,7 @@ function getFileIcon(fileName: string) {
     case 'bmp':
     case 'webp':
     case 'svg':
-      return <FileImage className="h-4 w-4 text-purple-500" />
+      return <FileImage className="h-4 w-4 text-chart-5" />
     case 'mp4':
     case 'avi':
     case 'mov':
@@ -59,20 +60,20 @@ function getFileIcon(fileName: string) {
     case 'flv':
     case 'webm':
     case 'mkv':
-      return <FileVideo className="h-4 w-4 text-orange-500" />
+      return <FileVideo className="h-4 w-4 text-chart-4" />
     case 'mp3':
     case 'wav':
     case 'flac':
     case 'aac':
-      return <FileAudio className="h-4 w-4 text-pink-500" />
+      return <FileAudio className="h-4 w-4 text-chart-3" />
     case 'zip':
     case 'rar':
     case '7z':
     case 'tar':
     case 'gz':
-      return <FileArchive className="h-4 w-4 text-yellow-500" />
+      return <FileArchive className="h-4 w-4 text-chart-1" />
     case 'json':
-      return <FileJson className="h-4 w-4 text-yellow-500" />
+      return <FileJson className="h-4 w-4 text-chart-1" />
     case 'js':
     case 'ts':
     case 'jsx':
@@ -87,103 +88,166 @@ function getFileIcon(fileName: string) {
     case 'rb':
     case 'go':
     case 'rs':
-      return <FileCode className="h-4 w-4 text-blue-500" />
+      return <FileCode className="h-4 w-4 text-primary" />
     default:
-      return <FileType className="h-4 w-4 text-gray-500" />
+      return <FileType className="h-4 w-4 text-muted-foreground" />
   }
 }
 
-export function FileSearchCommand({ open, onOpenChange, onFileSelect }: FileSearchCommandProps) {
+export function FileSearchCommand({ 
+  open, 
+  onOpenChange, 
+  onFileSelect,
+  onEmailSelect,
+  onCalendarEventSelect 
+}: FileSearchCommandProps) {
   const [query, setQuery] = React.useState("")
-  const [results, setResults] = React.useState<SearchResult[]>([])
-  const [loading, setLoading] = React.useState(false)
+  
+  // File results
+  const [fileResults, setFileResults] = React.useState<FileSearchResult[]>([])
+  const [loadingFiles, setLoadingFiles] = React.useState(false)
+  
+  // Email results
+  const [emailResults, setEmailResults] = React.useState<EmailSearchResult[]>([])
+  const [loadingEmails, setLoadingEmails] = React.useState(false)
+  
+  // Calendar results
+  const [calendarResults, setCalendarResults] = React.useState<CalendarEvent[]>([])
+  const [loadingCalendar, setLoadingCalendar] = React.useState(false)
+  
+  // Feature availability
+  const [isGmailEnabled, setIsGmailEnabled] = React.useState(false)
+  const [isCalendarEnabled, setIsCalendarEnabled] = React.useState(false)
 
-  const searchFiles = React.useCallback(async (searchQuery: string) => {
-    if (!searchQuery.trim()) {
-      setResults([])
-      return
-    }
-
-    setLoading(true)
-    try {
-      // Call the backend endpoint /files/search_s3_files/ to search for files
-      const response = await ApiService.searchS3Files(searchQuery)
-      
-      // Backend returns: { result: "success", files: [...], query: "...", total_results: N }
-      if (response && response.result === 'success') {
-        const files = response.files || []
-        setResults(files)
-      } else {
-        // Handle error response from backend
-        setResults([])
+  // Check feature availability when dialog opens
+  React.useEffect(() => {
+    if (!open) return
+    
+    async function checkFeatures() {
+      try {
+        const [gmailAvailable, calendarAvailable] = await Promise.all([
+          ApiService.Scopes.isFeatureAvailable('gmail'),
+          ApiService.Scopes.isFeatureAvailable('calendar')
+        ])
+        setIsGmailEnabled(gmailAvailable)
+        setIsCalendarEnabled(calendarAvailable)
+      } catch (error) {
+        console.error('Error checking feature availability:', error)
+        setIsGmailEnabled(false)
+        setIsCalendarEnabled(false)
       }
-    } catch (error) {
-      // Handle network or API errors
-      console.error('Error searching files:', error)
-      setResults([])
-    } finally {
-      setLoading(false)
     }
-  }, [])
+    
+    checkFeatures()
+  }, [open])
 
+  // Debounced search effect
   React.useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (query.trim()) {
-        searchFiles(query)
-      } else {
-        setResults([])
+      if (!query.trim()) {
+        setFileResults([])
+        setEmailResults([])
+        setCalendarResults([])
+        return
+      }
+
+      // Search files (always)
+      setLoadingFiles(true)
+      searchFiles(query).then(results => {
+        setFileResults(results)
+        setLoadingFiles(false)
+      })
+
+      // Search emails (if enabled)
+      if (isGmailEnabled && onEmailSelect) {
+        setLoadingEmails(true)
+        searchEmails(query).then(results => {
+          setEmailResults(results)
+          setLoadingEmails(false)
+        })
+      }
+
+      // Search calendar (if enabled)
+      if (isCalendarEnabled && onCalendarEventSelect) {
+        setLoadingCalendar(true)
+        searchCalendarEvents(query).then(results => {
+          setCalendarResults(results)
+          setLoadingCalendar(false)
+        })
       }
     }, 300)
 
     return () => clearTimeout(timeoutId)
-  }, [query, searchFiles])
+  }, [query, isGmailEnabled, isCalendarEnabled, onEmailSelect, onCalendarEventSelect])
 
-  const handleFileSelect = React.useCallback((result: SearchResult) => {
-    const fileSystemItem: FileSystemItem = {
-      file_id: result.file_id,
-      name: result.file_name,
-      path: result.file_path,
-      type: 'file',
-      size: result.file_size,
-      modified: result.date_modified,
-      created: result.date_uploaded,
-      device_name: result.device_name,
-      s3_url: result.s3_url,
-    }
-    
-    onFileSelect(fileSystemItem)
+  const handleFileSelect = React.useCallback((result: FileSearchResult) => {
+    onFileSelect(toFileSystemItem(result))
     onOpenChange(false)
     setQuery("")
-    setResults([])
+    setFileResults([])
+    setEmailResults([])
+    setCalendarResults([])
   }, [onFileSelect, onOpenChange])
 
+  const handleEmailSelect = React.useCallback((result: EmailSearchResult) => {
+    if (onEmailSelect) {
+      onEmailSelect(result)
+      onOpenChange(false)
+      setQuery("")
+      setFileResults([])
+      setEmailResults([])
+      setCalendarResults([])
+    }
+  }, [onEmailSelect, onOpenChange])
+
+  const handleCalendarSelect = React.useCallback((event: CalendarEvent) => {
+    if (onCalendarEventSelect) {
+      onCalendarEventSelect(event)
+      onOpenChange(false)
+      setQuery("")
+      setFileResults([])
+      setEmailResults([])
+      setCalendarResults([])
+    }
+  }, [onCalendarEventSelect, onOpenChange])
+
+  // Reset state when dialog closes
   React.useEffect(() => {
     if (!open) {
       setQuery("")
-      setResults([])
+      setFileResults([])
+      setEmailResults([])
+      setCalendarResults([])
     }
   }, [open])
+
+  const isLoading = loadingFiles || loadingEmails || loadingCalendar
+  const hasResults = fileResults.length > 0 || emailResults.length > 0 || calendarResults.length > 0
+  const showEmailSection = isGmailEnabled && onEmailSelect
+  const showCalendarSection = isCalendarEnabled && onCalendarEventSelect
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
       <CommandInput 
-        placeholder="Search files..." 
+        placeholder="Search..." 
         value={query}
         onValueChange={setQuery}
       />
       <CommandList>
-        {loading && (
+        {isLoading && !hasResults && (
           <CommandEmpty>Searching...</CommandEmpty>
         )}
-        {!loading && query.trim() && results.length === 0 && (
-          <CommandEmpty>No files found.</CommandEmpty>
+        {!isLoading && query.trim() && !hasResults && (
+          <CommandEmpty>No results found.</CommandEmpty>
         )}
-        {!loading && results.length > 0 && (
+        
+        {/* File Results */}
+        {fileResults.length > 0 && (
           <CommandGroup heading="Files">
-            {results.map((result) => (
+            {fileResults.map((result) => (
               <CommandItem
                 key={result.file_id}
-                value={`${result.file_name} ${result.file_path}`}
+                value={`file-${result.file_name} ${result.file_path}`}
                 onSelect={() => handleFileSelect(result)}
               >
                 {getFileIcon(result.file_name)}
@@ -195,11 +259,82 @@ export function FileSearchCommand({ open, onOpenChange, onFileSelect }: FileSear
             ))}
           </CommandGroup>
         )}
-        {!loading && !query.trim() && (
-          <CommandEmpty>Start typing to search files...</CommandEmpty>
+
+        {/* Email Results */}
+        {showEmailSection && emailResults.length > 0 && (
+          <CommandGroup heading="Email">
+            {emailResults.slice(0, 10).map((result) => {
+              const { subject, from } = getEmailLabel(result)
+              return (
+                <CommandItem
+                  key={result.id}
+                  value={`email-${subject} ${from || ''}`}
+                  onSelect={() => handleEmailSelect(result)}
+                >
+                  <Mail className="h-4 w-4 text-primary" />
+                  <span className="ml-2 truncate">{subject}</span>
+                  {from && (
+                    <span className="ml-auto text-xs text-muted-foreground truncate max-w-[150px]">
+                      {from}
+                    </span>
+                  )}
+                </CommandItem>
+              )
+            })}
+          </CommandGroup>
+        )}
+
+        {/* Calendar Results */}
+        {showCalendarSection && calendarResults.length > 0 && (
+          <CommandGroup heading="Calendar">
+            {calendarResults.slice(0, 10).map((event) => {
+              const { summary, dateStr } = getCalendarLabel(event)
+              return (
+                <CommandItem
+                  key={event.id}
+                  value={`calendar-${summary} ${dateStr}`}
+                  onSelect={() => handleCalendarSelect(event)}
+                >
+                  <Calendar className="h-4 w-4 text-chart-4" />
+                  <span className="ml-2 truncate">{summary}</span>
+                  {dateStr && (
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      {dateStr}
+                    </span>
+                  )}
+                </CommandItem>
+              )
+            })}
+          </CommandGroup>
+        )}
+
+        {/* Loading indicators for individual sections */}
+        {loadingFiles && fileResults.length === 0 && query.trim() && (
+          <CommandGroup heading="Files">
+            <CommandItem disabled>
+              <span className="text-muted-foreground">Searching files...</span>
+            </CommandItem>
+          </CommandGroup>
+        )}
+        {showEmailSection && loadingEmails && emailResults.length === 0 && query.trim() && (
+          <CommandGroup heading="Email">
+            <CommandItem disabled>
+              <span className="text-muted-foreground">Searching emails...</span>
+            </CommandItem>
+          </CommandGroup>
+        )}
+        {showCalendarSection && loadingCalendar && calendarResults.length === 0 && query.trim() && (
+          <CommandGroup heading="Calendar">
+            <CommandItem disabled>
+              <span className="text-muted-foreground">Searching calendar...</span>
+            </CommandItem>
+          </CommandGroup>
+        )}
+
+        {!isLoading && !query.trim() && (
+          <CommandEmpty>Start typing to search...</CommandEmpty>
         )}
       </CommandList>
     </CommandDialog>
   )
 }
-

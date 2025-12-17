@@ -1055,7 +1055,7 @@ const ThreadWelcome: FC = () => {
                 </KbdGroup>
               </div>
               <div className="flex items-center gap-3">
-                <Typography variant="muted">Search Files:</Typography>
+                <Typography variant="muted">Search:</Typography>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
                   <Typography variant="muted" asChild><span>+</span></Typography>

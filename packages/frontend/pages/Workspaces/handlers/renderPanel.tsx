@@ -101,6 +101,8 @@ interface RenderPanelProps {
   setPanelLayout: React.Dispatch<React.SetStateAction<any>>;
   isMac?: boolean;
   onSplitPreview?: (direction: 'horizontal' | 'vertical' | null, position: { x: number; y: number }) => void;
+  calendarJumpDate?: Date | null;
+  onCalendarJumpComplete?: () => void;
 }
 
 export const renderPanel = ({
@@ -127,7 +129,9 @@ export const renderPanel = ({
   isPowerPointFile,
   setPanelLayout,
   isMac = false,
-  onSplitPreview
+  onSplitPreview,
+  calendarJumpDate,
+  onCalendarJumpComplete
 }: RenderPanelProps) => {
   const isActive = panel.id === activePanelId;
   const isDropTarget = dragState.dropTargetPanel === panel.id;
@@ -415,10 +419,12 @@ export const renderPanel = ({
                 if ((tab as any).type === 'calendar') {
                   return (
                     <CalendarViewer
+                      initialDate={calendarJumpDate || undefined}
                       initialView="month"
                       onEventClick={(ev) => {
                         // Optionally open event details in a new panel/tab using Email-like pattern
                       }}
+                      onDateChange={onCalendarJumpComplete}
                     />
                   );
                 }

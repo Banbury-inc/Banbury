@@ -3,14 +3,15 @@ import {
   Send, 
   Star, 
   StarOff, 
-  Search,
   RefreshCw,
   ChevronLeft,
-  ChevronRight,
   Paperclip,
   Trash2,
-  AlertCircle,
-  Settings
+  Settings,
+  Inbox,
+  FileText,
+  AlertTriangle,
+  Tag
 } from 'lucide-react'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 
@@ -18,9 +19,10 @@ import { EmailViewer } from '../../MiddlePanel/EmailViewer/EmailViewer'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/old-input'
 import { Typography } from '../../ui/typography'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '../../ui/select'
 import { ApiService } from '../../../../backend/api/apiService'
-import { GmailMessage, GmailMessageListResponse } from '../../../../backend/api/emails/emails'
+import { GmailMessage, GmailMessageListResponse, GmailLabel } from '../../../../backend/api/emails/emails'
+import { loadLabels as fetchLabels } from './handlers/loadLabels'
 
 interface EmailTabProps {
   onOpenEmailApp?: () => void
@@ -44,7 +46,42 @@ interface ParsedEmail {
 
 type GmailHeader = { name: string; value: string }
 
-export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: EmailTabProps) {
+// Helper to get label display name
+function getLabelDisplayName(label: GmailLabel): string {
+  // For system labels, use friendlier names
+  const systemNameMap: Record<string, string> = {
+    'INBOX': 'Inbox',
+    'SENT': 'Sent',
+    'DRAFT': 'Drafts',
+    'STARRED': 'Starred',
+    'SPAM': 'Spam',
+    'TRASH': 'Trash',
+    'IMPORTANT': 'Important',
+    'UNREAD': 'Unread',
+    'CATEGORY_PERSONAL': 'Personal',
+    'CATEGORY_SOCIAL': 'Social',
+    'CATEGORY_PROMOTIONS': 'Promotions',
+    'CATEGORY_UPDATES': 'Updates',
+    'CATEGORY_FORUMS': 'Forums',
+  }
+  return systemNameMap[label.id] || label.name
+}
+
+// Helper to get icon for system labels
+function getLabelIcon(labelId: string) {
+  switch (labelId) {
+    case 'INBOX': return Inbox
+    case 'SENT': return Send
+    case 'DRAFT': return FileText
+    case 'STARRED': return Star
+    case 'SPAM': return AlertTriangle
+    case 'TRASH': return Trash2
+    case 'IMPORTANT': return Star
+    default: return Tag
+  }
+}
+
+export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
   const [messages, setMessages] = useState<GmailMessageListResponse>({})
   const [selectedMessage, setSelectedMessage] = useState<GmailMessage | null>(null)
   const [parsedMessages, setParsedMessages] = useState<ParsedEmail[]>([])
@@ -52,7 +89,9 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
   const [error, setError] = useState<string | null>(null)
   const [composeOpen, setComposeOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'drafts' | 'starred'>('inbox')
+  const [selectedLabelId, setSelectedLabelId] = useState<string>('INBOX')
+  const [labels, setLabels] = useState<GmailLabel[]>([])
+  const [labelsLoading, setLabelsLoading] = useState(false)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [gmailAvailable, setGmailAvailable] = useState<boolean | null>(null)
   const [checkingGmailAccess, setCheckingGmailAccess] = useState(false)
@@ -63,6 +102,44 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
     subject: '',
     body: ''
   })
+
+  // Separate labels into system and user labels
+  const { systemLabels, userLabels } = useMemo(() => {
+    const system: GmailLabel[] = []
+    const user: GmailLabel[] = []
+    // Priority order for system labels
+    const priorityOrder = ['INBOX', 'STARRED', 'SENT', 'DRAFT', 'IMPORTANT', 'SPAM', 'TRASH', 'UNREAD']
+    
+    for (const label of labels) {
+      if (label.type === 'system') {
+        // Skip hidden/internal system labels
+        if (label.id === 'CHAT' || label.id === 'CATEGORY_PERSONAL' && labels.some(l => l.id === 'INBOX')) continue
+        system.push(label)
+      } else {
+        user.push(label)
+      }
+    }
+    
+    // Sort system labels by priority
+    system.sort((a, b) => {
+      const aIdx = priorityOrder.indexOf(a.id)
+      const bIdx = priorityOrder.indexOf(b.id)
+      if (aIdx === -1 && bIdx === -1) return a.name.localeCompare(b.name)
+      if (aIdx === -1) return 1
+      if (bIdx === -1) return -1
+      return aIdx - bIdx
+    })
+    
+    // Sort user labels alphabetically
+    user.sort((a, b) => a.name.localeCompare(b.name))
+    
+    return { systemLabels: system, userLabels: user }
+  }, [labels])
+
+  // Get the currently selected label object
+  const selectedLabel = useMemo(() => {
+    return labels.find(l => l.id === selectedLabelId) || { id: selectedLabelId, name: selectedLabelId, type: 'system' as const }
+  }, [labels, selectedLabelId])
 
   // Format date for display
   const formatDate = useCallback((dateString: string): string => {
@@ -85,8 +162,8 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
     const getHeader = (name: string) => headers.find((h: GmailHeader) => h.name.toLowerCase() === name.toLowerCase())?.value || ''
     
     // For sent emails, show "To" field as the primary contact
-    const isSentEmail = activeTab === 'sent'
-    const isDraft = activeTab === 'drafts'
+    const isSentEmail = selectedLabelId === 'SENT'
+    const isDraft = selectedLabelId === 'DRAFT' || message.labelIds?.includes('DRAFT')
     
     // Check for attachments in nested parts
     const hasAttachments = (payload: any): boolean => {
@@ -124,7 +201,18 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
       labels: message.labelIds || [],
       isDraft
     }
-  }, [activeTab])
+  }, [selectedLabelId])
+
+  // Load labels from Gmail API
+  const loadLabels = useCallback(async () => {
+    setLabelsLoading(true)
+    try {
+      const labelsResult = await fetchLabels()
+      setLabels(labelsResult)
+    } finally {
+      setLabelsLoading(false)
+    }
+  }, [])
 
   // Load messages
   const loadMessages = useCallback(async (pageToken?: string, query?: string) => {
@@ -135,10 +223,9 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
     }
     setError(null)
     try {
-      const labelIds = activeTab === 'inbox' ? ['INBOX'] : activeTab === 'sent' ? ['SENT'] : activeTab === 'drafts' ? ['DRAFT'] : ['STARRED']
       const response = await ApiService.Emails.listMessages({
         maxResults: 20,
-        labelIds,
+        labelIds: [selectedLabelId],
         pageToken,
         q: query
       })
@@ -231,7 +318,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
         setLoading(false)
       }
     }
-  }, [activeTab])
+  }, [selectedLabelId])
 
   // Load full message details
   const loadMessageDetails = useCallback(async (messageId: string) => {
@@ -364,12 +451,34 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
     checkGmailAccess()
   }, [checkGmailAccess])
 
-  // Load initial messages
+  // Load labels when Gmail is available
+  useEffect(() => {
+    if (gmailAvailable) {
+      loadLabels()
+    }
+  }, [gmailAvailable, loadLabels])
+
+  // Load initial messages when label changes
   useEffect(() => {
     if (gmailAvailable) {
       loadMessages()
     }
-  }, [loadMessages, activeTab, gmailAvailable])
+  }, [loadMessages, selectedLabelId, gmailAvailable])
+
+  // Listen for label refresh events (when a label is created in the viewer)
+  useEffect(() => {
+    const handler = () => {
+      loadLabels()
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('gmail-labels-refresh', handler)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('gmail-labels-refresh', handler)
+      }
+    }
+  }, [loadLabels])
 
   // Global refresh listener so other components can force a refresh
   useEffect(() => {
@@ -386,14 +495,9 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
     }
   }, [loadMessages, searchQuery])
 
-  // Get tab label
-  const getTabLabel = useCallback((tab: 'inbox' | 'sent' | 'drafts' | 'starred') => {
-    return tab === 'inbox' ? 'Inbox' : tab === 'sent' ? 'Sent' : tab === 'drafts' ? 'Drafts' : 'Starred'
-  }, [])
-
-  // Handle tab change
-  const handleTabChange = useCallback((tab: 'inbox' | 'sent' | 'drafts' | 'starred') => {
-    setActiveTab(tab)
+  // Handle label selection change
+  const handleLabelChange = useCallback((labelId: string) => {
+    setSelectedLabelId(labelId)
     setSelectedMessage(null)
     setMessages({})
     setParsedMessages([])
@@ -425,28 +529,64 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
       <div className="flex flex-col bg-card flex-shrink-0">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <div className="flex items-center gap-4">
-            {/* Tab Navigation */}
-            <Select value={activeTab} onValueChange={(value) => handleTabChange(value as 'inbox' | 'sent' | 'drafts' | 'starred')}>
-              <SelectTrigger size="sm">
-                <SelectValue placeholder={getTabLabel(activeTab)}>
-                  <Typography variant="xs" className="font-medium">
-                    {getTabLabel(activeTab)}
-                  </Typography>
+            {/* Label Navigation */}
+            <Select value={selectedLabelId} onValueChange={handleLabelChange}>
+              <SelectTrigger size="sm" className="min-w-[120px]">
+                <SelectValue>
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const Icon = getLabelIcon(selectedLabelId)
+                      return <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    })()}
+                    <Typography variant="xs" className="font-medium">
+                      {getLabelDisplayName(selectedLabel)}
+                    </Typography>
+                  </div>
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="inbox">
-                  <Typography variant="xs" className="font-medium">Inbox</Typography>
-                </SelectItem>
-                <SelectItem value="sent">
-                  <Typography variant="xs" className="font-medium">Sent</Typography>
-                </SelectItem>
-                <SelectItem value="drafts">
-                  <Typography variant="xs" className="font-medium">Drafts</Typography>
-                </SelectItem>
-                <SelectItem value="starred">
-                  <Typography variant="xs" className="font-medium">Starred</Typography>
-                </SelectItem>
+                {labelsLoading ? (
+                  <div className="flex items-center justify-center py-2">
+                    <RefreshCw className="h-3 w-3 animate-spin mr-2 text-muted-foreground" strokeWidth={1} />
+                    <Typography variant="xs" className="text-muted-foreground">Loading...</Typography>
+                  </div>
+                ) : (
+                  <>
+                    {/* System Labels */}
+                    <SelectGroup>
+                      <SelectLabel>Mailbox</SelectLabel>
+                      {systemLabels.map((label) => {
+                        const Icon = getLabelIcon(label.id)
+                        return (
+                          <SelectItem key={label.id} value={label.id}>
+                            <div className="flex items-center gap-2">
+                              <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                              <Typography variant="xs" className="font-medium">{getLabelDisplayName(label)}</Typography>
+                            </div>
+                          </SelectItem>
+                        )
+                      })}
+                    </SelectGroup>
+                    
+                    {/* User Labels */}
+                    {userLabels.length > 0 && (
+                      <>
+                        <SelectSeparator />
+                        <SelectGroup>
+                          <SelectLabel>Labels</SelectLabel>
+                          {userLabels.map((label) => (
+                            <SelectItem key={label.id} value={label.id}>
+                              <div className="flex items-center gap-2">
+                                <Tag className="h-3.5 w-3.5" strokeWidth={1.5} />
+                                <Typography variant="xs" className="font-medium">{label.name}</Typography>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </>
+                    )}
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -608,16 +748,16 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
                     <div className="flex flex-col items-center justify-center h-full p-4">
                       <Mail className="h-12 w-12 mb-4 opacity-50 text-gray-400 dark:text-gray-400" strokeWidth={1} />
                       <Typography variant="small" className="mb-2 text-gray-500 dark:text-gray-400">
-                        {activeTab === 'inbox' ? 'No emails found' : 
-                         activeTab === 'sent' ? 'No sent emails found' : 
-                         activeTab === 'drafts' ? 'No drafts found' :
-                         'No starred emails found'}
+                        No emails in {getLabelDisplayName(selectedLabel)}
                       </Typography>
                       <Typography variant="muted" className="text-xs text-gray-400 dark:text-gray-500">
-                        {activeTab === 'inbox' ? 'Your inbox is empty or try refreshing' :
-                         activeTab === 'sent' ? 'You haven\'t sent any emails yet' :
-                         activeTab === 'drafts' ? 'You don\'t have any saved drafts' :
-                         'You haven\'t starred any emails yet'}
+                        {selectedLabelId === 'INBOX' ? 'Your inbox is empty or try refreshing' :
+                         selectedLabelId === 'SENT' ? 'You haven\'t sent any emails yet' :
+                         selectedLabelId === 'DRAFT' ? 'You don\'t have any saved drafts' :
+                         selectedLabelId === 'STARRED' ? 'You haven\'t starred any emails yet' :
+                         selectedLabelId === 'TRASH' ? 'Your trash is empty' :
+                         selectedLabelId === 'SPAM' ? 'No spam messages' :
+                         'No emails with this label'}
                       </Typography>
                     </div>
                   ) : (

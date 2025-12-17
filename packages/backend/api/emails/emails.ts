@@ -31,6 +31,43 @@ export interface GmailThreadResponse {
   error?: string
 }
 
+export interface GmailLabel {
+  id: string
+  name: string
+  type: 'system' | 'user'
+  messageListVisibility?: 'show' | 'hide'
+  labelListVisibility?: 'labelShow' | 'labelShowIfUnread' | 'labelHide'
+  messagesTotal?: number
+  messagesUnread?: number
+  threadsTotal?: number
+  threadsUnread?: number
+  color?: {
+    textColor?: string
+    backgroundColor?: string
+  }
+}
+
+export interface GmailLabelListResponse {
+  labels: GmailLabel[]
+}
+
+// Fallback system labels when the API endpoint is unavailable
+export const FALLBACK_SYSTEM_LABELS: GmailLabel[] = [
+  { id: 'INBOX', name: 'Inbox', type: 'system' },
+  { id: 'SENT', name: 'Sent', type: 'system' },
+  { id: 'DRAFT', name: 'Drafts', type: 'system' },
+  { id: 'STARRED', name: 'Starred', type: 'system' },
+  { id: 'SPAM', name: 'Spam', type: 'system' },
+  { id: 'TRASH', name: 'Trash', type: 'system' },
+  { id: 'IMPORTANT', name: 'Important', type: 'system' },
+  { id: 'UNREAD', name: 'Unread', type: 'system' },
+  { id: 'CATEGORY_PERSONAL', name: 'Personal', type: 'system' },
+  { id: 'CATEGORY_SOCIAL', name: 'Social', type: 'system' },
+  { id: 'CATEGORY_PROMOTIONS', name: 'Promotions', type: 'system' },
+  { id: 'CATEGORY_UPDATES', name: 'Updates', type: 'system' },
+  { id: 'CATEGORY_FORUMS', name: 'Forums', type: 'system' },
+]
+
 
 export default class Emails {
     constructor(_api: ApiService) {}
@@ -181,5 +218,47 @@ export default class Emails {
     return resp.data
   }
 
+  /**
+   * List all Gmail labels (system + user labels)
+   * Falls back to a static list of system labels if the endpoint is unavailable
+   */
+  static async listLabels(): Promise<GmailLabelListResponse> {
+    try {
+      const resp = await axios.get<GmailLabelListResponse>(
+        `${ApiService.baseURL}/authentication/gmail/labels/`,
+        { headers: this.withAuthHeaders() }
+      )
+      return resp.data
+    } catch (error) {
+      // If endpoint doesn't exist or fails, return fallback system labels
+      console.warn('Gmail labels endpoint unavailable, using fallback system labels:', error)
+      return { labels: FALLBACK_SYSTEM_LABELS }
+    }
+  }
+
+  /**
+   * Create a new Gmail label
+   * @param input Label creation parameters
+   * @returns The created label
+   */
+  static async createLabel(input: { name: string; labelListVisibility?: 'labelShow' | 'labelShowIfUnread' | 'labelHide'; messageListVisibility?: 'show' | 'hide' }): Promise<GmailLabel> {
+    const resp = await axios.post<GmailLabel>(
+      `${ApiService.baseURL}/authentication/gmail/labels/`,
+      input,
+      { headers: { 'Content-Type': 'application/json', ...this.withAuthHeaders() } }
+    )
+    return resp.data
+  }
+
+  /**
+   * Delete a Gmail label
+   * @param labelId The label ID to delete
+   */
+  static async deleteLabel(labelId: string): Promise<void> {
+    await axios.delete(
+      `${ApiService.baseURL}/authentication/gmail/labels/${encodeURIComponent(labelId)}/`,
+      { headers: this.withAuthHeaders() }
+    )
+  }
 
 }

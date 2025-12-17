@@ -1,12 +1,15 @@
-import { ArrowLeft, Reply, Forward, Trash2, Archive, Star, Clock, User, Mail, Paperclip, Download, Send, X, Save } from "lucide-react"
+import { ArrowLeft, Reply, Trash2, Archive, Star, Paperclip, Download, Send, X, Save, Tag, Check, Plus } from "lucide-react"
 import { useEffect, useMemo, useState, useCallback } from "react"
 import { Button } from "../../ui/button"
 import { Input } from "../../ui/old-input"
 import { extractEmailContent, hasAttachments, formatFileSize, cleanHtmlContent } from "../../../utils/emailUtils"
 import { useToast } from "../../ui/use-toast"
 import { Typography } from "frontend/components/ui/typography"
+import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover"
 import { ApiService } from "../../../../backend/api/apiService"
+import { GmailLabel } from "../../../../backend/api/emails/emails"
 import { loadThreadMessages } from "./handlers/loadThreadMessages"
+import { loadAvailableLabels, toggleLabel, createAndApplyLabel, dispatchLabelRefreshEvents } from "./handlers/labelActions"
 
 interface EmailViewerProps {
   email: any
@@ -88,9 +91,23 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
   })
   const [sendingReply, setSendingReply] = useState<boolean>(false)
   const [replyAttachments, setReplyAttachments] = useState<File[]>([])
+  
+  // Labels popover state
+  const [labelsPopoverOpen, setLabelsPopoverOpen] = useState(false)
+  const [availableLabels, setAvailableLabels] = useState<GmailLabel[]>([])
+  const [labelsLoading, setLabelsLoading] = useState(false)
+  const [newLabelName, setNewLabelName] = useState('')
+  const [creatingLabel, setCreatingLabel] = useState(false)
 
   const isStarred = useMemo(() => labels.includes('STARRED'), [labels])
   const { toast } = useToast()
+  
+  // Separate available labels into user labels only (system labels are handled separately)
+  const userLabels = useMemo(() => {
+    return availableLabels
+      .filter(l => l.type === 'user')
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [availableLabels])
 
   // Auto-scroll to reply composer when it appears
   useEffect(() => {
@@ -390,6 +407,91 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
     }
   }
 
+  // Load available labels from Gmail API
+  const fetchAvailableLabels = useCallback(async () => {
+    setLabelsLoading(true)
+    try {
+      const labelsResult = await loadAvailableLabels()
+      setAvailableLabels(labelsResult)
+    } finally {
+      setLabelsLoading(false)
+    }
+  }, [])
+
+  // Load labels when popover opens
+  useEffect(() => {
+    if (labelsPopoverOpen && availableLabels.length === 0) {
+      fetchAvailableLabels()
+    }
+  }, [labelsPopoverOpen, availableLabels.length, fetchAvailableLabels])
+
+  // Toggle a label on the email
+  const handleToggleLabel = useCallback(async (labelId: string) => {
+    const hasLabel = labels.includes(labelId)
+    
+    // Optimistic update
+    if (hasLabel) {
+      setLabels(prev => prev.filter(l => l !== labelId))
+    } else {
+      setLabels(prev => [...prev, labelId])
+    }
+    
+    try {
+      await toggleLabel(email.id, labelId, hasLabel)
+      
+      if (onRefresh) onRefresh()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('email-refresh'))
+      }
+    } catch {
+      // Revert optimistic update on error
+      if (hasLabel) {
+        setLabels(prev => [...prev, labelId])
+      } else {
+        setLabels(prev => prev.filter(l => l !== labelId))
+      }
+      toast({
+        title: "Failed to update label",
+        description: "There was an error updating the label.",
+        variant: "destructive",
+      })
+    }
+  }, [labels, email?.id, onRefresh, toast])
+
+  // Create a new label and apply it to the email
+  const handleCreateLabel = useCallback(async () => {
+    if (!newLabelName.trim()) return
+    
+    setCreatingLabel(true)
+    try {
+      const newLabel = await createAndApplyLabel(email.id, newLabelName.trim())
+      
+      // Add to available labels and apply locally
+      setAvailableLabels(prev => [...prev, newLabel])
+      setLabels(prev => [...prev, newLabel.id])
+      
+      // Clear input
+      setNewLabelName('')
+      
+      // Notify other components to refresh labels
+      dispatchLabelRefreshEvents()
+      
+      toast({
+        title: "Label created",
+        description: `Label "${newLabel.name}" created and applied.`,
+        variant: "default",
+      })
+    } catch {
+      toast({
+        title: "Failed to create label",
+        description: "There was an error creating the label.",
+        variant: "destructive",
+      })
+    } finally {
+      setCreatingLabel(false)
+    }
+  }, [newLabelName, email?.id, toast])
+
   // Load full thread messages when a new email is selected
   // Threads are loaded ONLY via Gmail threadId - no subject-based heuristics
   useEffect(() => {
@@ -437,6 +539,76 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
         
         {/* Compact Actions */}
         <div className="flex items-center gap-1">
+          {/* Labels Popover */}
+          <Popover open={labelsPopoverOpen} onOpenChange={setLabelsPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="primary" size="icon-sm" title="Manage labels">
+                <Tag className="h-3 w-3" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0" align="end">
+              <div className="p-3 border-b border-border">
+                <Typography variant="small" className="font-medium">Labels</Typography>
+              </div>
+              
+              {labelsLoading ? (
+                <div className="p-4 text-center">
+                  <Typography variant="muted" className="text-xs">Loading labels...</Typography>
+                </div>
+              ) : (
+                <div className="max-h-64 overflow-y-auto">
+                  {userLabels.length === 0 ? (
+                    <div className="p-4 text-center">
+                      <Typography variant="muted" className="text-xs">No labels yet</Typography>
+                    </div>
+                  ) : (
+                    <div className="py-1">
+                      {userLabels.map((label) => {
+                        const isApplied = labels.includes(label.id)
+                        return (
+                          <button
+                            key={label.id}
+                            onClick={() => handleToggleLabel(label.id)}
+                            className="w-full flex items-center gap-2 px-3 py-2 hover:bg-accent transition-colors text-left"
+                          >
+                            <div className={`w-4 h-4 rounded border flex items-center justify-center ${isApplied ? 'bg-primary border-primary' : 'border-border'}`}>
+                              {isApplied && <Check className="h-3 w-3 text-primary-foreground" />}
+                            </div>
+                            <Typography variant="xs">{label.name}</Typography>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Create new label */}
+              <div className="p-3 border-t border-border">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="New label..."
+                    value={newLabelName}
+                    onChange={(e) => setNewLabelName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreateLabel()}
+                    variant="primary"
+                    className="flex-1 h-8 text-xs"
+                    disabled={creatingLabel}
+                  />
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleCreateLabel}
+                    disabled={creatingLabel || !newLabelName.trim()}
+                    className="h-8 px-2"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+          
           <Button variant="primary" size="icon-sm" onClick={handleArchive} disabled={actionLoading}>
             <Archive className="h-3 w-3" />
           </Button>
