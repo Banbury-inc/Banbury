@@ -62,6 +62,7 @@ export const TabComponent = ({ label, isActive, onClick, onClose, style, isNew, 
       ${isClosing ? 'animate-tab-exit' : ''}
       px-4 
       py-2
+      h-9
       text-sm
       font-medium
       transition-colors 
@@ -390,7 +391,7 @@ export const Tabs: React.FC<TabsProps> = ({
         <button
           onClick={() => onTabAdd?.()}
           data-testid="new-tab-button"
-          className="px-4 py-2 text-sm transition-colors duration-150 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-[#2d2d2d] bg-transparent"
+          className="px-4 h-9 text-sm transition-colors duration-150 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-[#2d2d2d] bg-transparent flex items-center justify-center"
         >
           <AddIcon size={14} />
         </button>
