@@ -500,7 +500,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                         {isSelected && <Check className="size-4" />}
                       </span>
                       <div className="flex items-center">
-                        {model.name}
+                        <Typography variant="xs">{model.name}</Typography>
                       </div>
                     </div>
                   )
@@ -526,7 +526,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                         {isSelected && <Check className="size-4" />}
                       </span>
                       <div className="flex items-center">
-                        {model.name}
+                        <Typography variant="xs">{model.name}</Typography>
                       </div>
                     </div>
                   )
@@ -571,7 +571,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                   </span>
                   <div className="flex items-center [&_svg]:!text-gray-400">
                     <Search size={16} strokeWidth={1} className="mr-2" />
-                    Web Search
+                    <Typography variant="xs" className="text-xs font-medium">Web Search</Typography>
                   </div>
                 </div>
                 <div
@@ -583,7 +583,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                   </span>
                   <div className="flex items-center [&_svg]:!text-blue-500">
                     <FileText size={16} strokeWidth={1} className="mr-2" />
-                    Read File
+                    <Typography variant="xs" className="text-xs font-medium">Read File</Typography>
                   </div>
                 </div>
                 <div
@@ -595,7 +595,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                   </span>
                   <div className="flex items-center [&_svg]:!text-red-500">
                     <Mail size={16} strokeWidth={1} className="mr-2" />
-                    Gmail
+                    <Typography variant="xs" className="text-xs font-medium">Gmail</Typography>
                   </div>
                 </div>
                 <div
@@ -607,7 +607,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                   </span>
                   <div className="flex items-center [&_svg]:!text-green-500">
                     <Chrome size={16} strokeWidth={1} className="mr-2" />
-                    Browser
+                    <Typography variant="xs" className="text-xs font-medium">Browser</Typography>
                   </div>
                 </div>
                 <div
@@ -619,7 +619,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                   </span>
                   <div className="flex items-center [&_svg]:!text-blue-400">
                     <MessageSquare size={16} strokeWidth={1} className="mr-2" />
-                    X (Twitter)
+                    <Typography variant="xs" className="text-xs font-medium">X (Twitter)</Typography>
                   </div>
                 </div>
                 <div
@@ -631,7 +631,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                   </span>
                   <div className="flex items-center [&_svg]:!text-purple-500">
                     <MessageSquare size={16} strokeWidth={1} className="mr-2" />
-                    Slack
+                    <Typography variant="xs" className="text-xs font-medium">Slack</Typography>
                   </div>
                 </div>
                 <div
@@ -642,7 +642,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                   </span>
                   <div className="flex items-center [&_svg]:!text-yellow-400">
                     <Brain size={16} strokeWidth={1} className="mr-2" />
-                    Memory
+                    <Typography variant="xs" className="text-xs font-medium">Memory</Typography>
                   </div>
                 </div>
               </div>

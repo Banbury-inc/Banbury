@@ -5,6 +5,7 @@ import { X as CloseIcon, Plus as AddIcon } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { SplitPreview } from '../SplitPreview';
+import { Typography } from '../../ui/typography';
 
 import type { Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/types';
 
@@ -80,7 +81,7 @@ export const TabComponent = ({ label, isActive, onClick, onClose, style, isNew, 
       group
     `}
   >
-    <span className="truncate select-none">{label}</span>
+    <Typography variant="xs" className="truncate select-none">{label}</Typography>
     {onClose && (
       <button
         onClick={(e) => {

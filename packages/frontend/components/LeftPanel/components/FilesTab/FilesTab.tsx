@@ -197,43 +197,43 @@ export function FilesTab({
                   <SelectItem value="upload-file" className="[&_svg]:!text-gray-400">
                     <div className="flex items-center">
                       <FilePlus size={16} strokeWidth={1} className="mr-2" />
-                      Upload File
+                      <Typography variant="xs" className="font-medium">Upload File</Typography>
                     </div>
                   </SelectItem>
                   <SelectItem value="upload-folder" className="[&_svg]:!text-yellow-400">
                     <div className="flex items-center">
                       <FolderPlus size={16} strokeWidth={1} className="mr-2" />
-                      Upload Folder
+                      <Typography variant="xs" className="font-medium">Upload Folder</Typography>
                     </div>
                   </SelectItem>
                   <SelectItem value="document" className="[&_svg]:!text-blue-500">
                     <div className="flex items-center">
                       <FileText size={16} strokeWidth={1} className="mr-2" />
-                      Document
+                      <Typography variant="xs" className="font-medium">Document</Typography>
                     </div>
                   </SelectItem>
                   <SelectItem value="spreadsheet" className="[&_svg]:!text-green-500">
                     <div className="flex items-center">
                       <FileSpreadsheet size={16} strokeWidth={1} className="mr-2" />
-                      Spreadsheet
+                      <Typography variant="xs" className="font-medium">Spreadsheet</Typography>
                     </div>
                   </SelectItem>
                   <SelectItem value="canvas" className="[&_svg]:!text-purple-400">
                     <div className="flex items-center">
                       <Network size={16} strokeWidth={1} className="mr-2" />
-                      Canvas
+                      <Typography variant="xs" className="font-medium">Canvas</Typography>
                     </div>
                   </SelectItem>
                   <SelectItem value="presentation" className="[&_svg]:!text-orange-400">
                     <div className="flex items-center">
                       <FileBarChart size={16} strokeWidth={1} className="mr-2" />
-                      Presentation
+                      <Typography variant="xs" className="font-medium">Presentation</Typography>
                     </div>
                   </SelectItem>
                   <SelectItem value="folder" className="[&_svg]:!text-yellow-400">
                     <div className="flex items-center">
                       <Folder size={16} strokeWidth={1} className="mr-2" />
-                      Folder
+                      <Typography variant="xs" className="font-medium">Folder</Typography>
                     </div>
                   </SelectItem>
                 </SelectContent>
