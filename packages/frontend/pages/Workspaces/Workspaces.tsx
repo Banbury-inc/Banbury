@@ -979,6 +979,7 @@ const Workspaces = (): React.ReactNode => {
                         window.dispatchEvent(new CustomEvent('clear-conversation', {}))
                       }}
                       onEmailSelect={handleEmailSelect}
+                      hasCalendarOpen={getAllTabs(panelLayout).some(tab => (tab as any).type === 'calendar')}
                     />
                   </Allotment.Pane>
                 )}

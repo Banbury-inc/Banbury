@@ -320,6 +320,57 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
     }
   }
 
+  const handleToggleStarForMessage = async (msg: any) => {
+    const msgLabels = msg?.labelIds || []
+    const currentlyStarred = msgLabels.includes('STARRED')
+    try {
+      setActionLoading(true)
+      if (currentlyStarred) {
+        await ApiService.Emails.modifyMessage(msg.id, { removeLabelIds: ['STARRED'] })
+        // Update the message in threadMessages
+        setThreadMessages((prev) =>
+          prev.map((m) =>
+            m.id === msg.id
+              ? { ...m, labelIds: (m.labelIds || []).filter((l: string) => l !== 'STARRED') }
+              : m
+          )
+        )
+        // If this is the main email, also update labels state
+        if (msg.id === email.id) {
+          setLabels((prev) => prev.filter((l) => l !== 'STARRED'))
+          if (onStarToggled) onStarToggled(email, false)
+        }
+        if (onRefresh) onRefresh()
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('email-refresh'))
+        }
+      } else {
+        await ApiService.Emails.modifyMessage(msg.id, { addLabelIds: ['STARRED'] })
+        // Update the message in threadMessages
+        setThreadMessages((prev) =>
+          prev.map((m) =>
+            m.id === msg.id
+              ? { ...m, labelIds: (m.labelIds || []).includes('STARRED') ? m.labelIds : [...(m.labelIds || []), 'STARRED'] }
+              : m
+          )
+        )
+        // If this is the main email, also update labels state
+        if (msg.id === email.id) {
+          setLabels((prev) => (prev.includes('STARRED') ? prev : [...prev, 'STARRED']))
+          if (onStarToggled) onStarToggled(email, true)
+        }
+        if (onRefresh) onRefresh()
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('email-refresh'))
+        }
+      }
+    } catch (error) {
+      alert('Failed to toggle star')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   const handleDelete = async () => {
     try {
       setActionLoading(true)
@@ -452,15 +503,15 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
   }, [email])
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-zinc-800">
+    <div className="h-full flex flex-col bg-accent">
       {/* Compact Header */}
       {!email ? (
-        <div className="h-full flex items-center justify-center text-gray-400 dark:text-gray-400">
+        <div className="h-full flex items-center justify-center text-muted-foreground">
           <p>Select an email to view</p>
         </div>
       ) : (
         <>
-      <div className="flex items-center justify-between px-3 py-3 bg-zinc-200 border-b border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700">
+      <div className="flex items-center justify-between px-3 py-3 bg-accent border-b border-border">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {onBack && (
             <Button
@@ -471,21 +522,10 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
               <ArrowLeft className="h-3 w-3" />
             </Button>
           )}
-          <div className="min-w-0 flex-1">
-            <Typography variant="h3" className="truncate">
-              {getHeader('Subject') || '(No Subject)'}
-            </Typography>
-          </div>
         </div>
         
         {/* Compact Actions */}
         <div className="flex items-center gap-1">
-          <Button variant="primary" size="icon-sm" onClick={handleReply} disabled={actionLoading}>
-            <Reply className="h-3 w-3" />
-          </Button>
-          <Button variant="primary" size="icon-sm" onClick={handleForward} disabled={actionLoading}>
-            <Forward className="h-3 w-3" />
-          </Button>
           <Button variant="primary" size="icon-sm" onClick={handleArchive} disabled={actionLoading}>
             <Archive className="h-3 w-3" />
           </Button>
@@ -505,9 +545,9 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
       </div>
 
       {/* Email Content */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-400 scrollbar-track-zinc-100 hover:scrollbar-thumb-zinc-500">
-        <div className="w-full">
-          <div className="w-full">
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-400 scrollbar-track-zinc-100 hover:scrollbar-thumb-zinc-500 flex flex-col">
+        <div className="w-full flex-1 flex flex-col">
+          <div className="w-full flex-1 flex flex-col">
             {threadLoading && (
               <div className="p-6 text-sm text-zinc-500 flex items-center gap-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-zinc-400"></div>
@@ -515,7 +555,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
               </div>
             )}
             {!threadLoading && (threadMessages.length > 0 ? (
-              <div className="bg-white">
+              <div className="bg-white flex-1 flex flex-col">
                 {threadMessages.map((msg, index) => {
                   const content = extractEmailContent(msg?.payload)
                   const header = (n: string) => msg?.payload?.headers?.find((h: any) => h.name.toLowerCase() === n.toLowerCase())?.value || 'Unknown'
@@ -523,11 +563,12 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                   const fromHeader = header('From')
                   const senderName = extractSenderName(fromHeader)
                   const senderEmail = fromHeader.includes('<') ? fromHeader.match(/<(.+)>/)?.[1] || fromHeader : fromHeader
+                  const isLastMessage = index === threadMessages.length - 1
                   
                   return (
-                    <div key={msg.id} className={`border-b border-gray-200 ${index === threadMessages.length - 1 ? 'border-b-2' : ''} ${index > 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                    <div key={msg.id} className={`border-b border-gray-200 ${isLastMessage ? 'border-b-2 flex-1 flex flex-col' : ''} ${index > 0 ? 'bg-gray-50' : 'bg-white'}`}>
                       {/* Email Header */}
-                      <div className="px-6 py-4">
+                      <div className="px-6 py-4 flex-shrink-0">
                         <div className="flex items-start gap-3">
                           {/* Avatar */}
                           <div className="flex-shrink-0">
@@ -548,8 +589,11 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                                     variant="primaryonWhite"
                                     size="icon-sm"
                                     title="Star email"
+                                    className={`${(msg?.labelIds || []).includes('STARRED') ? 'text-yellow-400 hover:text-yellow-500' : ''}`}
+                                    onClick={() => handleToggleStarForMessage(msg)}
+                                    disabled={actionLoading}
                                   >
-                                    <Star className="h-3 w-3" />
+                                    <Star className="h-3 w-3" fill={(msg?.labelIds || []).includes('STARRED') ? 'currentColor' : 'none'} />
                                   </Button>
                                   <Button
                                     variant="primaryonWhite"
@@ -583,8 +627,8 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                       </div>
                       
                       {/* Email Content */}
-                      <div className="px-6 pb-4">
-                        <div className="ml-13">
+                      <div className={`px-6 pb-4 ${isLastMessage ? 'flex-1 flex flex-col min-h-0' : ''}`}>
+                        <div className={`ml-13 ${isLastMessage ? 'flex-1 min-h-0' : ''}`}>
                           {content?.html ? (
                             <div className="text-gray-900 leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: cleanHtmlContent(content.html) }} />
                           ) : (
@@ -597,7 +641,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
                       
                       {/* Attachments */}
                       {msgHasAttachments && content.attachments && (
-                        <div className="px-6 pb-4">
+                        <div className={`px-6 pb-4 ${isLastMessage ? 'flex-shrink-0' : ''}`}>
                           <div className="ml-13">
                             <div className="border-t border-gray-200 pt-4">
                               <div className="flex items-center gap-2 mb-3">
@@ -642,7 +686,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
 
           {/* Inline Reply Composer */}
           {showReplyComposer && (
-            <div className="bg-white border-t border-zinc-200 shadow-lg w-full" data-reply-composer>
+            <div className="bg-white border-t border-zinc-200 shadow-lg w-full flex-shrink-0" data-reply-composer>
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
                 <div className="flex items-center gap-3">

@@ -24,6 +24,7 @@ interface RightPanelProps {
   onDeleteConversation: (conversationId: string) => void
   onClearConversation: () => void
   onEmailSelect: (email: any) => void
+  hasCalendarOpen?: boolean
 }
 
 export function RightPanel({
@@ -37,11 +38,14 @@ export function RightPanel({
   onDeleteConversation,
   onClearConversation,
   onEmailSelect,
+  hasCalendarOpen = false,
 }: RightPanelProps): JSX.Element {
+  const shouldShowCollapseButton = selectedFile || selectedEmail || hasCalendarOpen
+  
   return (
     <div className="h-full bg-background border-l border-zinc-200 dark:border-white/[0.06] flex flex-col relative shadow-soft">
       {/* Collapse button for assistant panel - positioned on left border */}
-      {selectedFile && (
+      {shouldShowCollapseButton && (
         <button
           onClick={onToggleCollapse}
           className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
