@@ -729,6 +729,7 @@ export default function DemoApp() {
             onToggleFileSidebar={handleToggleFileSidebar}
             onToggleAssistantPanel={handleToggleAssistantPanel}
             renderPanelGroup={renderPanelGroup}
+            hasFilesOpen={selectedFile !== null}
           />
         </div>
 

@@ -41,13 +41,15 @@ export function RightPanel({
   return (
     <div className="h-full bg-background border-l border-zinc-200 dark:border-white/[0.06] flex flex-col relative shadow-soft">
       {/* Collapse button for assistant panel - positioned on left border */}
-      <button
-        onClick={onToggleCollapse}
-        className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
-        title="Collapse assistant panel"
-      >
-        <Menu className="h-4 w-4" strokeWidth={1} />
-      </button>
+      {selectedFile && (
+        <button
+          onClick={onToggleCollapse}
+          className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
+          title="Collapse assistant panel"
+        >
+          <Menu className="h-4 w-4" strokeWidth={1} />
+        </button>
+      )}
       {/* Conversation Management Dropdown */}
       <div className="bg-background dark:bg-background px-4 py-3 flex items-center justify-end gap-3 border-zinc-200 dark:border-white/[0.06]">
         <div className="flex items-center gap-3">

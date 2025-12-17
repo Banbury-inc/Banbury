@@ -958,6 +958,7 @@ const Workspaces = (): React.ReactNode => {
                       onToggleFileSidebar={() => setIsFileSidebarCollapsed(false)}
                       onToggleAssistantPanel={() => setIsAssistantPanelCollapsed(false)}
                       renderPanelGroup={renderPanelGroup}
+                      hasFilesOpen={getAllTabs(panelLayout).length > 0}
                     />
                   </Allotment.Pane>
                 )}
