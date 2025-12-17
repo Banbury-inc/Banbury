@@ -639,7 +639,7 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
                               }`}>
                                 {email.subject}
                               </Typography>
-                              <Typography variant="muted" className="text-xs">
+                              <Typography variant="muted" className="text-xs line-clamp-1">
                                 {email.snippet}
                               </Typography>
                             </div>
