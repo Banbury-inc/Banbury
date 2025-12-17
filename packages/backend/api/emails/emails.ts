@@ -16,6 +16,21 @@ export interface GmailMessage {
   internalDate?: string
 }
 
+export interface GmailThreadMessage {
+  id: string
+  from?: string
+  subject?: string
+  date?: string
+  snippet?: string
+}
+
+export interface GmailThreadResponse {
+  result: 'success' | 'error'
+  id?: string
+  messages?: GmailThreadMessage[]
+  error?: string
+}
+
 
 export default class Emails {
     constructor(_api: ApiService) {}
@@ -104,7 +119,7 @@ export default class Emails {
   }
 
   static async getThread(threadId: string) {
-    const resp = await axios.get<GmailMessage>(
+    const resp = await axios.get<GmailThreadResponse>(
       `${ApiService.baseURL}/authentication/gmail/thread/${encodeURIComponent(threadId)}/`,
       { headers: this.withAuthHeaders() }
     )

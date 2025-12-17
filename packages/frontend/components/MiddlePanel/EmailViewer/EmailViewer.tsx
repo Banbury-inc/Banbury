@@ -6,6 +6,7 @@ import { extractEmailContent, hasAttachments, formatFileSize, cleanHtmlContent }
 import { useToast } from "../../ui/use-toast"
 import { Typography } from "frontend/components/ui/typography"
 import { ApiService } from "../../../../backend/api/apiService"
+import { loadThreadMessages } from "./handlers/loadThreadMessages"
 
 interface EmailViewerProps {
   email: any
@@ -390,111 +391,21 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
   }
 
   // Load full thread messages when a new email is selected
+  // Threads are loaded ONLY via Gmail threadId - no subject-based heuristics
   useEffect(() => {
     const loadThread = async () => {
+      // Early return for no email
       if (!email) {
         setThreadMessages([])
         return
       }
 
-      // If no threadId, try to find related messages by subject or just show single email
-      if (!email.threadId) {
-        
-        // Try to find related emails by subject
-        try {
-          const subject = getHeader('Subject')
-          if (subject && subject !== 'Unknown') {
-            // Remove "Re:" prefix for search
-            const cleanSubject = subject.replace(/^Re:\s*/i, '')
-            
-            const searchResult = await ApiService.Emails.listMessages({
-              q: `subject:"${cleanSubject}"`,
-              maxResults: 10
-            })
-            
-            if (searchResult.messages && searchResult.messages.length > 1) {
-              // Load full messages for the related emails
-              const messageIds = searchResult.messages.map(m => m.id)
-              const batch = await ApiService.Emails.getMessagesBatch(messageIds)
-              const fullMessages: any[] = messageIds
-                .map((id) => batch?.messages?.[id])
-                .filter((m) => m && !m.error)
-                .sort((a: any, b: any) => Number(a.internalDate || 0) - Number(b.internalDate || 0))
-              
-              if (fullMessages.length > 1) {
-                setThreadMessages(fullMessages)
-                return
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error searching for related emails:', error)
-        }
-        
-        setThreadMessages([email])
-        return
-      }
-      
+      // Only show loading indicator when we have a threadId to fetch
+      if (email.threadId) setThreadLoading(true)
+
       try {
-        setThreadLoading(true)
-        
-        // Get thread metadata (ids in the thread)
-        const thread: any = await ApiService.Emails.getThread(email.threadId)
-        
-        const ids: string[] = (thread?.messages || thread?.thread?.messages || [])
-          .map((m: any) => (m.id ? m.id : m.messageId ? m.messageId : m))
-          .filter(Boolean)
-
-
-        if (ids && ids.length > 1) {
-          // Fetch full messages in batch for rendering contents
-          const batch = await ApiService.Emails.getMessagesBatch(ids)
-          
-          const fullMessages: any[] = ids
-            .map((id) => batch?.messages?.[id])
-            .filter((m) => m && !m.error)
-            // Sort by internalDate ascending (oldest first)
-            .sort((a: any, b: any) => Number(a.internalDate || 0) - Number(b.internalDate || 0))
-          
-          setThreadMessages(fullMessages.length > 0 ? fullMessages : [email])
-        } else {
-          setThreadMessages([email])
-        }
-      } catch (e) {
-        console.error('Error loading thread via threadId, falling back to subject search:', e)
-        
-        // Fallback: Try to find related emails by subject when thread API fails
-        try {
-          const subject = getHeader('Subject')
-          if (subject && subject !== 'Unknown') {
-            // Remove "Re:" prefix for search
-            const cleanSubject = subject.replace(/^Re:\s*/i, '')
-            
-            const searchResult = await ApiService.Emails.listMessages({
-              q: `subject:"${cleanSubject}"`,
-              maxResults: 10
-            })
-            
-            if (searchResult.messages && searchResult.messages.length > 1) {
-              // Load full messages for the related emails
-              const messageIds = searchResult.messages.map(m => m.id)
-              const batch = await ApiService.Emails.getMessagesBatch(messageIds)
-              const fullMessages: any[] = messageIds
-                .map((id) => batch?.messages?.[id])
-                .filter((m) => m && !m.error)
-                .sort((a: any, b: any) => Number(a.internalDate || 0) - Number(b.internalDate || 0))
-              
-              if (fullMessages.length > 1) {
-                setThreadMessages(fullMessages)
-                return
-              }
-            }
-          }
-        } catch (fallbackError) {
-          console.error('Fallback search also failed:', fallbackError)
-        }
-        
-        setThreadMessages([email])
+        const result = await loadThreadMessages(email)
+        setThreadMessages(result.messages)
       } finally {
         setThreadLoading(false)
       }
