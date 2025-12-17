@@ -12,7 +12,7 @@ import {
   AlertCircle,
   Settings
 } from 'lucide-react'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 
 import { EmailViewer } from '../../MiddlePanel/EmailViewer/EmailViewer'
 import { Button } from '../../ui/button'
@@ -348,6 +348,17 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
     }
   }, [messages, parseGmailMessage])
 
+  // Calculate thread counts for each email
+  const threadCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    parsedMessages.forEach(email => {
+      if (email.threadId) {
+        counts.set(email.threadId, (counts.get(email.threadId) || 0) + 1)
+      }
+    })
+    return counts
+  }, [parsedMessages])
+
   // Check Gmail access on component mount
   useEffect(() => {
     checkGmailAccess()
@@ -624,6 +635,11 @@ export function EmailTab({ onOpenEmailApp, onMessageSelect, onComposeEmail }: Em
                               <div className="flex items-center gap-2 mb-1 min-w-0">
                                 {!email.isRead && (
                                   <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
+                                )}
+                                {email.threadId && threadCounts.get(email.threadId) && threadCounts.get(email.threadId)! > 1 && (
+                                  <Typography variant="xs" className="flex-shrink-0 px-1.5 py-0.5 font-medium bg-accent rounded-full">
+                                    {threadCounts.get(email.threadId)}
+                                  </Typography>
                                 )}
                                 <Typography variant="small" className={`font-medium truncate min-w-0 ${
                                   !email.isRead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'
