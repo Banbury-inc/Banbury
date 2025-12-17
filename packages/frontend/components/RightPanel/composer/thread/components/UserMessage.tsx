@@ -29,7 +29,7 @@ export const UserMessage: FC = () => {
         data-role="user"
       >
         <div className="col-start-1 row-start-1 relative">
-          <div className="bg-muted text-foreground rounded-2xl px-4 py-2 break-words overflow-x-auto max-w-full">
+          <div className="bg-muted text-foreground rounded-md px-4 py-2 break-words overflow-x-auto max-w-full">
               <MessagePrimitive.Content components={{ Text: TextWithBreaks }} />
               
               {/* Display attached files */}
@@ -78,7 +78,7 @@ export const UserMessage: FC = () => {
             className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
           >
             <ActionBarPrimitive.Edit asChild>
-              <button className="absolute inset-0 cursor-pointer bg-muted/10 hover:bg-muted/20 rounded-2xl transition-all duration-200 hover:ring-2 hover:ring-primary/20" />
+              <button className="absolute inset-0 cursor-pointer bg-muted/10 hover:bg-muted/20 rounded-md transition-all duration-200 hover:ring-2 hover:ring-primary/20" />
             </ActionBarPrimitive.Edit>
           </ActionBarPrimitive.Root>
         </div>

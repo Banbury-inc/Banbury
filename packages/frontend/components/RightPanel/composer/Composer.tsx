@@ -153,7 +153,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
       <div className="relative flex w-full flex-col">
         {/* Display attachments (files + emails) above the composer */}
         {(attachedFiles.length > 0 || attachedEmails.length > 0) && (
-          <div className="bg-accent border-b border-border rounded-t-2xl px-2 py-0.5">
+          <div className="bg-accent border-b border-border rounded-t-md px-2 py-0.5">
             <FileAttachmentDisplay 
               files={attachedFiles}
               emails={attachedEmails}
@@ -171,7 +171,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
           onRejectAll={onRejectAll}
         />
 
-        <ComposerPrimitive.Root className="relative flex w-full flex-col rounded-2xl">
+        <ComposerPrimitive.Root className="relative flex w-full flex-col rounded-md">
           {/* Hidden native input to keep @assistant-ui runtime in sync */}
           <ComposerPrimitive.Input
             placeholder="Send a message..."
@@ -184,7 +184,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
           />
 
           {/* Visible Tiptap editor with @ mention for files */}
-          <div className={`bg-accent border-0 ${(attachedFiles.length > 0 || attachedEmails.length > 0 || pendingChanges.length > 0) ? 'border-t-0 rounded-t-none' : 'border-t border-zinc-300 dark:border-zinc-700 rounded-t-2xl'} max-h-[50vh] overflow-y-auto`}>
+          <div className={`bg-accent border-0 ${(attachedFiles.length > 0 || attachedEmails.length > 0 || pendingChanges.length > 0) ? 'border-t-0 rounded-t-none' : 'border-t border-zinc-300 dark:border-zinc-700 rounded-t-md'} max-h-[50vh] overflow-y-auto`}>
             <ChatTiptapComposer
               hiddenInputRef={inputRef}
               userInfo={userInfo}
@@ -456,7 +456,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
   };
 
   return (
-    <div ref={containerRef} className="bg-accent border-0 relative flex items-center justify-between rounded-b-2xl p-2">
+    <div ref={containerRef} className="bg-accent border-0 relative flex items-center justify-between rounded-b-md p-2">
       <div ref={buttonsRef} className="flex pl-4 items-center gap-2">
         {(isMeasuring || visibleButtons.model) && (
           <Popover>

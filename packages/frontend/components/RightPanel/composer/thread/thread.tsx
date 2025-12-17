@@ -928,7 +928,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
               <div key={message.id || index} className="mx-auto max-w-[var(--thread-max-width)] px-[var(--thread-padding-x)]">
                 {message.role === 'user' ? (
                   <div className="mx-auto grid w-full max-w-[var(--thread-max-width)] auto-rows-auto text-sm grid-cols-[minmax(72px,1fr)_auto] gap-y-1 py-4 [&:where(>*)]:col-start-2">
-                    <div className="bg-muted text-foreground col-start-2 rounded-3xl px-5 py-2.5 break-words overflow-x-auto max-w-full">
+                    <div className="bg-muted text-foreground col-start-2 rounded-md px-5 py-2.5 break-words overflow-x-auto max-w-full">
                       <Typography variant="small" className="whitespace-pre-wrap">
                         {Array.isArray(message.content)
                           ? message.content.map((part: any) => part.type === 'text' ? part.text : '').join('')
