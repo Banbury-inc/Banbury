@@ -7,7 +7,7 @@ import {
   Plus,
   Network,
   Folder,
-  Presentation,
+  FileBarChart,
 } from "lucide-react"
 import { useState, useRef, useCallback } from 'react'
 import { LocalFilesView } from "./components/LocalFilesView"
@@ -194,43 +194,43 @@ export function FilesTab({
                   <Plus className="h-4 w-4 text-primary-foreground" strokeWidth={1} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="upload-file">
+                  <SelectItem value="upload-file" className="[&_svg]:!text-gray-400">
                     <div className="flex items-center">
                       <FilePlus size={16} strokeWidth={1} className="mr-2" />
                       Upload File
                     </div>
                   </SelectItem>
-                  <SelectItem value="upload-folder">
+                  <SelectItem value="upload-folder" className="[&_svg]:!text-yellow-400">
                     <div className="flex items-center">
                       <FolderPlus size={16} strokeWidth={1} className="mr-2" />
                       Upload Folder
                     </div>
                   </SelectItem>
-                  <SelectItem value="document">
+                  <SelectItem value="document" className="[&_svg]:!text-blue-500">
                     <div className="flex items-center">
                       <FileText size={16} strokeWidth={1} className="mr-2" />
                       Document
                     </div>
                   </SelectItem>
-                  <SelectItem value="spreadsheet">
+                  <SelectItem value="spreadsheet" className="[&_svg]:!text-green-500">
                     <div className="flex items-center">
                       <FileSpreadsheet size={16} strokeWidth={1} className="mr-2" />
                       Spreadsheet
                     </div>
                   </SelectItem>
-                  <SelectItem value="canvas">
+                  <SelectItem value="canvas" className="[&_svg]:!text-purple-400">
                     <div className="flex items-center">
                       <Network size={16} strokeWidth={1} className="mr-2" />
                       Canvas
                     </div>
                   </SelectItem>
-                  <SelectItem value="presentation">
+                  <SelectItem value="presentation" className="[&_svg]:!text-orange-400">
                     <div className="flex items-center">
-                      <Presentation size={16} strokeWidth={1} className="mr-2" />
+                      <FileBarChart size={16} strokeWidth={1} className="mr-2" />
                       Presentation
                     </div>
                   </SelectItem>
-                  <SelectItem value="folder">
+                  <SelectItem value="folder" className="[&_svg]:!text-yellow-400">
                     <div className="flex items-center">
                       <Folder size={16} strokeWidth={1} className="mr-2" />
                       Folder
