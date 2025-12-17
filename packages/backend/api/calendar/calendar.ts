@@ -3,6 +3,7 @@ import axios from 'axios';
 
 export interface CalendarEvent {
   id: string
+  calendarId?: string
   status?: string
   summary?: string
   description?: string
@@ -19,6 +20,26 @@ export interface CalendarEvent {
 
 export interface ListEventsResponse {
   items?: CalendarEvent[]
+  nextPageToken?: string
+}
+
+export interface CalendarListEntry {
+  id: string
+  summary?: string
+  description?: string
+  summaryOverride?: string
+  colorId?: string
+  backgroundColor?: string
+  foregroundColor?: string
+  hidden?: boolean
+  selected?: boolean
+  primary?: boolean
+  accessRole?: 'freeBusyReader' | 'reader' | 'writer' | 'owner'
+  timeZone?: string
+}
+
+export interface ListCalendarsResponse {
+  items?: CalendarListEntry[]
   nextPageToken?: string
 }
 
@@ -79,6 +100,21 @@ export default class Calendar{
       `${ApiService.baseURL}/authentication/calendar/events/${encodeURIComponent(eventId)}/?calendarId=${encodeURIComponent(calendarId)}`,
       { headers: this.withAuthHeaders() }
     )
+    return resp.data
+  }
+
+  static async listCalendars(params?: { maxResults?: number; pageToken?: string; minAccessRole?: string; showDeleted?: boolean; showHidden?: boolean }) {
+    const query: Record<string, any> = {}
+    if (typeof params?.maxResults === 'number') query.maxResults = params.maxResults
+    if (params?.pageToken) query.pageToken = params.pageToken
+    if (params?.minAccessRole) query.minAccessRole = params.minAccessRole
+    if (typeof params?.showDeleted !== 'undefined') query.showDeleted = params.showDeleted
+    if (typeof params?.showHidden !== 'undefined') query.showHidden = params.showHidden
+
+    const url = new URL(`${ApiService.baseURL}/authentication/calendar/calendars/`)
+    Object.entries(query).forEach(([k, v]) => url.searchParams.append(k, String(v)))
+
+    const resp = await axios.get<ListCalendarsResponse>(url.toString(), { headers: this.withAuthHeaders() })
     return resp.data
   }
 

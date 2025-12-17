@@ -166,7 +166,7 @@ export function EditEventPopover({ isOpen, position, event, onClose, onSaved, on
 
     setLoading(true)
     try {
-      await ApiService.Calendar.updateEvent(event.id, eventData)
+      await ApiService.Calendar.updateEvent(event.id, eventData, event.calendarId ?? 'primary')
       onSaved()
       onClose()
     } catch (e) {
@@ -181,7 +181,7 @@ export function EditEventPopover({ isOpen, position, event, onClose, onSaved, on
     if (!event || !confirm('Are you sure you want to delete this event?')) return
     setDeleting(true)
     try {
-      await ApiService.Calendar.deleteEvent(event.id)
+      await ApiService.Calendar.deleteEvent(event.id, event.calendarId ?? 'primary')
       onDeleted()
       onClose()
     } catch (e) {
