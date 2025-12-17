@@ -190,7 +190,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
               userInfo={userInfo}
               onFileAttach={onFileAttach}
               onAttachmentPayload={onAttachmentPayload}
-              placeholder="Send a message..."
+              placeholder="Ask anything or type @ to mention a file..."
               className="min-h-16"
               onSend={() => handleSend({ composer, onSend: onSend })}
             />
