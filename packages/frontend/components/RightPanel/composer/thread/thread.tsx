@@ -41,6 +41,7 @@ import { Composer } from "../Composer";
 import { UserMessage } from "./components/UserMessage";
 import { BranchPicker } from "./components/BranchPicker";
 import { getDefaultModelForProvider, getModelById } from "../handlers/getModelDisplayName";
+import { Typography, typographyVariants } from "../../../ui/typography";
 
 import type { FC } from "react";
 
@@ -917,7 +918,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         backgroundColor: 'transparent',
       }}
     >
-      <ThreadPrimitive.Viewport className={cn(styles.darkScrollbar, "relative flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden min-h-0") } style={{ height: '100%', maxHeight: '100%' }}>
+      <ThreadPrimitive.Viewport className={cn(styles.darkScrollbar, "relative flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden min-h-0 pt-4") } style={{ height: '100%', maxHeight: '100%' }}>
         {loadedMessagesBuffer ? null : <ThreadWelcome />}
 
         {/* Fallback buffer messages (shown only if runtime hasn't hydrated yet) */}
@@ -928,22 +929,22 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
                 {message.role === 'user' ? (
                   <div className="mx-auto grid w-full max-w-[var(--thread-max-width)] auto-rows-auto text-sm grid-cols-[minmax(72px,1fr)_auto] gap-y-1 py-4 [&:where(>*)]:col-start-2">
                     <div className="bg-muted text-foreground col-start-2 rounded-3xl px-5 py-2.5 break-words overflow-x-auto max-w-full">
-                      <div className="whitespace-pre-wrap">
+                      <Typography variant="small" className="whitespace-pre-wrap">
                         {Array.isArray(message.content)
                           ? message.content.map((part: any) => part.type === 'text' ? part.text : '').join('')
                           : ''}
-                      </div>
+                      </Typography>
                     </div>
                   </div>
                 ) : (
                   <div className="relative mx-auto grid w-full max-w-[var(--thread-max-width)] grid-cols-[1fr] grid-rows-[auto_1fr] py-1">
-                    <div className="text-zinc-900 dark:text-white col-start-1 row-start-1 leading-none break-words text-sm overflow-x-auto max-w-full">
+                    <Typography variant="small" className="col-start-1 row-start-1 leading-none break-words overflow-x-auto max-w-full">
                       <div className="whitespace-pre-wrap">
                         {Array.isArray(message.content)
                           ? message.content.map((part: any) => part.type === 'text' ? part.text : '').join('')
                           : ''}
                       </div>
-                    </div>
+                    </Typography>
                   </div>
                 )}
               </div>
@@ -1046,26 +1047,26 @@ const ThreadWelcome: FC = () => {
             />
             <div className="flex flex-col items-center gap-4">
               <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">New Agent:</span>
+                <Typography variant="muted">New Agent:</Typography>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-                  <span className="text-muted-foreground">+</span>
+                  <Typography variant="muted" asChild><span>+</span></Typography>
                   <Kbd>N</Kbd>
                 </KbdGroup>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">Search Files:</span>
+                <Typography variant="muted">Search Files:</Typography>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-                  <span className="text-muted-foreground">+</span>
+                  <Typography variant="muted" asChild><span>+</span></Typography>
                   <Kbd>P</Kbd>
                 </KbdGroup>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">Toggle Left Panel:</span>
+                <Typography variant="muted">Toggle Left Panel:</Typography>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-                  <span className="text-muted-foreground">+</span>
+                  <Typography variant="muted" asChild><span>+</span></Typography>
                   <Kbd>H</Kbd>
                 </KbdGroup>
               </div>
@@ -1080,8 +1081,8 @@ const ThreadWelcome: FC = () => {
 const MessageError: FC = () => {
   return (
     <MessagePrimitive.Error>
-      <ErrorPrimitive.Root className="border-destructive bg-destructive/10 dark:bg-destructive/5 text-destructive mt-2 rounded-md border p-3 text-sm dark:text-red-200">
-        <ErrorPrimitive.Message className="line-clamp-2" />
+      <ErrorPrimitive.Root className="border-destructive bg-destructive/10 dark:bg-destructive/5 text-destructive mt-2 rounded-md border p-3 dark:text-red-200">
+        <ErrorPrimitive.Message className={cn(typographyVariants({ variant: "small" }), "line-clamp-2")} />
       </ErrorPrimitive.Root>
     </MessagePrimitive.Error>
   );
@@ -1127,17 +1128,17 @@ const StreamingStatus: FC = () => {
       >
         <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/30 rounded-lg p-3">
           {statusDetails.thinking && (
-            <div className="flex items-center text-blue-700 dark:text-blue-300 text-sm mb-2">
+            <div className="flex items-center text-blue-700 dark:text-blue-300 mb-2">
               <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-2"></div>
-              {statusDetails.thinking}
+              <Typography variant="small">{statusDetails.thinking}</Typography>
             </div>
           )}
           
           {statusDetails.step && statusDetails.totalSteps && (
             <div className="mb-2">
-              <div className="flex items-center justify-between text-xs text-blue-600 dark:text-blue-400 mb-1">
-                <span>Step {statusDetails.step} of {statusDetails.totalSteps}</span>
-                <span>{Math.round(statusDetails.progress || 0)}%</span>
+              <div className="flex items-center justify-between text-blue-600 dark:text-blue-400 mb-1">
+                <Typography variant="xs">Step {statusDetails.step} of {statusDetails.totalSteps}</Typography>
+                <Typography variant="xs">{Math.round(statusDetails.progress || 0)}%</Typography>
               </div>
               <div className="w-full bg-blue-200 dark:bg-blue-800/30 rounded-full h-1.5">
                 <div 
@@ -1149,18 +1150,18 @@ const StreamingStatus: FC = () => {
           )}
           
           {statusDetails.toolStatus && (
-            <div className="flex items-center text-green-600 dark:text-green-400 text-xs">
+            <div className="flex items-center text-green-600 dark:text-green-400">
               <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2"></span>
-              <span className="font-medium">{statusDetails.toolStatus.tool}:</span>
-              <span className="ml-1">{statusDetails.toolStatus.message}</span>
+              <Typography variant="xs" className="font-medium">{statusDetails.toolStatus.tool}:</Typography>
+              <Typography variant="xs" className="ml-1">{statusDetails.toolStatus.message}</Typography>
             </div>
           )}
           
           {statusDetails.toolCompleted && (
-            <div className="flex items-center text-green-600 dark:text-green-400 text-xs">
+            <div className="flex items-center text-green-600 dark:text-green-400">
               <CheckIcon className="w-4 h-4 mr-2" strokeWidth={1} />
-              <span className="font-medium">{statusDetails.toolCompleted.tool}:</span>
-              <span className="ml-1">{statusDetails.toolCompleted.message}</span>
+              <Typography variant="xs" className="font-medium">{statusDetails.toolCompleted.tool}:</Typography>
+              <Typography variant="xs" className="ml-1">{statusDetails.toolCompleted.message}</Typography>
             </div>
           )}
         </div>
@@ -1178,7 +1179,7 @@ const AssistantMessage: FC = () => {
         animate={{ y: 0, opacity: 1 }}
         data-role="assistant"
       >
-        <div className="text-zinc-900 dark:text-white col-start-1 row-start-1 leading-none break-words text-sm overflow-x-auto max-w-full pb-10">
+        <div className={cn(typographyVariants({ variant: "small" }), "col-start-1 row-start-1 leading-none break-words overflow-x-auto max-w-full pb-10")}>
           <MessagePrimitive.Content
             components={{
               Text: MarkdownText,
@@ -1334,7 +1335,7 @@ const SaveConversationDialog: FC<SaveConversationDialogProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 w-full max-w-md mx-4 shadow-xl border border-zinc-200 dark:border-zinc-700">
-        <h3 className="text-lg font-semibold mb-4 text-zinc-900 dark:text-white">Save Conversation</h3>
+        <Typography variant="h4" className="mb-4">Save Conversation</Typography>
         <input
           type="text"
           placeholder="Enter conversation title..."
@@ -1376,11 +1377,11 @@ const LoadConversationDialog: FC<LoadConversationDialogProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden flex flex-col shadow-xl border border-zinc-200 dark:border-zinc-700">
-        <h3 className="text-lg font-semibold mb-4 text-zinc-900 dark:text-white">Load Conversation</h3>
+        <Typography variant="h4" className="mb-4">Load Conversation</Typography>
         
         <div className="flex-1 overflow-y-auto">
           {conversations.length === 0 ? (
-            <p className="text-zinc-600 dark:text-zinc-400 text-center py-8">No saved conversations found.</p>
+            <Typography variant="muted" className="text-center py-8">No saved conversations found.</Typography>
           ) : (
             <div className="space-y-2">
               {conversations.map((conversation) => (
@@ -1389,10 +1390,10 @@ const LoadConversationDialog: FC<LoadConversationDialogProps> = ({
                   className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-700 rounded hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium truncate text-zinc-900 dark:text-white">{conversation.title}</h4>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <Typography variant="h4" className="truncate">{conversation.title}</Typography>
+                    <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">
                       {new Date(conversation.updated_at).toLocaleDateString()}
-                    </p>
+                    </Typography>
                   </div>
                   <div className="flex gap-2 ml-4">
                     <TooltipIconButton

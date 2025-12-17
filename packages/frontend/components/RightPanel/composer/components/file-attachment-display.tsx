@@ -2,6 +2,7 @@ import { File, ChevronDown, ChevronRight, X, Mail, Network, Eye, PaintbrushIcon 
 import React, { useState } from 'react';
 
 import { Button } from '../../../ui/button';
+import { Typography } from '../../../ui/typography';
 import { FileSystemItem } from '../../../../utils/fileTreeUtils';
 import { isDrawioFile } from '../../../MiddlePanel/CanvasViewer/handlers/drawio-viewer-handlers';
 import { isTldrawFile } from '../../../../pages/Workspaces/handlers/fileTypeUtils';
@@ -42,12 +43,12 @@ export const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
         ) : (
           <ChevronRight className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
         )}
-        <span className="text-sm text-zinc-700 dark:text-zinc-300 font-medium">
+        <Typography variant="xs" className="text-zinc-700 dark:text-zinc-300 font-medium">
           {totalCount} Attachment{totalCount > 1 ? 's' : ''}
           {fileCount > 0 && emailCount > 0 && (
-            <span className="text-sm text-zinc-500 dark:text-zinc-400 ml-1">({fileCount} file{fileCount>1?'s':''}, {emailCount} email{emailCount>1?'s':''})</span>
+            <Typography variant="xs" className="text-zinc-500 dark:text-zinc-400 ml-1">({fileCount} file{fileCount>1?'s':''}, {emailCount} email{emailCount>1?'s':''})</Typography>
           )}
-        </span>
+        </Typography>
       </div>
 
       {/* File list */}
@@ -68,9 +69,9 @@ export const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
                 ) : (
                   <File className="h-4 w-4 text-zinc-500 dark:text-zinc-400 flex-shrink-0" />
                 )}
-                <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate flex-1" title={file.name}>
+                <Typography variant="xs" className="truncate flex-1 text-zinc-700 dark:text-zinc-300" title={file.name}>
                   {file.name}
-                </span>
+                </Typography>
                 
                 {/* Action buttons */}
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
