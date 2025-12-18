@@ -42,6 +42,12 @@ import { UserMessage } from "./components/UserMessage";
 import { BranchPicker } from "./components/BranchPicker";
 import { getDefaultModelForProvider, getModelById } from "../handlers/getModelDisplayName";
 import { Typography, typographyVariants } from "../../../ui/typography";
+import {
+  getStoredKeybinds,
+  getActiveKey,
+  parseKeyString,
+  type KeybindsState,
+} from "../../../modals/settings-tabs/handlers/keybindHandlers";
 
 import type { FC } from "react";
 
@@ -1017,15 +1023,29 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
 };
 
 const ThreadWelcome: FC = () => {
-  // Always show LangGraph mode as active
-  const toolPreferences = { langgraph_mode: true };
   const [isMac, setIsMac] = useState(false);
+  const [keybinds, setKeybinds] = useState<KeybindsState>(getStoredKeybinds);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0)
     }
   }, []);
+
+  // Listen for keybind updates
+  useEffect(() => {
+    function handleKeybindsUpdate() {
+      setKeybinds(getStoredKeybinds())
+    }
+    
+    window.addEventListener('keybinds-updated', handleKeybindsUpdate)
+    return () => window.removeEventListener('keybinds-updated', handleKeybindsUpdate)
+  }, []);
+
+  // Get active keys for each keybind
+  const newAgentKey = parseKeyString(getActiveKey(keybinds.newAgent))
+  const searchKey = parseKeyString(getActiveKey(keybinds.searchFiles))
+  const togglePanelKey = parseKeyString(getActiveKey(keybinds.toggleFileSidebar))
 
   return (
     <ThreadPrimitive.Empty>
@@ -1051,24 +1071,42 @@ const ThreadWelcome: FC = () => {
                 <Typography variant="muted">New Agent:</Typography>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+                  {newAgentKey.shift && (
+                    <>
+                      <Typography variant="muted" asChild><span>+</span></Typography>
+                      <Kbd>{isMac ? '⇧' : 'Shift'}</Kbd>
+                    </>
+                  )}
                   <Typography variant="muted" asChild><span>+</span></Typography>
-                  <Kbd>N</Kbd>
+                  <Kbd>{newAgentKey.key.toUpperCase()}</Kbd>
                 </KbdGroup>
               </div>
               <div className="flex items-center gap-3">
                 <Typography variant="muted">Search:</Typography>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+                  {searchKey.shift && (
+                    <>
+                      <Typography variant="muted" asChild><span>+</span></Typography>
+                      <Kbd>{isMac ? '⇧' : 'Shift'}</Kbd>
+                    </>
+                  )}
                   <Typography variant="muted" asChild><span>+</span></Typography>
-                  <Kbd>P</Kbd>
+                  <Kbd>{searchKey.key.toUpperCase()}</Kbd>
                 </KbdGroup>
               </div>
               <div className="flex items-center gap-3">
                 <Typography variant="muted">Toggle Left Panel:</Typography>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+                  {togglePanelKey.shift && (
+                    <>
+                      <Typography variant="muted" asChild><span>+</span></Typography>
+                      <Kbd>{isMac ? '⇧' : 'Shift'}</Kbd>
+                    </>
+                  )}
                   <Typography variant="muted" asChild><span>+</span></Typography>
-                  <Kbd>H</Kbd>
+                  <Kbd>{togglePanelKey.key.toUpperCase()}</Kbd>
                 </KbdGroup>
               </div>
             </div>
