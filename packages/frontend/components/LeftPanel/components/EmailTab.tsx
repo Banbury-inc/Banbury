@@ -809,11 +809,11 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
     <div className="h-full flex flex-col">
       {/* Email Tab Header */}
       <div className="flex flex-col bg-card flex-shrink-0">
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between px-4 py-3 border-b gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             {/* Provider Selector */}
             <Select value={selectedProvider} onValueChange={(v) => handleProviderChange(v as EmailProvider)}>
-              <SelectTrigger size="xs" className="w-[100px]">
+              <SelectTrigger size="xs" className="w-auto min-w-0 max-w-[100px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -828,18 +828,18 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
             
             {/* Label/Folder Navigation */}
             <Select value={selectedLabelId} onValueChange={handleLabelChange}>
-              <SelectTrigger size="xs" className="min-w-[120px]">
+              <SelectTrigger size="xs" className="min-w-0 flex-1">
                 <SelectValue>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     {(() => {
                       if (selectedProvider === 'outlook') {
                         const Icon = getOutlookFolderIcon(selectedLabelId)
-                        return <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                        return <Icon className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.5} />
                       }
                       const Icon = getLabelIcon(selectedLabelId)
-                      return <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      return <Icon className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.5} />
                     })()}
-                    <Typography variant="xs" className="font-medium">
+                    <Typography variant="xs" className="font-medium truncate">
                       {selectedProvider === 'outlook' 
                         ? (outlookFolders.find(f => f.id === selectedLabelId)?.name || selectedLabelId)
                         : getLabelDisplayName(selectedLabel)}
@@ -931,7 +931,7 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               variant="outline"
               size="xs"

@@ -186,17 +186,17 @@ export function FilesTab({
           <div className="flex items-center min-w-0 flex-1 overflow-hidden">
             {/* File View Mode Navigation */}
             <Select value={fileViewMode} onValueChange={(value) => setFileViewMode(value as 'local' | 'recent' | 'starred' | 'shared' | 'drive' | 'drive-recent' | 'drive-starred' | 'drive-trash')}>
-              <SelectTrigger size="xs" className="min-w-[120px]">
+              <SelectTrigger size="xs" className="min-w-0 flex-1">
                 <SelectValue>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     {(() => {
                       const Icon = getViewModeIcon(fileViewMode)
                       if (fileViewMode === 'drive') {
-                        return <Icon size={14} className="h-3.5 w-3.5 grayscale opacity-70" />
+                        return <Icon size={14} className="h-3.5 w-3.5 grayscale opacity-70 flex-shrink-0" />
                       }
-                      return <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      return <Icon className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.5} />
                     })()}
-                    <Typography variant="xs" className="font-medium">
+                    <Typography variant="xs" className="font-medium truncate">
                       {getViewModeDisplayName(fileViewMode)}
                     </Typography>
                   </div>
