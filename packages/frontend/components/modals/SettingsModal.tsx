@@ -281,7 +281,22 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       setActiveTab('connections')
       router.replace(router.pathname, undefined, { shallow: true })
     }
-  }, [router.query.scopeActivated, router.query.x_connected])
+
+    if (router.query.outlook_connected === 'true') {
+      toast({
+        title: "Outlook Account Connected",
+        description: "Successfully connected to your Microsoft Outlook account!",
+      })
+      setActiveTab('connections')
+      router.replace(router.pathname, undefined, { shallow: true })
+    }
+
+    if (router.query.settingsTab) {
+      setActiveTab(String(router.query.settingsTab))
+      const { settingsTab, ...rest } = router.query
+      router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true })
+    }
+  }, [router.query.scopeActivated, router.query.x_connected, router.query.outlook_connected, router.query.settingsTab])
 
   async function loadUserInfo() {
     try {

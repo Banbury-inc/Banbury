@@ -59,6 +59,16 @@ export function NavSidebar({ onLogout }: NavSidebarProps) {
     }
   }, [])
 
+  // Handle openSettings query param (for OAuth callbacks)
+  useEffect(() => {
+    if (router.isReady && router.query.openSettings === 'true') {
+      setSettingsOpen(true)
+      // Clean up only the openSettings param, keep others for SettingsModal
+      const { openSettings, ...rest } = router.query
+      router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true })
+    }
+  }, [router.isReady, router.query.openSettings])
+
   const loadSubscription = async () => {
     try {
       const response = await ApiService.get('/billing/check-payment-status/') as any
