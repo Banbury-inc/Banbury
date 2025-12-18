@@ -322,7 +322,7 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
                 <Typography variant="small" className="text-destructive">{error}</Typography>
               </div>
             )}
-            {loading && events.length === 0 ? (
+            {(loading || calendarsLoading || (calendarAvailable && calendars.length > 0 && events.length === 0 && !error)) ? (
               <div className="flex items-center justify-center flex-1">
                 <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" strokeWidth={1} />
                 <Typography variant="muted">Loading events...</Typography>
