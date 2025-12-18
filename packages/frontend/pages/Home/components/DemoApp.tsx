@@ -281,23 +281,35 @@ const panelLayout: PanelGroup = {
   size: 50,
 }
 
-// Store original service methods to restore later
-let originalIsFeatureAvailable: typeof ApiService.Scopes.isFeatureAvailable
-let originalGetUserFiles: typeof ApiService.Files.getUserFiles
-let originalListFiles: typeof ApiService.Drive.listFiles
-let originalListMessages: typeof ApiService.Emails.listMessages
-let originalGetMessagesBatch: typeof ApiService.Emails.getMessagesBatch
-let originalListEvents: typeof ApiService.Calendar.listEvents
+// Store original service methods to restore later - only save once before any mocking
+let originalIsFeatureAvailable: typeof ApiService.Scopes.isFeatureAvailable | null = null
+let originalGetUserFiles: typeof ApiService.Files.getUserFiles | null = null
+let originalListFiles: typeof ApiService.Drive.listFiles | null = null
+let originalListMessages: typeof ApiService.Emails.listMessages | null = null
+let originalGetMessagesBatch: typeof ApiService.Emails.getMessagesBatch | null = null
+let originalListEvents: typeof ApiService.Calendar.listEvents | null = null
 
 // Setup mocks function - called before component renders
 function setupDemoMocks() {
-  // Save originals
-  originalIsFeatureAvailable = ApiService.Scopes.isFeatureAvailable
-  originalGetUserFiles = ApiService.Files.getUserFiles
-  originalListFiles = ApiService.Drive.listFiles
-  originalListMessages = ApiService.Emails.listMessages
-  originalGetMessagesBatch = ApiService.Emails.getMessagesBatch
-  originalListEvents = ApiService.Calendar.listEvents
+  // Save originals ONLY if not already saved (prevents saving mocked versions)
+  if (originalIsFeatureAvailable === null) {
+    originalIsFeatureAvailable = ApiService.Scopes.isFeatureAvailable
+  }
+  if (originalGetUserFiles === null) {
+    originalGetUserFiles = ApiService.Files.getUserFiles
+  }
+  if (originalListFiles === null) {
+    originalListFiles = ApiService.Drive.listFiles
+  }
+  if (originalListMessages === null) {
+    originalListMessages = ApiService.Emails.listMessages
+  }
+  if (originalGetMessagesBatch === null) {
+    originalGetMessagesBatch = ApiService.Emails.getMessagesBatch
+  }
+  if (originalListEvents === null) {
+    originalListEvents = ApiService.Calendar.listEvents
+  }
 
   // Mock ScopeService - make all features available
   ApiService.Scopes.isFeatureAvailable = async (feature: string) => {
@@ -343,12 +355,25 @@ function setupDemoMocks() {
 
 // Cleanup mocks function
 function cleanupDemoMocks() {
-  ApiService.Scopes.isFeatureAvailable = originalIsFeatureAvailable
-  ApiService.Files.getUserFiles = originalGetUserFiles
-  ApiService.Drive.listFiles = originalListFiles
-  ApiService.Emails.listMessages = originalListMessages
-  ApiService.Emails.getMessagesBatch = originalGetMessagesBatch
-  ApiService.Calendar.listEvents = originalListEvents
+  // Only restore if we have originals saved
+  if (originalIsFeatureAvailable !== null) {
+    ApiService.Scopes.isFeatureAvailable = originalIsFeatureAvailable
+  }
+  if (originalGetUserFiles !== null) {
+    ApiService.Files.getUserFiles = originalGetUserFiles
+  }
+  if (originalListFiles !== null) {
+    ApiService.Drive.listFiles = originalListFiles
+  }
+  if (originalListMessages !== null) {
+    ApiService.Emails.listMessages = originalListMessages
+  }
+  if (originalGetMessagesBatch !== null) {
+    ApiService.Emails.getMessagesBatch = originalGetMessagesBatch
+  }
+  if (originalListEvents !== null) {
+    ApiService.Calendar.listEvents = originalListEvents
+  }
 }
 
 export default function DemoApp() {

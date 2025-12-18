@@ -23,6 +23,7 @@ export function normalizeToolPreferences({
     x_api: toolPreferences.x_api === true,
     langgraph_mode: true,
     model_provider: toolPreferences.model_provider === "openai" ? "openai" : "anthropic",
+    model_id: toolPreferences.model_id,
   }
 }
 

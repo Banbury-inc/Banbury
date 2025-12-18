@@ -4,6 +4,7 @@ import { Button } from '../../ui/button'
 import { CalendarEvent, CalendarListEntry } from '../../../../backend/api/calendar/calendar'
 import { CreateEventPopover } from './CreateEventPopover'
 import { EditEventPopover } from './EditEventPopover'
+import { ViewEventPopover } from './ViewEventPopover'
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -19,6 +20,10 @@ import {
   toggleCalendarVisibility, 
   subscribeToVisibilityChanges 
 } from './handlers/calendarVisibility'
+import {
+  EventPopoverMode,
+  getDefaultPopoverPosition
+} from './handlers/eventPopoverHandlers'
 
 type CalendarView = 'month' | 'week' | 'day'
 
@@ -46,8 +51,9 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const [popoverPos, setPopoverPos] = useState<{ x: number; y: number } | null>(null)
-  const [isEditPopoverOpen, setIsEditPopoverOpen] = useState(false)
-  const [editPopoverPos, setEditPopoverPos] = useState<{ x: number; y: number } | null>(null)
+  const [isEventPopoverOpen, setIsEventPopoverOpen] = useState(false)
+  const [eventPopoverPos, setEventPopoverPos] = useState<{ x: number; y: number } | null>(null)
+  const [eventPopoverMode, setEventPopoverMode] = useState<EventPopoverMode>('view')
   const [isClosingPopover, setIsClosingPopover] = useState(false)
   const [calendars, setCalendars] = useState<CalendarListEntry[]>([])
   const [visibleCalendarIds, setVisibleCalendarIds] = useState<string[]>(() => getVisibleCalendarIds())
@@ -98,25 +104,42 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
   }, [])
 
   const loadEventsFromCalendars = useCallback(async () => {
-    if (visibleCalendarIds.length === 0) {
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CalendarViewer.tsx:loadEventsFromCalendars:entry',message:'loadEventsFromCalendars called',data:{visibleCalendarIds,calendarsCount:calendars.length,calendarsIds:calendars.map(c=>({id:c.id,primary:c.primary,summary:c.summary}))},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1-H2'})}).catch(()=>{});
+    // #endregion
+    // Filter visibleCalendarIds to only include IDs that actually exist in the calendar list
+    // This prevents fetching events for phantom IDs like "primary" that don't match any real calendar
+    const calendarIdSet = new Set(calendars.map(c => c.id))
+    const validCalendarIds = visibleCalendarIds.filter(id => calendarIdSet.has(id))
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CalendarViewer.tsx:loadEventsFromCalendars:filter',message:'After filtering validCalendarIds',data:{calendarIdSetArray:Array.from(calendarIdSet),validCalendarIds,removedIds:visibleCalendarIds.filter(id=>!calendarIdSet.has(id))},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
+    
+    if (validCalendarIds.length === 0) {
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CalendarViewer.tsx:loadEventsFromCalendars:empty',message:'No valid calendar IDs, clearing events',data:{visibleCalendarIds,calendarsCount:calendars.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
       setEvents([])
       return
     }
     setLoading(true)
     try {
       const merged = await loadMergedEvents({
-        calendarIds: visibleCalendarIds,
+        calendarIds: validCalendarIds,
         timeMin: visibleRange.start.toISOString(),
         timeMax: visibleRange.end.toISOString(),
         maxResults: 2500,
         singleEvents: true,
         orderBy: 'startTime'
       })
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CalendarViewer.tsx:loadEventsFromCalendars:result',message:'Events loaded from merged',data:{validCalendarIds,eventsCount:merged.length,eventCalendarIds:[...new Set(merged.map(e=>e.calendarId))]},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3-H4'})}).catch(()=>{});
+      // #endregion
       setEvents(merged)
     } finally {
       setLoading(false)
     }
-  }, [visibleCalendarIds, visibleRange.start, visibleRange.end])
+  }, [visibleCalendarIds, visibleRange.start, visibleRange.end, calendars])
 
   useEffect(() => {
     fetchCalendars()
@@ -128,29 +151,31 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
 
   useEffect(() => {
     const unsubscribe = subscribeToVisibilityChanges((ids) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CalendarViewer.tsx:subscribeToVisibilityChanges',message:'Visibility change received',data:{newIds:ids,currentCalendarsCount:calendars.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H5'})}).catch(()=>{});
+      // #endregion
       setVisibleCalendarIds(ids)
     })
     return unsubscribe
   }, [])
 
   const handleEventClick = (event: CalendarEvent, clickPos?: { x: number; y: number }) => {
-    if (isPopoverOpen || isEditPopoverOpen || isClosingPopover) return
+    if (isPopoverOpen || isEventPopoverOpen || isClosingPopover) return
     
     setSelectedEvent(event)
     setSelectedDate(null)
-    const defaultPos = typeof window !== 'undefined' ? { x: window.innerWidth / 2, y: window.innerHeight / 3 } : { x: 0, y: 0 }
-    setEditPopoverPos(clickPos || defaultPos)
-    setIsEditPopoverOpen(true)
+    setEventPopoverPos(clickPos || getDefaultPopoverPosition())
+    setEventPopoverMode('view')
+    setIsEventPopoverOpen(true)
     onEventClick?.(event)
   }
 
   const handleDateClick = (date: Date, clickPos?: { x: number; y: number }) => {
-    if (isPopoverOpen || isEditPopoverOpen || isClosingPopover) return
+    if (isPopoverOpen || isEventPopoverOpen || isClosingPopover) return
     
     setSelectedEvent(null)
     setSelectedDate(date)
-    const defaultPos = typeof window !== 'undefined' ? { x: window.innerWidth / 2, y: window.innerHeight / 3 } : { x: 0, y: 0 }
-    setPopoverPos(clickPos || defaultPos)
+    setPopoverPos(clickPos || getDefaultPopoverPosition())
     setIsPopoverOpen(true)
   }
 
@@ -170,12 +195,21 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
     setTimeout(() => setIsClosingPopover(false), 100)
   }
 
-  const handleEditPopoverClose = () => {
+  const handleEventPopoverClose = () => {
     setIsClosingPopover(true)
-    setIsEditPopoverOpen(false)
-    setEditPopoverPos(null)
+    setIsEventPopoverOpen(false)
+    setEventPopoverPos(null)
     setSelectedEvent(null)
+    setEventPopoverMode('view')
     setTimeout(() => setIsClosingPopover(false), 100)
+  }
+
+  const handleSwitchToEditMode = () => {
+    setEventPopoverMode('edit')
+  }
+
+  const handleBackToViewMode = () => {
+    setEventPopoverMode('view')
   }
 
   const handleCalendarToggle = useCallback((calendarId: string) => {
@@ -606,7 +640,9 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
     )
   }
 
-  const visibleCount = visibleCalendarIds.length
+  // Count only visible calendars that actually exist in the dropdown (not phantom IDs like "primary")
+  const calendarIdSet = new Set(calendars.map(c => c.id))
+  const visibleCount = visibleCalendarIds.filter(id => calendarIdSet.has(id)).length
   const totalCount = calendars.length
 
   return (
@@ -680,14 +716,25 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
         onCreated={handleEventSaved}
       />
 
-      <EditEventPopover
-        isOpen={isEditPopoverOpen}
-        position={editPopoverPos}
-        event={selectedEvent}
-        onClose={handleEditPopoverClose}
-        onSaved={handleEventSaved}
-        onDeleted={handleEventDeleted}
-      />
+      {eventPopoverMode === 'view' ? (
+        <ViewEventPopover
+          isOpen={isEventPopoverOpen}
+          position={eventPopoverPos}
+          event={selectedEvent}
+          onClose={handleEventPopoverClose}
+          onEdit={handleSwitchToEditMode}
+        />
+      ) : (
+        <EditEventPopover
+          isOpen={isEventPopoverOpen}
+          position={eventPopoverPos}
+          event={selectedEvent}
+          onClose={handleEventPopoverClose}
+          onSaved={handleEventSaved}
+          onDeleted={handleEventDeleted}
+          onBack={handleBackToViewMode}
+        />
+      )}
     </div>
   )
 }

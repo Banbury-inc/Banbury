@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import * as AssistantUI from "@assistant-ui/react";
 import {
   ChevronRightIcon,
@@ -20,7 +20,9 @@ import { ChatTiptapComposer } from "../../ChatTiptapComposer";
 import { FileAttachment } from "./components/file-attachment";
 import { FileAttachmentDisplay } from "./components/file-attachment-display";
 import { PendingChangesBar } from "./components/pending-changes-bar";
+import { ContextWheel } from "./components/context-wheel";
 import { Button } from "../../ui/button";
+import { TooltipProvider } from "../../ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -36,6 +38,8 @@ import { Check } from "lucide-react";
 import { FileSystemItem } from "../../../utils/fileTreeUtils";
 import { ThreadScrollToBottom } from "./ThreadScrollToBottom";
 import { handleSend } from "./handlers/handleSend";
+import { computeContextBudget } from "./handlers/contextBudget";
+import { getDocumentContextPreview } from "../../../assistant/ClaudeRuntimeProvider/handlers/getDocumentContextPreview";
 import { 
   getModelDisplayName, 
   AVAILABLE_MODELS, 
@@ -51,6 +55,7 @@ const {
   ComposerPrimitive,
   ThreadPrimitive,
   useComposerRuntime,
+  useThreadRuntime,
 } = AssistantUI as any;
 
 interface ComposerToolPreferences {
@@ -88,9 +93,11 @@ interface ComposerProps {
   pendingChanges: Array<{ id: string; type: string; description: string }>;
   onAcceptAll: () => void;
   onRejectAll: () => void;
+  // Fallback message buffer for context calculation when runtime messages aren't available
+  messageBuffer?: any[] | null;
 }
 
-export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll }) => {
+export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll, messageBuffer }) => {
   const composer = useComposerRuntime();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -209,6 +216,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
             toolPreferences={toolPreferences}
             onUpdateToolPreferences={(prefs) => onUpdateToolPreferences(prefs)}
             onSend={() => handleSend({ composer, onSend: onSend })}
+            messageBuffer={messageBuffer}
           />
         </ComposerPrimitive.Root>
       </div>
@@ -232,11 +240,15 @@ interface ComposerActionProps {
   toolPreferences: ComposerToolPreferences;
   onUpdateToolPreferences: (prefs: ComposerToolPreferences) => void;
   onSend: () => void;
+  // Fallback message buffer for context calculation when runtime messages aren't available
+  messageBuffer?: any[] | null;
 }
 
-const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, onSend }) => {
+const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, onSend, messageBuffer }) => {
   const composer = useComposerRuntime();
+  const threadRuntime = useThreadRuntime();
   const [hasText, setHasText] = useState(false);
+  const [draftText, setDraftText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -251,6 +263,112 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
     globe: true,
   });
   const [isMeasuring, setIsMeasuring] = useState(true);
+
+  // Track streaming content length to trigger context budget recalculation
+  // This is needed because threadRuntime.messages reference doesn't change during streaming
+  const [streamingContentLength, setStreamingContentLength] = useState(0);
+
+  // Helper to get messages from thread runtime (tries multiple access patterns)
+  const getThreadMessages = useCallback(() => {
+    try {
+      // Try different ways to access messages (assistant-ui runtime internals vary)
+      const messages1 = threadRuntime?.messages || [];
+      const messages2 = (threadRuntime as any)?._threadBinding?.getState?.()?.messages || [];
+      const messages3 = (threadRuntime as any)?.getState?.()?.messages || [];
+      
+      // Return the first non-empty array from runtime sources
+      if (messages1.length > 0) return messages1;
+      if (messages2.length > 0) return messages2;
+      if (messages3.length > 0) return messages3;
+      
+      // Fallback to message buffer if provided (used when loading conversations)
+      if (messageBuffer && messageBuffer.length > 0) return messageBuffer;
+      
+      return [];
+    } catch {
+      // Fallback to message buffer on error
+      if (messageBuffer && messageBuffer.length > 0) return messageBuffer;
+      return [];
+    }
+  }, [threadRuntime, messageBuffer]);
+
+  // Poll for streaming content changes to update context wheel
+  useEffect(() => {
+    const updateStreamingContent = () => {
+      try {
+        const messages = getThreadMessages();
+        if (messages.length === 0) return;
+
+        // Calculate total content length from all messages
+        let totalLength = 0;
+        for (const msg of messages) {
+          const content = msg.content || [];
+          if (Array.isArray(content)) {
+            for (const part of content) {
+              if (typeof part === "string") {
+                totalLength += part.length;
+              } else if (part?.type === "text" && part?.text) {
+                totalLength += part.text.length;
+              } else if (part?.type === "tool-call" && part?.args) {
+                totalLength += JSON.stringify(part.args).length;
+              } else if (part?.type === "tool-result" && part?.result) {
+                const result = typeof part.result === "string" ? part.result : JSON.stringify(part.result);
+                totalLength += result.length;
+              }
+            }
+          } else if (typeof content === "string") {
+            totalLength += content.length;
+          }
+        }
+
+        // Only update if length changed to avoid unnecessary re-renders
+        setStreamingContentLength((prev) => {
+          if (prev !== totalLength) return totalLength;
+          return prev;
+        });
+      } catch {
+        // Ignore errors accessing runtime
+      }
+    };
+
+    // Poll every 100ms to catch streaming updates
+    const interval = setInterval(updateStreamingContent, 100);
+    updateStreamingContent();
+
+    return () => clearInterval(interval);
+  }, [getThreadMessages]);
+
+  // Compute context budget for the wheel
+  const contextBudget = useMemo(() => {
+    // Get thread messages from runtime using robust accessor
+    const threadMessages = getThreadMessages();
+    const normalizedMessages = threadMessages.map((msg: any) => ({
+      role: msg.role || "user",
+      content: msg.content || [],
+    }));
+
+    // Get document context preview (side-effect-free)
+    const documentContextPreview = typeof window !== "undefined" 
+      ? getDocumentContextPreview() 
+      : "";
+
+    // Build attachments summary
+    const attachmentsSummary = [
+      ...attachedFiles.map((f) => `[File: ${f.name}]`),
+      ...attachedEmails.map((e) => `[Email: ${e.subject || "No subject"}]`),
+    ].join(" ");
+
+    const modelId = toolPreferences.model_id || getDefaultModelForProvider(toolPreferences.model_provider);
+    
+    return computeContextBudget({
+      modelId,
+      provider: toolPreferences.model_provider,
+      threadMessages: normalizedMessages,
+      draftText,
+      documentContextPreview,
+      attachmentsSummary,
+    });
+  }, [getThreadMessages, draftText, attachedFiles, attachedEmails, toolPreferences.model_id, toolPreferences.model_provider, streamingContentLength]);
 
   const getRecognition = () => {
     const SpeechRecognitionImpl = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -311,8 +429,10 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
     const checkForText = () => {
       const input = document.querySelector('textarea[aria-label="Message input"]') as HTMLTextAreaElement;
       if (input) {
-        const text = input.value.trim();
-        setHasText(text.length > 0);
+        const text = input.value;
+        const trimmedText = text.trim();
+        setHasText(trimmedText.length > 0);
+        setDraftText(text);
       }
     };
 
@@ -320,6 +440,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
     const handleTiptapUpdate = (event: CustomEvent) => {
       const text = event.detail?.text || '';
       setHasText(text.trim().length > 0);
+      setDraftText(text);
     };
 
     // Check immediately
@@ -684,39 +805,52 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         )}
       </div>
 
-      <ThreadPrimitive.If running={false}>
-        <Button
-          type="button"
-          variant="primary"
-          size="icon"
-          className={`h-8 w-8 ${
-            hasText 
-              ? 'cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100' 
-              : 'opacity-50 bg-zinc-300 dark:bg-zinc-600 text-zinc-500 dark:text-zinc-400 cursor-not-allowed'
-          }`}
-          title="Send"
-          aria-label="Send message"
-          onClick={handleSendFromButton}
-          disabled={!hasText}
-        >
-          <ChevronRightIcon height={16} width={16} strokeWidth={1} />
-        </Button>
-      </ThreadPrimitive.If>
+      <div className="flex items-center gap-2">
+        {/* Context wheel showing token usage */}
+        <TooltipProvider>
+          <ContextWheel
+            usagePercent={contextBudget.usagePercent}
+            estimatedPromptTokens={contextBudget.estimatedPromptTokens}
+            contextWindowTokens={contextBudget.contextWindowTokens}
+            estimatedRemainingTokens={contextBudget.estimatedRemainingTokens}
+            reservedOutputTokens={contextBudget.reservedOutputTokens}
+          />
+        </TooltipProvider>
 
-      <ThreadPrimitive.If running>
-        <ComposerPrimitive.Cancel asChild>
+        <ThreadPrimitive.If running={false}>
           <Button
             type="button"
             variant="primary"
             size="icon"
-            title="Stop generating"
-            aria-label="Stop generating"
-            className="h-8 w-8 cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100" 
+            className={`h-8 w-8 ${
+              hasText 
+                ? 'cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100' 
+                : 'opacity-50 bg-zinc-300 dark:bg-zinc-600 text-zinc-500 dark:text-zinc-400 cursor-not-allowed'
+            }`}
+            title="Send"
+            aria-label="Send message"
+            onClick={handleSendFromButton}
+            disabled={!hasText}
           >
-            <Square height={14} width={14} strokeWidth={1} />
+            <ChevronRightIcon height={16} width={16} strokeWidth={1} />
           </Button>
-        </ComposerPrimitive.Cancel>
-      </ThreadPrimitive.If>
+        </ThreadPrimitive.If>
+
+        <ThreadPrimitive.If running>
+          <ComposerPrimitive.Cancel asChild>
+            <Button
+              type="button"
+              variant="primary"
+              size="icon"
+              title="Stop generating"
+              aria-label="Stop generating"
+              className="h-8 w-8 cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100" 
+            >
+              <Square height={14} width={14} strokeWidth={1} />
+            </Button>
+          </ComposerPrimitive.Cancel>
+        </ThreadPrimitive.If>
+      </div>
     </div>
   );
 };

@@ -155,6 +155,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       send({ type: "step-progression", step: totalSteps, totalSteps })
     }
     
+    // Try to extract and emit token usage from the final AI message
+    // LangChain stores usage in response_metadata or additional_kwargs depending on provider
+    try {
+      const lastAiMessage = aiMessages[aiMessages.length - 1]
+      if (lastAiMessage) {
+        // Check multiple possible locations for token usage
+        const responseMetadata = lastAiMessage.response_metadata || {}
+        const additionalKwargs = lastAiMessage.additional_kwargs || {}
+        const usage = responseMetadata.usage || additionalKwargs.usage || {}
+        
+        // Anthropic format: input_tokens, output_tokens
+        // OpenAI format: prompt_tokens, completion_tokens, total_tokens
+        const inputTokens = usage.input_tokens || usage.prompt_tokens || 0
+        const outputTokens = usage.output_tokens || usage.completion_tokens || 0
+        const totalTokens = usage.total_tokens || (inputTokens + outputTokens)
+        
+        if (inputTokens > 0 || outputTokens > 0) {
+          send({
+            type: "token-usage",
+            inputTokens,
+            outputTokens,
+            totalTokens,
+            model: normalizedToolPreferences.model_id || normalizedToolPreferences.model_provider,
+          })
+        }
+      }
+    } catch {
+      // Ignore token usage extraction errors - it's optional
+    }
+    
     send({ type: "done" })
     res.end()
 

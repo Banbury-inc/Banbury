@@ -986,6 +986,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         pendingChanges={pendingChanges}
         onAcceptAll={handleAcceptAll}
         onRejectAll={handleRejectAll}
+        messageBuffer={loadedMessagesBuffer}
       />
 
       {/* Conversation Dialogs */}

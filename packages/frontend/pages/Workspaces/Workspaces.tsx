@@ -572,18 +572,8 @@ const Workspaces = (): React.ReactNode => {
     // Ensure dark mode is enabled
     window.localStorage.setItem('themeMode', 'dark');
     
-    // Force cleanup of any demo mocks that might still be active
+    // Clean up demo mode if active
     if (typeof window !== 'undefined' && (window as any).__DEMO_MODE_ACTIVE__) {
-      // Import and run cleanup if available
-      import('../Home/components/DemoApp').then(module => {
-        // The cleanup function is internal, but we can rely on React's unmount
-        // Just trigger a file refresh after a short delay
-        setTimeout(() => {
-          triggerSidebarRefresh();
-        }, 100);
-      }).catch(() => {
-        // If import fails, just continue
-      });
       (window as any).__DEMO_MODE_ACTIVE__ = false;
     }
     

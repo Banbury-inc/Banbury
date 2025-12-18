@@ -139,6 +139,31 @@ export async function* processStreamEvents({
               }
             } 
           };
+        } else if (evt.type === "token-usage") {
+          // Handle token usage event - store for context wheel calibration
+          const tokenUsage = {
+            inputTokens: evt.inputTokens || 0,
+            outputTokens: evt.outputTokens || 0,
+            totalTokens: evt.totalTokens || 0,
+            model: evt.model || "",
+            timestamp: Date.now(),
+          };
+          
+          // Store in localStorage for the composer to use
+          try {
+            localStorage.setItem("lastTokenUsage", JSON.stringify(tokenUsage));
+          } catch {
+            // Ignore localStorage errors
+          }
+          
+          // Dispatch event for any listeners (e.g., context wheel)
+          try {
+            window.dispatchEvent(new CustomEvent("assistant-token-usage", { detail: tokenUsage }));
+          } catch {
+            // Ignore event dispatch errors
+          }
+          
+          // Don't yield - this is metadata, not content
         } else if (evt.type === "error") {
           // Display error message in chat
           const errorMessage = evt.error || "An error occurred";

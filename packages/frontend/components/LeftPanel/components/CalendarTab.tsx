@@ -1,14 +1,22 @@
-import { Calendar, Plus, RefreshCw, Settings, Clock, MapPin, Users, ChevronDown, ChevronRight, Check } from 'lucide-react'
+import { Calendar, CalendarDays, Plus, RefreshCw, Settings, Clock, MapPin, Users, SquareArrowOutUpRight } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '../../ui/button'
 import { Typography } from '../../ui/typography'
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuCheckboxItem, 
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
+} from '../../ui/dropdown-menu'
 import { CalendarEvent, CalendarListEntry } from '../../../../backend/api/calendar/calendar'
 import { CreateEventPopover } from '../../MiddlePanel/CalendarViewer/CreateEventPopover'
 import { ApiService } from 'backend/api/apiService'
 import { loadCalendars } from './handlers/loadCalendars'
 import { 
   getVisibleCalendarIds, 
-  toggleCalendarVisibility, 
+  toggleCalendarVisibility,
   subscribeToVisibilityChanges 
 } from './handlers/calendarVisibility'
 
@@ -31,7 +39,6 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
   const [calendars, setCalendars] = useState<CalendarListEntry[]>([])
   const [calendarsLoading, setCalendarsLoading] = useState(false)
   const [visibleCalendarIds, setVisibleCalendarIds] = useState<string[]>(() => getVisibleCalendarIds())
-  const [calendarsExpanded, setCalendarsExpanded] = useState(true)
   const [displayedCount, setDisplayedCount] = useState(EVENTS_PER_PAGE)
   const [dateRange] = useState<{ start: string; end: string }>(() => {
     const start = new Date()
@@ -50,14 +57,19 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
   }, [])
 
   const loadMergedEvents = useCallback(async () => {
-    if (visibleCalendarIds.length === 0) {
+    // Filter visibleCalendarIds to only include IDs that actually exist in the calendar list
+    // This prevents fetching events for phantom IDs like "primary" that don't match any real calendar
+    const calendarIdSet = new Set(calendars.map(c => c.id))
+    const validCalendarIds = visibleCalendarIds.filter(id => calendarIdSet.has(id))
+    
+    if (validCalendarIds.length === 0) {
       setEvents([])
       return
     }
     setLoading(true)
     setError(null)
     try {
-      const eventPromises = visibleCalendarIds.map(async (calendarId) => {
+      const eventPromises = validCalendarIds.map(async (calendarId) => {
         try {
           const resp = await ApiService.Calendar.listEvents({
             calendarId,
@@ -74,19 +86,28 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
       })
       const results = await Promise.all(eventPromises)
       const allEvents = results.flat()
-      allEvents.sort((a, b) => {
+      
+      // Deduplicate events by ID - "primary" and email-based calendar IDs can return the same events
+      const seenIds = new Set<string>()
+      const deduplicatedEvents = allEvents.filter(event => {
+        if (seenIds.has(event.id)) return false
+        seenIds.add(event.id)
+        return true
+      })
+      
+      deduplicatedEvents.sort((a, b) => {
         const aStart = a.start?.dateTime || a.start?.date || ''
         const bStart = b.start?.dateTime || b.start?.date || ''
         return aStart.localeCompare(bStart)
       })
-      setEvents(allEvents)
+      setEvents(deduplicatedEvents)
       setDisplayedCount(EVENTS_PER_PAGE)
     } catch {
       setError('Failed to load calendar events. Please check your Calendar access.')
     } finally {
       setLoading(false)
     }
-  }, [visibleCalendarIds, dateRange.start, dateRange.end])
+  }, [visibleCalendarIds, dateRange.start, dateRange.end, calendars])
 
   const checkCalendarAccess = useCallback(async () => {
     try {
@@ -125,9 +146,8 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
   useEffect(() => {
     if (calendarAvailable) {
       fetchCalendars()
-      loadMergedEvents()
     }
-  }, [calendarAvailable, fetchCalendars, loadMergedEvents])
+  }, [calendarAvailable, fetchCalendars])
 
   useEffect(() => {
     const unsubscribe = subscribeToVisibilityChanges((ids) => {
@@ -182,15 +202,68 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
     return cal.summaryOverride || cal.summary || cal.id
   }
 
+  // Count only visible calendars that actually exist in the dropdown (not phantom IDs like "primary")
+  const calendarIdSet = new Set(calendars.map(c => c.id))
+  const visibleCount = visibleCalendarIds.filter(id => calendarIdSet.has(id)).length
+  const totalCount = calendars.length
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex flex-col bg-card">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-4">
+            {/* Calendar Navigation */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  title="Calendars"
+                >
+                  <Calendar className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
+                  {totalCount > 0 && (
+                    <Typography variant="xs" className="font-medium">
+                      {visibleCount}/{totalCount}
+                    </Typography>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuLabel>Show calendars</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {calendarsLoading ? (
+                  <div className="flex items-center justify-center py-2">
+                    <RefreshCw className="h-3 w-3 animate-spin mr-2 text-muted-foreground" strokeWidth={1} />
+                    <Typography variant="xs" className="text-muted-foreground">Loading...</Typography>
+                  </div>
+                ) : calendars.length === 0 ? (
+                  <div className="px-2 py-1 text-xs text-muted-foreground">No calendars found</div>
+                ) : (
+                  calendars.map((cal) => {
+                    const isVisible = visibleCalendarIds.includes(cal.id)
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={cal.id}
+                        checked={isVisible}
+                        onCheckedChange={() => handleCalendarToggle(cal.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <div 
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: cal.backgroundColor || '#3b82f6' }}
+                        />
+                        <span className="truncate">{getCalendarDisplayName(cal)}</span>
+                        {cal.primary && <span className="text-xs text-muted-foreground ml-auto">(Primary)</span>}
+                      </DropdownMenuCheckboxItem>
+                    )
+                  })
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => {
                 if (onOpenCalendarApp) {
@@ -199,10 +272,9 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
                   window.dispatchEvent(new CustomEvent('calendar-open', { detail: { view: 'month' } }))
                 }
               }}
+              title="Open Calendar"
             >
-              <Typography variant="xs" className="font-medium">
-                Open Calendar
-              </Typography>
+              <SquareArrowOutUpRight className="h-4 w-4" strokeWidth={1.5} />
             </Button>
             <Button
               variant="outline"
@@ -245,59 +317,6 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
           </div>
         ) : (
           <div className="h-full flex flex-col">
-            {/* Calendars toggle section */}
-            <div className="border-b border-border">
-              <button
-                onClick={() => setCalendarsExpanded(!calendarsExpanded)}
-                className="flex items-center gap-2 w-full px-4 py-2 hover:bg-accent/50 transition-colors text-left"
-              >
-                {calendarsExpanded ? (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" strokeWidth={1} />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={1} />
-                )}
-                <Typography variant="small" className="font-medium">Calendars</Typography>
-                {calendarsLoading && (
-                  <RefreshCw className="h-3 w-3 animate-spin text-muted-foreground ml-auto" strokeWidth={1} />
-                )}
-              </button>
-              {calendarsExpanded && (
-                <div className="px-4 pb-2 space-y-1">
-                  {calendars.length === 0 && !calendarsLoading ? (
-                    <Typography variant="muted" className="text-xs py-1">No calendars found</Typography>
-                  ) : (
-                    calendars.map((cal) => {
-                      const isVisible = visibleCalendarIds.includes(cal.id)
-                      return (
-                        <button
-                          key={cal.id}
-                          onClick={() => handleCalendarToggle(cal.id)}
-                          className="flex items-center gap-2 w-full py-1 px-1 rounded hover:bg-accent/50 transition-colors text-left group"
-                        >
-                          <div
-                            className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                              isVisible 
-                                ? 'border-primary bg-primary' 
-                                : 'border-muted-foreground'
-                            }`}
-                            style={isVisible && cal.backgroundColor ? { backgroundColor: cal.backgroundColor, borderColor: cal.backgroundColor } : undefined}
-                          >
-                            {isVisible && <Check className="h-3 w-3 text-primary-foreground" strokeWidth={2} />}
-                          </div>
-                          <Typography variant="small" className="truncate flex-1">
-                            {getCalendarDisplayName(cal)}
-                          </Typography>
-                          {cal.primary && (
-                            <Typography variant="muted" className="text-xs">Primary</Typography>
-                          )}
-                        </button>
-                      )
-                    })
-                  )}
-                </div>
-              )}
-            </div>
-
             {error && (
               <div className="p-4 bg-destructive/10 border border-destructive/30 rounded m-2">
                 <Typography variant="small" className="text-destructive">{error}</Typography>
