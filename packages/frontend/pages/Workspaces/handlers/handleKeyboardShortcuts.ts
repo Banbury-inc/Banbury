@@ -1,6 +1,35 @@
+import { 
+  getStoredKeybinds, 
+  getActiveKey, 
+  parseKeyString,
+  KeybindsState 
+} from '../../../components/modals/settings-tabs/handlers/keybindHandlers'
+
 interface KeyboardShortcutCallbacks {
   onFileSearchOpen?: () => void
   onToggleFileSidebar?: () => void
+}
+
+// Cache keybinds to avoid reading localStorage on every keypress
+let cachedKeybinds: KeybindsState | null = null
+
+function getKeybinds(): KeybindsState {
+  if (!cachedKeybinds) {
+    cachedKeybinds = getStoredKeybinds()
+  }
+  return cachedKeybinds
+}
+
+// Listen for keybind updates to invalidate cache
+if (typeof window !== 'undefined') {
+  window.addEventListener('keybinds-updated', () => {
+    cachedKeybinds = null
+  })
+}
+
+function matchesKeybind(event: KeyboardEvent, keybindKey: string): boolean {
+  const { key: expectedKey, shift: expectedShift } = parseKeyString(keybindKey)
+  return event.key.toLowerCase() === expectedKey && event.shiftKey === expectedShift
 }
 
 export function createKeyboardShortcutHandler(callbacks: KeyboardShortcutCallbacks = {}) {
@@ -13,10 +42,13 @@ export function createKeyboardShortcutHandler(callbacks: KeyboardShortcutCallbac
     }
 
     const isCtrl = event.ctrlKey || event.metaKey
-    const key = event.key.toLowerCase()
+    if (!isCtrl) return
 
-    // Check for Ctrl+N (Windows/Linux) or Cmd+N (Mac) - always work globally
-    if (isCtrl && key === 'n') {
+    const keybinds = getKeybinds()
+
+    // Check for new agent shortcut (default: Ctrl+N)
+    const newAgentKey = getActiveKey(keybinds.newAgent)
+    if (matchesKeybind(event, newAgentKey)) {
       // Prevent default to override browser behavior
       event.preventDefault()
       event.stopPropagation()
@@ -29,8 +61,9 @@ export function createKeyboardShortcutHandler(callbacks: KeyboardShortcutCallbac
       return
     }
 
-    // Check for Ctrl+P (Windows/Linux) or Cmd+P (Mac) for file search - always work globally
-    if (isCtrl && key === 'p') {
+    // Check for file search shortcut (default: Ctrl+P)
+    const searchFilesKey = getActiveKey(keybinds.searchFiles)
+    if (matchesKeybind(event, searchFilesKey)) {
       // Check if file search dialog is already open by looking for the command dialog
       const fileSearchDialog = document.querySelector('[role="dialog"][data-state="open"]')
       const isFileSearchOpen = fileSearchDialog && 
@@ -48,18 +81,18 @@ export function createKeyboardShortcutHandler(callbacks: KeyboardShortcutCallbac
       return
     }
 
-    // Check for Ctrl+H (Windows/Linux) or Cmd+H (Mac) to toggle file sidebar
-    // Note: On macOS, Cmd+H may be intercepted by the OS to hide the app
-    if (isCtrl && !event.shiftKey && key === 'h') {
+    // Check for toggle file sidebar shortcut (default: Ctrl+H)
+    const toggleSidebarKey = getActiveKey(keybinds.toggleFileSidebar)
+    if (matchesKeybind(event, toggleSidebarKey)) {
       event.preventDefault()
       event.stopPropagation()
       onToggleFileSidebar?.()
       return
     }
 
-    // Fallback: Ctrl+Shift+L (Windows/Linux) or Cmd+Shift+L (Mac) to toggle file sidebar
-    // This ensures the shortcut works even when Cmd+H is intercepted by the OS
-    if (isCtrl && event.shiftKey && key === 'l') {
+    // Check for alternate toggle file sidebar shortcut (default: Ctrl+Shift+L)
+    const toggleSidebarAltKey = getActiveKey(keybinds.toggleFileSidebarAlt)
+    if (matchesKeybind(event, toggleSidebarAltKey)) {
       event.preventDefault()
       event.stopPropagation()
       onToggleFileSidebar?.()
