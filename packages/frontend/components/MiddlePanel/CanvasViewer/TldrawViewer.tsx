@@ -482,7 +482,7 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
                 <p className="text-sm text-muted-foreground mt-1">{error}</p>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="xs"
                   onClick={handleRefresh}
                   className="mt-3"
                 >

@@ -140,7 +140,7 @@ export const TldrawContextToolbar = track(({
         {/* Edit Button */}
         <Button
           variant="ghost"
-          size="sm"
+          size="icon-xs"
           onClick={handleEdit}
           title="Edit selected shapes"
           className="h-8 w-8 p-0 hover:bg-muted"
@@ -151,7 +151,7 @@ export const TldrawContextToolbar = track(({
         {/* Duplicate Button */}
         <Button
           variant="ghost"
-          size="sm"
+          size="icon-xs"
           onClick={handleDuplicate}
           title="Duplicate selected shapes"
           className="h-8 w-8 p-0 hover:bg-muted"
@@ -162,7 +162,7 @@ export const TldrawContextToolbar = track(({
         {/* Group/Ungroup Button */}
         <Button
           variant="ghost"
-          size="sm"
+          size="icon-xs"
           onClick={handleGroup}
           title={allShapesGrouped ? 'Ungroup shapes' : 'Group shapes'}
           className="h-8 w-8 p-0 hover:bg-muted"
@@ -177,7 +177,7 @@ export const TldrawContextToolbar = track(({
         {/* Lock/Unlock Button */}
         <Button
           variant="ghost"
-          size="sm"
+          size="icon-xs"
           onClick={handleToggleLock}
           title={hasLockedShapes ? 'Unlock shapes' : 'Lock shapes'}
           className="h-8 w-8 p-0 hover:bg-muted"
@@ -192,7 +192,7 @@ export const TldrawContextToolbar = track(({
         {/* Delete Button */}
         <Button
           variant="ghost"
-          size="sm"
+          size="icon-xs"
           onClick={handleDelete}
           title="Delete selected shapes"
           className="h-8 w-8 p-0 hover:bg-destructive hover:text-destructive-foreground"

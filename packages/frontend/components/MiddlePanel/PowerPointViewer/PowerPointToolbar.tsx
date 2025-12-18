@@ -665,7 +665,7 @@ export function PowerPointToolbar({
       <DropdownMenuTrigger asChild>
         <Button
           variant="primary"
-          size="icon-sm"
+          size="icon-xs"
           title={
             colorType === 'text' ? 'Text Color' : 
             colorType === 'fill' ? 'Fill Color' : 
@@ -733,22 +733,22 @@ export function PowerPointToolbar({
       {/* Left Section - Element Tools & Formatting */}
       <div className="flex items-center gap-1 flex-1 min-w-0">
         {/* Undo/Redo */}
-        <Button variant="primary" size="icon-sm" onClick={onUndo} disabled={!canUndo} title="Undo">
+        <Button variant="primary" size="icon-xs" onClick={onUndo} disabled={!canUndo} title="Undo">
           <Undo size={16} />
         </Button>
-        <Button variant="primary" size="icon-sm" onClick={onRedo} disabled={!canRedo} title="Redo">
+        <Button variant="primary" size="icon-xs" onClick={onRedo} disabled={!canRedo} title="Redo">
           <Redo size={16} />
         </Button>
 
         <div className="w-px h-6 bg-border mx-1" />
 
         {/* Slide Creation */}
-        <Button variant="primary" size="icon-sm" onClick={onAddSlide} title="Add Slide">
+        <Button variant="primary" size="icon-xs" onClick={onAddSlide} title="Add Slide">
           <Plus size={16} />
         </Button>
         <Button
           variant="primary"
-          size="icon-sm"
+          size="icon-xs"
           onClick={onDeleteSlide}
           disabled={slides.length <= 1}
           title="Delete Slide"
@@ -767,7 +767,7 @@ export function PowerPointToolbar({
 
             <Popover open={layoutPanelOpen} onOpenChange={setLayoutPanelOpen}>
               <PopoverTrigger asChild>
-                <Button variant="primary" size="icon-sm" title="Layout">
+                <Button variant="primary" size="icon-xs" title="Layout">
                   <Layout size={16} />
                 </Button>
               </PopoverTrigger>
@@ -784,7 +784,7 @@ export function PowerPointToolbar({
 
             <Popover open={themePanelOpen} onOpenChange={setThemePanelOpen}>
               <PopoverTrigger asChild>
-                <Button variant="primary" size="icon-sm" title="Theme">
+                <Button variant="primary" size="icon-xs" title="Theme">
                   <Paintbrush size={16} />
                 </Button>
               </PopoverTrigger>
@@ -801,7 +801,7 @@ export function PowerPointToolbar({
 
             <Popover open={transitionPanelOpen} onOpenChange={setTransitionPanelOpen}>
               <PopoverTrigger asChild>
-                <Button variant="primary" size="icon-sm" title="Transition">
+                <Button variant="primary" size="icon-xs" title="Transition">
                   <RefreshCw size={16} />
                 </Button>
               </PopoverTrigger>
@@ -821,13 +821,13 @@ export function PowerPointToolbar({
         <div className="w-px h-6 bg-border mx-1" />
 
         {/* Element Creation */}
-        <Button variant="primary" size="icon-sm" onClick={handleAddText} title="Add Text">
+        <Button variant="primary" size="icon-xs" onClick={handleAddText} title="Add Text">
           <Type size={16} />
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="primary" size="icon-sm" title="Add Shape">
+            <Button variant="primary" size="icon-xs" title="Add Shape">
               <Square size={17} />
             </Button>
           </DropdownMenuTrigger>
@@ -854,7 +854,7 @@ export function PowerPointToolbar({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="primary" size="icon-sm" title="Add Image">
+            <Button variant="primary" size="icon-xs" title="Add Image">
               <Image size={16} />
             </Button>
           </DropdownMenuTrigger>
@@ -874,14 +874,14 @@ export function PowerPointToolbar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button variant="primary" size="icon-sm" onClick={handleAddTable} title="Add Table">
+        <Button variant="primary" size="icon-xs" onClick={handleAddTable} title="Add Table">
           <Table size={16} />
         </Button>
 
         {selectedElement && (
           <Button 
             variant="primary" 
-            size="icon-sm"
+            size="icon-xs"
             className="text-destructive hover:text-destructive" 
             onClick={onDeleteElement} 
             title="Delete Element"
@@ -898,7 +898,7 @@ export function PowerPointToolbar({
             {/* Font Family */}
             <DropdownMenu open={fontDropdownOpen} onOpenChange={setFontDropdownOpen}>
               <DropdownMenuTrigger asChild>
-                <Button variant="primary" size="sm" title="Font Family" className="min-w-[100px] justify-between">
+                <Button variant="primary" size="xs" title="Font Family" className="min-w-[100px] justify-between">
                   <span className="text-xs truncate">{selectedElement.fontFace || 'Arial'}</span>
                   <ChevronDown size={14} className="ml-1" />
                 </Button>
@@ -916,7 +916,7 @@ export function PowerPointToolbar({
             <div className="flex items-center">
               <Button
                 variant="primary"
-                size="icon-sm"
+                size="icon-xs"
                 className="rounded-r-none border-r-0"
                 onClick={handleFontSizeDecrement}
                 title="Decrease Font Size"
@@ -933,7 +933,7 @@ export function PowerPointToolbar({
               />
               <Button
                 variant="primary"
-                size="icon-sm"
+                size="icon-xs"
                 className="rounded-l-none border-l-0"
                 onClick={handleFontSizeIncrement}
                 title="Increase Font Size"
@@ -944,7 +944,7 @@ export function PowerPointToolbar({
 
             <Button
               variant="primary"
-              size="icon-sm"
+              size="icon-xs"
               className={selectedElement.bold ? 'bg-accent' : ''}
               onClick={handleToggleBold}
               title="Bold"
@@ -953,7 +953,7 @@ export function PowerPointToolbar({
             </Button>
             <Button
               variant="primary"
-              size="icon-sm"
+              size="icon-xs"
               className={selectedElement.italic ? 'bg-accent' : ''}
               onClick={handleToggleItalic}
               title="Italic"
@@ -968,7 +968,7 @@ export function PowerPointToolbar({
               <PopoverTrigger asChild>
                 <Button
                   variant="primary"
-                  size="icon-sm"
+                  size="icon-xs"
                   title="Text Background"
                 >
                   <div className="relative">
@@ -1010,7 +1010,7 @@ export function PowerPointToolbar({
                     <Button 
                       onClick={handleClearTextBackground} 
                       variant="outline" 
-                      size="sm" 
+                      size="xs" 
                       className="w-full"
                     >
                       Clear Background
@@ -1048,7 +1048,7 @@ export function PowerPointToolbar({
                         onChange={(e) => setGradientAngle(parseInt(e.target.value))}
                       />
                     </div>
-                    <Button onClick={handleTextGradientApply} className="w-full" size="sm">
+                    <Button onClick={handleTextGradientApply} className="w-full" size="xs">
                       Apply Gradient
                     </Button>
                   </TabsContent>
@@ -1061,7 +1061,7 @@ export function PowerPointToolbar({
               {renderColorPicker('textBorder', textBorderColorOpen, setTextBorderColorOpen, selectedElement.border?.color || '#000000')}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="primary" size="sm" title="Border Width" className="min-w-[60px] ml-1 justify-between">
+                  <Button variant="primary" size="xs" title="Border Width" className="min-w-[60px] ml-1 justify-between">
                     <span className="text-xs">{selectedElement.border?.width || 1}pt</span>
                     <ChevronDown size={14} className="ml-1" />
                   </Button>
@@ -1083,7 +1083,7 @@ export function PowerPointToolbar({
             {/* Text Alignment Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="primary" size="sm" title="Text Alignment" className="gap-1">
+                <Button variant="primary" size="xs" title="Text Alignment" className="gap-1">
                   {selectedElement.align === 'left' && <AlignLeft size={16} />}
                   {selectedElement.align === 'center' && <AlignCenter size={16} />}
                   {selectedElement.align === 'right' && <AlignRight size={16} />}
@@ -1132,7 +1132,7 @@ export function PowerPointToolbar({
               {renderColorPicker('fill', fillColorOpen, setFillColorOpen, fillStyleToColorString(selectedElement.fill) || '#4a90d9')}
               <Popover open={shapeGradientOpen} onOpenChange={setShapeGradientOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="primary" size="icon-sm" title="Shape Fill Gradient" className="ml-1">
+                  <Button variant="primary" size="icon-xs" title="Shape Fill Gradient" className="ml-1">
                     <div className="w-4 h-4" style={{ background: 'linear-gradient(90deg, #ff0000, #0000ff)' }} />
                   </Button>
                 </PopoverTrigger>
@@ -1169,7 +1169,7 @@ export function PowerPointToolbar({
                         onChange={(e) => setGradientAngle(parseInt(e.target.value))}
                       />
                     </div>
-                    <Button onClick={handleShapeGradientApply} className="w-full" size="sm">
+                    <Button onClick={handleShapeGradientApply} className="w-full" size="xs">
                       Apply Gradient
                     </Button>
                   </div>
@@ -1223,7 +1223,7 @@ export function PowerPointToolbar({
             
             <Button
               variant="primary"
-              size="icon-sm"
+              size="icon-xs"
               onClick={handleAddTableRow}
               title="Add Row"
             >
@@ -1231,7 +1231,7 @@ export function PowerPointToolbar({
             </Button>
             <Button
               variant="primary"
-              size="icon-sm"
+              size="icon-xs"
               onClick={handleRemoveTableRow}
               disabled={!selectedElement.rows || selectedElement.rows <= 1}
               title="Remove Row"
@@ -1243,7 +1243,7 @@ export function PowerPointToolbar({
             
             <Button
               variant="primary"
-              size="icon-sm"
+              size="icon-xs"
               onClick={handleAddTableColumn}
               title="Add Column"
             >
@@ -1251,7 +1251,7 @@ export function PowerPointToolbar({
             </Button>
             <Button
               variant="primary"
-              size="icon-sm"
+              size="icon-xs"
               onClick={handleRemoveTableColumn}
               disabled={!selectedElement.columns || selectedElement.columns <= 1}
               title="Remove Column"
@@ -1270,7 +1270,7 @@ export function PowerPointToolbar({
             
             <Button
               variant="primary"
-              size="icon-sm"
+              size="icon-xs"
               className={selectedElement.headerRow ? 'bg-accent' : ''}
               onClick={handleToggleHeaderRow}
               title="Toggle Header Row"
@@ -1287,7 +1287,7 @@ export function PowerPointToolbar({
             <div className="w-px h-6 bg-border mx-1" />
             <DropdownMenu open={overflowOpen} onOpenChange={setOverflowOpen}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" title="More tools">
+                <Button variant="ghost" size="icon-xs" title="More tools">
                   <MoreHorizontal size={16} />
                 </Button>
               </DropdownMenuTrigger>
@@ -1325,7 +1325,7 @@ export function PowerPointToolbar({
           {onShare && (
             <Button
               variant="ghost"
-              size="icon-sm"
+              size="icon-xs"
               onClick={onShare}
               title="Share"
             >
@@ -1334,7 +1334,7 @@ export function PowerPointToolbar({
           )}
           <Button
             variant="ghost"
-            size="icon-sm"
+            size="icon-xs"
             onClick={onSave}
             disabled={saving || !hasUnsavedChanges}
             title="Save"
@@ -1347,7 +1347,7 @@ export function PowerPointToolbar({
           </Button>
           <Button
             variant="ghost"
-            size="icon-sm"
+            size="icon-xs"
             onClick={onDownload}
             title="Download"
           >

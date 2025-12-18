@@ -488,7 +488,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
               visibleButtons.includes(btn.id) ? (
                 <Button
                   variant="primary"
-                  size="icon-sm"
+                  size="icon-xs"
                   key={btn.id}
                   onClick={btn.onClick}
                   title={btn.title}
@@ -501,7 +501,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
             {toolbarButtons.some(b => !visibleButtons.includes(b.id)) && (
               <DropdownMenu open={overflowOpen} onOpenChange={setOverflowOpen}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon-sm" title="More tools">
+                  <Button variant="ghost" size="icon-xs" title="More tools">
                     <MoreHorizontal size={16} />
                   </Button>
                 </DropdownMenuTrigger>
@@ -537,7 +537,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
           <div className="flex items-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" title="Headings" className="gap-1">
+                <Button variant="ghost" size="xs" title="Headings" className="gap-1">
                   <span className="flex items-center gap-1">
                     {editor.isActive('heading', { level: 1 }) && 'H1'}
                     {editor.isActive('heading', { level: 2 }) && 'H2'}
@@ -613,7 +613,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon-sm"
+                  size="icon-xs"
                   title="Add Image"
                 >
                   <ImageIcon size={16} />
@@ -748,7 +748,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
               {onShare && (
                 <Button
                   variant="ghost"
-                  size="icon-sm"
+                  size="icon-xs"
                   onClick={onShare}
                   title="Share document"
                 >
@@ -758,7 +758,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
               {onSave && (
                 <Button
                   variant="ghost"
-                  size="icon-sm"
+                  size="icon-xs"
                   onClick={onSave}
                   disabled={saving || !canSave}
                   title="Save document"
@@ -769,7 +769,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
               {onDownload && (
                 <Button
                   variant="ghost"
-                  size="icon-sm"
+                  size="icon-xs"
                   onClick={onDownload}
                   title="Download document"
                 >

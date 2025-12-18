@@ -217,7 +217,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
           <div className="flex items-center gap-3">
             <Button
               variant="default"
-              size="sm"
+              size="icon-xs"
               onClick={goToPrevPage}
               disabled={pageNumber <= 1}
               className="h-8 bg-primary hover:bg-primary/80 disabled:bg-muted disabled:text-muted-foreground"
@@ -235,7 +235,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
             </div>
             <Button
               variant="default"
-              size="sm"
+              size="icon-xs"
               onClick={goToNextPage}
               disabled={pageNumber >= numPages}
               className="h-8 bg-primary hover:bg-primary/80 disabled:bg-muted disabled:text-muted-foreground"
@@ -248,7 +248,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
           <div className="flex items-center gap-2">
             <Button
               variant="default"
-              size="icon"
+              size="icon-xs"
               onClick={zoomOut}
               disabled={scale <= 0.5}
               className="h-8 w-8 bg-primary hover:bg-primary/80 disabled:bg-muted disabled:text-muted-foreground"
@@ -258,7 +258,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
             </Button>
             <Button
               variant="outline"
-              size="sm"
+              size="xs"
               onClick={resetZoom}
               className="h-8 min-w-[60px] text-sm font-medium border-primary text-primary hover:bg-primary hover:text-primary-foreground"
               title="Reset zoom to 100%"
@@ -267,7 +267,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
             </Button>
             <Button
               variant="default"
-              size="icon"
+              size="icon-xs"
               onClick={zoomIn}
               disabled={scale >= 3.0}
               className="h-8 w-8 bg-primary hover:bg-primary/80 disabled:bg-muted disabled:text-muted-foreground"
