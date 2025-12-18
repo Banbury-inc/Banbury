@@ -95,15 +95,31 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file, userInfo }) => {
         setLoading(true);
         setError(null);
 
-        // Get the file content from S3 using the ApiService
-        const downloadResult = await ApiService.downloadS3File(file.file_id, file.name);
+        const isDriveFile = file.path?.startsWith('drive://');
+        const isOneDriveFile = file.path?.startsWith('onedrive://');
         
-        if (!downloadResult.success) {
-          throw new Error('Failed to download file');
-        }
+        let fileContent: string;
+        
+        if (isDriveFile) {
+          // Get file content from Google Drive
+          const blob = await ApiService.Drive.getFileBlob(file.file_id);
+          fileContent = await blob.text();
+        } else if (isOneDriveFile) {
+          // Get file content from OneDrive
+          const blob = await ApiService.OneDrive.getFileBlob(file.file_id);
+          fileContent = await blob.text();
+        } else {
+          // Get the file content from S3 using the ApiService
+          const downloadResult = await ApiService.downloadS3File(file.file_id, file.name);
+          
+          if (!downloadResult.success) {
+            throw new Error('Failed to download file');
+          }
 
-        // Convert blob to text
-        const fileContent = await downloadResult.blob.text();
+          // Convert blob to text
+          fileContent = await downloadResult.blob.text();
+        }
+        
         setContent(fileContent);
         
         // Set the language based on file extension

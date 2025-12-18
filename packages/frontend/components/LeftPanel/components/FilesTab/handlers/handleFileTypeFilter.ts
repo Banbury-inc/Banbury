@@ -1,5 +1,6 @@
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
 import { DriveFile } from "../../../../../../backend/api/drive/drive"
+import { OneDriveFile } from "../../../../../../backend/api/onedrive/onedrive"
 
 // File type category definitions
 export interface FileTypeCategory {
@@ -159,6 +160,46 @@ export function filterDriveFiles(files: DriveFile[], activeFilters: Set<string>)
     if (file.mimeType?.includes('folder')) return false
     
     return matchesDriveFileTypeFilter(file, activeFilters)
+  })
+}
+
+// Check if a OneDrive file matches any of the active filter categories
+export function matchesOneDriveFileTypeFilter(file: OneDriveFile, activeFilters: Set<string>): boolean {
+  if (activeFilters.size === 0) return true
+  
+  const mimeType = file.file?.mimeType
+  const name = file.name
+  
+  for (const categoryKey of activeFilters) {
+    const category = FILE_TYPE_CATEGORIES[categoryKey]
+    if (!category) continue
+    
+    // Check by mimeType
+    if (mimeType && category.mimeTypes) {
+      for (const mType of category.mimeTypes) {
+        if (mimeType.includes(mType)) return true
+      }
+    }
+    
+    // Check by extension as fallback
+    const extension = getFileExtension(name)
+    if (extension && category.extensions.includes(extension)) {
+      return true
+    }
+  }
+  
+  return false
+}
+
+// Filter OneDrive files
+export function filterOneDriveFiles(files: OneDriveFile[], activeFilters: Set<string>): OneDriveFile[] {
+  if (activeFilters.size === 0) return files
+  
+  return files.filter(file => {
+    // Hide folders when filters are active
+    if (file.folder) return false
+    
+    return matchesOneDriveFileTypeFilter(file, activeFilters)
   })
 }
 

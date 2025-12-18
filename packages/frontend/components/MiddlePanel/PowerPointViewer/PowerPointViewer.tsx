@@ -175,8 +175,9 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
       setError(null)
 
       try {
-        // Check if this is a Google Drive file
+        // Check if this is a Google Drive or OneDrive file
         const isDriveFile = currentFile.path?.startsWith('drive://')
+        const isOneDriveFile = currentFile.path?.startsWith('onedrive://')
         const isGoogleSlides = currentFile.mimeType?.includes('vnd.google-apps.presentation')
 
         let blob: Blob
@@ -184,6 +185,9 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
         if (isDriveFile && isGoogleSlides) {
           // Export Google Slides as PPTX
           blob = await ApiService.Drive.exportSlidesAsPptx(currentFile.file_id)
+        } else if (isOneDriveFile) {
+          // Download from OneDrive
+          blob = await ApiService.OneDrive.getFileBlob(currentFile.file_id)
         } else {
           // Download regular file from S3
           const result = await ApiService.downloadFromS3(currentFile.file_id, currentFile.name)

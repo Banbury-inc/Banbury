@@ -3,6 +3,7 @@ import { XApiConnection } from './XApiConnection'
 import { SlackConnection } from './SlackConnection'
 import { GitHubConnection } from './GitHubConnection'
 import { OutlookConnection } from './OutlookConnection'
+import { OneDriveConnection } from './OneDriveConnection'
 import { ScopeManager } from './ScopeManager'
 
 export function ConnectionsTab() {
@@ -31,6 +32,10 @@ export function ConnectionsTab() {
 
       <div className="space-y-4">
         <OutlookConnection />
+      </div>
+
+      <div className="space-y-4">
+        <OneDriveConnection />
       </div>
     </div>
   )

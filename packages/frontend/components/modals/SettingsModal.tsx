@@ -291,12 +291,21 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       router.replace(router.pathname, undefined, { shallow: true })
     }
 
+    if (router.query.onedrive_connected === 'true') {
+      toast({
+        title: "OneDrive Account Connected",
+        description: "Successfully connected to your Microsoft OneDrive account!",
+      })
+      setActiveTab('connections')
+      router.replace(router.pathname, undefined, { shallow: true })
+    }
+
     if (router.query.settingsTab) {
       setActiveTab(String(router.query.settingsTab))
       const { settingsTab, ...rest } = router.query
       router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true })
     }
-  }, [router.query.scopeActivated, router.query.x_connected, router.query.outlook_connected, router.query.settingsTab])
+  }, [router.query.scopeActivated, router.query.x_connected, router.query.outlook_connected, router.query.onedrive_connected, router.query.settingsTab])
 
   async function loadUserInfo() {
     try {

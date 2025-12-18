@@ -38,8 +38,9 @@ export async function handlePowerPointSave({
     // Generate PPTX blob
     const blob = await pptx.write({ outputType: 'blob' }) as Blob
 
-    // Check if this is a Google Drive file
+    // Check if this is a Google Drive or OneDrive file
     const isDriveFile = currentFile.path?.startsWith('drive://')
+    const isOneDriveFile = currentFile.path?.startsWith('onedrive://')
     const isGoogleSlides = currentFile.mimeType?.includes('vnd.google-apps.presentation')
 
     // Create File object
@@ -57,6 +58,19 @@ export async function handlePowerPointSave({
 
       toast({
         title: "Presentation saved to Google Drive",
+        description: `${currentFile.name} has been updated successfully.`,
+        variant: "success",
+      })
+    } else if (isOneDriveFile) {
+      // Save to OneDrive
+      await ApiService.OneDrive.updateFile(
+        currentFile.file_id,
+        fileToUpload,
+        currentFile.name
+      )
+
+      toast({
+        title: "Presentation saved to OneDrive",
         description: `${currentFile.name} has been updated successfully.`,
         variant: "success",
       })

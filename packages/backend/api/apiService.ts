@@ -4,8 +4,10 @@ import { CONFIG } from '../../frontend/config/config';
 import Files from './files/files'
 import Emails from './emails/emails'
 import Calendar from './calendar/calendar'
+import OutlookCalendar from './outlook-calendar/outlookCalendar'
 import Knowledge from './knowledge/knowledge'
 import Drive from './drive/drive'
+import OneDrive from './onedrive/onedrive'
 import MeetingAgent from './meeting-agent/meeting-agent'
 import Conversations from './conversations/conversations'
 import Scopes from './scopes/scopes'
@@ -44,8 +46,10 @@ export class ApiService {
   Files: Files
   Emails: Emails
   Calendar: Calendar
+  OutlookCalendar: OutlookCalendar
   Knowledge: Knowledge
   Drive: Drive
+  OneDrive: OneDrive
   MeetingAgent: MeetingAgent
   Conversations: Conversations
   Scopes: Scopes
@@ -57,8 +61,10 @@ export class ApiService {
     this.Files = new Files(this)
     this.Emails = new Emails(this)
     this.Calendar = new Calendar(this)
+    this.OutlookCalendar = new OutlookCalendar(this)
     this.Knowledge = new Knowledge(this)
     this.Drive = new Drive(this)
+    this.OneDrive = new OneDrive(this)
     this.MeetingAgent = new MeetingAgent(this)
     this.Conversations = new Conversations(this)
     this.Scopes = new Scopes(this)
@@ -71,8 +77,10 @@ export class ApiService {
   static Files = Files;
   static Emails = Emails;
   static Calendar = Calendar;
+  static OutlookCalendar = OutlookCalendar;
   static Knowledge = Knowledge;
   static Drive = Drive;
+  static OneDrive = OneDrive;
   static MeetingAgent = MeetingAgent;
   static Conversations = Conversations;
   static Scopes = Scopes;

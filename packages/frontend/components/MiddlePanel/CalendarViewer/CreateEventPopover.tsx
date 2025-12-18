@@ -3,6 +3,7 @@ import { Save, X } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { CalendarEvent } from '../../../../backend/api/calendar/calendar'
 import { ApiService } from 'backend/api/apiService'
+import type { CalendarProvider } from '../../LeftPanel/components/handlers/calendarProvider'
 
 interface CreateEventPopoverProps {
   isOpen: boolean
@@ -10,9 +11,10 @@ interface CreateEventPopoverProps {
   selectedDate: Date | null
   onClose: () => void
   onCreated: () => void
+  provider?: CalendarProvider
 }
 
-export function CreateEventPopover({ isOpen, position, selectedDate, onClose, onCreated }: CreateEventPopoverProps) {
+export function CreateEventPopover({ isOpen, position, selectedDate, onClose, onCreated, provider = 'google' }: CreateEventPopoverProps) {
   const [formData, setFormData] = useState<Partial<CalendarEvent>>({})
   const [isAllDay, setIsAllDay] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -176,7 +178,8 @@ export function CreateEventPopover({ isOpen, position, selectedDate, onClose, on
 
     setLoading(true)
     try {
-      await ApiService.Calendar.createEvent(eventData)
+      const CalendarApi = provider === 'microsoft' ? ApiService.OutlookCalendar : ApiService.Calendar
+      await CalendarApi.createEvent(eventData)
       onCreated()
       onClose()
     } catch (e) {

@@ -42,6 +42,14 @@ import {
   calendarDeleteEventTool,
 } from "./tools/calendarTools";
 import {
+  msCalendarListCalendarsTool,
+  msCalendarListEventsTool,
+  msCalendarGetEventTool,
+  msCalendarCreateEventTool,
+  msCalendarUpdateEventTool,
+  msCalendarDeleteEventTool,
+} from "./tools/microsoftCalendarTools";
+import {
   xApiGetUserInfoTool,
   xApiGetUserTweetsTool,
   xApiSearchTweetsTool,
@@ -164,6 +172,12 @@ const tools = [
   calendarCreateEventTool,
   calendarUpdateEventTool,
   calendarDeleteEventTool,
+  msCalendarListCalendarsTool,
+  msCalendarListEventsTool,
+  msCalendarGetEventTool,
+  msCalendarCreateEventTool,
+  msCalendarUpdateEventTool,
+  msCalendarDeleteEventTool,
   xApiGetUserInfoTool,
   xApiGetUserTweetsTool,
   xApiSearchTweetsTool,

@@ -7,10 +7,10 @@ import { CalendarEvent } from '../../../../backend/calendarService'
 interface CalendarEventViewerProps {
   event: CalendarEvent | null
   onBack?: () => void
-  onOpenInGoogle?: (event: CalendarEvent) => void
+  onOpenInCalendar?: (event: CalendarEvent) => void
 }
 
-export function CalendarEventViewer({ event, onBack, onOpenInGoogle }: CalendarEventViewerProps) {
+export function CalendarEventViewer({ event, onBack, onOpenInCalendar }: CalendarEventViewerProps) {
   const title = event?.summary || '(No title)'
   const description = event?.description || ''
   const when = useMemo(() => {
@@ -62,8 +62,8 @@ export function CalendarEventViewer({ event, onBack, onOpenInGoogle }: CalendarE
               variant="ghost"
               size="sm"
               className="text-slate-500 hover:bg-slate-100 hover:text-slate-700 p-1 h-8 w-8 rounded-md transition-colors duration-200"
-              onClick={() => onOpenInGoogle ? onOpenInGoogle(event) : window.open(event.htmlLink as string, '_blank')}
-              title="Open in Google Calendar"
+              onClick={() => onOpenInCalendar ? onOpenInCalendar(event) : window.open(event.htmlLink as string, '_blank')}
+              title="Open in Calendar"
             >
               <ExternalLink className="h-3 w-3" />
             </Button>

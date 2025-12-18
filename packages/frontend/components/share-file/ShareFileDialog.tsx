@@ -14,6 +14,7 @@ import {
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import Files from "backend/api/files/files"
+import { ApiService } from "backend/api/apiService"
 
 interface User {
   username: string
@@ -28,7 +29,7 @@ interface ShareFileDialogProps {
   file: {
     id: string
     name: string
-    type: "s3" | "drive"
+    type: "s3" | "drive" | "onedrive"
   } | null
   onShareSuccess?: () => void
 }
@@ -121,6 +122,20 @@ export function ShareFileDialog({
       } else if (file.type === "drive") {
         const result = await Files.shareDriveFile(file.id, recipients, "edit")
         setSuccessMessage(result.message)
+        setSelectedUsers([])
+        onShareSuccess?.()
+        setTimeout(() => onOpenChange(false), 1500)
+      } else if (file.type === "onedrive") {
+        // Share via OneDrive - invite users with edit access
+        const emails = recipients.map((r) => r.email).filter(Boolean) as string[]
+        if (emails.length > 0) {
+          await ApiService.OneDrive.inviteToShare(file.id, emails, "write")
+          setSuccessMessage(`File shared with ${emails.length} user(s) via OneDrive`)
+        } else {
+          // Fallback: create a shareable link
+          const result = await ApiService.OneDrive.createShareLink(file.id, "edit")
+          setSuccessMessage(`Shareable link created: ${result.link}`)
+        }
         setSelectedUsers([])
         onShareSuccess?.()
         setTimeout(() => onOpenChange(false), 1500)

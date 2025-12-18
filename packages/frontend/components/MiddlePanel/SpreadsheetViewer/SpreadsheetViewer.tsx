@@ -62,13 +62,20 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
       setError(null);
 
       try {
-        // Check if this is a Google Drive file
+        // Check if this is a Google Drive or OneDrive file
         const isDriveFile = currentFile.path?.startsWith('drive://');
+        const isOneDriveFile = currentFile.path?.startsWith('onedrive://');
         const isGoogleSheet = currentFile.mimeType?.includes('vnd.google-apps.spreadsheet');
         
         if (isDriveFile && isGoogleSheet) {
           // Export Google Sheet as XLSX
           const blob = await ApiService.Drive.exportSheetAsXlsx(currentFile.file_id);
+          currentUrl = URL.createObjectURL(blob);
+          setDocumentUrl(currentUrl);
+          setDocumentBlob(blob);
+        } else if (isOneDriveFile) {
+          // Download from OneDrive
+          const blob = await ApiService.OneDrive.getFileBlob(currentFile.file_id);
           currentUrl = URL.createObjectURL(blob);
           setDocumentUrl(currentUrl);
           setDocumentBlob(blob);
@@ -109,6 +116,7 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
     
     try {
       const isDriveFile = currentFile.path?.startsWith('drive://');
+      const isOneDriveFile = currentFile.path?.startsWith('onedrive://');
       const isGoogleSheet = currentFile.mimeType?.includes('vnd.google-apps.spreadsheet');
       
       // Determine download filename
@@ -130,6 +138,16 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
       // Fallback to fetching if no URL is available
       if (isDriveFile && isGoogleSheet) {
         const blob = await ApiService.Drive.exportSheetAsXlsx(currentFile.file_id);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = downloadName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      } else if (isOneDriveFile) {
+        const blob = await ApiService.OneDrive.getFileBlob(currentFile.file_id);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

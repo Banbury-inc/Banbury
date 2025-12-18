@@ -41,14 +41,24 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
     setIsRetrying(true);
 
     const isDriveFile = file.path?.startsWith('drive://');
+    const isOneDriveFile = file.path?.startsWith('onedrive://');
 
     // For regular videos, retry the download
-    const fetchPromise = isDriveFile
-      ? ApiService.Drive.getFileBlob(file.file_id || '').then(blob => {
-          const url = window.URL.createObjectURL(blob);
-          return { success: true, url };
-        })
-      : ApiService.downloadFromS3(file.file_id || '', file.name);
+    let fetchPromise: Promise<{ success: boolean; url: string }>;
+    
+    if (isDriveFile) {
+      fetchPromise = ApiService.Drive.getFileBlob(file.file_id || '').then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        return { success: true, url };
+      });
+    } else if (isOneDriveFile) {
+      fetchPromise = ApiService.OneDrive.getFileBlob(file.file_id || '').then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        return { success: true, url };
+      });
+    } else {
+      fetchPromise = ApiService.downloadFromS3(file.file_id || '', file.name);
+    }
 
     fetchPromise
       .then(result => {
@@ -74,6 +84,7 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
     setError(null);
 
     const isDriveFile = file.path?.startsWith('drive://');
+    const isOneDriveFile = file.path?.startsWith('onedrive://');
 
     // For regular videos, use the download endpoint
     const fetchRegularVideo = async () => {
@@ -82,6 +93,11 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
         if (isDriveFile) {
           // Handle Google Drive video
           const blob = await ApiService.Drive.getFileBlob(file.file_id || '');
+          const url = window.URL.createObjectURL(blob);
+          setVideoUrl(url);
+        } else if (isOneDriveFile) {
+          // Handle OneDrive video
+          const blob = await ApiService.OneDrive.getFileBlob(file.file_id || '');
           const url = window.URL.createObjectURL(blob);
           setVideoUrl(url);
         } else {
@@ -123,8 +139,27 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
       return;
     }
 
+    const isDriveFile = file.path?.startsWith('drive://');
+    const isOneDriveFile = file.path?.startsWith('onedrive://');
+
     // Fallback: fetch the URL
-    ApiService.downloadFromS3(file.file_id || '', file.name)
+    let fetchPromise: Promise<{ success: boolean; url: string }>;
+    
+    if (isDriveFile) {
+      fetchPromise = ApiService.Drive.getFileBlob(file.file_id || '').then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        return { success: true, url };
+      });
+    } else if (isOneDriveFile) {
+      fetchPromise = ApiService.OneDrive.getFileBlob(file.file_id || '').then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        return { success: true, url };
+      });
+    } else {
+      fetchPromise = ApiService.downloadFromS3(file.file_id || '', file.name);
+    }
+
+    fetchPromise
       .then(result => {
         if (result.success && result.url) {
           const a = document.createElement('a');

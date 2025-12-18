@@ -27,7 +27,7 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
   
   // Share dialog state
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [fileToShare, setFileToShare] = useState<{ id: string; name: string; type: 's3' | 'drive' } | null>(null);
+  const [fileToShare, setFileToShare] = useState<{ id: string; name: string; type: 's3' | 'drive' | 'onedrive' } | null>(null);
 
   // Prevent duplicate loads (e.g., React StrictMode) for the same file
   const lastFetchKeyRef = useRef<string | null>(null);
@@ -57,13 +57,20 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
       setError(null);
 
       try {
-        // Check if this is a Google Drive file
+        // Check if this is a Google Drive or OneDrive file
         const isDriveFile = currentFile.path?.startsWith('drive://');
+        const isOneDriveFile = currentFile.path?.startsWith('onedrive://');
         const isGoogleDoc = currentFile.mimeType?.includes('vnd.google-apps.document');
         
         if (isDriveFile && isGoogleDoc) {
           // Export Google Doc as DOCX
           const blob = await ApiService.Drive.exportDocAsDocx(currentFile.file_id);
+          currentUrl = URL.createObjectURL(blob);
+          setDocumentUrl(currentUrl);
+          setDocumentBlob(blob);
+        } else if (isOneDriveFile) {
+          // Download from OneDrive
+          const blob = await ApiService.OneDrive.getFileBlob(currentFile.file_id);
           currentUrl = URL.createObjectURL(blob);
           setDocumentUrl(currentUrl);
           setDocumentBlob(blob);
@@ -196,6 +203,7 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
     
     try {
       const isDriveFile = currentFile.path?.startsWith('drive://');
+      const isOneDriveFile = currentFile.path?.startsWith('onedrive://');
       const isGoogleDoc = currentFile.mimeType?.includes('vnd.google-apps.document');
       
       // Determine download filename
@@ -218,6 +226,16 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
       // Fallback to fetching if no URL is available
       if (isDriveFile && isGoogleDoc) {
         const blob = await ApiService.Drive.exportDocAsDocx(currentFile.file_id);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = downloadName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      } else if (isOneDriveFile) {
+        const blob = await ApiService.OneDrive.getFileBlob(currentFile.file_id);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -317,9 +335,11 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
       // Wrap Blob in a File to ensure filename and type are preserved for multipart
       const fileToUpload = new File([blob], currentFile.name, { type: contentType })
 
-      // Save to Google Drive or S3 depending on file type
+      // Save to Google Drive, OneDrive, or S3 depending on file type
+      const isOneDriveFile = currentFile.path?.startsWith('onedrive://');
+      
       if (isDriveFile && isGoogleDoc) {
-        const driveResult = await ApiService.Drive.updateFile(
+        await ApiService.Drive.updateFile(
           currentFile.file_id,
           fileToUpload,
           currentFile.name
@@ -328,6 +348,24 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
         // Show success toast
         toast({
           title: "Document saved to Google Drive",
+          description: `${currentFile.name} has been updated successfully.`,
+          variant: "success",
+        });
+        
+        // Call save complete callback if provided
+        if (onSaveComplete) {
+          onSaveComplete();
+        }
+      } else if (isOneDriveFile) {
+        await ApiService.OneDrive.updateFile(
+          currentFile.file_id,
+          fileToUpload,
+          currentFile.name
+        );
+        
+        // Show success toast
+        toast({
+          title: "Document saved to OneDrive",
           description: `${currentFile.name} has been updated successfully.`,
           variant: "success",
         });
@@ -372,10 +410,16 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
     if (!currentFile.file_id) return;
     
     const isDriveFile = currentFile.path?.startsWith('drive://');
+    const isOneDriveFile = currentFile.path?.startsWith('onedrive://');
+    
+    let fileType: 's3' | 'drive' | 'onedrive' = 's3';
+    if (isDriveFile) fileType = 'drive';
+    else if (isOneDriveFile) fileType = 'onedrive';
+    
     setFileToShare({
       id: currentFile.file_id,
       name: currentFile.name,
-      type: isDriveFile ? 'drive' : 's3'
+      type: fileType
     });
     setShareDialogOpen(true);
   }, [currentFile]);

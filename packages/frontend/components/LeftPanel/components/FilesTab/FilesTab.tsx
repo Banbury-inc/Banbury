@@ -14,11 +14,13 @@ import {
   Filter,
   X,
   Users,
+  Search,
 } from "lucide-react"
 import { useState, useRef, useCallback } from 'react'
 import { LocalFilesView } from "./components/LocalFilesView"
 import { GoogleDriveView } from "./components/GoogleDriveView"
-import { GoogleDriveIcon } from "../../../icons"
+import { OneDriveView } from "./components/OneDriveView"
+import { GoogleDriveIcon, OneDriveIcon } from "../../../icons"
 import { Button } from "../../../ui/button"
 import { FileSystemItem } from "../../../../utils/fileTreeUtils"
 import { Typography } from "../../../ui/typography"
@@ -74,7 +76,7 @@ export function FilesTab({
   onCreatePowerpoint,
   onCreateFolder,
 }: FilesTabProps) {
-  const [fileViewMode, setFileViewMode] = useState<'local' | 'recent' | 'starred' | 'shared' | 'drive' | 'drive-recent' | 'drive-starred' | 'drive-trash'>('local')
+  const [fileViewMode, setFileViewMode] = useState<'local' | 'recent' | 'starred' | 'shared' | 'drive' | 'drive-recent' | 'drive-starred' | 'drive-trash' | 'onedrive' | 'onedrive-recent' | 'onedrive-favorites' | 'onedrive-search' | 'onedrive-trash'>('local')
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set())
 
   // Toggle a filter category
@@ -106,6 +108,11 @@ export function FilesTab({
       case 'drive-recent': return Clock
       case 'drive-starred': return Star
       case 'drive-trash': return Trash2
+      case 'onedrive': return OneDriveIcon
+      case 'onedrive-recent': return Clock
+      case 'onedrive-favorites': return Star
+      case 'onedrive-search': return Search
+      case 'onedrive-trash': return Trash2
       default: return Folder
     }
   }
@@ -121,6 +128,11 @@ export function FilesTab({
       case 'drive-recent': return 'Drive Recent'
       case 'drive-starred': return 'Drive Starred'
       case 'drive-trash': return 'Drive Trash'
+      case 'onedrive': return 'OneDrive'
+      case 'onedrive-recent': return 'OneDrive Recent'
+      case 'onedrive-favorites': return 'OneDrive Favorites'
+      case 'onedrive-search': return 'OneDrive Search'
+      case 'onedrive-trash': return 'OneDrive Trash'
       default: return 'All Files'
     }
   }
@@ -185,13 +197,16 @@ export function FilesTab({
         <div className="flex items-center justify-between px-4 py-3 border-b min-w-0 gap-3">
           <div className="flex items-center min-w-0 flex-1 overflow-hidden">
             {/* File View Mode Navigation */}
-            <Select value={fileViewMode} onValueChange={(value) => setFileViewMode(value as 'local' | 'recent' | 'starred' | 'shared' | 'drive' | 'drive-recent' | 'drive-starred' | 'drive-trash')}>
+            <Select value={fileViewMode} onValueChange={(value) => setFileViewMode(value as 'local' | 'recent' | 'starred' | 'shared' | 'drive' | 'drive-recent' | 'drive-starred' | 'drive-trash' | 'onedrive' | 'onedrive-recent' | 'onedrive-favorites' | 'onedrive-search' | 'onedrive-trash')}>
               <SelectTrigger size="xs" className="min-w-0 flex-1">
                 <SelectValue>
                   <div className="flex items-center gap-2 min-w-0">
                     {(() => {
                       const Icon = getViewModeIcon(fileViewMode)
                       if (fileViewMode === 'drive') {
+                        return <Icon size={14} className="h-3.5 w-3.5 grayscale opacity-70 flex-shrink-0" />
+                      }
+                      if (fileViewMode === 'onedrive') {
                         return <Icon size={14} className="h-3.5 w-3.5 grayscale opacity-70 flex-shrink-0" />
                       }
                       return <Icon className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.5} />
@@ -258,6 +273,42 @@ export function FilesTab({
                     <div className="flex items-center gap-2">
                       <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
                       <Typography variant="xs" className="font-medium">Drive Trash</Typography>
+                    </div>
+                  </SelectItem>
+                </SelectGroup>
+
+                {/* OneDrive Group */}
+                <SelectSeparator />
+                <SelectGroup>
+                  <SelectLabel>OneDrive</SelectLabel>
+                  <SelectItem value="onedrive">
+                    <div className="flex items-center gap-2">
+                      <OneDriveIcon size={14} className="h-3.5 w-3.5 grayscale opacity-70" />
+                      <Typography variant="xs" className="font-medium">OneDrive</Typography>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="onedrive-recent">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      <Typography variant="xs" className="font-medium">OneDrive Recent</Typography>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="onedrive-favorites">
+                    <div className="flex items-center gap-2">
+                      <Star className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      <Typography variant="xs" className="font-medium">OneDrive Favorites</Typography>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="onedrive-search">
+                    <div className="flex items-center gap-2">
+                      <Search className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      <Typography variant="xs" className="font-medium">OneDrive Search</Typography>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="onedrive-trash">
+                    <div className="flex items-center gap-2">
+                      <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      <Typography variant="xs" className="font-medium">OneDrive Trash</Typography>
                     </div>
                   </SelectItem>
                 </SelectGroup>
@@ -459,6 +510,51 @@ export function FilesTab({
 
         {fileViewMode === 'drive-trash' && (
           <GoogleDriveView
+            viewMode="trash"
+            onFileSelect={onFileSelect}
+            selectedFile={selectedFile}
+            activeFilters={activeFilters}
+          />
+        )}
+
+        {fileViewMode === 'onedrive' && (
+          <OneDriveView
+            viewMode="root"
+            onFileSelect={onFileSelect}
+            selectedFile={selectedFile}
+            activeFilters={activeFilters}
+          />
+        )}
+
+        {fileViewMode === 'onedrive-recent' && (
+          <OneDriveView
+            viewMode="recent"
+            onFileSelect={onFileSelect}
+            selectedFile={selectedFile}
+            activeFilters={activeFilters}
+          />
+        )}
+
+        {fileViewMode === 'onedrive-favorites' && (
+          <OneDriveView
+            viewMode="favorites"
+            onFileSelect={onFileSelect}
+            selectedFile={selectedFile}
+            activeFilters={activeFilters}
+          />
+        )}
+
+        {fileViewMode === 'onedrive-search' && (
+          <OneDriveView
+            viewMode="search"
+            onFileSelect={onFileSelect}
+            selectedFile={selectedFile}
+            activeFilters={activeFilters}
+          />
+        )}
+
+        {fileViewMode === 'onedrive-trash' && (
+          <OneDriveView
             viewMode="trash"
             onFileSelect={onFileSelect}
             selectedFile={selectedFile}

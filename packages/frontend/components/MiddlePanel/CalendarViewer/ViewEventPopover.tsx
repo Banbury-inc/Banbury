@@ -92,7 +92,7 @@ export function ViewEventPopover({ isOpen, position, event, onClose, onEdit }: V
               size="sm"
               className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
               onClick={() => window.open(event.htmlLink as string, '_blank')}
-              title="Open in Google Calendar"
+              title="Open in Calendar"
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </Button>

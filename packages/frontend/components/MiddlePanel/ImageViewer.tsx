@@ -34,10 +34,17 @@ export function ImageViewer({ file, userInfo }: ImageViewerProps) {
 
       try {
         const isDriveFile = file.path?.startsWith('drive://');
+        const isOneDriveFile = file.path?.startsWith('onedrive://');
         
         if (isDriveFile) {
           // Handle Google Drive file
           const blob = await ApiService.Drive.getFileBlob(file.file_id);
+          const url = window.URL.createObjectURL(blob);
+          currentUrl = url;
+          setImageUrl(url);
+        } else if (isOneDriveFile) {
+          // Handle OneDrive file
+          const blob = await ApiService.OneDrive.getFileBlob(file.file_id);
           const url = window.URL.createObjectURL(blob);
           currentUrl = url;
           setImageUrl(url);
@@ -73,10 +80,14 @@ export function ImageViewer({ file, userInfo }: ImageViewerProps) {
     
     try {
       const isDriveFile = file.path?.startsWith('drive://');
+      const isOneDriveFile = file.path?.startsWith('onedrive://');
       let url: string;
       
       if (isDriveFile) {
         const blob = await ApiService.Drive.getFileBlob(file.file_id);
+        url = window.URL.createObjectURL(blob);
+      } else if (isOneDriveFile) {
+        const blob = await ApiService.OneDrive.getFileBlob(file.file_id);
         url = window.URL.createObjectURL(blob);
       } else {
         const result = await ApiService.downloadFromS3(file.file_id, file.name);

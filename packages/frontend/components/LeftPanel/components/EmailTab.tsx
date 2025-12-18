@@ -20,6 +20,7 @@ import { Button } from '../../ui/button'
 import { Input } from '../../ui/old-input'
 import { Typography } from '../../ui/typography'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '../../ui/select'
+import { GmailIcon, OutlookIcon } from '../../icons'
 import { ApiService } from '../../../../backend/api/apiService'
 import { GmailMessage, GmailMessageListResponse, GmailLabel, OutlookMessage, OutlookFolder } from '../../../../backend/api/emails/emails'
 import { loadLabels as fetchLabels } from './handlers/loadLabels'
@@ -813,15 +814,32 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
           <div className="flex items-center gap-2 min-w-0 flex-1">
             {/* Provider Selector */}
             <Select value={selectedProvider} onValueChange={(v) => handleProviderChange(v as EmailProvider)}>
-              <SelectTrigger size="xs" className="w-auto min-w-0 max-w-[100px]">
-                <SelectValue />
+              <SelectTrigger size="xs" className="min-w-0 flex-1">
+                <SelectValue>
+                  <div className="flex items-center gap-2 min-w-0">
+                    {selectedProvider === 'gmail' ? (
+                      <GmailIcon size={14} className="h-3.5 w-3.5 grayscale opacity-70 flex-shrink-0" />
+                    ) : (
+                      <OutlookIcon size={14} className="h-3.5 w-3.5 grayscale opacity-70 flex-shrink-0" />
+                    )}
+                    <Typography variant="xs" className="font-medium truncate">
+                      {selectedProvider === 'gmail' ? 'Gmail' : 'Outlook'}
+                    </Typography>
+                  </div>
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="gmail" disabled={!gmailAvailable}>
-                  <Typography variant="xs" className="font-medium">Gmail</Typography>
+                  <div className="flex items-center gap-2">
+                    <GmailIcon size={14} className="h-3.5 w-3.5 grayscale opacity-70" />
+                    <Typography variant="xs" className="font-medium">Gmail</Typography>
+                  </div>
                 </SelectItem>
                 <SelectItem value="outlook" disabled={!outlookAvailable}>
-                  <Typography variant="xs" className="font-medium">Outlook</Typography>
+                  <div className="flex items-center gap-2">
+                    <OutlookIcon size={14} className="h-3.5 w-3.5 grayscale opacity-70" />
+                    <Typography variant="xs" className="font-medium">Outlook</Typography>
+                  </div>
                 </SelectItem>
               </SelectContent>
             </Select>
