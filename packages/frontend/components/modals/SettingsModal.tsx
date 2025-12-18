@@ -10,6 +10,7 @@ import {
   Palette,
   Video,
   Brain,
+  Keyboard,
 } from 'lucide-react'
 
 import { Button } from '../ui/button'
@@ -33,7 +34,8 @@ import {
   SubscriptionTab, 
   ConnectionsTab,
   MeetingAgentTab,
-  AISettingsTab
+  AISettingsTab,
+  KeybindsTab
 } from './settings-tabs'
 import { handleUpdateProfile } from './handlers/settingsHandlers'
 
@@ -223,6 +225,11 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       id: 'appearance',
       label: 'Appearance',
       icon: Palette,
+    },
+    {
+      id: 'keybinds',
+      label: 'Keyboard Shortcuts',
+      icon: Keyboard,
     },
     {
       id: 'ai-settings',
@@ -448,6 +455,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   isDarkMode={isDarkMode}
                   onThemeToggle={handleThemeToggle}
                 />
+              )}
+
+              {activeTab === 'keybinds' && (
+                <KeybindsTab />
               )}
 
               {activeTab === 'ai-settings' && (

@@ -43,6 +43,11 @@ import { openFileInTab, openEmailInTab, handleCloseTab, handleTabChange } from '
 import { isDrawioFile, isTldrawFile, isPowerPointFile } from './handlers/fileTypeUtils';
 import { createWorkspacesKeyboardHandler } from './handlers/createWorkspacesKeyboardHandler';
 import { Kbd, KbdGroup } from '../../components/ui/kbd';
+import { 
+  getStoredKeybinds, 
+  getActiveKey,
+  KeybindsState 
+} from '../../components/modals/settings-tabs/handlers/keybindHandlers';
 import { FileSearchCommand } from '../../components/FileSearchCommand';
 import { EmailSearchResult } from '../../components/handlers/file-search-command-handlers';
 import { CalendarEvent } from '../../../backend/api/calendar/calendar';
@@ -79,6 +84,7 @@ const Workspaces = (): React.ReactNode => {
   const [isAssistantPanelCollapsed, setIsAssistantPanelCollapsed] = useState(false);
   const [isMac, setIsMac] = useState(false);
   const [fileSearchOpen, setFileSearchOpen] = useState(false);
+  const [keybinds, setKeybinds] = useState<KeybindsState>(getStoredKeybinds);
   const [calendarJumpDate, setCalendarJumpDate] = useState<Date | null>(null);
   const [calendarSelectedEvent, setCalendarSelectedEvent] = useState<CalendarEvent | null>(null);
   const [panelLayout, setPanelLayout] = useState<PanelGroup>({
@@ -411,6 +417,31 @@ const Workspaces = (): React.ReactNode => {
       );
     }
     
+    // Helper to render a keybind display
+    const renderKeybind = (keyString: string) => {
+      const hasShift = keyString.includes('shift+')
+      const key = keyString.replace('shift+', '').toUpperCase()
+      
+      return (
+        <KbdGroup>
+          <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
+          {hasShift && (
+            <>
+              <span className="text-muted-foreground">+</span>
+              <Kbd>{isMac ? '⇧' : 'Shift'}</Kbd>
+            </>
+          )}
+          <span className="text-muted-foreground">+</span>
+          <Kbd>{key}</Kbd>
+        </KbdGroup>
+      )
+    }
+
+    const newAgentKey = getActiveKey(keybinds.newAgent)
+    const searchFilesKey = getActiveKey(keybinds.searchFiles)
+    const toggleSidebarKey = getActiveKey(keybinds.toggleFileSidebar)
+    const toggleSidebarAltKey = getActiveKey(keybinds.toggleFileSidebarAlt)
+
     return (
       <div className="h-full flex flex-col items-center justify-center gap-4">
         <Image 
@@ -424,48 +455,40 @@ const Workspaces = (): React.ReactNode => {
         <div className="flex flex-col items-center gap-4">
           <div className="flex flex-col items-center gap-2">
             <p className="text-sm text-muted-foreground">Create a new agent</p>
-            <KbdGroup>
-              <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-              <span className="text-muted-foreground">+</span>
-              <Kbd>N</Kbd>
-            </KbdGroup>
+            {renderKeybind(newAgentKey)}
           </div>
           <div className="flex flex-col items-center gap-2">
             <p className="text-sm text-muted-foreground">Search files</p>
-            <KbdGroup>
-              <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-              <span className="text-muted-foreground">+</span>
-              <Kbd>P</Kbd>
-            </KbdGroup>
+            {renderKeybind(searchFilesKey)}
           </div>
           <div className="flex flex-col items-center gap-2">
             <p className="text-sm text-muted-foreground">Toggle file sidebar</p>
             <div className="flex items-center gap-2">
-              <KbdGroup>
-                <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-                <span className="text-muted-foreground">+</span>
-                <Kbd>H</Kbd>
-              </KbdGroup>
+              {renderKeybind(toggleSidebarKey)}
               <span className="text-xs text-muted-foreground">or</span>
-              <KbdGroup>
-                <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-                <span className="text-muted-foreground">+</span>
-                <Kbd>⇧</Kbd>
-                <span className="text-muted-foreground">+</span>
-                <Kbd>L</Kbd>
-              </KbdGroup>
+              {renderKeybind(toggleSidebarAltKey)}
             </div>
           </div>
         </div>
       </div>
     );
-  }, [renderPanelWrapper, isMac]);
+  }, [renderPanelWrapper, isMac, keybinds]);
 
   // Detect Mac platform for keyboard shortcut display
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0)
     }
+  }, []);
+
+  // Listen for keybind updates
+  useEffect(() => {
+    function handleKeybindsUpdate() {
+      setKeybinds(getStoredKeybinds())
+    }
+    
+    window.addEventListener('keybinds-updated', handleKeybindsUpdate)
+    return () => window.removeEventListener('keybinds-updated', handleKeybindsUpdate)
   }, []);
 
   // Register global keyboard shortcuts - use capture phase to ensure they work universally
