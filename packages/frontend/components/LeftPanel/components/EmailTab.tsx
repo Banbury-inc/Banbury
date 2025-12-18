@@ -811,18 +811,18 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
       {/* Email Tab Header */}
       <div className="flex flex-col bg-card flex-shrink-0">
         <div className="flex items-center justify-between px-4 py-3 border-b gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="flex items-center gap-2 min-w-0 flex-1 @container">
             {/* Provider Selector */}
             <Select value={selectedProvider} onValueChange={(v) => handleProviderChange(v as EmailProvider)}>
-              <SelectTrigger size="xs" className="min-w-0 flex-1">
+              <SelectTrigger size="xs" className="min-w-0 w-auto">
                 <SelectValue>
                   <div className="flex items-center gap-2 min-w-0">
                     {selectedProvider === 'gmail' ? (
-                      <GmailIcon size={14} className="h-3.5 w-3.5 grayscale opacity-70 flex-shrink-0" />
+                      <GmailIcon size={14} className="h-3.5 w-3.5 flex-shrink-0" />
                     ) : (
-                      <OutlookIcon size={14} className="h-3.5 w-3.5 grayscale opacity-70 flex-shrink-0" />
+                      <OutlookIcon size={14} className="h-3.5 w-3.5 flex-shrink-0" />
                     )}
-                    <Typography variant="xs" className="font-medium truncate">
+                    <Typography variant="xs" className="font-medium truncate hidden @[280px]:inline">
                       {selectedProvider === 'gmail' ? 'Gmail' : 'Outlook'}
                     </Typography>
                   </div>
@@ -831,13 +831,13 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
               <SelectContent>
                 <SelectItem value="gmail" disabled={!gmailAvailable}>
                   <div className="flex items-center gap-2">
-                    <GmailIcon size={14} className="h-3.5 w-3.5 grayscale opacity-70" />
+                    <GmailIcon size={14} className="h-3.5 w-3.5" />
                     <Typography variant="xs" className="font-medium">Gmail</Typography>
                   </div>
                 </SelectItem>
                 <SelectItem value="outlook" disabled={!outlookAvailable}>
                   <div className="flex items-center gap-2">
-                    <OutlookIcon size={14} className="h-3.5 w-3.5 grayscale opacity-70" />
+                    <OutlookIcon size={14} className="h-3.5 w-3.5" />
                     <Typography variant="xs" className="font-medium">Outlook</Typography>
                   </div>
                 </SelectItem>
@@ -846,7 +846,7 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
             
             {/* Label/Folder Navigation */}
             <Select value={selectedLabelId} onValueChange={handleLabelChange}>
-              <SelectTrigger size="xs" className="min-w-0 flex-1">
+              <SelectTrigger size="xs" className="min-w-0 w-auto">
                 <SelectValue>
                   <div className="flex items-center gap-2 min-w-0">
                     {(() => {
@@ -857,7 +857,7 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
                       const Icon = getLabelIcon(selectedLabelId)
                       return <Icon className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.5} />
                     })()}
-                    <Typography variant="xs" className="font-medium truncate">
+                    <Typography variant="xs" className="font-medium truncate hidden @[280px]:inline">
                       {selectedProvider === 'outlook' 
                         ? (outlookFolders.find(f => f.id === selectedLabelId)?.name || selectedLabelId)
                         : getLabelDisplayName(selectedLabel)}

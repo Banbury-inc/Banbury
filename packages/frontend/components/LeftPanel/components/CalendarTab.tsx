@@ -302,19 +302,19 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
     <div className="h-full flex flex-col">
       <div className="flex flex-col bg-card">
         <div className="flex items-center justify-between px-4 py-3 border-b min-w-0 gap-3">
-          <div className="flex items-center min-w-0 flex-1 overflow-hidden">
+          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden @container">
             {/* Provider Selector */}
             <Select value={provider} onValueChange={handleProviderChange}>
-              <SelectTrigger size="xs" className="min-w-0 flex-shrink-0">
+              <SelectTrigger size="xs" className="min-w-0 w-auto">
                 <SelectValue>
                   <div className="flex items-center gap-2 min-w-0">
                     {isGoogleProvider ? (
-                      <GoogleCalendarIcon className="h-3.5 w-3.5 grayscale opacity-70 flex-shrink-0" />
+                      <GoogleCalendarIcon className="h-3.5 w-3.5 flex-shrink-0" />
                     ) : (
-                      <OutlookIcon size={14} className="h-3.5 w-3.5 grayscale opacity-70 flex-shrink-0" />
+                      <OutlookIcon size={14} className="h-3.5 w-3.5 flex-shrink-0" />
                     )}
-                    <Typography variant="xs" className="font-medium truncate">
-                      {isGoogleProvider ? 'Google Calendar' : 'Microsoft Calendar'}
+                    <Typography variant="xs" className="font-medium truncate hidden @[280px]:inline">
+                      {isGoogleProvider ? 'Google' : 'Microsoft'}
                     </Typography>
                   </div>
                 </SelectValue>
@@ -324,14 +324,14 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
                   <SelectLabel>Calendar Provider</SelectLabel>
                   <SelectItem value="google">
                     <div className="flex items-center gap-2">
-                      <GoogleCalendarIcon className="h-3.5 w-3.5 grayscale opacity-70" />
-                      <Typography variant="xs" className="font-medium">Google Calendar</Typography>
+                      <GoogleCalendarIcon className="h-3.5 w-3.5" />
+                      <Typography variant="xs" className="font-medium">Google</Typography>
                     </div>
                   </SelectItem>
                   <SelectItem value="microsoft">
                     <div className="flex items-center gap-2">
-                      <OutlookIcon size={14} className="h-3.5 w-3.5 grayscale opacity-70" />
-                      <Typography variant="xs" className="font-medium">Microsoft Calendar</Typography>
+                      <OutlookIcon size={14} className="h-3.5 w-3.5" />
+                      <Typography variant="xs" className="font-medium">Microsoft</Typography>
                     </div>
                   </SelectItem>
                 </SelectGroup>
@@ -348,9 +348,9 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
                     title="Calendars"
                     className="flex-shrink-0"
                   >
-                    <Calendar className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
+                    <Calendar className="h-3.5 w-3.5 @[280px]:mr-1" strokeWidth={1.5} />
                     {totalCount > 0 && (
-                      <Typography variant="xs" className="font-medium">
+                      <Typography variant="xs" className="font-medium hidden @[280px]:inline">
                         {visibleCount}/{totalCount}
                       </Typography>
                     )}
