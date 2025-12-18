@@ -22,6 +22,10 @@ import CalendarFeatureTab from './components/Tabs/CalendarFeatureTab';
 import CanvasFeatureTab from './components/Tabs/CanvasFeatureTab';
 import GmailFeatureTab from './components/Tabs/GmailFeatureTab';
 import MeetingAgentFeatureTab from './components/Tabs/MeetingAgentFeatureTab';
+import PowerPointFeatureTab from './components/Tabs/PowerPointFeatureTab'
+import ContextWheelTab from './components/Tabs/ContextWheelTab'
+import FileSharingTab from './components/Tabs/FileSharingTab'
+import BillingTab from './components/Tabs/BillingTab'
 
 const Docs = () => {
   const router = useRouter();
@@ -160,8 +164,24 @@ const Docs = () => {
               <MeetingAgentFeatureTab />
             )}
 
+            {activeSection === 'powerpoint-feature' && (
+              <PowerPointFeatureTab />
+            )}
+
+            {activeSection === 'context-wheel' && (
+              <ContextWheelTab />
+            )}
+
+            {activeSection === 'file-sharing' && (
+              <FileSharingTab />
+            )}
+
+            {activeSection === 'billing' && (
+              <BillingTab />
+            )}
+
             {/* Default Tab - Show when no specific tab is selected */}
-            {!['what-is-banbury', 'features', 'using-banbury', 'task-studio', 'knowledge-graph', 'memories', 'integrations', 'gmail', 'google-docs', 'google-sheets', 'outlook', 'x', 'docs-feature', 'spreadsheets-feature', 'folders-feature', 'browse-feature', 'calendar-feature', 'canvas-feature', 'gmail-feature', 'meeting-agent-feature'].includes(activeSection) && (
+            {!['what-is-banbury', 'features', 'using-banbury', 'task-studio', 'knowledge-graph', 'memories', 'integrations', 'gmail', 'google-docs', 'google-sheets', 'outlook', 'x', 'docs-feature', 'spreadsheets-feature', 'folders-feature', 'browse-feature', 'calendar-feature', 'canvas-feature', 'gmail-feature', 'meeting-agent-feature', 'powerpoint-feature', 'context-wheel', 'file-sharing', 'billing'].includes(activeSection) && (
               <WhatIsBanburyTab />
             )}
           </Box>

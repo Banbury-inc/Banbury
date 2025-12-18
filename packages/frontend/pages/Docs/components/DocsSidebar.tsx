@@ -38,11 +38,14 @@ const DocsSidebar = ({ activeSection }: DocsSidebarProps): JSX.Element => {
         { id: 'gmail-feature', title: 'Gmail', href: '/docs/gmail-feature' },
         { id: 'docs-feature', title: 'Docs', href: '/docs/docs-feature' },
         { id: 'spreadsheets-feature', title: 'Spreadsheets', href: '/docs/spreadsheets-feature' },
+        { id: 'powerpoint-feature', title: 'PowerPoint', href: '/docs/powerpoint-feature' },
+        { id: 'context-wheel', title: 'Context Wheel', href: '/docs/context-wheel' },
         { id: 'calendar-feature', title: 'Calendar', href: '/docs/calendar-feature' },
         { id: 'meeting-agent-feature', title: 'Meetings', href: '/docs/meeting-agent-feature' },
         { id: 'folders-feature', title: 'Folders', href: '/docs/folders-feature' },
         { id: 'browse-feature', title: 'Browse', href: '/docs/browse-feature' },
         { id: 'canvas-feature', title: 'Canvas', href: '/docs/canvas-feature' },
+        { id: 'file-sharing', title: 'File Sharing', href: '/docs/file-sharing' },
       ]
     },
     {
@@ -72,10 +75,17 @@ const DocsSidebar = ({ activeSection }: DocsSidebarProps): JSX.Element => {
         { id: 'x', title: 'X (Twitter)', href: '/docs/x' },
       ]
     },
+    {
+      id: 'account',
+      title: 'Account',
+      items: [
+        { id: 'billing', title: 'Billing', href: '/docs/billing' },
+      ]
+    },
   ];
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(sections.map(section => section.id))
+    new Set(['account', ...sections.map(section => section.id)])
   );
 
   const toggleSection = (sectionId: string) => {
