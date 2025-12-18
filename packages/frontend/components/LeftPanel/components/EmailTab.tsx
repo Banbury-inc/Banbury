@@ -813,7 +813,7 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
           <div className="flex items-center gap-2">
             {/* Provider Selector */}
             <Select value={selectedProvider} onValueChange={(v) => handleProviderChange(v as EmailProvider)}>
-              <SelectTrigger size="sm" className="w-[100px]">
+              <SelectTrigger size="xs" className="w-[100px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -828,7 +828,7 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
             
             {/* Label/Folder Navigation */}
             <Select value={selectedLabelId} onValueChange={handleLabelChange}>
-              <SelectTrigger size="sm" className="min-w-[120px]">
+              <SelectTrigger size="xs" className="min-w-[120px]">
                 <SelectValue>
                   <div className="flex items-center gap-2">
                     {(() => {
@@ -934,7 +934,7 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="sm"
+              size="xs"
               onClick={() => selectedProvider === 'outlook' ? loadOutlookMessages() : loadMessages()}
               disabled={loading}
               title="Refresh"
@@ -943,7 +943,7 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
             </Button>
             <Button
               variant="default"
-              size="sm"
+              size="xs"
               title="Compose"
               onClick={() => onComposeEmail ? onComposeEmail() : setComposeOpen(true)}
             >

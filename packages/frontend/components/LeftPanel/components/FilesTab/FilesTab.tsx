@@ -183,7 +183,7 @@ export function FilesTab({
           <div className="flex items-center min-w-0 flex-1 overflow-hidden">
             {/* File View Mode Navigation */}
             <Select value={fileViewMode} onValueChange={(value) => setFileViewMode(value as 'local' | 'recent' | 'starred' | 'drive' | 'drive-recent' | 'drive-starred' | 'drive-trash')}>
-              <SelectTrigger size="sm" className="min-w-[120px]">
+              <SelectTrigger size="xs" className="min-w-[120px]">
                 <SelectValue>
                   <div className="flex items-center gap-2">
                     {(() => {
@@ -260,7 +260,7 @@ export function FilesTab({
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="xs"
                   title="Filter by file type"
                   className={`flex-shrink-0 relative ${activeFilters.size > 0 ? 'border-primary' : ''}`}
                 >
@@ -303,7 +303,7 @@ export function FilesTab({
             </Popover>
             <Button
               variant="outline"
-              size="sm"
+              size="xs"
               onClick={() => handleRefreshFiles({ setRefreshCounter: setLocalRefreshCounter, setIsRefreshing })}
               disabled={isRefreshing}
               title="Refresh"
@@ -340,7 +340,7 @@ export function FilesTab({
                   }
                 }}
               >
-                <SelectTrigger size="sm" className="bg-foreground hover:bg-foreground hover:text-primary-foreground flex-shrink-0">
+                <SelectTrigger size="xs" className="bg-foreground hover:bg-foreground hover:text-primary-foreground flex-shrink-0">
                   <Plus className="h-4 w-4 text-primary-foreground" strokeWidth={1} />
                 </SelectTrigger>
                 <SelectContent>

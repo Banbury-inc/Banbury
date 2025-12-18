@@ -217,7 +217,7 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="xs"
                   title="Calendars"
                 >
                   <Calendar className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
@@ -264,7 +264,7 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="sm"
+              size="xs"
               onClick={() => {
                 if (onOpenCalendarApp) {
                   onOpenCalendarApp()
@@ -278,7 +278,7 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
             </Button>
             <Button
               variant="outline"
-              size="sm"
+              size="xs"
               onClick={() => loadMergedEvents()}
               disabled={loading}
               title="Refresh"
@@ -287,7 +287,7 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
             </Button>
             <Button
               variant="default"
-              size="sm"
+              size="xs"
               onClick={handleCreateEvent}
               title="Create Event"
             >
