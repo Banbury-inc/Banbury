@@ -152,6 +152,18 @@ export function ShareFileDialog({
     return user.username
   }
 
+  // Fix: Clean up body pointer-events when dialog closes (Radix animation cleanup bug)
+  React.useEffect(() => {
+    if (!open) {
+      const timeoutId = setTimeout(() => {
+        if (document.body.style.pointerEvents === 'none') {
+          document.body.style.pointerEvents = '';
+        }
+      }, 350);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [open]);
+
   if (!file) return null
 
   return (
