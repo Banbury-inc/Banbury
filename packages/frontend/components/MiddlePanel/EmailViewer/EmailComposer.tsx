@@ -2,8 +2,7 @@ import {
   Send, 
   X, 
   Paperclip, 
-  Save,
-  ArrowLeft
+  Save
 } from 'lucide-react'
 import { useState, useCallback, useEffect } from 'react'
 import { Button } from '../../ui/button'
@@ -12,6 +11,7 @@ import { useToast } from '../../ui/use-toast'
 import { EmailTiptapEditor } from './EmailTiptapEditor'
 import RecipientChipsInput from './RecipientChipsInput'
 import { ApiService } from '../../../../backend/api/apiService'
+import { useKeyboardShortcuts, getSendShortcutText } from './handlers/useKeyboardShortcuts'
 
 const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
   let binary = ''
@@ -45,6 +45,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
   const [signature, setSignature] = useState<string>('')
   const [loadingSignature, setLoadingSignature] = useState(false)
   const { toast } = useToast()
+  const sendShortcutText = getSendShortcutText()
 
   // Fetch signature when component mounts (only for new emails, not replies)
   useEffect(() => {
@@ -273,6 +274,13 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
     setAttachments(prev => prev.filter((_, i) => i !== index))
   }, [])
 
+  // Enable keyboard shortcut (Ctrl+Enter / Cmd+Enter) when form is valid and not sending
+  const canSend = parseRecipients(form.to).length > 0 && form.subject && !isContentEmpty(form.body) && !sending
+  useKeyboardShortcuts({
+    onSend: handleSend,
+    enabled: canSend
+  })
+
   return (
     <div className="h-full flex flex-col bg-card">
       {/* Email Form */}
@@ -389,13 +397,12 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
                 variant="default"
                 size="sm"
                 onClick={handleSend}
-                disabled={
-                  sending || parseRecipients(form.to).length === 0 || !form.subject || isContentEmpty(form.body)
-                }
+                disabled={!canSend}
                 className="flex-shrink-0 w-auto px-4 bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 <Send className="h-4 w-4 mr-2" />
                 {sending ? 'Sending...' : 'Send'}
+                <span className="ml-2 text-xs opacity-70">{sendShortcutText}</span>
               </Button>
               <Button
                 variant="secondary"
