@@ -1,5 +1,5 @@
 import { RefreshCw, Folder } from "lucide-react"
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { DriveFileTreeItem } from "./DriveFileTreeItem"
 import { Button } from "../../../../ui/button"
 import { DriveFile } from "../../../../../../backend/api/drive/drive"
@@ -7,17 +7,20 @@ import { ApiService } from "../../../../../../backend/api/apiService"
 import { Typography } from "../../../../ui/typography"
 import { handleFetchDriveFiles, DriveViewMode } from "../handlers/handleFetchDriveFiles"
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
+import { filterDriveFiles } from "../handlers/handleFileTypeFilter"
 
 interface GoogleDriveViewProps {
   viewMode?: DriveViewMode
   onFileSelect?: (file: FileSystemItem) => void
   selectedFile?: FileSystemItem | null
+  activeFilters?: Set<string>
 }
 
 export function GoogleDriveView({
   viewMode = 'my-drive',
   onFileSelect,
   selectedFile,
+  activeFilters = new Set(),
 }: GoogleDriveViewProps) {
   const [driveFiles, setDriveFiles] = useState<DriveFile[]>([])
   const [driveLoading, setDriveLoading] = useState(false)
@@ -179,6 +182,11 @@ export function GoogleDriveView({
     }
   }, [viewMode])
 
+  // Apply filters to Drive files
+  const filteredDriveFiles = useMemo(() => {
+    return filterDriveFiles(driveFiles, activeFilters)
+  }, [driveFiles, activeFilters])
+
   return (
     <div 
       className="h-full overflow-y-auto sidebar-scrollbar"
@@ -220,19 +228,23 @@ export function GoogleDriveView({
         </div>
       )}
       
-      {!checkingDriveAccess && driveAvailable && !driveLoading && driveFiles.length === 0 && !driveError && (
+      {!checkingDriveAccess && driveAvailable && !driveLoading && filteredDriveFiles.length === 0 && !driveError && (
         <div className="px-3 py-2">
           <Typography variant="muted">
-            {viewMode === 'recent' && 'No recent files found'}
-            {viewMode === 'starred' && 'No starred files found'}
-            {viewMode === 'trash' && 'No files in trash'}
-            {viewMode === 'my-drive' && 'No Google Drive files found'}
+            {activeFilters.size > 0 ? 'No matching files' : (
+              <>
+                {viewMode === 'recent' && 'No recent files found'}
+                {viewMode === 'starred' && 'No starred files found'}
+                {viewMode === 'trash' && 'No files in trash'}
+                {viewMode === 'my-drive' && 'No Google Drive files found'}
+              </>
+            )}
           </Typography>
         </div>
       )}
 
       {/* Google Drive file tree */}
-      {driveAvailable && driveFiles
+      {driveAvailable && filteredDriveFiles
         .slice() // Create a copy to avoid mutating state
         .sort((a, b) => {
           // For my-drive mode, sort folders first then by name
@@ -271,7 +283,7 @@ export function GoogleDriveView({
       )}
       
       {/* End of Drive files indicator */}
-      {!driveLoading && !isLoadingMoreDrive && driveFiles.length > 0 && !driveNextPageToken && (
+      {!driveLoading && !isLoadingMoreDrive && filteredDriveFiles.length > 0 && !driveNextPageToken && (
         <div className="flex items-center justify-center px-3 py-4">
           <Typography variant="muted" className="text-xs">End of files</Typography>
         </div>

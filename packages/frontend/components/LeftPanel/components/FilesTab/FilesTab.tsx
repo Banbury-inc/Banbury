@@ -11,6 +11,8 @@ import {
   Clock,
   Star,
   Trash2,
+  Filter,
+  X,
 } from "lucide-react"
 import { useState, useRef, useCallback } from 'react'
 import { LocalFilesView } from "./components/LocalFilesView"
@@ -20,8 +22,11 @@ import { Button } from "../../../ui/button"
 import { FileSystemItem } from "../../../../utils/fileTreeUtils"
 import { Typography } from "../../../ui/typography"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from "../../../ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "../../../ui/popover"
+import { Checkbox } from "../../../ui/checkbox"
 import { handleRefreshFiles } from "./handlers/handleRefreshFiles"
 import { handleRefreshComplete } from "./handlers/handleRefreshComplete"
+import { FILE_TYPE_CATEGORIES } from "./handlers/handleFileTypeFilter"
 
 interface FilesTabProps {
   userInfo?: {
@@ -69,6 +74,25 @@ export function FilesTab({
   onCreateFolder,
 }: FilesTabProps) {
   const [fileViewMode, setFileViewMode] = useState<'local' | 'recent' | 'starred' | 'drive' | 'drive-recent' | 'drive-starred' | 'drive-trash'>('local')
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set())
+
+  // Toggle a filter category
+  const toggleFilter = (categoryKey: string) => {
+    setActiveFilters(prev => {
+      const newFilters = new Set(prev)
+      if (newFilters.has(categoryKey)) {
+        newFilters.delete(categoryKey)
+      } else {
+        newFilters.add(categoryKey)
+      }
+      return newFilters
+    })
+  }
+
+  // Clear all filters
+  const clearFilters = () => {
+    setActiveFilters(new Set())
+  }
 
   // Helper to get icon for view mode
   const getViewModeIcon = (mode: string) => {
@@ -232,6 +256,51 @@ export function FilesTab({
             </Select>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  title="Filter by file type"
+                  className={`flex-shrink-0 relative ${activeFilters.size > 0 ? 'border-primary' : ''}`}
+                >
+                  <Filter className="h-4 w-4" />
+                  {activeFilters.size > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center">
+                      {activeFilters.size}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2" align="end">
+                <div className="flex items-center justify-between mb-2 pb-2 border-b">
+                  <Typography variant="xs" className="font-medium">Filter by type</Typography>
+                  {activeFilters.size > 0 && (
+                    <button
+                      onClick={clearFilters}
+                      className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                    >
+                      <X className="h-3 w-3" />
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  {Object.entries(FILE_TYPE_CATEGORIES).map(([key, category]) => (
+                    <label
+                      key={key}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={activeFilters.has(key)}
+                        onCheckedChange={() => toggleFilter(key)}
+                      />
+                      <Typography variant="xs">{category.label}</Typography>
+                    </label>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
             <Button
               variant="outline"
               size="sm"
@@ -348,6 +417,7 @@ export function FilesTab({
             onCreatePowerpoint={onCreatePowerpoint}
             fileInputRef={fileInputRef}
             folderInputRef={folderInputRef}
+            activeFilters={activeFilters}
           />
         )}
 
@@ -356,6 +426,7 @@ export function FilesTab({
             viewMode="my-drive"
             onFileSelect={onFileSelect}
             selectedFile={selectedFile}
+            activeFilters={activeFilters}
           />
         )}
 
@@ -364,6 +435,7 @@ export function FilesTab({
             viewMode="recent"
             onFileSelect={onFileSelect}
             selectedFile={selectedFile}
+            activeFilters={activeFilters}
           />
         )}
 
@@ -372,6 +444,7 @@ export function FilesTab({
             viewMode="starred"
             onFileSelect={onFileSelect}
             selectedFile={selectedFile}
+            activeFilters={activeFilters}
           />
         )}
 
@@ -380,6 +453,7 @@ export function FilesTab({
             viewMode="trash"
             onFileSelect={onFileSelect}
             selectedFile={selectedFile}
+            activeFilters={activeFilters}
           />
         )}
       </div>

@@ -21,6 +21,7 @@ import { handleCreatePowerpointSubmit } from "../handlers/handleCreatePowerpoint
 import { handleCreateRootFolderSubmit } from "../handlers/handleCreateRootFolderSubmit"
 import { getRecentFileIds, addRecentFileId } from "../handlers/handleRecentFiles"
 import { fetchStarredFileIds, starFile, unstarFile } from "../handlers/handleStarredFiles"
+import { filterFileTree, filterFlatFileList } from "../handlers/handleFileTypeFilter"
 
 interface LocalFilesViewProps {
   viewMode: 'local' | 'recent' | 'starred'
@@ -47,6 +48,7 @@ interface LocalFilesViewProps {
   onCreatePowerpoint?: (presentationName: string) => void
   fileInputRef: React.RefObject<HTMLInputElement>
   folderInputRef: React.RefObject<HTMLInputElement>
+  activeFilters?: Set<string>
 }
 
 export function LocalFilesView({
@@ -70,6 +72,7 @@ export function LocalFilesView({
   onCreatePowerpoint,
   fileInputRef,
   folderInputRef,
+  activeFilters = new Set(),
 }: LocalFilesViewProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [fileSystem, setFileSystem] = useState<FileSystemItem[]>([])
@@ -392,6 +395,19 @@ export function LocalFilesView({
       .map((id) => fileByIdMap.get(id))
       .filter((item): item is FileSystemItem => !!item && item.type === 'file')
   }, [starredFileIds, fileByIdMap])
+
+  // Apply filters to file lists
+  const filteredFileSystem = useMemo(() => {
+    return filterFileTree(fileSystem, activeFilters)
+  }, [fileSystem, activeFilters])
+
+  const filteredRecentFiles = useMemo(() => {
+    return filterFlatFileList(recentFiles, activeFilters)
+  }, [recentFiles, activeFilters])
+
+  const filteredStarredFiles = useMemo(() => {
+    return filterFlatFileList(starredFiles, activeFilters)
+  }, [starredFiles, activeFilters])
 
   // Wrapper for file select that tracks recent opens
   const handleFileSelectWithRecent = useCallback((file: FileSystemItem) => {
@@ -909,9 +925,9 @@ export function LocalFilesView({
             </div>
           )}
           
-          {viewMode === 'local' && !loading && !error && fileSystem.length === 0 && !uploadingFolder && (
+          {viewMode === 'local' && !loading && !error && filteredFileSystem.length === 0 && !uploadingFolder && (
             <div className="px-3 py-2">
-              <Typography variant="muted">No files found</Typography>
+              <Typography variant="muted">{activeFilters.size > 0 ? 'No matching files' : 'No files found'}</Typography>
             </div>
           )}
 
@@ -1094,12 +1110,12 @@ export function LocalFilesView({
           {/* Recent Files View */}
           {viewMode === 'recent' && (
             <>
-              {recentFiles.length === 0 ? (
+              {filteredRecentFiles.length === 0 ? (
                 <div className="px-3 py-2">
-                  <Typography variant="muted" className="text-sm">No recent files</Typography>
+                  <Typography variant="muted" className="text-sm">{activeFilters.size > 0 ? 'No matching files' : 'No recent files'}</Typography>
                 </div>
               ) : (
-                recentFiles.map((file) => (
+                filteredRecentFiles.map((file) => (
                   <FileTreeItem
                     key={file.file_id}
                     item={file}
@@ -1138,12 +1154,12 @@ export function LocalFilesView({
           {/* Starred Files View */}
           {viewMode === 'starred' && (
             <>
-              {starredFiles.length === 0 ? (
+              {filteredStarredFiles.length === 0 ? (
                 <div className="px-3 py-2">
-                  <Typography variant="muted" className="text-sm">No starred files</Typography>
+                  <Typography variant="muted" className="text-sm">{activeFilters.size > 0 ? 'No matching files' : 'No starred files'}</Typography>
                 </div>
               ) : (
-                starredFiles.map((file) => (
+                filteredStarredFiles.map((file) => (
                   <FileTreeItem
                     key={file.file_id}
                     item={file}
@@ -1180,7 +1196,7 @@ export function LocalFilesView({
           )}
           
           {/* Local file tree */}
-          {viewMode === 'local' && fileSystem.map((item) => (
+          {viewMode === 'local' && filteredFileSystem.map((item) => (
             <FileTreeItem
               key={item.id}
               item={item}

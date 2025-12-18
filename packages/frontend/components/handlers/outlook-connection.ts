@@ -33,4 +33,3 @@ export async function initiateOutlookOAuth({ callbackUrl }: { callbackUrl: strin
 export async function disconnectOutlookAccount(): Promise<void> {
   await ApiService.post('/authentication/outlook/disconnect/')
 }
-
