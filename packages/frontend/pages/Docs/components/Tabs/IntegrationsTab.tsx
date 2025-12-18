@@ -33,6 +33,12 @@ export default function IntegrationsTab() {
             <Typography variant="p" className="mb-1">
               • <Link href="/docs/outlook" className="underline underline-offset-4">Outlook</Link> — Email and calendar workflows (latest)
             </Typography>
+            <Typography variant="p" className="mb-1">
+              • <Link href="/docs/microsoft-calendar" className="underline underline-offset-4">Microsoft Calendar</Link> — Schedule and manage calendar events
+            </Typography>
+            <Typography variant="p" className="mb-1">
+              • <Link href="/docs/onedrive" className="underline underline-offset-4">OneDrive</Link> — Access and sync cloud files
+            </Typography>
             <Typography variant="p">
               • <Link href="/docs/x" className="underline underline-offset-4">X (Twitter)</Link> — Social media read/post
             </Typography>

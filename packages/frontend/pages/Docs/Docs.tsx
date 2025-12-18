@@ -12,6 +12,8 @@ import GmailTab from './components/Tabs/GmailTab';
 import GoogleDocsTab from './components/Tabs/GoogleDocsTab';
 import GoogleSheetsTab from './components/Tabs/GoogleSheetsTab';
 import OutlookTab from './components/Tabs/OutlookTab';
+import MicrosoftCalendarTab from './components/Tabs/MicrosoftCalendarTab';
+import OneDriveTab from './components/Tabs/OneDriveTab';
 import XTab from './components/Tabs/XTab';
 import MemoriesTab from './components/Tabs/MemoriesTab';
 import DocsFeatureTab from './components/Tabs/DocsFeatureTab';
@@ -127,6 +129,14 @@ const Docs = () => {
               <OutlookTab />
             )}
 
+            {activeSection === 'microsoft-calendar' && (
+              <MicrosoftCalendarTab />
+            )}
+
+            {activeSection === 'onedrive' && (
+              <OneDriveTab />
+            )}
+
             {activeSection === 'x' && (
               <XTab />
             )}
@@ -181,7 +191,7 @@ const Docs = () => {
             )}
 
             {/* Default Tab - Show when no specific tab is selected */}
-            {!['what-is-banbury', 'features', 'using-banbury', 'task-studio', 'knowledge-graph', 'memories', 'integrations', 'gmail', 'google-docs', 'google-sheets', 'outlook', 'x', 'docs-feature', 'spreadsheets-feature', 'folders-feature', 'browse-feature', 'calendar-feature', 'canvas-feature', 'gmail-feature', 'meeting-agent-feature', 'powerpoint-feature', 'context-wheel', 'file-sharing', 'billing'].includes(activeSection) && (
+            {!['what-is-banbury', 'features', 'using-banbury', 'task-studio', 'knowledge-graph', 'memories', 'integrations', 'gmail', 'google-docs', 'google-sheets', 'outlook', 'microsoft-calendar', 'onedrive', 'x', 'docs-feature', 'spreadsheets-feature', 'folders-feature', 'browse-feature', 'calendar-feature', 'canvas-feature', 'gmail-feature', 'meeting-agent-feature', 'powerpoint-feature', 'context-wheel', 'file-sharing', 'billing'].includes(activeSection) && (
               <WhatIsBanburyTab />
             )}
           </Box>

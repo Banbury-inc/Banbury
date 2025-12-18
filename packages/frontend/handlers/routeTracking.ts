@@ -166,7 +166,9 @@ function getDocsPageMetadata(section: string): { pageTitle: string; contentType:
     'google-docs': 'Docs - Google Docs Integration',
     'google-sheets': 'Docs - Google Sheets Integration',
     'outlook': 'Docs - Outlook Integration',
-    'x': 'Docs - X (Twitter) Integration'
+    'x': 'Docs - X (Twitter) Integration',
+    'microsoft-calendar': 'Docs - Microsoft Calendar Integration',
+    'onedrive': 'Docs - OneDrive Integration'
   }
 
   const contentTypeMap: Record<string, string> = {
@@ -189,7 +191,9 @@ function getDocsPageMetadata(section: string): { pageTitle: string; contentType:
     'google-docs': 'documentation - google docs integration',
     'google-sheets': 'documentation - google sheets integration',
     'outlook': 'documentation - outlook integration',
-    'x': 'documentation - x integration'
+    'x': 'documentation - x integration',
+    'microsoft-calendar': 'documentation - microsoft calendar integration',
+    'onedrive': 'documentation - onedrive integration'
   }
 
   return {

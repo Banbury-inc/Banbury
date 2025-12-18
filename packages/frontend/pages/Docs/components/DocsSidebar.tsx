@@ -72,6 +72,8 @@ const DocsSidebar = ({ activeSection }: DocsSidebarProps): JSX.Element => {
         { id: 'google-docs', title: 'Google Docs', href: '/docs/google-docs' },
         { id: 'google-sheets', title: 'Google Sheets', href: '/docs/google-sheets' },
         { id: 'outlook', title: 'Outlook', href: '/docs/outlook' },
+        { id: 'microsoft-calendar', title: 'Microsoft Calendar', href: '/docs/microsoft-calendar' },
+        { id: 'onedrive', title: 'OneDrive', href: '/docs/onedrive' },
         { id: 'x', title: 'X (Twitter)', href: '/docs/x' },
       ]
     },
