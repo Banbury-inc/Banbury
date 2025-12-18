@@ -21,12 +21,15 @@ import { Input } from '../../ui/old-input'
 import { Typography } from '../../ui/typography'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '../../ui/select'
 import { ApiService } from '../../../../backend/api/apiService'
-import { GmailMessage, GmailMessageListResponse, GmailLabel } from '../../../../backend/api/emails/emails'
+import { GmailMessage, GmailMessageListResponse, GmailLabel, OutlookMessage, OutlookFolder } from '../../../../backend/api/emails/emails'
 import { loadLabels as fetchLabels } from './handlers/loadLabels'
+import { checkOutlookConnectionStatus } from '../../handlers/outlook-connection'
+
+type EmailProvider = 'gmail' | 'outlook'
 
 interface EmailTabProps {
   onOpenEmailApp?: () => void
-  onMessageSelect?: (message: GmailMessage) => void
+  onMessageSelect?: (message: GmailMessage | OutlookMessage, provider: EmailProvider) => void
   onComposeEmail?: () => void
 }
 
@@ -42,6 +45,8 @@ interface ParsedEmail {
   hasAttachments: boolean
   labels: string[]
   isDraft: boolean
+  provider: EmailProvider
+  isStarred?: boolean
 }
 
 type GmailHeader = { name: string; value: string }
@@ -82,8 +87,12 @@ function getLabelIcon(labelId: string) {
 }
 
 export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
+  // Provider state
+  const [selectedProvider, setSelectedProvider] = useState<EmailProvider>('gmail')
+  
+  // Gmail state
   const [messages, setMessages] = useState<GmailMessageListResponse>({})
-  const [selectedMessage, setSelectedMessage] = useState<GmailMessage | null>(null)
+  const [selectedMessage, setSelectedMessage] = useState<GmailMessage | OutlookMessage | null>(null)
   const [parsedMessages, setParsedMessages] = useState<ParsedEmail[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -95,6 +104,13 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [gmailAvailable, setGmailAvailable] = useState<boolean | null>(null)
   const [checkingGmailAccess, setCheckingGmailAccess] = useState(false)
+  
+  // Outlook state
+  const [outlookMessages, setOutlookMessages] = useState<OutlookMessage[]>([])
+  const [outlookFolders, setOutlookFolders] = useState<OutlookFolder[]>([])
+  const [outlookAvailable, setOutlookAvailable] = useState<boolean | null>(null)
+  const [checkingOutlookAccess, setCheckingOutlookAccess] = useState(false)
+  const [outlookNextPageToken, setOutlookNextPageToken] = useState<string | undefined>(undefined)
   
   // Compose form state
   const [composeForm, setComposeForm] = useState({
@@ -163,7 +179,7 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
     
     // For sent emails, show "To" field as the primary contact
     const isSentEmail = selectedLabelId === 'SENT'
-    const isDraft = selectedLabelId === 'DRAFT' || message.labelIds?.includes('DRAFT')
+    const isDraft = selectedLabelId === 'DRAFT' || (message.labelIds?.includes('DRAFT') ?? false)
     
     // Check for attachments in nested parts
     const hasAttachments = (payload: any): boolean => {
@@ -199,7 +215,60 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
       isRead: !message.labelIds?.includes('UNREAD'),
       hasAttachments: hasAttachments(message.payload),
       labels: message.labelIds || [],
-      isDraft
+      isDraft,
+      provider: 'gmail',
+      isStarred: message.labelIds?.includes('STARRED') ?? false
+    }
+  }, [selectedLabelId])
+
+  // Parse Outlook message into readable format
+  const parseOutlookMessage = useCallback((message: OutlookMessage): ParsedEmail => {
+    const isSentEmail = selectedLabelId.toLowerCase() === 'sentitems'
+    const isDraft = selectedLabelId.toLowerCase() === 'drafts'
+    
+    // Format from address
+    let fromStr = 'Unknown'
+    if (message.from?.emailAddress) {
+      fromStr = message.from.emailAddress.name || message.from.emailAddress.address
+    }
+    
+    // Format to addresses
+    let toStr = ''
+    if (message.toRecipients?.length) {
+      toStr = message.toRecipients.map(r => r.emailAddress?.name || r.emailAddress?.address || '').join(', ')
+    }
+    
+    // Handle date parsing
+    let dateString = 'Unknown'
+    const dateSource = message.receivedDateTime || message.sentDateTime
+    if (dateSource) {
+      try {
+        const date = new Date(dateSource)
+        if (!isNaN(date.getTime())) {
+          dateString = date.toLocaleString()
+        }
+      } catch (e) {
+        console.error('Failed to parse date:', dateSource)
+      }
+    }
+    
+    // Check if flagged (Outlook equivalent of starred)
+    const isStarred = message.flag?.flagStatus === 'flagged'
+    
+    return {
+      id: message.id,
+      threadId: message.conversationId || message.id,
+      subject: message.subject || '(No Subject)',
+      from: isSentEmail ? 'You' : fromStr,
+      to: toStr,
+      date: dateString,
+      snippet: message.bodyPreview || '',
+      isRead: message.isRead ?? true,
+      hasAttachments: message.hasAttachments ?? false,
+      labels: [], // Outlook uses folders, not labels
+      isDraft,
+      provider: 'outlook',
+      isStarred
     }
   }, [selectedLabelId])
 
@@ -213,6 +282,86 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
       setLabelsLoading(false)
     }
   }, [])
+
+  // Load folders from Outlook API
+  const loadOutlookFolders = useCallback(async () => {
+    setLabelsLoading(true)
+    try {
+      const response = await ApiService.Emails.listOutlookFolders()
+      setOutlookFolders(response.folders || [])
+    } catch (err) {
+      console.error('Failed to load Outlook folders:', err)
+    } finally {
+      setLabelsLoading(false)
+    }
+  }, [])
+
+  // Load Outlook messages
+  const loadOutlookMessages = useCallback(async (pageToken?: string, query?: string) => {
+    if (pageToken) {
+      setIsLoadingMore(true)
+    } else {
+      setLoading(true)
+    }
+    setError(null)
+    try {
+      const response = await ApiService.Emails.listOutlookMessages({
+        folderId: selectedLabelId,
+        maxResults: 20,
+        pageToken,
+        q: query
+      })
+      
+      if (response.messages && response.messages.length > 0) {
+        // Get full message details in batch
+        const messageIds = response.messages.map((msg: OutlookMessage) => msg.id)
+        try {
+          const batchResponse = await ApiService.Emails.getOutlookMessagesBatch(messageIds)
+          const fullMessages: OutlookMessage[] = []
+          
+          for (const msg of response.messages) {
+            const fullMessage = batchResponse.messages[msg.id]
+            if (fullMessage && !('error' in fullMessage)) {
+              fullMessages.push(fullMessage)
+            } else {
+              // Add partial message if batch fails
+              fullMessages.push(msg)
+            }
+          }
+          
+          if (pageToken) {
+            setOutlookMessages(prev => [...prev, ...fullMessages])
+          } else {
+            setOutlookMessages(fullMessages)
+          }
+          setOutlookNextPageToken(response.nextPageToken)
+        } catch (batchError) {
+          console.error('Failed to load Outlook messages in batch:', batchError)
+          // Use the list response directly
+          if (pageToken) {
+            setOutlookMessages(prev => [...prev, ...response.messages])
+          } else {
+            setOutlookMessages(response.messages)
+          }
+          setOutlookNextPageToken(response.nextPageToken)
+        }
+      } else {
+        if (!pageToken) {
+          setOutlookMessages([])
+        }
+        setOutlookNextPageToken(undefined)
+      }
+    } catch (err) {
+      console.error('Failed to load Outlook messages:', err)
+      setError('Failed to load Outlook emails. Please check your connection.')
+    } finally {
+      if (pageToken) {
+        setIsLoadingMore(false)
+      } else {
+        setLoading(false)
+      }
+    }
+  }, [selectedLabelId])
 
   // Load messages
   const loadMessages = useCallback(async (pageToken?: string, query?: string) => {
@@ -321,23 +470,36 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
   }, [selectedLabelId])
 
   // Load full message details
-  const loadMessageDetails = useCallback(async (messageId: string) => {
+  const loadMessageDetails = useCallback(async (messageId: string, provider: EmailProvider = 'gmail') => {
     try {
-      const message = await ApiService.Emails.getMessage(messageId)
-      
-      // Mark as read if unread
-      if (message.labelIds?.includes('UNREAD')) {
-        await ApiService.Emails.modifyMessage(messageId, {
-          removeLabelIds: ['UNREAD']
-        })
-      }
-      
-      // If onMessageSelect is provided, use it to open in main panel
-      if (onMessageSelect) {
-        onMessageSelect(message)
+      if (provider === 'outlook') {
+        const message = await ApiService.Emails.getOutlookMessage(messageId)
+        
+        // Mark as read if unread
+        if (!message.isRead) {
+          await ApiService.Emails.modifyOutlookMessage(messageId, { isRead: true })
+        }
+        
+        if (onMessageSelect) {
+          onMessageSelect(message, 'outlook')
+        } else {
+          setSelectedMessage(message)
+        }
       } else {
-        // Otherwise, show in the tab (fallback behavior)
-        setSelectedMessage(message)
+        const message = await ApiService.Emails.getMessage(messageId)
+        
+        // Mark as read if unread
+        if (message.labelIds?.includes('UNREAD')) {
+          await ApiService.Emails.modifyMessage(messageId, {
+            removeLabelIds: ['UNREAD']
+          })
+        }
+        
+        if (onMessageSelect) {
+          onMessageSelect(message, 'gmail')
+        } else {
+          setSelectedMessage(message)
+        }
       }
     } catch (error) {
       console.error('Failed to load message details:', error)
@@ -366,43 +528,68 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
   }, [composeForm, loadMessages])
 
   // Handle message actions
-  const handleMessageAction = useCallback(async (messageId: string, action: string) => {
+  const handleMessageAction = useCallback(async (messageId: string, action: string, provider: EmailProvider = 'gmail') => {
     try {
-      switch (action) {
-        case 'archive':
-          await ApiService.Emails.modifyMessage(messageId, {
-            removeLabelIds: ['INBOX']
-          })
-          break
-        case 'delete':
-          await ApiService.Emails.modifyMessage(messageId, {
-            addLabelIds: ['TRASH']
-          })
-          break
-        case 'star':
-          await ApiService.Emails.modifyMessage(messageId, {
-            addLabelIds: ['STARRED']
-          })
-          break
-        case 'unstar':
-          await ApiService.Emails.modifyMessage(messageId, {
-            removeLabelIds: ['STARRED']
-          })
-          break
-        case 'edit':
-          // TODO: Implement draft editing - open in composer
-          break
-        case 'send':
-          // TODO: Implement draft sending
-          break
+      if (provider === 'outlook') {
+        switch (action) {
+          case 'archive':
+            await ApiService.Emails.modifyOutlookMessage(messageId, {
+              action: 'move',
+              destinationFolderId: 'archive'
+            })
+            break
+          case 'delete':
+            await ApiService.Emails.modifyOutlookMessage(messageId, {
+              action: 'delete'
+            })
+            break
+          case 'star':
+            await ApiService.Emails.modifyOutlookMessage(messageId, {
+              flag: 'flagged'
+            })
+            break
+          case 'unstar':
+            await ApiService.Emails.modifyOutlookMessage(messageId, {
+              flag: 'notFlagged'
+            })
+            break
+        }
+        loadOutlookMessages()
+      } else {
+        switch (action) {
+          case 'archive':
+            await ApiService.Emails.modifyMessage(messageId, {
+              removeLabelIds: ['INBOX']
+            })
+            break
+          case 'delete':
+            await ApiService.Emails.modifyMessage(messageId, {
+              addLabelIds: ['TRASH']
+            })
+            break
+          case 'star':
+            await ApiService.Emails.modifyMessage(messageId, {
+              addLabelIds: ['STARRED']
+            })
+            break
+          case 'unstar':
+            await ApiService.Emails.modifyMessage(messageId, {
+              removeLabelIds: ['STARRED']
+            })
+            break
+          case 'edit':
+            // TODO: Implement draft editing - open in composer
+            break
+          case 'send':
+            // TODO: Implement draft sending
+            break
+        }
+        loadMessages()
       }
-      
-      // Refresh messages
-      loadMessages()
     } catch (error) {
       console.error('Failed to perform message action:', error)
     }
-  }, [loadMessages])
+  }, [loadMessages, loadOutlookMessages])
 
   // Check Gmail access
   const checkGmailAccess = useCallback(async () => {
@@ -418,6 +605,20 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
     }
   }, [])
 
+  // Check Outlook access
+  const checkOutlookAccess = useCallback(async () => {
+    try {
+      setCheckingOutlookAccess(true)
+      const status = await checkOutlookConnectionStatus()
+      setOutlookAvailable(status.connected)
+    } catch (error) {
+      console.error('Error checking Outlook access:', error)
+      setOutlookAvailable(false)
+    } finally {
+      setCheckingOutlookAccess(false)
+    }
+  }, [])
+
   // Request Gmail access
   const requestGmailAccess = useCallback(async () => {
     try {
@@ -429,11 +630,22 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
 
   // Parse messages when messages state changes
   useEffect(() => {
-    if (messages.messages) {
-      const parsed = messages.messages.map(msg => parseGmailMessage(msg))
-      setParsedMessages(parsed)
+    if (selectedProvider === 'outlook') {
+      if (outlookMessages.length > 0) {
+        const parsed = outlookMessages.map(msg => parseOutlookMessage(msg))
+        setParsedMessages(parsed)
+      } else {
+        setParsedMessages([])
+      }
+    } else {
+      if (messages.messages) {
+        const parsed = messages.messages.map(msg => parseGmailMessage(msg))
+        setParsedMessages(parsed)
+      } else {
+        setParsedMessages([])
+      }
     }
-  }, [messages, parseGmailMessage])
+  }, [messages, outlookMessages, selectedProvider, parseGmailMessage, parseOutlookMessage])
 
   // Calculate thread counts for each email
   const threadCounts = useMemo(() => {
@@ -446,24 +658,40 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
     return counts
   }, [parsedMessages])
 
-  // Check Gmail access on component mount
+  // Check email access on component mount
   useEffect(() => {
     checkGmailAccess()
-  }, [checkGmailAccess])
+    checkOutlookAccess()
+  }, [checkGmailAccess, checkOutlookAccess])
 
-  // Load labels when Gmail is available
+  // Load labels/folders when provider is available
   useEffect(() => {
-    if (gmailAvailable) {
+    if (selectedProvider === 'outlook' && outlookAvailable) {
+      loadOutlookFolders()
+    } else if (selectedProvider === 'gmail' && gmailAvailable) {
       loadLabels()
     }
-  }, [gmailAvailable, loadLabels])
+  }, [selectedProvider, gmailAvailable, outlookAvailable, loadLabels, loadOutlookFolders])
 
-  // Load initial messages when label changes
+  // Load initial messages when label/folder changes
   useEffect(() => {
-    if (gmailAvailable) {
+    if (selectedProvider === 'outlook' && outlookAvailable) {
+      loadOutlookMessages()
+    } else if (selectedProvider === 'gmail' && gmailAvailable) {
       loadMessages()
     }
-  }, [loadMessages, selectedLabelId, gmailAvailable])
+  }, [loadMessages, loadOutlookMessages, selectedLabelId, selectedProvider, gmailAvailable, outlookAvailable])
+
+  // Reset selected label when provider changes
+  useEffect(() => {
+    if (selectedProvider === 'outlook') {
+      setSelectedLabelId('inbox')
+    } else {
+      setSelectedLabelId('INBOX')
+    }
+    setSelectedMessage(null)
+    setParsedMessages([])
+  }, [selectedProvider])
 
   // Listen for label refresh events (when a label is created in the viewer)
   useEffect(() => {
@@ -499,8 +727,17 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
   const handleLabelChange = useCallback((labelId: string) => {
     setSelectedLabelId(labelId)
     setSelectedMessage(null)
-    setMessages({})
+    if (selectedProvider === 'outlook') {
+      setOutlookMessages([])
+    } else {
+      setMessages({})
+    }
     setParsedMessages([])
+  }, [selectedProvider])
+
+  // Handle provider change
+  const handleProviderChange = useCallback((provider: EmailProvider) => {
+    setSelectedProvider(provider)
   }, [])
 
   // Handle search
@@ -510,10 +747,14 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
 
   // Load more messages for infinite scroll
   const loadMoreMessages = useCallback(() => {
-    if (messages.nextPageToken && !isLoadingMore) {
+    if (isLoadingMore) return
+    
+    if (selectedProvider === 'outlook' && outlookNextPageToken) {
+      loadOutlookMessages(outlookNextPageToken)
+    } else if (selectedProvider === 'gmail' && messages.nextPageToken) {
       loadMessages(messages.nextPageToken)
     }
-  }, [messages.nextPageToken, isLoadingMore, loadMessages])
+  }, [selectedProvider, messages.nextPageToken, outlookNextPageToken, isLoadingMore, loadMessages, loadOutlookMessages])
 
   // Handle scroll for infinite loading
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
@@ -523,23 +764,85 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
     }
   }, [loadMoreMessages])
 
+  // Get display name for Outlook folders
+  const getOutlookFolderDisplayName = (folder: OutlookFolder): string => {
+    const nameMap: Record<string, string> = {
+      'inbox': 'Inbox',
+      'sentitems': 'Sent Items',
+      'drafts': 'Drafts',
+      'deleteditems': 'Deleted Items',
+      'junkemail': 'Junk Email',
+      'archive': 'Archive',
+      'outbox': 'Outbox',
+    }
+    return nameMap[folder.name.toLowerCase()] || folder.name
+  }
+
+  // Get icon for Outlook folders
+  const getOutlookFolderIcon = (folderId: string) => {
+    const lowerName = folderId.toLowerCase()
+    if (lowerName.includes('inbox')) return Inbox
+    if (lowerName.includes('sent')) return Send
+    if (lowerName.includes('draft')) return FileText
+    if (lowerName.includes('deleted') || lowerName.includes('trash')) return Trash2
+    if (lowerName.includes('junk') || lowerName.includes('spam')) return AlertTriangle
+    return Tag
+  }
+
+  // Determine which folders/labels to show based on provider
+  const { displayedSystemFolders, displayedUserFolders } = useMemo(() => {
+    if (selectedProvider === 'outlook') {
+      const systemFolders = outlookFolders.filter(f => f.type === 'system')
+      const userFolders = outlookFolders.filter(f => f.type === 'user')
+      return { displayedSystemFolders: systemFolders, displayedUserFolders: userFolders }
+    } else {
+      return { displayedSystemFolders: systemLabels, displayedUserFolders: userLabels }
+    }
+  }, [selectedProvider, outlookFolders, systemLabels, userLabels])
+
+  // Check if any provider is available
+  const anyProviderAvailable = gmailAvailable || outlookAvailable
+  const isCheckingAccess = checkingGmailAccess || checkingOutlookAccess
+  const currentProviderAvailable = selectedProvider === 'gmail' ? gmailAvailable : outlookAvailable
+
   return (
     <div className="h-full flex flex-col">
       {/* Email Tab Header */}
       <div className="flex flex-col bg-card flex-shrink-0">
         <div className="flex items-center justify-between px-4 py-3 border-b">
-          <div className="flex items-center gap-4">
-            {/* Label Navigation */}
+          <div className="flex items-center gap-2">
+            {/* Provider Selector */}
+            <Select value={selectedProvider} onValueChange={(v) => handleProviderChange(v as EmailProvider)}>
+              <SelectTrigger size="sm" className="w-[100px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="gmail" disabled={!gmailAvailable}>
+                  <Typography variant="xs" className="font-medium">Gmail</Typography>
+                </SelectItem>
+                <SelectItem value="outlook" disabled={!outlookAvailable}>
+                  <Typography variant="xs" className="font-medium">Outlook</Typography>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {/* Label/Folder Navigation */}
             <Select value={selectedLabelId} onValueChange={handleLabelChange}>
               <SelectTrigger size="sm" className="min-w-[120px]">
                 <SelectValue>
                   <div className="flex items-center gap-2">
                     {(() => {
+                      if (selectedProvider === 'outlook') {
+                        const Icon = getOutlookFolderIcon(selectedLabelId)
+                        return <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      }
                       const Icon = getLabelIcon(selectedLabelId)
                       return <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
                     })()}
                     <Typography variant="xs" className="font-medium">
-                      {getLabelDisplayName(selectedLabel)}
+                      {selectedProvider === 'outlook' 
+                        ? (outlookFolders.find(f => f.id === selectedLabelId)?.name || selectedLabelId)
+                        : getLabelDisplayName(selectedLabel)}
                     </Typography>
                   </div>
                 </SelectValue>
@@ -550,9 +853,47 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
                     <RefreshCw className="h-3 w-3 animate-spin mr-2 text-muted-foreground" strokeWidth={1} />
                     <Typography variant="xs" className="text-muted-foreground">Loading...</Typography>
                   </div>
+                ) : selectedProvider === 'outlook' ? (
+                  <>
+                    {/* Outlook Folders */}
+                    <SelectGroup>
+                      <SelectLabel>Folders</SelectLabel>
+                      {displayedSystemFolders.map((folder) => {
+                        const outlookFolder = folder as OutlookFolder
+                        const Icon = getOutlookFolderIcon(outlookFolder.id)
+                        return (
+                          <SelectItem key={outlookFolder.id} value={outlookFolder.id}>
+                            <div className="flex items-center gap-2">
+                              <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                              <Typography variant="xs" className="font-medium">{getOutlookFolderDisplayName(outlookFolder)}</Typography>
+                            </div>
+                          </SelectItem>
+                        )
+                      })}
+                    </SelectGroup>
+                    {displayedUserFolders.length > 0 && (
+                      <>
+                        <SelectSeparator />
+                        <SelectGroup>
+                          <SelectLabel>Custom Folders</SelectLabel>
+                          {displayedUserFolders.map((folder) => {
+                            const outlookFolder = folder as OutlookFolder
+                            return (
+                              <SelectItem key={outlookFolder.id} value={outlookFolder.id}>
+                                <div className="flex items-center gap-2">
+                                  <Tag className="h-3.5 w-3.5" strokeWidth={1.5} />
+                                  <Typography variant="xs" className="font-medium">{outlookFolder.name}</Typography>
+                                </div>
+                              </SelectItem>
+                            )
+                          })}
+                        </SelectGroup>
+                      </>
+                    )}
+                  </>
                 ) : (
                   <>
-                    {/* System Labels */}
+                    {/* Gmail Labels */}
                     <SelectGroup>
                       <SelectLabel>Mailbox</SelectLabel>
                       {systemLabels.map((label) => {
@@ -594,7 +935,7 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => loadMessages()}
+              onClick={() => selectedProvider === 'outlook' ? loadOutlookMessages() : loadMessages()}
               disabled={loading}
               title="Refresh"
             >
@@ -634,25 +975,37 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
 
       {/* Email Content */}
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        {checkingGmailAccess ? (
+        {isCheckingAccess ? (
           <div className="flex items-center justify-center h-full">
             <RefreshCw className="h-4 w-4 animate-spin mr-2 text-gray-400 dark:text-gray-400" strokeWidth={1} />
-            <Typography variant="muted">Checking Gmail access...</Typography>
+            <Typography variant="muted">Checking email access...</Typography>
           </div>
-        ) : gmailAvailable === false ? (
+        ) : !currentProviderAvailable ? (
           <div className="flex flex-col items-center justify-center h-full p-4">
             <Mail className="h-12 w-12 mb-4 opacity-50 text-gray-400 dark:text-gray-400" strokeWidth={1} />
-            <Typography variant="h3" className="mb-2">Gmail Access Required</Typography>
-            <Typography variant="small" className="text-center mb-4 max-w-md text-gray-500 dark:text-gray-400">
-              To use the email features, you need to grant Gmail access to your Google account.
+            <Typography variant="h3" className="mb-2">
+              {selectedProvider === 'outlook' ? 'Outlook' : 'Gmail'} Access Required
             </Typography>
-            <Button
-              onClick={requestGmailAccess}
-              variant="default"
-            >
-              <Settings className="h-4 w-4 mr-2" strokeWidth={1} />
-              Activate Gmail Access
-            </Button>
+            <Typography variant="small" className="text-center mb-4 max-w-md text-gray-500 dark:text-gray-400">
+              {selectedProvider === 'outlook' 
+                ? 'To use Outlook email features, connect your Microsoft account in Settings → Connections.'
+                : 'To use the email features, you need to grant Gmail access to your Google account.'
+              }
+            </Typography>
+            {selectedProvider === 'gmail' && (
+              <Button
+                onClick={requestGmailAccess}
+                variant="default"
+              >
+                <Settings className="h-4 w-4 mr-2" strokeWidth={1} />
+                Activate Gmail Access
+              </Button>
+            )}
+            {selectedProvider === 'outlook' && (
+              <Typography variant="muted" className="text-xs">
+                Go to Settings → Connections to connect Outlook
+              </Typography>
+            )}
           </div>
         ) : composeOpen ? (
           /* Compose Form */
@@ -765,7 +1118,7 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
                       {parsedMessages.map((email) => (
                         <div
                           key={email.id}
-                          onClick={() => loadMessageDetails(email.id)}
+                          onClick={() => loadMessageDetails(email.id, email.provider)}
                           className={`group p-3 border-b border-zinc-300 dark:border-zinc-700 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors min-w-0 ${
                             !email.isRead ? 'bg-zinc-50 dark:bg-zinc-800/30' : ''
                           }`}
@@ -809,11 +1162,14 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
                                    size="sm"
                                    onClick={(e: React.MouseEvent) => {
                                      e.stopPropagation()
-                                     handleMessageAction(email.id, email.labels.includes('STARRED') ? 'unstar' : 'star')
+                                     const isStarred = email.provider === 'gmail' 
+                                       ? email.labels.includes('STARRED')
+                                       : email.isStarred
+                                     handleMessageAction(email.id, isStarred ? 'unstar' : 'star', email.provider)
                                    }}
                                    className="h-6 w-6 p-0 text-gray-400 dark:text-gray-400 hover:text-yellow-400 dark:hover:text-yellow-400"
                                  >
-                                   {email.labels.includes('STARRED') ? (
+                                   {(email.provider === 'gmail' ? email.labels.includes('STARRED') : email.isStarred) ? (
                                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" strokeWidth={1} />
                                    ) : (
                                      <StarOff className="h-4 w-4" strokeWidth={1} />
@@ -824,7 +1180,7 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
                                    size="sm"
                                    onClick={(e: React.MouseEvent) => {
                                      e.stopPropagation()
-                                     handleMessageAction(email.id, 'delete')
+                                     handleMessageAction(email.id, 'delete', email.provider)
                                    }}
                                    className="h-6 w-6 p-0 text-gray-400 dark:text-gray-400 hover:text-red-400 dark:hover:text-red-400"
                                  >

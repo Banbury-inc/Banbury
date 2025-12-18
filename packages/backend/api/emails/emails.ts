@@ -261,4 +261,240 @@ export default class Emails {
     )
   }
 
+  // =========================================================================
+  // Outlook API Methods
+  // =========================================================================
+
+  /**
+   * List Outlook messages
+   */
+  static async listOutlookMessages(params?: { folderId?: string; maxResults?: number; pageToken?: string; q?: string }): Promise<OutlookMessageListResponse> {
+    const query: Record<string, any> = {}
+    if (params?.folderId) query.folderId = params.folderId
+    if (typeof params?.maxResults === 'number') query.maxResults = params.maxResults
+    if (params?.pageToken) query.pageToken = params.pageToken
+    if (params?.q) query.q = params.q
+
+    const url = new URL(`${ApiService.baseURL}/authentication/outlook/list_messages/`)
+    Object.entries(query).forEach(([k, v]) => url.searchParams.append(k, String(v)))
+
+    const resp = await axios.get<OutlookMessageListResponse>(url.toString(), {
+      headers: this.withAuthHeaders()
+    })
+    return resp.data
+  }
+
+  /**
+   * Get a single Outlook message by ID
+   */
+  static async getOutlookMessage(messageId: string): Promise<OutlookMessage> {
+    const resp = await axios.get<OutlookMessage>(
+      `${ApiService.baseURL}/authentication/outlook/messages/${encodeURIComponent(messageId)}/`,
+      { headers: this.withAuthHeaders() }
+    )
+    return resp.data
+  }
+
+  /**
+   * Get multiple Outlook messages in batch
+   */
+  static async getOutlookMessagesBatch(messageIds: string[]): Promise<{ messages: Record<string, OutlookMessage> }> {
+    const resp = await axios.post(
+      `${ApiService.baseURL}/authentication/outlook/messages/batch`,
+      { messageIds },
+      { headers: { 'Content-Type': 'application/json', ...this.withAuthHeaders() } }
+    )
+    return resp.data
+  }
+
+  /**
+   * List Outlook mail folders (equivalent to Gmail labels)
+   */
+  static async listOutlookFolders(): Promise<OutlookFolderListResponse> {
+    try {
+      const resp = await axios.get<OutlookFolderListResponse>(
+        `${ApiService.baseURL}/authentication/outlook/folders/`,
+        { headers: this.withAuthHeaders() }
+      )
+      return resp.data
+    } catch (error) {
+      console.warn('Outlook folders endpoint unavailable, using fallback:', error)
+      return { folders: FALLBACK_OUTLOOK_FOLDERS }
+    }
+  }
+
+  /**
+   * Send an Outlook email
+   */
+  static async sendOutlookMessage(input: { to: string; subject: string; body: string; cc?: string; bcc?: string; isDraft?: boolean }): Promise<any> {
+    const resp = await axios.post(`${ApiService.baseURL}/authentication/outlook/send_message/`, input, {
+      headers: { 'Content-Type': 'application/json', ...this.withAuthHeaders() }
+    })
+    return resp.data
+  }
+
+  /**
+   * Send a reply to an Outlook email
+   */
+  static async sendOutlookReply(input: { original_message_id: string; body: string }): Promise<any> {
+    const resp = await axios.post(`${ApiService.baseURL}/authentication/outlook/reply/`, input, {
+      headers: { 'Content-Type': 'application/json', ...this.withAuthHeaders() }
+    })
+    return resp.data
+  }
+
+  /**
+   * Modify an Outlook message (star/flag, read/unread, delete, move)
+   */
+  static async modifyOutlookMessage(messageId: string, change: {
+    action?: 'delete' | 'permanentDelete' | 'move'
+    destinationFolderId?: string
+    isRead?: boolean
+    flag?: 'flagged' | 'notFlagged' | 'complete'
+    addLabelIds?: string[]
+    removeLabelIds?: string[]
+  }): Promise<any> {
+    const resp = await axios.post(
+      `${ApiService.baseURL}/authentication/outlook/messages/${encodeURIComponent(messageId)}/modify/`,
+      change,
+      { headers: { 'Content-Type': 'application/json', ...this.withAuthHeaders() } }
+    )
+    return resp.data
+  }
+
+  /**
+   * Get an Outlook message attachment
+   */
+  static async getOutlookAttachment(messageId: string, attachmentId: string): Promise<OutlookAttachment> {
+    const resp = await axios.get<OutlookAttachment>(
+      `${ApiService.baseURL}/authentication/outlook/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}`,
+      { headers: this.withAuthHeaders() }
+    )
+    return resp.data
+  }
+
+  /**
+   * Get all messages in an Outlook conversation/thread
+   */
+  static async getOutlookThread(conversationId: string): Promise<OutlookThreadResponse> {
+    const resp = await axios.get<OutlookThreadResponse>(
+      `${ApiService.baseURL}/authentication/outlook/thread/${encodeURIComponent(conversationId)}/`,
+      { headers: this.withAuthHeaders() }
+    )
+    return resp.data
+  }
+
+  /**
+   * Search Outlook emails
+   */
+  static async searchOutlookEmails(query: string): Promise<any> {
+    try {
+      const listResponse = await this.listOutlookMessages({ q: query, maxResults: 10 })
+      
+      if (!listResponse.messages || listResponse.messages.length === 0) {
+        return { messages: [] }
+      }
+      
+      const messageIds = listResponse.messages.map((msg: any) => msg.id)
+      const batchResponse = await this.getOutlookMessagesBatch(messageIds)
+      const fullMessages = Object.values(batchResponse.messages || {})
+      
+      return {
+        messages: fullMessages,
+        nextPageToken: listResponse.nextPageToken
+      }
+    } catch (error) {
+      console.error('Outlook search error:', error)
+      throw error
+    }
+  }
 }
+
+// =========================================================================
+// Outlook Types
+// =========================================================================
+
+export interface OutlookMessageListResponse {
+  messages: OutlookMessage[]
+  nextPageToken?: string
+}
+
+export interface OutlookMessage {
+  id: string
+  subject?: string
+  from?: {
+    emailAddress: {
+      name?: string
+      address: string
+    }
+  }
+  toRecipients?: Array<{
+    emailAddress: {
+      name?: string
+      address: string
+    }
+  }>
+  ccRecipients?: Array<{
+    emailAddress: {
+      name?: string
+      address: string
+    }
+  }>
+  receivedDateTime?: string
+  sentDateTime?: string
+  bodyPreview?: string
+  body?: {
+    contentType: 'Text' | 'HTML'
+    content: string
+  }
+  isRead?: boolean
+  hasAttachments?: boolean
+  flag?: {
+    flagStatus: 'notFlagged' | 'flagged' | 'complete'
+  }
+  parentFolderId?: string
+  conversationId?: string
+  internetMessageHeaders?: Array<{
+    name: string
+    value: string
+  }>
+  attachments?: OutlookAttachment[]
+}
+
+export interface OutlookFolder {
+  id: string
+  name: string
+  type: 'system' | 'user'
+  parentFolderId?: string
+  messagesUnread?: number
+  messagesTotal?: number
+}
+
+export interface OutlookFolderListResponse {
+  folders: OutlookFolder[]
+}
+
+export interface OutlookAttachment {
+  id: string
+  name: string
+  contentType: string
+  size: number
+  data?: string  // Base64 encoded content
+}
+
+export interface OutlookThreadResponse {
+  result: 'success' | 'error'
+  id?: string
+  messages?: OutlookMessage[]
+  error?: string
+}
+
+// Fallback Outlook folders when the API endpoint is unavailable
+export const FALLBACK_OUTLOOK_FOLDERS: OutlookFolder[] = [
+  { id: 'inbox', name: 'Inbox', type: 'system' },
+  { id: 'sentitems', name: 'Sent Items', type: 'system' },
+  { id: 'drafts', name: 'Drafts', type: 'system' },
+  { id: 'deleteditems', name: 'Deleted Items', type: 'system' },
+  { id: 'junkemail', name: 'Junk Email', type: 'system' },
+  { id: 'archive', name: 'Archive', type: 'system' },
+]

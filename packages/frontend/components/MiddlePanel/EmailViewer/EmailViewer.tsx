@@ -7,12 +7,15 @@ import { useToast } from "../../ui/use-toast"
 import { Typography } from "frontend/components/ui/typography"
 import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover"
 import { ApiService } from "../../../../backend/api/apiService"
-import { GmailLabel } from "../../../../backend/api/emails/emails"
+import { GmailLabel, OutlookMessage } from "../../../../backend/api/emails/emails"
 import { loadThreadMessages } from "./handlers/loadThreadMessages"
 import { loadAvailableLabels, toggleLabel, createAndApplyLabel, dispatchLabelRefreshEvents } from "./handlers/labelActions"
 
+type EmailProvider = 'gmail' | 'outlook'
+
 interface EmailViewerProps {
   email: any
+  provider?: EmailProvider
   onBack?: () => void
   onReply?: (email: any) => void
   onForward?: (email: any) => void
@@ -22,16 +25,48 @@ interface EmailViewerProps {
   onRefresh?: () => void
 }
 
-export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDelete, onStarToggled, onRefresh }: EmailViewerProps) {
+export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForward, onArchive, onDelete, onStarToggled, onRefresh }: EmailViewerProps) {
 
+  // Helper to determine if this is an Outlook email
+  const isOutlook = provider === 'outlook'
+
+  // Get header value - works for both Gmail and Outlook
   const getHeader = (name: string) => {
+    if (isOutlook) {
+      // Outlook uses different structure
+      const outlookEmail = email as OutlookMessage
+      switch (name.toLowerCase()) {
+        case 'from':
+          return outlookEmail?.from?.emailAddress?.name || outlookEmail?.from?.emailAddress?.address || 'Unknown'
+        case 'to':
+          return outlookEmail?.toRecipients?.map(r => r.emailAddress?.name || r.emailAddress?.address).join(', ') || 'Unknown'
+        case 'subject':
+          return outlookEmail?.subject || '(No Subject)'
+        case 'date':
+          return outlookEmail?.receivedDateTime || outlookEmail?.sentDateTime || 'Unknown'
+        default:
+          return 'Unknown'
+      }
+    }
     return email?.payload?.headers?.find((h: any) => h.name.toLowerCase() === name.toLowerCase())?.value || 'Unknown'
+  }
+
+  // Get the sender email address
+  const getSenderEmail = () => {
+    if (isOutlook) {
+      const outlookEmail = email as OutlookMessage
+      return outlookEmail?.from?.emailAddress?.address || 'Unknown'
+    }
+    const fromHeader = getHeader('From')
+    const match = fromHeader.match(/<(.+)>$/)
+    return match ? match[1] : fromHeader
   }
 
   const formatDate = (internalDate: string) => {
     if (!internalDate) return 'Unknown'
     try {
-      const date = new Date(parseInt(internalDate))
+      // For Outlook, the date is already an ISO string
+      const date = isOutlook ? new Date(internalDate) : new Date(parseInt(internalDate))
       const now = new Date()
       const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
       
@@ -45,6 +80,19 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
     } catch {
       return 'Unknown'
     }
+  }
+
+  // Get email body content based on provider
+  const getEmailBodyContent = () => {
+    if (isOutlook) {
+      const outlookEmail = email as OutlookMessage
+      return {
+        text: outlookEmail?.body?.contentType === 'Text' ? outlookEmail?.body?.content || '' : '',
+        html: outlookEmail?.body?.contentType === 'HTML' ? outlookEmail?.body?.content || '' : '',
+        attachments: outlookEmail?.attachments || []
+      }
+    }
+    return extractEmailContent(email.payload)
   }
 
   // Generate avatar for email sender
@@ -99,7 +147,17 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
   const [newLabelName, setNewLabelName] = useState('')
   const [creatingLabel, setCreatingLabel] = useState(false)
 
-  const isStarred = useMemo(() => labels.includes('STARRED'), [labels])
+  // Outlook-specific starred state
+  const [outlookStarred, setOutlookStarred] = useState<boolean>(false)
+
+  // Determine if starred based on provider
+  const isStarred = useMemo(() => {
+    if (isOutlook) {
+      const outlookEmail = email as OutlookMessage
+      return outlookEmail?.flag?.flagStatus === 'flagged' || outlookStarred
+    }
+    return labels.includes('STARRED')
+  }, [labels, isOutlook, email, outlookStarred])
   const { toast } = useToast()
   
   // Separate available labels into user labels only (system labels are handled separately)
@@ -126,19 +184,31 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
   }, [showReplyComposer])
 
   useEffect(() => {
-    setLabels(email?.labelIds || [])
-  }, [email])
+    if (isOutlook) {
+      setLabels([])
+      const outlookEmail = email as OutlookMessage
+      setOutlookStarred(outlookEmail?.flag?.flagStatus === 'flagged')
+    } else {
+      setLabels(email?.labelIds || [])
+    }
+  }, [email, isOutlook])
 
   // Extract full email content (handle no email gracefully)
-  const emailContent = email ? extractEmailContent(email.payload) : { text: '', html: '', attachments: [] as any[] }
+  const emailContent = email ? getEmailBodyContent() : { text: '', html: '', attachments: [] as any[] }
   const hasAttachmentsFlag = hasAttachments(emailContent)
 
   const handleDownloadAttachment = async (attachmentId: string, filename: string, messageId?: string) => {
     try {
-      const response = await ApiService.Emails.getAttachment(messageId || email.id, attachmentId)
+      let response
+      if (isOutlook) {
+        response = await ApiService.Emails.getOutlookAttachment(messageId || email.id, attachmentId)
+      } else {
+        response = await ApiService.Emails.getAttachment(messageId || email.id, attachmentId)
+      }
+      
       if (response.data) {
-        // Decode base64url data
-        const base64 = response.data.replace(/-/g, '+').replace(/_/g, '/')
+        // Decode base64url data (Gmail uses base64url, Outlook uses base64)
+        const base64 = isOutlook ? response.data : response.data.replace(/-/g, '+').replace(/_/g, '/')
         const binaryString = atob(base64)
         const bytes = new Uint8Array(binaryString.length)
         for (let i = 0; i < binaryString.length; i++) {
@@ -164,15 +234,25 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
   // Initialize reply form when email changes
   useEffect(() => {
     if (email) {
-      const fromHeader = getHeader('From')
-      const subjectHeader = getHeader('Subject')
+      let toAddr: string
+      let subjectHeader: string
+      
+      if (isOutlook) {
+        const outlookEmail = email as OutlookMessage
+        toAddr = outlookEmail?.from?.emailAddress?.address || ''
+        subjectHeader = outlookEmail?.subject || ''
+      } else {
+        toAddr = getHeader('From')
+        subjectHeader = getHeader('Subject')
+      }
+      
       setReplyForm({
-        to: fromHeader,
+        to: toAddr,
         subject: subjectHeader.startsWith('Re: ') ? subjectHeader : `Re: ${subjectHeader}`,
         body: ''
       })
     }
-  }, [email])
+  }, [email, isOutlook])
 
   const handleReply = () => {
     setShowReplyComposer(true)
@@ -215,19 +295,28 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
 
     setSendingReply(true)
     try {
-      const attachmentsPayload = await Promise.all(replyAttachments.map(async (file) => ({
-        filename: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        content: await file.arrayBuffer().then((buf) => arrayBufferToBase64(buf))
-      })))
+      if (isOutlook) {
+        // Outlook reply - simpler structure, no attachments in basic reply
+        await ApiService.Emails.sendOutlookReply({
+          original_message_id: email.id,
+          body: replyForm.body
+        })
+      } else {
+        // Gmail reply with attachments
+        const attachmentsPayload = await Promise.all(replyAttachments.map(async (file) => ({
+          filename: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          content: await file.arrayBuffer().then((buf) => arrayBufferToBase64(buf))
+        })))
 
-      await ApiService.Emails.sendReply({
-        original_message_id: email.id,
-        to: replyForm.to,
-        subject: replyForm.subject,
-        body: replyForm.body,
-        attachments: attachmentsPayload
-      })
+        await ApiService.Emails.sendReply({
+          original_message_id: email.id,
+          to: replyForm.to,
+          subject: replyForm.subject,
+          body: replyForm.body,
+          attachments: attachmentsPayload
+        })
+      }
 
       toast({
         title: "Reply sent successfully",
@@ -253,7 +342,7 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
     } finally {
       setSendingReply(false)
     }
-  }, [replyForm, email.id, toast, onRefresh, replyAttachments])
+  }, [replyForm, email.id, toast, onRefresh, replyAttachments, isOutlook])
 
   const handleSaveReplyDraft = useCallback(async () => {
     if (!replyForm.body.trim()) {
@@ -296,8 +385,15 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
   const handleArchive = async () => {
     try {
       setActionLoading(true)
-      await ApiService.Emails.modifyMessage(email.id, { removeLabelIds: ['INBOX'] })
-      setLabels((prev) => prev.filter((l) => l !== 'INBOX'))
+      if (isOutlook) {
+        await ApiService.Emails.modifyOutlookMessage(email.id, {
+          action: 'move',
+          destinationFolderId: 'archive'
+        })
+      } else {
+        await ApiService.Emails.modifyMessage(email.id, { removeLabelIds: ['INBOX'] })
+        setLabels((prev) => prev.filter((l) => l !== 'INBOX'))
+      }
       if (onArchive) onArchive(email)
       if (onRefresh) onRefresh()
       if (typeof window !== 'undefined') {
@@ -311,25 +407,29 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
   }
 
   const handleToggleStar = async () => {
-    const currentlyStarred = labels.includes('STARRED')
     try {
       setActionLoading(true)
-      if (currentlyStarred) {
-        await ApiService.Emails.modifyMessage(email.id, { removeLabelIds: ['STARRED'] })
-        setLabels((prev) => prev.filter((l) => l !== 'STARRED'))
-        if (onStarToggled) onStarToggled(email, false)
-        if (onRefresh) onRefresh()
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('email-refresh'))
-        }
+      if (isOutlook) {
+        // Outlook uses flag instead of label
+        const newFlag = isStarred ? 'notFlagged' : 'flagged'
+        await ApiService.Emails.modifyOutlookMessage(email.id, { flag: newFlag })
+        setOutlookStarred(!isStarred)
+        if (onStarToggled) onStarToggled(email, !isStarred)
       } else {
-        await ApiService.Emails.modifyMessage(email.id, { addLabelIds: ['STARRED'] })
-        setLabels((prev) => (prev.includes('STARRED') ? prev : [...prev, 'STARRED']))
-        if (onStarToggled) onStarToggled(email, true)
-        if (onRefresh) onRefresh()
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('email-refresh'))
+        const currentlyStarred = labels.includes('STARRED')
+        if (currentlyStarred) {
+          await ApiService.Emails.modifyMessage(email.id, { removeLabelIds: ['STARRED'] })
+          setLabels((prev) => prev.filter((l) => l !== 'STARRED'))
+          if (onStarToggled) onStarToggled(email, false)
+        } else {
+          await ApiService.Emails.modifyMessage(email.id, { addLabelIds: ['STARRED'] })
+          setLabels((prev) => (prev.includes('STARRED') ? prev : [...prev, 'STARRED']))
+          if (onStarToggled) onStarToggled(email, true)
         }
+      }
+      if (onRefresh) onRefresh()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('email-refresh'))
       }
     } catch (error) {
       alert('Failed to toggle star')
@@ -392,8 +492,12 @@ export function EmailViewer({ email, onBack, onReply, onForward, onArchive, onDe
   const handleDelete = async () => {
     try {
       setActionLoading(true)
-      await ApiService.Emails.modifyMessage(email.id, { addLabelIds: ['TRASH'] })
-      setLabels((prev) => (prev.includes('TRASH') ? prev : [...prev, 'TRASH']))
+      if (isOutlook) {
+        await ApiService.Emails.modifyOutlookMessage(email.id, { action: 'delete' })
+      } else {
+        await ApiService.Emails.modifyMessage(email.id, { addLabelIds: ['TRASH'] })
+        setLabels((prev) => (prev.includes('TRASH') ? prev : [...prev, 'TRASH']))
+      }
       if (onDelete) onDelete(email)
       if (onRefresh) onRefresh()
       if (typeof window !== 'undefined') {
