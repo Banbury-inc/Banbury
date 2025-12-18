@@ -24,6 +24,7 @@ import {
   EventPopoverMode,
   getDefaultPopoverPosition
 } from './handlers/eventPopoverHandlers'
+import { applyInitialEventSelection } from './handlers/applyInitialEventSelection'
 
 type CalendarView = 'month' | 'week' | 'day'
 
@@ -32,9 +33,11 @@ interface CalendarViewerProps {
   initialView?: CalendarView
   onEventClick?: (event: CalendarEvent) => void
   onDateChange?: () => void
+  initialEvent?: CalendarEvent
+  onInitialEventConsumed?: () => void
 }
 
-export function CalendarViewer({ initialDate, initialView = 'month', onEventClick, onDateChange }: CalendarViewerProps) {
+export function CalendarViewer({ initialDate, initialView = 'month', onEventClick, onDateChange, initialEvent, onInitialEventConsumed }: CalendarViewerProps) {
   const [currentDate, setCurrentDate] = useState<Date>(initialDate || new Date())
 
   useEffect(() => {
@@ -43,6 +46,21 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
       onDateChange?.()
     }
   }, [initialDate, onDateChange])
+
+  // Handle externally selected event (from left panel or command palette)
+  useEffect(() => {
+    if (initialEvent) {
+      applyInitialEventSelection({
+        initialEvent,
+        setCurrentDate,
+        setSelectedEvent,
+        setEventPopoverPos,
+        setEventPopoverMode,
+        setIsEventPopoverOpen,
+        onInitialEventConsumed
+      })
+    }
+  }, [initialEvent, onInitialEventConsumed])
 
   const [view, setView] = useState<CalendarView>(initialView)
   const [events, setEvents] = useState<CalendarEvent[]>([])

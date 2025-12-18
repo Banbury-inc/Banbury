@@ -24,6 +24,7 @@ import { PowerPointViewer } from '../../../components/MiddlePanel/PowerPointView
 import { GoogleDriveViewer } from '../../../components/MiddlePanel/GoogleDriveViewer';
 import BanburyLogo from '../../../assets/images/Logo.png';
 import { Kbd, KbdGroup } from '../../../components/ui/kbd';
+import { CalendarEvent } from '../../../../backend/api/calendar/calendar';
 
 interface UserInfo {
   username: string;
@@ -103,6 +104,8 @@ interface RenderPanelProps {
   onSplitPreview?: (direction: 'horizontal' | 'vertical' | null, position: { x: number; y: number }) => void;
   calendarJumpDate?: Date | null;
   onCalendarJumpComplete?: () => void;
+  calendarSelectedEvent?: CalendarEvent | null;
+  onCalendarSelectedEventConsumed?: () => void;
 }
 
 export const renderPanel = ({
@@ -131,7 +134,9 @@ export const renderPanel = ({
   isMac = false,
   onSplitPreview,
   calendarJumpDate,
-  onCalendarJumpComplete
+  onCalendarJumpComplete,
+  calendarSelectedEvent,
+  onCalendarSelectedEventConsumed
 }: RenderPanelProps) => {
   const isActive = panel.id === activePanelId;
   const isDropTarget = dragState.dropTargetPanel === panel.id;
@@ -425,6 +430,8 @@ export const renderPanel = ({
                         // Optionally open event details in a new panel/tab using Email-like pattern
                       }}
                       onDateChange={onCalendarJumpComplete}
+                      initialEvent={calendarSelectedEvent || undefined}
+                      onInitialEventConsumed={onCalendarSelectedEventConsumed}
                     />
                   );
                 }

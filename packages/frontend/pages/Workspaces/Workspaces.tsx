@@ -34,6 +34,7 @@ import { handleFileDeleted } from './handlers/handleFileDeleted';
 import { handleFileRenamed } from './handlers/handleFileRenamed';
 import { splitPanel } from './handlers/splitPanel';
 import { openCalendarInTab } from './handlers/openCalendarInTab';
+import { handleCalendarEventSelect } from './handlers/handleCalendarEventSelect';
 import { handleReplyToEmail } from './handlers/handleReplyToEmail';
 import { handleComposeEmail } from './handlers/handleComposeEmail';
 import { loadConversations, saveCurrentConversation, loadConversation, deleteConversation } from './handlers/conversationManagement';
@@ -43,7 +44,7 @@ import { isDrawioFile, isTldrawFile, isPowerPointFile } from './handlers/fileTyp
 import { createWorkspacesKeyboardHandler } from './handlers/createWorkspacesKeyboardHandler';
 import { Kbd, KbdGroup } from '../../components/ui/kbd';
 import { FileSearchCommand } from '../../components/FileSearchCommand';
-import { EmailSearchResult, getCalendarEventDate } from '../../components/handlers/file-search-command-handlers';
+import { EmailSearchResult } from '../../components/handlers/file-search-command-handlers';
 import { CalendarEvent } from '../../../backend/api/calendar/calendar';
 import {
   UserInfo,
@@ -79,6 +80,7 @@ const Workspaces = (): React.ReactNode => {
   const [isMac, setIsMac] = useState(false);
   const [fileSearchOpen, setFileSearchOpen] = useState(false);
   const [calendarJumpDate, setCalendarJumpDate] = useState<Date | null>(null);
+  const [calendarSelectedEvent, setCalendarSelectedEvent] = useState<CalendarEvent | null>(null);
   const [panelLayout, setPanelLayout] = useState<PanelGroup>({
     id: 'root',
     type: 'panel',
@@ -276,15 +278,15 @@ const Workspaces = (): React.ReactNode => {
     openEmailInTabCallback(email, activePanelId);
   }, [openEmailInTabCallback, activePanelId]);
 
-  // Handler for calendar event selection from command palette
-  const handleSearchCalendarEventSelect = useCallback((event: CalendarEvent) => {
-    // Get the event date for jumping
-    const eventDate = getCalendarEventDate(event);
-    if (eventDate) {
-      setCalendarJumpDate(eventDate);
-    }
-    // Open the calendar tab
-    openCalendarInTabCallback(activePanelId);
+  // Handler for calendar event selection (shared by command palette and left panel)
+  const handleCalendarEventSelectCallback = useCallback((event: CalendarEvent) => {
+    handleCalendarEventSelect({
+      event,
+      setCalendarJumpDate,
+      setCalendarSelectedEvent,
+      openCalendarInTabCallback,
+      activePanelId
+    })
   }, [openCalendarInTabCallback, activePanelId]);
   
   // Split preview while dragging is controlled by the Olympus Tabs component via onSplitPreview
@@ -341,6 +343,11 @@ const Workspaces = (): React.ReactNode => {
     setCalendarJumpDate(null);
   }, []);
 
+  // Clear the calendar selected event after it's been consumed
+  const handleCalendarSelectedEventConsumed = useCallback(() => {
+    setCalendarSelectedEvent(null);
+  }, []);
+
   // Render a single panel - using extracted function
   const renderPanelWrapper = useCallback((panel: Panel) => {
     return renderPanel({
@@ -375,9 +382,11 @@ const Workspaces = (): React.ReactNode => {
         }));
       },
       calendarJumpDate,
-      onCalendarJumpComplete: handleCalendarJumpComplete
+      onCalendarJumpComplete: handleCalendarJumpComplete,
+      calendarSelectedEvent,
+      onCalendarSelectedEventConsumed: handleCalendarSelectedEventConsumed
     });
-  }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmailCallback, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, isDrawioFile, isTldrawFile, isPowerPointFile, setPanelLayout, setDragState, calendarJumpDate, handleCalendarJumpComplete]);
+  }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmailCallback, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, isDrawioFile, isTldrawFile, isPowerPointFile, setPanelLayout, setDragState, calendarJumpDate, handleCalendarJumpComplete, calendarSelectedEvent, handleCalendarSelectedEventConsumed]);
   
   // Render panel group (recursive for nested splits)
   const renderPanelGroup = useCallback((group: PanelGroup): React.ReactNode => {
@@ -958,6 +967,7 @@ const Workspaces = (): React.ReactNode => {
                           onCreatePowerpoint={handleCreatePowerpointWrapper}
                           onGenerateImage={handleGenerateImage}
                           onCreateFolder={handleCreateFolder}
+                          onEventSelect={handleCalendarEventSelectCallback}
                           onOpenCalendar={() => openCalendarInTabCallback(activePanelId)}
                         />
                       </div>
@@ -1177,7 +1187,7 @@ const Workspaces = (): React.ReactNode => {
         onOpenChange={setFileSearchOpen}
         onFileSelect={handleFileSelect}
         onEmailSelect={handleSearchEmailSelect}
-        onCalendarEventSelect={handleSearchCalendarEventSelect}
+        onCalendarEventSelect={handleCalendarEventSelectCallback}
       />
       <Toaster />
     </TooltipProvider>
