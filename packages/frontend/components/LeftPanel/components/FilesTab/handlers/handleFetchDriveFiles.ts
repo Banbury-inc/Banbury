@@ -1,8 +1,11 @@
 import { DriveFile } from "../../../../../../backend/api/drive/drive"
 import { ApiService } from "../../../../../../backend/api/apiService"
 
+export type DriveViewMode = 'my-drive' | 'recent' | 'starred' | 'trash'
+
 interface FetchDriveFilesParams {
   pageToken?: string
+  viewMode?: DriveViewMode
   setIsLoadingMoreDrive: (loading: boolean) => void
   setDriveLoading: (loading: boolean) => void
   setDriveError: (error: string | null) => void
@@ -12,8 +15,23 @@ interface FetchDriveFilesParams {
   checkDriveAccess: () => void
 }
 
+function getQueryParamsForMode(viewMode: DriveViewMode): { q: string; orderBy: string } {
+  switch (viewMode) {
+    case 'recent':
+      return { q: 'trashed = false', orderBy: 'modifiedTime desc' }
+    case 'starred':
+      return { q: 'starred = true and trashed = false', orderBy: 'modifiedTime desc' }
+    case 'trash':
+      return { q: 'trashed = true', orderBy: 'modifiedTime desc' }
+    case 'my-drive':
+    default:
+      return { q: "'root' in parents and trashed = false", orderBy: 'folder,name' }
+  }
+}
+
 export async function handleFetchDriveFiles({
   pageToken,
+  viewMode = 'my-drive',
   setIsLoadingMoreDrive,
   setDriveLoading,
   setDriveError,
@@ -40,8 +58,16 @@ export async function handleFetchDriveFiles({
       throw new Error('No authentication token found')
     }
     
-    // Fetch root-level files with pagination
-    const response = await ApiService.Drive.listRootFiles(100, pageToken)
+    // Get query params based on the view mode
+    const { q, orderBy } = getQueryParamsForMode(viewMode)
+    
+    // Fetch files with mode-specific query
+    const response = await ApiService.Drive.listFiles({
+      pageSize: 100,
+      pageToken,
+      q,
+      orderBy,
+    })
     
     if (response.files) {
       // If pageToken exists, append to existing files; otherwise replace

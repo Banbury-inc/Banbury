@@ -1,19 +1,21 @@
 import { RefreshCw, Folder } from "lucide-react"
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { DriveFileTreeItem } from "./DriveFileTreeItem"
 import { Button } from "../../../../ui/button"
 import { DriveFile } from "../../../../../../backend/api/drive/drive"
 import { ApiService } from "../../../../../../backend/api/apiService"
 import { Typography } from "../../../../ui/typography"
-import { handleFetchDriveFiles } from "../handlers/handleFetchDriveFiles"
+import { handleFetchDriveFiles, DriveViewMode } from "../handlers/handleFetchDriveFiles"
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
 
 interface GoogleDriveViewProps {
+  viewMode?: DriveViewMode
   onFileSelect?: (file: FileSystemItem) => void
   selectedFile?: FileSystemItem | null
 }
 
 export function GoogleDriveView({
+  viewMode = 'my-drive',
   onFileSelect,
   selectedFile,
 }: GoogleDriveViewProps) {
@@ -24,6 +26,9 @@ export function GoogleDriveView({
   const [driveNextPageToken, setDriveNextPageToken] = useState<string | undefined>(undefined)
   const [isLoadingMoreDrive, setIsLoadingMoreDrive] = useState(false)
   const [checkingDriveAccess, setCheckingDriveAccess] = useState(false)
+  
+  // Track the previous view mode to detect changes
+  const previousViewMode = useRef<DriveViewMode>(viewMode)
   
   // Drive folder expansion state (tree view)
   const [expandedDriveItems, setExpandedDriveItems] = useState<Set<string>>(new Set())
@@ -63,10 +68,11 @@ export function GoogleDriveView({
     }
   }, [])
 
-  // Fetch Google Drive files (root level)
+  // Fetch Google Drive files based on view mode
   const fetchDriveFiles = useCallback(async (pageToken?: string) => {
     await handleFetchDriveFiles({
       pageToken,
+      viewMode,
       setIsLoadingMoreDrive,
       setDriveLoading,
       setDriveError,
@@ -75,7 +81,7 @@ export function GoogleDriveView({
       setDriveAvailable,
       checkDriveAccess,
     })
-  }, [checkDriveAccess])
+  }, [checkDriveAccess, viewMode])
 
   // Load more Google Drive files for infinite scroll
   const loadMoreDriveFiles = useCallback(() => {
@@ -142,12 +148,36 @@ export function GoogleDriveView({
     checkDriveAccess()
   }, [checkDriveAccess])
 
-  // Fetch Drive files when available
+  // Reset state when viewMode changes
+  useEffect(() => {
+    if (previousViewMode.current !== viewMode) {
+      // Clear files and reset state when switching modes
+      setDriveFiles([])
+      setDriveNextPageToken(undefined)
+      setDriveError(null)
+      setExpandedDriveItems(new Set())
+      setDriveFolderContents(new Map())
+      previousViewMode.current = viewMode
+    }
+  }, [viewMode])
+
+  // Fetch Drive files when available or viewMode changes
   useEffect(() => {
     if (driveAvailable) {
       fetchDriveFiles()
     }
-  }, [driveAvailable, fetchDriveFiles])
+  }, [driveAvailable, viewMode]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Get display label for the current view mode
+  const getViewModeLabel = useCallback(() => {
+    switch (viewMode) {
+      case 'recent': return 'recent'
+      case 'starred': return 'starred'
+      case 'trash': return 'trashed'
+      case 'my-drive':
+      default: return ''
+    }
+  }, [viewMode])
 
   return (
     <div 
@@ -192,19 +222,30 @@ export function GoogleDriveView({
       
       {!checkingDriveAccess && driveAvailable && !driveLoading && driveFiles.length === 0 && !driveError && (
         <div className="px-3 py-2">
-          <Typography variant="muted">No Google Drive files found</Typography>
+          <Typography variant="muted">
+            {viewMode === 'recent' && 'No recent files found'}
+            {viewMode === 'starred' && 'No starred files found'}
+            {viewMode === 'trash' && 'No files in trash'}
+            {viewMode === 'my-drive' && 'No Google Drive files found'}
+          </Typography>
         </div>
       )}
 
       {/* Google Drive file tree */}
       {driveAvailable && driveFiles
+        .slice() // Create a copy to avoid mutating state
         .sort((a, b) => {
-          // Sort folders first, then files
-          const aIsFolder = a.mimeType?.includes('folder')
-          const bIsFolder = b.mimeType?.includes('folder')
-          if (aIsFolder && !bIsFolder) return -1
-          if (!aIsFolder && bIsFolder) return 1
-          return a.name.localeCompare(b.name)
+          // For my-drive mode, sort folders first then by name
+          // For other modes (recent/starred/trash), preserve API order (modifiedTime desc)
+          if (viewMode === 'my-drive') {
+            const aIsFolder = a.mimeType?.includes('folder')
+            const bIsFolder = b.mimeType?.includes('folder')
+            if (aIsFolder && !bIsFolder) return -1
+            if (!aIsFolder && bIsFolder) return 1
+            return a.name.localeCompare(b.name)
+          }
+          // Keep API order for other modes
+          return 0
         })
         .map((file) => (
           <DriveFileTreeItem

@@ -81,15 +81,15 @@ export function DriveFileTreeItem({
     if (file.mimeType?.includes('video')) return <FileVideo className="h-4 w-4 flex-shrink-0 text-red-400" />
     if (file.mimeType?.includes('audio')) return <FileAudio className="h-4 w-4 flex-shrink-0 text-blue-400" />
     if (file.mimeType?.includes('pdf')) return <FileText className="h-4 w-4 flex-shrink-0 text-red-400" />
-    return <File className="h-4 w-4 flex-shrink-0 text-gray-400" />
+    return <File className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
   }
 
   return (
     <>
       <button
         onClick={handleClick}
-        className={`w-full flex items-center gap-2 text-left px-3 py-2 hover:bg-zinc-800 cursor-pointer transition-colors ${
-          isSelected ? 'bg-zinc-800 text-white' : 'text-zinc-300'
+        className={`w-full flex items-center gap-2 text-left px-3 py-2 hover:bg-muted cursor-pointer transition-colors ${
+          isSelected ? 'bg-muted text-foreground' : 'text-muted-foreground'
         }`}
         style={{ paddingLeft: `${(level * 12) + 12}px` }}
       >
@@ -143,7 +143,7 @@ export function DriveFileTreeItem({
       {/* Show loading state for empty expanded folders */}
       {isFolder && isExpanded && isLoading && (
         <div
-          className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-500"
+          className="w-full flex items-center gap-2 text-left px-3 py-2 text-muted-foreground"
           style={{ paddingLeft: `${((level + 1) * 12) + 12}px` }}
         >
           <div className="w-3" />
@@ -155,7 +155,7 @@ export function DriveFileTreeItem({
       {/* Show empty state for expanded folders with no contents */}
       {isFolder && isExpanded && !isLoading && children.length === 0 && (
         <div
-          className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-500"
+          className="w-full flex items-center gap-2 text-left px-3 py-2 text-muted-foreground"
           style={{ paddingLeft: `${((level + 1) * 12) + 12}px` }}
         >
           <div className="w-3" />

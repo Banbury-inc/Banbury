@@ -10,14 +10,16 @@ import {
   FileBarChart,
   Clock,
   Star,
+  Trash2,
 } from "lucide-react"
 import { useState, useRef, useCallback } from 'react'
 import { LocalFilesView } from "./components/LocalFilesView"
 import { GoogleDriveView } from "./components/GoogleDriveView"
+import { GoogleDriveIcon } from "../../../icons"
 import { Button } from "../../../ui/button"
 import { FileSystemItem } from "../../../../utils/fileTreeUtils"
 import { Typography } from "../../../ui/typography"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../ui/select"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from "../../../ui/select"
 import { handleRefreshFiles } from "./handlers/handleRefreshFiles"
 import { handleRefreshComplete } from "./handlers/handleRefreshComplete"
 
@@ -66,7 +68,35 @@ export function FilesTab({
   onCreatePowerpoint,
   onCreateFolder,
 }: FilesTabProps) {
-  const [fileViewMode, setFileViewMode] = useState<'local' | 'recent' | 'starred' | 'drive'>('local')
+  const [fileViewMode, setFileViewMode] = useState<'local' | 'recent' | 'starred' | 'drive' | 'drive-recent' | 'drive-starred' | 'drive-trash'>('local')
+
+  // Helper to get icon for view mode
+  const getViewModeIcon = (mode: string) => {
+    switch (mode) {
+      case 'local': return Folder
+      case 'recent': return Clock
+      case 'starred': return Star
+      case 'drive': return GoogleDriveIcon
+      case 'drive-recent': return Clock
+      case 'drive-starred': return Star
+      case 'drive-trash': return Trash2
+      default: return Folder
+    }
+  }
+
+  // Helper to get display name for view mode
+  const getViewModeDisplayName = (mode: string) => {
+    switch (mode) {
+      case 'local': return 'All Files'
+      case 'recent': return 'Recent'
+      case 'starred': return 'Starred'
+      case 'drive': return 'Google Drive'
+      case 'drive-recent': return 'Drive Recent'
+      case 'drive-starred': return 'Drive Starred'
+      case 'drive-trash': return 'Drive Trash'
+      default: return 'All Files'
+    }
+  }
   const [localRefreshCounter, setLocalRefreshCounter] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -128,43 +158,76 @@ export function FilesTab({
         <div className="flex items-center justify-between px-4 py-3 border-b min-w-0 gap-3">
           <div className="flex items-center min-w-0 flex-1 overflow-hidden">
             {/* File View Mode Navigation */}
-            <Select value={fileViewMode} onValueChange={(value) => setFileViewMode(value as 'local' | 'recent' | 'starred' | 'drive')}>
-              <SelectTrigger size="sm">
-                <SelectValue />
+            <Select value={fileViewMode} onValueChange={(value) => setFileViewMode(value as 'local' | 'recent' | 'starred' | 'drive' | 'drive-recent' | 'drive-starred' | 'drive-trash')}>
+              <SelectTrigger size="sm" className="min-w-[120px]">
+                <SelectValue>
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const Icon = getViewModeIcon(fileViewMode)
+                      if (fileViewMode === 'drive') {
+                        return <Icon size={14} className="h-3.5 w-3.5 grayscale opacity-70" />
+                      }
+                      return <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    })()}
+                    <Typography variant="xs" className="font-medium">
+                      {getViewModeDisplayName(fileViewMode)}
+                    </Typography>
+                  </div>
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="local">
-                  <div className="flex items-center gap-2">
-                    <Folder className="h-3 w-3" strokeWidth={1.5} />
-                    <Typography variant="xs" className="font-medium">
-                      All Files
-                    </Typography>
-                  </div>
-                </SelectItem>
-                <SelectItem value="recent">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-3 w-3" strokeWidth={1.5} />
-                    <Typography variant="xs" className="font-medium">
-                      Recent
-                    </Typography>
-                  </div>
-                </SelectItem>
-                <SelectItem value="starred">
-                  <div className="flex items-center gap-2">
-                    <Star className="h-3 w-3" strokeWidth={1.5} />
-                    <Typography variant="xs" className="font-medium">
-                      Starred
-                    </Typography>
-                  </div>
-                </SelectItem>
-                <SelectItem value="drive">
-                  <div className="flex items-center gap-2">
-                    <Network className="h-3 w-3" strokeWidth={1.5} />
-                    <Typography variant="xs" className="font-medium">
-                      Google Drive
-                    </Typography>
-                  </div>
-                </SelectItem>
+                {/* Local Files Group */}
+                <SelectGroup>
+                  <SelectLabel>Local</SelectLabel>
+                  <SelectItem value="local">
+                    <div className="flex items-center gap-2">
+                      <Folder className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      <Typography variant="xs" className="font-medium">All Files</Typography>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="recent">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      <Typography variant="xs" className="font-medium">Recent</Typography>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="starred">
+                    <div className="flex items-center gap-2">
+                      <Star className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      <Typography variant="xs" className="font-medium">Starred</Typography>
+                    </div>
+                  </SelectItem>
+                </SelectGroup>
+
+                {/* Google Drive Group */}
+                <SelectSeparator />
+                <SelectGroup>
+                  <SelectLabel>Google Drive</SelectLabel>
+                  <SelectItem value="drive">
+                    <div className="flex items-center gap-2">
+                      <GoogleDriveIcon size={14} className="h-3.5 w-3.5 grayscale opacity-70" />
+                      <Typography variant="xs" className="font-medium">Google Drive</Typography>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="drive-recent">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      <Typography variant="xs" className="font-medium">Drive Recent</Typography>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="drive-starred">
+                    <div className="flex items-center gap-2">
+                      <Star className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      <Typography variant="xs" className="font-medium">Drive Starred</Typography>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="drive-trash">
+                    <div className="flex items-center gap-2">
+                      <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      <Typography variant="xs" className="font-medium">Drive Trash</Typography>
+                    </div>
+                  </SelectItem>
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
@@ -290,6 +353,31 @@ export function FilesTab({
 
         {fileViewMode === 'drive' && (
           <GoogleDriveView
+            viewMode="my-drive"
+            onFileSelect={onFileSelect}
+            selectedFile={selectedFile}
+          />
+        )}
+
+        {fileViewMode === 'drive-recent' && (
+          <GoogleDriveView
+            viewMode="recent"
+            onFileSelect={onFileSelect}
+            selectedFile={selectedFile}
+          />
+        )}
+
+        {fileViewMode === 'drive-starred' && (
+          <GoogleDriveView
+            viewMode="starred"
+            onFileSelect={onFileSelect}
+            selectedFile={selectedFile}
+          />
+        )}
+
+        {fileViewMode === 'drive-trash' && (
+          <GoogleDriveView
+            viewMode="trash"
             onFileSelect={onFileSelect}
             selectedFile={selectedFile}
           />
