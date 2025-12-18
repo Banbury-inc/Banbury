@@ -8,6 +8,8 @@ import {
   Network,
   Folder,
   FileBarChart,
+  Clock,
+  Star,
 } from "lucide-react"
 import { useState, useRef, useCallback } from 'react'
 import { LocalFilesView } from "./components/LocalFilesView"
@@ -64,7 +66,7 @@ export function FilesTab({
   onCreatePowerpoint,
   onCreateFolder,
 }: FilesTabProps) {
-  const [fileViewMode, setFileViewMode] = useState<'local' | 'drive'>('local')
+  const [fileViewMode, setFileViewMode] = useState<'local' | 'recent' | 'starred' | 'drive'>('local')
   const [localRefreshCounter, setLocalRefreshCounter] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -126,26 +128,42 @@ export function FilesTab({
         <div className="flex items-center justify-between px-4 py-3 border-b min-w-0 gap-3">
           <div className="flex items-center min-w-0 flex-1 overflow-hidden">
             {/* File View Mode Navigation */}
-            <Select value={fileViewMode} onValueChange={(value) => setFileViewMode(value as 'local' | 'drive')}>
+            <Select value={fileViewMode} onValueChange={(value) => setFileViewMode(value as 'local' | 'recent' | 'starred' | 'drive')}>
               <SelectTrigger size="sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="local">
-                  <Typography
-                    variant="xs"
-                    className="font-medium"
-                  >
-                    Local Files
-                  </Typography>
+                  <div className="flex items-center gap-2">
+                    <Folder className="h-3 w-3" strokeWidth={1.5} />
+                    <Typography variant="xs" className="font-medium">
+                      All Files
+                    </Typography>
+                  </div>
+                </SelectItem>
+                <SelectItem value="recent">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3 w-3" strokeWidth={1.5} />
+                    <Typography variant="xs" className="font-medium">
+                      Recent
+                    </Typography>
+                  </div>
+                </SelectItem>
+                <SelectItem value="starred">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-3 w-3" strokeWidth={1.5} />
+                    <Typography variant="xs" className="font-medium">
+                      Starred
+                    </Typography>
+                  </div>
                 </SelectItem>
                 <SelectItem value="drive">
-                  <Typography
-                    variant="xs"
-                    className="font-medium"
-                  >
-                    Google Drive
-                  </Typography>
+                  <div className="flex items-center gap-2">
+                    <Network className="h-3 w-3" strokeWidth={1.5} />
+                    <Typography variant="xs" className="font-medium">
+                      Google Drive
+                    </Typography>
+                  </div>
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -245,8 +263,9 @@ export function FilesTab({
 
       {/* Tab Content */}
       <div className="flex-1 overflow-hidden">
-        {fileViewMode === 'local' && (
+        {(fileViewMode === 'local' || fileViewMode === 'recent' || fileViewMode === 'starred') && (
           <LocalFilesView
+            viewMode={fileViewMode}
             userInfo={userInfo}
             onFileSelect={onFileSelect}
             selectedFile={selectedFile}

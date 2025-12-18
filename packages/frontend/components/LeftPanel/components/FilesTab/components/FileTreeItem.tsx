@@ -21,6 +21,7 @@ import {
   FilePlus,
   FileCog,
   Network,
+  Star,
 } from "lucide-react"
 import { useState, useEffect, useRef } from 'react'
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
@@ -64,6 +65,9 @@ export interface FileTreeItemProps {
   onShiftToggleSelection: (item: FileSystemItem, e?: React.MouseEvent) => void
   selectionCount: number
   onDeleteSelectedFiles: () => void
+  starredFileIds?: Set<string>
+  onStarFile?: (fileId: string) => void
+  onUnstarFile?: (fileId: string) => void
 }
 
 // Comprehensive file type detection functions
@@ -202,9 +206,11 @@ interface FileContextMenuProps {
   onUploadFolder?: () => void
   isFolder?: boolean
   deleteLabel?: string
+  isStarred?: boolean
+  onToggleStar?: () => void
 }
 
-function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFile, onUploadFolder, isFolder, deleteLabel }: FileContextMenuProps) {
+function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFile, onUploadFolder, isFolder, deleteLabel, isStarred, onToggleStar }: FileContextMenuProps) {
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
@@ -242,6 +248,17 @@ function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFi
               <FolderPlus className="w-4 h-4" strokeWidth={1} />
               <Typography variant="xs" className="text-zinc-900 dark:text-white">
                 New Folder
+              </Typography>
+            </ContextMenu.Item>
+          )}
+          {onToggleStar && !isFolder && (
+            <ContextMenu.Item 
+              className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              onSelect={onToggleStar}
+            >
+              <Star className={`w-4 h-4 ${isStarred ? 'text-yellow-500 fill-yellow-500' : ''}`} strokeWidth={1} />
+              <Typography variant="xs" className="text-zinc-900 dark:text-white">
+                {isStarred ? 'Unstar' : 'Star'}
               </Typography>
             </ContextMenu.Item>
           )}
@@ -295,7 +312,10 @@ export function FileTreeItem({
   selectedIds,
   onShiftToggleSelection,
   selectionCount,
-  onDeleteSelectedFiles
+  onDeleteSelectedFiles,
+  starredFileIds,
+  onStarFile,
+  onUnstarFile,
 }: FileTreeItemProps) {
   
   // Helper function to select filename without extension
@@ -577,6 +597,9 @@ export function FileTreeItem({
         {!hasChildren && <div className="w-3" />}
         <FileIconComponent className={`h-4 w-4 flex-shrink-0 ${fileIconData.color}`} />
         <Typography variant="xs" className="truncate min-w-0 flex-1">{item.name}</Typography>
+        {item.type === 'file' && item.file_id && starredFileIds?.has(item.file_id) && (
+          <Star className="h-3 w-3 flex-shrink-0 text-yellow-500 fill-yellow-500" strokeWidth={1.5} />
+        )}
       </button>
     )
   )
@@ -601,6 +624,15 @@ export function FileTreeItem({
             onUploadFile={onUploadFile}
             onUploadFolder={onUploadFolder}
             isFolder={item.type === 'folder'}
+            isStarred={item.file_id ? starredFileIds?.has(item.file_id) : false}
+            onToggleStar={item.file_id ? () => {
+              const isCurrentlyStarred = starredFileIds?.has(item.file_id!)
+              if (isCurrentlyStarred) {
+                onUnstarFile?.(item.file_id!)
+              } else {
+                onStarFile?.(item.file_id!)
+              }
+            } : undefined}
           >
             {buttonContent}
           </FileContextMenu>
@@ -673,6 +705,9 @@ export function FileTreeItem({
               onShiftToggleSelection={onShiftToggleSelection}
               selectionCount={selectionCount}
               onDeleteSelectedFiles={onDeleteSelectedFiles}
+              starredFileIds={starredFileIds}
+              onStarFile={onStarFile}
+              onUnstarFile={onUnstarFile}
             />
           ))}
         </>

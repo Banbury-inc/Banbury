@@ -5,20 +5,25 @@ import {
   FileSpreadsheet,
   Upload,
   Network,
+  Clock,
+  Star,
 } from "lucide-react"
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { toggleFileSelection, collectSelectedFileItems } from "../../../handlers/handle-multi-select"
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { toggleFileSelection } from "../../../handlers/handle-multi-select"
 import { FileTreeItem, DragState } from "./FileTreeItem"
 import { ApiService } from "../../../../../../backend/api/apiService"
-import { buildFileTree, FileSystemItem } from "../../../../../utils/fileTreeUtils"
+import { buildFileTree, FileSystemItem, flattenFileTree } from "../../../../../utils/fileTreeUtils"
 import { Typography } from "../../../../ui/typography"
 import { handleCreateDocumentSubmit } from "../handlers/handleCreateDocumentSubmit"
 import { handleCreateSpreadsheetSubmit } from "../handlers/handleCreateSpreadsheetSubmit"
 import { handleCreateDrawioSubmit as handleCreateDrawioSubmitHandler } from "../handlers/handleCreateDrawioSubmit"
 import { handleCreatePowerpointSubmit } from "../handlers/handleCreatePowerpointSubmit"
 import { handleCreateRootFolderSubmit } from "../handlers/handleCreateRootFolderSubmit"
+import { getRecentFileIds, addRecentFileId } from "../handlers/handleRecentFiles"
+import { fetchStarredFileIds, starFile, unstarFile } from "../handlers/handleStarredFiles"
 
 interface LocalFilesViewProps {
+  viewMode: 'local' | 'recent' | 'starred'
   userInfo?: {
     username: string
     email?: string
@@ -45,6 +50,7 @@ interface LocalFilesViewProps {
 }
 
 export function LocalFilesView({
+  viewMode,
   userInfo,
   onFileSelect,
   selectedFile,
@@ -70,6 +76,10 @@ export function LocalFilesView({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  
+  // Recent/Starred state
+  const [recentFileIds, setRecentFileIds] = useState<string[]>([])
+  const [starredFileIds, setStarredFileIds] = useState<Set<string>>(new Set())
   const [isCreatingRootFolder, setIsCreatingRootFolder] = useState(false)
   const [newRootFolderName, setNewRootFolderName] = useState('New Folder')
   const [isCreatingRootFolderPending, setIsCreatingRootFolderPending] = useState(false)
@@ -339,6 +349,87 @@ export function LocalFilesView({
       return () => clearTimeout(timeoutId)
     }
   }, [isCreatingRootFolder])
+
+  // Load recent file IDs from localStorage on mount
+  useEffect(() => {
+    if (userInfo?.username) {
+      const ids = getRecentFileIds(userInfo.username)
+      setRecentFileIds(ids)
+    }
+  }, [userInfo?.username])
+
+  // Load starred file IDs from backend on mount
+  useEffect(() => {
+    if (userInfo?.username) {
+      fetchStarredFileIds().then((ids) => {
+        setStarredFileIds(new Set(ids))
+      })
+    }
+  }, [userInfo?.username])
+
+  // Flatten file tree for lookups
+  const flatFileList = useMemo(() => flattenFileTree(fileSystem), [fileSystem])
+
+  // Map file_id to FileSystemItem for quick lookup
+  const fileByIdMap = useMemo(() => {
+    const map = new Map<string, FileSystemItem>()
+    flatFileList.forEach((item) => {
+      if (item.file_id) map.set(item.file_id, item)
+    })
+    return map
+  }, [flatFileList])
+
+  // Derive recent files list from IDs
+  const recentFiles = useMemo(() => {
+    return recentFileIds
+      .map((id) => fileByIdMap.get(id))
+      .filter((item): item is FileSystemItem => !!item && item.type === 'file')
+  }, [recentFileIds, fileByIdMap])
+
+  // Derive starred files list from IDs
+  const starredFiles = useMemo(() => {
+    return Array.from(starredFileIds)
+      .map((id) => fileByIdMap.get(id))
+      .filter((item): item is FileSystemItem => !!item && item.type === 'file')
+  }, [starredFileIds, fileByIdMap])
+
+  // Wrapper for file select that tracks recent opens
+  const handleFileSelectWithRecent = useCallback((file: FileSystemItem) => {
+    if (userInfo?.username && file.file_id) {
+      const updated = addRecentFileId(userInfo.username, file.file_id)
+      setRecentFileIds(updated)
+    }
+    onFileSelect?.(file)
+  }, [userInfo?.username, onFileSelect])
+
+  // Star/unstar handlers
+  const handleStarFile = useCallback(async (fileId: string) => {
+    // Optimistic update
+    setStarredFileIds((prev) => new Set([...prev, fileId]))
+    const success = await starFile(fileId)
+    if (!success) {
+      // Rollback on failure
+      setStarredFileIds((prev) => {
+        const next = new Set(prev)
+        next.delete(fileId)
+        return next
+      })
+    }
+  }, [])
+
+  const handleUnstarFile = useCallback(async (fileId: string) => {
+    // Optimistic update
+    setStarredFileIds((prev) => {
+      const next = new Set(prev)
+      next.delete(fileId)
+      return next
+    })
+    const success = await unstarFile(fileId)
+    if (!success) {
+      // Rollback on failure
+      setStarredFileIds((prev) => new Set([...prev, fileId]))
+    }
+  }, [])
 
   const handleCreateRootFolderSubmitWrapper = async () => {
     await handleCreateRootFolderSubmit({
@@ -798,34 +889,34 @@ export function LocalFilesView({
           )}
           
           {/* Local Files View */}
-          {loading && !fileSystem.length && (
+          {viewMode === 'local' && loading && !fileSystem.length && (
             <div className="flex items-center gap-2 px-3 py-2">
               <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
               <Typography variant="muted">Loading files...</Typography>
             </div>
           )}
           
-          {error && (
+          {viewMode === 'local' && error && (
             <div className="px-3 py-2">
               <Typography variant="small" className="text-destructive">{error}</Typography>
             </div>
           )}
           
-          {uploadingFolder && (
+          {viewMode === 'local' && uploadingFolder && (
             <div className="flex items-center gap-2 px-3 py-2">
               <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
               <Typography variant="muted">Uploading folder...</Typography>
             </div>
           )}
           
-          {!loading && !error && fileSystem.length === 0 && !uploadingFolder && (
+          {viewMode === 'local' && !loading && !error && fileSystem.length === 0 && !uploadingFolder && (
             <div className="px-3 py-2">
               <Typography variant="muted">No files found</Typography>
             </div>
           )}
 
           {/* Root level folder creation */}
-          {isCreatingRootFolder && (
+          {viewMode === 'local' && isCreatingRootFolder && (
             <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
               <div className="w-3" />
               <Folder className="h-4 w-4 text-muted-foreground" />
@@ -842,7 +933,7 @@ export function LocalFilesView({
               />
             </div>
           )}
-          {isCreatingRootFolderPending && pendingRootFolderName && (
+          {viewMode === 'local' && isCreatingRootFolderPending && pendingRootFolderName && (
             <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
               <div className="w-3" />
               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -852,7 +943,7 @@ export function LocalFilesView({
           )}
 
           {/* Root level document creation */}
-          {isCreatingDocument && (
+          {viewMode === 'local' && isCreatingDocument && (
             <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
               <div className="w-3" />
               <FileText className="h-4 w-4 text-muted-foreground" />
@@ -876,7 +967,7 @@ export function LocalFilesView({
               />
             </div>
           )}
-          {isCreatingDocumentPending && pendingDocumentName && (
+          {viewMode === 'local' && isCreatingDocumentPending && pendingDocumentName && (
             <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
               <div className="w-3" />
               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -886,7 +977,7 @@ export function LocalFilesView({
           )}
 
           {/* Root level spreadsheet creation */}
-          {isCreatingSpreadsheet && (
+          {viewMode === 'local' && isCreatingSpreadsheet && (
             <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
               <div className="w-3" />
               <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
@@ -910,7 +1001,7 @@ export function LocalFilesView({
               />
             </div>
           )}
-          {isCreatingSpreadsheetPending && pendingSpreadsheetName && (
+          {viewMode === 'local' && isCreatingSpreadsheetPending && pendingSpreadsheetName && (
             <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
               <div className="w-3" />
               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -920,7 +1011,7 @@ export function LocalFilesView({
           )}
 
           {/* Root level draw.io diagram creation */}
-          {isCreatingDrawio && (
+          {viewMode === 'local' && isCreatingDrawio && (
             <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
               <div className="w-3" />
               <Network className="h-4 w-4 text-muted-foreground" />
@@ -937,7 +1028,7 @@ export function LocalFilesView({
               />
             </div>
           )}
-          {isCreatingDrawioPending && pendingDrawioName && (
+          {viewMode === 'local' && isCreatingDrawioPending && pendingDrawioName && (
             <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
               <div className="w-3" />
               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -947,7 +1038,7 @@ export function LocalFilesView({
           )}
 
           {/* Root level tldraw canvas creation */}
-          {isCreatingTldraw && (
+          {viewMode === 'local' && isCreatingTldraw && (
             <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
               <div className="w-3" />
               <Network className="h-4 w-4 text-muted-foreground" />
@@ -964,7 +1055,7 @@ export function LocalFilesView({
               />
             </div>
           )}
-          {isCreatingTldrawPending && pendingTldrawName && (
+          {viewMode === 'local' && isCreatingTldrawPending && pendingTldrawName && (
             <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
               <div className="w-3" />
               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -974,7 +1065,7 @@ export function LocalFilesView({
           )}
 
           {/* Root level PowerPoint presentation creation */}
-          {isCreatingPowerpoint && (
+          {viewMode === 'local' && isCreatingPowerpoint && (
             <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
               <div className="w-3" />
               <FileText className="h-4 w-4 text-muted-foreground" />
@@ -991,7 +1082,7 @@ export function LocalFilesView({
               />
             </div>
           )}
-          {isCreatingPowerpointPending && pendingPowerpointName && (
+          {viewMode === 'local' && isCreatingPowerpointPending && pendingPowerpointName && (
             <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
               <div className="w-3" />
               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -1000,15 +1091,103 @@ export function LocalFilesView({
             </div>
           )}
           
+          {/* Recent Files View */}
+          {viewMode === 'recent' && (
+            <>
+              {recentFiles.length === 0 ? (
+                <div className="px-3 py-2">
+                  <Typography variant="muted" className="text-sm">No recent files</Typography>
+                </div>
+              ) : (
+                recentFiles.map((file) => (
+                  <FileTreeItem
+                    key={file.file_id}
+                    item={file}
+                    level={0}
+                    expandedItems={new Set()}
+                    toggleExpanded={() => {}}
+                    onFileSelect={handleFileSelectWithRecent}
+                    selectedFile={selectedFile}
+                    onFileDeleted={onFileDeleted}
+                    onFileRenamed={onFileRenamed}
+                    onFolderCreated={handleFolderCreated}
+                    onFolderRenamed={handleFolderRenamed}
+                    onFolderDeleted={handleFolderDeleted}
+                    onUploadFile={handleFileUpload}
+                    onUploadFolder={handleFolderUpload}
+                    userInfo={userInfo}
+                    dragState={dragState}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    selectedIds={selectedIds}
+                    onShiftToggleSelection={onShiftToggleSelection}
+                    selectionCount={selectionCount}
+                    onDeleteSelectedFiles={onDeleteSelectedFiles}
+                    starredFileIds={starredFileIds}
+                    onStarFile={handleStarFile}
+                    onUnstarFile={handleUnstarFile}
+                  />
+                ))
+              )}
+            </>
+          )}
+          
+          {/* Starred Files View */}
+          {viewMode === 'starred' && (
+            <>
+              {starredFiles.length === 0 ? (
+                <div className="px-3 py-2">
+                  <Typography variant="muted" className="text-sm">No starred files</Typography>
+                </div>
+              ) : (
+                starredFiles.map((file) => (
+                  <FileTreeItem
+                    key={file.file_id}
+                    item={file}
+                    level={0}
+                    expandedItems={new Set()}
+                    toggleExpanded={() => {}}
+                    onFileSelect={handleFileSelectWithRecent}
+                    selectedFile={selectedFile}
+                    onFileDeleted={onFileDeleted}
+                    onFileRenamed={onFileRenamed}
+                    onFolderCreated={handleFolderCreated}
+                    onFolderRenamed={handleFolderRenamed}
+                    onFolderDeleted={handleFolderDeleted}
+                    onUploadFile={handleFileUpload}
+                    onUploadFolder={handleFolderUpload}
+                    userInfo={userInfo}
+                    dragState={dragState}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    selectedIds={selectedIds}
+                    onShiftToggleSelection={onShiftToggleSelection}
+                    selectionCount={selectionCount}
+                    onDeleteSelectedFiles={onDeleteSelectedFiles}
+                    starredFileIds={starredFileIds}
+                    onStarFile={handleStarFile}
+                    onUnstarFile={handleUnstarFile}
+                  />
+                ))
+              )}
+            </>
+          )}
+          
           {/* Local file tree */}
-          {fileSystem.map((item) => (
+          {viewMode === 'local' && fileSystem.map((item) => (
             <FileTreeItem
               key={item.id}
               item={item}
               level={0}
               expandedItems={expandedItems}
               toggleExpanded={toggleExpanded}
-              onFileSelect={onFileSelect}
+              onFileSelect={handleFileSelectWithRecent}
               selectedFile={selectedFile}
               onFileDeleted={onFileDeleted}
               onFileRenamed={onFileRenamed}
@@ -1028,6 +1207,9 @@ export function LocalFilesView({
               onShiftToggleSelection={onShiftToggleSelection}
               selectionCount={selectionCount}
               onDeleteSelectedFiles={onDeleteSelectedFiles}
+              starredFileIds={starredFileIds}
+              onStarFile={handleStarFile}
+              onUnstarFile={handleUnstarFile}
             />
           ))}
         </div>

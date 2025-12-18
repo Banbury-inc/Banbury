@@ -658,4 +658,77 @@ export default class Files {
       throw ApiService.enhanceError(error, 'Failed to download file');
     }
   }
+
+  /**
+   * Get starred S3 file IDs for the current user
+   */
+  static async getStarredS3Files(): Promise<{ success: boolean; file_ids: string[] }> {
+    try {
+      ApiService.loadAuthToken()
+      
+      const response = await ApiService.post<{
+        result?: string
+        file_ids?: string[]
+        error?: string
+      }>('/files/get_starred_s3_files/', {})
+
+      if (response.result === 'success' && response.file_ids) {
+        return { success: true, file_ids: response.file_ids }
+      } else if (response.error) {
+        throw new Error(response.error)
+      }
+      return { success: true, file_ids: [] }
+    } catch (error) {
+      console.error('getStarredS3Files error:', error)
+      throw ApiService.enhanceError(error, 'Failed to fetch starred files')
+    }
+  }
+
+  /**
+   * Star an S3 file
+   */
+  static async starS3File(fileId: string): Promise<{ success: boolean }> {
+    try {
+      ApiService.loadAuthToken()
+      
+      const response = await ApiService.post<{
+        result?: string
+        error?: string
+      }>('/files/star_s3_file/', { file_id: fileId })
+
+      if (response.result === 'success') {
+        return { success: true }
+      } else if (response.error) {
+        throw new Error(response.error)
+      }
+      return { success: true }
+    } catch (error) {
+      console.error('starS3File error:', error)
+      throw ApiService.enhanceError(error, 'Failed to star file')
+    }
+  }
+
+  /**
+   * Unstar an S3 file
+   */
+  static async unstarS3File(fileId: string): Promise<{ success: boolean }> {
+    try {
+      ApiService.loadAuthToken()
+      
+      const response = await ApiService.post<{
+        result?: string
+        error?: string
+      }>('/files/unstar_s3_file/', { file_id: fileId })
+
+      if (response.result === 'success') {
+        return { success: true }
+      } else if (response.error) {
+        throw new Error(response.error)
+      }
+      return { success: true }
+    } catch (error) {
+      console.error('unstarS3File error:', error)
+      throw ApiService.enhanceError(error, 'Failed to unstar file')
+    }
+  }
 }
