@@ -70,6 +70,7 @@ import {
   Minus,
   Save,
   Download,
+  Share2,
   RefreshCw,
   MoreHorizontal,
   ChevronDown,
@@ -132,9 +133,10 @@ interface PowerPointToolbarProps {
   canUndo: boolean
   canRedo: boolean
   
-  // Save/Download
+  // Save/Download/Share
   onSave: () => void
   onDownload: () => void
+  onShare?: () => void
   saving: boolean
   hasUnsavedChanges: boolean
   
@@ -166,6 +168,7 @@ export function PowerPointToolbar({
   canRedo,
   onSave,
   onDownload,
+  onShare,
   saving,
   hasUnsavedChanges,
   currentTemplateId,
@@ -1317,8 +1320,18 @@ export function PowerPointToolbar({
         <div className="w-px h-6 bg-border mx-2" />
 
 
-        {/* Save & Download */}
+        {/* Share, Save & Download */}
         <div className="flex items-center gap-1">
+          {onShare && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onShare}
+              title="Share"
+            >
+              <Share2 size={16} />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon-sm"

@@ -14,6 +14,7 @@ import { FileTreeItem, DragState } from "./FileTreeItem"
 import { ApiService } from "../../../../../../backend/api/apiService"
 import { buildFileTree, FileSystemItem, flattenFileTree } from "../../../../../utils/fileTreeUtils"
 import { Typography } from "../../../../ui/typography"
+import { ShareFileDialog } from "../../../../share-file/ShareFileDialog"
 import { handleCreateDocumentSubmit } from "../handlers/handleCreateDocumentSubmit"
 import { handleCreateSpreadsheetSubmit } from "../handlers/handleCreateSpreadsheetSubmit"
 import { handleCreateDrawioSubmit as handleCreateDrawioSubmitHandler } from "../handlers/handleCreateDrawioSubmit"
@@ -24,7 +25,7 @@ import { fetchStarredFileIds, starFile, unstarFile } from "../handlers/handleSta
 import { filterFileTree, filterFlatFileList } from "../handlers/handleFileTypeFilter"
 
 interface LocalFilesViewProps {
-  viewMode: 'local' | 'recent' | 'starred'
+  viewMode: 'local' | 'recent' | 'starred' | 'shared'
   userInfo?: {
     username: string
     email?: string
@@ -80,9 +81,11 @@ export function LocalFilesView({
   const [error, setError] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   
-  // Recent/Starred state
+  // Recent/Starred/Shared state
   const [recentFileIds, setRecentFileIds] = useState<string[]>([])
   const [starredFileIds, setStarredFileIds] = useState<Set<string>>(new Set())
+  const [sharedFiles, setSharedFiles] = useState<FileSystemItem[]>([])
+  const [loadingShared, setLoadingShared] = useState(false)
   const [isCreatingRootFolder, setIsCreatingRootFolder] = useState(false)
   const [newRootFolderName, setNewRootFolderName] = useState('New Folder')
   const [isCreatingRootFolderPending, setIsCreatingRootFolderPending] = useState(false)
@@ -126,6 +129,10 @@ export function LocalFilesView({
   
   const [uploadingFolder, setUploadingFolder] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
+  
+  // Share dialog state
+  const [shareDialogOpen, setShareDialogOpen] = useState(false)
+  const [fileToShare, setFileToShare] = useState<{ id: string; name: string; type: 's3' | 'drive' } | null>(null)
   
   // Drag and drop state
   const [dragState, setDragState] = useState<DragState>({
@@ -189,6 +196,17 @@ export function LocalFilesView({
       dragOverTarget: null
     }))
   }
+
+  // Share file handler
+  const handleShareFile = useCallback((file: FileSystemItem) => {
+    if (!file.file_id) return
+    setFileToShare({
+      id: file.file_id,
+      name: file.name,
+      type: 's3'
+    })
+    setShareDialogOpen(true)
+  }, [])
 
   const handleDrop = async (targetItem: FileSystemItem, draggedItem: FileSystemItem) => {
     if (!draggedItem.file_id || targetItem.type !== 'folder') return
@@ -370,6 +388,37 @@ export function LocalFilesView({
     }
   }, [userInfo?.username])
 
+  // Fetch shared files when 'shared' view mode is active
+  useEffect(() => {
+    if (viewMode === 'shared' && userInfo?.username) {
+      setLoadingShared(true)
+      ApiService.Files.getSharedS3Files()
+        .then((response) => {
+          if (response.result === 'success' && response.files) {
+            // Convert backend file info to FileSystemItem format
+            const sharedItems: FileSystemItem[] = response.files.map((file: any) => ({
+              id: file.file_id || file._id,
+              name: file.file_name,
+              type: 'file' as const,
+              file_id: file.file_id || file._id,
+              file_type: file.file_type,
+              file_path: file.file_path,
+              source: 's3' as const,
+              owner: file.username,
+            }))
+            setSharedFiles(sharedItems)
+          } else {
+            setSharedFiles([])
+          }
+        })
+        .catch((err) => {
+          console.error('Error fetching shared files:', err)
+          setSharedFiles([])
+        })
+        .finally(() => setLoadingShared(false))
+    }
+  }, [viewMode, userInfo?.username, refreshTrigger])
+
   // Flatten file tree for lookups
   const flatFileList = useMemo(() => flattenFileTree(fileSystem), [fileSystem])
 
@@ -408,6 +457,10 @@ export function LocalFilesView({
   const filteredStarredFiles = useMemo(() => {
     return filterFlatFileList(starredFiles, activeFilters)
   }, [starredFiles, activeFilters])
+
+  const filteredSharedFiles = useMemo(() => {
+    return filterFlatFileList(sharedFiles, activeFilters)
+  }, [sharedFiles, activeFilters])
 
   // Wrapper for file select that tracks recent opens
   const handleFileSelectWithRecent = useCallback((file: FileSystemItem) => {
@@ -1145,6 +1198,7 @@ export function LocalFilesView({
                     starredFileIds={starredFileIds}
                     onStarFile={handleStarFile}
                     onUnstarFile={handleUnstarFile}
+                    onShareFile={handleShareFile}
                   />
                 ))
               )}
@@ -1189,6 +1243,57 @@ export function LocalFilesView({
                     starredFileIds={starredFileIds}
                     onStarFile={handleStarFile}
                     onUnstarFile={handleUnstarFile}
+                    onShareFile={handleShareFile}
+                  />
+                ))
+              )}
+            </>
+          )}
+
+          {/* Shared with me Files View */}
+          {viewMode === 'shared' && (
+            <>
+              {loadingShared ? (
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <Typography variant="muted">Loading shared files...</Typography>
+                </div>
+              ) : filteredSharedFiles.length === 0 ? (
+                <div className="px-3 py-2">
+                  <Typography variant="muted" className="text-sm">{activeFilters.size > 0 ? 'No matching files' : 'No files shared with you'}</Typography>
+                </div>
+              ) : (
+                filteredSharedFiles.map((file) => (
+                  <FileTreeItem
+                    key={file.file_id}
+                    item={file}
+                    level={0}
+                    expandedItems={new Set()}
+                    toggleExpanded={() => {}}
+                    onFileSelect={handleFileSelectWithRecent}
+                    selectedFile={selectedFile}
+                    onFileDeleted={onFileDeleted}
+                    onFileRenamed={onFileRenamed}
+                    onFolderCreated={handleFolderCreated}
+                    onFolderRenamed={handleFolderRenamed}
+                    onFolderDeleted={handleFolderDeleted}
+                    onUploadFile={handleFileUpload}
+                    onUploadFolder={handleFolderUpload}
+                    userInfo={userInfo}
+                    dragState={dragState}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    selectedIds={selectedIds}
+                    onShiftToggleSelection={onShiftToggleSelection}
+                    selectionCount={selectionCount}
+                    onDeleteSelectedFiles={onDeleteSelectedFiles}
+                    starredFileIds={starredFileIds}
+                    onStarFile={handleStarFile}
+                    onUnstarFile={handleUnstarFile}
+                    onShareFile={handleShareFile}
                   />
                 ))
               )}
@@ -1226,10 +1331,18 @@ export function LocalFilesView({
               starredFileIds={starredFileIds}
               onStarFile={handleStarFile}
               onUnstarFile={handleUnstarFile}
+              onShareFile={handleShareFile}
             />
           ))}
         </div>
       </div>
+
+      {/* Share File Dialog */}
+      <ShareFileDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        file={fileToShare}
+      />
 
       {/* Hidden file inputs */}
       <input

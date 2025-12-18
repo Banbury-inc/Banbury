@@ -22,6 +22,7 @@ import {
   FileCog,
   Network,
   Star,
+  Share2,
 } from "lucide-react"
 import { useState, useEffect, useRef } from 'react'
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
@@ -68,6 +69,7 @@ export interface FileTreeItemProps {
   starredFileIds?: Set<string>
   onStarFile?: (fileId: string) => void
   onUnstarFile?: (fileId: string) => void
+  onShareFile?: (file: FileSystemItem) => void
 }
 
 // Comprehensive file type detection functions
@@ -208,9 +210,10 @@ interface FileContextMenuProps {
   deleteLabel?: string
   isStarred?: boolean
   onToggleStar?: () => void
+  onShare?: () => void
 }
 
-function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFile, onUploadFolder, isFolder, deleteLabel, isStarred, onToggleStar }: FileContextMenuProps) {
+function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFile, onUploadFolder, isFolder, deleteLabel, isStarred, onToggleStar, onShare }: FileContextMenuProps) {
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
@@ -259,6 +262,17 @@ function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFi
               <Star className={`w-4 h-4 ${isStarred ? 'text-yellow-500 fill-yellow-500' : ''}`} strokeWidth={1} />
               <Typography variant="xs" className="text-zinc-900 dark:text-white">
                 {isStarred ? 'Unstar' : 'Star'}
+              </Typography>
+            </ContextMenu.Item>
+          )}
+          {onShare && !isFolder && (
+            <ContextMenu.Item 
+              className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              onSelect={onShare}
+            >
+              <Share2 className="w-4 h-4" strokeWidth={1} />
+              <Typography variant="xs" className="text-zinc-900 dark:text-white">
+                Share
               </Typography>
             </ContextMenu.Item>
           )}
@@ -316,6 +330,7 @@ export function FileTreeItem({
   starredFileIds,
   onStarFile,
   onUnstarFile,
+  onShareFile,
 }: FileTreeItemProps) {
   
   // Helper function to select filename without extension
@@ -633,6 +648,7 @@ export function FileTreeItem({
                 onStarFile?.(item.file_id!)
               }
             } : undefined}
+            onShare={item.type === 'file' && item.file_id ? () => onShareFile?.(item) : undefined}
           >
             {buttonContent}
           </FileContextMenu>
@@ -708,6 +724,7 @@ export function FileTreeItem({
               starredFileIds={starredFileIds}
               onStarFile={onStarFile}
               onUnstarFile={onUnstarFile}
+              onShareFile={onShareFile}
             />
           ))}
         </>

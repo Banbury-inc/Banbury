@@ -49,7 +49,8 @@ import {
   ChevronDown,
   Table as TableIcon,
   Search,
-  FileImage
+  FileImage,
+  Share2
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -80,6 +81,7 @@ interface AITiptapEditorProps {
   className?: string;
   onSave?: () => void;
   onDownload?: () => void;
+  onShare?: () => void;
   saving?: boolean;
   canSave?: boolean;
 }
@@ -91,6 +93,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
   className,
   onSave,
   onDownload,
+  onShare,
   saving = false,
   canSave = false
 }) => {
@@ -730,9 +733,6 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button onClick={setLink} variant="ghost" size="icon-sm" title="Add Link">
-              <LinkIcon size={16} />
-            </Button>
           </div>
 
           <div className="w-px h-6 bg-border mx-1" />
@@ -741,10 +741,20 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
         </div>
 
         {/* Right side - Document Actions */}
-        {(onSave || onDownload) && (
+        {(onShare || onSave || onDownload) && (
           <div ref={rightActionsRef} className="flex items-center gap-1 flex-shrink-0 whitespace-nowrap ml-2">
             <div className="w-px h-6 bg-border mx-2" />
             <div className="flex items-center gap-1">
+              {onShare && (
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={onShare}
+                  title="Share document"
+                >
+                  <Share2 size={16} />
+                </Button>
+              )}
               {onSave && (
                 <Button
                   variant="ghost"

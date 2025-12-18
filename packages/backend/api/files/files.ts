@@ -731,4 +731,193 @@ export default class Files {
       throw ApiService.enhanceError(error, 'Failed to unstar file')
     }
   }
+
+  /**
+   * Share an S3 file with other users
+   */
+  static async shareS3File(
+    fileId: string,
+    recipients: Array<{ username: string }>,
+    access: 'edit' | 'view' = 'edit'
+  ): Promise<{
+    success: boolean
+    message: string
+    shared_with_count?: number
+    not_found_users?: string[]
+  }> {
+    try {
+      ApiService.loadAuthToken()
+      
+      const response = await ApiService.post<{
+        result?: string
+        message?: string
+        shared_with_count?: number
+        not_found_users?: string[]
+        error?: string
+      }>('/files/share_s3_file/', {
+        file_id: fileId,
+        recipients,
+        access
+      })
+
+      if (response.result === 'success') {
+        return {
+          success: true,
+          message: response.message || 'File shared successfully',
+          shared_with_count: response.shared_with_count,
+          not_found_users: response.not_found_users
+        }
+      } else if (response.error) {
+        throw new Error(response.error)
+      }
+      throw new Error('Failed to share file')
+    } catch (error) {
+      console.error('shareS3File error:', error)
+      throw ApiService.enhanceError(error, 'Failed to share file')
+    }
+  }
+
+  /**
+   * Share a Google Drive file with other users
+   */
+  static async shareDriveFile(
+    driveFileId: string,
+    recipients: Array<{ username: string; email?: string }>,
+    access: 'edit' | 'view' = 'edit'
+  ): Promise<{
+    success: boolean
+    message: string
+    successes?: Array<{ recipient: string; permission_id: string; role: string }>
+    errors?: Array<{ recipient: string; error: string }>
+  }> {
+    try {
+      ApiService.loadAuthToken()
+      
+      const response = await ApiService.post<{
+        result?: string
+        message?: string
+        successes?: Array<{ recipient: string; permission_id: string; role: string }>
+        errors?: Array<{ recipient: string; error: string }>
+        error?: string
+      }>('/files/google_drive/share_file/', {
+        drive_file_id: driveFileId,
+        recipients,
+        access
+      })
+
+      if (response.result === 'success' || response.result === 'partial_success') {
+        return {
+          success: response.result === 'success',
+          message: response.message || 'File shared',
+          successes: response.successes,
+          errors: response.errors
+        }
+      } else if (response.error) {
+        throw new Error(response.error)
+      }
+      throw new Error('Failed to share file')
+    } catch (error) {
+      console.error('shareDriveFile error:', error)
+      throw ApiService.enhanceError(error, 'Failed to share Drive file')
+    }
+  }
+
+  /**
+   * Get S3 files that have been shared with the current user
+   */
+  static async getSharedS3Files(): Promise<{
+    success: boolean
+    files: Array<{
+      file_id: string
+      file_name: string
+      file_size: number
+      file_type: string
+      content_type: string
+      s3_url: string
+      created_at: string
+      last_modified: string
+      owner_username: string
+      owner_name: string
+      access_level: 'edit' | 'view'
+    }>
+    total_count: number
+  }> {
+    try {
+      ApiService.loadAuthToken()
+      
+      const response = await ApiService.get<{
+        result?: string
+        files?: Array<{
+          file_id: string
+          file_name: string
+          file_size: number
+          file_type: string
+          content_type: string
+          s3_url: string
+          created_at: string
+          last_modified: string
+          owner_username: string
+          owner_name: string
+          access_level: 'edit' | 'view'
+        }>
+        total_count?: number
+        error?: string
+      }>('/files/get_shared_s3_files/')
+
+      if (response.result === 'success' && response.files) {
+        return {
+          success: true,
+          files: response.files,
+          total_count: response.total_count || response.files.length
+        }
+      } else if (response.error) {
+        throw new Error(response.error)
+      }
+      return { success: true, files: [], total_count: 0 }
+    } catch (error) {
+      console.error('getSharedS3Files error:', error)
+      throw ApiService.enhanceError(error, 'Failed to fetch shared files')
+    }
+  }
+
+  /**
+   * Search for users by username/name/email (typeahead)
+   */
+  static async searchUsers(query: string): Promise<{
+    success: boolean
+    users: Array<{
+      username: string
+      first_name?: string
+      last_name?: string
+      email?: string
+    }>
+  }> {
+    try {
+      ApiService.loadAuthToken()
+      
+      const response = await ApiService.get<{
+        result?: string
+        users?: Array<{
+          username: string
+          first_name?: string
+          last_name?: string
+          email?: string
+        }>
+        error?: string
+      }>(`/users/typeahead/${encodeURIComponent(query)}/`)
+
+      if (response.result === 'success' && response.users) {
+        return {
+          success: true,
+          users: response.users
+        }
+      } else if (response.error) {
+        throw new Error(response.error)
+      }
+      return { success: true, users: [] }
+    } catch (error) {
+      console.error('searchUsers error:', error)
+      throw ApiService.enhanceError(error, 'Failed to search users')
+    }
+  }
 }

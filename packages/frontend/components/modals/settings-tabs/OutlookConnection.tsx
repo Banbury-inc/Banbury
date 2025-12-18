@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Mail } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { useToast } from '../../ui/use-toast'
 import { CONFIG } from '../../../config/config'
+import { OutlookIcon } from '../../icons/OutlookIcon'
 import { 
   checkOutlookConnectionStatus, 
   initiateOutlookOAuth, 
@@ -45,7 +45,7 @@ export function OutlookConnection() {
       console.error('Error initiating Outlook connection:', error)
       toast({
         title: 'Connection failed',
-        description: error.message || 'Failed to connect to Outlook account',
+        description: error.message || 'Failed to connect to Outlook',
         variant: 'destructive'
       })
     } finally {
@@ -60,13 +60,13 @@ export function OutlookConnection() {
       setConnectionStatus({ connected: false })
       toast({
         title: 'Disconnected',
-        description: 'Successfully disconnected from Outlook account'
+        description: 'Successfully disconnected from Outlook'
       })
     } catch (error: any) {
       console.error('Error disconnecting Outlook account:', error)
       toast({
         title: 'Disconnection failed',
-        description: error.message || 'Failed to disconnect from Outlook account',
+        description: error.message || 'Failed to disconnect from Outlook',
         variant: 'destructive'
       })
     } finally {
@@ -87,7 +87,7 @@ export function OutlookConnection() {
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
         <div className={`p-2 rounded-lg ${connectionStatus.connected ? 'bg-green-900/20' : 'bg-zinc-800'}`}>
-          <Mail className={`h-5 w-5 ${connectionStatus.connected ? 'text-green-400' : 'text-zinc-400'}`} />
+          <OutlookIcon size={20} className={connectionStatus.connected ? '' : 'opacity-60'} />
         </div>
         <div>
           <h3 className="text-white text-sm font-medium">Outlook</h3>
@@ -122,7 +122,7 @@ export function OutlookConnection() {
             </>
           ) : (
             <>
-              <Mail className="h-4 w-4 mr-2" />
+              <OutlookIcon size={16} className="mr-2" />
               Connect
             </>
           )}
@@ -131,4 +131,3 @@ export function OutlookConnection() {
     </div>
   )
 }
-

@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { inlineImagesInHtml } from './handlers/inlineImages';
 import { useToast } from '../../ui/use-toast';
 import WordViewer from './WordViewer';
 import { ApiService } from '../../../../backend/api/apiService'
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
+import { ShareFileDialog } from '../../share-file/ShareFileDialog';
 
 interface DocumentViewerProps {
   file: FileSystemItem;
@@ -23,6 +24,10 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
   const [currentFile, setCurrentFile] = useState<FileSystemItem>(file);
   const [documentBlob, setDocumentBlob] = useState<Blob | null>(null);
   const { toast } = useToast();
+  
+  // Share dialog state
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [fileToShare, setFileToShare] = useState<{ id: string; name: string; type: 's3' | 'drive' } | null>(null);
 
   // Prevent duplicate loads (e.g., React StrictMode) for the same file
   const lastFetchKeyRef = useRef<string | null>(null);
@@ -362,6 +367,19 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
     }
   };
 
+  // Handle share button click
+  const handleShare = useCallback(() => {
+    if (!currentFile.file_id) return;
+    
+    const isDriveFile = currentFile.path?.startsWith('drive://');
+    setFileToShare({
+      id: currentFile.file_id,
+      name: currentFile.name,
+      type: isDriveFile ? 'drive' : 's3'
+    });
+    setShareDialogOpen(true);
+  }, [currentFile]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full bg-card">
@@ -403,6 +421,7 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
             }}
             onSaveDocument={handleSave}
             onDownloadDocument={handleDownload}
+            onShareDocument={handleShare}
             saving={saving}
             canSave={!!currentContent}
           />
@@ -412,6 +431,13 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
           </div>
         )}
       </div>
+      
+      {/* Share File Dialog */}
+      <ShareFileDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        file={fileToShare}
+      />
     </div>
   );
 }

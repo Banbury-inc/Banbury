@@ -9,6 +9,7 @@ interface TiptapWordEditorProps {
   placeholder?: string;
   onSave?: () => void;
   onDownload?: () => void;
+  onShare?: () => void;
   saving?: boolean;
   canSave?: boolean;
 }
@@ -19,6 +20,7 @@ const TiptapWordEditor: React.FC<TiptapWordEditorProps> = ({
   placeholder = 'Start typing...',
   onSave,
   onDownload,
+  onShare,
   saving,
   canSave
 }) => {
@@ -66,6 +68,7 @@ Please provide your response in HTML format that can be directly applied to the 
       className="h-full border-0 rounded-none"
       onSave={onSave}
       onDownload={onDownload}
+      onShare={onShare}
       saving={saving}
       canSave={canSave}
     />

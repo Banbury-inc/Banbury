@@ -17,6 +17,7 @@ interface WordViewerProps {
   onDocumentEditorChange?: (editor: any, content: string, fileName: string) => void;
   onSaveDocument?: () => void;
   onDownloadDocument?: () => void;
+  onShareDocument?: () => void;
   saving?: boolean;
   canSave?: boolean;
 }
@@ -31,6 +32,7 @@ const WordViewer: React.FC<WordViewerProps> = ({
   onDocumentEditorChange,
   onSaveDocument,
   onDownloadDocument,
+  onShareDocument,
   saving,
   canSave
 }) => {
@@ -350,6 +352,7 @@ const WordViewer: React.FC<WordViewerProps> = ({
         placeholder={`Start editing ${fileName || 'your document'}...`}
         onSave={onSaveDocument}
         onDownload={onDownloadDocument}
+        onShare={onShareDocument}
         saving={saving}
         canSave={canSave}
       />

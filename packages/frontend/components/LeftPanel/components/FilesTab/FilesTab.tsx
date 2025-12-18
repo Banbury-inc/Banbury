@@ -13,6 +13,7 @@ import {
   Trash2,
   Filter,
   X,
+  Users,
 } from "lucide-react"
 import { useState, useRef, useCallback } from 'react'
 import { LocalFilesView } from "./components/LocalFilesView"
@@ -73,7 +74,7 @@ export function FilesTab({
   onCreatePowerpoint,
   onCreateFolder,
 }: FilesTabProps) {
-  const [fileViewMode, setFileViewMode] = useState<'local' | 'recent' | 'starred' | 'drive' | 'drive-recent' | 'drive-starred' | 'drive-trash'>('local')
+  const [fileViewMode, setFileViewMode] = useState<'local' | 'recent' | 'starred' | 'shared' | 'drive' | 'drive-recent' | 'drive-starred' | 'drive-trash'>('local')
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set())
 
   // Toggle a filter category
@@ -100,6 +101,7 @@ export function FilesTab({
       case 'local': return Folder
       case 'recent': return Clock
       case 'starred': return Star
+      case 'shared': return Users
       case 'drive': return GoogleDriveIcon
       case 'drive-recent': return Clock
       case 'drive-starred': return Star
@@ -114,6 +116,7 @@ export function FilesTab({
       case 'local': return 'All Files'
       case 'recent': return 'Recent'
       case 'starred': return 'Starred'
+      case 'shared': return 'Shared with me'
       case 'drive': return 'Google Drive'
       case 'drive-recent': return 'Drive Recent'
       case 'drive-starred': return 'Drive Starred'
@@ -182,7 +185,7 @@ export function FilesTab({
         <div className="flex items-center justify-between px-4 py-3 border-b min-w-0 gap-3">
           <div className="flex items-center min-w-0 flex-1 overflow-hidden">
             {/* File View Mode Navigation */}
-            <Select value={fileViewMode} onValueChange={(value) => setFileViewMode(value as 'local' | 'recent' | 'starred' | 'drive' | 'drive-recent' | 'drive-starred' | 'drive-trash')}>
+            <Select value={fileViewMode} onValueChange={(value) => setFileViewMode(value as 'local' | 'recent' | 'starred' | 'shared' | 'drive' | 'drive-recent' | 'drive-starred' | 'drive-trash')}>
               <SelectTrigger size="xs" className="min-w-[120px]">
                 <SelectValue>
                   <div className="flex items-center gap-2">
@@ -219,6 +222,12 @@ export function FilesTab({
                     <div className="flex items-center gap-2">
                       <Star className="h-3.5 w-3.5" strokeWidth={1.5} />
                       <Typography variant="xs" className="font-medium">Starred</Typography>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="shared">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      <Typography variant="xs" className="font-medium">Shared with me</Typography>
                     </div>
                   </SelectItem>
                 </SelectGroup>
@@ -395,7 +404,7 @@ export function FilesTab({
 
       {/* Tab Content */}
       <div className="flex-1 overflow-hidden">
-        {(fileViewMode === 'local' || fileViewMode === 'recent' || fileViewMode === 'starred') && (
+        {(fileViewMode === 'local' || fileViewMode === 'recent' || fileViewMode === 'starred' || fileViewMode === 'shared') && (
           <LocalFilesView
             viewMode={fileViewMode}
             userInfo={userInfo}

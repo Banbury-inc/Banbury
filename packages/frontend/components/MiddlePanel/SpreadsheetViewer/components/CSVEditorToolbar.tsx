@@ -20,6 +20,7 @@ import {
   WrapText,
   Save,
   Download,
+  Share2,
   MoreVertical,
   HelpCircle,
   Check,
@@ -103,6 +104,7 @@ interface CSVEditorToolbarProps {
   // Document actions
   onSaveDocument?: () => void;
   onDownloadDocument?: () => void;
+  onShareDocument?: () => void;
   saving?: boolean;
   canSave?: boolean;
   
@@ -144,6 +146,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
   setBorderStyle,
   onSaveDocument,
   onDownloadDocument,
+  onShareDocument,
   saving = false,
   canSave = false,
   setHelpDialogOpen,
@@ -582,11 +585,21 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
           </>
         )}
 
-        {/* Document Actions - Save and Download */}
-        {(onSaveDocument || onDownloadDocument) && (
+        {/* Document Actions - Share, Save and Download */}
+        {(onShareDocument || onSaveDocument || onDownloadDocument) && (
           <>
             <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: '#3f3f46' }} />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto' }}>
+              {onShareDocument && (
+                <Button
+                  variant="primary"
+                  size="icon-sm"
+                  onClick={onShareDocument}
+                  title="Share spreadsheet"
+                >
+                  <Share2 size={16} />
+                </Button>
+              )}
               {onSaveDocument && (
                 <Button
                   variant="primary"
