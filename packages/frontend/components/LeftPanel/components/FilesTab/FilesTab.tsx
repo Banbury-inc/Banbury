@@ -445,7 +445,7 @@ export function FilesTab({
                   title="Filter by file type"
                   className={`flex-shrink-0 relative ${activeFilters.size > 0 ? 'border-primary' : ''}`}
                 >
-                  <Filter className="h-4 w-4" />
+                  <Filter className="h-4 w-4 text-muted-foreground" />
                   {activeFilters.size > 0 && (
                     <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center">
                       {activeFilters.size}
@@ -490,7 +490,7 @@ export function FilesTab({
               title="Refresh"
               className="flex-shrink-0"
             >
-              <RefreshCw className={isRefreshing ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+              <RefreshCw className={isRefreshing ? 'h-4 w-4 animate-spin text-muted-foreground' : 'h-4 w-4 text-muted-foreground'} />
             </Button>
             {fileProvider === 'local' && (
               <Select

@@ -1,4 +1,4 @@
-import { Calendar, Plus, RefreshCw, Settings, Clock, MapPin, Users, SquareArrowOutUpRight } from 'lucide-react'
+import { Calendar, Plus, RefreshCw, Settings, Clock, MapPin, Users, SquareArrowOutUpRight, ChevronDown } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '../../ui/button'
 import { Typography } from '../../ui/typography'
@@ -348,12 +348,13 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
                     title="Calendars"
                     className="flex-shrink-0"
                   >
-                    <Calendar className="h-3.5 w-3.5 @[280px]:mr-1" strokeWidth={1.5} />
+                    <Calendar className="h-3.5 w-3.5 @[280px]:mr-1 text-muted-foreground" strokeWidth={1.5} />
                     {totalCount > 0 && (
                       <Typography variant="xs" className="font-medium hidden @[280px]:inline">
                         {visibleCount}/{totalCount}
                       </Typography>
                     )}
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" strokeWidth={1.5} />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-56 p-2" align="start">
@@ -408,7 +409,7 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
               }}
               title="Open Calendar"
             >
-              <SquareArrowOutUpRight className="h-4 w-4" strokeWidth={1.5} />
+              <SquareArrowOutUpRight className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
             </Button>
             <Button
               variant="outline"
@@ -417,7 +418,7 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
               disabled={loading || !isAvailable}
               title="Refresh"
             >
-              <RefreshCw className={`${loading ? 'animate-spin' : ''}`} strokeWidth={1} />
+              <RefreshCw className={`h-4 w-4 text-muted-foreground ${loading ? 'animate-spin' : ''}`} strokeWidth={1.5} />
             </Button>
             {isAvailable && (
               <Button
