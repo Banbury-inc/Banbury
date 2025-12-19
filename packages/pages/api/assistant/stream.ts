@@ -330,6 +330,7 @@ function createChatModel(provider: ModelProvider, modelId?: string) {
     model: actualModelId,
     apiKey: process.env.ANTHROPIC_API_KEY,
     temperature: 0.2,
+    invocationKwargs: { top_p: undefined }, // Override to prevent -1 being sent to newer models
   });
 }
 

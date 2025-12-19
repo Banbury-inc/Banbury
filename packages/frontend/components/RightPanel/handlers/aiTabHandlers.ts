@@ -1,9 +1,7 @@
 // Handler functions for AI conversation tabs
+import { AiTab } from '../../../pages/Workspaces/types'
 
-export interface AiTab {
-  id: string
-  label: string
-}
+export type { AiTab }
 
 let tabCounter = 0
 
@@ -12,6 +10,7 @@ export function createAiTab(label?: string): AiTab {
   return {
     id: `ai-tab-${Date.now()}-${tabCounter}`,
     label: label || `Chat ${tabCounter}`,
+    type: 'ai',
   }
 }
 
@@ -20,6 +19,7 @@ export function createInitialAiTab(): AiTab {
   return {
     id: `ai-tab-${Date.now()}-1`,
     label: 'Chat 1',
+    type: 'ai',
   }
 }
 

@@ -4,7 +4,6 @@ import Image from 'next/image';
 import { ClaudeRuntimeProvider } from '../../assistant/ClaudeRuntimeProvider/ClaudeRuntimeProvider';
 import { LeftPanel } from "../../components/LeftPanel/LeftPanel";
 import { MiddlePanel } from "../../components/MiddlePanel/MiddlePanel";
-import { RightPanel } from "../../components/RightPanel/RightPanel";
 import { NavSidebar } from "../../components/nav-sidebar";
 import { FileSystemItem } from '../../utils/fileTreeUtils';
 import 'allotment/dist/style.css';
@@ -43,6 +42,7 @@ import { openFileInTab, openEmailInTab, handleCloseTab, handleTabChange } from '
 import { isDrawioFile, isTldrawFile, isPowerPointFile } from './handlers/fileTypeUtils';
 import { createWorkspacesKeyboardHandler } from './handlers/createWorkspacesKeyboardHandler';
 import { Kbd, KbdGroup } from '../../components/ui/kbd';
+import { renderAssistantPanel } from './handlers/renderAssistantPanel';
 import { 
   getStoredKeybinds, 
   getActiveKey,
@@ -58,7 +58,11 @@ import {
   Panel,
   SplitDirection,
   PanelGroup,
+  AiTab,
+  DragState,
 } from './types';
+import { createInitialAiTab, createAiTab } from '../../components/RightPanel/handlers/aiTabHandlers';
+import { isDefaultAiTabLabel, deriveAiTabTitleFromText } from '../../components/RightPanel/handlers/aiTabTitle';
 
 
 
@@ -96,6 +100,60 @@ const Workspaces = (): React.ReactNode => {
       activeTabId: null
     }
   });
+  
+  // Assistant panel dock layout - mirrors panelLayout structure for the right panel
+  const initialAiTab = createInitialAiTab();
+  const [assistantDockLayout, setAssistantDockLayout] = useState<PanelGroup>({
+    id: 'assistant-root',
+    type: 'panel',
+    panel: {
+      id: 'assistant-main-panel',
+      tabs: [initialAiTab],
+      activeTabId: initialAiTab.id
+    }
+  });
+  const [activeAssistantPanelId, setActiveAssistantPanelId] = useState<string>('assistant-main-panel');
+
+  // Listen for title candidate events and update AI tab labels
+  useEffect(() => {
+    const handleTitleCandidate = (event: Event) => {
+      const { tabId, text } = (event as CustomEvent).detail || {}
+      if (!tabId || !text) return
+
+      const derivedTitle = deriveAiTabTitleFromText(text)
+      if (!derivedTitle) return
+
+      setAssistantDockLayout((prev) => {
+        const updatePanel = (panel: Panel): Panel => ({
+          ...panel,
+          tabs: panel.tabs.map((tab) => {
+            if (tab.type === 'ai' && tab.id === tabId && isDefaultAiTabLabel(tab.label)) {
+              return { ...tab, label: derivedTitle }
+            }
+            return tab
+          })
+        })
+
+        const updateGroup = (group: PanelGroup): PanelGroup => {
+          if (group.type === 'panel' && group.panel) {
+            return { ...group, panel: updatePanel(group.panel) }
+          }
+          if (group.type === 'split' && group.children) {
+            return { ...group, children: group.children.map(updateGroup) }
+          }
+          return group
+        }
+
+        return updateGroup(prev)
+      })
+    }
+
+    window.addEventListener('assistant-ai-tab-title-candidate', handleTitleCandidate)
+    return () => {
+      window.removeEventListener('assistant-ai-tab-title-candidate', handleTitleCandidate)
+    }
+  }, [])
+  
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -104,16 +162,7 @@ const Workspaces = (): React.ReactNode => {
   } | null>(null);
   
 
-  const [dragState, setDragState] = useState<{
-    isDragging: boolean;
-    draggedTab: WorkspaceTab | null;
-    draggedFromPanel: string | null;
-    dragStartPosition: { x: number; y: number } | null;
-    currentPosition: { x: number; y: number } | null;
-    dragDirection: 'horizontal' | 'vertical' | null;
-    dropZone: 'left' | 'right' | 'top' | 'bottom' | null;
-    dropTargetPanel: string | null;
-  }>({
+  const [dragState, setDragState] = useState<DragState>({
     isDragging: false,
     draggedTab: null,
     draggedFromPanel: null,
@@ -354,6 +403,12 @@ const Workspaces = (): React.ReactNode => {
     setCalendarSelectedEvent(null);
   }, []);
 
+  // Handle email selection from EmailTab - now opens in tabs
+  const handleEmailSelect = useCallback((email: any) => {
+    setSelectedEmail(email);
+    openEmailInTabCallback(email, activePanelId);
+  }, [openEmailInTabCallback, activePanelId]);
+
   // Render a single panel - using extracted function
   const renderPanelWrapper = useCallback((panel: Panel) => {
     return renderPanel({
@@ -390,9 +445,15 @@ const Workspaces = (): React.ReactNode => {
       calendarJumpDate,
       onCalendarJumpComplete: handleCalendarJumpComplete,
       calendarSelectedEvent,
-      onCalendarSelectedEventConsumed: handleCalendarSelectedEventConsumed
+      onCalendarSelectedEventConsumed: handleCalendarSelectedEventConsumed,
+      selectedFile,
+      selectedEmail,
+      onEmailSelect: handleEmailSelect,
+      onClearConversation: (tabId: string) => {
+        window.dispatchEvent(new CustomEvent('clear-conversation', { detail: { tabId } }));
+      },
     });
-  }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmailCallback, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, isDrawioFile, isTldrawFile, isPowerPointFile, setPanelLayout, setDragState, calendarJumpDate, handleCalendarJumpComplete, calendarSelectedEvent, handleCalendarSelectedEventConsumed]);
+  }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmailCallback, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, isDrawioFile, isTldrawFile, isPowerPointFile, setPanelLayout, setDragState, calendarJumpDate, handleCalendarJumpComplete, calendarSelectedEvent, handleCalendarSelectedEventConsumed, selectedFile, selectedEmail, handleEmailSelect]);
   
   // Render panel group (recursive for nested splits)
   const renderPanelGroup = useCallback((group: PanelGroup): React.ReactNode => {
@@ -474,6 +535,113 @@ const Workspaces = (): React.ReactNode => {
     );
   }, [renderPanelWrapper, isMac, keybinds]);
 
+  // Assistant panel tab handlers
+  const handleAssistantTabChange = useCallback((panelId: string, tabId: string) => {
+    setAssistantDockLayout((prev) => {
+      const updateActive = (layout: PanelGroup): PanelGroup => {
+        if (layout.type === 'panel' && layout.panel?.id === panelId) {
+          return {
+            ...layout,
+            panel: { ...layout.panel, activeTabId: tabId }
+          };
+        }
+        if (layout.type === 'group' && layout.children) {
+          return { ...layout, children: layout.children.map(updateActive) };
+        }
+        return layout;
+      };
+      return updateActive(prev);
+    });
+    setActiveAssistantPanelId(panelId);
+  }, []);
+
+  const handleAssistantTabClose = useCallback((tabId: string, panelId: string) => {
+    setAssistantDockLayout((prev) => removeTabFromPanel(prev, panelId, tabId));
+  }, [removeTabFromPanel]);
+
+  const handleAssistantTabAdd = useCallback((panelId: string) => {
+    const newTab = createAiTab();
+    setAssistantDockLayout((prev) => addTabToPanel(prev, panelId, newTab));
+  }, [addTabToPanel]);
+
+  const handleAssistantTabReorder = useCallback((panelId: string, sourceIndex: number, destinationIndex: number) => {
+    setAssistantDockLayout((prev) => {
+      const reorderInLayout = (layout: PanelGroup): PanelGroup => {
+        if (layout.type === 'panel' && layout.panel?.id === panelId) {
+          const newTabs = [...layout.panel.tabs];
+          const [moved] = newTabs.splice(sourceIndex, 1);
+          newTabs.splice(destinationIndex, 0, moved);
+          return { ...layout, panel: { ...layout.panel, tabs: newTabs } };
+        }
+        if (layout.type === 'group' && layout.children) {
+          return { ...layout, children: layout.children.map(reorderInLayout) };
+        }
+        return layout;
+      };
+      return reorderInLayout(prev);
+    });
+  }, []);
+
+  // Render a single assistant panel
+  const renderAssistantPanelWrapper = useCallback((panel: Panel) => {
+    return renderAssistantPanel({
+      panel,
+      activePanelId: activeAssistantPanelId,
+      dragState,
+      userInfo,
+      selectedFile,
+      selectedEmail,
+      conversations,
+      isLoadingConversations,
+      setActivePanelId: setActiveAssistantPanelId,
+      handleTabChange: handleAssistantTabChange,
+      handleCloseTab: handleAssistantTabClose,
+      handleTabAdd: handleAssistantTabAdd,
+      handleTabReorder: handleAssistantTabReorder,
+      onLoadConversation: loadConversationCallback,
+      onDeleteConversation: deleteConversationCallback,
+      onClearConversation: (tabId: string) => {
+        window.dispatchEvent(new CustomEvent('clear-conversation', { detail: { tabId } }));
+      },
+      onEmailSelect: handleEmailSelect,
+      setAssistantDockLayout,
+      onSplitPreview: (direction, position) => {
+        setDragState((prev) => ({
+          ...prev,
+          dragDirection: direction,
+          currentPosition: position,
+        }));
+      },
+      splitPreviewBoundsSelector: '[data-assistant-dock]',
+    });
+  }, [activeAssistantPanelId, dragState, userInfo, selectedFile, selectedEmail, conversations, isLoadingConversations, handleAssistantTabChange, handleAssistantTabClose, handleAssistantTabAdd, handleAssistantTabReorder, loadConversationCallback, deleteConversationCallback, handleEmailSelect, setAssistantDockLayout]);
+
+  // Render assistant panel group (recursive for nested splits)
+  const renderAssistantPanelGroup = useCallback((group: PanelGroup): React.ReactNode => {
+    if (group.type === 'panel' && group.panel) {
+      return renderAssistantPanelWrapper(group.panel);
+    }
+    
+    if (group.type === 'group' && group.children) {
+      return (
+        <Allotment
+          vertical={group.direction === 'vertical'}
+          proportionalLayout={true}
+          defaultSizes={group.children.map((child) => child.size || 50)}
+          key={group.id}
+        >
+          {group.children.map((child) => (
+            <Allotment.Pane key={child.id}>
+              {renderAssistantPanelGroup(child)}
+            </Allotment.Pane>
+          ))}
+        </Allotment>
+      );
+    }
+    
+    return null;
+  }, [renderAssistantPanelWrapper]);
+
   // Detect Mac platform for keyboard shortcut display
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -547,14 +715,6 @@ const Workspaces = (): React.ReactNode => {
     setFolderCreationTrigger(true);
     setTimeout(() => setFolderCreationTrigger(false), 100);
   };
-
-
-
-  // Handle email selection from EmailTab - now opens in tabs
-  const handleEmailSelect = useCallback((email: any) => {
-    setSelectedEmail(email);
-    openEmailInTabCallback(email, activePanelId);
-  }, [openEmailInTabCallback, activePanelId]);
 
   // Handle compose email - now opens in a tab
   const handleComposeEmailCallback = useCallback(() => {
@@ -745,7 +905,7 @@ const Workspaces = (): React.ReactNode => {
     return () => document.body.classList.remove('drag-cursor');
   }, [dragState.isDragging]);
 
-  // Register panels as drop targets with closest-edge (panel body only)
+  // Register panels as drop targets with closest-edge (panel body only) - covers both dock roots
   useEffect(() => {
     const panelNodes = Array.from(document.querySelectorAll('[data-panel-id]')) as HTMLElement[];
     const cleanups: Array<() => void> = [];
@@ -780,15 +940,60 @@ const Workspaces = (): React.ReactNode => {
     });
 
     return () => cleanups.forEach((fn) => fn());
-  }, [panelLayout]);
+  }, [panelLayout, assistantDockLayout]);
 
-  // Global monitor: create split on drop based on closest edge
+  // Global monitor: create split on drop based on closest edge - handles cross-dock moves
   useEffect(() => {
+    // Helper to find tab in both layouts
+    const findTabInAllLayouts = (tabId: string): { tab: WorkspaceTab | null; sourceLayout: 'main' | 'assistant'; sourcePanelId: string | null } => {
+      // Check main layout first
+      const mainTabs = getAllTabs(panelLayout);
+      const mainTab = mainTabs.find((t) => t.id === tabId);
+      if (mainTab) {
+        let sourcePanelId: string | null = null;
+        const findSource = (layout: PanelGroup): void => {
+          if (layout.type === 'panel' && layout.panel) {
+            if (layout.panel.tabs.some((t) => t.id === tabId)) {
+              sourcePanelId = layout.panel.id;
+            }
+          } else if (layout.type === 'group' && layout.children) {
+            layout.children.forEach(findSource);
+          }
+        };
+        findSource(panelLayout);
+        return { tab: mainTab, sourceLayout: 'main', sourcePanelId };
+      }
+      
+      // Check assistant layout
+      const assistantTabs = getAllTabs(assistantDockLayout);
+      const assistantTab = assistantTabs.find((t) => t.id === tabId);
+      if (assistantTab) {
+        let sourcePanelId: string | null = null;
+        const findSource = (layout: PanelGroup): void => {
+          if (layout.type === 'panel' && layout.panel) {
+            if (layout.panel.tabs.some((t) => t.id === tabId)) {
+              sourcePanelId = layout.panel.id;
+            }
+          } else if (layout.type === 'group' && layout.children) {
+            layout.children.forEach(findSource);
+          }
+        };
+        findSource(assistantDockLayout);
+        return { tab: assistantTab, sourceLayout: 'assistant', sourcePanelId };
+      }
+      
+      return { tab: null, sourceLayout: 'main', sourcePanelId: null };
+    };
+    
+    // Determine which dock root a panel belongs to
+    const getTargetDockRoot = (panelId: string): 'main' | 'assistant' => {
+      return panelId.startsWith('assistant-') ? 'assistant' : 'main';
+    };
+
     return monitorForElements({
       onDragStart({ source, location }: any) {
         if (source?.data?.type !== 'tab') return;
-        const tabs = getAllTabs(panelLayout);
-        const dragged = tabs.find((t) => t.id === source.data.id) || null;
+        const { tab: dragged } = findTabInAllLayouts(source.data.id);
         const input = location?.current?.input;
         const pos = input && typeof input.clientX === 'number' && typeof input.clientY === 'number'
           ? { x: input.clientX, y: input.clientY }
@@ -823,10 +1028,7 @@ const Workspaces = (): React.ReactNode => {
         if (!target || !edge || !targetPanelId) {
           const pos = dragStateRef.current.currentPosition;
           if (!pos) {
-            // As a last resort, try to use the last mouse move event position via document.elementFromPoint with event-less estimation
-            // If not available, abort
-            setDragState((prev) => ({
-              ...prev,
+            setDragState({
               isDragging: false,
               draggedTab: null,
               draggedFromPanel: null,
@@ -835,14 +1037,38 @@ const Workspaces = (): React.ReactNode => {
               dragDirection: null,
               dropZone: null,
               dropTargetPanel: null,
-            }));
+            });
             return;
           }
           const el = document.elementFromPoint(pos.x, pos.y) as HTMLElement | null;
           const panelEl = el ? (el.closest('[data-panel-id]') as HTMLElement | null) : null;
-          if (!panelEl) return;
+          if (!panelEl) {
+            setDragState({
+              isDragging: false,
+              draggedTab: null,
+              draggedFromPanel: null,
+              dragStartPosition: null,
+              currentPosition: null,
+              dragDirection: null,
+              dropZone: null,
+              dropTargetPanel: null,
+            });
+            return;
+          }
           const pid = panelEl.getAttribute('data-panel-id') || '';
-          if (!pid) return;
+          if (!pid) {
+            setDragState({
+              isDragging: false,
+              draggedTab: null,
+              draggedFromPanel: null,
+              dragStartPosition: null,
+              currentPosition: null,
+              dragDirection: null,
+              dropZone: null,
+              dropTargetPanel: null,
+            });
+            return;
+          }
           targetPanelId = pid;
           const rect = panelEl.getBoundingClientRect();
           const relX = Math.max(0, Math.min(pos.x - rect.left, rect.width));
@@ -858,31 +1084,89 @@ const Workspaces = (): React.ReactNode => {
           else edge = 'bottom';
         }
 
-        if (!edge || !targetPanelId) return;
+        if (!edge || !targetPanelId) {
+          setDragState({
+            isDragging: false,
+            draggedTab: null,
+            draggedFromPanel: null,
+            dragStartPosition: null,
+            currentPosition: null,
+            dragDirection: null,
+            dropZone: null,
+            dropTargetPanel: null,
+          });
+          return;
+        }
 
-        // Find the dragged tab and its real source panel
-        const allTabs = getAllTabs(panelLayout);
-        const draggedTab = allTabs.find((t) => t.id === tabId);
-        if (!draggedTab) return;
-        let actualSourcePanelId: string | null = null;
-        const findSource = (layout: PanelGroup): void => {
-          if (layout.type === 'panel' && layout.panel) {
-            if (layout.panel.tabs.some((t) => t.id === tabId)) {
-              actualSourcePanelId = layout.panel.id;
-            }
-          } else if (layout.type === 'group' && layout.children) {
-            layout.children.forEach(findSource);
-          }
-        };
-        findSource(panelLayout);
-        if (!actualSourcePanelId) return;
+        // Find the dragged tab and its real source (across both layouts)
+        const { tab: draggedTab, sourceLayout, sourcePanelId } = findTabInAllLayouts(tabId);
+        if (!draggedTab || !sourcePanelId) {
+          setDragState({
+            isDragging: false,
+            draggedTab: null,
+            draggedFromPanel: null,
+            dragStartPosition: null,
+            currentPosition: null,
+            dragDirection: null,
+            dropZone: null,
+            dropTargetPanel: null,
+          });
+          return;
+        }
 
-        // Remove tab from source
-        setPanelLayout((prev) => removeTabFromPanel(prev, actualSourcePanelId!, tabId));
-
-        // Split the target panel with the dragged tab
+        const targetLayout = getTargetDockRoot(targetPanelId);
         const direction: SplitDirection = edge === 'left' || edge === 'right' ? 'horizontal' : 'vertical';
-        splitPanelCallback(targetPanelId, direction, draggedTab as any);
+        
+        // Remove tab from source layout
+        if (sourceLayout === 'main') {
+          setPanelLayout((prev) => removeTabFromPanel(prev, sourcePanelId, tabId));
+        } else {
+          setAssistantDockLayout((prev) => removeTabFromPanel(prev, sourcePanelId, tabId));
+        }
+        
+        // Add tab to target layout via split
+        if (targetLayout === 'main') {
+          splitPanelCallback(targetPanelId, direction, draggedTab as FileTab);
+        } else {
+          // Split in assistant layout
+          setAssistantDockLayout((prev) => {
+            const newPanelId = `assistant-panel-${Date.now()}`;
+            const newPanel: Panel = {
+              id: newPanelId,
+              tabs: [draggedTab],
+              activeTabId: draggedTab.id
+            };
+            
+            const splitInLayout = (layout: PanelGroup): PanelGroup => {
+              if (layout.type === 'panel' && layout.panel?.id === targetPanelId) {
+                return {
+                  id: `group-${Date.now()}`,
+                  type: 'group',
+                  direction,
+                  children: [
+                    { ...layout, size: 50 },
+                    {
+                      id: newPanelId,
+                      type: 'panel',
+                      panel: newPanel,
+                      size: 50
+                    }
+                  ]
+                };
+              }
+              if (layout.type === 'group' && layout.children) {
+                return {
+                  ...layout,
+                  children: layout.children.map((child) => splitInLayout(child))
+                };
+              }
+              return layout;
+            };
+            
+            return splitInLayout(prev);
+          });
+          setActiveAssistantPanelId(`assistant-panel-${Date.now()}`);
+        }
 
         // Reset drag state after handling drop
         setDragState({
@@ -897,7 +1181,7 @@ const Workspaces = (): React.ReactNode => {
         });
       },
     });
-      }, [panelLayout, getAllTabs, removeTabFromPanel, splitPanelCallback]);
+  }, [panelLayout, assistantDockLayout, getAllTabs, removeTabFromPanel, splitPanelCallback]);
 
   const handleLogout = () => {
     // Clear all authentication data using ApiService
@@ -1013,24 +1297,25 @@ const Workspaces = (): React.ReactNode => {
                   </Allotment.Pane>
                 )}
                 
-                {/* Assistant Panel */}
+                {/* Assistant Panel - Dock-based with draggable tabs */}
                 {!isAssistantPanelCollapsed && (
                   <Allotment.Pane minSize={280}>
-                    <RightPanel
-                      userInfo={userInfo}
-                      selectedFile={selectedFile}
-                      selectedEmail={selectedEmail}
-                      conversations={conversations}
-                      isLoadingConversations={isLoadingConversations}
-                      onToggleCollapse={() => setIsAssistantPanelCollapsed(true)}
-                      onLoadConversation={loadConversationCallback}
-                      onDeleteConversation={deleteConversationCallback}
-                      onClearConversation={(tabId: string) => {
-                        window.dispatchEvent(new CustomEvent('clear-conversation', { detail: { tabId } }))
-                      }}
-                      onEmailSelect={handleEmailSelect}
-                      hasCalendarOpen={getAllTabs(panelLayout).some(tab => (tab as any).type === 'calendar')}
-                    />
+                    <div 
+                      data-assistant-dock 
+                      className="h-full relative"
+                    >
+                      {/* Collapse button for assistant panel - positioned on left border */}
+                      {(selectedFile || selectedEmail || getAllTabs(panelLayout).some(tab => tab.type === 'calendar')) && (
+                        <button
+                          onClick={() => setIsAssistantPanelCollapsed(true)}
+                          className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
+                          title="Collapse assistant panel"
+                        >
+                          <Menu className="h-4 w-4" strokeWidth={1} />
+                        </button>
+                      )}
+                      {renderAssistantPanelGroup(assistantDockLayout)}
+                    </div>
                   </Allotment.Pane>
                 )}
               </Allotment>

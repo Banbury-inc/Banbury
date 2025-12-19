@@ -1,52 +1,10 @@
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
-
-// Types from Workspaces.tsx
-interface Panel {
-  id: string;
-  tabs: WorkspaceTab[];
-  activeTabId: string | null;
-}
-
-type SplitDirection = 'horizontal' | 'vertical';
-
-interface PanelGroup {
-  id: string;
-  type: 'panel' | 'group';
-  direction?: SplitDirection;
-  children?: PanelGroup[];
-  panel?: Panel;
-  size?: number;
-}
-
-interface FileTab {
-  id: string;
-  fileName: string;
-  filePath: string;
-  fileType: string;
-  file: FileSystemItem;
-  type: 'file';
-}
-
-interface EmailTab {
-  id: string;
-  subject: string;
-  emailId: string;
-  email: any; // Gmail message object
-  type: 'email';
-}
-
-interface CalendarTab {
-  id: string;
-  title: string;
-  type: 'calendar';
-}
-
-type WorkspaceTab = FileTab | EmailTab | CalendarTab;
+import { Panel, PanelGroup, WorkspaceTab, SplitDirection } from '../types';
 
 export const splitPanel = (
   panelId: string,
   direction: SplitDirection,
-  newFileTab: FileTab | undefined,
+  newTab: WorkspaceTab | undefined,
   setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>,
   setActivePanelId: React.Dispatch<React.SetStateAction<string>>,
   setSelectedFile: React.Dispatch<React.SetStateAction<FileSystemItem | null>>
@@ -54,8 +12,8 @@ export const splitPanel = (
   const newPanelId = `panel-${Date.now()}`;
   const newPanel: Panel = {
     id: newPanelId,
-    tabs: newFileTab ? [newFileTab] : [],
-    activeTabId: newFileTab ? newFileTab.id : null
+    tabs: newTab ? [newTab] : [],
+    activeTabId: newTab ? newTab.id : null
   };
   
   setPanelLayout(prev => {
@@ -90,7 +48,7 @@ export const splitPanel = (
   });
   
   setActivePanelId(newPanelId);
-  if (newFileTab) {
-    setSelectedFile(newFileTab.file);
+  if (newTab && newTab.type === 'file') {
+    setSelectedFile(newTab.file);
   }
 };

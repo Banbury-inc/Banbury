@@ -1,81 +1,27 @@
 import React from 'react';
-import Image from 'next/image';
 import OlympusTabs, { Tab as OlympusTab } from '../../../components/common/Tabs/Tabs';
 import { DocumentViewer } from '../../../components/MiddlePanel/DocumentViewer/DocumentViewer';
 import { EmailComposer } from '../../../components/MiddlePanel/EmailViewer/EmailComposer';
-import { Typography } from '../../../components/ui/typography';
 import { EmailViewer } from '../../../components/MiddlePanel/EmailViewer/EmailViewer';
 import { ImageViewer } from '../../../components/MiddlePanel/ImageViewer';
 import { CalendarViewer } from '../../../components/MiddlePanel/CalendarViewer/CalendarViewer';
 import { SpreadsheetViewer } from '../../../components/MiddlePanel/SpreadsheetViewer/SpreadsheetViewer';
 import { VideoViewer } from '../../../components/MiddlePanel/VideoViewer/VideoViewer';
-import CodeViewer from '../../../components/MiddlePanel/CodeViewer/CodeViewer';
 import IDE from '../../../components/MiddlePanel/CodeViewer/IDE';
 import BrowserViewer from '../../../components/MiddlePanel/BrowserViewer/BrowserViewer';
 import NotebookViewer from '../../../components/MiddlePanel/NotebookViewer/NotebookViewer';
 import NotebookLabViewer from '../../../components/MiddlePanel/NotebookViewer/NotebookLabViewer';
 import { CONFIG } from '../../../config/config';
 import { PDFViewer } from '../../../components/MiddlePanel/PDFViewer';
-import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import { isNotebookFile, isTldrawFile, isPowerPointFile, isDriveImageFile, isDrivePdfFile, isDriveDocumentFile, isDriveSpreadsheetFile, isDriveVideoFile, isDriveCodeFile, isDrivePresentationFile } from './fileTypeUtils';
+import { isNotebookFile, isDriveImageFile, isDrivePdfFile, isDriveDocumentFile, isDriveSpreadsheetFile, isDriveVideoFile, isDriveCodeFile, isDrivePresentationFile } from './fileTypeUtils';
 import DrawioViewer from '../../../components/MiddlePanel/CanvasViewer/DrawioViewer';
 import TldrawViewer from '../../../components/MiddlePanel/CanvasViewer/TldrawViewer';
 import { PowerPointViewer } from '../../../components/MiddlePanel/PowerPointViewer/PowerPointViewer';
 import { GoogleDriveViewer } from '../../../components/MiddlePanel/GoogleDriveViewer';
-import BanburyLogo from '../../../assets/images/Logo.png';
-import { Kbd, KbdGroup } from '../../../components/ui/kbd';
 import { CalendarEvent } from '../../../../backend/api/calendar/calendar';
-
-interface UserInfo {
-  username: string;
-  email?: string;
-  first_name?: string;
-  last_name?: string;
-  picture?: any;
-  phone_number?: string;
-  auth_method?: string;
-}
-
-interface FileTab {
-  id: string;
-  fileName: string;
-  filePath: string;
-  fileType: string;
-  file: FileSystemItem;
-  type: 'file';
-}
-
-interface EmailTab {
-  id: string;
-  subject: string;
-  emailId: string;
-  email: any;
-  type: 'email';
-}
-
-interface CalendarTab {
-  id: string;
-  type: 'calendar';
-}
-
-type WorkspaceTab = FileTab | EmailTab | CalendarTab;
-
-interface Panel {
-  id: string;
-  tabs: WorkspaceTab[];
-  activeTabId: string | null;
-}
-
-interface DragState {
-  isDragging: boolean;
-  draggedTab: WorkspaceTab | null;
-  draggedFromPanel: string | null;
-  dragStartPosition: { x: number; y: number } | null;
-  currentPosition: { x: number; y: number } | null;
-  dragDirection: 'horizontal' | 'vertical' | null;
-  dropZone: 'left' | 'right' | 'top' | 'bottom' | null;
-  dropTargetPanel: string | null;
-}
+import { Panel, DragState, UserInfo } from '../types';
+import { AiConversationTabPane } from '../../../components/RightPanel/AiConversationTabPane';
+import { FileSystemItem } from '../../../utils/fileTreeUtils';
 
 interface RenderPanelProps {
   panel: Panel;
@@ -106,6 +52,11 @@ interface RenderPanelProps {
   onCalendarJumpComplete?: () => void;
   calendarSelectedEvent?: CalendarEvent | null;
   onCalendarSelectedEventConsumed?: () => void;
+  // Props for AI tab rendering
+  selectedFile?: FileSystemItem | null;
+  selectedEmail?: any;
+  onEmailSelect?: (email: any) => void;
+  onClearConversation?: (tabId: string) => void;
 }
 
 export const renderPanel = ({
@@ -136,7 +87,11 @@ export const renderPanel = ({
   calendarJumpDate,
   onCalendarJumpComplete,
   calendarSelectedEvent,
-  onCalendarSelectedEventConsumed
+  onCalendarSelectedEventConsumed,
+  selectedFile,
+  selectedEmail,
+  onEmailSelect,
+  onClearConversation,
 }: RenderPanelProps) => {
   const isActive = panel.id === activePanelId;
   const isDropTarget = dragState.dropTargetPanel === panel.id;
@@ -156,10 +111,14 @@ export const renderPanel = ({
         <div className="bg-background flex items-stretch">
           <div className="flex items-stretch flex-1">
             <OlympusTabs
-              tabs={panel.tabs.map<OlympusTab>((t) => ({ 
-                id: t.id, 
-                label: (t as any).type === 'email' ? (t as any).subject : ( (t as any).type === 'file' ? (t as any).fileName : 'Calendar' ) 
-              }))}
+              tabs={panel.tabs.map<OlympusTab>((t) => {
+                let label = 'Unknown';
+                if (t.type === 'email') label = t.subject;
+                else if (t.type === 'file') label = t.fileName;
+                else if (t.type === 'calendar') label = t.title || 'Calendar';
+                else if (t.type === 'ai') label = t.label;
+                return { id: t.id, label };
+              })}
               activeTab={panel.activeTabId || panel.tabs[0]?.id}
               onTabChange={(tabId) => handleTabChange(panel.id, tabId)}
               onTabClose={(tabId) => handleCloseTab(tabId, panel.id)}
@@ -421,18 +380,34 @@ export const renderPanel = ({
                     );
                   }
                 }
-                if ((tab as any).type === 'calendar') {
+                if (tab.type === 'calendar') {
                   return (
                     <CalendarViewer
                       initialDate={calendarJumpDate || undefined}
                       initialView="month"
-                      onEventClick={(ev) => {
+                      onEventClick={() => {
                         // Optionally open event details in a new panel/tab using Email-like pattern
                       }}
                       onDateChange={onCalendarJumpComplete}
                       initialEvent={calendarSelectedEvent || undefined}
                       onInitialEventConsumed={onCalendarSelectedEventConsumed}
                     />
+                  );
+                }
+                
+                // Handle AI tabs - wrap with bg-card to match right panel styling
+                if (tab.type === 'ai') {
+                  return (
+                    <div className="h-full bg-card">
+                      <AiConversationTabPane
+                        tabId={tab.id}
+                        userInfo={userInfo}
+                        selectedFile={selectedFile}
+                        selectedEmail={selectedEmail}
+                        onEmailSelect={onEmailSelect}
+                        onClearConversation={onClearConversation ? () => onClearConversation(tab.id) : undefined}
+                      />
+                    </div>
                   );
                 }
                 

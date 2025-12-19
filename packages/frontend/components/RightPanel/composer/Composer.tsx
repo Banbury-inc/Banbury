@@ -95,9 +95,11 @@ interface ComposerProps {
   onRejectAll: () => void;
   // Fallback message buffer for context calculation when runtime messages aren't available
   messageBuffer?: any[] | null;
+  // Tab ID for updating tab title on first message
+  assistantTabId?: string;
 }
 
-export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll, messageBuffer }) => {
+export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll, messageBuffer, assistantTabId }) => {
   const composer = useComposerRuntime();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -199,7 +201,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
               onAttachmentPayload={onAttachmentPayload}
               placeholder="Ask anything or type @ to mention a file..."
               className="min-h-16"
-              onSend={() => handleSend({ composer, onSend: onSend })}
+              onSend={() => handleSend({ composer, onSend: onSend, tabId: assistantTabId })}
             />
           </div>
 
@@ -215,7 +217,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
             onToggleWebSearch={onToggleWebSearch}
             toolPreferences={toolPreferences}
             onUpdateToolPreferences={(prefs) => onUpdateToolPreferences(prefs)}
-            onSend={() => handleSend({ composer, onSend: onSend })}
+            onSend={() => handleSend({ composer, onSend: onSend, tabId: assistantTabId })}
             messageBuffer={messageBuffer}
           />
         </ComposerPrimitive.Root>

@@ -1,47 +1,5 @@
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
-
-// Types from Workspaces.tsx
-interface Panel {
-  id: string;
-  tabs: WorkspaceTab[];
-  activeTabId: string | null;
-}
-
-type SplitDirection = 'horizontal' | 'vertical';
-
-interface PanelGroup {
-  id: string;
-  type: 'panel' | 'group';
-  direction?: SplitDirection;
-  children?: PanelGroup[];
-  panel?: Panel;
-  size?: number;
-}
-
-interface FileTab {
-  id: string;
-  fileName: string;
-  filePath: string;
-  fileType: string;
-  file: FileSystemItem;
-  type: 'file';
-}
-
-interface EmailTab {
-  id: string;
-  subject: string;
-  emailId: string;
-  email: any; // Gmail message object
-  type: 'email';
-}
-
-interface CalendarTab {
-  id: string;
-  title: string;
-  type: 'calendar';
-}
-
-type WorkspaceTab = FileTab | EmailTab | CalendarTab;
+import { Panel, PanelGroup, WorkspaceTab, FileTab, EmailTab } from '../types';
 
 // Open file in a new tab within specified panel
 export const openFileInTab = (

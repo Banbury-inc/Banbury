@@ -15,6 +15,10 @@ import {
   getNextActiveTabId,
   reorderAiTabs,
 } from './handlers/aiTabHandlers'
+import {
+  isDefaultAiTabLabel,
+  deriveAiTabTitleFromText,
+} from './handlers/aiTabTitle'
 
 interface Conversation {
   _id: string
@@ -119,6 +123,31 @@ export function RightPanel({
   const handleClearActiveConversation = useCallback(() => {
     onClearConversation(activeAiTabId)
   }, [onClearConversation, activeAiTabId])
+
+  // Listen for title candidate events and update tab labels when still default
+  useEffect(() => {
+    const handleTitleCandidate = (event: Event) => {
+      const { tabId, text } = (event as CustomEvent).detail || {}
+      if (!tabId || !text) return
+
+      const derivedTitle = deriveAiTabTitleFromText(text)
+      if (!derivedTitle) return
+
+      setAiTabs((prev) =>
+        prev.map((tab) => {
+          if (tab.id === tabId && isDefaultAiTabLabel(tab.label)) {
+            return { ...tab, label: derivedTitle }
+          }
+          return tab
+        })
+      )
+    }
+
+    window.addEventListener('assistant-ai-tab-title-candidate', handleTitleCandidate)
+    return () => {
+      window.removeEventListener('assistant-ai-tab-title-candidate', handleTitleCandidate)
+    }
+  }, [])
   
   return (
     <div className="h-full bg-card border-l border-zinc-200 dark:border-white/[0.06] flex flex-col relative shadow-soft">

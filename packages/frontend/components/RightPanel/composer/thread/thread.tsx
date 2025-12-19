@@ -701,9 +701,18 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       const eventTabId = customEvent.detail?.tabId;
       
       // If tabId is specified in the event, only handle if it matches this tab
-      if (eventTabId && assistantTabId && eventTabId !== assistantTabId) return;
-      // If this thread has a tabId but event doesn't specify one, ignore (legacy behavior for non-tabbed usage)
-      if (assistantTabId && !eventTabId) return;
+      if (eventTabId && assistantTabId && eventTabId !== assistantTabId) {
+        return;
+      }
+      // If this thread has a tabId but event doesn't specify one, check if this is the active tab
+      if (assistantTabId && !eventTabId) {
+        const activeTabId = (window as any).__banburyActiveAiTabId
+        // Only ignore if activeTabId is set and doesn't match this thread
+        // If activeTabId is undefined, we can't determine which is active, so handle this event
+        if (activeTabId && assistantTabId !== activeTabId) {
+          return;
+        }
+      }
       
       // Clear the loaded messages buffer to show welcome message
       setLoadedMessagesBuffer(null);
@@ -993,6 +1002,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         onAcceptAll={handleAcceptAll}
         onRejectAll={handleRejectAll}
         messageBuffer={loadedMessagesBuffer}
+        assistantTabId={assistantTabId}
       />
 
       {/* Conversation Dialogs */}

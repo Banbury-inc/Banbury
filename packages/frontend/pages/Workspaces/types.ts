@@ -33,7 +33,13 @@ export interface CalendarTab {
   type: 'calendar'
 }
 
-export type WorkspaceTab = FileTab | EmailTab | CalendarTab
+export interface AiTab {
+  id: string
+  label: string
+  type: 'ai'
+}
+
+export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab
 
 export interface Panel {
   id: string
@@ -50,5 +56,16 @@ export interface PanelGroup {
   children?: PanelGroup[]
   panel?: Panel
   size?: number
+}
+
+export interface DragState {
+  isDragging: boolean
+  draggedTab: WorkspaceTab | null
+  draggedFromPanel: string | null
+  dragStartPosition: { x: number; y: number } | null
+  currentPosition: { x: number; y: number } | null
+  dragDirection: 'horizontal' | 'vertical' | null
+  dropZone: 'left' | 'right' | 'top' | 'bottom' | null
+  dropTargetPanel: string | null
 }
 

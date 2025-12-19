@@ -35,6 +35,8 @@ interface TabsProps {
   dragContext?: Record<string, any>;
   suppressReorderIndicator?: boolean;
   onSplitPreview?: (direction: 'horizontal' | 'vertical' | null, position: { x: number; y: number }) => void;
+  /** CSS selector to determine the container for split preview bounds. Defaults to 'main.h-full' */
+  splitPreviewBoundsSelector?: string;
 }
 
 const DragPreview = ({ label }: { label: string }) => (
@@ -125,7 +127,8 @@ export const Tabs: React.FC<TabsProps> = ({
   onReorder,
   dragContext,
   suppressReorderIndicator = false,
-  onSplitPreview
+  onSplitPreview,
+  splitPreviewBoundsSelector = 'main.h-full',
 }) => {
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
   const [indicatorPosition, setIndicatorPosition] = useState<number | null>(null);
@@ -229,18 +232,18 @@ export const Tabs: React.FC<TabsProps> = ({
               : null;
             
             if (mousePosition) {
-              // Check if mouse is within the main content area (middle panel)
-              const mainElement = document.querySelector('main.h-full');
-              let isInMiddlePanel = false;
+              // Check if mouse is within the target container (configurable via splitPreviewBoundsSelector)
+              const containerElement = document.querySelector(splitPreviewBoundsSelector);
+              let isInContainer = false;
               let direction: 'horizontal' | 'vertical' | null = null;
               let previewPosition = mousePosition;
               
-              if (mainElement) {
-                const rect = mainElement.getBoundingClientRect();
-                isInMiddlePanel = mousePosition.x >= rect.left && mousePosition.x <= rect.right && 
+              if (containerElement) {
+                const rect = containerElement.getBoundingClientRect();
+                isInContainer = mousePosition.x >= rect.left && mousePosition.x <= rect.right && 
                                  mousePosition.y >= rect.top && mousePosition.y <= rect.bottom;
                 
-                if (isInMiddlePanel) {
+                if (isInContainer) {
                   // Use panel dimensions instead of viewport dimensions
                   const panelWidth = rect.width;
                   const panelHeight = rect.height;
@@ -265,15 +268,15 @@ export const Tabs: React.FC<TabsProps> = ({
               }
               
               setSplitPreviewState({
-                direction: isInMiddlePanel ? direction : null,
-                position: isInMiddlePanel ? previewPosition : mousePosition,
-                isVisible: isInMiddlePanel,
+                direction: isInContainer ? direction : null,
+                position: isInContainer ? previewPosition : mousePosition,
+                isVisible: isInContainer,
               });
               
               if (onSplitPreview) {
                 onSplitPreview(
-                  isInMiddlePanel ? direction : null,
-                  isInMiddlePanel ? previewPosition : mousePosition
+                  isInContainer ? direction : null,
+                  isInContainer ? previewPosition : mousePosition
                 );
               }
             }

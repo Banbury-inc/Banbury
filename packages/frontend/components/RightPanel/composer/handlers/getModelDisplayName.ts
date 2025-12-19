@@ -8,13 +8,51 @@ export interface ModelConfig {
 }
 
 export const AVAILABLE_MODELS: ModelConfig[] = [
-  // OpenAI Models
+  // OpenAI Models - GPT-5.x series (latest)
   {
-    id: "gpt-5",
-    name: "GPT-5",
+    id: "gpt-5.2",
+    name: "GPT-5.2",
     provider: "openai",
-    description: "Most capable OpenAI model",
+    description: "Latest flagship model with advanced reasoning",
   },
+  {
+    id: "gpt-5.2-pro",
+    name: "GPT-5.2 Pro",
+    provider: "openai",
+    description: "Most capable GPT-5.2 variant for complex tasks",
+  },
+  {
+    id: "gpt-5-mini",
+    name: "GPT-5 Mini",
+    provider: "openai",
+    description: "Efficient GPT-5 model for everyday tasks",
+  },
+  {
+    id: "gpt-5-nano",
+    name: "GPT-5 Nano",
+    provider: "openai",
+    description: "Lightweight GPT-5 model for fast responses",
+  },
+  // OpenAI Models - GPT-4.1 series
+  {
+    id: "gpt-4.1",
+    name: "GPT-4.1",
+    provider: "openai",
+    description: "Enhanced GPT-4 with improved coding and context",
+  },
+  {
+    id: "gpt-4.1-mini",
+    name: "GPT-4.1 Mini",
+    provider: "openai",
+    description: "Efficient GPT-4.1 variant",
+  },
+  {
+    id: "gpt-4.1-nano",
+    name: "GPT-4.1 Nano",
+    provider: "openai",
+    description: "Fastest GPT-4.1 variant",
+  },
+  // OpenAI Models - GPT-4o series (keep existing)
   {
     id: "gpt-4o",
     name: "GPT-4o",
@@ -27,17 +65,42 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     provider: "openai",
     description: "Affordable and intelligent small model",
   },
+  // OpenAI Models - o-series reasoning models
   {
-    id: "gpt-4-turbo",
-    name: "GPT-4 Turbo",
+    id: "o3",
+    name: "o3",
     provider: "openai",
-    description: "Previous generation flagship model",
+    description: "Advanced reasoning model for complex tasks",
+  },
+  {
+    id: "o3-pro",
+    name: "o3 Pro",
+    provider: "openai",
+    description: "Most capable o3 variant with extended compute",
+  },
+  {
+    id: "o3-mini",
+    name: "o3 Mini",
+    provider: "openai",
+    description: "Efficient reasoning model",
+  },
+  {
+    id: "o4-mini",
+    name: "o4 Mini",
+    provider: "openai",
+    description: "Fast, cost-efficient reasoning model",
   },
   {
     id: "o1",
     name: "o1",
     provider: "openai",
     description: "Reasoning model for complex tasks",
+  },
+  {
+    id: "o1-pro",
+    name: "o1 Pro",
+    provider: "openai",
+    description: "Enhanced o1 with more compute for better responses",
   },
   {
     id: "o1-mini",
@@ -47,10 +110,16 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
   },
   // Anthropic Models
   {
+    id: "claude-opus-4-5-20251101",
+    name: "Claude Opus 4.5",
+    provider: "anthropic",
+    description: "Most capable Claude model with advanced reasoning",
+  },
+  {
     id: "claude-sonnet-4-20250514",
     name: "Claude Sonnet 4",
     provider: "anthropic",
-    description: "Most capable Claude model",
+    description: "High-performance Claude model",
   },
   {
     id: "claude-3-5-sonnet-20241022",

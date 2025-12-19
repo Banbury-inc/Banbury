@@ -2,14 +2,30 @@ import type { ModelProvider } from "./getModelDisplayName"
 
 // Context window sizes (in tokens) for each model
 const MODEL_CONTEXT_WINDOWS: Record<string, number> = {
-  // OpenAI models
+  // OpenAI models - GPT-5.x series
+  "gpt-5.2": 128_000,
+  "gpt-5.2-pro": 128_000,
+  "gpt-5-mini": 128_000,
+  "gpt-5-nano": 128_000,
   "gpt-5": 128_000,
+  // OpenAI models - GPT-4.1 series
+  "gpt-4.1": 1_000_000,
+  "gpt-4.1-mini": 1_000_000,
+  "gpt-4.1-nano": 1_000_000,
+  // OpenAI models - GPT-4o series
   "gpt-4o": 128_000,
   "gpt-4o-mini": 128_000,
   "gpt-4-turbo": 128_000,
+  // OpenAI models - o-series reasoning
+  "o3": 200_000,
+  "o3-pro": 200_000,
+  "o3-mini": 200_000,
+  "o4-mini": 200_000,
   "o1": 200_000,
+  "o1-pro": 200_000,
   "o1-mini": 200_000,
   // Anthropic models
+  "claude-opus-4-5-20251101": 200_000,
   "claude-sonnet-4-20250514": 200_000,
   "claude-3-5-sonnet-20241022": 200_000,
   "claude-3-5-haiku-20241022": 200_000,

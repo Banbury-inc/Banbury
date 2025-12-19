@@ -3,9 +3,10 @@ import { extractEmailContent } from "../../../../utils/emailUtils"
 interface HandleSendParams {
   composer: any
   onSend?: () => void
+  tabId?: string
 }
 
-export function handleSend({ composer, onSend }: HandleSendParams) {
+export function handleSend({ composer, onSend, tabId }: HandleSendParams) {
   // Prefer the hidden textarea value, which tiptap keeps in sync (preserves newlines)
   const input = document.querySelector('textarea[aria-label="Message input"]') as HTMLTextAreaElement | null
   let text = input?.value ?? ''
@@ -166,6 +167,16 @@ export function handleSend({ composer, onSend }: HandleSendParams) {
       // Wait and then send
       setTimeout(() => {
         composer.send()
+        
+        // Dispatch event to update tab title from first user message
+        try {
+          const activeTabId = tabId || (window as any).__banburyActiveAiTabId
+          if (activeTabId && text.trim()) {
+            window.dispatchEvent(new CustomEvent('assistant-ai-tab-title-candidate', {
+              detail: { tabId: activeTabId, text: text.trim() }
+            }))
+          }
+        } catch {}
         
         // Call the onSend callback if provided
         if (onSend) {

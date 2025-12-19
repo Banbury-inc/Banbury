@@ -277,7 +277,7 @@ export function FilesTab({
         <div className="flex items-center justify-between px-4 py-3 border-b min-w-0 gap-3">
           <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden @container">
             {/* Provider Selector */}
-            <Select value={fileProvider} onValueChange={(value) => handleProviderChange(value as FileProvider)}>
+            <Select key={`provider-${fileProvider}`} value={fileProvider} onValueChange={(value) => handleProviderChange(value as FileProvider)}>
               <SelectTrigger size="xs" className="min-w-0 w-auto">
                 <SelectValue>
                   <div className="flex items-center gap-2 min-w-0">
@@ -320,7 +320,7 @@ export function FilesTab({
             </Select>
 
             {/* View Mode Selector */}
-            <Select value={getCurrentViewMode()} onValueChange={handleViewModeChange}>
+            <Select key={`view-mode-${fileProvider}-${getCurrentViewMode()}`} value={getCurrentViewMode()} onValueChange={handleViewModeChange}>
               <SelectTrigger size="xs" className="min-w-0 w-auto">
                 <SelectValue>
                   <div className="flex items-center gap-2 min-w-0">
