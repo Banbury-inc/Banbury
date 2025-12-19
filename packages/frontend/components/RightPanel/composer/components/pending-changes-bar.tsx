@@ -73,7 +73,7 @@ export const PendingChangesBar: FC<PendingChangesBarProps> = ({
             
             <div className="flex items-center gap-2 flex-shrink-0">
               <Button
-                size="sm"
+                size="xs"
                 variant="primary"
                 onClick={onRejectAll}
                 className="text-primary hover:text-primary/80 hover:bg-primary/10 h-7 text-xs px-2 mr-2"
@@ -81,7 +81,7 @@ export const PendingChangesBar: FC<PendingChangesBarProps> = ({
                 Reject all
               </Button>
               <Button
-                size="sm"
+                size="xs"
                 variant="default"
                 onClick={onAcceptAll}
                 className="h-7 text-xs px-2 mr-2 hover:bg-primary/10 hover:text-primary/80"

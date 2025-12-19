@@ -279,8 +279,8 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
         <DropdownMenuTrigger asChild>
           <Button
             variant="primary"
-            size="icon"
-            className="h-8 w-8"
+            size="xs"
+            className="h-7 w-7"
             title="Attach file"
             aria-label="Attach file"
           >
@@ -337,7 +337,7 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
                 <span className="text-sm text-foreground truncate flex-1">{file.name}</span>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="xs"
                   className="h-6 w-6 p-0 text-muted-foreground hover:text-red-400"
                   onClick={() => onFileRemove(file.file_id!)}
                   title="Remove file"

@@ -78,7 +78,7 @@ export const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
                   {(isDiagram || isCanvas) && onFileView && (
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="xs"
                       className={`h-5 w-5 p-0 text-muted-foreground ${
                         isDiagram ? 'hover:text-blue-400' : 'hover:text-purple-400'
                       }`}
@@ -93,7 +93,7 @@ export const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
                   )}
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="xs"
                     className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -126,7 +126,7 @@ export const FileAttachmentDisplay: React.FC<FileAttachmentDisplayProps> = ({
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="xs"
                     className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
                     onClick={(e) => {
                       e.stopPropagation();

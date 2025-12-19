@@ -472,7 +472,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
       const containerWidth = container.offsetWidth
       if (containerWidth === 0) return // Container not ready yet
       
-      const sendButtonWidth = 40 // h-8 w-8 = 32px + padding
+      const sendButtonWidth = 36 // h-7 w-7 = 28px + padding
       const padding = 16 // p-2 = 8px on each side
       const gap = 8 // gap-2 = 8px
       
@@ -586,7 +586,8 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
             <PopoverTrigger asChild>
               <Button
                 variant="primary"
-                className="h-8 px-3 gap-1.5 "
+                size="xs"
+                className="h-7 px-2 gap-1"
                 title="Model"
                 aria-label="Model"
               >
@@ -671,8 +672,8 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
             <PopoverTrigger asChild>
               <Button
                 variant="primary"
-                size="icon"
-                className="h-8 w-8"
+                size="xs"
+                className="h-7 w-7"
                 title="Tools"
                 aria-label="Tools"
               >
@@ -775,8 +776,8 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         {(isMeasuring || visibleButtons.mic) && (
           <Button
             variant="primary"
-            size="icon"
-            className={`h-8 w-8 ${
+            size="xs"
+            className={`h-7 w-7 ${
               isRecording
                 ? "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:text-white dark:hover:bg-red-700"
                 : ""
@@ -792,8 +793,8 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         {(isMeasuring || visibleButtons.globe) && (
           <Button
             variant="primary"
-            size="icon"
-            className={`h-8 w-8 ${
+            size="xs"
+            className={`h-7 w-7 ${
               isWebSearchEnabled 
                 ? "bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white" 
                 : ""
@@ -823,8 +824,8 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           <Button
             type="button"
             variant="primary"
-            size="icon"
-            className={`h-8 w-8 ${
+            size="xs"
+            className={`h-7 w-7 ${
               hasText 
                 ? 'cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100' 
                 : 'opacity-50 bg-zinc-300 dark:bg-zinc-600 text-zinc-500 dark:text-zinc-400 cursor-not-allowed'
@@ -843,10 +844,10 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
             <Button
               type="button"
               variant="primary"
-              size="icon"
+              size="xs"
               title="Stop generating"
               aria-label="Stop generating"
-              className="h-8 w-8 cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100" 
+              className="h-7 w-7 cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100" 
             >
               <Square height={14} width={14} strokeWidth={1} />
             </Button>
