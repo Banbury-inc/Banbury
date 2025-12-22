@@ -54,7 +54,7 @@ import {
   Redo,
   Type,
   Square,
-  Image,
+  Image as ImageIcon,
   Table,
   Trash2,
   Bold,
@@ -563,7 +563,7 @@ export function PowerPointToolbar({
     { id: 'divider-1', isDivider: true },
     { id: 'text', title: 'Add Text', icon: <Type size={16} />, onClick: handleAddText },
     { id: 'shape', title: 'Add Shape', icon: <Square size={16} />, isDropdown: true },
-    { id: 'image', title: 'Add Image', icon: <Image size={16} />, isDropdown: true }, // eslint-disable-line jsx-a11y/alt-text
+    { id: 'image', title: 'Add Image', icon: <ImageIcon size={16} />, isDropdown: true },
     { id: 'delete', title: 'Delete Element', icon: <Trash2 size={16} />, onClick: onDeleteElement, disabled: !selectedElement, showWhen: !!selectedElement },
   ]
 
@@ -856,8 +856,7 @@ export function PowerPointToolbar({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="primary" size="icon-xs" title="Add Image">
-              {/* eslint-disable-next-line jsx-a11y/alt-text */}
-              <Image size={16} />
+              <ImageIcon size={16} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
@@ -1441,8 +1440,7 @@ export function PowerPointToolbar({
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                        <Image size={32} className="text-muted-foreground" />
+                        <ImageIcon size={32} className="text-muted-foreground" />
                       </div>
                     )}
                     <div className="absolute bottom-0 left-0 right-0 bg-background/90 p-2 text-xs truncate">
