@@ -132,32 +132,31 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-white">User Management</h1>
+        <h1 className="text-2xl font-bold text-foreground">User Management</h1>
       </div>
       
-      <Card className="bg-zinc-900 border-zinc-700">
+      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-white">All Users</CardTitle>
-              <CardDescription className="text-zinc-400">Manage user accounts and view file statistics</CardDescription>
+              <CardTitle className="text-foreground">All Users</CardTitle>
+              <CardDescription className="text-muted-foreground">Manage user accounts and view file statistics</CardDescription>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="ml-auto bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white">
+                <Button variant="outline" size="sm" className="ml-auto border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent">
                   <Settings2 className="h-4 w-4 mr-2" />
                   Columns
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="text-zinc-400">Toggle Columns</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-muted-foreground">Toggle Columns</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {COLUMNS.map((column) => (
                   <DropdownMenuCheckboxItem
                     key={column.key}
                     checked={isColumnVisible(column.key)}
                     onCheckedChange={() => toggleColumn(column.key)}
-                    className="text-zinc-300"
                   >
                     {column.label}
                   </DropdownMenuCheckboxItem>
@@ -167,71 +166,71 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto border border-zinc-700 rounded-lg">
+          <div className="overflow-x-auto border border-zinc-300 dark:border-white/[0.06] rounded-lg">
             <table className="w-full min-w-full">
               <thead>
-                <tr className="border-b border-zinc-700">
+                <tr className="border-b border-zinc-300 dark:border-white/[0.06]">
                   {isColumnVisible('user') && (
-                    <th className="text-left py-2 px-2 text-zinc-300 font-medium text-sm">User</th>
+                    <th className="text-left py-2 px-2 text-muted-foreground font-medium text-sm">User</th>
                   )}
                   {isColumnVisible('email') && (
-                    <th className="text-left py-2 px-2 text-zinc-300 font-medium text-sm">Email</th>
+                    <th className="text-left py-2 px-2 text-muted-foreground font-medium text-sm">Email</th>
                   )}
                   {isColumnVisible('integrations') && (
-                    <th className="text-center py-2 px-2 text-zinc-300 font-medium text-xs">Google</th>
+                    <th className="text-center py-2 px-2 text-muted-foreground font-medium text-xs">Google</th>
                   )}
                   {isColumnVisible('plan') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Plan</th>
+                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">Plan</th>
                   )}
                   {isColumnVisible('files') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Files</th>
+                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">Files</th>
                   )}
                   {isColumnVisible('storage') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Storage</th>
+                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">Storage</th>
                   )}
                   {isColumnVisible('aiMessages') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">AI Msgs</th>
+                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">AI Msgs</th>
                   )}
                   {isColumnVisible('logins') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Logins</th>
+                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">Logins</th>
                   )}
                   {isColumnVisible('lastLogin') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Last Login</th>
+                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">Last Login</th>
                   )}
                   {isColumnVisible('workspaceVisits') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Workspace Visits</th>
+                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">Workspace Visits</th>
                   )}
                   {isColumnVisible('lastWorkspaceVisit') && (
-                    <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Last Workspace Visit</th>
+                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">Last Workspace Visit</th>
                   )}
                   {isColumnVisible('auth') && (
-                    <th className="text-center py-2 px-2 text-zinc-300 font-medium text-xs">Auth</th>
+                    <th className="text-center py-2 px-2 text-muted-foreground font-medium text-xs">Auth</th>
                   )}
                   {isColumnVisible('created') && (
-                    <th className="text-center py-2 px-2 text-zinc-300 font-medium text-xs">Created</th>
+                    <th className="text-center py-2 px-2 text-muted-foreground font-medium text-xs">Created</th>
                   )}
                 </tr>
               </thead>
               <tbody>
                 {users.map((user) => (
-                  <tr key={user._id} className="border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors">
+                  <tr key={user._id} className="border-b border-zinc-200 dark:border-white/[0.04] hover:bg-accent/50 dark:hover:bg-accent/50 transition-colors">
                     {isColumnVisible('user') && (
                       <td className="py-2 px-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-zinc-700 rounded-full flex items-center justify-center">
-                            <Users className="h-3 w-3 text-zinc-400" />
+                          <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
+                            <Users className="h-3 w-3 text-muted-foreground" />
                           </div>
                           <div className="min-w-0">
-                            <div className="text-white font-medium text-sm truncate">
+                            <div className="text-foreground font-medium text-sm truncate">
                               {user.first_name} {user.last_name}
                             </div>
-                            <div className="text-zinc-400 text-xs truncate">@{user.username}</div>
+                            <div className="text-muted-foreground text-xs truncate">@{user.username}</div>
                           </div>
                         </div>
                       </td>
                     )}
                     {isColumnVisible('email') && (
-                      <td className="py-2 px-2 text-zinc-300 text-sm truncate">{user.email}</td>
+                      <td className="py-2 px-2 text-muted-foreground text-sm truncate">{user.email}</td>
                     )}
                     {isColumnVisible('integrations') && (
                       <td className="py-2 px-2 text-center">
@@ -245,7 +244,7 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
                           
                           if (!flags) {
                             return (
-                              <span className="text-zinc-500 text-xs">—</span>
+                              <span className="text-muted-foreground text-xs">—</span>
                             )
                           }
                           
@@ -270,16 +269,16 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
                                 <TooltipContent side="top" className="max-w-xs">
                                   <div className="text-xs">
                                     <div className="font-medium mb-1">Google Services</div>
-                                    <div className={flags.hasGmail ? 'text-green-400' : 'text-zinc-400'}>
+                                    <div className={flags.hasGmail ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}>
                                       Gmail: {flags.hasGmail ? 'Connected' : 'Not connected'}
                                     </div>
-                                    <div className={flags.hasDrive ? 'text-green-400' : 'text-zinc-400'}>
+                                    <div className={flags.hasDrive ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}>
                                       Drive: {flags.hasDrive ? 'Connected' : 'Not connected'}
                                     </div>
-                                    <div className={flags.hasCalendar ? 'text-green-400' : 'text-zinc-400'}>
+                                    <div className={flags.hasCalendar ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}>
                                       Calendar: {flags.hasCalendar ? 'Connected' : 'Not connected'}
                                     </div>
-                                    <div className="mt-1 text-zinc-500 text-[10px]">{tooltipContent}</div>
+                                    <div className="mt-1 text-muted-foreground text-[10px]">{tooltipContent}</div>
                                   </div>
                                 </TooltipContent>
                               </Tooltip>
@@ -292,8 +291,8 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
                       <td className="py-2 px-1 text-center">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
                           user.subscription === 'pro' 
-                            ? 'bg-purple-900/50 text-purple-300' 
-                            : 'bg-green-900/50 text-green-300'
+                            ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300' 
+                            : 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
                         }`}>
                           {user.subscription === 'pro' ? 'Pro' : 'Free'}
                         </span>
@@ -301,38 +300,38 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
                     )}
                     {isColumnVisible('files') && (
                       <td className="py-2 px-1 text-center">
-                        <span className="text-white font-medium text-sm">{user.totalFiles?.toLocaleString() || 0}</span>
+                        <span className="text-foreground font-medium text-sm">{user.totalFiles?.toLocaleString() || 0}</span>
                       </td>
                     )}
                     {isColumnVisible('storage') && (
                       <td className="py-2 px-1 text-center">
-                        <span className="text-white font-medium text-sm" title={user.lastFileUploadAt ? convertToEasternTime(user.lastFileUploadAt) : 'Never'}>
+                        <span className="text-foreground font-medium text-sm" title={user.lastFileUploadAt ? convertToEasternTime(user.lastFileUploadAt) : 'Never'}>
                           {user.totalFileSize ? formatBytes(user.totalFileSize) : '0 B'}
                         </span>
                       </td>
                     )}
                     {isColumnVisible('aiMessages') && (
                       <td className="py-2 px-1 text-center">
-                        <span className="text-white font-medium text-sm">{user.aiMessageCount?.toLocaleString() || 0}</span>
+                        <span className="text-foreground font-medium text-sm">{user.aiMessageCount?.toLocaleString() || 0}</span>
                       </td>
                     )}
                     {isColumnVisible('logins') && (
                       <td className="py-2 px-1 text-center">
-                        <span className="text-white font-medium text-sm">{user.loginCount?.toLocaleString() || 0}</span>
+                        <span className="text-foreground font-medium text-sm">{user.loginCount?.toLocaleString() || 0}</span>
                       </td>
                     )}
                     {isColumnVisible('lastLogin') && (
-                      <td className="py-2 px-1 text-center text-zinc-400 text-xs">
+                      <td className="py-2 px-1 text-center text-muted-foreground text-xs">
                         {user.lastLoginDate ? convertToEasternTime(user.lastLoginDate) : 'Never'}
                       </td>
                     )}
                     {isColumnVisible('workspaceVisits') && (
                       <td className="py-2 px-1 text-center">
-                        <span className="text-white font-medium text-sm">{user.workspaceVisitCount?.toLocaleString() || 0}</span>
+                        <span className="text-foreground font-medium text-sm">{user.workspaceVisitCount?.toLocaleString() || 0}</span>
                       </td>
                     )}
                     {isColumnVisible('lastWorkspaceVisit') && (
-                      <td className="py-2 px-1 text-center text-zinc-400 text-xs">
+                      <td className="py-2 px-1 text-center text-muted-foreground text-xs">
                         {user.lastWorkspaceVisitDate ? convertToEasternTime(user.lastWorkspaceVisitDate) : 'Never'}
                       </td>
                     )}
@@ -340,15 +339,15 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
                       <td className="py-2 px-2 text-center">
                         <span className={`px-1 py-0.5 rounded text-xs font-medium ${
                           user.auth_method === 'google_oauth' 
-                            ? 'bg-blue-900/50 text-blue-300' 
-                            : 'bg-green-900/50 text-green-300'
+                            ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' 
+                            : 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
                         }`}>
                           {user.auth_method === 'google_oauth' ? 'Google' : 'Email'}
                         </span>
                       </td>
                     )}
                     {isColumnVisible('created') && (
-                      <td className="py-2 px-2 text-center text-zinc-400 text-xs">
+                      <td className="py-2 px-2 text-center text-muted-foreground text-xs">
                         {user.created_at ? convertToEasternTime(user.created_at) : 'N/A'}
                       </td>
                     )}
@@ -359,7 +358,7 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
           </div>
           
           {users.length === 0 && (
-            <div className="text-center py-8 text-zinc-400">
+            <div className="text-center py-8 text-muted-foreground">
               No users found.
             </div>
           )}

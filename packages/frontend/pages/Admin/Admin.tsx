@@ -595,10 +595,10 @@ export default function Admin() {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-black">
+      <div className="flex h-screen bg-background">
         <NavSidebar />
         <div className="flex-1 ml-16 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-foreground"></div>
         </div>
       </div>
     )
@@ -609,8 +609,8 @@ export default function Admin() {
       <NavSidebar />
       <div className="flex-1 ml-16 flex">
         {/* Sidebar */}
-        <div className="w-64 bg-background border-r border-zinc-700 p-4">
-          <h2 className="text-white text-lg font-semibold mb-6">Admin Panel</h2>
+        <div className="w-64 bg-card border-r border-zinc-300 dark:border-white/[0.06] p-4">
+          <h2 className="text-foreground text-lg font-semibold mb-6">Admin Panel</h2>
           <nav className="space-y-2">
             {tabs.map((tab) => {
               const Icon = tab.icon
@@ -620,8 +620,8 @@ export default function Admin() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-background text-white'
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                      ? 'bg-accent dark:bg-accent text-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent dark:hover:bg-accent'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -638,28 +638,28 @@ export default function Admin() {
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-foreground">System Overview</h1>
-                <Button onClick={loadAdminData} variant="outline" className="text-white border-zinc-600">
+                <Button onClick={loadAdminData} variant="outline" className="border-zinc-300 dark:border-white/[0.06]">
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Refresh
                 </Button>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className="bg-background border-zinc-700">
+                <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-white text-sm">Total Users</CardTitle>
+                    <CardTitle className="text-foreground text-sm">Total Users</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-foreground">{systemStats.totalUsers.toLocaleString()}</div>
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-background border-zinc-700">
+                <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-white text-sm">Total Files</CardTitle>
+                    <CardTitle className="text-foreground text-sm">Total Files</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-white">{systemStats.totalFiles.toLocaleString()}</div>
+                    <div className="text-2xl font-bold text-foreground">{systemStats.totalFiles.toLocaleString()}</div>
                   </CardContent>
                 </Card>
               </div>

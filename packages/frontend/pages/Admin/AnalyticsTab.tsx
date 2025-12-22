@@ -433,7 +433,7 @@ export function AnalyticsTab({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-white">{getPageTitle()}</h1>
+        <h1 className="text-2xl font-bold text-foreground">{getPageTitle()}</h1>
         <div className="flex gap-2">
           <select 
             onChange={(e) => {
@@ -445,7 +445,7 @@ export function AnalyticsTab({
               loadConversationUsers(days)
               loadFileTypeAnalytics(days)
             }}
-            className="bg-zinc-800 text-white border border-zinc-600 rounded px-3 py-2"
+            className="bg-card text-foreground border border-zinc-300 dark:border-white/[0.06] rounded px-3 py-2"
             defaultValue="30"
           >
             <option value="7">Last 7 days</option>
@@ -461,7 +461,7 @@ export function AnalyticsTab({
             loadDashboardVisitStats()
             loadWorkspaceVisitStats()
             loadFileTypeAnalytics(30)
-          }} variant="outline" className="text-white border-zinc-600">
+          }} variant="outline" className="border-zinc-300 dark:border-white/[0.06]">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -477,7 +477,7 @@ export function AnalyticsTab({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="text-white border-zinc-600 hover:bg-zinc-800"
+                  className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                 >
                   <Filter className="h-4 w-4 mr-2" />
                   Filter Analytics Data
@@ -488,14 +488,14 @@ export function AnalyticsTab({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-96 bg-zinc-900 border-zinc-700 max-h-[80vh] overflow-y-auto">
+              <PopoverContent className="w-96 bg-card border-zinc-300 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-white font-semibold mb-1">Filter Analytics Data</h3>
-                    <p className="text-zinc-400 text-sm">Filter all visitor analytics by IP address or location</p>
+                    <h3 className="text-foreground font-semibold mb-1">Filter Analytics Data</h3>
+                    <p className="text-muted-foreground text-sm">Filter all visitor analytics by IP address or location</p>
                   </div>
                   <div>
-                    <Label htmlFor="overview-ip-exclusion" className="text-white text-sm mb-2 block">
+                    <Label htmlFor="overview-ip-exclusion" className="text-foreground text-sm mb-2 block">
                       Exclude IP Addresses
                     </Label>
                     <div className="flex gap-2">
@@ -506,20 +506,20 @@ export function AnalyticsTab({
                         value={visitorIpInput}
                         onChange={(e) => setVisitorIpInput(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && addIpExclusion()}
-                        className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                        className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
                       />
                       <Button 
                         onClick={addIpExclusion}
                         variant="outline"
                         size="sm"
-                        className="text-white border-zinc-600 hover:bg-zinc-800"
+                        className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                       >
                         Add
                       </Button>
                     </div>
                     {visitorIpExclusions.length > 0 && (
                       <div className="mt-2">
-                        <div className="text-zinc-400 text-xs mb-1">Excluded IPs:</div>
+                        <div className="text-muted-foreground text-xs mb-1">Excluded IPs:</div>
                         <div className="flex flex-wrap gap-2">
                           {visitorIpExclusions.map((ip) => (
                             <span
@@ -540,7 +540,7 @@ export function AnalyticsTab({
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="overview-location-exclusion" className="text-white text-sm mb-2 block">
+                    <Label htmlFor="overview-location-exclusion" className="text-foreground text-sm mb-2 block">
                       Exclude Locations (City, Region, or Country)
                     </Label>
                     <div className="flex gap-2">
@@ -551,20 +551,20 @@ export function AnalyticsTab({
                         value={visitorLocationInput}
                         onChange={(e) => setVisitorLocationInput(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && addLocationExclusion()}
-                        className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                        className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
                       />
                       <Button 
                         onClick={addLocationExclusion}
                         variant="outline"
                         size="sm"
-                        className="text-white border-zinc-600 hover:bg-zinc-800"
+                        className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                       >
                         Add
                       </Button>
                     </div>
                     {visitorLocationExclusions.length > 0 && (
                       <div className="mt-2">
-                        <div className="text-zinc-400 text-xs mb-1">Excluded Locations:</div>
+                        <div className="text-muted-foreground text-xs mb-1">Excluded Locations:</div>
                         <div className="flex flex-wrap gap-2">
                           {visitorLocationExclusions.map((location) => (
                             <span
@@ -585,7 +585,7 @@ export function AnalyticsTab({
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="overview-location-filter" className="text-white text-sm mb-2 block">
+                    <Label htmlFor="overview-location-filter" className="text-foreground text-sm mb-2 block">
                       Location Filter (City, Region, Country)
                     </Label>
                     <Input
@@ -594,19 +594,19 @@ export function AnalyticsTab({
                       placeholder="Enter location to filter..."
                       value={visitorLocationFilter}
                       onChange={(e) => setVisitorLocationFilter(e.target.value)}
-                      className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                      className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
                     />
                   </div>
                   <div className="flex flex-col gap-2 pt-2">
                     <Button 
                       onClick={clearAllFilters}
                       variant="outline"
-                      className="w-full text-white border-zinc-600 hover:bg-zinc-800"
+                      className="w-full border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                     >
                       Clear All Filters
                     </Button>
                     {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
-                      <div className="text-zinc-400 text-xs text-center">
+                      <div className="text-muted-foreground text-xs text-center">
                         Showing {getFilteredVisitors().length} of {visitorData.length} visitors
                       </div>
                     )}
@@ -618,15 +618,15 @@ export function AnalyticsTab({
 
           {/* Enhanced Tracking Summary */}
           {getFilteredVisitors().some(v => v.tracking_version) && (
-            <Card className="bg-zinc-900 border-zinc-700 mb-4">
+            <Card className="bg-card border-zinc-300 dark:border-white/[0.06] mb-4">
               <CardHeader>
-                <CardTitle className="text-white">Enhanced Tracking Summary</CardTitle>
-                <CardDescription className="text-zinc-400">Insights from social media and campaign tracking</CardDescription>
+                <CardTitle className="text-foreground">Enhanced Tracking Summary</CardTitle>
+                <CardDescription className="text-muted-foreground">Insights from social media and campaign tracking</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <h4 className="text-white font-medium mb-3">Traffic Sources</h4>
+                    <h4 className="text-foreground font-medium mb-3">Traffic Sources</h4>
                     <div className="space-y-2">
                       {(() => {
                         const sourceStats: Record<string, number> = {}
@@ -648,9 +648,9 @@ export function AnalyticsTab({
                                   source === 'linkedin' ? 'bg-purple-500' :
                                   'bg-zinc-500'
                                 }`}></div>
-                                <span className="text-white capitalize">{source}</span>
+                                <span className="text-foreground capitalize">{source}</span>
                               </div>
-                              <span className="text-zinc-400 font-medium">{count}</span>
+                              <span className="text-muted-foreground font-medium">{count}</span>
                             </div>
                           ))
                       })()}
@@ -658,7 +658,7 @@ export function AnalyticsTab({
                   </div>
                   
                   <div>
-                    <h4 className="text-white font-medium mb-3">Content Types</h4>
+                    <h4 className="text-foreground font-medium mb-3">Content Types</h4>
                     <div className="space-y-2">
                       {(() => {
                         const contentStats: Record<string, number> = {}
@@ -672,8 +672,8 @@ export function AnalyticsTab({
                           .slice(0, 5)
                           .map(([content, count]) => (
                             <div key={content} className="flex items-center justify-between">
-                              <span className="text-white">{content.replace('_', ' ')}</span>
-                              <span className="text-zinc-400 font-medium">{count}</span>
+                              <span className="text-foreground">{content.replace('_', ' ')}</span>
+                              <span className="text-muted-foreground font-medium">{count}</span>
                             </div>
                           ))
                       })()}
@@ -681,7 +681,7 @@ export function AnalyticsTab({
                   </div>
                   
                   <div>
-                    <h4 className="text-white font-medium mb-3">Active Campaigns</h4>
+                    <h4 className="text-foreground font-medium mb-3">Active Campaigns</h4>
                     <div className="space-y-2">
                       {(() => {
                         const campaignStats: Record<string, number> = {}
@@ -700,11 +700,11 @@ export function AnalyticsTab({
                         
                         return campaigns.length > 0 ? campaigns.map(([campaign, count]) => (
                           <div key={campaign} className="flex items-center justify-between">
-                            <span className="text-white text-sm font-mono truncate flex-1" title={campaign}>{campaign}</span>
-                            <span className="text-zinc-400 font-medium ml-2">{count}</span>
+                            <span className="text-foreground text-sm font-mono truncate flex-1" title={campaign}>{campaign}</span>
+                            <span className="text-muted-foreground font-medium ml-2">{count}</span>
                           </div>
                         )) : (
-                          <div className="text-zinc-500 text-sm">No active campaigns</div>
+                          <div className="text-muted-foreground text-sm">No active campaigns</div>
                         )
                       })()}
                     </div>
@@ -715,142 +715,142 @@ export function AnalyticsTab({
           )}
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-white text-sm">Total Visitors</CardTitle>
+            <CardTitle className="text-foreground text-sm">Total Visitors</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-foreground">
               {visitorStats?.total_visitors?.toLocaleString() || '0'}
             </div>
-            <div className="text-zinc-400 text-sm">All time</div>
+            <div className="text-muted-foreground text-sm">All time</div>
           </CardContent>
         </Card>
         
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-white text-sm">Recent Visitors</CardTitle>
+            <CardTitle className="text-foreground text-sm">Recent Visitors</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-foreground">
               {filteredStats?.recent_visitors?.toLocaleString() || '0'}
             </div>
-            <div className="text-zinc-400 text-sm">
+            <div className="text-muted-foreground text-sm">
               Last {filteredStats?.period_days || 30} days
               {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ' (filtered)'}
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-white text-sm">Total Logins</CardTitle>
+            <CardTitle className="text-foreground text-sm">Total Logins</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-foreground">
               {loginStats?.total_logins?.toLocaleString() || '0'}
             </div>
-            <div className="text-zinc-400 text-sm">All time</div>
+            <div className="text-muted-foreground text-sm">All time</div>
           </CardContent>
         </Card>
         
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-white text-sm">Recent Logins</CardTitle>
+            <CardTitle className="text-foreground text-sm">Recent Logins</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-foreground">
               {loginStats?.recent_logins?.toLocaleString() || '0'}
             </div>
-            <div className="text-zinc-400 text-sm">Last {loginStats?.period_days || 30} days</div>
+            <div className="text-muted-foreground text-sm">Last {loginStats?.period_days || 30} days</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-white text-sm">AI Conversations</CardTitle>
+            <CardTitle className="text-foreground text-sm">AI Conversations</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-foreground">
               {conversationsAnalytics?.summary?.total_conversations?.toLocaleString() || '0'}
             </div>
-            <div className="text-zinc-400 text-sm">Last {conversationsAnalytics?.summary?.period_days || 30} days</div>
+            <div className="text-muted-foreground text-sm">Last {conversationsAnalytics?.summary?.period_days || 30} days</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-white text-sm">AI Messages</CardTitle>
+            <CardTitle className="text-foreground text-sm">AI Messages</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-foreground">
               {conversationsAnalytics?.summary?.total_messages?.toLocaleString() || '0'}
             </div>
-            <div className="text-zinc-400 text-sm">Avg {conversationsAnalytics?.summary?.avg_messages_per_conversation || 0} per chat</div>
+            <div className="text-muted-foreground text-sm">Avg {conversationsAnalytics?.summary?.avg_messages_per_conversation || 0} per chat</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-white text-sm">Total Dashboard Visits</CardTitle>
+            <CardTitle className="text-foreground text-sm">Total Dashboard Visits</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-foreground">
               {dashboardVisitStats?.total_dashboard_visits?.toLocaleString() || '0'}
             </div>
-            <div className="text-zinc-400 text-sm">All time</div>
+            <div className="text-muted-foreground text-sm">All time</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-white text-sm">Recent Dashboard Visits</CardTitle>
+            <CardTitle className="text-foreground text-sm">Recent Dashboard Visits</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-foreground">
               {dashboardVisitStats?.recent_dashboard_visits?.toLocaleString() || '0'}
             </div>
-            <div className="text-zinc-400 text-sm">Last {dashboardVisitStats?.period_days || 30} days</div>
+            <div className="text-muted-foreground text-sm">Last {dashboardVisitStats?.period_days || 30} days</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-white text-sm">Total Workspace Visits</CardTitle>
+            <CardTitle className="text-foreground text-sm">Total Workspace Visits</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-foreground">
               {workspaceVisitStats?.total_workspace_visits?.toLocaleString() || '0'}
             </div>
-            <div className="text-zinc-400 text-sm">All time</div>
+            <div className="text-muted-foreground text-sm">All time</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-white text-sm">Recent Workspace Visits</CardTitle>
+            <CardTitle className="text-foreground text-sm">Recent Workspace Visits</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-foreground">
               {workspaceVisitStats?.recent_workspace_visits?.toLocaleString() || '0'}
             </div>
-            <div className="text-zinc-400 text-sm">Last {workspaceVisitStats?.period_days || 30} days</div>
+            <div className="text-muted-foreground text-sm">Last {workspaceVisitStats?.period_days || 30} days</div>
           </CardContent>
         </Card>
           </div>
 
-      <Card className="bg-zinc-900 border-zinc-700 mb-4">
+      <Card className="bg-card border-zinc-300 dark:border-white/[0.06] mb-4">
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-white">Visitors Over Time</CardTitle>
-              <CardDescription className="text-zinc-400">Daily visitor trends for the selected period</CardDescription>
+              <CardTitle className="text-foreground">Visitors Over Time</CardTitle>
+              <CardDescription className="text-muted-foreground">Daily visitor trends for the selected period</CardDescription>
             </div>
             <Button 
               onClick={() => loadVisitorData(30)} 
               variant="outline" 
               size="sm"
-              className="text-white border-zinc-600 hover:bg-zinc-800"
+              className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -864,7 +864,7 @@ export function AnalyticsTab({
           ) : filteredStats?.daily_stats && filteredStats.daily_stats.length > 0 ? (
             <div className="w-full h-72 p-4">
               {/* Debug info */}
-              <div className="text-xs text-zinc-500 mb-2">
+              <div className="text-xs text-muted-foreground mb-2">
                 Chart data points: {filteredStats.daily_stats.length} | 
                 Date range: {filteredStats.daily_stats[0]?.date} to {filteredStats.daily_stats[filteredStats.daily_stats.length - 1]?.date} |
                 Today: {new Date().toISOString().split('T')[0]}
@@ -916,7 +916,7 @@ export function AnalyticsTab({
                       const date = new Date(label + 'T12:00:00')
                       return (
                         <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-3 shadow-lg">
-                          <div className="text-white font-medium">
+                          <div className="text-foreground font-medium">
                             {date.toLocaleDateString('en-US', { 
                               weekday: 'long', 
                               year: 'numeric', 
@@ -943,7 +943,7 @@ export function AnalyticsTab({
               </ChartContainer>
             </div>
           ) : (
-            <div className="flex items-center justify-center py-8 text-zinc-400">
+            <div className="flex items-center justify-center py-8 text-muted-foreground">
               <div className="text-center">
                 <div>No visitor data available for the selected period</div>
                 {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
@@ -960,10 +960,10 @@ export function AnalyticsTab({
       {/* Page-Specific Visitors Over Time Graphs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         {/* Home Page Visitors */}
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader>
-            <CardTitle className="text-white text-base">Home Page Visitors</CardTitle>
-            <CardDescription className="text-zinc-400 text-xs">
+            <CardTitle className="text-foreground text-base">Home Page Visitors</CardTitle>
+            <CardDescription className="text-muted-foreground text-xs">
               Daily trends for home page
               {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ' (filtered)'}
             </CardDescription>
@@ -1021,7 +1021,7 @@ export function AnalyticsTab({
                         const date = new Date(label + 'T12:00:00')
                         return (
                           <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-2 shadow-lg">
-                            <div className="text-white font-medium text-xs">
+                            <div className="text-foreground font-medium text-xs">
                               {date.toLocaleDateString('en-US', { 
                                 month: 'short', 
                                 day: 'numeric' 
@@ -1046,7 +1046,7 @@ export function AnalyticsTab({
                 </ChartContainer>
               </div>
             ) : (
-              <div className="flex items-center justify-center py-6 text-zinc-400 text-xs">
+              <div className="flex items-center justify-center py-6 text-muted-foreground text-xs">
                 No home page data
               </div>
             )}
@@ -1054,10 +1054,10 @@ export function AnalyticsTab({
         </Card>
 
         {/* Docs Page Visitors */}
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader>
-            <CardTitle className="text-white text-base">Docs Page Visitors</CardTitle>
-            <CardDescription className="text-zinc-400 text-xs">
+            <CardTitle className="text-foreground text-base">Docs Page Visitors</CardTitle>
+            <CardDescription className="text-muted-foreground text-xs">
               Daily trends for docs page
               {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ' (filtered)'}
             </CardDescription>
@@ -1115,7 +1115,7 @@ export function AnalyticsTab({
                         const date = new Date(label + 'T12:00:00')
                         return (
                           <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-2 shadow-lg">
-                            <div className="text-white font-medium text-xs">
+                            <div className="text-foreground font-medium text-xs">
                               {date.toLocaleDateString('en-US', { 
                                 month: 'short', 
                                 day: 'numeric' 
@@ -1140,7 +1140,7 @@ export function AnalyticsTab({
                 </ChartContainer>
               </div>
             ) : (
-              <div className="flex items-center justify-center py-6 text-zinc-400 text-xs">
+              <div className="flex items-center justify-center py-6 text-muted-foreground text-xs">
                 No docs page data
               </div>
             )}
@@ -1148,10 +1148,10 @@ export function AnalyticsTab({
         </Card>
 
         {/* Workspaces Page Visitors */}
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader>
-            <CardTitle className="text-white text-base">Workspaces Page Visitors</CardTitle>
-            <CardDescription className="text-zinc-400 text-xs">Daily trends for workspaces page</CardDescription>
+            <CardTitle className="text-foreground text-base">Workspaces Page Visitors</CardTitle>
+            <CardDescription className="text-muted-foreground text-xs">Daily trends for workspaces page</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {visitorLoading ? (
@@ -1206,7 +1206,7 @@ export function AnalyticsTab({
                         const date = new Date(label + 'T12:00:00')
                         return (
                           <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-2 shadow-lg">
-                            <div className="text-white font-medium text-xs">
+                            <div className="text-foreground font-medium text-xs">
                               {date.toLocaleDateString('en-US', { 
                                 month: 'short', 
                                 day: 'numeric' 
@@ -1231,7 +1231,7 @@ export function AnalyticsTab({
                 </ChartContainer>
               </div>
             ) : (
-              <div className="flex items-center justify-center py-6 text-zinc-400 text-xs">
+              <div className="flex items-center justify-center py-6 text-muted-foreground text-xs">
                 No workspaces page data
               </div>
             )}
@@ -1239,10 +1239,10 @@ export function AnalyticsTab({
         </Card>
 
         {/* Login / Auth Page Visitors */}
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader>
-            <CardTitle className="text-white text-base">Login / Auth Visitors</CardTitle>
-            <CardDescription className="text-zinc-400 text-xs">
+            <CardTitle className="text-foreground text-base">Login / Auth Visitors</CardTitle>
+            <CardDescription className="text-muted-foreground text-xs">
               Daily trends for login and auth pages
               {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ' (filtered)'}
             </CardDescription>
@@ -1300,7 +1300,7 @@ export function AnalyticsTab({
                         const date = new Date(label + 'T12:00:00')
                         return (
                           <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-2 shadow-lg">
-                            <div className="text-white font-medium text-xs">
+                            <div className="text-foreground font-medium text-xs">
                               {date.toLocaleDateString('en-US', { 
                                 month: 'short', 
                                 day: 'numeric' 
@@ -1325,7 +1325,7 @@ export function AnalyticsTab({
                 </ChartContainer>
               </div>
             ) : (
-              <div className="flex items-center justify-center py-6 text-zinc-400 text-xs">
+              <div className="flex items-center justify-center py-6 text-muted-foreground text-xs">
                 No auth page data
               </div>
             )}
@@ -1333,10 +1333,10 @@ export function AnalyticsTab({
         </Card>
 
         {/* Task Studio Page Visitors */}
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader>
-            <CardTitle className="text-white text-base">Task Studio Visitors</CardTitle>
-            <CardDescription className="text-zinc-400 text-xs">
+            <CardTitle className="text-foreground text-base">Task Studio Visitors</CardTitle>
+            <CardDescription className="text-muted-foreground text-xs">
               Daily trends for task studio page
               {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ' (filtered)'}
             </CardDescription>
@@ -1394,7 +1394,7 @@ export function AnalyticsTab({
                         const date = new Date(label + 'T12:00:00')
                         return (
                           <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-2 shadow-lg">
-                            <div className="text-white font-medium text-xs">
+                            <div className="text-foreground font-medium text-xs">
                               {date.toLocaleDateString('en-US', { 
                                 month: 'short', 
                                 day: 'numeric' 
@@ -1419,7 +1419,7 @@ export function AnalyticsTab({
                 </ChartContainer>
               </div>
             ) : (
-              <div className="flex items-center justify-center py-6 text-zinc-400 text-xs">
+              <div className="flex items-center justify-center py-6 text-muted-foreground text-xs">
                 No task studio data
               </div>
             )}
@@ -1427,10 +1427,10 @@ export function AnalyticsTab({
         </Card>
 
         {/* Meetings Page Visitors */}
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader>
-            <CardTitle className="text-white text-base">Meetings Visitors</CardTitle>
-            <CardDescription className="text-zinc-400 text-xs">
+            <CardTitle className="text-foreground text-base">Meetings Visitors</CardTitle>
+            <CardDescription className="text-muted-foreground text-xs">
               Daily trends for meetings page
               {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ' (filtered)'}
             </CardDescription>
@@ -1488,7 +1488,7 @@ export function AnalyticsTab({
                         const date = new Date(label + 'T12:00:00')
                         return (
                           <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-2 shadow-lg">
-                            <div className="text-white font-medium text-xs">
+                            <div className="text-foreground font-medium text-xs">
                               {date.toLocaleDateString('en-US', { 
                                 month: 'short', 
                                 day: 'numeric' 
@@ -1513,7 +1513,7 @@ export function AnalyticsTab({
                 </ChartContainer>
               </div>
             ) : (
-              <div className="flex items-center justify-center py-6 text-zinc-400 text-xs">
+              <div className="flex items-center justify-center py-6 text-muted-foreground text-xs">
                 No meetings page data
               </div>
             )}
@@ -1524,10 +1524,10 @@ export function AnalyticsTab({
       {/* Documentation Pages Breakdown */}
       {docsPageBreakdown.length > 0 && (
         <div className="mb-4">
-          <h3 className="text-white text-lg font-semibold mb-3">
+          <h3 className="text-foreground text-lg font-semibold mb-3">
             Documentation Pages Breakdown
             {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
-              <span className="text-zinc-400 text-sm font-normal ml-2">(filtered)</span>
+              <span className="text-muted-foreground text-sm font-normal ml-2">(filtered)</span>
             )}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1546,12 +1546,12 @@ export function AnalyticsTab({
               const colorScheme = colors[index % colors.length]
               
               return (
-                <Card key={page} className="bg-zinc-900 border-zinc-700">
+                <Card key={page} className="bg-card border-zinc-300 dark:border-white/[0.06]">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-white text-base capitalize">{page}</CardTitle>
+                      <CardTitle className="text-foreground text-base capitalize">{page}</CardTitle>
                     </div>
-                    <CardDescription className="text-zinc-400 text-xs">
+                    <CardDescription className="text-muted-foreground text-xs">
                       Documentation page visits over time
                     </CardDescription>
                   </CardHeader>
@@ -1598,14 +1598,14 @@ export function AnalyticsTab({
                                   const data = payload[0].payload
                                   return (
                                     <div className="bg-zinc-800 border border-zinc-700 px-3 py-2 rounded-lg shadow-lg">
-                                      <p className="text-zinc-400 text-xs mb-1">
+                                      <p className="text-muted-foreground text-xs mb-1">
                                         {new Date(data.date).toLocaleDateString('en-US', { 
                                           month: 'short', 
                                           day: 'numeric',
                                           year: 'numeric'
                                         })}
                                       </p>
-                                      <p className="text-white font-semibold text-sm">
+                                      <p className="text-foreground font-semibold text-sm">
                                         {data.count} {data.count === 1 ? 'visit' : 'visits'}
                                       </p>
                                     </div>
@@ -1626,7 +1626,7 @@ export function AnalyticsTab({
                         </ChartContainer>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center py-4 text-zinc-400 text-xs">
+                      <div className="flex items-center justify-center py-4 text-muted-foreground text-xs">
                         No data available
                       </div>
                     )}
@@ -1638,18 +1638,18 @@ export function AnalyticsTab({
         </div>
       )}
 
-      <Card className="bg-zinc-900 border-zinc-700 mb-4">
+      <Card className="bg-card border-zinc-300 dark:border-white/[0.06] mb-4">
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-white">User Logins Over Time</CardTitle>
-              <CardDescription className="text-zinc-400">Daily login trends for the selected period</CardDescription>
+              <CardTitle className="text-foreground">User Logins Over Time</CardTitle>
+              <CardDescription className="text-muted-foreground">Daily login trends for the selected period</CardDescription>
             </div>
             <Button 
               onClick={() => loadLoginData(30)} 
               variant="outline" 
               size="sm"
-              className="text-white border-zinc-600 hover:bg-zinc-800"
+              className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -1663,7 +1663,7 @@ export function AnalyticsTab({
           ) : loginStats?.daily_stats && loginStats.daily_stats.length > 0 ? (
             <div className="w-full h-72 p-4">
               {/* Debug info */}
-              <div className="text-xs text-zinc-500 mb-2">
+              <div className="text-xs text-muted-foreground mb-2">
                 Login data points: {loginStats.daily_stats.length} | 
                 Date range: {loginStats.daily_stats[0]?.date} to {loginStats.daily_stats[loginStats.daily_stats.length - 1]?.date} |
                 Today: {new Date().toISOString().split('T')[0]}
@@ -1714,7 +1714,7 @@ export function AnalyticsTab({
                       const date = new Date(label + 'T12:00:00')
                       return (
                         <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-3 shadow-lg">
-                          <div className="text-white font-medium">
+                          <div className="text-foreground font-medium">
                             {date.toLocaleDateString('en-US', { 
                               weekday: 'long', 
                               year: 'numeric', 
@@ -1741,7 +1741,7 @@ export function AnalyticsTab({
               </ChartContainer>
             </div>
           ) : (
-            <div className="flex items-center justify-center py-8 text-zinc-400">
+            <div className="flex items-center justify-center py-8 text-muted-foreground">
               <div className="text-center">
                 <div>No login data available for the selected period</div>
                 {loginStats && (
@@ -1757,10 +1757,10 @@ export function AnalyticsTab({
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader>
-            <CardTitle className="text-white">Top Countries</CardTitle>
-            <CardDescription className="text-zinc-400">
+            <CardTitle className="text-foreground">Top Countries</CardTitle>
+            <CardDescription className="text-muted-foreground">
               Most visited countries
               {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ' (filtered)'}
             </CardDescription>
@@ -1771,27 +1771,27 @@ export function AnalyticsTab({
                 {filteredStats.country_stats.slice(0, 8).map((country, index) => (
                   <div key={country._id} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-zinc-700 rounded-full flex items-center justify-center text-xs text-white">
+                      <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs text-foreground">
                         {index + 1}
                       </div>
-                      <span className="text-white">{country._id}</span>
+                      <span className="text-foreground">{country._id}</span>
                     </div>
-                    <span className="text-zinc-400 font-medium">{country.count}</span>
+                    <span className="text-muted-foreground font-medium">{country.count}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-zinc-400">
+              <div className="text-center py-8 text-muted-foreground">
                 No country data available
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader>
-            <CardTitle className="text-white">Authentication Methods</CardTitle>
-            <CardDescription className="text-zinc-400">Login methods breakdown</CardDescription>
+            <CardTitle className="text-foreground">Authentication Methods</CardTitle>
+            <CardDescription className="text-muted-foreground">Login methods breakdown</CardDescription>
           </CardHeader>
           <CardContent>
             {loginStats?.auth_method_stats && loginStats.auth_method_stats.length > 0 ? (
@@ -1799,19 +1799,19 @@ export function AnalyticsTab({
                 {loginStats.auth_method_stats.map((method, index) => (
                   <div key={method._id} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-zinc-700 rounded-full flex items-center justify-center text-xs text-white">
+                      <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs text-foreground">
                         {index + 1}
                       </div>
-                      <span className="text-white capitalize">
+                      <span className="text-foreground capitalize">
                         {method._id === 'google_oauth' ? 'Google OAuth' : method._id === 'password' ? 'Password' : method._id}
                       </span>
                     </div>
-                    <span className="text-zinc-400 font-medium">{method.count}</span>
+                    <span className="text-muted-foreground font-medium">{method.count}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-zinc-400">
+              <div className="text-center py-8 text-muted-foreground">
                 No authentication data available
               </div>
             )}
@@ -1820,10 +1820,10 @@ export function AnalyticsTab({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader>
-            <CardTitle className="text-white">Top Users by Logins</CardTitle>
-            <CardDescription className="text-zinc-400">Most active users in the selected period</CardDescription>
+            <CardTitle className="text-foreground">Top Users by Logins</CardTitle>
+            <CardDescription className="text-muted-foreground">Most active users in the selected period</CardDescription>
           </CardHeader>
           <CardContent>
             {loginStats?.top_users_stats && loginStats.top_users_stats.length > 0 ? (
@@ -1831,27 +1831,27 @@ export function AnalyticsTab({
                 {loginStats.top_users_stats.slice(0, 8).map((user, index) => (
                   <div key={user._id} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-zinc-700 rounded-full flex items-center justify-center text-xs text-white">
+                      <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs text-foreground">
                         {index + 1}
                       </div>
-                      <span className="text-white">{user._id}</span>
+                      <span className="text-foreground">{user._id}</span>
                     </div>
-                    <span className="text-zinc-400 font-medium">{user.count} logins</span>
+                    <span className="text-muted-foreground font-medium">{user.count} logins</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-zinc-400">
+              <div className="text-center py-8 text-muted-foreground">
                 No user login data available
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900 border-zinc-700">
+        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
           <CardHeader>
-            <CardTitle className="text-white">Recent Logins</CardTitle>
-            <CardDescription className="text-zinc-400">Latest user authentication events</CardDescription>
+            <CardTitle className="text-foreground">Recent Logins</CardTitle>
+            <CardDescription className="text-muted-foreground">Latest user authentication events</CardDescription>
           </CardHeader>
           <CardContent>
             {loginLoading ? (
@@ -1867,20 +1867,20 @@ export function AnalyticsTab({
                         login.auth_method === 'google_oauth' ? 'bg-blue-500' : 'bg-green-500'
                       }`}></div>
                       <div>
-                        <div className="text-white font-medium">{login.username}</div>
-                        <div className="text-zinc-500 text-xs">
+                        <div className="text-foreground font-medium">{login.username}</div>
+                        <div className="text-muted-foreground text-xs">
                           {login.auth_method === 'google_oauth' ? 'Google OAuth' : 'Password'}
                         </div>
                       </div>
                     </div>
-                    <span className="text-zinc-400 text-xs">
+                    <span className="text-muted-foreground text-xs">
                       {convertToEasternTime(login.timestamp)}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-zinc-400">
+              <div className="text-center py-8 text-muted-foreground">
                 No recent login data available
               </div>
             )}
@@ -1899,7 +1899,7 @@ export function AnalyticsTab({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="text-white border-zinc-600 hover:bg-zinc-800"
+                  className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                 >
                   <Filter className="h-4 w-4 mr-2" />
                   Filter Visitors
@@ -1910,14 +1910,14 @@ export function AnalyticsTab({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-96 bg-zinc-900 border-zinc-700 max-h-[80vh] overflow-y-auto">
+              <PopoverContent className="w-96 bg-card border-zinc-300 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-white font-semibold mb-1">Filter Visitors</h3>
-                    <p className="text-zinc-400 text-sm">Filter visitors by IP address or location</p>
+                    <h3 className="text-foreground font-semibold mb-1">Filter Visitors</h3>
+                    <p className="text-muted-foreground text-sm">Filter visitors by IP address or location</p>
                   </div>
                   <div>
-                    <Label htmlFor="ip-exclusion" className="text-white text-sm mb-2 block">
+                    <Label htmlFor="ip-exclusion" className="text-foreground text-sm mb-2 block">
                       Exclude IP Addresses
                     </Label>
                     <div className="flex gap-2">
@@ -1928,20 +1928,20 @@ export function AnalyticsTab({
                         value={visitorIpInput}
                         onChange={(e) => setVisitorIpInput(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && addIpExclusion()}
-                        className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                        className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
                       />
                       <Button 
                         onClick={addIpExclusion}
                         variant="outline"
                         size="sm"
-                        className="text-white border-zinc-600 hover:bg-zinc-800"
+                        className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                       >
                         Add
                       </Button>
                     </div>
                     {visitorIpExclusions.length > 0 && (
                       <div className="mt-2">
-                        <div className="text-zinc-400 text-xs mb-1">Excluded IPs:</div>
+                        <div className="text-muted-foreground text-xs mb-1">Excluded IPs:</div>
                         <div className="flex flex-wrap gap-2">
                           {visitorIpExclusions.map((ip) => (
                             <span
@@ -1962,7 +1962,7 @@ export function AnalyticsTab({
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="location-exclusion" className="text-white text-sm mb-2 block">
+                    <Label htmlFor="location-exclusion" className="text-foreground text-sm mb-2 block">
                       Exclude Locations (City, Region, or Country)
                     </Label>
                     <div className="flex gap-2">
@@ -1973,20 +1973,20 @@ export function AnalyticsTab({
                         value={visitorLocationInput}
                         onChange={(e) => setVisitorLocationInput(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && addLocationExclusion()}
-                        className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                        className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
                       />
                       <Button 
                         onClick={addLocationExclusion}
                         variant="outline"
                         size="sm"
-                        className="text-white border-zinc-600 hover:bg-zinc-800"
+                        className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                       >
                         Add
                       </Button>
                     </div>
                     {visitorLocationExclusions.length > 0 && (
                       <div className="mt-2">
-                        <div className="text-zinc-400 text-xs mb-1">Excluded Locations:</div>
+                        <div className="text-muted-foreground text-xs mb-1">Excluded Locations:</div>
                         <div className="flex flex-wrap gap-2">
                           {visitorLocationExclusions.map((location) => (
                             <span
@@ -2007,7 +2007,7 @@ export function AnalyticsTab({
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="location-filter" className="text-white text-sm mb-2 block">
+                    <Label htmlFor="location-filter" className="text-foreground text-sm mb-2 block">
                       Location Filter (City, Region, Country)
                     </Label>
                     <Input
@@ -2016,19 +2016,19 @@ export function AnalyticsTab({
                       placeholder="Enter location to filter..."
                       value={visitorLocationFilter}
                       onChange={(e) => setVisitorLocationFilter(e.target.value)}
-                      className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                      className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
                     />
                   </div>
                   <div className="flex flex-col gap-2 pt-2">
                     <Button 
                       onClick={clearAllFilters}
                       variant="outline"
-                      className="w-full text-white border-zinc-600 hover:bg-zinc-800"
+                      className="w-full border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                     >
                       Clear All Filters
                     </Button>
                     {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
-                      <div className="text-zinc-400 text-xs text-center">
+                      <div className="text-muted-foreground text-xs text-center">
                         Showing {getFilteredVisitors().length} of {visitorData.length} visitors
                       </div>
                     )}
@@ -2038,12 +2038,12 @@ export function AnalyticsTab({
             </Popover>
           </div>
 
-          <Card className="bg-zinc-900 border-zinc-700">
+          <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-white">Recent Visitors</CardTitle>
-                  <CardDescription className="text-zinc-400">
+                  <CardTitle className="text-foreground">Recent Visitors</CardTitle>
+                  <CardDescription className="text-muted-foreground">
                     Latest site visitors with location data
                     {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ' (filtered)'}
                   </CardDescription>
@@ -2055,7 +2055,7 @@ export function AnalyticsTab({
                 const currentPage = clampPage({ page: visitorPage, totalPages })
                 return (
                   <>
-                    <span className="text-zinc-400 text-xs hidden md:inline">
+                    <span className="text-muted-foreground text-xs hidden md:inline">
                       Page {currentPage} of {totalPages} • {filteredVisitors.length} total
                       {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ` (filtered from ${visitorData.length})`}
                     </span>
@@ -2064,7 +2064,7 @@ export function AnalyticsTab({
                       size="sm"
                       onClick={() => setVisitorPage(prevVisitorPage({ page: currentPage }))}
                       disabled={!canGoPrev({ page: currentPage })}
-                      className="text-white border-zinc-600"
+                      className="border-zinc-300 dark:border-white/[0.06]"
                     >
                       Prev
                     </Button>
@@ -2073,7 +2073,7 @@ export function AnalyticsTab({
                       size="sm"
                       onClick={() => setVisitorPage(nextVisitorPage({ page: currentPage, totalPages }))}
                       disabled={!canGoNext({ page: currentPage, totalPages })}
-                      className="text-white border-zinc-600"
+                      className="border-zinc-300 dark:border-white/[0.06]"
                     >
                       Next
                     </Button>
@@ -2093,13 +2093,13 @@ export function AnalyticsTab({
               <table className="w-full min-w-full">
                 <thead>
                   <tr className="border-b border-zinc-700">
-                    <th className="text-left py-3 px-4 text-zinc-300 font-medium">IP Address</th>
-                    <th className="text-left py-3 px-4 text-zinc-300 font-medium">Page</th>
-                    <th className="text-left py-3 px-4 text-zinc-300 font-medium">Source</th>
-                    <th className="text-left py-3 px-4 text-zinc-300 font-medium">Campaign</th>
-                    <th className="text-left py-3 px-4 text-zinc-300 font-medium">Content Type</th>
-                    <th className="text-left py-3 px-4 text-zinc-300 font-medium">Location</th>
-                    <th className="text-left py-3 px-4 text-zinc-300 font-medium">Time</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">IP Address</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Page</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Source</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Campaign</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Content Type</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Location</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Time</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2110,17 +2110,17 @@ export function AnalyticsTab({
                     const paged = getPageSlice({ items: filteredVisitors, page: currentPage, pageSize: visitorPageSize })
                     return paged
                   })().map((visitor) => (
-                    <tr key={visitor._id} className="border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors">
+                    <tr key={visitor._id} className="border-b border-zinc-200 dark:border-white/[0.04] hover:bg-accent/50 dark:hover:bg-accent/50 transition-colors">
                       <td className="py-3 px-4">
-                        <span className="text-white font-mono text-sm">{visitor.ip_address}</span>
+                        <span className="text-foreground font-mono text-sm">{visitor.ip_address}</span>
                       </td>
                       <td className="py-3 px-4 max-w-[200px]">
                         <div>
-                          <div className="text-white text-sm font-medium truncate" title={visitor.page_title || visitor.path || 'Unknown'}>
+                          <div className="text-foreground text-sm font-medium truncate" title={visitor.page_title || visitor.path || 'Unknown'}>
                             {visitor.page_title || (visitor.path ? visitor.path.split('?')[0] : 'Unknown')}
                           </div>
                           {visitor.path && visitor.path !== visitor.page_title && (
-                            <div className="text-zinc-500 text-xs font-mono truncate" title={visitor.path}>
+                            <div className="text-muted-foreground text-xs font-mono truncate" title={visitor.path}>
                               {visitor.path}
                             </div>
                           )}
@@ -2133,21 +2133,21 @@ export function AnalyticsTab({
                             visitor.referrer_source === 'facebook' ? 'bg-blue-800/50 text-blue-200' :
                             visitor.referrer_source === 'google' ? 'bg-green-900/50 text-green-300' :
                             visitor.referrer_source === 'linkedin' ? 'bg-purple-900/50 text-purple-300' :
-                            'bg-zinc-700/50 text-zinc-300'
+                            'bg-muted/50 text-muted-foreground'
                           }`}>
                             {visitor.referrer_source}
                           </span>
                         ) : (
-                          <span className="text-zinc-500 text-xs">Direct</span>
+                          <span className="text-muted-foreground text-xs">Direct</span>
                         )}
                       </td>
                       <td className="py-3 px-4 max-w-[120px]">
                         {visitor.campaign_id ? (
-                          <span className="text-zinc-300 text-xs font-mono truncate inline-block max-w-full" title={visitor.campaign_id}>
+                          <span className="text-muted-foreground text-xs font-mono truncate inline-block max-w-full" title={visitor.campaign_id}>
                             {visitor.campaign_id.length > 12 ? `${visitor.campaign_id.substring(0, 12)}...` : visitor.campaign_id}
                           </span>
                         ) : (
-                          <span className="text-zinc-500 text-xs">-</span>
+                          <span className="text-muted-foreground text-xs">-</span>
                         )}
                       </td>
                       <td className="py-3 px-4">
@@ -2158,21 +2158,21 @@ export function AnalyticsTab({
                             visitor.content_type === 'auth_page' ? 'bg-yellow-900/50 text-yellow-300' :
                             visitor.content_type === 'features_page' ? 'bg-purple-900/50 text-purple-300' :
                             visitor.content_type.startsWith('documentation -') ? 'bg-cyan-900/50 text-cyan-300' :
-                            'bg-zinc-700/50 text-zinc-300'
+                            'bg-muted/50 text-muted-foreground'
                           }`}>
                             {visitor.content_type.replace('_', ' ')}
                           </span>
                         ) : (
-                          <span className="text-zinc-500 text-xs">Unknown</span>
+                          <span className="text-muted-foreground text-xs">Unknown</span>
                         )}
                       </td>
                       <td className="py-3 px-4">
                         <div>
-                          <div className="text-white text-sm">{visitor.city}</div>
-                          <div className="text-zinc-400 text-xs">{visitor.region}, {visitor.country}</div>
+                          <div className="text-foreground text-sm">{visitor.city}</div>
+                          <div className="text-muted-foreground text-xs">{visitor.region}, {visitor.country}</div>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-zinc-400 text-sm">
+                      <td className="py-3 px-4 text-muted-foreground text-sm">
                         {convertToEasternTime(visitor.time)}
                       </td>
                     </tr>
@@ -2181,7 +2181,7 @@ export function AnalyticsTab({
               </table>
             </div>
           ) : (
-            <div className="text-center py-8 text-zinc-400">
+            <div className="text-center py-8 text-muted-foreground">
               No visitor data available
             </div>
           )}
@@ -2219,7 +2219,7 @@ export function AnalyticsTab({
                   <PopoverTrigger asChild>
                     <Button 
                       variant="outline" 
-                      className="text-white border-zinc-600 hover:bg-zinc-800"
+                      className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                     >
                       <Filter className="h-4 w-4 mr-2" />
                       Filter by User
@@ -2230,14 +2230,14 @@ export function AnalyticsTab({
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-96 bg-zinc-900 border-zinc-700 max-h-[80vh] overflow-y-auto">
+                  <PopoverContent className="w-96 bg-card border-zinc-300 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
                     <div className="space-y-4">
                       <div>
-                        <h3 className="text-white font-semibold mb-1">Filter by User</h3>
-                        <p className="text-zinc-400 text-sm">Exclude specific users from file type analytics</p>
+                        <h3 className="text-foreground font-semibold mb-1">Filter by User</h3>
+                        <p className="text-muted-foreground text-sm">Exclude specific users from file type analytics</p>
                       </div>
                       <div>
-                        <Label htmlFor="user-exclusion" className="text-white text-sm mb-2 block">
+                        <Label htmlFor="user-exclusion" className="text-foreground text-sm mb-2 block">
                           Exclude Users (username or email)
                         </Label>
                         <div className="flex gap-2">
@@ -2248,13 +2248,13 @@ export function AnalyticsTab({
                             value={userExclusionInput}
                             onChange={(e) => setUserExclusionInput(e.target.value)}
                             onKeyPress={(e) => e.key === 'Enter' && addUserExclusion()}
-                            className="bg-zinc-800 text-white border-zinc-600 focus:border-blue-500"
+                            className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
                           />
                           <Button 
                             onClick={addUserExclusion}
                             variant="outline"
                             size="sm"
-                            className="text-white border-zinc-600 hover:bg-zinc-800"
+                            className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                           >
                             Add
                           </Button>
@@ -2262,7 +2262,7 @@ export function AnalyticsTab({
                         {excludedUsers.length > 0 && (
                           <div className="mt-2">
                             <div className="flex justify-between items-center mb-1">
-                              <div className="text-zinc-400 text-xs">Excluded Users:</div>
+                              <div className="text-muted-foreground text-xs">Excluded Users:</div>
                               <button
                                 onClick={clearUserExclusions}
                                 className="text-xs text-red-400 hover:text-red-300"
@@ -2296,57 +2296,57 @@ export function AnalyticsTab({
 
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="bg-zinc-900 border-zinc-700">
+                <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-zinc-400">Total Files</CardTitle>
+                    <CardTitle className="text-sm text-muted-foreground">Total Files</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl font-bold text-foreground">
                       {fileTypeAnalytics.summary.total_files.toLocaleString()}
                     </div>
-                    <div className="text-xs text-zinc-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       {fileTypeAnalytics.summary.recent_files.toLocaleString()} in last {fileTypeAnalytics.summary.period_days} days
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-zinc-900 border-zinc-700">
+                <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-zinc-400">Total Storage</CardTitle>
+                    <CardTitle className="text-sm text-muted-foreground">Total Storage</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl font-bold text-foreground">
                       {(fileTypeAnalytics.summary.total_storage / (1024 ** 3)).toFixed(2)} GB
                     </div>
-                    <div className="text-xs text-zinc-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       {(fileTypeAnalytics.summary.recent_storage / (1024 ** 3)).toFixed(2)} GB recent
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-zinc-900 border-zinc-700">
+                <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-zinc-400">File Types</CardTitle>
+                    <CardTitle className="text-sm text-muted-foreground">File Types</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl font-bold text-foreground">
                       {fileTypeAnalytics.summary.unique_file_types}
                     </div>
-                    <div className="text-xs text-zinc-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       Most common: {fileTypeAnalytics.summary.most_common_type || 'N/A'}
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-zinc-900 border-zinc-700">
+                <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-zinc-400">Categories</CardTitle>
+                    <CardTitle className="text-sm text-muted-foreground">Categories</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl font-bold text-foreground">
                       {fileTypeAnalytics.summary.unique_categories}
                     </div>
-                    <div className="text-xs text-zinc-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       Most common: {fileTypeAnalytics.summary.most_common_category || 'N/A'}
                     </div>
                   </CardContent>
@@ -2354,10 +2354,10 @@ export function AnalyticsTab({
               </div>
 
               {/* File Types by Category */}
-              <Card className="bg-zinc-900 border-zinc-700">
+              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
                 <CardHeader>
-                  <CardTitle className="text-white">Files by Category</CardTitle>
-                  <CardDescription className="text-zinc-400">
+                  <CardTitle className="text-foreground">Files by Category</CardTitle>
+                  <CardDescription className="text-muted-foreground">
                     Distribution of files across different categories
                   </CardDescription>
                 </CardHeader>
@@ -2368,12 +2368,12 @@ export function AnalyticsTab({
                       return (
                         <div key={index} className="space-y-1">
                           <div className="flex justify-between text-sm">
-                            <span className="text-white font-medium">{category.category}</span>
-                            <span className="text-zinc-400">
+                            <span className="text-foreground font-medium">{category.category}</span>
+                            <span className="text-muted-foreground">
                               {category.count} files ({percentage.toFixed(1)}%)
                             </span>
                           </div>
-                          <div className="flex justify-between text-xs text-zinc-500">
+                          <div className="flex justify-between text-xs text-muted-foreground">
                             <span>Storage: {(category.size / (1024 ** 2)).toFixed(2)} MB</span>
                             <span>{((category.size / fileTypeAnalytics.summary.total_storage) * 100).toFixed(1)}% of total</span>
                           </div>
@@ -2391,10 +2391,10 @@ export function AnalyticsTab({
               </Card>
 
               {/* Top File Types */}
-              <Card className="bg-zinc-900 border-zinc-700">
+              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
                 <CardHeader>
-                  <CardTitle className="text-white">Top File Types</CardTitle>
-                  <CardDescription className="text-zinc-400">
+                  <CardTitle className="text-foreground">Top File Types</CardTitle>
+                  <CardDescription className="text-muted-foreground">
                     Most common file extensions
                   </CardDescription>
                 </CardHeader>
@@ -2403,23 +2403,23 @@ export function AnalyticsTab({
                     <table className="w-full">
                       <thead className="bg-zinc-800 sticky top-0">
                         <tr>
-                          <th className="text-left p-3 text-white text-sm font-medium">File Type</th>
-                          <th className="text-left p-3 text-white text-sm font-medium">Category</th>
-                          <th className="text-right p-3 text-white text-sm font-medium">Count</th>
-                          <th className="text-right p-3 text-white text-sm font-medium">Total Size</th>
-                          <th className="text-right p-3 text-white text-sm font-medium">Avg Size</th>
+                          <th className="text-left p-3 text-foreground text-sm font-medium">File Type</th>
+                          <th className="text-left p-3 text-foreground text-sm font-medium">Category</th>
+                          <th className="text-right p-3 text-foreground text-sm font-medium">Count</th>
+                          <th className="text-right p-3 text-foreground text-sm font-medium">Total Size</th>
+                          <th className="text-right p-3 text-foreground text-sm font-medium">Avg Size</th>
                         </tr>
                       </thead>
                       <tbody>
                         {fileTypeAnalytics.file_type_stats.slice(0, 20).map((fileType, index) => (
                           <tr key={index} className="border-b border-zinc-700">
-                            <td className="p-3 text-white">.{fileType.file_type}</td>
-                            <td className="p-3 text-zinc-400">{fileType.category}</td>
-                            <td className="p-3 text-right text-zinc-300">{fileType.count.toLocaleString()}</td>
-                            <td className="p-3 text-right text-zinc-300">
+                            <td className="p-3 text-foreground">.{fileType.file_type}</td>
+                            <td className="p-3 text-muted-foreground">{fileType.category}</td>
+                            <td className="p-3 text-right text-muted-foreground">{fileType.count.toLocaleString()}</td>
+                            <td className="p-3 text-right text-muted-foreground">
                               {(fileType.size / (1024 ** 2)).toFixed(2)} MB
                             </td>
-                            <td className="p-3 text-right text-zinc-300">
+                            <td className="p-3 text-right text-muted-foreground">
                               {(fileType.size / fileType.count / 1024).toFixed(2)} KB
                             </td>
                           </tr>
@@ -2431,10 +2431,10 @@ export function AnalyticsTab({
               </Card>
 
               {/* Daily Upload Trends */}
-              <Card className="bg-zinc-900 border-zinc-700">
+              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
                 <CardHeader>
-                  <CardTitle className="text-white">Daily Upload Trends</CardTitle>
-                  <CardDescription className="text-zinc-400">
+                  <CardTitle className="text-foreground">Daily Upload Trends</CardTitle>
+                  <CardDescription className="text-muted-foreground">
                     Total file uploads over the last {fileTypeAnalytics.summary.period_days} days
                   </CardDescription>
                 </CardHeader>
@@ -2476,7 +2476,7 @@ export function AnalyticsTab({
                       </ChartContainer>
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-zinc-400">
+                    <div className="text-center py-8 text-muted-foreground">
                       No daily upload data available
                     </div>
                   )}
@@ -2484,10 +2484,10 @@ export function AnalyticsTab({
               </Card>
 
               {/* File Types Over Time by Category - Stacked Area Chart */}
-              <Card className="bg-zinc-900 border-zinc-700">
+              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
                 <CardHeader>
-                  <CardTitle className="text-white">File Types Over Time by Category</CardTitle>
-                  <CardDescription className="text-zinc-400">
+                  <CardTitle className="text-foreground">File Types Over Time by Category</CardTitle>
+                  <CardDescription className="text-muted-foreground">
                     Breakdown of uploads by category over the last {fileTypeAnalytics.summary.period_days} days
                   </CardDescription>
                 </CardHeader>
@@ -2568,13 +2568,13 @@ export function AnalyticsTab({
                               className="w-3 h-3 rounded-full" 
                               style={{ backgroundColor: category.color }}
                             ></div>
-                            <span className="text-xs text-zinc-400">{category.name}</span>
+                            <span className="text-xs text-muted-foreground">{category.name}</span>
                           </div>
                         ))}
                       </div>
                     </>
                   ) : (
-                    <div className="text-center py-8 text-zinc-400">
+                    <div className="text-center py-8 text-muted-foreground">
                       No daily upload data available
                     </div>
                   )}
@@ -2593,10 +2593,10 @@ export function AnalyticsTab({
                   const color = colors[index % colors.length]
                   
                   return categoryData.length > 0 ? (
-                    <Card key={category.category} className="bg-zinc-900 border-zinc-700">
+                    <Card key={category.category} className="bg-card border-zinc-300 dark:border-white/[0.06]">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-white text-sm">{category.category} Uploads</CardTitle>
-                        <CardDescription className="text-zinc-400 text-xs">
+                        <CardTitle className="text-foreground text-sm">{category.category} Uploads</CardTitle>
+                        <CardDescription className="text-muted-foreground text-xs">
                           {category.count} total files
                         </CardDescription>
                       </CardHeader>
@@ -2641,10 +2641,10 @@ export function AnalyticsTab({
               </div>
 
               {/* Recent File Type Activity */}
-              <Card className="bg-zinc-900 border-zinc-700">
+              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
                 <CardHeader>
-                  <CardTitle className="text-white">Recent Activity (Last {fileTypeAnalytics.summary.period_days} Days)</CardTitle>
-                  <CardDescription className="text-zinc-400">
+                  <CardTitle className="text-foreground">Recent Activity (Last {fileTypeAnalytics.summary.period_days} Days)</CardTitle>
+                  <CardDescription className="text-muted-foreground">
                     File types uploaded in the selected time period
                   </CardDescription>
                 </CardHeader>
@@ -2656,8 +2656,8 @@ export function AnalyticsTab({
                         return (
                           <div key={index} className="space-y-1">
                             <div className="flex justify-between text-sm">
-                              <span className="text-white font-medium">{category.category}</span>
-                              <span className="text-zinc-400">
+                              <span className="text-foreground font-medium">{category.category}</span>
+                              <span className="text-muted-foreground">
                                 {category.count} files ({percentage.toFixed(1)}%)
                               </span>
                             </div>
@@ -2671,7 +2671,7 @@ export function AnalyticsTab({
                         )
                       })
                     ) : (
-                      <div className="text-center py-4 text-zinc-400">
+                      <div className="text-center py-4 text-muted-foreground">
                         No recent file activity
                       </div>
                     )}
@@ -2680,9 +2680,9 @@ export function AnalyticsTab({
               </Card>
             </>
           ) : (
-            <Card className="bg-zinc-900 border-zinc-700">
+            <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
               <CardContent className="pt-6">
-                <div className="text-center py-8 text-zinc-400">
+                <div className="text-center py-8 text-muted-foreground">
                   No file type analytics available
                 </div>
               </CardContent>

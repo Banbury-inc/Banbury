@@ -89,7 +89,7 @@ export function AIConversationsTab({
           <PopoverTrigger asChild>
             <Button 
               variant="outline" 
-              className="text-white border-zinc-600 hover:bg-zinc-800"
+              className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
             >
               <Filter className="h-4 w-4 mr-2" />
               Filter Conversations
@@ -100,21 +100,21 @@ export function AIConversationsTab({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 bg-zinc-900 border-zinc-700">
+          <PopoverContent className="w-80">
             <div className="space-y-4">
               <div>
-                <h3 className="text-white font-semibold mb-1">Filter Conversations</h3>
-                <p className="text-zinc-400 text-sm">Filter conversations by username</p>
+                <h3 className="text-foreground font-semibold mb-1">Filter Conversations</h3>
+                <p className="text-muted-foreground text-sm">Filter conversations by username</p>
               </div>
               <div>
-                <Label htmlFor="user-filter" className="text-white text-sm mb-2 block">
+                <Label htmlFor="user-filter" className="text-foreground text-sm mb-2 block">
                   Select User
                 </Label>
                 <select
                   id="user-filter"
                   value={conversationUserFilter}
                   onChange={(e) => setConversationUserFilter(e.target.value)}
-                  className="w-full bg-zinc-800 text-white border border-zinc-600 rounded px-3 py-2 focus:border-blue-500 focus:outline-none"
+                  className="w-full bg-card text-foreground border border-zinc-300 dark:border-white/[0.06] rounded px-3 py-2 focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">All Users</option>
                   {usersLoading ? (
@@ -132,7 +132,7 @@ export function AIConversationsTab({
                 <Button 
                   onClick={() => loadConversationsAnalytics(30, conversationUserFilter)}
                   variant="outline"
-                  className="flex-1 text-white border-zinc-600 hover:bg-zinc-800"
+                  className="flex-1 border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Apply
@@ -144,7 +144,7 @@ export function AIConversationsTab({
                       loadConversationsAnalytics(30, '')
                     }}
                     variant="outline"
-                    className="flex-1 text-white border-zinc-600 hover:bg-zinc-800"
+                    className="flex-1 border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                   >
                     Clear
                   </Button>
@@ -155,12 +155,12 @@ export function AIConversationsTab({
         </Popover>
       </div>
 
-      <Card className="bg-zinc-900 border-zinc-700">
+      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-white">AI Conversations</CardTitle>
-              <CardDescription className="text-zinc-400">
+              <CardTitle className="text-foreground">AI Conversations</CardTitle>
+              <CardDescription className="text-muted-foreground">
                 Recent AI conversations with users
                 {conversationUserFilter && ` (filtered by: ${conversationUserFilter})`}
               </CardDescription>
@@ -169,7 +169,7 @@ export function AIConversationsTab({
               onClick={() => loadConversationsAnalytics(30, conversationUserFilter)} 
               variant="outline" 
               size="sm"
-              className="text-white border-zinc-600 hover:bg-zinc-800"
+              className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -178,18 +178,18 @@ export function AIConversationsTab({
         <CardContent>
           {conversationsLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
             </div>
           ) : conversationsAnalytics?.conversations && conversationsAnalytics.conversations.length > 0 ? (
-            <div className="overflow-x-auto border border-zinc-700 rounded-lg">
+            <div className="overflow-x-auto border border-zinc-300 dark:border-white/[0.06] rounded-lg">
               <table className="w-full min-w-full">
                 <thead>
-                  <tr className="border-b border-zinc-700">
-                    <th className="text-left py-3 px-4 text-zinc-300 font-medium">User</th>
-                    <th className="text-left py-3 px-4 text-zinc-300 font-medium">Conversation Title</th>
-                    <th className="text-center py-3 px-4 text-zinc-300 font-medium">Messages</th>
-                    <th className="text-left py-3 px-4 text-zinc-300 font-medium">Created</th>
-                    <th className="text-left py-3 px-4 text-zinc-300 font-medium">Last Activity</th>
+                  <tr className="border-b border-zinc-300 dark:border-white/[0.06]">
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">User</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Conversation Title</th>
+                    <th className="text-center py-3 px-4 text-muted-foreground font-medium">Messages</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Created</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Last Activity</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -197,43 +197,43 @@ export function AIConversationsTab({
                     <Fragment key={conversation._id}>
                       <tr 
                         onClick={() => handleConversationRowClick(conversation._id)}
-                        className="border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                        className="border-b border-zinc-200 dark:border-white/[0.04] hover:bg-accent/50 dark:hover:bg-accent/50 transition-colors cursor-pointer"
                       >
                         <td className="py-3 px-4">
-                          <span className="text-white font-medium">{conversation.username}</span>
+                          <span className="text-foreground font-medium">{conversation.username}</span>
                         </td>
                         <td className="py-3 px-4 max-w-[300px]">
-                          <span className="text-zinc-300 text-sm truncate inline-block max-w-full" title={conversation.title}>
+                          <span className="text-muted-foreground text-sm truncate inline-block max-w-full" title={conversation.title}>
                             {conversation.title || 'Untitled Conversation'}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-center">
-                          <span className="text-white font-medium">{conversation.message_count}</span>
+                          <span className="text-foreground font-medium">{conversation.message_count}</span>
                         </td>
-                        <td className="py-3 px-4 text-zinc-400 text-sm">
+                        <td className="py-3 px-4 text-muted-foreground text-sm">
                           {convertToEasternTime(conversation.created_at)}
                         </td>
-                        <td className="py-3 px-4 text-zinc-400 text-sm">
+                        <td className="py-3 px-4 text-muted-foreground text-sm">
                           {conversation.last_message_at ? convertToEasternTime(conversation.last_message_at) : convertToEasternTime(conversation.updated_at)}
                         </td>
                       </tr>
                       {expandedConversation === conversation._id && (
                         <tr>
                           <td colSpan={5} className="p-0">
-                            <div className="bg-zinc-800/30 border-l-4 border-blue-500">
+                            <div className="bg-accent/30 border-l-4 border-blue-500">
                               {conversationDetailsLoading ? (
                                 <div className="p-6 text-center">
-                                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-                                  <div className="text-zinc-400">Loading conversation details...</div>
+                                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto mb-4"></div>
+                                  <div className="text-muted-foreground">Loading conversation details...</div>
                                 </div>
                               ) : conversationDetails ? (
                                 <div className="p-6">
                                   <div className="flex justify-between items-start mb-4">
                                     <div>
-                                      <h3 className="text-white font-semibold text-lg mb-2">
+                                      <h3 className="text-foreground font-semibold text-lg mb-2">
                                         {conversationDetails.title || 'Untitled Conversation'}
                                       </h3>
-                                      <div className="text-zinc-400 text-sm">
+                                      <div className="text-muted-foreground text-sm">
                                         <span className="mr-4">User: {conversationDetails.username}</span>
                                         <span className="mr-4">Messages: {conversationDetails.messages?.length || 0}</span>
                                         <span>Created: {convertToEasternTime(conversationDetails.created_at)}</span>
@@ -247,23 +247,23 @@ export function AIConversationsTab({
                                       }}
                                       variant="outline"
                                       size="sm"
-                                      className="text-white border-zinc-600 hover:bg-zinc-800"
+                                      className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                                     >
                                       Close
                                     </Button>
                                   </div>
                                   <div className="space-y-4 max-h-96 overflow-y-auto">
                                     {conversationDetails.messages?.map((message: any, index: number) => (
-                                      <div key={index} className="bg-zinc-900/50 rounded-lg p-4">
+                                      <div key={index} className="bg-muted/50 rounded-lg p-4">
                                         <div className="flex justify-between items-start mb-2">
-                                          <span className="text-blue-400 font-medium text-sm">
+                                          <span className="text-blue-600 dark:text-blue-400 font-medium text-sm">
                                             {message.role === 'user' ? 'User' : 'AI Assistant'}
                                           </span>
-                                          <span className="text-zinc-500 text-xs">
+                                          <span className="text-muted-foreground text-xs">
                                             {message.timestamp ? convertToEasternTime(message.timestamp) : 'Unknown time'}
                                           </span>
                                         </div>
-                                        <div className="text-zinc-200 text-sm whitespace-pre-wrap">
+                                        <div className="text-foreground text-sm whitespace-pre-wrap">
                                           {(() => {
                                             const content = message.content || message.text || 'No content'
                                             if (typeof content === 'string') {
@@ -286,7 +286,7 @@ export function AIConversationsTab({
                                   </div>
                                 </div>
                               ) : (
-                                <div className="p-6 text-center text-zinc-400">
+                                <div className="p-6 text-center text-muted-foreground">
                                   Failed to load conversation details
                                 </div>
                               )}
@@ -299,13 +299,13 @@ export function AIConversationsTab({
                 </tbody>
               </table>
               {conversationsAnalytics.conversations.length > 20 && (
-                <div className="p-3 text-center text-zinc-400 text-sm bg-zinc-800">
+                <div className="p-3 text-center text-muted-foreground text-sm bg-muted">
                   Showing 20 of {conversationsAnalytics.conversations.length} conversations
                 </div>
               )}
             </div>
           ) : (
-            <div className="text-center py-8 text-zinc-400">
+            <div className="text-center py-8 text-muted-foreground">
               No conversation data available
             </div>
           )}
