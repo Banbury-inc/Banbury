@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import Image from 'next/image'
 import { cn } from '../../../lib/utils'
 import { Slide } from './PowerPointViewer'
 import { renderShapeSvg } from './shape-catalog'
@@ -169,7 +170,7 @@ function SlideThumbnail({ slide }: { slide: Slide }) {
           return (
             <div
               key={element.id}
-              className="absolute bg-muted flex items-center justify-center"
+              className="absolute bg-muted flex items-center justify-center relative"
               style={{
                 left: `${element.x}%`,
                 top: `${element.y}%`,
@@ -178,10 +179,12 @@ function SlideThumbnail({ slide }: { slide: Slide }) {
               }}
             >
               {element.imageUrl && (
-                <img
+                <Image
                   src={element.imageUrl}
                   alt=""
-                  className="max-w-full max-h-full object-contain"
+                  fill
+                  className="object-contain"
+                  unoptimized
                 />
               )}
             </div>

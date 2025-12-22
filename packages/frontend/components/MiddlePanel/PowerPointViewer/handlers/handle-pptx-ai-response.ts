@@ -99,7 +99,6 @@ export function handlePptxAIResponse(
   if (preview === true) {
     // Check if we've already previewed this changeId
     if (appliedPreviewChangeIds.has(effectiveChangeId)) {
-      console.log(`[pptx-ai] Ignoring duplicate preview for changeId: ${effectiveChangeId}`);
       return null; // Idempotent: already previewed
     }
 

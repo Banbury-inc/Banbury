@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { SlideElement, Slide, FillStyle } from './PowerPointViewer'
 import {
   createTextElement,
@@ -562,7 +563,7 @@ export function PowerPointToolbar({
     { id: 'divider-1', isDivider: true },
     { id: 'text', title: 'Add Text', icon: <Type size={16} />, onClick: handleAddText },
     { id: 'shape', title: 'Add Shape', icon: <Square size={16} />, isDropdown: true },
-    { id: 'image', title: 'Add Image', icon: <Image size={16} />, isDropdown: true },
+    { id: 'image', title: 'Add Image', icon: <Image size={16} />, isDropdown: true }, // eslint-disable-line jsx-a11y/alt-text
     { id: 'delete', title: 'Delete Element', icon: <Trash2 size={16} />, onClick: onDeleteElement, disabled: !selectedElement, showWhen: !!selectedElement },
   ]
 
@@ -855,6 +856,7 @@ export function PowerPointToolbar({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="primary" size="icon-xs" title="Add Image">
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               <Image size={16} />
             </Button>
           </DropdownMenuTrigger>
@@ -1430,13 +1432,16 @@ export function PowerPointToolbar({
                     className="relative aspect-square rounded-lg border-2 border-border hover:border-primary transition-colors overflow-hidden bg-muted disabled:opacity-50"
                   >
                     {file.thumbnailLink ? (
-                      <img
+                      <Image
                         src={file.thumbnailLink}
                         alt={file.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        unoptimized
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
+                        {/* eslint-disable-next-line jsx-a11y/alt-text */}
                         <Image size={32} className="text-muted-foreground" />
                       </div>
                     )}

@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
+import Image from 'next/image'
 import { Slide, SlideElement } from './PowerPointViewer'
 import { getShapeDefinition, renderShapeSvg } from './shape-catalog'
 import { Move } from 'lucide-react'
@@ -525,17 +526,18 @@ function ElementRenderer({
   if (element.type === 'image') {
     return (
       <div
-        className={`bg-muted flex items-center justify-center overflow-hidden ${isSelected ? 'border-2 border-primary rounded-sm' : 'border-2 border-muted rounded-sm'}`}
+        className={`bg-muted flex items-center justify-center overflow-hidden relative ${isSelected ? 'border-2 border-primary rounded-sm' : 'border-2 border-muted rounded-sm'}`}
         style={baseStyles}
         onClick={onClick}
         onMouseDown={onMouseDown}
       >
         {element.imageUrl ? (
-          <img
+          <Image
             src={element.imageUrl}
             alt=""
-            className="max-w-full max-h-full object-contain"
-            draggable={false}
+            fill
+            className="object-contain"
+            unoptimized
           />
         ) : (
           <div className="text-muted-foreground text-sm">No image</div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import OlympusTabs, { Tab as OlympusTab } from '../../../components/common/Tabs/Tabs';
 import { DocumentViewer } from '../../../components/MiddlePanel/DocumentViewer/DocumentViewer';
 import { EmailComposer } from '../../../components/MiddlePanel/EmailViewer/EmailComposer';
@@ -22,6 +23,9 @@ import { CalendarEvent } from '../../../../backend/api/calendar/calendar';
 import { Panel, DragState, UserInfo } from '../types';
 import { AiConversationTabPane } from '../../../components/RightPanel/AiConversationTabPane';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
+import { Typography } from '../../../components/ui/typography';
+import { Kbd, KbdGroup } from '../../../components/ui/kbd';
+import BanburyLogo from '../../../assets/images/Logo.png';
 
 interface RenderPanelProps {
   panel: Panel;
