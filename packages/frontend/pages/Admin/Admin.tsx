@@ -2,7 +2,6 @@ import {
   Users, 
   Activity, 
   RefreshCw,
-  BarChart3,
   BarChart,
   Eye,
   MessageSquare,
@@ -291,6 +290,11 @@ export default function Admin() {
         
         if (activeTab === 'analytics-filetypes' && !fileTypeLoading) {
           loadFileTypeAnalytics(30)
+        }
+        
+        // Load scopes analytics when users tab is active (for Google integrations display)
+        if (activeTab === 'users' && !scopesLoading && !scopesAnalytics) {
+          loadScopesAnalytics()
         }
   }, [activeTab])
 
@@ -667,6 +671,7 @@ export default function Admin() {
               users={users}
               convertToEasternTime={convertToEasternTime}
               formatBytes={formatBytes}
+              scopesAnalytics={scopesAnalytics}
             />
           )}
 

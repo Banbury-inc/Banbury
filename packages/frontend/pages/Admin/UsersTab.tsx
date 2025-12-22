@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Users, Settings2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Button } from '../../components/ui/button'
@@ -10,6 +10,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip'
+import { GmailIcon, GoogleDriveIcon, GoogleCalendarIcon } from '../../components/icons'
+import { 
+  buildUserGoogleIntegrationsMap, 
+  getGoogleIntegrationsForUser,
+  GoogleScopesAnalyticsData 
+} from './handlers/google-integrations'
 
 interface User {
   _id: string
@@ -34,10 +41,25 @@ interface User {
   preferredAuthMethod?: string
 }
 
+interface GoogleScopesAnalytics {
+  summary: {
+    total_google_users: number
+    users_with_scopes: number
+    unique_scopes: number
+    most_common_scope: string
+    average_scopes_per_user: number
+  }
+  scope_stats: Array<{scope: string, count: number, percentage: number}>
+  category_stats: Array<{category: string, count: number}>
+  distribution_stats: Array<{scope_count: number, user_count: number}>
+  users_with_scopes: Array<{user_id: string, username: string, email: string, scopes: string[], scope_count: number}>
+}
+
 interface UsersTabProps {
   users: User[]
   convertToEasternTime: (timestamp: string) => string
   formatBytes: (bytes: number, decimals?: number) => string
+  scopesAnalytics: GoogleScopesAnalytics | null
 }
 
 interface ColumnConfig {
@@ -49,6 +71,7 @@ interface ColumnConfig {
 const COLUMNS: ColumnConfig[] = [
   { key: 'user', label: 'User', defaultVisible: true },
   { key: 'email', label: 'Email', defaultVisible: true },
+  { key: 'integrations', label: 'Google', defaultVisible: true },
   { key: 'plan', label: 'Plan', defaultVisible: true },
   { key: 'files', label: 'Files', defaultVisible: true },
   { key: 'storage', label: 'Storage', defaultVisible: true },
@@ -63,7 +86,13 @@ const COLUMNS: ColumnConfig[] = [
 
 const STORAGE_KEY = 'usersTab-visibleColumns'
 
-export function UsersTab({ users, convertToEasternTime, formatBytes }: UsersTabProps) {
+export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnalytics }: UsersTabProps) {
+  // Build a lookup map from scopes analytics for quick access
+  const integrationsMap = useMemo(
+    () => buildUserGoogleIntegrationsMap(scopesAnalytics),
+    [scopesAnalytics]
+  )
+
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(() => {
     const stored = localStorage.getItem(STORAGE_KEY)
     const defaultColumns = new Set(COLUMNS.filter(col => col.defaultVisible).map(col => col.key))
@@ -148,6 +177,9 @@ export function UsersTab({ users, convertToEasternTime, formatBytes }: UsersTabP
                   {isColumnVisible('email') && (
                     <th className="text-left py-2 px-2 text-zinc-300 font-medium text-sm">Email</th>
                   )}
+                  {isColumnVisible('integrations') && (
+                    <th className="text-center py-2 px-2 text-zinc-300 font-medium text-xs">Google</th>
+                  )}
                   {isColumnVisible('plan') && (
                     <th className="text-center py-2 px-1 text-zinc-300 font-medium text-xs">Plan</th>
                   )}
@@ -200,6 +232,61 @@ export function UsersTab({ users, convertToEasternTime, formatBytes }: UsersTabP
                     )}
                     {isColumnVisible('email') && (
                       <td className="py-2 px-2 text-zinc-300 text-sm truncate">{user.email}</td>
+                    )}
+                    {isColumnVisible('integrations') && (
+                      <td className="py-2 px-2 text-center">
+                        {(() => {
+                          const flags = getGoogleIntegrationsForUser(
+                            integrationsMap,
+                            user._id,
+                            user.email,
+                            user.username
+                          )
+                          
+                          if (!flags) {
+                            return (
+                              <span className="text-zinc-500 text-xs">—</span>
+                            )
+                          }
+                          
+                          const tooltipContent = `${flags.scopeCount} scope(s): ${flags.scopes.slice(0, 3).map(s => s.split('/').pop()).join(', ')}${flags.scopes.length > 3 ? '...' : ''}`
+                          
+                          return (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center justify-center gap-1">
+                                    <div className={`rounded p-0.5 ${flags.hasGmail ? 'opacity-100' : 'opacity-25 grayscale'}`}>
+                                      <GmailIcon size={14} />
+                                    </div>
+                                    <div className={`rounded p-0.5 ${flags.hasDrive ? 'opacity-100' : 'opacity-25 grayscale'}`}>
+                                      <GoogleDriveIcon size={14} />
+                                    </div>
+                                    <div className={`rounded p-0.5 ${flags.hasCalendar ? 'opacity-100' : 'opacity-25 grayscale'}`}>
+                                      <GoogleCalendarIcon size={14} />
+                                    </div>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs">
+                                  <div className="text-xs">
+                                    <div className="font-medium mb-1">Google Services</div>
+                                    <div className={flags.hasGmail ? 'text-green-400' : 'text-zinc-400'}>
+                                      Gmail: {flags.hasGmail ? 'Connected' : 'Not connected'}
+                                    </div>
+                                    <div className={flags.hasDrive ? 'text-green-400' : 'text-zinc-400'}>
+                                      Drive: {flags.hasDrive ? 'Connected' : 'Not connected'}
+                                    </div>
+                                    <div className={flags.hasCalendar ? 'text-green-400' : 'text-zinc-400'}>
+                                      Calendar: {flags.hasCalendar ? 'Connected' : 'Not connected'}
+                                    </div>
+                                    <div className="mt-1 text-zinc-500 text-[10px]">{tooltipContent}</div>
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )
+                        })()}
+                      </td>
                     )}
                     {isColumnVisible('plan') && (
                       <td className="py-2 px-1 text-center">
