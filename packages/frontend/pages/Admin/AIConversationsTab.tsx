@@ -87,7 +87,7 @@ export function AIConversationsTab({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80">
+          <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm sm:w-80">
             <div className="space-y-4">
               <div>
                 <h3 className="text-foreground font-semibold mb-1">Filter Conversations</h3>
@@ -144,7 +144,7 @@ export function AIConversationsTab({
 
       <Card className="bg-card border-border">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle className="text-foreground">AI Conversations</CardTitle>
               <CardDescription className="text-muted-foreground">
@@ -214,15 +214,15 @@ export function AIConversationsTab({
                                   <div className="text-muted-foreground">Loading conversation details...</div>
                                 </div>
                               ) : conversationDetails ? (
-                                <div className="p-6">
-                                  <div className="flex justify-between items-start mb-4">
+                                <div className="p-4 sm:p-6">
+                                  <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start mb-4">
                                     <div>
                                       <h3 className="text-foreground font-semibold text-lg mb-2">
                                         {conversationDetails.title || 'Untitled Conversation'}
                                       </h3>
-                                      <div className="text-muted-foreground text-sm">
-                                        <span className="mr-4">User: {conversationDetails.username}</span>
-                                        <span className="mr-4">Messages: {conversationDetails.messages?.length || 0}</span>
+                                      <div className="text-muted-foreground text-sm flex flex-col gap-1 sm:flex-row sm:gap-4">
+                                        <span>User: {conversationDetails.username}</span>
+                                        <span>Messages: {conversationDetails.messages?.length || 0}</span>
                                         <span>Created: {conversationDetails.created_at ? convertToEasternTime(conversationDetails.created_at) : 'Unknown'}</span>
                                       </div>
                                     </div>

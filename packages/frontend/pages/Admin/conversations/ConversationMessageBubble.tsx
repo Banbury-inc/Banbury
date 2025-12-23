@@ -16,7 +16,7 @@ export function ConversationMessageBubble({
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div 
-        className={`max-w-[80%] rounded-lg p-4 ${
+        className={`max-w-[85%] sm:max-w-[80%] rounded-lg p-3 sm:p-4 ${
           isUser 
             ? 'bg-primary text-primary-foreground' 
             : 'bg-muted border border-border'

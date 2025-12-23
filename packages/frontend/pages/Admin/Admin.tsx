@@ -5,7 +5,10 @@ import {
   BarChart,
   Eye,
   MessageSquare,
-  FileType
+  FileType,
+  Menu,
+  ArrowLeft,
+  FolderOpen
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
@@ -13,9 +16,11 @@ import { useState, useEffect } from 'react'
 import { NavSidebar } from '../../components/nav-sidebar'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../components/ui/sheet'
 import { ApiService } from '../../../backend/api/apiService'
 import { UsersTab } from './UsersTab'
 import { AnalyticsTab } from './AnalyticsTab'
+import { handleTabSelect } from './handlers/admin-mobile-nav'
 
 // Utility function to convert UTC timestamp to Eastern time
 const convertToEasternTime = (timestamp: string): string => {
@@ -226,6 +231,7 @@ export default function Admin() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [users, setUsers] = useState<User[]>([])
   const [systemStats, setSystemStats] = useState<SystemStats>({
     totalUsers: 0,
@@ -595,9 +601,11 @@ export default function Admin() {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-background">
-        <NavSidebar />
-        <div className="flex-1 ml-16 flex items-center justify-center">
+      <div className="flex min-h-dvh bg-background">
+        <div className="hidden md:block">
+          <NavSidebar />
+        </div>
+        <div className="flex-1 md:ml-16 flex items-center justify-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-foreground"></div>
         </div>
       </div>
@@ -605,11 +613,69 @@ export default function Admin() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      <NavSidebar />
-      <div className="flex-1 ml-16 flex">
-        {/* Sidebar */}
-        <div className="w-64 bg-card border-r border-zinc-300 dark:border-white/[0.06] p-4">
+    <div className="flex min-h-dvh bg-background">
+      <div className="hidden md:block">
+        <NavSidebar />
+      </div>
+      <div className="flex-1 md:ml-16 flex flex-col md:flex-row">
+        {/* Mobile Header */}
+        <div className="md:hidden sticky top-0 z-30 bg-card border-b border-zinc-300 dark:border-white/[0.06] px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="border-zinc-300 dark:border-white/[0.06]">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[280px] sm:w-[300px]">
+                <SheetHeader>
+                  <SheetTitle className="text-foreground">Admin Panel</SheetTitle>
+                </SheetHeader>
+                <nav className="space-y-2 mt-6">
+                  <button
+                    onClick={() => {
+                      router.push('/workspaces')
+                      setMobileSheetOpen(false)
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors text-muted-foreground hover:text-foreground hover:bg-accent dark:hover:bg-accent"
+                  >
+                    <FolderOpen className="h-4 w-4" />
+                    Back to Workspaces
+                  </button>
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => handleTabSelect(tab.id, setActiveTab, () => setMobileSheetOpen(false))}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                          activeTab === tab.id
+                            ? 'bg-accent dark:bg-accent text-foreground'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-accent dark:hover:bg-accent'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {tab.label}
+                      </button>
+                    )
+                  })}
+                </nav>
+              </SheetContent>
+            </Sheet>
+            <h2 className="text-foreground text-lg font-semibold">Admin</h2>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => router.push('/workspaces')}
+            className="border-zinc-300 dark:border-white/[0.06]"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block w-64 bg-card border-r border-zinc-300 dark:border-white/[0.06] p-4">
           <h2 className="text-foreground text-lg font-semibold mb-6">Admin Panel</h2>
           <nav className="space-y-2">
             {tabs.map((tab) => {
@@ -633,10 +699,10 @@ export default function Admin() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
                 <h1 className="text-2xl font-bold text-foreground">System Overview</h1>
                 <Button onClick={loadAdminData} variant="outline" className="border-zinc-300 dark:border-white/[0.06]">
                   <RefreshCw className="h-4 w-4 mr-2" />

@@ -131,25 +131,25 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
   }
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
         <h1 className="text-2xl font-bold text-foreground">User Management</h1>
       </div>
       
       <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
         <CardHeader>
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start">
             <div>
               <CardTitle className="text-foreground">All Users</CardTitle>
               <CardDescription className="text-muted-foreground">Manage user accounts and view file statistics</CardDescription>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="ml-auto border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent">
+                <Button variant="outline" size="sm" className="sm:ml-auto border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent">
                   <Settings2 className="h-4 w-4 mr-2" />
                   Columns
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] max-w-sm sm:w-56">
                 <DropdownMenuLabel className="text-muted-foreground">Toggle Columns</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {COLUMNS.map((column) => (
@@ -166,7 +166,109 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto border border-zinc-300 dark:border-white/[0.06] rounded-lg">
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {users.map((user) => {
+              const flags = getGoogleIntegrationsForUser(
+                integrationsMap,
+                user._id,
+                user.email,
+                user.username
+              )
+              return (
+                <Card key={user._id} className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center flex-shrink-0">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-foreground font-medium text-sm truncate">
+                            {user.first_name} {user.last_name}
+                          </div>
+                          <div className="text-muted-foreground text-xs truncate">@{user.username}</div>
+                          {user.email && (
+                            <div className="text-muted-foreground text-xs truncate mt-0.5">{user.email}</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          user.subscription === 'pro' 
+                            ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300' 
+                            : 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
+                        }`}>
+                          {user.subscription === 'pro' ? 'Pro' : 'Free'}
+                        </span>
+                        {flags && (
+                          <div className="flex items-center justify-center gap-0.5">
+                            <div className={`rounded p-0.5 ${flags.hasGmail ? 'opacity-100' : 'opacity-25 grayscale'}`}>
+                              <GmailIcon size={12} />
+                            </div>
+                            <div className={`rounded p-0.5 ${flags.hasDrive ? 'opacity-100' : 'opacity-25 grayscale'}`}>
+                              <GoogleDriveIcon size={12} />
+                            </div>
+                            <div className={`rounded p-0.5 ${flags.hasCalendar ? 'opacity-100' : 'opacity-25 grayscale'}`}>
+                              <GoogleCalendarIcon size={12} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-zinc-200 dark:border-white/[0.04]">
+                      <div>
+                        <div className="text-muted-foreground text-xs">Files</div>
+                        <div className="text-foreground font-medium text-sm">{user.totalFiles?.toLocaleString() || 0}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground text-xs">Storage</div>
+                        <div className="text-foreground font-medium text-sm">{user.totalFileSize ? formatBytes(user.totalFileSize) : '0 B'}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground text-xs">AI Messages</div>
+                        <div className="text-foreground font-medium text-sm">{user.aiMessageCount?.toLocaleString() || 0}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground text-xs">Logins</div>
+                        <div className="text-foreground font-medium text-sm">{user.loginCount?.toLocaleString() || 0}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground text-xs">Workspace Visits</div>
+                        <div className="text-foreground font-medium text-sm">{user.workspaceVisitCount?.toLocaleString() || 0}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground text-xs">Last Login</div>
+                        <div className="text-foreground text-xs">{user.lastLoginDate ? convertToEasternTime(user.lastLoginDate) : 'Never'}</div>
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t border-zinc-200 dark:border-white/[0.04]">
+                      <div className="flex items-center justify-between">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          user.auth_method === 'google_oauth' 
+                            ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' 
+                            : 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
+                        }`}>
+                          {user.auth_method === 'google_oauth' ? 'Google' : 'Email'}
+                        </span>
+                        <span className="text-muted-foreground text-xs">
+                          Created: {user.created_at ? convertToEasternTime(user.created_at) : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+            {users.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No users found.
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto border border-zinc-300 dark:border-white/[0.06] rounded-lg">
             <table className="w-full min-w-full">
               <thead>
                 <tr className="border-b border-zinc-300 dark:border-white/[0.06]">

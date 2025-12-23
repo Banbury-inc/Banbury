@@ -432,7 +432,7 @@ export function AnalyticsTab({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
         <h1 className="text-2xl font-bold text-foreground">{getPageTitle()}</h1>
         <div className="flex gap-2">
           <select 
@@ -488,7 +488,7 @@ export function AnalyticsTab({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-96 bg-card border-zinc-300 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
+              <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-card border-zinc-300 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-foreground font-semibold mb-1">Filter Analytics Data</h3>
@@ -841,7 +841,7 @@ export function AnalyticsTab({
 
       <Card className="bg-card border-zinc-300 dark:border-white/[0.06] mb-4">
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
             <div>
               <CardTitle className="text-foreground">Visitors Over Time</CardTitle>
               <CardDescription className="text-muted-foreground">Daily visitor trends for the selected period</CardDescription>
@@ -850,7 +850,7 @@ export function AnalyticsTab({
               onClick={() => loadVisitorData(30)} 
               variant="outline" 
               size="sm"
-              className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+              className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent sm:self-start"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -1640,7 +1640,7 @@ export function AnalyticsTab({
 
       <Card className="bg-card border-zinc-300 dark:border-white/[0.06] mb-4">
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
             <div>
               <CardTitle className="text-foreground">User Logins Over Time</CardTitle>
               <CardDescription className="text-muted-foreground">Daily login trends for the selected period</CardDescription>
@@ -1649,7 +1649,7 @@ export function AnalyticsTab({
               onClick={() => loadLoginData(30)} 
               variant="outline" 
               size="sm"
-              className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+              className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent sm:self-start"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -1910,7 +1910,7 @@ export function AnalyticsTab({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-96 bg-card border-zinc-300 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
+              <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-card border-zinc-300 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-foreground font-semibold mb-1">Filter Visitors</h3>
@@ -2040,7 +2040,7 @@ export function AnalyticsTab({
 
           <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle className="text-foreground">Recent Visitors</CardTitle>
                   <CardDescription className="text-muted-foreground">
@@ -2089,8 +2089,86 @@ export function AnalyticsTab({
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
             </div>
           ) : visitorData.length > 0 ? (
-            <div className="overflow-x-auto border border-zinc-700 rounded-lg">
-              <table className="w-full min-w-full">
+            <>
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                {(() => {
+                  const filteredVisitors = getFilteredVisitors()
+                  const totalPages = getTotalPages({ totalItems: filteredVisitors.length, pageSize: visitorPageSize })
+                  const currentPage = clampPage({ page: visitorPage, totalPages })
+                  const paged = getPageSlice({ items: filteredVisitors, page: currentPage, pageSize: visitorPageSize })
+                  return paged
+                })().map((visitor) => (
+                  <Card key={visitor._id} className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-foreground font-medium text-sm truncate" title={visitor.page_title || visitor.path || 'Unknown'}>
+                            {visitor.page_title || (visitor.path ? visitor.path.split('?')[0] : 'Unknown')}
+                          </div>
+                          {visitor.path && visitor.path !== visitor.page_title && (
+                            <div className="text-muted-foreground text-xs font-mono truncate mt-0.5" title={visitor.path}>
+                              {visitor.path}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          {visitor.referrer_source && (
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              visitor.referrer_source === 'twitter' ? 'bg-blue-900/50 text-blue-300' :
+                              visitor.referrer_source === 'facebook' ? 'bg-blue-800/50 text-blue-200' :
+                              visitor.referrer_source === 'google' ? 'bg-green-900/50 text-green-300' :
+                              visitor.referrer_source === 'linkedin' ? 'bg-purple-900/50 text-purple-300' :
+                              'bg-muted/50 text-muted-foreground'
+                            }`}>
+                              {visitor.referrer_source}
+                            </span>
+                          )}
+                          {visitor.content_type && (
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              visitor.content_type === 'landing_page' ? 'bg-green-900/50 text-green-300' :
+                              visitor.content_type === 'dashboard' ? 'bg-blue-900/50 text-blue-300' :
+                              visitor.content_type === 'auth_page' ? 'bg-yellow-900/50 text-yellow-300' :
+                              visitor.content_type === 'features_page' ? 'bg-purple-900/50 text-purple-300' :
+                              visitor.content_type.startsWith('documentation -') ? 'bg-cyan-900/50 text-cyan-300' :
+                              'bg-muted/50 text-muted-foreground'
+                            }`}>
+                              {visitor.content_type.replace('_', ' ')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-200 dark:border-white/[0.04]">
+                        <div>
+                          <div className="text-muted-foreground text-xs">IP Address</div>
+                          <div className="text-foreground font-mono text-xs truncate">{visitor.ip_address}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground text-xs">Location</div>
+                          <div className="text-foreground text-xs">{visitor.city}</div>
+                          <div className="text-muted-foreground text-xs">{visitor.region}, {visitor.country}</div>
+                        </div>
+                        {visitor.campaign_id && (
+                          <div className="col-span-2">
+                            <div className="text-muted-foreground text-xs">Campaign</div>
+                            <div className="text-foreground font-mono text-xs truncate" title={visitor.campaign_id}>
+                              {visitor.campaign_id.length > 30 ? `${visitor.campaign_id.substring(0, 30)}...` : visitor.campaign_id}
+                            </div>
+                          </div>
+                        )}
+                        <div className="col-span-2">
+                          <div className="text-muted-foreground text-xs">Time</div>
+                          <div className="text-foreground text-xs">{convertToEasternTime(visitor.time)}</div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto border border-zinc-700 rounded-lg">
+                <table className="w-full min-w-full">
                 <thead>
                   <tr className="border-b border-zinc-700">
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">IP Address</th>
@@ -2180,6 +2258,7 @@ export function AnalyticsTab({
                 </tbody>
               </table>
             </div>
+            </>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               No visitor data available
@@ -2230,7 +2309,7 @@ export function AnalyticsTab({
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-96 bg-card border-zinc-300 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
+                  <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-card border-zinc-300 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
                     <div className="space-y-4">
                       <div>
                         <h3 className="text-foreground font-semibold mb-1">Filter by User</h3>
