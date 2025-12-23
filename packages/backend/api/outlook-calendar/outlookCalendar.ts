@@ -68,7 +68,7 @@ export default class OutlookCalendar {
     if (typeof params?.singleEvents !== 'undefined') query.singleEvents = String(params.singleEvents)
     if (params?.orderBy) query.orderBy = params.orderBy
 
-    const url = new URL(`${ApiService.baseURL}/authentication/outlook/events/`)
+    const url = new URL(`${ApiService.baseURL}/authentication/outlook/calendar/events/`)
     Object.entries(query).forEach(([k, v]) => url.searchParams.append(k, v))
 
     const resp = await axios.get<ListEventsResponse>(url.toString(), { headers: this.withAuthHeaders() })
@@ -81,7 +81,7 @@ export default class OutlookCalendar {
   static async getEvent(eventId: string, calendarId?: string): Promise<CalendarEvent> {
     const params = calendarId ? `?calendarId=${encodeURIComponent(calendarId)}` : ''
     const resp = await axios.get<CalendarEvent>(
-      `${ApiService.baseURL}/authentication/outlook/events/${encodeURIComponent(eventId)}/${params}`,
+      `${ApiService.baseURL}/authentication/outlook/calendar/events/${encodeURIComponent(eventId)}/${params}`,
       { headers: this.withAuthHeaders() }
     )
     return resp.data
@@ -92,7 +92,7 @@ export default class OutlookCalendar {
    */
   static async createEvent(event: Partial<CalendarEvent>, calendarId?: string): Promise<CalendarEvent> {
     const resp = await axios.post<CalendarEvent>(
-      `${ApiService.baseURL}/authentication/outlook/events/`,
+      `${ApiService.baseURL}/authentication/outlook/calendar/events/`,
       { calendarId, event },
       { headers: { 'Content-Type': 'application/json', ...this.withAuthHeaders() } }
     )
@@ -104,7 +104,7 @@ export default class OutlookCalendar {
    */
   static async updateEvent(eventId: string, event: Partial<CalendarEvent>, calendarId?: string): Promise<CalendarEvent> {
     const resp = await axios.put<CalendarEvent>(
-      `${ApiService.baseURL}/authentication/outlook/events/${encodeURIComponent(eventId)}/`,
+      `${ApiService.baseURL}/authentication/outlook/calendar/events/${encodeURIComponent(eventId)}/`,
       { calendarId, event },
       { headers: { 'Content-Type': 'application/json', ...this.withAuthHeaders() } }
     )
@@ -117,7 +117,7 @@ export default class OutlookCalendar {
   static async deleteEvent(eventId: string, calendarId?: string): Promise<void> {
     const params = calendarId ? `?calendarId=${encodeURIComponent(calendarId)}` : ''
     await axios.delete(
-      `${ApiService.baseURL}/authentication/outlook/events/${encodeURIComponent(eventId)}/${params}`,
+      `${ApiService.baseURL}/authentication/outlook/calendar/events/${encodeURIComponent(eventId)}/${params}`,
       { headers: this.withAuthHeaders() }
     )
   }

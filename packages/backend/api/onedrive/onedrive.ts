@@ -34,27 +34,71 @@ export default class OneDrive {
   /**
    * List files from OneDrive root
    */
-  static async listRootFiles(pageSize: number = 100): Promise<OneDriveFileListResponse> {
+  static async listRootFiles(pageSize: number = 100, skipToken?: string): Promise<OneDriveFileListResponse> {
     const url = new URL(`${ApiService.baseURL}/authentication/onedrive/root/children/`)
-    url.searchParams.append('pageSize', String(pageSize))
+    url.searchParams.append('top', String(pageSize))
+    if (skipToken) {
+      url.searchParams.append('skipToken', skipToken)
+    }
 
-    const resp = await axios.get<OneDriveFileListResponse>(url.toString(), {
+    const resp = await axios.get<any>(url.toString(), {
       headers: this.withAuthHeaders()
     })
-    return resp.data
+    
+    // Transform backend response format to frontend expected format
+    // Backend returns: { items: OneDriveFile[], nextSkipToken?: string }
+    // Frontend expects: { value?: OneDriveFile[], '@odata.nextLink'?: string }
+    const transformedResponse: OneDriveFileListResponse = {
+      value: resp.data.items || [],
+      '@odata.nextLink': resp.data.nextSkipToken ? undefined : resp.data['@odata.nextLink']
+    }
+    
+    // If we have nextSkipToken, construct a nextLink URL for pagination
+    if (resp.data.nextSkipToken) {
+      const nextUrl = new URL(`${ApiService.baseURL}/authentication/onedrive/root/children/`)
+      nextUrl.searchParams.append('top', String(pageSize))
+      nextUrl.searchParams.append('skipToken', resp.data.nextSkipToken)
+      transformedResponse['@odata.nextLink'] = nextUrl.toString()
+    }
+    
+    return transformedResponse
   }
 
   /**
    * List children of a specific folder
    */
-  static async listFolderChildren(folderId: string, pageSize: number = 100): Promise<OneDriveFileListResponse> {
+  static async listFolderChildren(folderId: string, pageSize: number = 100, skipToken?: string): Promise<OneDriveFileListResponse> {
     const url = new URL(`${ApiService.baseURL}/authentication/onedrive/items/${encodeURIComponent(folderId)}/children/`)
-    url.searchParams.append('pageSize', String(pageSize))
+    url.searchParams.append('top', String(pageSize))
+    if (skipToken) {
+      url.searchParams.append('skipToken', skipToken)
+    }
 
-    const resp = await axios.get<OneDriveFileListResponse>(url.toString(), {
+    const resp = await axios.get<any>(url.toString(), {
       headers: this.withAuthHeaders()
     })
-    return resp.data
+    
+    // Transform backend response format to frontend expected format
+    const transformedResponse: OneDriveFileListResponse = {
+      value: resp.data.items || [],
+      '@odata.nextLink': resp.data.nextSkipToken ? undefined : resp.data['@odata.nextLink']
+    }
+    
+    if (resp.data.nextSkipToken) {
+      const nextUrl = new URL(`${ApiService.baseURL}/authentication/onedrive/items/${encodeURIComponent(folderId)}/children/`)
+      nextUrl.searchParams.append('top', String(pageSize))
+      nextUrl.searchParams.append('skipToken', resp.data.nextSkipToken)
+      transformedResponse['@odata.nextLink'] = nextUrl.toString()
+    }
+    
+    return transformedResponse
+  }
+
+  /**
+   * List files in a folder (alias for listFolderChildren)
+   */
+  static async listFilesInFolder(folderId: string, pageSize: number = 100): Promise<OneDriveFileListResponse> {
+    return this.listFolderChildren(folderId, pageSize)
   }
 
   /**
@@ -62,12 +106,16 @@ export default class OneDrive {
    */
   static async listRecentFiles(pageSize: number = 20): Promise<OneDriveFileListResponse> {
     const url = new URL(`${ApiService.baseURL}/authentication/onedrive/recent/`)
-    url.searchParams.append('pageSize', String(pageSize))
+    url.searchParams.append('top', String(pageSize))
 
-    const resp = await axios.get<OneDriveFileListResponse>(url.toString(), {
+    const resp = await axios.get<any>(url.toString(), {
       headers: this.withAuthHeaders()
     })
-    return resp.data
+    
+    // Transform backend response format
+    return {
+      value: resp.data.items || []
+    }
   }
 
   /**
@@ -76,12 +124,46 @@ export default class OneDrive {
   static async searchFiles(query: string, pageSize: number = 20): Promise<OneDriveFileListResponse> {
     const url = new URL(`${ApiService.baseURL}/authentication/onedrive/search/`)
     url.searchParams.append('q', query)
-    url.searchParams.append('pageSize', String(pageSize))
+    url.searchParams.append('top', String(pageSize))
 
-    const resp = await axios.get<OneDriveFileListResponse>(url.toString(), {
+    const resp = await axios.get<any>(url.toString(), {
       headers: this.withAuthHeaders()
     })
-    return resp.data
+    
+    // Transform backend response format
+    return {
+      value: resp.data.items || []
+    }
+  }
+
+  /**
+   * Get favorites
+   */
+  static async getFavorites(): Promise<OneDriveFileListResponse> {
+    const resp = await axios.get<any>(
+      `${ApiService.baseURL}/authentication/onedrive/favorites/`,
+      { headers: this.withAuthHeaders() }
+    )
+    
+    // Transform backend response format
+    return {
+      value: resp.data.items || []
+    }
+  }
+
+  /**
+   * Get trash/deleted items
+   */
+  static async getTrash(): Promise<OneDriveFileListResponse> {
+    const resp = await axios.get<any>(
+      `${ApiService.baseURL}/authentication/onedrive/trash/`,
+      { headers: this.withAuthHeaders() }
+    )
+    
+    // Transform backend response format
+    return {
+      value: resp.data.items || []
+    }
   }
 
   /**

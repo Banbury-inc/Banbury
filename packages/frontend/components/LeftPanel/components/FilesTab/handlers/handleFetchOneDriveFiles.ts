@@ -1,4 +1,4 @@
-import { OneDriveFile } from "../../../../../../backend/api/onedrive/onedrive"
+import { OneDriveFile, OneDriveFileListResponse } from "../../../../../../backend/api/onedrive/onedrive"
 import OneDrive from "../../../../../../backend/api/onedrive/onedrive"
 
 export type OneDriveViewMode = 'root' | 'recent' | 'favorites' | 'search' | 'trash'
@@ -44,7 +44,7 @@ export async function handleFetchOneDriveFiles({
       throw new Error('No authentication token found')
     }
 
-    let response: { value?: OneDriveFile[]; nextLink?: string }
+    let response: OneDriveFileListResponse
 
     switch (viewMode) {
       case 'recent':
@@ -78,9 +78,9 @@ export async function handleFetchOneDriveFiles({
       }
 
       // Extract skipToken from nextLink if present
-      if (response.nextLink) {
-        const url = new URL(response.nextLink)
-        const nextSkipToken = url.searchParams.get('$skiptoken') || response.nextLink
+      if (response['@odata.nextLink']) {
+        const url = new URL(response['@odata.nextLink'])
+        const nextSkipToken = url.searchParams.get('skipToken') || response['@odata.nextLink']
         setNextLink(nextSkipToken)
       } else {
         setNextLink(undefined)

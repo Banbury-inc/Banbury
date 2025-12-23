@@ -61,7 +61,7 @@ export const msCalendarListEventsTool = tool(
     if (input.query) params.set('q', input.query)
 
     const queryString = params.toString()
-    const listUrl = `${apiBase}/authentication/outlook/events/${queryString ? `?${queryString}` : ''}`
+    const listUrl = `${apiBase}/authentication/outlook/calendar/events/${queryString ? `?${queryString}` : ''}`
     const resp = await fetch(listUrl, { method: 'GET', headers: { Authorization: `Bearer ${token}` } })
     if (!resp.ok) {
       return JSON.stringify({ success: false, error: `HTTP ${resp.status}: ${resp.statusText}` })
@@ -100,7 +100,7 @@ export const msCalendarGetEventTool = tool(
     if (input.calendarId) params.set('calendarId', input.calendarId)
 
     const queryString = params.toString()
-    const url = `${apiBase}/authentication/outlook/events/${encodeURIComponent(input.eventId)}/${queryString ? `?${queryString}` : ''}`
+    const url = `${apiBase}/authentication/outlook/calendar/events/${encodeURIComponent(input.eventId)}/${queryString ? `?${queryString}` : ''}`
     const resp = await fetch(url, { method: 'GET', headers: { Authorization: `Bearer ${token}` } })
     if (!resp.ok) {
       return JSON.stringify({ success: false, error: `HTTP ${resp.status}: ${resp.statusText}` })
@@ -131,7 +131,7 @@ export const msCalendarCreateEventTool = tool(
       throw new Error("Missing auth token in server context")
     }
 
-    const url = `${apiBase}/authentication/outlook/events/`
+    const url = `${apiBase}/authentication/outlook/calendar/events/`
     const resp = await fetch(url, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -166,7 +166,7 @@ export const msCalendarUpdateEventTool = tool(
       throw new Error("Missing auth token in server context")
     }
 
-    const url = `${apiBase}/authentication/outlook/events/${encodeURIComponent(input.eventId)}/`
+    const url = `${apiBase}/authentication/outlook/calendar/events/${encodeURIComponent(input.eventId)}/`
     const resp = await fetch(url, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -206,7 +206,7 @@ export const msCalendarDeleteEventTool = tool(
     if (input.calendarId) params.set('calendarId', input.calendarId)
 
     const queryString = params.toString()
-    const url = `${apiBase}/authentication/outlook/events/${encodeURIComponent(input.eventId)}/${queryString ? `?${queryString}` : ''}`
+    const url = `${apiBase}/authentication/outlook/calendar/events/${encodeURIComponent(input.eventId)}/${queryString ? `?${queryString}` : ''}`
     const resp = await fetch(url, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
     if (!resp.ok) {
       return JSON.stringify({ success: false, error: `HTTP ${resp.status}: ${resp.statusText}` })

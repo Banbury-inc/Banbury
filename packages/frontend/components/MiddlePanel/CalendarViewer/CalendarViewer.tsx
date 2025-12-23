@@ -13,7 +13,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from '../../ui/dropdown-menu'
-import { loadCalendars } from './handlers/loadCalendars'
+import { loadCalendars } from '../../LeftPanel/components/handlers/loadCalendars'
+import { loadMicrosoftCalendars } from '../../LeftPanel/components/handlers/loadMicrosoftCalendars'
+import { getSelectedProvider } from '../../LeftPanel/components/handlers/calendarProvider'
 import { loadMergedEvents } from './handlers/loadMergedEvents'
 import { 
   getVisibleCalendarIds, 
@@ -114,7 +116,8 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
 
   const fetchCalendars = useCallback(async () => {
     try {
-      const cals = await loadCalendars()
+      const provider = getSelectedProvider()
+      const cals = provider === 'microsoft' ? await loadMicrosoftCalendars() : await loadCalendars()
       setCalendars(cals)
     } catch {
       setCalendars([])
@@ -122,21 +125,12 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
   }, [])
 
   const loadEventsFromCalendars = useCallback(async () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CalendarViewer.tsx:loadEventsFromCalendars:entry',message:'loadEventsFromCalendars called',data:{visibleCalendarIds,calendarsCount:calendars.length,calendarsIds:calendars.map(c=>({id:c.id,primary:c.primary,summary:c.summary}))},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1-H2'})}).catch(()=>{});
-    // #endregion
     // Filter visibleCalendarIds to only include IDs that actually exist in the calendar list
     // This prevents fetching events for phantom IDs like "primary" that don't match any real calendar
     const calendarIdSet = new Set(calendars.map(c => c.id))
     const validCalendarIds = visibleCalendarIds.filter(id => calendarIdSet.has(id))
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CalendarViewer.tsx:loadEventsFromCalendars:filter',message:'After filtering validCalendarIds',data:{calendarIdSetArray:Array.from(calendarIdSet),validCalendarIds,removedIds:visibleCalendarIds.filter(id=>!calendarIdSet.has(id))},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
-    // #endregion
     
     if (validCalendarIds.length === 0) {
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CalendarViewer.tsx:loadEventsFromCalendars:empty',message:'No valid calendar IDs, clearing events',data:{visibleCalendarIds,calendarsCount:calendars.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
-      // #endregion
       setEvents([])
       return
     }
@@ -150,9 +144,6 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
         singleEvents: true,
         orderBy: 'startTime'
       })
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CalendarViewer.tsx:loadEventsFromCalendars:result',message:'Events loaded from merged',data:{validCalendarIds,eventsCount:merged.length,eventCalendarIds:[...new Set(merged.map(e=>e.calendarId))]},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3-H4'})}).catch(()=>{});
-      // #endregion
       setEvents(merged)
     } finally {
       setLoading(false)
@@ -169,9 +160,6 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
 
   useEffect(() => {
     const unsubscribe = subscribeToVisibilityChanges((ids) => {
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CalendarViewer.tsx:subscribeToVisibilityChanges',message:'Visibility change received',data:{newIds:ids,currentCalendarsCount:calendars.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H5'})}).catch(()=>{});
-      // #endregion
       setVisibleCalendarIds(ids)
     })
     return unsubscribe
