@@ -219,6 +219,8 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
             onUpdateToolPreferences={(prefs) => onUpdateToolPreferences(prefs)}
             onSend={() => handleSend({ composer, onSend: onSend, tabId: assistantTabId })}
             messageBuffer={messageBuffer}
+            inputRef={inputRef}
+            assistantTabId={assistantTabId}
           />
         </ComposerPrimitive.Root>
       </div>
@@ -244,9 +246,11 @@ interface ComposerActionProps {
   onSend: () => void;
   // Fallback message buffer for context calculation when runtime messages aren't available
   messageBuffer?: any[] | null;
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  assistantTabId?: string;
 }
 
-const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, onSend, messageBuffer }) => {
+const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, onSend, messageBuffer, inputRef, assistantTabId }) => {
   const composer = useComposerRuntime();
   const threadRuntime = useThreadRuntime();
   const [hasText, setHasText] = useState(false);
@@ -400,7 +404,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         }
       }
       const text = (finalTranscript || interim).trim();
-      const input = document.querySelector('textarea[aria-label="Message input"]') as HTMLTextAreaElement | null;
+      const input = inputRef.current;
       if (input) {
         input.value = text;
         input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -429,13 +433,78 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
   // Check for text content in the hidden input
   useEffect(() => {
     const checkForText = () => {
-      const input = document.querySelector('textarea[aria-label="Message input"]') as HTMLTextAreaElement;
-      if (input) {
-        const text = input.value;
-        const trimmedText = text.trim();
-        setHasText(trimmedText.length > 0);
-        setDraftText(text);
+      // Use the ref to get the specific input for this tab instance
+      const input = inputRef.current;
+      if (!input) return;
+      
+      let text = '';
+      
+      // Always check the ProseMirror editor directly as the source of truth
+      // Find the ProseMirror editor that belongs to this composer instance
+      // Strategy 1: Find ProseMirror near the input (they're in the same composer)
+      let proseMirror: Element | null = null;
+      
+      // Try multiple strategies to find the ProseMirror element
+      // Strategy 1: Look for ProseMirror in the same parent container as the input
+      const inputParent = input.parentElement;
+      if (inputParent) {
+        // The input is inside ComposerPrimitive.Root, ProseMirror is in a sibling div
+        const composerRoot = inputParent.closest('[class*="flex-col"]');
+        if (composerRoot) {
+          proseMirror = composerRoot.querySelector('.ProseMirror');
+        }
       }
+      
+      // Strategy 2: If not found, search from containerRef
+      if (!proseMirror && containerRef.current) {
+        const container = containerRef.current;
+        // Go up to find the composer root, then find ProseMirror
+        const composerRoot = container.closest('[class*="flex-col"]') || container.parentElement;
+        if (composerRoot) {
+          proseMirror = composerRoot.querySelector('.ProseMirror');
+        }
+      }
+      
+      // Strategy 3: Find ProseMirror that's closest to this input (by checking all and finding the one in the same tab)
+      if (!proseMirror) {
+        const allProseMirrors = document.querySelectorAll('.ProseMirror');
+        for (const pm of Array.from(allProseMirrors)) {
+          // Check if this ProseMirror is in the same tab as our input
+          const pmTab = pm.closest('[class*="absolute"]');
+          const inputTab = input.closest('[class*="absolute"]');
+          if (pmTab === inputTab || (pm.closest('.min-h-16') && input.closest('.min-h-16'))) {
+            proseMirror = pm;
+            break;
+          }
+        }
+      }
+      
+      if (proseMirror) {
+        // Get text from ProseMirror element (this is the actual editor content)
+        const paragraphs = Array.from(proseMirror.querySelectorAll('p'));
+        if (paragraphs.length > 0) {
+          text = paragraphs.map((p) => (p.textContent || '').trimEnd()).join('\n\n');
+        } else {
+          text = proseMirror.textContent || '';
+        }
+        
+        // Sync textarea if it's out of sync
+        if (input.value !== text) {
+          input.value = text;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      } else {
+        // Fallback to textarea value if we can't find ProseMirror
+        text = input.value;
+      }
+      
+      const trimmedText = text.trim();
+      const newHasText = trimmedText.length > 0;
+      
+      // Always update state to ensure button state refreshes, especially when tab becomes active
+      setHasText(newHasText);
+      setDraftText(text);
     };
 
     // Listen for custom tiptap update events
@@ -447,18 +516,127 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
 
     // Check immediately
     checkForText();
+    
+    // Also check after a short delay to ensure DOM is ready
+    setTimeout(checkForText, 100);
+    setTimeout(checkForText, 300);
 
-    // Set up an interval to check for changes
-    const interval = setInterval(checkForText, 50); // Check more frequently
+    // Set up an interval to check for changes more frequently
+    const interval = setInterval(checkForText, 100);
 
     // Listen for tiptap update events
     document.addEventListener('tiptap-update', handleTiptapUpdate as EventListener);
 
+    let lastActiveTabId: string | undefined = undefined;
+    
+    // Listen for when this tab becomes active
+    const handleVisibilityChange = () => {
+      // Check if this is the active tab
+      const activeTabId = (window as any).__banburyActiveAiTabId;
+      if (assistantTabId && activeTabId === assistantTabId) {
+        // This tab just became active, check text immediately with multiple attempts
+        setTimeout(checkForText, 0);
+        setTimeout(checkForText, 50);
+        setTimeout(checkForText, 150);
+      }
+    };
+
+    // Check on window focus (user might have switched tabs)
+    window.addEventListener('focus', handleVisibilityChange);
+    
+    // Poll for active tab changes and check immediately when tab becomes active
+    const activeTabCheckInterval = setInterval(() => {
+      const activeTabId = (window as any).__banburyActiveAiTabId;
+      if (assistantTabId && activeTabId === assistantTabId) {
+        // Check if this is a new activation (tab just became active)
+        if (lastActiveTabId !== activeTabId) {
+          // Tab just became active, check immediately
+          checkForText();
+          setTimeout(checkForText, 50);
+          setTimeout(checkForText, 150);
+        } else {
+          // Tab is already active, just check normally
+          checkForText();
+        }
+        lastActiveTabId = activeTabId;
+      } else {
+        lastActiveTabId = undefined;
+      }
+    }, 100); // Check more frequently
+
+    // Use IntersectionObserver to detect when the container becomes visible (tab becomes active)
+    let intersectionObserver: IntersectionObserver | null = null;
+    const setupIntersectionObserver = () => {
+      if (containerRef.current && !intersectionObserver) {
+        intersectionObserver = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                // Tab became visible, check text immediately with multiple attempts
+                checkForText();
+                setTimeout(checkForText, 50);
+                setTimeout(checkForText, 150);
+              }
+            });
+          },
+          { threshold: 0.1 }
+        );
+        intersectionObserver.observe(containerRef.current);
+      }
+    };
+
+    // Set up observer immediately if container is available
+    setupIntersectionObserver();
+
+    // Also set up observer after a short delay in case container isn't ready yet
+    const observerTimeout = setTimeout(setupIntersectionObserver, 100);
+
+    // Use MutationObserver to detect when the tab container's 'hidden' class is removed
+    let mutationObserver: MutationObserver | null = null;
+    const setupMutationObserver = () => {
+      // Find the tab container (parent with 'absolute' class that might have 'hidden' class)
+      const tabContainer = containerRef.current?.closest('[class*="absolute"]');
+      if (tabContainer && !mutationObserver) {
+        mutationObserver = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+              const target = mutation.target as HTMLElement;
+              // Check if 'hidden' class was removed (tab became visible)
+              if (!target.classList.contains('hidden') && target.offsetParent !== null) {
+                // Tab became visible, check text immediately
+                setTimeout(checkForText, 0);
+                setTimeout(checkForText, 50);
+                setTimeout(checkForText, 150);
+              }
+            }
+          });
+        });
+        mutationObserver.observe(tabContainer, {
+          attributes: true,
+          attributeFilter: ['class'],
+          subtree: false
+        });
+      }
+    };
+
+    // Set up mutation observer after a delay to ensure DOM is ready
+    const mutationObserverTimeout = setTimeout(setupMutationObserver, 200);
+
     return () => {
       clearInterval(interval);
+      clearInterval(activeTabCheckInterval);
+      clearTimeout(observerTimeout);
+      clearTimeout(mutationObserverTimeout);
+      window.removeEventListener('focus', handleVisibilityChange);
       document.removeEventListener('tiptap-update', handleTiptapUpdate as EventListener);
+      if (intersectionObserver && containerRef.current) {
+        intersectionObserver.unobserve(containerRef.current);
+      }
+      if (mutationObserver) {
+        mutationObserver.disconnect();
+      }
     };
-  }, []);
+  }, [inputRef, assistantTabId]);
 
   // Monitor container size and hide buttons when space is limited
   useEffect(() => {
