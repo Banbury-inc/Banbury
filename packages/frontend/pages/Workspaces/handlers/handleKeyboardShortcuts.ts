@@ -52,14 +52,8 @@ export function createKeyboardShortcutHandler(callbacks: KeyboardShortcutCallbac
       // Prevent default to override browser behavior
       event.preventDefault()
       event.stopPropagation()
-      // Get the active AI tab ID if available
-      const activeTabId = (window as any).__banburyActiveAiTabId
-      // Dispatch the clear-conversation event to create a new agent
-      // Note: If activeTabId is not set, dispatch without tabId - the thread component
-      // will check if it's the active tab and handle accordingly
-      window.dispatchEvent(new CustomEvent('clear-conversation', { 
-        detail: activeTabId ? { tabId: activeTabId } : {} 
-      }))
+      // Dispatch the create-new-ai-tab event to create a new tab
+      window.dispatchEvent(new CustomEvent('create-new-ai-tab'))
       return
     }
 

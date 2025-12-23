@@ -673,6 +673,22 @@ const Workspaces = (): React.ReactNode => {
     }
   }, []);
 
+  // Listen for create-new-ai-tab events to create a new tab in the active assistant panel
+  useEffect(() => {
+    const handleCreateNewTab = () => {
+      // Use the active assistant panel ID, or fallback to the default
+      const targetPanelId = activeAssistantPanelId || 'assistant-main-panel'
+      handleAssistantTabAdd(targetPanelId)
+      // Also activate the panel to ensure it's visible
+      setActiveAssistantPanelId(targetPanelId)
+    }
+
+    window.addEventListener('create-new-ai-tab', handleCreateNewTab)
+    return () => {
+      window.removeEventListener('create-new-ai-tab', handleCreateNewTab)
+    }
+  }, [activeAssistantPanelId, handleAssistantTabAdd]);
+
   const handleCreateWordDocumentWrapper = async (documentName: string) => {
     await handleCreateWordDocument(userInfo, setUploading, toast, triggerSidebarRefresh, documentName);
   };

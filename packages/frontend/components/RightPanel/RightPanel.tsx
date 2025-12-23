@@ -124,6 +124,18 @@ export function RightPanel({
     onClearConversation(activeAiTabId)
   }, [onClearConversation, activeAiTabId])
 
+  // Listen for create-new-ai-tab events to create a new tab
+  useEffect(() => {
+    const handleCreateNewTab = () => {
+      handleTabAdd()
+    }
+
+    window.addEventListener('create-new-ai-tab', handleCreateNewTab)
+    return () => {
+      window.removeEventListener('create-new-ai-tab', handleCreateNewTab)
+    }
+  }, [handleTabAdd])
+
   // Listen for title candidate events and update tab labels when still default
   useEffect(() => {
     const handleTitleCandidate = (event: Event) => {
