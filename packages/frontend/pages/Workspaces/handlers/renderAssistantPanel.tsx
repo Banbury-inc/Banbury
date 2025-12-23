@@ -10,6 +10,7 @@ import {
 } from '../../../components/ui/dropdown-menu'
 import { Panel, WorkspaceTab, DragState, UserInfo, PanelGroup, AiTab } from '../types'
 import { FileSystemItem } from '../../../utils/fileTreeUtils'
+import { getAllTabs } from './panelUtils'
 
 interface Conversation {
   _id: string
@@ -36,6 +37,7 @@ interface RenderAssistantPanelProps {
   onClearConversation: (tabId: string) => void
   onEmailSelect: (email: any) => void
   setAssistantDockLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
+  assistantDockLayout: PanelGroup
   onSplitPreview?: (direction: 'horizontal' | 'vertical' | null, position: { x: number; y: number }) => void
   splitPreviewBoundsSelector?: string
 }
@@ -59,6 +61,7 @@ export function renderAssistantPanel({
   onClearConversation,
   onEmailSelect,
   setAssistantDockLayout,
+  assistantDockLayout,
   onSplitPreview,
   splitPreviewBoundsSelector,
 }: RenderAssistantPanelProps) {
@@ -69,6 +72,11 @@ export function renderAssistantPanel({
   const aiTabs = panel.tabs.filter((t): t is AiTab => t.type === 'ai')
   // Also handle non-AI tabs that might be dropped here (file/email/calendar)
   const allTabs = panel.tabs
+  
+  // Get all tabs across all panels in the assistant dock layout
+  const allTabsAcrossPanels = getAllTabs(assistantDockLayout)
+  // Allow closing if there are tabs in other panels OR more than one tab in current panel
+  const canCloseTab = allTabsAcrossPanels.length > 1 || allTabs.length > 1
 
   const getTabLabel = (tab: WorkspaceTab): string => {
     if (tab.type === 'ai') return tab.label
@@ -94,7 +102,7 @@ export function renderAssistantPanel({
             tabs={allTabs.map<OlympusTab>((t) => ({ id: t.id, label: getTabLabel(t) }))}
             activeTab={activeTabId}
             onTabChange={(tabId) => handleTabChange(panel.id, tabId)}
-            onTabClose={allTabs.length > 1 ? (tabId) => handleCloseTab(tabId, panel.id) : undefined}
+            onTabClose={canCloseTab ? (tabId) => handleCloseTab(tabId, panel.id) : undefined}
             onTabAdd={() => handleTabAdd(panel.id)}
             onReorder={(sourceIndex, destinationIndex) => handleTabReorder(panel.id, sourceIndex, destinationIndex)}
             dragContext={{ panelId: panel.id }}

@@ -605,6 +605,7 @@ const Workspaces = (): React.ReactNode => {
       },
       onEmailSelect: handleEmailSelect,
       setAssistantDockLayout,
+      assistantDockLayout,
       onSplitPreview: (direction, position) => {
         setDragState((prev) => ({
           ...prev,
@@ -614,7 +615,7 @@ const Workspaces = (): React.ReactNode => {
       },
       splitPreviewBoundsSelector: '[data-assistant-dock]',
     });
-  }, [activeAssistantPanelId, dragState, userInfo, selectedFile, selectedEmail, conversations, isLoadingConversations, handleAssistantTabChange, handleAssistantTabClose, handleAssistantTabAdd, handleAssistantTabReorder, loadConversationCallback, deleteConversationCallback, handleEmailSelect, setAssistantDockLayout]);
+  }, [activeAssistantPanelId, dragState, userInfo, selectedFile, selectedEmail, conversations, isLoadingConversations, handleAssistantTabChange, handleAssistantTabClose, handleAssistantTabAdd, handleAssistantTabReorder, loadConversationCallback, deleteConversationCallback, handleEmailSelect, setAssistantDockLayout, assistantDockLayout]);
 
   // Render assistant panel group (recursive for nested splits)
   const renderAssistantPanelGroup = useCallback((group: PanelGroup): React.ReactNode => {
