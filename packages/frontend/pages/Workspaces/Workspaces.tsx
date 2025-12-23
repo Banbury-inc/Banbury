@@ -770,18 +770,39 @@ const Workspaces = (): React.ReactNode => {
     }
     
     const checkAuthAndFetchUser = async () => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Workspaces.tsx:773',message:'checkAuthAndFetchUser entry',data:{hasToken:!!(typeof window!=='undefined'&&window.localStorage&&localStorage.getItem('authToken'))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       try {
         setLoading(true);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Workspaces.tsx:775',message:'setLoading(true) called',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Workspaces.tsx:777',message:'before validateToken call',data:{tokenExists:!!(typeof window!=='undefined'&&window.localStorage&&localStorage.getItem('authToken'))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         // Validate token first using ApiService
         const isValidToken = await ApiService.validateToken();
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Workspaces.tsx:778',message:'after validateToken call',data:{isValidToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
 
         if (!isValidToken) {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Workspaces.tsx:780',message:'token invalid, redirecting to login',data:{isValidToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
           // Token is invalid, redirect to login
           router.push('/login');
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Workspaces.tsx:782',message:'router.push(/login) called, about to return',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
           return;
         }
 
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Workspaces.tsx:786',message:'token valid, setting user info',data:{isValidToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         // Token is valid, create user info from stored data
         const username = localStorage.getItem('authUsername') || localStorage.getItem('username');
         const basicUserInfo: UserInfo = {
@@ -798,9 +819,15 @@ const Workspaces = (): React.ReactNode => {
           triggerSidebarRefresh();
         }, 500);
       } catch (err) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Workspaces.tsx:801',message:'catch block entered',data:{error:err instanceof Error?err.message:String(err)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         // Still try to show basic info if we have some stored data
         const username = localStorage.getItem('authUsername') || localStorage.getItem('username');
         if (username) {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Workspaces.tsx:804',message:'catch: username found, setting user info',data:{username},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+          // #endregion
           const basicUserInfo: UserInfo = {
             username: username,
             email: localStorage.getItem('userEmail') || username,
@@ -815,11 +842,20 @@ const Workspaces = (): React.ReactNode => {
             triggerSidebarRefresh();
           }, 500);
         } else {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Workspaces.tsx:818',message:'catch: no username, redirecting to login',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+          // #endregion
           router.push('/login');
           return;
         }
       } finally {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Workspaces.tsx:822',message:'finally block entered, calling setLoading(false)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         setLoading(false);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Workspaces.tsx:823',message:'setLoading(false) called',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
       }
     };
 

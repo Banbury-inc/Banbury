@@ -394,7 +394,7 @@ export function LocalFilesView({
       setLoadingShared(true)
       ApiService.Files.getSharedS3Files()
         .then((response) => {
-          if (response.result === 'success' && response.files) {
+          if (response.success && response.files) {
             // Convert backend file info to FileSystemItem format
             const sharedItems: FileSystemItem[] = response.files.map((file: any) => ({
               id: file.file_id || file._id,
@@ -402,9 +402,13 @@ export function LocalFilesView({
               type: 'file' as const,
               file_id: file.file_id || file._id,
               file_type: file.file_type,
-              file_path: file.file_path,
+              file_path: file.file_path || `shared/${file.file_name}`, // Fallback path if not provided
               source: 's3' as const,
-              owner: file.username,
+              owner: file.owner_username || file.username, // Use owner_username from backend
+              s3_url: file.s3_url, // Critical: include s3_url for file access
+              size: file.file_size,
+              modified: file.last_modified ? new Date(file.last_modified) : undefined,
+              created: file.created_at ? new Date(file.created_at) : undefined,
             }))
             setSharedFiles(sharedItems)
           } else {
