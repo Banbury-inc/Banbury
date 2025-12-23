@@ -9,7 +9,7 @@ import {
   FolderOpen,
   Trash2,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import BanburyLogo from "../../../../assets/images/Logo.png";
 
@@ -78,6 +78,12 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   const { toast } = useToast();
   const [attachedFiles, setAttachedFiles] = useState<FileSystemItem[]>([]);
   const [attachedEmails, setAttachedEmails] = useState<any[]>([]);
+  const lastAutoAttachedFileIdRef = useRef<string | null>(null);
+  
+  // Reset the auto-attach ref when the tab changes
+  useEffect(() => {
+    lastAutoAttachedFileIdRef.current = null;
+  }, [assistantTabId]);
   const [drawioModalOpen, setDrawioModalOpen] = useState(false);
   const [selectedDrawioFile, setSelectedDrawioFile] = useState<FileSystemItem | null>(null);
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true);
@@ -148,7 +154,16 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   // (removed custom loaded conversation state)
 
   const handleFileAttach = (file: FileSystemItem) => {
-    setAttachedFiles(prev => [...prev, file]);
+    setAttachedFiles(prev => {
+      // Check if the file is already attached
+      const isAlreadyAttached = prev.some(f => f.file_id === file.file_id);
+      
+      if (isAlreadyAttached) {
+        return prev;
+      }
+      
+      return [...prev, file];
+    });
   };
 
   const handleFileRemove = (fileId: string) => {
@@ -491,33 +506,41 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   // Auto-attach the selected file from Workspaces
   useEffect(() => {
     if (selectedFile && selectedFile.file_id) {
-      // Check if the file is already attached
-      const isAlreadyAttached = attachedFiles.some(f => f.file_id === selectedFile.file_id);
-      
-      if (!isAlreadyAttached) {
-        // Only attach if it's a viewable file type (aligned with Workspaces)
-        const isViewableFile = (fileName: string): boolean => {
-          const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'];
-          const documentExtensions = ['.docx', '.doc', '.pdf'];
-          const spreadsheetExtensions = ['.csv', '.xlsx', '.xls'];
-          const presentationExtensions = ['.pptx', '.ppt'];
-          const canvasExtensions = ['.tldraw'];
-          const codeExtensions = [
-            '.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala',
-            '.html', '.htm', '.css', '.scss', '.sass', '.less', '.xml', '.json', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf', '.sh', '.bash', '.zsh', '.fish',
-            '.sql', '.r', '.m', '.mat', '.ipynb', '.jl', '.dart', '.lua', '.pl', '.pm', '.tcl', '.vbs', '.ps1', '.bat', '.cmd', '.coffee', '.litcoffee', '.iced',
-            '.md', '.markdown', '.tex', '.rtex', '.bib', '.vue', '.svelte'
-          ];
-          const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
-          return [...imageExtensions, ...documentExtensions, ...spreadsheetExtensions, ...presentationExtensions, ...canvasExtensions, ...codeExtensions].includes(extension);
-        };
-        
-        if (isViewableFile(selectedFile.name)) {
-          setAttachedFiles(prev => [selectedFile, ...prev]);
-        }
+      // Skip if we've already auto-attached this exact file for this tab
+      // (but allow attaching if selectedFile changes to a different file)
+      if (lastAutoAttachedFileIdRef.current === selectedFile.file_id) {
+        return;
       }
+      
+      // Only attach if it's a viewable file type (aligned with Workspaces)
+      const isViewableFile = (fileName: string): boolean => {
+        const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'];
+        const documentExtensions = ['.docx', '.doc', '.pdf'];
+        const spreadsheetExtensions = ['.csv', '.xlsx', '.xls'];
+        const presentationExtensions = ['.pptx', '.ppt'];
+        const canvasExtensions = ['.tldraw'];
+        const codeExtensions = [
+          '.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala',
+          '.html', '.htm', '.css', '.scss', '.sass', '.less', '.xml', '.json', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf', '.sh', '.bash', '.zsh', '.fish',
+          '.sql', '.r', '.m', '.mat', '.ipynb', '.jl', '.dart', '.lua', '.pl', '.pm', '.tcl', '.vbs', '.ps1', '.bat', '.cmd', '.coffee', '.litcoffee', '.iced',
+          '.md', '.markdown', '.tex', '.rtex', '.bib', '.vue', '.svelte'
+        ];
+        const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+        return [...imageExtensions, ...documentExtensions, ...spreadsheetExtensions, ...presentationExtensions, ...canvasExtensions, ...codeExtensions].includes(extension);
+      };
+      
+      if (isViewableFile(selectedFile.name)) {
+        // Use handleFileAttach which includes duplicate checking (checks attachedFiles state)
+        // This provides a second layer of protection against duplicates
+        handleFileAttach(selectedFile);
+        // Track that we've auto-attached this file for this tab
+        lastAutoAttachedFileIdRef.current = selectedFile.file_id;
+      }
+    } else {
+      // Reset ref when selectedFile is cleared
+      lastAutoAttachedFileIdRef.current = null;
     }
-  }, [selectedFile, attachedFiles]);
+  }, [selectedFile]);
 
   // Auto-attach the selected email from Email tab
   useEffect(() => {
