@@ -1,10 +1,11 @@
-import { useState, Fragment } from 'react'
+import { useState, Fragment, useMemo } from 'react'
 import { RefreshCw, Filter } from 'lucide-react'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Label } from '../../components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
-import { ApiService } from '../../../backend/api/apiService'
+import { ConversationMessageBubble } from './conversations/ConversationMessageBubble'
+import { createAIConversationsHandlers } from './handlers/ai-conversations-handlers'
 
 interface ConversationData {
   _id: string
@@ -14,8 +15,8 @@ interface ConversationData {
   created_at: string
   updated_at: string
   last_message_at?: string
-  messages: any[]
-  metadata?: any
+  messages: unknown[]
+  metadata?: unknown
 }
 
 interface ConversationsAnalytics {
@@ -53,33 +54,19 @@ export function AIConversationsTab({
   convertToEasternTime
 }: AIConversationsTabProps) {
   const [expandedConversation, setExpandedConversation] = useState<string | null>(null)
-  const [conversationDetails, setConversationDetails] = useState<any>(null)
+  const [conversationDetails, setConversationDetails] = useState<{
+    title?: string
+    username?: string
+    messages?: Array<{ role: string; content?: unknown; text?: string; timestamp?: string }>
+    created_at?: string
+  } | null>(null)
   const [conversationDetailsLoading, setConversationDetailsLoading] = useState(false)
 
-  const loadConversationDetails = async (conversationId: string) => {
-    setConversationDetailsLoading(true)
-    try {
-      const response = await ApiService.getConversationAdmin(conversationId) as any
-      if (response.success) {
-        setConversationDetails(response.conversation)
-        setExpandedConversation(conversationId)
-      }
-    } catch (error) {
-      console.error('Failed to load conversation details:', error)
-      setConversationDetails(null)
-    } finally {
-      setConversationDetailsLoading(false)
-    }
-  }
-
-  const handleConversationRowClick = (conversationId: string) => {
-    if (expandedConversation === conversationId) {
-      setExpandedConversation(null)
-      setConversationDetails(null)
-    } else {
-      loadConversationDetails(conversationId)
-    }
-  }
+  const handlers = useMemo(() => createAIConversationsHandlers({
+    setConversationDetailsLoading,
+    setConversationDetails,
+    setExpandedConversation
+  }), [])
 
   return (
     <div className="space-y-6">
@@ -89,12 +76,12 @@ export function AIConversationsTab({
           <PopoverTrigger asChild>
             <Button 
               variant="outline" 
-              className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+              className="border-border hover:bg-accent"
             >
               <Filter className="h-4 w-4 mr-2" />
               Filter Conversations
               {conversationUserFilter && (
-                <span className="ml-2 bg-blue-500 text-white px-2 py-0.5 rounded text-xs">
+                <span className="ml-2 bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs">
                   1
                 </span>
               )}
@@ -114,7 +101,7 @@ export function AIConversationsTab({
                   id="user-filter"
                   value={conversationUserFilter}
                   onChange={(e) => setConversationUserFilter(e.target.value)}
-                  className="w-full bg-card text-foreground border border-zinc-300 dark:border-white/[0.06] rounded px-3 py-2 focus:border-blue-500 focus:outline-none"
+                  className="w-full bg-card text-foreground border border-border rounded px-3 py-2 focus:border-primary focus:outline-none"
                 >
                   <option value="">All Users</option>
                   {usersLoading ? (
@@ -132,7 +119,7 @@ export function AIConversationsTab({
                 <Button 
                   onClick={() => loadConversationsAnalytics(30, conversationUserFilter)}
                   variant="outline"
-                  className="flex-1 border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                  className="flex-1 border-border hover:bg-accent"
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Apply
@@ -144,7 +131,7 @@ export function AIConversationsTab({
                       loadConversationsAnalytics(30, '')
                     }}
                     variant="outline"
-                    className="flex-1 border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                    className="flex-1 border-border hover:bg-accent"
                   >
                     Clear
                   </Button>
@@ -155,7 +142,7 @@ export function AIConversationsTab({
         </Popover>
       </div>
 
-      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+      <Card className="bg-card border-border">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -169,7 +156,7 @@ export function AIConversationsTab({
               onClick={() => loadConversationsAnalytics(30, conversationUserFilter)} 
               variant="outline" 
               size="sm"
-              className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+              className="border-border hover:bg-accent"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -181,10 +168,10 @@ export function AIConversationsTab({
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
             </div>
           ) : conversationsAnalytics?.conversations && conversationsAnalytics.conversations.length > 0 ? (
-            <div className="overflow-x-auto border border-zinc-300 dark:border-white/[0.06] rounded-lg">
+            <div className="overflow-x-auto border border-border rounded-lg">
               <table className="w-full min-w-full">
                 <thead>
-                  <tr className="border-b border-zinc-300 dark:border-white/[0.06]">
+                  <tr className="border-b border-border">
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">User</th>
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">Conversation Title</th>
                     <th className="text-center py-3 px-4 text-muted-foreground font-medium">Messages</th>
@@ -196,8 +183,8 @@ export function AIConversationsTab({
                   {conversationsAnalytics.conversations.slice(0, 20).map((conversation) => (
                     <Fragment key={conversation._id}>
                       <tr 
-                        onClick={() => handleConversationRowClick(conversation._id)}
-                        className="border-b border-zinc-200 dark:border-white/[0.04] hover:bg-accent/50 dark:hover:bg-accent/50 transition-colors cursor-pointer"
+                        onClick={() => handlers.handleConversationRowClick(conversation._id, expandedConversation)}
+                        className="border-b border-border/50 hover:bg-accent/50 transition-colors cursor-pointer"
                       >
                         <td className="py-3 px-4">
                           <span className="text-foreground font-medium">{conversation.username}</span>
@@ -220,7 +207,7 @@ export function AIConversationsTab({
                       {expandedConversation === conversation._id && (
                         <tr>
                           <td colSpan={5} className="p-0">
-                            <div className="bg-accent/30 border-l-4 border-blue-500">
+                            <div className="bg-accent/30 border-l-4 border-primary">
                               {conversationDetailsLoading ? (
                                 <div className="p-6 text-center">
                                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto mb-4"></div>
@@ -236,52 +223,28 @@ export function AIConversationsTab({
                                       <div className="text-muted-foreground text-sm">
                                         <span className="mr-4">User: {conversationDetails.username}</span>
                                         <span className="mr-4">Messages: {conversationDetails.messages?.length || 0}</span>
-                                        <span>Created: {convertToEasternTime(conversationDetails.created_at)}</span>
+                                        <span>Created: {conversationDetails.created_at ? convertToEasternTime(conversationDetails.created_at) : 'Unknown'}</span>
                                       </div>
                                     </div>
                                     <Button
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        setExpandedConversation(null)
-                                        setConversationDetails(null)
+                                        handlers.closeExpandedPanel()
                                       }}
                                       variant="outline"
                                       size="sm"
-                                      className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                                      className="border-border hover:bg-accent"
                                     >
                                       Close
                                     </Button>
                                   </div>
                                   <div className="space-y-4 max-h-96 overflow-y-auto">
-                                    {conversationDetails.messages?.map((message: any, index: number) => (
-                                      <div key={index} className="bg-muted/50 rounded-lg p-4">
-                                        <div className="flex justify-between items-start mb-2">
-                                          <span className="text-blue-600 dark:text-blue-400 font-medium text-sm">
-                                            {message.role === 'user' ? 'User' : 'AI Assistant'}
-                                          </span>
-                                          <span className="text-muted-foreground text-xs">
-                                            {message.timestamp ? convertToEasternTime(message.timestamp) : 'Unknown time'}
-                                          </span>
-                                        </div>
-                                        <div className="text-foreground text-sm whitespace-pre-wrap">
-                                          {(() => {
-                                            const content = message.content || message.text || 'No content'
-                                            if (typeof content === 'string') {
-                                              return content
-                                            } else if (typeof content === 'object' && content !== null) {
-                                              if (content.text) {
-                                                return content.text
-                                              } else if (content.type && content.text) {
-                                                return content.text
-                                              } else {
-                                                return JSON.stringify(content)
-                                              }
-                                            } else {
-                                              return String(content)
-                                            }
-                                          })()}
-                                        </div>
-                                      </div>
+                                    {conversationDetails.messages?.map((message, index) => (
+                                      <ConversationMessageBubble
+                                        key={index}
+                                        message={message}
+                                        convertToEasternTime={convertToEasternTime}
+                                      />
                                     ))}
                                   </div>
                                 </div>
@@ -314,4 +277,3 @@ export function AIConversationsTab({
     </div>
   )
 }
-
