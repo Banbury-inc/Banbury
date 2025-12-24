@@ -112,8 +112,8 @@ export const renderPanel = ({
     >
       {/* Panel Tab Bar (Olympus Tabs) */}
       {panel.tabs.length > 0 && (
-        <div className="bg-background flex items-stretch">
-          <div className="flex items-stretch flex-1">
+        <div className="bg-background flex items-stretch border-b border-zinc-200 dark:border-white/[0.06] pt-[12px] md:pt-0">
+          <div className="flex items-stretch flex-1 overflow-x-auto min-w-0">
             <OlympusTabs
               tabs={panel.tabs.map<OlympusTab>((t) => {
                 let label = 'Unknown';

@@ -7,10 +7,13 @@ import { MiddlePanel } from "../../components/MiddlePanel/MiddlePanel";
 import { NavSidebar } from "../../components/nav-sidebar";
 import { FileSystemItem } from '../../utils/fileTreeUtils';
 import 'allotment/dist/style.css';
-import { X, FolderOpen, Trash2, Menu } from 'lucide-react';
+import { X, FolderOpen, Trash2, Menu, Files, MessageSquare, Brain, LogOut, UserStarIcon } from 'lucide-react';
 import BanburyLogo from '../../assets/images/Logo.png';
 import { SplitZones } from '../../components/common/SplitZones';
 import { useRouter } from 'next/router';
+import { useIsMobile } from '../../hooks/use-mobile';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '../../components/ui/sheet';
+import { Button } from '../../components/ui/button';
 import { dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { attachClosestEdge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
 import { TiptapAIProvider } from '../../contexts/TiptapAIContext';
@@ -70,6 +73,7 @@ import { isDefaultAiTabLabel, deriveAiTabTitleFromText } from '../../components/
 const Workspaces = (): React.ReactNode => {
   const router = useRouter();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<FileSystemItem | null>(null);
@@ -88,6 +92,10 @@ const Workspaces = (): React.ReactNode => {
   const [isAssistantPanelCollapsed, setIsAssistantPanelCollapsed] = useState(false);
   const [isMac, setIsMac] = useState(false);
   const [fileSearchOpen, setFileSearchOpen] = useState(false);
+  // Mobile state management
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [mobileFileSidebarOpen, setMobileFileSidebarOpen] = useState(false);
+  const [mobileAssistantOpen, setMobileAssistantOpen] = useState(false);
   const [keybinds, setKeybinds] = useState<KeybindsState>(getStoredKeybinds);
   const [calendarJumpDate, setCalendarJumpDate] = useState<Date | null>(null);
   const [calendarSelectedEvent, setCalendarSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -504,36 +512,45 @@ const Workspaces = (): React.ReactNode => {
     const toggleSidebarAltKey = getActiveKey(keybinds.toggleFileSidebarAlt)
 
     return (
-      <div className="h-full flex flex-col items-center justify-center gap-4">
+      <div className="h-full flex flex-col items-center justify-center gap-4 px-4">
         <Image 
           src={BanburyLogo} 
           alt="Banbury" 
           className="opacity-20 dark:opacity-15"
-          width={80}
-          height={80}
+          width={isMobile ? 60 : 80}
+          height={isMobile ? 60 : 80}
           priority
         />
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-sm text-muted-foreground">Create a new agent</p>
-            {renderKeybind(newAgentKey)}
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-sm text-muted-foreground">Search files</p>
-            {renderKeybind(searchFilesKey)}
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-sm text-muted-foreground">Toggle file sidebar</p>
-            <div className="flex items-center gap-2">
-              {renderKeybind(toggleSidebarKey)}
-              <span className="text-xs text-muted-foreground">or</span>
-              {renderKeybind(toggleSidebarAltKey)}
+        <div className="flex flex-col items-center gap-4 max-w-md w-full">
+          {!isMobile ? (
+            <>
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-sm text-muted-foreground">Create a new agent</p>
+                {renderKeybind(newAgentKey)}
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-sm text-muted-foreground">Search files</p>
+                {renderKeybind(searchFilesKey)}
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-sm text-muted-foreground">Toggle file sidebar</p>
+                <div className="flex items-center gap-2">
+                  {renderKeybind(toggleSidebarKey)}
+                  <span className="text-xs text-muted-foreground">or</span>
+                  {renderKeybind(toggleSidebarAltKey)}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-3 text-center">
+              <p className="text-sm text-muted-foreground mobile-text">Tap the menu buttons above to get started</p>
+              <p className="text-xs text-muted-foreground mobile-text">Use the Files button to browse your workspace</p>
             </div>
-          </div>
+          )}
         </div>
       </div>
     );
-  }, [renderPanelWrapper, isMac, keybinds]);
+  }, [renderPanelWrapper, isMac, keybinds, isMobile]);
 
   // Assistant panel tab handlers
   const handleAssistantTabChange = useCallback((panelId: string, tabId: string) => {
@@ -649,6 +666,41 @@ const Workspaces = (): React.ReactNode => {
       setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0)
     }
   }, []);
+
+  // Mobile drawer management: ensure only one drawer is open at a time
+  // Note: Assistant panel can stay open with other drawers, but nav and file sidebar close others
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    if (mobileNavOpen) {
+      setMobileFileSidebarOpen(false);
+      // Don't close assistant panel when nav opens - user might want both
+    }
+  }, [isMobile, mobileNavOpen]);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    if (mobileFileSidebarOpen) {
+      setMobileNavOpen(false);
+      // Don't close assistant panel when file sidebar opens - user might want both
+    }
+  }, [isMobile, mobileFileSidebarOpen]);
+
+  // On mobile, auto-collapse sidebars by default, but open assistant panel
+  useEffect(() => {
+    if (isMobile) {
+      setIsFileSidebarCollapsed(true);
+      setIsAssistantPanelCollapsed(true);
+      // Open assistant panel by default on mobile
+      setMobileAssistantOpen(true);
+    } else {
+      // Restore desktop state when switching back
+      setIsFileSidebarCollapsed(false);
+      setIsAssistantPanelCollapsed(false);
+      setMobileAssistantOpen(false);
+    }
+  }, [isMobile]);
 
   // Listen for keybind updates
   useEffect(() => {
@@ -1283,25 +1335,280 @@ const Workspaces = (): React.ReactNode => {
             }}
           >
 
-          {/* Navigation Sidebar - Fixed */}
-          <NavSidebar onLogout={handleLogout} />
+          {/* Navigation Sidebar - Fixed (hidden on mobile) */}
+          <div className="hidden md:block">
+            <NavSidebar onLogout={handleLogout} />
+          </div>
+          
+          {/* Mobile Header - Always present on mobile */}
+          {isMobile && (
+            <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background">
+              <div className="px-2 py-1.5 border-b border-zinc-200 dark:border-white/[0.06] flex items-center justify-between w-full touch-target bg-background">
+                <div className="flex items-center gap-1">
+                  {/* Mobile Navigation Drawer */}
+                  <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[32px] min-w-[32px] border-zinc-300 dark:border-white/[0.06] touch-target p-0">
+                        <Menu className="h-3.5 w-3.5" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-[280px] sm:w-[300px] p-0">
+                      <SheetHeader className="px-4 py-3 border-b border-zinc-300 dark:border-white/[0.06]">
+                        <SheetTitle className="text-foreground mobile-text text-base font-semibold">Navigation</SheetTitle>
+                      </SheetHeader>
+                      <div className="flex-1 overflow-auto py-4">
+                        <div className="flex flex-col gap-2 px-4">
+                          {[
+                            { id: 'workspaces', icon: FolderOpen, label: 'Workspaces', path: '/workspaces' },
+                            { id: 'knowledge', icon: Brain, label: 'Knowledge', path: '/knowledge' },
+                            ...(userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com' 
+                              ? [{ id: 'admin', icon: UserStarIcon, label: 'Admin', path: '/admin' }]
+                              : []),
+                          ].map((item) => {
+                            const Icon = item.icon;
+                            const isActive = router.pathname === item.path;
+                            return (
+                              <button
+                                key={item.id}
+                                onClick={() => {
+                                  router.push(item.path);
+                                  setMobileNavOpen(false);
+                                }}
+                                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors touch-target min-h-[44px] ${
+                                  isActive
+                                    ? 'bg-accent dark:bg-accent text-foreground'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-accent dark:hover:bg-accent'
+                                }`}
+                              >
+                                <Icon className="h-5 w-5 flex-shrink-0" strokeWidth={1} />
+                                <span className="mobile-text">{item.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="px-4 pt-4 border-t border-zinc-300 dark:border-white/[0.06]">
+                          <button
+                            onClick={() => {
+                              handleLogout();
+                              setMobileNavOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors text-red-500 dark:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/10 touch-target min-h-[44px]"
+                          >
+                            <LogOut className="h-5 w-5 flex-shrink-0" strokeWidth={1} />
+                            <span className="mobile-text">Logout</span>
+                          </button>
+                        </div>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                  
+                  {/* File Sidebar Toggle */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 min-h-[32px] min-w-[32px] border-zinc-300 dark:border-white/[0.06] touch-target p-0"
+                    onClick={() => setMobileFileSidebarOpen(true)}
+                    title="Files"
+                  >
+                    <Files className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-1">
+                  {/* Assistant Panel Toggle */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 min-h-[32px] min-w-[32px] border-zinc-300 dark:border-white/[0.06] touch-target p-0"
+                    onClick={() => setMobileAssistantOpen(true)}
+                    title="Assistant"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Main Content Area with Resizable Panels */}
-          <div className="flex flex-1 ml-16 flex-col">
+          <div className={`flex flex-1 ${isMobile ? 'pt-[44px]' : 'md:ml-16'} flex-col`}>
+            {/* Mobile File Sidebar Drawer */}
+            {isMobile && (
+              <Sheet open={mobileFileSidebarOpen} onOpenChange={setMobileFileSidebarOpen}>
+                <SheetContent side="left" className="w-[320px] sm:w-[360px] p-0">
+                  <div className="h-full flex flex-col">
+                    <div className="px-4 py-3 border-b border-zinc-300 dark:border-white/[0.06]">
+                      <SheetTitle className="text-foreground mobile-text text-base font-semibold">Files</SheetTitle>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <LeftPanel 
+                        currentView="workspaces"
+                        userInfo={userInfo}
+                        onFileSelect={(file) => {
+                          handleFileSelect(file);
+                          setMobileFileSidebarOpen(false);
+                        }}
+                        selectedFile={selectedFile}
+                        refreshTrigger={refreshTrigger}
+                        onFileDeleted={handleFileDeletedCallback}
+                        onFileRenamed={handleFileRenamedCallback}
+                        onFileMoved={handleFileMovedWrapper}
+                        onFolderCreated={handleFolderCreated}
+                        onFolderRenamed={handleFolderRenamedCallback}
+                        triggerRootFolderCreation={folderCreationTrigger}
+                        onEmailSelect={(email) => {
+                          handleEmailSelect(email);
+                          setMobileFileSidebarOpen(false);
+                        }}
+                        onComposeEmail={handleComposeEmailCallback}
+                        onCreateDocument={handleCreateWordDocumentWrapper}
+                        onCreateSpreadsheet={handleCreateSpreadsheetWrapper}
+                        onCreateNotebook={handleCreateNotebookWrapper}
+                        onCreateDrawio={handleCreateDrawioWrapper}
+                        onCreateTldraw={handleCreateTldrawWrapper}
+                        onCreatePowerpoint={handleCreatePowerpointWrapper}
+                        onGenerateImage={handleGenerateImage}
+                        onCreateFolder={handleCreateFolder}
+                        onEventSelect={(event) => {
+                          handleCalendarEventSelectCallback(event);
+                          setMobileFileSidebarOpen(false);
+                        }}
+                        onOpenCalendar={() => {
+                          openCalendarInTabCallback(activePanelId);
+                          setMobileFileSidebarOpen(false);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            )}
+
+            {/* Mobile Assistant Panel Drawer */}
+            {isMobile && (
+              <Sheet open={mobileAssistantOpen} onOpenChange={setMobileAssistantOpen}>
+                <SheetContent side="right" className="w-full sm:w-[400px] p-0 [&>button]:hidden">
+                  <div className="h-full flex flex-col">
+                    {/* Mobile Toolbar in Assistant Panel */}
+                    <div className="px-2 py-1.5 border-b border-zinc-200 dark:border-white/[0.06] flex items-center justify-between w-full touch-target bg-background">
+                      <div className="flex items-center gap-1">
+                        {/* Mobile Navigation Drawer */}
+                        <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+                          <SheetTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[32px] min-w-[32px] border-zinc-300 dark:border-white/[0.06] touch-target p-0">
+                              <Menu className="h-3.5 w-3.5" />
+                            </Button>
+                          </SheetTrigger>
+                          <SheetContent side="left" className="w-[280px] sm:w-[300px] p-0">
+                            <SheetHeader className="px-4 py-3 border-b border-zinc-300 dark:border-white/[0.06]">
+                              <SheetTitle className="text-foreground mobile-text text-base font-semibold">Navigation</SheetTitle>
+                            </SheetHeader>
+                            <div className="flex-1 overflow-auto py-4">
+                              <div className="flex flex-col gap-2 px-4">
+                                {[
+                                  { id: 'workspaces', icon: FolderOpen, label: 'Workspaces', path: '/workspaces' },
+                                  { id: 'knowledge', icon: Brain, label: 'Knowledge', path: '/knowledge' },
+                                  ...(userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com' 
+                                    ? [{ id: 'admin', icon: UserStarIcon, label: 'Admin', path: '/admin' }]
+                                    : []),
+                                ].map((item) => {
+                                  const Icon = item.icon;
+                                  const isActive = router.pathname === item.path;
+                                  return (
+                                    <button
+                                      key={item.id}
+                                      onClick={() => {
+                                        router.push(item.path);
+                                        setMobileNavOpen(false);
+                                      }}
+                                      className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors touch-target min-h-[44px] ${
+                                        isActive
+                                          ? 'bg-accent dark:bg-accent text-foreground'
+                                          : 'text-muted-foreground hover:text-foreground hover:bg-accent dark:hover:bg-accent'
+                                      }`}
+                                    >
+                                      <Icon className="h-5 w-5 flex-shrink-0" strokeWidth={1} />
+                                      <span className="mobile-text">{item.label}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <div className="px-4 pt-4 border-t border-zinc-300 dark:border-white/[0.06]">
+                                <button
+                                  onClick={() => {
+                                    handleLogout();
+                                    setMobileNavOpen(false);
+                                  }}
+                                  className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors text-red-500 dark:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/10 touch-target min-h-[44px]"
+                                >
+                                  <LogOut className="h-5 w-5 flex-shrink-0" strokeWidth={1} />
+                                  <span className="mobile-text">Logout</span>
+                                </button>
+                              </div>
+                            </div>
+                          </SheetContent>
+                        </Sheet>
+                        
+                        {/* File Sidebar Toggle */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 min-h-[32px] min-w-[32px] border-zinc-300 dark:border-white/[0.06] touch-target p-0"
+                          onClick={() => {
+                            setMobileFileSidebarOpen(true);
+                            setMobileAssistantOpen(false);
+                          }}
+                          title="Files"
+                        >
+                          <Files className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      
+                      <div className="flex items-center gap-1">
+                        {/* Assistant Panel Toggle - Close button */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 min-h-[32px] min-w-[32px] border-zinc-300 dark:border-white/[0.06] touch-target p-0"
+                          onClick={() => setMobileAssistantOpen(false)}
+                          title="Close Assistant"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <div 
+                        data-assistant-dock 
+                        className="h-full relative"
+                      >
+                        {renderAssistantPanelGroup(assistantDockLayout)}
+                      </div>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            )}
+
             {/* Resizable Panels */}
             <div className="flex flex-1">
               <Allotment>
-                {/* File Sidebar Panel */}
-                {!isFileSidebarCollapsed && (
-                  <Allotment.Pane minSize={200} preferredSize={300} maxSize={400} className="relative z-10">
+                {/* File Sidebar Panel - Desktop Only */}
+                {!isMobile && !isFileSidebarCollapsed && (
+                  <Allotment.Pane 
+                    minSize={isMobile ? 150 : 200} 
+                    preferredSize={isMobile ? 250 : 300} 
+                    maxSize={isMobile ? 300 : 400} 
+                    className="relative z-10"
+                  >
                     <div className="h-full flex flex-col relative">
                       {/* Collapse button for file sidebar - positioned on right border */}
                       <button
                         onClick={() => setIsFileSidebarCollapsed(true)}
-                        className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
+                        className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-11 w-11 md:h-6 md:w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
                         title="Collapse file sidebar"
                       >
-                        <Menu className="h-4 w-4" strokeWidth={1} />
+                        <Menu className="h-4 w-4 md:h-4 md:w-4" strokeWidth={1} />
                       </button>
                       {/* File Sidebar Content */}
                       <div className="flex-1 overflow-hidden">
@@ -1337,22 +1644,34 @@ const Workspaces = (): React.ReactNode => {
                 
                 {/* Main Content Panel - Only show when files are open */}
                 {getAllTabs(panelLayout).length > 0 && (
-                  <Allotment.Pane minSize={400} preferredSize={1200}>
+                  <Allotment.Pane minSize={isMobile ? 300 : 400} preferredSize={isMobile ? 800 : 1200}>
                     <MiddlePanel
-                      isFileSidebarCollapsed={isFileSidebarCollapsed}
-                      isAssistantPanelCollapsed={isAssistantPanelCollapsed}
+                      isFileSidebarCollapsed={isMobile ? true : isFileSidebarCollapsed}
+                      isAssistantPanelCollapsed={isMobile ? true : isAssistantPanelCollapsed}
                       panelLayout={panelLayout}
-                      onToggleFileSidebar={() => setIsFileSidebarCollapsed(false)}
-                      onToggleAssistantPanel={() => setIsAssistantPanelCollapsed(false)}
+                      onToggleFileSidebar={() => {
+                        if (isMobile) {
+                          setMobileFileSidebarOpen(true);
+                        } else {
+                          setIsFileSidebarCollapsed(false);
+                        }
+                      }}
+                      onToggleAssistantPanel={() => {
+                        if (isMobile) {
+                          setMobileAssistantOpen(true);
+                        } else {
+                          setIsAssistantPanelCollapsed(false);
+                        }
+                      }}
                       renderPanelGroup={renderPanelGroup}
                       hasFilesOpen={getAllTabs(panelLayout).length > 0}
                     />
                   </Allotment.Pane>
                 )}
                 
-                {/* Assistant Panel - Dock-based with draggable tabs */}
-                {!isAssistantPanelCollapsed && (
-                  <Allotment.Pane minSize={280}>
+                {/* Assistant Panel - Dock-based with draggable tabs - Desktop Only */}
+                {!isMobile && !isAssistantPanelCollapsed && (
+                  <Allotment.Pane minSize={isMobile ? 200 : 280}>
                     <div 
                       data-assistant-dock 
                       className="h-full relative"
@@ -1361,10 +1680,10 @@ const Workspaces = (): React.ReactNode => {
                       {(selectedFile || selectedEmail || getAllTabs(panelLayout).some(tab => tab.type === 'calendar')) && (
                         <button
                           onClick={() => setIsAssistantPanelCollapsed(true)}
-                          className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-6 w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
+                          className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-11 w-11 md:h-6 md:w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
                           title="Collapse assistant panel"
                         >
-                          <Menu className="h-4 w-4" strokeWidth={1} />
+                          <Menu className="h-4 w-4 md:h-4 md:w-4" strokeWidth={1} />
                         </button>
                       )}
                       {renderAssistantPanelGroup(assistantDockLayout)}
@@ -1536,6 +1855,28 @@ const Workspaces = (): React.ReactNode => {
           .burger-button:hover {
             transform: translateY(-50%) scale(1.1);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          }
+          /* Touch-friendly targets - minimum 44x44px on mobile */
+          @media (max-width: 767px) {
+            .touch-target {
+              min-height: 44px;
+              min-width: 44px;
+            }
+            /* Ensure buttons in mobile header are touch-friendly */
+            button[class*="h-11"] {
+              min-height: 44px;
+              min-width: 44px;
+            }
+            /* Improve spacing for mobile */
+            .mobile-spacing {
+              padding: 0.75rem;
+              gap: 0.75rem;
+            }
+            /* Responsive typography */
+            .mobile-text {
+              font-size: 0.875rem;
+              line-height: 1.5;
+            }
           }
         `}</style>
 
