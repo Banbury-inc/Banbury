@@ -1352,7 +1352,7 @@ const Workspaces = (): React.ReactNode => {
                         <Menu className="h-3.5 w-3.5" />
                       </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="w-[280px] sm:w-[300px] p-0">
+                    <SheetContent side="left" className="w-[280px] sm:w-[300px] p-0 mobile-sheet-expand">
                       <SheetHeader className="px-4 py-3 border-b border-zinc-300 dark:border-white/[0.06]">
                         <SheetTitle className="text-foreground mobile-text text-base font-semibold">Navigation</SheetTitle>
                       </SheetHeader>
@@ -1435,7 +1435,7 @@ const Workspaces = (): React.ReactNode => {
             {/* Mobile File Sidebar Drawer */}
             {isMobile && (
               <Sheet open={mobileFileSidebarOpen} onOpenChange={setMobileFileSidebarOpen}>
-                <SheetContent side="left" className="w-[320px] sm:w-[360px] p-0">
+                <SheetContent side="left" className="w-[320px] sm:w-[360px] p-0 mobile-sheet-expand">
                   <div className="h-full flex flex-col">
                     <div className="px-4 py-3 bg-card">
                       <SheetTitle className="text-foreground mobile-text text-base font-semibold">Files</SheetTitle>
@@ -1487,7 +1487,7 @@ const Workspaces = (): React.ReactNode => {
             {/* Mobile Assistant Panel Drawer */}
             {isMobile && (
               <Sheet open={mobileAssistantOpen} onOpenChange={setMobileAssistantOpen}>
-                <SheetContent side="right" className="w-full sm:w-[400px] p-0 [&>button]:hidden">
+                <SheetContent side="right" className="w-full sm:w-[400px] p-0 [&>button]:hidden mobile-sheet-expand-right">
                   <div className="h-full flex flex-col">
                     {/* Mobile Toolbar in Assistant Panel */}
                     <div className="px-2 py-1.5 border-b border-zinc-200 dark:border-white/[0.06] flex items-center justify-between w-full touch-target bg-background">
@@ -1499,7 +1499,7 @@ const Workspaces = (): React.ReactNode => {
                               <Menu className="h-3.5 w-3.5" />
                             </Button>
                           </SheetTrigger>
-                          <SheetContent side="left" className="w-[280px] sm:w-[300px] p-0">
+                          <SheetContent side="left" className="w-[280px] sm:w-[300px] p-0 mobile-sheet-expand">
                             <SheetHeader className="px-4 py-3 border-b border-zinc-300 dark:border-white/[0.06]">
                               <SheetTitle className="text-foreground mobile-text text-base font-semibold">Navigation</SheetTitle>
                             </SheetHeader>
@@ -1858,6 +1858,60 @@ const Workspaces = (): React.ReactNode => {
           }
           /* Touch-friendly targets - minimum 44x44px on mobile */
           @media (max-width: 767px) {
+            /* Mobile Sheet expanding animations - horizontal slide only */
+            .mobile-sheet-expand[data-slot="sheet-content"][data-state="open"] {
+              animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            }
+            .mobile-sheet-expand[data-slot="sheet-content"][data-state="closed"] {
+              animation: slideOutLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            }
+            @keyframes slideInRight {
+              from {
+                transform: translateX(-100%);
+                opacity: 0;
+              }
+              to {
+                transform: translateX(0);
+                opacity: 1;
+              }
+            }
+            @keyframes slideOutLeft {
+              from {
+                transform: translateX(0);
+                opacity: 1;
+              }
+              to {
+                transform: translateX(-100%);
+                opacity: 0;
+              }
+            }
+            /* Right panel (assistant) expanding animation - horizontal slide only */
+            .mobile-sheet-expand-right[data-slot="sheet-content"][data-state="open"] {
+              animation: slideInLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            }
+            .mobile-sheet-expand-right[data-slot="sheet-content"][data-state="closed"] {
+              animation: slideOutRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            }
+            @keyframes slideInLeft {
+              from {
+                transform: translateX(100%);
+                opacity: 0;
+              }
+              to {
+                transform: translateX(0);
+                opacity: 1;
+              }
+            }
+            @keyframes slideOutRight {
+              from {
+                transform: translateX(0);
+                opacity: 1;
+              }
+              to {
+                transform: translateX(100%);
+                opacity: 0;
+              }
+            }
             .touch-target {
               min-height: 44px;
               min-width: 44px;
