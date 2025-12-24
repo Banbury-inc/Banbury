@@ -16,7 +16,7 @@ import {
 } from "./ui/dropdown-menu"
 import { SettingsModal } from "./modals/SettingsModal"
 import { ApiService } from "../../backend/api/apiService"
-import BanburyLogo from "../assets/images/Logo.png"
+import BanburyLogo from "../assets/images/New_Logo.png"
 import { Typography } from "./ui/typography"
 
 interface NavSidebarProps {

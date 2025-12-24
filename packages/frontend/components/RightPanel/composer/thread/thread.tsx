@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import BanburyLogo from "../../../../assets/images/Logo.png";
+import BanburyLogo from "../../../../assets/images/New_Logo.png";
 
 import { DocumentAITool } from "../components/DocumentAITool";
 import { DocxAITool } from "../components/DocxAITool";
