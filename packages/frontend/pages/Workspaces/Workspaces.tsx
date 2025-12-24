@@ -1437,7 +1437,7 @@ const Workspaces = (): React.ReactNode => {
               <Sheet open={mobileFileSidebarOpen} onOpenChange={setMobileFileSidebarOpen}>
                 <SheetContent side="left" className="w-[320px] sm:w-[360px] p-0">
                   <div className="h-full flex flex-col">
-                    <div className="px-4 py-3 border-b border-zinc-300 dark:border-white/[0.06]">
+                    <div className="px-4 py-3 bg-card">
                       <SheetTitle className="text-foreground mobile-text text-base font-semibold">Files</SheetTitle>
                     </div>
                     <div className="flex-1 overflow-hidden">
