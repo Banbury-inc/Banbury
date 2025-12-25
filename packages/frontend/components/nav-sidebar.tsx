@@ -193,7 +193,7 @@ export function NavSidebar({ onLogout, onToggleLeftPanel }: NavSidebarProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center justify-center rounded-full hover:ring-2 hover:ring-accent dark:hover:ring-accent transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent dark:focus:ring-accent hover:scale-110 active:scale-95">
-                <Avatar className="h-10 w-10 cursor-pointer">
+                <Avatar className="h-8 w-8 cursor-pointer">
                   {userPicture && (
                     <AvatarImage src={userPicture} alt={username || 'User'} />
                   )}
@@ -210,7 +210,6 @@ export function NavSidebar({ onLogout, onToggleLeftPanel }: NavSidebarProps) {
                   <div className="flex items-center gap-2 mt-1">
                     {subscription === 'pro' ? (
                       <Badge variant="default" className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0">
-                        <Crown className="mr-1 h-4 w-4" strokeWidth={1} />
                         Pro
                       </Badge>
                     ) : (
