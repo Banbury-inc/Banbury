@@ -139,6 +139,7 @@
   },
   "active": "9454596cb4bc6a15",
   "lastOpenFiles": [
+    "packages/frontend/pages/Workspaces/handlers/handleLeftPanelResize.ts",
     "packages/frontend/components/MiddlePanel/MeetingViewer/MeetingJoinComposer.tsx",
     "packages/frontend/components/MiddlePanel/MeetingViewer/MeetingViewer.tsx",
     "packages/frontend/components/MiddlePanel/MeetingViewer",
@@ -148,7 +149,6 @@
     "packages/frontend/components/LeftPanel/components/MeetingsTab/MeetingsTab.tsx",
     "packages/frontend/components/LeftPanel/components/MeetingsTab/components/MeetingsListView.tsx",
     "packages/frontend/components/LeftPanel/components/MeetingsTab/components",
-    "packages/frontend/components/LeftPanel/components/MeetingsTab/handlers/handleRefreshMeetings.ts",
-    "packages/frontend/components/LeftPanel/components/MeetingsTab/handlers"
+    "packages/frontend/components/LeftPanel/components/MeetingsTab/handlers/handleRefreshMeetings.ts"
   ]
 }

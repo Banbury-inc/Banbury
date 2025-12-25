@@ -46,6 +46,7 @@ import { isDrawioFile, isTldrawFile, isPowerPointFile } from './handlers/fileTyp
 import { createWorkspacesKeyboardHandler } from './handlers/createWorkspacesKeyboardHandler';
 import { Kbd, KbdGroup } from '../../components/ui/kbd';
 import { renderAssistantPanel } from './handlers/renderAssistantPanel';
+import { useLeftPanelResize } from './handlers/handleLeftPanelResize';
 import { 
   getStoredKeybinds, 
   getActiveKey,
@@ -96,6 +97,14 @@ const Workspaces = (): React.ReactNode => {
   const [isAssistantPanelCollapsed, setIsAssistantPanelCollapsed] = useState(false);
   const [isMac, setIsMac] = useState(false);
   const [fileSearchOpen, setFileSearchOpen] = useState(false);
+  
+  // Left panel resize functionality
+  const { leftPanelWidth, isResizing, handleResizeStart } = useLeftPanelResize({
+    isFileSidebarCollapsed,
+    defaultWidth: 320,
+    minWidth: 200,
+    maxWidth: 600,
+  });
   // Mobile state management
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileFileSidebarOpen, setMobileFileSidebarOpen] = useState(false);
@@ -1661,61 +1670,89 @@ const Workspaces = (): React.ReactNode => {
 
             {/* Resizable Panels */}
             <div className="flex flex-1">
-              <Allotment>
+              <div className="flex-1 flex">
                 {/* File Sidebar Panel - Desktop Only */}
-                {!isMobile && !isFileSidebarCollapsed && (
-                  <Allotment.Pane 
-                    minSize={isMobile ? 150 : 200} 
-                    preferredSize={isMobile ? 250 : 300} 
-                    maxSize={isMobile ? 300 : 400} 
-                    className="relative z-10"
+                {!isMobile && (
+                  <div 
+                    className={`h-full flex-shrink-0 overflow-hidden ${
+                      isFileSidebarCollapsed ? 'w-0 transition-all duration-300 ease-in-out' : 'transition-all duration-300 ease-in-out'
+                    }`}
+                    style={!isFileSidebarCollapsed ? { 
+                      width: `${leftPanelWidth}px`,
+                      transition: isResizing ? 'none' : undefined
+                    } : undefined}
                   >
-                    <div className="h-full flex flex-col relative">
-                      {/* Collapse button for file sidebar - positioned on right border */}
-                      <button
-                        onClick={() => setIsFileSidebarCollapsed(true)}
-                        className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-11 w-11 md:h-6 md:w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
-                        title="Collapse file sidebar"
-                      >
-                        <Menu className="h-4 w-4 md:h-4 md:w-4" strokeWidth={1} />
-                      </button>
-                      {/* File Sidebar Content */}
-                      <div className="flex-1 overflow-hidden">
-                        <LeftPanel 
-                          currentView="workspaces"
-                          userInfo={userInfo}
-                          onFileSelect={handleFileSelect}
-                          selectedFile={selectedFile}
-                          refreshTrigger={refreshTrigger}
-                          onFileDeleted={handleFileDeletedCallback}
-                          onFileRenamed={handleFileRenamedCallback}
-                          onFileMoved={handleFileMovedWrapper}
-                          onFolderCreated={handleFolderCreated}
-                          onFolderRenamed={handleFolderRenamedCallback}
-                          triggerRootFolderCreation={folderCreationTrigger}
-                          onEmailSelect={handleEmailSelect}
-                          onComposeEmail={handleComposeEmailCallback}
-                          onCreateDocument={handleCreateWordDocumentWrapper}
-                          onCreateSpreadsheet={handleCreateSpreadsheetWrapper}
-                          onCreateNotebook={handleCreateNotebookWrapper}
-                          onCreateDrawio={handleCreateDrawioWrapper}
-                          onCreateTldraw={handleCreateTldrawWrapper}
-                          onCreatePowerpoint={handleCreatePowerpointWrapper}
-                          onGenerateImage={handleGenerateImage}
-                          onCreateFolder={handleCreateFolder}
-                          onEventSelect={handleCalendarEventSelectCallback}
-                          onOpenCalendar={() => openCalendarInTabCallback(activePanelId)}
-                          onTaskSelect={handleTaskSelect}
-                          selectedTask={selectedTask}
-                          onCreateTask={handleCreateTask}
-                          onMeetingSelect={handleMeetingSelect}
-                          selectedMeeting={selectedMeeting}
-                          onJoinMeeting={handleJoinMeeting}
-                        />
+                    <div 
+                      className="h-full"
+                      style={!isFileSidebarCollapsed ? { width: `${leftPanelWidth}px` } : undefined}
+                    >
+                      <div className="h-full flex flex-col relative">
+                        {/* Resize handle */}
+                        {!isFileSidebarCollapsed && (
+                          <div
+                            onMouseDown={handleResizeStart}
+                            className={`absolute right-0 top-0 bottom-0 cursor-ew-resize z-30 transition-colors ${
+                              isResizing ? 'bg-accent' : 'hover:bg-accent/50'
+                            }`}
+                            style={{ 
+                              touchAction: 'none',
+                              width: '4px',
+                              marginRight: '-2px'
+                            }}
+                            title="Drag to resize"
+                          />
+                        )}
+                        {/* Collapse button for file sidebar - positioned on right border, offset to avoid resize handle */}
+                        {!isFileSidebarCollapsed && (
+                          <button
+                            onClick={() => setIsFileSidebarCollapsed(true)}
+                            className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-11 w-11 md:h-6 md:w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
+                            title="Collapse file sidebar"
+                            onMouseDown={(e) => e.stopPropagation()}
+                          >
+                            <Menu className="h-4 w-4 md:h-4 md:w-4" strokeWidth={1} />
+                          </button>
+                        )}
+                        {/* File Sidebar Content */}
+                        <div className="flex-1 overflow-hidden">
+                          <LeftPanel 
+                            currentView="workspaces"
+                            userInfo={userInfo}
+                            onFileSelect={handleFileSelect}
+                            selectedFile={selectedFile}
+                            refreshTrigger={refreshTrigger}
+                            onFileDeleted={handleFileDeletedCallback}
+                            onFileRenamed={handleFileRenamedCallback}
+                            onFileMoved={handleFileMovedWrapper}
+                            onFolderCreated={handleFolderCreated}
+                            onFolderRenamed={handleFolderRenamedCallback}
+                            triggerRootFolderCreation={folderCreationTrigger}
+                            onEmailSelect={handleEmailSelect}
+                            onComposeEmail={handleComposeEmailCallback}
+                            onCreateDocument={handleCreateWordDocumentWrapper}
+                            onCreateSpreadsheet={handleCreateSpreadsheetWrapper}
+                            onCreateNotebook={handleCreateNotebookWrapper}
+                            onCreateDrawio={handleCreateDrawioWrapper}
+                            onCreateTldraw={handleCreateTldrawWrapper}
+                            onCreatePowerpoint={handleCreatePowerpointWrapper}
+                            onGenerateImage={handleGenerateImage}
+                            onCreateFolder={handleCreateFolder}
+                            onEventSelect={handleCalendarEventSelectCallback}
+                            onOpenCalendar={() => openCalendarInTabCallback(activePanelId)}
+                            onTaskSelect={handleTaskSelect}
+                            selectedTask={selectedTask}
+                            onCreateTask={handleCreateTask}
+                            onMeetingSelect={handleMeetingSelect}
+                            selectedMeeting={selectedMeeting}
+                            onJoinMeeting={handleJoinMeeting}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </Allotment.Pane>
+                  </div>
                 )}
+                <div className="flex-1 min-w-0">
+                  <Allotment>
                 
                 {/* Main Content Panel - Only show when files are open */}
                 {getAllTabs(panelLayout).length > 0 && (
@@ -1765,7 +1802,9 @@ const Workspaces = (): React.ReactNode => {
                     </div>
                   </Allotment.Pane>
                 )}
-              </Allotment>
+                  </Allotment>
+                </div>
+              </div>
             </div>
           </div>
           

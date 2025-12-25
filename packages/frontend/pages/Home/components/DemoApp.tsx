@@ -723,8 +723,14 @@ export default function DemoApp() {
           
           <div className="h-[500px] sm:h-[600px] lg:h-[600px] w-full max-w-7xl flex overflow-hidden rounded-lg sm:rounded-xl border border-white/10 sm:border-2 shadow-xl sm:shadow-2xl bg-zinc-900/50 backdrop-blur-sm relative z-10">
         {/* Left Panel */}
-        {!isFileSidebarCollapsed && (
-          <div className="w-60 sm:w-64 md:w-72 lg:w-80 h-full flex-shrink-0 hidden md:block">
+        <div 
+          className={`h-full flex-shrink-0 hidden md:block transition-all duration-300 ease-in-out overflow-hidden ${
+            isFileSidebarCollapsed 
+              ? 'w-0' 
+              : 'w-60 sm:w-64 md:w-72 lg:w-80'
+          }`}
+        >
+          <div className="h-full w-60 sm:w-64 md:w-72 lg:w-80">
             <LeftPanel 
               currentView="workspaces"
               userInfo={mockUserInfo}
@@ -743,7 +749,7 @@ export default function DemoApp() {
               onOpenCalendar={() => {}}
             />
           </div>
-        )}
+        </div>
 
         {/* Middle Panel */}
         <div className="flex-1 h-full min-w-0">
