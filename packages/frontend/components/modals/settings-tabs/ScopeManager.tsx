@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 
 import { Button } from '../../ui/button'
+import { Typography } from '../../ui/typography'
 import { ApiService } from '../../../../backend/api/apiService'
 import { UserScopes, AvailableFeatures } from '../../../../backend/api/scopes/scopes'
 
@@ -124,7 +125,7 @@ export function ScopeManager({ onFeatureActivated, className = '' }: ScopeManage
     return (
       <div className={`flex items-center justify-center p-6 ${className}`}>
         <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-        <span className="ml-2 text-gray-600">Loading Google integration settings...</span>
+        <Typography variant="small" className="ml-2 text-gray-600">Loading Google integration settings...</Typography>
       </div>
     )
   }
@@ -134,7 +135,7 @@ export function ScopeManager({ onFeatureActivated, className = '' }: ScopeManage
       <div className={`p-4 bg-red-900/20 border border-red-700 rounded-lg ${className}`}>
         <div className="flex items-center">
           <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-          <span className="text-red-400">{error}</span>
+          <Typography variant="small" className="text-red-400">{error}</Typography>
         </div>
         <Button 
           variant="outline" 
@@ -153,7 +154,7 @@ export function ScopeManager({ onFeatureActivated, className = '' }: ScopeManage
       <div className={`p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg ${className}`}>
         <div className="flex items-center">
           <AlertCircle className="h-5 w-5 text-yellow-400 mr-2" />
-          <span className="text-yellow-400">No Google integration data available</span>
+          <Typography variant="small" className="text-yellow-400">No Google integration data available</Typography>
         </div>
       </div>
     )
@@ -178,12 +179,7 @@ export function ScopeManager({ onFeatureActivated, className = '' }: ScopeManage
                 </div>
               </div>
               <div>
-                <h3 className="text-white text-sm font-medium">{feature.name}</h3>
-                <p className="text-zinc-400 text-xs">
-                  {isActive 
-                    ? status === 'required' ? 'Required - Active' : 'Connected'
-                    : 'Not connected'}
-                </p>
+                <Typography variant="small" className="text-white font-medium">{feature.name}</Typography>
               </div>
             </div>
 

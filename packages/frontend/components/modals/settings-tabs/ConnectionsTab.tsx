@@ -5,15 +5,16 @@ import { GitHubConnection } from './GitHubConnection'
 import { OutlookConnection } from './OutlookConnection'
 import { OneDriveConnection } from './OneDriveConnection'
 import { ScopeManager } from './ScopeManager'
+import { Typography } from '../../ui/typography'
 
 export function ConnectionsTab() {
   return (
     <div className="space-y-8">
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold mb-4 flex items-center text-zinc-900 dark:text-white">
+        <Typography variant="h3" className="mb-4 flex items-center text-zinc-900 dark:text-white">
           <Link className="h-5 w-5 mr-2" />
          Connections 
-        </h2>
+        </Typography>
         <ScopeManager 
           onFeatureActivated={() => {}}
         />

@@ -222,10 +222,10 @@ export function KeybindsTab() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold flex items-center text-zinc-900 dark:text-white">
+        <Typography variant="h3" className="flex items-center text-zinc-900 dark:text-white">
           <Keyboard className="h-5 w-5 mr-2" />
           Keyboard Shortcuts
-        </h2>
+        </Typography>
         {hasCustomizations && (
           <Button
             variant="outline"

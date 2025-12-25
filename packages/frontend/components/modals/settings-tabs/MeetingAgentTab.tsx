@@ -230,27 +230,27 @@ export function MeetingAgentTab({}: MeetingAgentTabProps) {
       <div className="space-y-4">
         {/* Bot Name */}
         <div>
-          <label className="text-sm font-medium text-zinc-600 dark:text-gray-400 mb-2 block">
+          <Typography variant="small" className="text-zinc-600 dark:text-gray-400 mb-2 block font-medium">
             Bot Name
-          </label>
+          </Typography>
           <Input
             value={botName}
             onChange={(e) => setBotName(e.target.value)}
             placeholder="Meeting Recorder"
             className="bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600"
           />
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+          <Typography variant="xs" className="text-zinc-500 dark:text-zinc-400 mt-1">
             This name will be displayed when the bot joins meetings
-          </p>
+          </Typography>
         </div>
 
         <Separator />
 
         {/* Profile Picture */}
         <div>
-          <label className="text-sm font-medium text-zinc-600 dark:text-gray-400 mb-2 block">
+          <Typography variant="small" className="text-zinc-600 dark:text-gray-400 mb-2 block font-medium">
             Profile Picture
-          </label>
+          </Typography>
           
           {displayImageUrl ? (
             <div className="space-y-3">
@@ -271,21 +271,21 @@ export function MeetingAgentTab({}: MeetingAgentTabProps) {
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <Typography variant="xs" className="text-zinc-500 dark:text-zinc-400">
                 {previewUrl ? 'New image selected (click Save to upload)' : 'Current profile picture'}
-              </p>
+              </Typography>
             </div>
           ) : (
             <div className="border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg p-8 text-center">
               <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Video className="h-8 w-8 text-zinc-400" />
               </div>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
+              <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 mb-1">
                 No profile picture set
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-500">
+              </Typography>
+              <Typography variant="xs" className="text-zinc-500 dark:text-zinc-500">
                 Select an image to upload
-              </p>
+              </Typography>
             </div>
           )}
 
@@ -308,15 +308,15 @@ export function MeetingAgentTab({}: MeetingAgentTabProps) {
           </Button>
 
           <div className="mt-3 space-y-1">
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <Typography variant="xs" className="text-zinc-500 dark:text-zinc-400">
               • Formats: JPG, PNG, GIF, WEBP
-            </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            </Typography>
+            <Typography variant="xs" className="text-zinc-500 dark:text-zinc-400">
               • Max size: 5MB
-            </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            </Typography>
+            <Typography variant="xs" className="text-zinc-500 dark:text-zinc-400">
               • Recommended: Square aspect ratio (1:1), minimum 200x200px
-            </p>
+            </Typography>
           </div>
         </div>
 

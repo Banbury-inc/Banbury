@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '../../ui/button'
 import { useToast } from '../../ui/use-toast'
+import { Typography } from '../../ui/typography'
 import { CONFIG } from '../../../config/config'
 import { OneDriveIcon } from '../../icons/OneDriveIcon'
 import { 
@@ -76,9 +77,9 @@ export function OneDriveConnection() {
 
   if (loading) {
     return (
-      <div className="flex items-center text-zinc-400">
+      <div className="flex items-center">
         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-zinc-400 mr-2"></div>
-        Checking OneDrive connection...
+        <Typography variant="small" className="text-zinc-400">Checking OneDrive connection...</Typography>
       </div>
     )
   }
@@ -90,12 +91,7 @@ export function OneDriveConnection() {
           <OneDriveIcon size={20} className={connectionStatus.connected ? '' : 'opacity-60'} />
         </div>
         <div>
-          <h3 className="text-white text-sm font-medium">OneDrive</h3>
-          <p className="text-zinc-400 text-xs">
-            {connectionStatus.connected 
-              ? `Connected${connectionStatus.accountEmail ? ` as ${connectionStatus.accountEmail}` : ''}${connectionStatus.accountName ? ` (${connectionStatus.accountName})` : ''}`
-              : 'Not connected'}
-          </p>
+          <Typography variant="small" className="text-white font-medium">OneDrive</Typography>
         </div>
       </div>
 

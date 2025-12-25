@@ -102,14 +102,14 @@ export function ProfileTab({ scopeActivated, userInfo, onUpdateProfile }: Profil
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-zinc-600 dark:text-gray-400">Username</label>
-              <p className="text-zinc-900 dark:text-white">{userInfo.username}</p>
+              <Typography variant="small" className="text-zinc-600 dark:text-gray-400">Username</Typography>
+              <Typography variant="p" className="text-zinc-900 dark:text-white">{userInfo.username}</Typography>
             </div>
             
             <Separator />
             
             <div>
-              <label className="text-sm text-zinc-600 dark:text-gray-400">Email</label>
+              <Typography variant="small" className="text-zinc-600 dark:text-gray-400">Email</Typography>
               {isEditing ? (
                 <Input
                   type="email"
@@ -119,14 +119,14 @@ export function ProfileTab({ scopeActivated, userInfo, onUpdateProfile }: Profil
                   placeholder="Enter your email"
                 />
               ) : (
-                <p className="text-zinc-900 dark:text-white">{userInfo.email || 'Not provided'}</p>
+                <Typography variant="p" className="text-zinc-900 dark:text-white">{userInfo.email || 'Not provided'}</Typography>
               )}
             </div>
             
             <Separator />
             
             <div>
-              <label className="text-sm text-zinc-600 dark:text-gray-400">First Name</label>
+              <Typography variant="small" className="text-zinc-600 dark:text-gray-400">First Name</Typography>
               {isEditing ? (
                 <Input
                   type="text"
@@ -136,14 +136,14 @@ export function ProfileTab({ scopeActivated, userInfo, onUpdateProfile }: Profil
                   placeholder="Enter your first name"
                 />
               ) : (
-                <p className="text-zinc-900 dark:text-white">{userInfo.first_name || 'Not provided'}</p>
+                <Typography variant="p" className="text-zinc-900 dark:text-white">{userInfo.first_name || 'Not provided'}</Typography>
               )}
             </div>
             
             <Separator />
             
             <div>
-              <label className="text-sm text-zinc-600 dark:text-gray-400">Last Name</label>
+              <Typography variant="small" className="text-zinc-600 dark:text-gray-400">Last Name</Typography>
               {isEditing ? (
                 <Input
                   type="text"
@@ -153,7 +153,7 @@ export function ProfileTab({ scopeActivated, userInfo, onUpdateProfile }: Profil
                   placeholder="Enter your last name"
                 />
               ) : (
-                <p className="text-zinc-900 dark:text-white">{userInfo.last_name || 'Not provided'}</p>
+                <Typography variant="p" className="text-zinc-900 dark:text-white">{userInfo.last_name || 'Not provided'}</Typography>
               )}
             </div>
 

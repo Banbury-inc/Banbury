@@ -1,6 +1,7 @@
 import { CheckCircle, Crown, Trash2 } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { Separator } from '../../ui/separator'
+import { Typography } from '../../ui/typography'
 
 interface SubscriptionTabProps {
   subscriptionStatus: {
@@ -22,10 +23,10 @@ export function SubscriptionTab({
 }: SubscriptionTabProps) {
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold mb-4 flex items-center text-zinc-900 dark:text-white">
+      <Typography variant="h3" className="mb-4 flex items-center text-zinc-900 dark:text-white">
         <Crown className="h-5 w-5 mr-2" />
         Subscription
-      </h2>
+      </Typography>
       <Separator />
 
       {subscriptionStatus ? (
@@ -33,24 +34,28 @@ export function SubscriptionTab({
           {/* Current Plan Section */}
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-zinc-600 dark:text-gray-400">Current Plan</label>
+              <Typography variant="small" className="text-zinc-600 dark:text-gray-400">Current Plan</Typography>
               <div className="flex items-center justify-between mt-1">
-                <p className="text-xl font-semibold text-zinc-900 dark:text-white">
+                <Typography variant="large" className="text-zinc-900 dark:text-white">
                   {subscriptionStatus.subscription === 'pro' ? 'Pro' : 'Free'}
-                </p>
-                <p className="text-xl font-semibold text-zinc-900 dark:text-white">
-                  {subscriptionStatus.subscription === 'pro' ? '$10' : '$0'}
-                  <span className="text-sm font-normal text-zinc-600 dark:text-zinc-400">/month</span>
-                </p>
+                </Typography>
+                <div className="text-zinc-900 dark:text-white">
+                  <Typography variant="large" className="inline">
+                    {subscriptionStatus.subscription === 'pro' ? '$10' : '$0'}
+                  </Typography>
+                  <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 inline ml-1">
+                    /month
+                  </Typography>
+                </div>
               </div>
               {subscriptionStatus.subscription === 'pro' && subscriptionStatus.payment_succeeded_at && (
-                <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1">
+                <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 mt-1">
                   Auto-renews on {new Date(new Date(subscriptionStatus.payment_succeeded_at).setMonth(new Date(subscriptionStatus.payment_succeeded_at).getMonth() + 1)).toLocaleDateString('en-US', { 
                     year: 'numeric', 
                     month: 'short', 
                     day: 'numeric' 
                   })}
-                </p>
+                </Typography>
               )}
             </div>
           </div>
@@ -59,41 +64,41 @@ export function SubscriptionTab({
 
           {/* Features Section */}
           <div className="space-y-4">
-            <label className="text-sm text-zinc-600 dark:text-gray-400">
+            <Typography variant="small" className="text-zinc-600 dark:text-gray-400">
               {subscriptionStatus.subscription === 'pro' ? 'Your Pro Benefits' : 'Free Plan Features'}
-            </label>
+            </Typography>
             
             {subscriptionStatus.subscription === 'pro' ? (
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-zinc-900 dark:text-white font-medium">Everything in Free</p>
-                    <p className="text-zinc-600 dark:text-zinc-400 text-sm">All basic features included</p>
+                    <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">Everything in Free</Typography>
+                    <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">All basic features included</Typography>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-zinc-900 dark:text-white font-medium">Unlimited storage</p>
-                    <p className="text-zinc-600 dark:text-zinc-400 text-sm">Store unlimited files and documents</p>
+                    <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">Unlimited storage</Typography>
+                    <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">Store unlimited files and documents</Typography>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-zinc-900 dark:text-white font-medium">Unlimited AI requests</p>
-                    <p className="text-zinc-600 dark:text-zinc-400 text-sm">No limits on AI assistance</p>
+                    <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">Unlimited AI requests</Typography>
+                    <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">No limits on AI assistance</Typography>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-zinc-900 dark:text-white font-medium">24/7 Priority support</p>
-                    <p className="text-zinc-600 dark:text-zinc-400 text-sm">Get help when you need it</p>
+                    <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">24/7 Priority support</Typography>
+                    <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">Get help when you need it</Typography>
                   </div>
                 </div>
               </div>
@@ -102,24 +107,24 @@ export function SubscriptionTab({
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-zinc-900 dark:text-white font-medium">10 GB storage</p>
-                    <p className="text-zinc-600 dark:text-zinc-400 text-sm">Store your important files and documents</p>
+                    <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">10 GB storage</Typography>
+                    <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">Store your important files and documents</Typography>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-zinc-900 dark:text-white font-medium">100 AI requests</p>
-                    <p className="text-zinc-600 dark:text-zinc-400 text-sm">Get started with AI assistance</p>
+                    <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">100 AI requests</Typography>
+                    <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">Get started with AI assistance</Typography>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-zinc-900 dark:text-white font-medium">Community support</p>
-                    <p className="text-zinc-600 dark:text-zinc-400 text-sm">Access to help documentation and community</p>
+                    <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">Community support</Typography>
+                    <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">Access to help documentation and community</Typography>
                   </div>
                 </div>
               </div>
@@ -147,24 +152,24 @@ export function SubscriptionTab({
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Crown className="h-5 w-5 text-yellow-500" />
-                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">Upgrade to Pro</h3>
+                  <Typography variant="h3" className="text-zinc-900 dark:text-white">Upgrade to Pro</Typography>
                 </div>
-                <p className="text-zinc-600 dark:text-zinc-400">
+                <Typography variant="p" className="text-zinc-600 dark:text-zinc-400">
                   Get unlimited storage, unlimited AI requests, and priority support.
-                </p>
+                </Typography>
                 
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-zinc-800 dark:text-zinc-300">
+                  <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    <span>Unlimited Storage</span>
+                    <Typography variant="small" className="text-zinc-800 dark:text-zinc-300">Unlimited Storage</Typography>
                   </div>
-                  <div className="flex items-center gap-2 text-zinc-800 dark:text-zinc-300">
+                  <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    <span>Unlimited AI Requests</span>
+                    <Typography variant="small" className="text-zinc-800 dark:text-zinc-300">Unlimited AI Requests</Typography>
                   </div>
-                  <div className="flex items-center gap-2 text-zinc-800 dark:text-zinc-300">
+                  <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    <span>24/7 Priority Support</span>
+                    <Typography variant="small" className="text-zinc-800 dark:text-zinc-300">24/7 Priority Support</Typography>
                   </div>
                 </div>
                 
@@ -180,9 +185,9 @@ export function SubscriptionTab({
           )}
         </>
       ) : (
-        <div className="flex items-center text-zinc-600 dark:text-zinc-400">
+        <div className="flex items-center">
           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-zinc-600 dark:border-zinc-400 mr-3"></div>
-          Loading subscription information...
+          <Typography variant="p" className="text-zinc-600 dark:text-zinc-400">Loading subscription information...</Typography>
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Twitter } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { useToast } from '../../ui/use-toast'
+import { Typography } from '../../ui/typography'
 import { CONFIG } from '../../../config/config'
 import { 
   checkXConnectionStatus, 
@@ -76,9 +77,9 @@ export const XApiConnection = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center text-zinc-400">
+      <div className="flex items-center">
         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-zinc-400 mr-2"></div>
-        Checking X connection...
+        <Typography variant="small" className="text-zinc-400">Checking X connection...</Typography>
       </div>
     )
   }
@@ -90,12 +91,7 @@ export const XApiConnection = () => {
           <Twitter className={`h-5 w-5 ${connectionStatus.connected ? 'text-green-400' : 'text-zinc-400'}`} />
         </div>
         <div>
-          <h3 className="text-white text-sm font-medium">X (Twitter)</h3>
-          <p className="text-zinc-400 text-xs">
-            {connectionStatus.connected 
-              ? `Connected${connectionStatus.username ? ` as @${connectionStatus.username}` : ''}`
-              : 'Not connected'}
-          </p>
+          <Typography variant="small" className="text-white font-medium">X (Twitter)</Typography>
         </div>
       </div>
 

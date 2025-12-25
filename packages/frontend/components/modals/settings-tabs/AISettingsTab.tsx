@@ -66,10 +66,10 @@ export function AISettingsTab() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold mb-4 flex items-center text-zinc-900 dark:text-white">
+      <Typography variant="h3" className="mb-4 flex items-center text-zinc-900 dark:text-white">
         <Brain className="h-5 w-5 mr-2" />
         AI Tool Settings
-      </h2>
+      </Typography>
       <Separator />
 
       <div className="space-y-6">

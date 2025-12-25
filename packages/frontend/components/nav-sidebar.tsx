@@ -203,7 +203,7 @@ export function NavSidebar({ onLogout, onToggleLeftPanel }: NavSidebarProps) {
                 </Avatar>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="end" className="w-56">
+            <DropdownMenuContent side="top" align="end" className="w-56 bg-accent border-border">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <Typography variant="p">{username}</Typography>

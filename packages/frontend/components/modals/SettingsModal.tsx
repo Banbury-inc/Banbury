@@ -173,8 +173,10 @@ function CheckoutForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel
       />
       
       {error && (
-        <div className="p-3 bg-red-900/20 border border-red-700 rounded text-red-400 text-sm">
-          {error}
+        <div className="p-3 bg-red-900/20 border border-red-700 rounded">
+          <Typography variant="small" className="text-red-400">
+            {error}
+          </Typography>
         </div>
       )}
 
@@ -432,10 +434,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogPortal>
           <DialogOverlay className="bg-black/0 backdrop-blur-sm" />
-          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-4xl h-[80vh] translate-x-[-50%] translate-y-[-50%] border bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg p-0">
+          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-4xl h-[80vh] translate-x-[-50%] translate-y-[-50%] border bg-card border-zinc-300 dark:border-zinc-700 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg p-0">
           <div className="flex h-full">
             {/* Sidebar */}
-            <div className="w-64 border-r border-zinc-300 dark:border-zinc-700 p-6 overflow-y-auto">
+            <div className="w-64 border-r border-zinc-300 dark:border-zinc-700 p-6 overflow-y-auto bg-card">
               <DialogHeader className="mb-6">
                 <DialogTitle className="text-xl font-bold text-zinc-900 dark:text-white">
                   <Typography variant="h2">Settings</Typography>
@@ -465,7 +467,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 p-8 overflow-y-auto">
+            <div className="flex-1 p-8 overflow-y-auto bg-card">
               {activeTab === 'profile' && (
                 <ProfileTab 
                   scopeActivated={scopeActivated}
@@ -520,9 +522,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
         <Dialog open={showCheckout} onOpenChange={() => setShowCheckout(false)}>
           <DialogPortal>
             <DialogOverlay className="bg-black/30 backdrop-blur-sm" />
-            <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] border bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg p-6">
+            <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] border bg-card border-zinc-300 dark:border-zinc-700 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg p-6">
             <div className="mb-4">
-              <h3 className="text-xl font-semibold text-zinc-900 dark:text-white">Subscribe to Pro</h3>
+              <Typography variant="h3" className="text-zinc-900 dark:text-white">Subscribe to Pro</Typography>
             </div>
             
             <Elements 
@@ -553,29 +555,35 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
         <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
           <DialogPortal>
             <DialogOverlay className="bg-black/30 backdrop-blur-sm" />
-            <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] border bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg p-6">
+            <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] border bg-card border-zinc-300 dark:border-zinc-700 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg p-6">
             <div className="mb-4">
-              <h3 className="flex items-center gap-3 text-zinc-900 dark:text-white text-xl font-semibold">
+              <Typography variant="h3" className="flex items-center gap-3 text-zinc-900 dark:text-white">
                 <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
                 Cancel Subscription
-              </h3>
+              </Typography>
             </div>
             
             <div className="space-y-4">
-              <p className="text-zinc-700 dark:text-zinc-300">
+              <Typography variant="p" className="text-zinc-700 dark:text-zinc-300">
                 Are you sure you want to cancel your Pro subscription?
-              </p>
+              </Typography>
               <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-4">
-                <h4 className="text-zinc-900 dark:text-white font-medium mb-2">You will lose access to:</h4>
-                <ul className="space-y-1 text-zinc-700 dark:text-zinc-400 text-sm">
-                  <li>• Unlimited storage</li>
-                  <li>• Unlimited AI requests</li>
-                  <li>• Priority support</li>
+                <Typography variant="h4" className="text-zinc-900 dark:text-white mb-2">You will lose access to:</Typography>
+                <ul className="space-y-1">
+                  <li>
+                    <Typography variant="small" className="text-zinc-700 dark:text-zinc-400">• Unlimited storage</Typography>
+                  </li>
+                  <li>
+                    <Typography variant="small" className="text-zinc-700 dark:text-zinc-400">• Unlimited AI requests</Typography>
+                  </li>
+                  <li>
+                    <Typography variant="small" className="text-zinc-700 dark:text-zinc-400">• Priority support</Typography>
+                  </li>
                 </ul>
               </div>
-              <p className="text-zinc-600 dark:text-zinc-400 text-sm">
+              <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">
                 Your subscription will remain active until the end of your current billing period.
-              </p>
+              </Typography>
             </div>
             
             <div className="flex gap-3">

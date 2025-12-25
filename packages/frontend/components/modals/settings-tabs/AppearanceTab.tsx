@@ -11,11 +11,11 @@ interface AppearanceTabProps {
 
 export function AppearanceTab({ isDarkMode, onThemeToggle }: AppearanceTabProps) {
   return (
-    <div className="space-y-6">
-        <h2 className="text-lg font-semibold mb-4 flex items-center text-zinc-900 dark:text-white">
+      <div className="space-y-6">
+        <Typography variant="h3" className="mb-4 flex items-center text-zinc-900 dark:text-white">
           <Palette className="h-5 w-5 mr-2" />
           Theme Settings
-        </h2>
+        </Typography>
         <Separator />
         
         <div className="flex items-center gap-2">
