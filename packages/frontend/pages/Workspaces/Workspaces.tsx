@@ -41,7 +41,7 @@ import { handleReplyToEmail } from './handlers/handleReplyToEmail';
 import { handleComposeEmail } from './handlers/handleComposeEmail';
 import { loadConversations, saveCurrentConversation, loadConversation, deleteConversation } from './handlers/conversationManagement';
 import { findPanel, getAllTabs, updatePanelActiveTab, addTabToPanel, removeTabFromPanel } from './handlers/panelUtils';
-import { openFileInTab, openEmailInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
+import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
 import { isDrawioFile, isTldrawFile, isPowerPointFile } from './handlers/fileTypeUtils';
 import { createWorkspacesKeyboardHandler } from './handlers/createWorkspacesKeyboardHandler';
 import { Kbd, KbdGroup } from '../../components/ui/kbd';
@@ -54,6 +54,8 @@ import {
 import { FileSearchCommand } from '../../components/FileSearchCommand';
 import { EmailSearchResult } from '../../components/handlers/file-search-command-handlers';
 import { CalendarEvent } from '../../../backend/api/calendar/calendar';
+import { Task } from '../../pages/TaskStudio/types';
+import { MeetingSession } from '../../types/meeting-types';
 import {
   UserInfo,
   FileTab,
@@ -78,6 +80,8 @@ const Workspaces = (): React.ReactNode => {
   const [loading, setLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<FileSystemItem | null>(null);
   const [selectedEmail, setSelectedEmail] = useState<any | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedMeeting, setSelectedMeeting] = useState<MeetingSession | null>(null);
   const [uploading, setUploading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [folderCreationTrigger, setFolderCreationTrigger] = useState<boolean>(false);
@@ -790,7 +794,51 @@ const Workspaces = (): React.ReactNode => {
     handleComposeEmail(activePanelId, addTabToPanel, setPanelLayout, setActivePanelId);
   }, [activePanelId, addTabToPanel, setPanelLayout, setActivePanelId]);
 
+  const openTaskInTabCallback = useCallback((task: Task | null, targetPanelId: string = activePanelId) => {
+    openTaskInTab(
+      task,
+      targetPanelId,
+      activePanelId,
+      panelLayout,
+      getAllTabs,
+      updatePanelActiveTab,
+      addTabToPanel,
+      setActivePanelId,
+      setPanelLayout
+    );
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
 
+  const openMeetingInTabCallback = useCallback((meeting: MeetingSession | null, targetPanelId: string = activePanelId) => {
+    openMeetingInTab(
+      meeting,
+      targetPanelId,
+      activePanelId,
+      panelLayout,
+      getAllTabs,
+      updatePanelActiveTab,
+      addTabToPanel,
+      setActivePanelId,
+      setPanelLayout
+    );
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
+
+  const handleTaskSelect = useCallback((task: Task) => {
+    setSelectedTask(task);
+    openTaskInTabCallback(task, activePanelId);
+  }, [openTaskInTabCallback, activePanelId]);
+
+  const handleCreateTask = useCallback(() => {
+    openTaskInTabCallback(null, activePanelId); // null means create task composer
+  }, [openTaskInTabCallback, activePanelId]);
+
+  const handleMeetingSelect = useCallback((meeting: MeetingSession) => {
+    setSelectedMeeting(meeting);
+    openMeetingInTabCallback(meeting, activePanelId);
+  }, [openMeetingInTabCallback, activePanelId]);
+
+  const handleJoinMeeting = useCallback(() => {
+    openMeetingInTabCallback(null, activePanelId); // null means join meeting composer
+  }, [openMeetingInTabCallback, activePanelId]);
 
   const handleFileDeletedCallback = useCallback((fileId: string) => {
     handleFileDeleted(fileId, selectedFile, setPanelLayout, setSelectedFile, triggerSidebarRefresh);
@@ -1480,6 +1528,24 @@ const Workspaces = (): React.ReactNode => {
                           openCalendarInTabCallback(activePanelId);
                           setMobileFileSidebarOpen(false);
                         }}
+                        onTaskSelect={(task) => {
+                          handleTaskSelect(task);
+                          setMobileFileSidebarOpen(false);
+                        }}
+                        selectedTask={selectedTask}
+                        onCreateTask={() => {
+                          handleCreateTask();
+                          setMobileFileSidebarOpen(false);
+                        }}
+                        onMeetingSelect={(meeting) => {
+                          handleMeetingSelect(meeting);
+                          setMobileFileSidebarOpen(false);
+                        }}
+                        selectedMeeting={selectedMeeting}
+                        onJoinMeeting={() => {
+                          handleJoinMeeting();
+                          setMobileFileSidebarOpen(false);
+                        }}
                       />
                     </div>
                   </div>
@@ -1639,6 +1705,12 @@ const Workspaces = (): React.ReactNode => {
                           onCreateFolder={handleCreateFolder}
                           onEventSelect={handleCalendarEventSelectCallback}
                           onOpenCalendar={() => openCalendarInTabCallback(activePanelId)}
+                          onTaskSelect={handleTaskSelect}
+                          selectedTask={selectedTask}
+                          onCreateTask={handleCreateTask}
+                          onMeetingSelect={handleMeetingSelect}
+                          selectedMeeting={selectedMeeting}
+                          onJoinMeeting={handleJoinMeeting}
                         />
                       </div>
                     </div>

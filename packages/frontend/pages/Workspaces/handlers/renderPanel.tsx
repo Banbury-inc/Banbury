@@ -26,6 +26,10 @@ import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { Typography } from '../../../components/ui/typography';
 import { Kbd, KbdGroup } from '../../../components/ui/kbd';
 import BanburyLogo from '../../../assets/images/Logo.png';
+import { TaskViewer } from '../../../components/MiddlePanel/TaskViewer/TaskViewer';
+import { TaskComposer } from '../../../components/MiddlePanel/TaskViewer/TaskComposer';
+import { MeetingViewer } from '../../../components/MiddlePanel/MeetingViewer/MeetingViewer';
+import { MeetingJoinComposer } from '../../../components/MiddlePanel/MeetingViewer/MeetingJoinComposer';
 
 interface RenderPanelProps {
   panel: Panel;
@@ -121,6 +125,8 @@ export const renderPanel = ({
                 else if (t.type === 'file') label = t.fileName;
                 else if (t.type === 'calendar') label = t.title || 'Calendar';
                 else if (t.type === 'ai') label = t.label;
+                else if (t.type === 'task') label = t.title;
+                else if (t.type === 'meeting') label = t.title;
                 return { id: t.id, label };
               })}
               activeTab={panel.activeTabId || panel.tabs[0]?.id}
@@ -413,6 +419,112 @@ export const renderPanel = ({
                       />
                     </div>
                   );
+                }
+                
+                // Handle task tabs
+                if (tab.type === 'task') {
+                  // Check if this is a create task composer (task is null)
+                  if (tab.task === null) {
+                    return (
+                      <TaskComposer 
+                        onBack={() => {
+                          handleCloseTab(tab.id, panel.id);
+                        }}
+                        onTaskCreated={() => {
+                          handleCloseTab(tab.id, panel.id);
+                        }}
+                      />
+                    );
+                  } else {
+                    return (
+                      <TaskViewer 
+                        task={tab.task}
+                        onBack={() => {
+                          handleCloseTab(tab.id, panel.id);
+                        }}
+                        onTaskUpdated={(updatedTask) => {
+                          // Update the tab with the new task data
+                          setPanelLayout((prev: any) => {
+                            const updateTaskInLayout = (layout: any): any => {
+                              if (layout.type === 'panel' && layout.panel?.id === panel.id) {
+                                const updatedTabs = layout.panel.tabs.map((t: any) => 
+                                  t.id === tab.id ? { ...t, task: updatedTask, title: updatedTask.title } : t
+                                );
+                                return {
+                                  ...layout,
+                                  panel: {
+                                    ...layout.panel,
+                                    tabs: updatedTabs,
+                                  },
+                                };
+                              }
+                              if (layout.type === 'group' && layout.children) {
+                                return { ...layout, children: layout.children.map(updateTaskInLayout) };
+                              }
+                              return layout;
+                            };
+                            return updateTaskInLayout(prev);
+                          });
+                        }}
+                        onTaskDeleted={(taskId) => {
+                          handleCloseTab(tab.id, panel.id);
+                        }}
+                      />
+                    );
+                  }
+                }
+                
+                // Handle meeting tabs
+                if (tab.type === 'meeting') {
+                  // Check if this is a join meeting composer (meeting is null)
+                  if (tab.meeting === null) {
+                    return (
+                      <MeetingJoinComposer 
+                        onBack={() => {
+                          handleCloseTab(tab.id, panel.id);
+                        }}
+                        onMeetingJoined={() => {
+                          handleCloseTab(tab.id, panel.id);
+                        }}
+                      />
+                    );
+                  } else {
+                    return (
+                      <MeetingViewer 
+                        meeting={tab.meeting}
+                        onBack={() => {
+                          handleCloseTab(tab.id, panel.id);
+                        }}
+                        onMeetingUpdated={(updatedMeeting) => {
+                          // Update the tab with the new meeting data
+                          setPanelLayout((prev: any) => {
+                            const updateMeetingInLayout = (layout: any): any => {
+                              if (layout.type === 'panel' && layout.panel?.id === panel.id) {
+                                const updatedTabs = layout.panel.tabs.map((t: any) => 
+                                  t.id === tab.id ? { ...t, meeting: updatedMeeting, title: updatedMeeting.title || 'Untitled Meeting' } : t
+                                );
+                                return {
+                                  ...layout,
+                                  panel: {
+                                    ...layout.panel,
+                                    tabs: updatedTabs,
+                                  },
+                                };
+                              }
+                              if (layout.type === 'group' && layout.children) {
+                                return { ...layout, children: layout.children.map(updateMeetingInLayout) };
+                              }
+                              return layout;
+                            };
+                            return updateMeetingInLayout(prev);
+                          });
+                        }}
+                        onMeetingDeleted={(meetingId) => {
+                          handleCloseTab(tab.id, panel.id);
+                        }}
+                      />
+                    );
+                  }
                 }
                 
                 return null;

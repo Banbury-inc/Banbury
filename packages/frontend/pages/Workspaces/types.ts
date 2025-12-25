@@ -1,4 +1,6 @@
 import { FileSystemItem } from '../../utils/fileTreeUtils'
+import { Task } from '../../pages/TaskStudio/types'
+import { MeetingSession } from '../../types/meeting-types'
 
 export interface UserInfo {
   username: string
@@ -39,7 +41,23 @@ export interface AiTab {
   type: 'ai'
 }
 
-export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab
+export interface TaskTab {
+  id: string
+  taskId: string
+  title: string
+  task: Task | null // null for create task composer
+  type: 'task'
+}
+
+export interface MeetingTab {
+  id: string
+  meetingId: string
+  title: string
+  meeting: MeetingSession | null // null for join meeting composer
+  type: 'meeting'
+}
+
+export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab
 
 export interface Panel {
   id: string

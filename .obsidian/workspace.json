@@ -1,0 +1,154 @@
+{
+  "main": {
+    "id": "4608bff8f069290d",
+    "type": "split",
+    "children": [
+      {
+        "id": "11ee019f1a7d3eaf",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "9454596cb4bc6a15",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "6edce865ecbe9fb6",
+    "type": "split",
+    "children": [
+      {
+        "id": "b96a142d0ca65cbc",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "7b0d8383d9d289f5",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "954a6437c89b296d",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "cf66ebcefe45e930",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "6b8e1ae4a0aaaeb2",
+    "type": "split",
+    "children": [
+      {
+        "id": "d72d8e1df29381b2",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "032a05a9b1b806a8",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "95ee470717cd29d2",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "b650a1866bdf7fd0",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              }
+            }
+          },
+          {
+            "id": "e2d29a4e4dd90d5f",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false
+    }
+  },
+  "active": "9454596cb4bc6a15",
+  "lastOpenFiles": [
+    "packages/frontend/components/MiddlePanel/MeetingViewer/MeetingJoinComposer.tsx",
+    "packages/frontend/components/MiddlePanel/MeetingViewer/MeetingViewer.tsx",
+    "packages/frontend/components/MiddlePanel/MeetingViewer",
+    "packages/frontend/components/MiddlePanel/TaskViewer/TaskComposer.tsx",
+    "packages/frontend/components/MiddlePanel/TaskViewer/TaskViewer.tsx",
+    "packages/frontend/components/MiddlePanel/TaskViewer",
+    "packages/frontend/components/LeftPanel/components/MeetingsTab/MeetingsTab.tsx",
+    "packages/frontend/components/LeftPanel/components/MeetingsTab/components/MeetingsListView.tsx",
+    "packages/frontend/components/LeftPanel/components/MeetingsTab/components",
+    "packages/frontend/components/LeftPanel/components/MeetingsTab/handlers/handleRefreshMeetings.ts",
+    "packages/frontend/components/LeftPanel/components/MeetingsTab/handlers"
+  ]
+}

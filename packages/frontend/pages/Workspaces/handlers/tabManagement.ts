@@ -1,5 +1,7 @@
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import { Panel, PanelGroup, WorkspaceTab, FileTab, EmailTab } from '../types';
+import { Panel, PanelGroup, WorkspaceTab, FileTab, EmailTab, TaskTab, MeetingTab } from '../types';
+import { Task } from '../../../pages/TaskStudio/types';
+import { MeetingSession } from '../../../types/meeting-types';
 
 // Open file in a new tab within specified panel
 export const openFileInTab = (
@@ -124,6 +126,140 @@ export const openEmailInTab = (
   setSelectedEmail(email);
 };
 
+// Open task in a new tab within specified panel
+export const openTaskInTab = (
+  task: Task | null, // null for create task composer
+  targetPanelId: string,
+  activePanelId: string,
+  panelLayout: PanelGroup,
+  getAllTabs: (layout: PanelGroup) => WorkspaceTab[],
+  updatePanelActiveTab: (layout: PanelGroup, panelId: string, tabId: string) => PanelGroup,
+  addTabToPanel: (layout: PanelGroup, panelId: string, tab: WorkspaceTab) => PanelGroup,
+  setActivePanelId: React.Dispatch<React.SetStateAction<string>>,
+  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
+) => {
+  // For create task composer (task is null), always create a new tab
+  if (task === null) {
+    const tabId = `task_create_${Date.now()}`;
+    const newTab: TaskTab = {
+      id: tabId,
+      taskId: '',
+      title: 'Create Task',
+      task: null,
+      type: 'task'
+    };
+    setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab));
+    setActivePanelId(targetPanelId);
+    return;
+  }
+
+  // Check if task is already open in any panel
+  const allTabs = getAllTabs(panelLayout);
+  const existingTab = allTabs.find(tab => tab.type === 'task' && tab.taskId === task.id);
+  
+  if (existingTab) {
+    // Find which panel contains this tab and switch to it
+    const switchToExistingTab = (layout: PanelGroup): boolean => {
+      if (layout.type === 'panel' && layout.panel) {
+        const tabExists = layout.panel.tabs.some(tab => tab.id === existingTab.id);
+        if (tabExists) {
+          setActivePanelId(layout.panel.id);
+          setPanelLayout(prev => updatePanelActiveTab(prev, layout.panel!.id, existingTab.id));
+          return true;
+        }
+      }
+      if (layout.type === 'group' && layout.children) {
+        return layout.children.some(child => switchToExistingTab(child));
+      }
+      return false;
+    };
+    
+    switchToExistingTab(panelLayout);
+    return;
+  }
+  
+  // Create new task tab
+  const tabId = `task_${task.id}_${Date.now()}`;
+  const newTab: TaskTab = {
+    id: tabId,
+    taskId: task.id,
+    title: task.title,
+    task: task,
+    type: 'task'
+  };
+  
+  // Add tab to the target panel
+  setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab));
+  setActivePanelId(targetPanelId);
+};
+
+// Open meeting in a new tab within specified panel
+export const openMeetingInTab = (
+  meeting: MeetingSession | null, // null for join meeting composer
+  targetPanelId: string,
+  activePanelId: string,
+  panelLayout: PanelGroup,
+  getAllTabs: (layout: PanelGroup) => WorkspaceTab[],
+  updatePanelActiveTab: (layout: PanelGroup, panelId: string, tabId: string) => PanelGroup,
+  addTabToPanel: (layout: PanelGroup, panelId: string, tab: WorkspaceTab) => PanelGroup,
+  setActivePanelId: React.Dispatch<React.SetStateAction<string>>,
+  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
+) => {
+  // For join meeting composer (meeting is null), always create a new tab
+  if (meeting === null) {
+    const tabId = `meeting_join_${Date.now()}`;
+    const newTab: MeetingTab = {
+      id: tabId,
+      meetingId: '',
+      title: 'Join Meeting',
+      meeting: null,
+      type: 'meeting'
+    };
+    setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab));
+    setActivePanelId(targetPanelId);
+    return;
+  }
+
+  // Check if meeting is already open in any panel
+  const allTabs = getAllTabs(panelLayout);
+  const existingTab = allTabs.find(tab => tab.type === 'meeting' && tab.meetingId === meeting.id);
+  
+  if (existingTab) {
+    // Find which panel contains this tab and switch to it
+    const switchToExistingTab = (layout: PanelGroup): boolean => {
+      if (layout.type === 'panel' && layout.panel) {
+        const tabExists = layout.panel.tabs.some(tab => tab.id === existingTab.id);
+        if (tabExists) {
+          setActivePanelId(layout.panel.id);
+          setPanelLayout(prev => updatePanelActiveTab(prev, layout.panel!.id, existingTab.id));
+          return true;
+        }
+      }
+      if (layout.type === 'group' && layout.children) {
+        return layout.children.some(child => switchToExistingTab(child));
+      }
+      return false;
+    };
+    
+    switchToExistingTab(panelLayout);
+    return;
+  }
+  
+  // Create new meeting tab
+  const tabId = `meeting_${meeting.id}_${Date.now()}`;
+  const newTab: MeetingTab = {
+    id: tabId,
+    meetingId: meeting.id,
+    title: meeting.title || 'Untitled Meeting',
+    meeting: meeting,
+    type: 'meeting'
+  };
+  
+  // Add tab to the target panel
+  setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab));
+  setActivePanelId(targetPanelId);
+};
+
 // Close a tab
 export const handleCloseTab = (
   tabId: string,
@@ -173,6 +309,9 @@ export const handleCloseTab = (
       setSelectedEmail(null);
     }
     
+    // Note: Task and meeting tabs don't need to update selectedFile/selectedEmail
+    // as they are managed separately
+    
     return newLayout;
   });
 };
@@ -192,7 +331,7 @@ export const handleTabChange = (
   setPanelLayout(prev => updatePanelActiveTab(prev, panelId, tabId));
   setActivePanelId(panelId);
   
-  // Update selected file
+  // Update selected file/email
   const panel = findPanel(panelLayout, panelId);
   if (panel) {
     const tab = panel.tabs.find(t => t.id === tabId);
@@ -203,6 +342,7 @@ export const handleTabChange = (
       setSelectedFile(null);
       setSelectedEmail((tab as any).email || null);
     } else {
+      // For task, meeting, calendar, and ai tabs, clear file/email selection
       setSelectedFile(null);
       setSelectedEmail(null);
     }

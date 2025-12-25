@@ -2,15 +2,20 @@ import {
   Folder, 
   Mail,
   Calendar as CalendarIcon,
+  CheckSquare,
+  Video,
 } from "lucide-react"
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { EmailTab } from "./components/EmailTab"
 import { CalendarTab } from "./components/CalendarTab"
 import { FilesTab } from "./components/FilesTab/FilesTab"
+import { TasksTab } from "./components/TasksTab/TasksTab"
+import { MeetingsTab } from "./components/MeetingsTab/MeetingsTab"
 import { FileSystemItem } from "../../utils/fileTreeUtils"
+import { Task } from "../../pages/TaskStudio/types"
+import { MeetingSession } from "../../types/meeting-types"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/old-tabs"
-import { Typography } from "../ui/typography"
 
 interface AppSidebarProps {
   currentView: 'dashboard' | 'workspaces'
@@ -41,9 +46,15 @@ interface AppSidebarProps {
   onGenerateImage?: () => void
   onEventSelect?: (event: any) => void
   onOpenCalendar?: () => void
+  onTaskSelect?: (task: Task) => void
+  selectedTask?: Task | null
+  onCreateTask?: () => void
+  onMeetingSelect?: (meeting: MeetingSession) => void
+  selectedMeeting?: MeetingSession | null
+  onJoinMeeting?: () => void
 }
 
-export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, onRefreshComplete, refreshTrigger, onFileDeleted, onFileRenamed, onFileMoved, onFolderCreated, onFolderRenamed, onFolderDeleted, triggerRootFolderCreation, onEmailSelect, onComposeEmail, onCreateDocument, onCreateSpreadsheet, onCreateNotebook, onCreateDrawio, onCreateTldraw, onCreatePowerpoint, onCreateFolder, onGenerateImage, onEventSelect, onOpenCalendar }: AppSidebarProps) {
+export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, onRefreshComplete, refreshTrigger, onFileDeleted, onFileRenamed, onFileMoved, onFolderCreated, onFolderRenamed, onFolderDeleted, triggerRootFolderCreation, onEmailSelect, onComposeEmail, onCreateDocument, onCreateSpreadsheet, onCreateNotebook, onCreateDrawio, onCreateTldraw, onCreatePowerpoint, onCreateFolder, onGenerateImage, onEventSelect, onOpenCalendar, onTaskSelect, selectedTask, onCreateTask, onMeetingSelect, selectedMeeting, onJoinMeeting }: AppSidebarProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<string>('files')
 
@@ -60,33 +71,21 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
       
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="mx-4 mt-3 tab-list-responsive bg-accent">
-          <TabsTrigger value="files" className="flex items-center justify-center min-w-0" title="Files">
+        <TabsList className="mx-4 mt-3 tab-list-responsive bg-accent min-w-0 overflow-hidden">
+          <TabsTrigger value="files" className="flex items-center justify-center min-w-0 overflow-hidden flex-shrink-0" title="Files">
             <Folder className="h-4 w-4 flex-shrink-0" strokeWidth={1} />
-            <Typography
-              variant="xs"
-              className="font-medium ml-2 tab-label"
-            >
-              Files
-            </Typography>
           </TabsTrigger>
-          <TabsTrigger value="email" className="flex items-center justify-center min-w-0" title="Email">
+          <TabsTrigger value="email" className="flex items-center justify-center min-w-0 overflow-hidden flex-shrink-0" title="Email">
             <Mail className="h-4 w-4 flex-shrink-0" strokeWidth={1} />
-            <Typography
-              variant="xs"
-              className="ml-2 tab-label"
-            >
-              Email
-            </Typography>
           </TabsTrigger>
-          <TabsTrigger value="calendar" className="flex items-center justify-center min-w-0" title="Calendar">
+          <TabsTrigger value="calendar" className="flex items-center justify-center min-w-0 overflow-hidden flex-shrink-0" title="Calendar">
             <CalendarIcon className="h-4 w-4 flex-shrink-0" strokeWidth={1} />
-            <Typography
-              variant="xs"
-              className="ml-2 tab-label"
-            >
-              Calendar
-            </Typography>
+          </TabsTrigger>
+          <TabsTrigger value="tasks" className="flex items-center justify-center min-w-0 overflow-hidden flex-shrink-0" title="Tasks">
+            <CheckSquare className="h-4 w-4 flex-shrink-0" strokeWidth={1} />
+          </TabsTrigger>
+          <TabsTrigger value="meetings" className="flex items-center justify-center min-w-0 overflow-hidden flex-shrink-0" title="Meetings">
+            <Video className="h-4 w-4 flex-shrink-0" strokeWidth={1} />
           </TabsTrigger>
         </TabsList>
         
@@ -97,8 +96,8 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
             container-name: left-panel;
           }
           
-          /* Hide labels when panel width is less than 240px */
-          @container left-panel (max-width: 240px) {
+          /* Hide labels when panel width is less than 320px (adjusted for 5 tabs) */
+          @container left-panel (max-width: 320px) {
             .tab-label {
               display: none !important;
             }
@@ -150,6 +149,26 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
             <CalendarTab 
               onOpenCalendarApp={onOpenCalendar}
               onEventSelect={onEventSelect}
+            />
+          </TabsContent>
+        )}
+        
+        {activeTab === 'tasks' && (
+          <TabsContent value="tasks" className="flex-1 flex flex-col mt-0 overflow-hidden">
+            <TasksTab
+              onTaskSelect={onTaskSelect}
+              selectedTask={selectedTask}
+              onCreateTask={onCreateTask}
+            />
+          </TabsContent>
+        )}
+        
+        {activeTab === 'meetings' && (
+          <TabsContent value="meetings" className="flex-1 flex flex-col mt-0 overflow-hidden">
+            <MeetingsTab
+              onMeetingSelect={onMeetingSelect}
+              selectedMeeting={selectedMeeting}
+              onJoinMeeting={onJoinMeeting}
             />
           </TabsContent>
         )}
