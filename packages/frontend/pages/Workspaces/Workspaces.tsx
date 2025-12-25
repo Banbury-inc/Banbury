@@ -1337,7 +1337,10 @@ const Workspaces = (): React.ReactNode => {
 
           {/* Navigation Sidebar - Fixed (hidden on mobile) */}
           <div className="hidden md:block">
-            <NavSidebar onLogout={handleLogout} />
+            <NavSidebar 
+              onLogout={handleLogout} 
+              onToggleLeftPanel={() => setIsFileSidebarCollapsed(prev => !prev)}
+            />
           </div>
           
           {/* Mobile Header - Always present on mobile */}

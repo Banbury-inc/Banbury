@@ -1,4 +1,4 @@
-import { FolderOpen, LogOut, Settings, UserStarIcon, Brain, Workflow, Video, Crown} from "lucide-react"
+import { FolderOpen, LogOut, Settings, UserStarIcon, Brain, Workflow, Video, Crown, PanelLeftIcon} from "lucide-react"
 import Image from 'next/image'
 import { useRouter } from "next/router"
 import { useState, useEffect } from "react"
@@ -21,9 +21,10 @@ import { Typography } from "./ui/typography"
 
 interface NavSidebarProps {
   onLogout?: () => void
+  onToggleLeftPanel?: () => void
 }
 
-export function NavSidebar({ onLogout }: NavSidebarProps) {
+export function NavSidebar({ onLogout, onToggleLeftPanel }: NavSidebarProps) {
   const router = useRouter()
   const [username, setUsername] = useState<string>('')
   const [userPicture, setUserPicture] = useState<string | null>(null)
@@ -146,6 +147,23 @@ export function NavSidebar({ onLogout }: NavSidebarProps) {
         
         {/* Navigation Items */}
         <nav className="flex flex-col gap-2">
+          {/* Left Panel Toggle Button */}
+          {onToggleLeftPanel && (
+            <div className="relative group">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onToggleLeftPanel}
+              >
+                <PanelLeftIcon className="h-5 w-5 text-muted-foreground dark:text-white" strokeWidth={1} />
+              </Button>
+              {/* Custom CSS tooltip */}
+              <div className="absolute left-full ml-3 px-3 py-2 bg-zinc-900 dark:bg-zinc-800 text-white text-xs rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 top-1/2 -translate-y-1/2 border border-zinc-700 dark:border-white/[0.08] shadow-xl animate-in fade-in slide-in-from-left-2">
+                Toggle Left Panel
+                <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 rotate-45 bg-zinc-900 dark:bg-zinc-800 border-l border-b border-zinc-700 dark:border-white/[0.08]"></div>
+              </div>
+            </div>
+          )}
           {navItems.map((item) => {
             const Icon = item.icon
             return (
