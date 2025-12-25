@@ -346,6 +346,11 @@ export default function Admin() {
   const [errorAnalytics, setErrorAnalytics] = useState<ErrorAnalytics | null>(null)
   const [errorLoading, setErrorLoading] = useState(false)
   const [analyticsDays, setAnalyticsDays] = useState<number>(30)
+  const [apiUsageExcludedUsers, setApiUsageExcludedUsers] = useState<string[]>([])
+  const [userEngagementExcludedUsers, setUserEngagementExcludedUsers] = useState<string[]>([])
+  const [retentionExcludedUsers, setRetentionExcludedUsers] = useState<string[]>([])
+  const [featureUsageExcludedUsers, setFeatureUsageExcludedUsers] = useState<string[]>([])
+  const [errorExcludedUsers, setErrorExcludedUsers] = useState<string[]>([])
 
   useEffect(() => {
     // Check if user is authorized (mmills only)
@@ -385,23 +390,23 @@ export default function Admin() {
         }
         
         if (activeTab === 'analytics-api-usage' && !apiUsageLoading) {
-          loadApiUsageAnalytics(analyticsDays)
+          loadApiUsageAnalytics(analyticsDays, apiUsageExcludedUsers)
         }
         
         if (activeTab === 'analytics-engagement' && !userEngagementLoading) {
-          loadUserEngagementAnalytics(analyticsDays)
+          loadUserEngagementAnalytics(analyticsDays, userEngagementExcludedUsers)
         }
         
         if (activeTab === 'analytics-retention' && !retentionLoading) {
-          loadRetentionAnalytics()
+          loadRetentionAnalytics(retentionExcludedUsers)
         }
         
         if (activeTab === 'analytics-features' && !featureUsageLoading) {
-          loadFeatureUsageAnalytics(analyticsDays)
+          loadFeatureUsageAnalytics(analyticsDays, featureUsageExcludedUsers)
         }
         
         if (activeTab === 'analytics-errors' && !errorLoading) {
-          loadErrorAnalytics(analyticsDays)
+          loadErrorAnalytics(analyticsDays, errorExcludedUsers)
         }
         
         // Load scopes analytics when users tab is active (for Google integrations display)
@@ -705,10 +710,10 @@ export default function Admin() {
     }
   }
 
-  const loadApiUsageAnalytics = async (days: number = 30) => {
+  const loadApiUsageAnalytics = async (days: number = 30, excludedUsers: string[] = []) => {
     setApiUsageLoading(true)
     try {
-      const response = await ApiService.getApiUsageAnalytics(days) as ApiUsageAnalytics
+      const response = await ApiService.getApiUsageAnalytics(days, excludedUsers) as ApiUsageAnalytics
       if (response.result === 'success') {
         setApiUsageAnalytics(response)
       }
@@ -720,10 +725,10 @@ export default function Admin() {
     }
   }
 
-  const loadUserEngagementAnalytics = async (days: number = 30) => {
+  const loadUserEngagementAnalytics = async (days: number = 30, excludedUsers: string[] = []) => {
     setUserEngagementLoading(true)
     try {
-      const response = await ApiService.getUserEngagementAnalytics(days) as UserEngagementAnalytics
+      const response = await ApiService.getUserEngagementAnalytics(days, excludedUsers) as UserEngagementAnalytics
       if (response.result === 'success') {
         setUserEngagementAnalytics(response)
       }
@@ -735,10 +740,10 @@ export default function Admin() {
     }
   }
 
-  const loadRetentionAnalytics = async () => {
+  const loadRetentionAnalytics = async (excludedUsers: string[] = []) => {
     setRetentionLoading(true)
     try {
-      const response = await ApiService.getRetentionAnalytics() as RetentionAnalytics
+      const response = await ApiService.getRetentionAnalytics(excludedUsers) as RetentionAnalytics
       if (response.result === 'success') {
         setRetentionAnalytics(response)
       }
@@ -750,10 +755,10 @@ export default function Admin() {
     }
   }
 
-  const loadFeatureUsageAnalytics = async (days: number = 30) => {
+  const loadFeatureUsageAnalytics = async (days: number = 30, excludedUsers: string[] = []) => {
     setFeatureUsageLoading(true)
     try {
-      const response = await ApiService.getFeatureUsageAnalytics(days) as FeatureUsageAnalytics
+      const response = await ApiService.getFeatureUsageAnalytics(days, excludedUsers) as FeatureUsageAnalytics
       if (response.result === 'success') {
         setFeatureUsageAnalytics(response)
       }
@@ -765,10 +770,10 @@ export default function Admin() {
     }
   }
 
-  const loadErrorAnalytics = async (days: number = 30) => {
+  const loadErrorAnalytics = async (days: number = 30, excludedUsers: string[] = []) => {
     setErrorLoading(true)
     try {
-      const response = await ApiService.getErrorAnalytics(days) as ErrorAnalytics
+      const response = await ApiService.getErrorAnalytics(days, excludedUsers) as ErrorAnalytics
       if (response.result === 'success') {
         setErrorAnalytics(response)
       }
@@ -991,6 +996,16 @@ export default function Admin() {
               analyticsDays={analyticsDays}
               setAnalyticsDays={setAnalyticsDays}
               convertToEasternTime={convertToEasternTime}
+              apiUsageExcludedUsers={apiUsageExcludedUsers}
+              setApiUsageExcludedUsers={setApiUsageExcludedUsers}
+              userEngagementExcludedUsers={userEngagementExcludedUsers}
+              setUserEngagementExcludedUsers={setUserEngagementExcludedUsers}
+              retentionExcludedUsers={retentionExcludedUsers}
+              setRetentionExcludedUsers={setRetentionExcludedUsers}
+              featureUsageExcludedUsers={featureUsageExcludedUsers}
+              setFeatureUsageExcludedUsers={setFeatureUsageExcludedUsers}
+              errorExcludedUsers={errorExcludedUsers}
+              setErrorExcludedUsers={setErrorExcludedUsers}
             />
                         )}
                       </div>

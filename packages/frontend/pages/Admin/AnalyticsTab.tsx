@@ -270,14 +270,24 @@ interface AnalyticsTabProps {
   loadWorkspaceVisitStats: () => Promise<void>
   loadVisitorData: (days: number) => Promise<void>
   loadFileTypeAnalytics: (days: number, usersToExclude?: string[]) => Promise<void>
-  loadApiUsageAnalytics: (days: number) => Promise<void>
-  loadUserEngagementAnalytics: (days: number) => Promise<void>
-  loadRetentionAnalytics: () => Promise<void>
-  loadFeatureUsageAnalytics: (days: number) => Promise<void>
-  loadErrorAnalytics: (days: number) => Promise<void>
+  loadApiUsageAnalytics: (days: number, excludedUsers?: string[]) => Promise<void>
+  loadUserEngagementAnalytics: (days: number, excludedUsers?: string[]) => Promise<void>
+  loadRetentionAnalytics: (excludedUsers?: string[]) => Promise<void>
+  loadFeatureUsageAnalytics: (days: number, excludedUsers?: string[]) => Promise<void>
+  loadErrorAnalytics: (days: number, excludedUsers?: string[]) => Promise<void>
   analyticsDays: number
   setAnalyticsDays: (days: number) => void
   convertToEasternTime: (timestamp: string) => string
+  apiUsageExcludedUsers: string[]
+  setApiUsageExcludedUsers: (users: string[]) => void
+  userEngagementExcludedUsers: string[]
+  setUserEngagementExcludedUsers: (users: string[]) => void
+  retentionExcludedUsers: string[]
+  setRetentionExcludedUsers: (users: string[]) => void
+  featureUsageExcludedUsers: string[]
+  setFeatureUsageExcludedUsers: (users: string[]) => void
+  errorExcludedUsers: string[]
+  setErrorExcludedUsers: (users: string[]) => void
 }
 
 export function AnalyticsTab({
@@ -332,7 +342,17 @@ export function AnalyticsTab({
   loadErrorAnalytics,
   analyticsDays,
   setAnalyticsDays,
-  convertToEasternTime
+  convertToEasternTime,
+  apiUsageExcludedUsers,
+  setApiUsageExcludedUsers,
+  userEngagementExcludedUsers,
+  setUserEngagementExcludedUsers,
+  retentionExcludedUsers,
+  setRetentionExcludedUsers,
+  featureUsageExcludedUsers,
+  setFeatureUsageExcludedUsers,
+  errorExcludedUsers,
+  setErrorExcludedUsers
 }: AnalyticsTabProps) {
   const [visitorIpExclusions, setVisitorIpExclusions] = useState<string[]>([])
   const [visitorIpInput, setVisitorIpInput] = useState<string>('')
@@ -623,11 +643,11 @@ export function AnalyticsTab({
             loadDashboardVisitStats()
             loadWorkspaceVisitStats()
             loadFileTypeAnalytics(analyticsDays)
-            loadApiUsageAnalytics(analyticsDays)
-            loadUserEngagementAnalytics(analyticsDays)
-            loadRetentionAnalytics()
-            loadFeatureUsageAnalytics(analyticsDays)
-            loadErrorAnalytics(analyticsDays)
+            loadApiUsageAnalytics(analyticsDays, apiUsageExcludedUsers)
+            loadUserEngagementAnalytics(analyticsDays, userEngagementExcludedUsers)
+            loadRetentionAnalytics(retentionExcludedUsers)
+            loadFeatureUsageAnalytics(analyticsDays, featureUsageExcludedUsers)
+            loadErrorAnalytics(analyticsDays, errorExcludedUsers)
           }} variant="outline" className="border-zinc-300 dark:border-white/[0.06]">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
@@ -2678,6 +2698,8 @@ export function AnalyticsTab({
           apiUsageLoading={apiUsageLoading}
           loadApiUsageAnalytics={loadApiUsageAnalytics}
           days={analyticsDays}
+          excludedUsers={apiUsageExcludedUsers}
+          setExcludedUsers={setApiUsageExcludedUsers}
         />
       )}
 
@@ -2688,6 +2710,8 @@ export function AnalyticsTab({
           userEngagementLoading={userEngagementLoading}
           loadUserEngagementAnalytics={loadUserEngagementAnalytics}
           days={analyticsDays}
+          excludedUsers={userEngagementExcludedUsers}
+          setExcludedUsers={setUserEngagementExcludedUsers}
         />
       )}
 
@@ -2697,6 +2721,8 @@ export function AnalyticsTab({
           retentionAnalytics={retentionAnalytics}
           retentionLoading={retentionLoading}
           loadRetentionAnalytics={loadRetentionAnalytics}
+          excludedUsers={retentionExcludedUsers}
+          setExcludedUsers={setRetentionExcludedUsers}
         />
       )}
 
@@ -2707,6 +2733,8 @@ export function AnalyticsTab({
           featureUsageLoading={featureUsageLoading}
           loadFeatureUsageAnalytics={loadFeatureUsageAnalytics}
           days={analyticsDays}
+          excludedUsers={featureUsageExcludedUsers}
+          setExcludedUsers={setFeatureUsageExcludedUsers}
         />
       )}
 
@@ -2717,6 +2745,8 @@ export function AnalyticsTab({
           errorLoading={errorLoading}
           loadErrorAnalytics={loadErrorAnalytics}
           days={analyticsDays}
+          excludedUsers={errorExcludedUsers}
+          setExcludedUsers={setErrorExcludedUsers}
         />
       )}
 

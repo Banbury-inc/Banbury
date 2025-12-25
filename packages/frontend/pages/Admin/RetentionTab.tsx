@@ -1,8 +1,11 @@
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Filter } from 'lucide-react'
+import { useState } from 'react'
 import { XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts'
 import { ChartContainer, ChartTooltip } from '../../components/ui/chart'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
+import { Input } from '../../components/ui/old-input'
+import { Label } from '../../components/ui/label'
 
 interface RetentionAnalytics {
   result: string
@@ -22,13 +25,17 @@ interface RetentionAnalytics {
 interface RetentionTabProps {
   retentionAnalytics: RetentionAnalytics | null
   retentionLoading: boolean
-  loadRetentionAnalytics: () => Promise<void>
+  loadRetentionAnalytics: (excludedUsers?: string[]) => Promise<void>
+  excludedUsers: string[]
+  setExcludedUsers: (users: string[]) => void
 }
 
 export function RetentionTab({
   retentionAnalytics,
   retentionLoading,
-  loadRetentionAnalytics
+  loadRetentionAnalytics,
+  excludedUsers,
+  setExcludedUsers
 }: RetentionTabProps) {
   if (retentionLoading) {
     return (
@@ -47,6 +54,27 @@ export function RetentionTab({
   }
 
   const { dau, wau, mau, retention_cohorts, daily_active_users } = retentionAnalytics
+  const [userExclusionInput, setUserExclusionInput] = useState<string>('')
+
+  const addUserExclusion = async () => {
+    if (userExclusionInput.trim() && !excludedUsers.includes(userExclusionInput.trim())) {
+      const newExcludedUsers = [...excludedUsers, userExclusionInput.trim()]
+      setExcludedUsers(newExcludedUsers)
+      setUserExclusionInput('')
+      await loadRetentionAnalytics(newExcludedUsers)
+    }
+  }
+
+  const removeUserExclusion = async (userToRemove: string) => {
+    const newExcludedUsers = excludedUsers.filter(user => user !== userToRemove)
+    setExcludedUsers(newExcludedUsers)
+    await loadRetentionAnalytics(newExcludedUsers)
+  }
+
+  const clearUserExclusions = async () => {
+    setExcludedUsers([])
+    await loadRetentionAnalytics([])
+  }
 
   const retentionRate7 = wau > 0 ? ((dau / wau) * 100).toFixed(1) : '0'
   const retentionRate30 = mau > 0 ? ((wau / mau) * 100).toFixed(1) : '0'
@@ -55,11 +83,81 @@ export function RetentionTab({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-foreground">User Retention Analytics</h2>
-        <Button onClick={loadRetentionAnalytics} variant="outline" className="border-zinc-300 dark:border-white/[0.06]">
+        <Button onClick={() => loadRetentionAnalytics(excludedUsers)} variant="outline" className="border-zinc-300 dark:border-white/[0.06]">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
+
+      {/* User Exclusion Filter */}
+      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <CardHeader>
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            Exclude Users
+          </CardTitle>
+          <CardDescription className="text-muted-foreground">
+            Exclude specific users from retention analytics
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="user-exclusion" className="text-foreground text-sm mb-2 block">
+                Exclude Users (username or email)
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="user-exclusion"
+                  type="text"
+                  placeholder="Enter username or email to exclude..."
+                  value={userExclusionInput}
+                  onChange={(e) => setUserExclusionInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && addUserExclusion()}
+                  className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
+                />
+                <Button 
+                  onClick={addUserExclusion}
+                  variant="outline"
+                  size="sm"
+                  className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                >
+                  Add
+                </Button>
+              </div>
+              {excludedUsers.length > 0 && (
+                <div className="mt-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="text-muted-foreground text-xs">Excluded Users:</div>
+                    <button
+                      onClick={clearUserExclusions}
+                      className="text-xs text-red-400 hover:text-red-300"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {excludedUsers.map((user) => (
+                      <span
+                        key={user}
+                        className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
+                      >
+                        {user}
+                        <button
+                          onClick={() => removeUserExclusion(user)}
+                          className="text-red-400 hover:text-red-200 ml-1"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

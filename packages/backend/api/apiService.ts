@@ -527,9 +527,10 @@ export class ApiService {
   /**
    * Get API usage analytics
    */
-  static async getApiUsageAnalytics(days: number = 30) {
+  static async getApiUsageAnalytics(days: number = 30, excludedUsers: string[] = []) {
     try {
-      const response = await this.get(`/analytics/get_api_usage_analytics/?days=${days}`);
+      const excludedUsersParam = excludedUsers.length > 0 ? `&excluded_users=${encodeURIComponent(excludedUsers.join(','))}` : '';
+      const response = await this.get(`/analytics/get_api_usage_analytics/?days=${days}${excludedUsersParam}`);
       return response;
     } catch (error) {
       console.error('Failed to fetch API usage analytics:', error);
@@ -540,9 +541,10 @@ export class ApiService {
   /**
    * Get user engagement analytics
    */
-  static async getUserEngagementAnalytics(days: number = 30) {
+  static async getUserEngagementAnalytics(days: number = 30, excludedUsers: string[] = []) {
     try {
-      const response = await this.get(`/analytics/get_user_engagement_analytics/?days=${days}`);
+      const excludedUsersParam = excludedUsers.length > 0 ? `&excluded_users=${encodeURIComponent(excludedUsers.join(','))}` : '';
+      const response = await this.get(`/analytics/get_user_engagement_analytics/?days=${days}${excludedUsersParam}`);
       return response;
     } catch (error) {
       console.error('Failed to fetch user engagement analytics:', error);
@@ -553,9 +555,10 @@ export class ApiService {
   /**
    * Get retention analytics
    */
-  static async getRetentionAnalytics() {
+  static async getRetentionAnalytics(excludedUsers: string[] = []) {
     try {
-      const response = await this.get(`/analytics/get_retention_analytics/`);
+      const excludedUsersParam = excludedUsers.length > 0 ? `?excluded_users=${encodeURIComponent(excludedUsers.join(','))}` : '';
+      const response = await this.get(`/analytics/get_retention_analytics/${excludedUsersParam}`);
       return response;
     } catch (error) {
       console.error('Failed to fetch retention analytics:', error);
@@ -566,9 +569,10 @@ export class ApiService {
   /**
    * Get feature usage analytics
    */
-  static async getFeatureUsageAnalytics(days: number = 30) {
+  static async getFeatureUsageAnalytics(days: number = 30, excludedUsers: string[] = []) {
     try {
-      const response = await this.get(`/analytics/get_feature_usage_analytics/?days=${days}`);
+      const excludedUsersParam = excludedUsers.length > 0 ? `&excluded_users=${encodeURIComponent(excludedUsers.join(','))}` : '';
+      const response = await this.get(`/analytics/get_feature_usage_analytics/?days=${days}${excludedUsersParam}`);
       return response;
     } catch (error) {
       console.error('Failed to fetch feature usage analytics:', error);
@@ -579,9 +583,10 @@ export class ApiService {
   /**
    * Get error analytics
    */
-  static async getErrorAnalytics(days: number = 30) {
+  static async getErrorAnalytics(days: number = 30, excludedUsers: string[] = []) {
     try {
-      const response = await this.get(`/analytics/get_error_analytics/?days=${days}`);
+      const excludedUsersParam = excludedUsers.length > 0 ? `&excluded_users=${encodeURIComponent(excludedUsers.join(','))}` : '';
+      const response = await this.get(`/analytics/get_error_analytics/?days=${days}${excludedUsersParam}`);
       return response;
     } catch (error) {
       console.error('Failed to fetch error analytics:', error);

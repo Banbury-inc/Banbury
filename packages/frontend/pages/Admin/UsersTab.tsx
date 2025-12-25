@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Users, Settings2 } from 'lucide-react'
+import { Users, Settings2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Button } from '../../components/ui/button'
 import {
@@ -86,6 +86,9 @@ const COLUMNS: ColumnConfig[] = [
 
 const STORAGE_KEY = 'usersTab-visibleColumns'
 
+type SortKey = 'user' | 'email' | 'integrations' | 'plan' | 'files' | 'storage' | 'aiMessages' | 'logins' | 'lastLogin' | 'workspaceVisits' | 'lastWorkspaceVisit' | 'auth' | 'created' | null
+type SortDirection = 'asc' | 'desc' | null
+
 export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnalytics }: UsersTabProps) {
   // Build a lookup map from scopes analytics for quick access
   const integrationsMap = useMemo(
@@ -110,6 +113,9 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
     return defaultColumns
   })
 
+  const [sortKey, setSortKey] = useState<SortKey>(null)
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null)
+
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(visibleColumns)))
   }, [visibleColumns])
@@ -129,6 +135,116 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
   function isColumnVisible(columnKey: string) {
     return visibleColumns.has(columnKey)
   }
+
+  function handleSort(columnKey: SortKey) {
+    if (sortKey === columnKey) {
+      // Cycle through: asc -> desc -> null
+      if (sortDirection === 'asc') {
+        setSortDirection('desc')
+      } else if (sortDirection === 'desc') {
+        setSortKey(null)
+        setSortDirection(null)
+      }
+    } else {
+      setSortKey(columnKey)
+      setSortDirection('asc')
+    }
+  }
+
+  function getSortIcon(columnKey: SortKey) {
+    if (sortKey !== columnKey) {
+      return <ArrowUpDown className="h-3 w-3 ml-1 opacity-50" />
+    }
+    if (sortDirection === 'asc') {
+      return <ArrowUp className="h-3 w-3 ml-1" />
+    }
+    if (sortDirection === 'desc') {
+      return <ArrowDown className="h-3 w-3 ml-1" />
+    }
+    return <ArrowUpDown className="h-3 w-3 ml-1 opacity-50" />
+  }
+
+  const sortedUsers = useMemo(() => {
+    if (!sortKey || !sortDirection) {
+      return users
+    }
+
+    return [...users].sort((a, b) => {
+      let aValue: any
+      let bValue: any
+
+      switch (sortKey) {
+        case 'user':
+          aValue = `${a.first_name || ''} ${a.last_name || ''}`.trim() || a.username
+          bValue = `${b.first_name || ''} ${b.last_name || ''}`.trim() || b.username
+          break
+        case 'email':
+          aValue = a.email || ''
+          bValue = b.email || ''
+          break
+        case 'integrations':
+          const aFlags = getGoogleIntegrationsForUser(integrationsMap, a._id, a.email, a.username)
+          const bFlags = getGoogleIntegrationsForUser(integrationsMap, b._id, b.email, b.username)
+          aValue = aFlags?.scopeCount || 0
+          bValue = bFlags?.scopeCount || 0
+          break
+        case 'plan':
+          aValue = a.subscription || 'free'
+          bValue = b.subscription || 'free'
+          break
+        case 'files':
+          aValue = a.totalFiles || 0
+          bValue = b.totalFiles || 0
+          break
+        case 'storage':
+          aValue = a.totalFileSize || 0
+          bValue = b.totalFileSize || 0
+          break
+        case 'aiMessages':
+          aValue = a.aiMessageCount || 0
+          bValue = b.aiMessageCount || 0
+          break
+        case 'logins':
+          aValue = a.loginCount || 0
+          bValue = b.loginCount || 0
+          break
+        case 'lastLogin':
+          aValue = a.lastLoginDate ? new Date(a.lastLoginDate).getTime() : 0
+          bValue = b.lastLoginDate ? new Date(b.lastLoginDate).getTime() : 0
+          break
+        case 'workspaceVisits':
+          aValue = a.workspaceVisitCount || 0
+          bValue = b.workspaceVisitCount || 0
+          break
+        case 'lastWorkspaceVisit':
+          aValue = a.lastWorkspaceVisitDate ? new Date(a.lastWorkspaceVisitDate).getTime() : 0
+          bValue = b.lastWorkspaceVisitDate ? new Date(b.lastWorkspaceVisitDate).getTime() : 0
+          break
+        case 'auth':
+          aValue = a.auth_method || ''
+          bValue = b.auth_method || ''
+          break
+        case 'created':
+          aValue = a.created_at ? new Date(a.created_at).getTime() : 0
+          bValue = b.created_at ? new Date(b.created_at).getTime() : 0
+          break
+        default:
+          return 0
+      }
+
+      // Handle comparison
+      let comparison = 0
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        comparison = aValue.localeCompare(bValue)
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        comparison = aValue - bValue
+      } else {
+        comparison = String(aValue).localeCompare(String(bValue))
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison
+    })
+  }, [users, sortKey, sortDirection, integrationsMap])
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
@@ -168,7 +284,7 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
         <CardContent>
           {/* Mobile Card View */}
           <div className="md:hidden space-y-3">
-            {users.map((user) => {
+            {sortedUsers.map((user) => {
               const flags = getGoogleIntegrationsForUser(
                 integrationsMap,
                 user._id,
@@ -260,7 +376,7 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
                 </Card>
               )
             })}
-            {users.length === 0 && (
+            {sortedUsers.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 No users found.
               </div>
@@ -273,48 +389,152 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
               <thead>
                 <tr className="border-b border-zinc-300 dark:border-white/[0.06]">
                   {isColumnVisible('user') && (
-                    <th className="text-left py-2 px-2 text-muted-foreground font-medium text-sm">User</th>
+                    <th 
+                      className="text-left py-2 px-2 text-muted-foreground font-medium text-sm cursor-pointer hover:bg-accent/50 transition-colors select-none"
+                      onClick={() => handleSort('user')}
+                    >
+                      <div className="flex items-center">
+                        User
+                        {getSortIcon('user')}
+                      </div>
+                    </th>
                   )}
                   {isColumnVisible('email') && (
-                    <th className="text-left py-2 px-2 text-muted-foreground font-medium text-sm">Email</th>
+                    <th 
+                      className="text-left py-2 px-2 text-muted-foreground font-medium text-sm cursor-pointer hover:bg-accent/50 transition-colors select-none"
+                      onClick={() => handleSort('email')}
+                    >
+                      <div className="flex items-center">
+                        Email
+                        {getSortIcon('email')}
+                      </div>
+                    </th>
                   )}
                   {isColumnVisible('integrations') && (
-                    <th className="text-center py-2 px-2 text-muted-foreground font-medium text-xs">Google</th>
+                    <th 
+                      className="text-center py-2 px-2 text-muted-foreground font-medium text-xs cursor-pointer hover:bg-accent/50 transition-colors select-none"
+                      onClick={() => handleSort('integrations')}
+                    >
+                      <div className="flex items-center justify-center">
+                        Google
+                        {getSortIcon('integrations')}
+                      </div>
+                    </th>
                   )}
                   {isColumnVisible('plan') && (
-                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">Plan</th>
+                    <th 
+                      className="text-center py-2 px-1 text-muted-foreground font-medium text-xs cursor-pointer hover:bg-accent/50 transition-colors select-none"
+                      onClick={() => handleSort('plan')}
+                    >
+                      <div className="flex items-center justify-center">
+                        Plan
+                        {getSortIcon('plan')}
+                      </div>
+                    </th>
                   )}
                   {isColumnVisible('files') && (
-                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">Files</th>
+                    <th 
+                      className="text-center py-2 px-1 text-muted-foreground font-medium text-xs cursor-pointer hover:bg-accent/50 transition-colors select-none"
+                      onClick={() => handleSort('files')}
+                    >
+                      <div className="flex items-center justify-center">
+                        Files
+                        {getSortIcon('files')}
+                      </div>
+                    </th>
                   )}
                   {isColumnVisible('storage') && (
-                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">Storage</th>
+                    <th 
+                      className="text-center py-2 px-1 text-muted-foreground font-medium text-xs cursor-pointer hover:bg-accent/50 transition-colors select-none"
+                      onClick={() => handleSort('storage')}
+                    >
+                      <div className="flex items-center justify-center">
+                        Storage
+                        {getSortIcon('storage')}
+                      </div>
+                    </th>
                   )}
                   {isColumnVisible('aiMessages') && (
-                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">AI Msgs</th>
+                    <th 
+                      className="text-center py-2 px-1 text-muted-foreground font-medium text-xs cursor-pointer hover:bg-accent/50 transition-colors select-none"
+                      onClick={() => handleSort('aiMessages')}
+                    >
+                      <div className="flex items-center justify-center">
+                        AI Msgs
+                        {getSortIcon('aiMessages')}
+                      </div>
+                    </th>
                   )}
                   {isColumnVisible('logins') && (
-                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">Logins</th>
+                    <th 
+                      className="text-center py-2 px-1 text-muted-foreground font-medium text-xs cursor-pointer hover:bg-accent/50 transition-colors select-none"
+                      onClick={() => handleSort('logins')}
+                    >
+                      <div className="flex items-center justify-center">
+                        Logins
+                        {getSortIcon('logins')}
+                      </div>
+                    </th>
                   )}
                   {isColumnVisible('lastLogin') && (
-                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">Last Login</th>
+                    <th 
+                      className="text-center py-2 px-1 text-muted-foreground font-medium text-xs cursor-pointer hover:bg-accent/50 transition-colors select-none"
+                      onClick={() => handleSort('lastLogin')}
+                    >
+                      <div className="flex items-center justify-center">
+                        Last Login
+                        {getSortIcon('lastLogin')}
+                      </div>
+                    </th>
                   )}
                   {isColumnVisible('workspaceVisits') && (
-                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">Workspace Visits</th>
+                    <th 
+                      className="text-center py-2 px-1 text-muted-foreground font-medium text-xs cursor-pointer hover:bg-accent/50 transition-colors select-none"
+                      onClick={() => handleSort('workspaceVisits')}
+                    >
+                      <div className="flex items-center justify-center">
+                        Workspace Visits
+                        {getSortIcon('workspaceVisits')}
+                      </div>
+                    </th>
                   )}
                   {isColumnVisible('lastWorkspaceVisit') && (
-                    <th className="text-center py-2 px-1 text-muted-foreground font-medium text-xs">Last Workspace Visit</th>
+                    <th 
+                      className="text-center py-2 px-1 text-muted-foreground font-medium text-xs cursor-pointer hover:bg-accent/50 transition-colors select-none"
+                      onClick={() => handleSort('lastWorkspaceVisit')}
+                    >
+                      <div className="flex items-center justify-center">
+                        Last Workspace Visit
+                        {getSortIcon('lastWorkspaceVisit')}
+                      </div>
+                    </th>
                   )}
                   {isColumnVisible('auth') && (
-                    <th className="text-center py-2 px-2 text-muted-foreground font-medium text-xs">Auth</th>
+                    <th 
+                      className="text-center py-2 px-2 text-muted-foreground font-medium text-xs cursor-pointer hover:bg-accent/50 transition-colors select-none"
+                      onClick={() => handleSort('auth')}
+                    >
+                      <div className="flex items-center justify-center">
+                        Auth
+                        {getSortIcon('auth')}
+                      </div>
+                    </th>
                   )}
                   {isColumnVisible('created') && (
-                    <th className="text-center py-2 px-2 text-muted-foreground font-medium text-xs">Created</th>
+                    <th 
+                      className="text-center py-2 px-2 text-muted-foreground font-medium text-xs cursor-pointer hover:bg-accent/50 transition-colors select-none"
+                      onClick={() => handleSort('created')}
+                    >
+                      <div className="flex items-center justify-center">
+                        Created
+                        {getSortIcon('created')}
+                      </div>
+                    </th>
                   )}
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
+                {sortedUsers.map((user) => (
                   <tr key={user._id} className="border-b border-zinc-200 dark:border-white/[0.04] hover:bg-accent/50 dark:hover:bg-accent/50 transition-colors">
                     {isColumnVisible('user') && (
                       <td className="py-2 px-2">
@@ -459,7 +679,7 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
             </table>
           </div>
           
-          {users.length === 0 && (
+          {sortedUsers.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               No users found.
             </div>
