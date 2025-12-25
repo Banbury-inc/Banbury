@@ -489,6 +489,7 @@ const Workspaces = (): React.ReactNode => {
           proportionalLayout={true}
           defaultSizes={group.children.map((child) => child.size || 50)}
           key={group.id}
+          className="h-full"
         >
           {group.children.map((child) => (
             <Allotment.Pane key={child.id}>
@@ -660,6 +661,7 @@ const Workspaces = (): React.ReactNode => {
           proportionalLayout={true}
           defaultSizes={group.children.map((child) => child.size || 50)}
           key={group.id}
+          className="h-full"
         >
           {group.children.map((child) => (
             <Allotment.Pane key={child.id}>
@@ -1375,7 +1377,7 @@ const Workspaces = (): React.ReactNode => {
       <TiptapAIProvider>
         <ClaudeRuntimeProvider>
           <div 
-            className="flex h-screen bg-background dark:bg-background"
+            className="flex h-screen overflow-hidden bg-background dark:bg-background"
             onClick={(e) => {
               // Check if the click is outside any CSV editor
               const target = e.target as HTMLElement;
@@ -1491,7 +1493,7 @@ const Workspaces = (): React.ReactNode => {
           )}
           
           {/* Main Content Area with Resizable Panels */}
-          <div className={`flex flex-1 ${isMobile ? 'pt-[44px]' : 'md:ml-16'} flex-col`}>
+          <div className={`flex flex-1 ${isMobile ? 'pt-[44px]' : 'md:ml-16'} flex-col overflow-hidden min-h-0`}>
             {/* Mobile File Sidebar Drawer */}
             {isMobile && (
               <Sheet open={mobileFileSidebarOpen} onOpenChange={setMobileFileSidebarOpen}>
@@ -1669,8 +1671,8 @@ const Workspaces = (): React.ReactNode => {
             )}
 
             {/* Resizable Panels */}
-            <div className="flex flex-1">
-              <div className="flex-1 flex">
+            <div className="flex flex-1 overflow-hidden min-h-0">
+              <div className="flex-1 flex overflow-hidden min-h-0">
                 {/* File Sidebar Panel - Desktop Only */}
                 {!isMobile && (
                   <div 
@@ -1751,8 +1753,8 @@ const Workspaces = (): React.ReactNode => {
                     </div>
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <Allotment>
+                <div className="flex-1 min-w-0 overflow-hidden min-h-0">
+                  <Allotment className="h-full">
                 
                 {/* Main Content Panel - Only show when files are open */}
                 {getAllTabs(panelLayout).length > 0 && (
@@ -1937,6 +1939,14 @@ const Workspaces = (): React.ReactNode => {
         />
 
         <style>{`
+          html, body {
+            overflow: hidden;
+            height: 100%;
+          }
+          #__next {
+            height: 100%;
+            overflow: hidden;
+          }
           .drag-cursor {
             cursor: grabbing !important;
           }
