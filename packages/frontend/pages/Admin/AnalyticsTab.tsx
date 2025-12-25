@@ -33,6 +33,7 @@ interface VisitorData {
   campaign_id?: string
   content_type?: string
   user_agent?: string
+  device_type?: string
   tracking_version?: string
 }
 
@@ -2148,6 +2149,12 @@ export function AnalyticsTab({
                           <div className="text-foreground text-xs">{visitor.city}</div>
                           <div className="text-muted-foreground text-xs">{visitor.region}, {visitor.country}</div>
                         </div>
+                        {visitor.device_type && (
+                          <div>
+                            <div className="text-muted-foreground text-xs">Device</div>
+                            <div className="text-foreground text-xs capitalize">{visitor.device_type}</div>
+                          </div>
+                        )}
                         {visitor.campaign_id && (
                           <div className="col-span-2">
                             <div className="text-muted-foreground text-xs">Campaign</div>
@@ -2176,6 +2183,7 @@ export function AnalyticsTab({
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">Source</th>
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">Campaign</th>
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">Content Type</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Device</th>
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">Location</th>
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">Time</th>
                   </tr>
@@ -2239,6 +2247,20 @@ export function AnalyticsTab({
                             'bg-muted/50 text-muted-foreground'
                           }`}>
                             {visitor.content_type.replace('_', ' ')}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">Unknown</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        {visitor.device_type ? (
+                          <span className={`px-2 py-1 rounded text-xs font-medium capitalize ${
+                            visitor.device_type === 'mobile' ? 'bg-blue-900/50 text-blue-300' :
+                            visitor.device_type === 'tablet' ? 'bg-purple-900/50 text-purple-300' :
+                            visitor.device_type === 'desktop' ? 'bg-green-900/50 text-green-300' :
+                            'bg-muted/50 text-muted-foreground'
+                          }`}>
+                            {visitor.device_type}
                           </span>
                         ) : (
                           <span className="text-muted-foreground text-xs">Unknown</span>

@@ -116,6 +116,7 @@ interface VisitorData {
   campaign_id?: string
   content_type?: string
   user_agent?: string
+  device_type?: string
   tracking_version?: string
 }
 

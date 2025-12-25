@@ -385,6 +385,7 @@ export class ApiService {
     campaign_id?: string;
     content_type?: string;
     user_agent?: string;
+    device_type?: string;
   }) {
     try {
       await this.post('/authentication/add_site_visitor_info_enhanced/', {

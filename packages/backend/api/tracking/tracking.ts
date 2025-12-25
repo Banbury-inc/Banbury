@@ -8,6 +8,7 @@ interface TrackingData {
     campaign_id?: string;
     content_type?: string;
     user_agent?: string;
+    device_type?: string;
 }
 
 export default class Tracking {
@@ -33,6 +34,9 @@ export default class Tracking {
         const referrerSource = this.extractReferrerSource(urlParams);
         const campaignId = this.extractCampaignId(urlParams);
         
+        // Detect device type
+        const deviceType = this.detectDeviceType();
+        
         // Prepare enhanced tracking data
         const trackingData: TrackingData = {
             path,
@@ -41,7 +45,8 @@ export default class Tracking {
             referrer_source: referrerSource,
             campaign_id: campaignId,
             content_type: additionalData?.contentType || 'web_page',
-            user_agent: navigator.userAgent || 'Unknown'
+            user_agent: navigator.userAgent || 'Unknown',
+            device_type: deviceType
         };
 
         // Send enhanced tracking data to your endpoint using the API service
@@ -121,6 +126,25 @@ export default class Tracking {
     }
     
     return undefined;
+  }
+
+  private static detectDeviceType(): string {
+    const userAgent = navigator.userAgent || '';
+    const ua = userAgent.toLowerCase();
+    
+    // Check for mobile devices
+    const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i;
+    
+    if (mobileRegex.test(ua)) {
+      // Distinguish between tablet and mobile phone
+      if (/ipad|tablet|playbook|silk/i.test(ua)) {
+        return 'tablet';
+      }
+      return 'mobile';
+    }
+    
+    // Default to desktop for non-mobile devices
+    return 'desktop';
   }
 }
 
