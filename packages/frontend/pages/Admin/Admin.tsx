@@ -237,6 +237,71 @@ interface FileTypeAnalytics {
   daily_stats: DailyFileStats[]
 }
 
+interface ApiUsageAnalytics {
+  result: string
+  summary: {
+    total_requests: number
+    unique_endpoints: number
+    avg_response_time: number
+    error_rate: number
+    period_days: number
+  }
+  endpoint_stats: Array<{
+    endpoint: string
+    count: number
+    avg_response_time: number
+    error_count: number
+    p95_response_time: number
+  }>
+  daily_stats: Array<{date: string, count: number, avg_response_time: number}>
+  hourly_stats: Array<{hour: number, count: number}>
+  user_stats: Array<{username: string, count: number}>
+}
+
+interface UserEngagementAnalytics {
+  result: string
+  summary: {
+    total_sessions: number
+    avg_session_duration: number
+    total_active_time: number
+    avg_active_time_per_session: number
+  }
+  daily_stats: Array<{date: string, sessions: number, active_time: number}>
+  session_duration_distribution: Array<{range: string, count: number}>
+}
+
+interface RetentionAnalytics {
+  result: string
+  dau: number
+  wau: number
+  mau: number
+  retention_cohorts: Array<{cohort: string, day_0: number, day_7: number, day_30: number, total?: number}>
+  daily_active_users: Array<{date: string, count: number}>
+}
+
+interface FeatureUsageAnalytics {
+  result: string
+  summary: {
+    total_feature_uses: number
+    unique_features: number
+    unique_users: number
+  }
+  feature_stats: Array<{feature: string, count: number, unique_users: number}>
+  daily_stats: Array<{date: string, feature: string, count: number}>
+}
+
+interface ErrorAnalytics {
+  result: string
+  summary: {
+    total_errors: number
+    error_rate: number
+    unique_error_types: number
+  }
+  error_by_type: Array<{error_type: string, count: number}>
+  error_by_endpoint: Array<{endpoint: string, count: number}>
+  daily_error_stats: Array<{date: string, count: number}>
+}
+
 export default function Admin() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -270,6 +335,17 @@ export default function Admin() {
   const [fileTypeAnalytics, setFileTypeAnalytics] = useState<FileTypeAnalytics | null>(null)
   const [fileTypeLoading, setFileTypeLoading] = useState(false)
   const [excludedUsers, setExcludedUsers] = useState<string[]>([])
+  const [apiUsageAnalytics, setApiUsageAnalytics] = useState<ApiUsageAnalytics | null>(null)
+  const [apiUsageLoading, setApiUsageLoading] = useState(false)
+  const [userEngagementAnalytics, setUserEngagementAnalytics] = useState<UserEngagementAnalytics | null>(null)
+  const [userEngagementLoading, setUserEngagementLoading] = useState(false)
+  const [retentionAnalytics, setRetentionAnalytics] = useState<RetentionAnalytics | null>(null)
+  const [retentionLoading, setRetentionLoading] = useState(false)
+  const [featureUsageAnalytics, setFeatureUsageAnalytics] = useState<FeatureUsageAnalytics | null>(null)
+  const [featureUsageLoading, setFeatureUsageLoading] = useState(false)
+  const [errorAnalytics, setErrorAnalytics] = useState<ErrorAnalytics | null>(null)
+  const [errorLoading, setErrorLoading] = useState(false)
+  const [analyticsDays, setAnalyticsDays] = useState<number>(30)
 
   useEffect(() => {
     // Check if user is authorized (mmills only)
@@ -295,24 +371,44 @@ export default function Admin() {
   // Load visitor, login, scopes, and conversations data when analytics tab is selected
   useEffect(() => {
         if ((activeTab === 'analytics-overview' || activeTab === 'analytics-visitors' || activeTab === 'analytics-conversations') && !visitorLoading && !loginLoading && !scopesLoading && !conversationsLoading && !usersLoading && !dashboardVisitLoading && !workspaceVisitLoading) {
-          loadVisitorData(30)
-          loadLoginData(30)
+          loadVisitorData(analyticsDays)
+          loadLoginData(analyticsDays)
           loadScopesAnalytics()
-          loadConversationsAnalytics(30, conversationUserFilter)
-          loadConversationUsers(30)
+          loadConversationsAnalytics(analyticsDays, conversationUserFilter)
+          loadConversationUsers(analyticsDays)
           loadDashboardVisitStats()
           loadWorkspaceVisitStats()
         }
         
         if (activeTab === 'analytics-filetypes' && !fileTypeLoading) {
-          loadFileTypeAnalytics(30)
+          loadFileTypeAnalytics(analyticsDays)
+        }
+        
+        if (activeTab === 'analytics-api-usage' && !apiUsageLoading) {
+          loadApiUsageAnalytics(analyticsDays)
+        }
+        
+        if (activeTab === 'analytics-engagement' && !userEngagementLoading) {
+          loadUserEngagementAnalytics(analyticsDays)
+        }
+        
+        if (activeTab === 'analytics-retention' && !retentionLoading) {
+          loadRetentionAnalytics()
+        }
+        
+        if (activeTab === 'analytics-features' && !featureUsageLoading) {
+          loadFeatureUsageAnalytics(analyticsDays)
+        }
+        
+        if (activeTab === 'analytics-errors' && !errorLoading) {
+          loadErrorAnalytics(analyticsDays)
         }
         
         // Load scopes analytics when users tab is active (for Google integrations display)
         if (activeTab === 'users' && !scopesLoading && !scopesAnalytics) {
           loadScopesAnalytics()
         }
-  }, [activeTab])
+  }, [activeTab, analyticsDays])
 
   // Debug daily_stats changes
   useEffect(() => {
@@ -609,6 +705,81 @@ export default function Admin() {
     }
   }
 
+  const loadApiUsageAnalytics = async (days: number = 30) => {
+    setApiUsageLoading(true)
+    try {
+      const response = await ApiService.getApiUsageAnalytics(days) as ApiUsageAnalytics
+      if (response.result === 'success') {
+        setApiUsageAnalytics(response)
+      }
+    } catch (error) {
+      console.error('Failed to load API usage analytics:', error)
+      setApiUsageAnalytics(null)
+    } finally {
+      setApiUsageLoading(false)
+    }
+  }
+
+  const loadUserEngagementAnalytics = async (days: number = 30) => {
+    setUserEngagementLoading(true)
+    try {
+      const response = await ApiService.getUserEngagementAnalytics(days) as UserEngagementAnalytics
+      if (response.result === 'success') {
+        setUserEngagementAnalytics(response)
+      }
+    } catch (error) {
+      console.error('Failed to load user engagement analytics:', error)
+      setUserEngagementAnalytics(null)
+    } finally {
+      setUserEngagementLoading(false)
+    }
+  }
+
+  const loadRetentionAnalytics = async () => {
+    setRetentionLoading(true)
+    try {
+      const response = await ApiService.getRetentionAnalytics() as RetentionAnalytics
+      if (response.result === 'success') {
+        setRetentionAnalytics(response)
+      }
+    } catch (error) {
+      console.error('Failed to load retention analytics:', error)
+      setRetentionAnalytics(null)
+    } finally {
+      setRetentionLoading(false)
+    }
+  }
+
+  const loadFeatureUsageAnalytics = async (days: number = 30) => {
+    setFeatureUsageLoading(true)
+    try {
+      const response = await ApiService.getFeatureUsageAnalytics(days) as FeatureUsageAnalytics
+      if (response.result === 'success') {
+        setFeatureUsageAnalytics(response)
+      }
+    } catch (error) {
+      console.error('Failed to load feature usage analytics:', error)
+      setFeatureUsageAnalytics(null)
+    } finally {
+      setFeatureUsageLoading(false)
+    }
+  }
+
+  const loadErrorAnalytics = async (days: number = 30) => {
+    setErrorLoading(true)
+    try {
+      const response = await ApiService.getErrorAnalytics(days) as ErrorAnalytics
+      if (response.result === 'success') {
+        setErrorAnalytics(response)
+      }
+    } catch (error) {
+      console.error('Failed to load error analytics:', error)
+      setErrorAnalytics(null)
+    } finally {
+      setErrorLoading(false)
+    }
+  }
+
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity },
@@ -616,7 +787,12 @@ export default function Admin() {
     { id: 'analytics-overview', label: 'Analytics Overview', icon: BarChart },
     { id: 'analytics-visitors', label: 'Visitors', icon: Eye },
     { id: 'analytics-conversations', label: 'AI Conversations', icon: MessageSquare },
-    { id: 'analytics-filetypes', label: 'File Types', icon: FileType }
+    { id: 'analytics-filetypes', label: 'File Types', icon: FileType },
+    { id: 'analytics-api-usage', label: 'API Usage', icon: BarChart },
+    { id: 'analytics-engagement', label: 'User Engagement', icon: Activity },
+    { id: 'analytics-retention', label: 'Retention', icon: Users },
+    { id: 'analytics-features', label: 'Feature Usage', icon: Activity },
+    { id: 'analytics-errors', label: 'Errors', icon: Activity }
   ]
 
   if (loading) {
@@ -761,9 +937,9 @@ export default function Admin() {
             />
           )}
 
-          {(activeTab === 'analytics-overview' || activeTab === 'analytics-visitors' || activeTab === 'analytics-conversations' || activeTab === 'analytics-filetypes') && (
+          {(activeTab === 'analytics-overview' || activeTab === 'analytics-visitors' || activeTab === 'analytics-conversations' || activeTab === 'analytics-filetypes' || activeTab === 'analytics-api-usage' || activeTab === 'analytics-engagement' || activeTab === 'analytics-retention' || activeTab === 'analytics-features' || activeTab === 'analytics-errors') && (
             <AnalyticsTab 
-              analyticsSubTab={activeTab === 'analytics-overview' ? 'overview' : activeTab === 'analytics-visitors' ? 'visitors' : activeTab === 'analytics-conversations' ? 'conversations' : 'filetypes'}
+              analyticsSubTab={activeTab === 'analytics-overview' ? 'overview' : activeTab === 'analytics-visitors' ? 'visitors' : activeTab === 'analytics-conversations' ? 'conversations' : activeTab === 'analytics-filetypes' ? 'filetypes' : activeTab === 'analytics-api-usage' ? 'api-usage' : activeTab === 'analytics-engagement' ? 'engagement' : activeTab === 'analytics-retention' ? 'retention' : activeTab === 'analytics-features' ? 'features' : activeTab === 'analytics-errors' ? 'errors' : 'overview'}
               visitorData={visitorData}
               visitorStats={visitorStats}
               visitorLoading={visitorLoading}
@@ -789,6 +965,16 @@ export default function Admin() {
               fileTypeLoading={fileTypeLoading}
               excludedUsers={excludedUsers}
               setExcludedUsers={setExcludedUsers}
+              apiUsageAnalytics={apiUsageAnalytics}
+              apiUsageLoading={apiUsageLoading}
+              userEngagementAnalytics={userEngagementAnalytics}
+              userEngagementLoading={userEngagementLoading}
+              retentionAnalytics={retentionAnalytics}
+              retentionLoading={retentionLoading}
+              featureUsageAnalytics={featureUsageAnalytics}
+              featureUsageLoading={featureUsageLoading}
+              errorAnalytics={errorAnalytics}
+              errorLoading={errorLoading}
               loadVisitorData={loadVisitorData}
               loadLoginData={loadLoginData}
               loadScopesAnalytics={loadScopesAnalytics}
@@ -797,6 +983,13 @@ export default function Admin() {
               loadDashboardVisitStats={loadDashboardVisitStats}
               loadWorkspaceVisitStats={loadWorkspaceVisitStats}
               loadFileTypeAnalytics={loadFileTypeAnalytics}
+              loadApiUsageAnalytics={loadApiUsageAnalytics}
+              loadUserEngagementAnalytics={loadUserEngagementAnalytics}
+              loadRetentionAnalytics={loadRetentionAnalytics}
+              loadFeatureUsageAnalytics={loadFeatureUsageAnalytics}
+              loadErrorAnalytics={loadErrorAnalytics}
+              analyticsDays={analyticsDays}
+              setAnalyticsDays={setAnalyticsDays}
               convertToEasternTime={convertToEasternTime}
             />
                         )}

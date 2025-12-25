@@ -525,6 +525,71 @@ export class ApiService {
   }
 
   /**
+   * Get API usage analytics
+   */
+  static async getApiUsageAnalytics(days: number = 30) {
+    try {
+      const response = await this.get(`/analytics/get_api_usage_analytics/?days=${days}`);
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch API usage analytics:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get user engagement analytics
+   */
+  static async getUserEngagementAnalytics(days: number = 30) {
+    try {
+      const response = await this.get(`/analytics/get_user_engagement_analytics/?days=${days}`);
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch user engagement analytics:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get retention analytics
+   */
+  static async getRetentionAnalytics() {
+    try {
+      const response = await this.get(`/analytics/get_retention_analytics/`);
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch retention analytics:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get feature usage analytics
+   */
+  static async getFeatureUsageAnalytics(days: number = 30) {
+    try {
+      const response = await this.get(`/analytics/get_feature_usage_analytics/?days=${days}`);
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch feature usage analytics:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get error analytics
+   */
+  static async getErrorAnalytics(days: number = 30) {
+    try {
+      const response = await this.get(`/analytics/get_error_analytics/?days=${days}`);
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch error analytics:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get list of users with conversations (admin only)
    */
   static async getConversationUsers(days: number = 30) {

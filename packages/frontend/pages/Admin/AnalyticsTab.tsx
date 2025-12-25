@@ -18,6 +18,11 @@ import {
   clampPage 
 } from '../handlers/adminVisitors'
 import { AIConversationsTab } from './AIConversationsTab'
+import { ApiUsageTab } from './ApiUsageTab'
+import { UserEngagementTab } from './UserEngagementTab'
+import { RetentionTab } from './RetentionTab'
+import { FeatureUsageTab } from './FeatureUsageTab'
+import { ErrorTrackingTab } from './ErrorTrackingTab'
 
 interface VisitorData {
   _id: string
@@ -154,6 +159,71 @@ interface FileTypeAnalytics {
   daily_stats: DailyFileStats[]
 }
 
+interface ApiUsageAnalytics {
+  result: string
+  summary: {
+    total_requests: number
+    unique_endpoints: number
+    avg_response_time: number
+    error_rate: number
+    period_days: number
+  }
+  endpoint_stats: Array<{
+    endpoint: string
+    count: number
+    avg_response_time: number
+    error_count: number
+    p95_response_time: number
+  }>
+  daily_stats: Array<{date: string, count: number, avg_response_time: number}>
+  hourly_stats: Array<{hour: number, count: number}>
+  user_stats: Array<{username: string, count: number}>
+}
+
+interface UserEngagementAnalytics {
+  result: string
+  summary: {
+    total_sessions: number
+    avg_session_duration: number
+    total_active_time: number
+    avg_active_time_per_session: number
+  }
+  daily_stats: Array<{date: string, sessions: number, active_time: number}>
+  session_duration_distribution: Array<{range: string, count: number}>
+}
+
+interface RetentionAnalytics {
+  result: string
+  dau: number
+  wau: number
+  mau: number
+  retention_cohorts: Array<{cohort: string, day_0: number, day_7: number, day_30: number, total?: number}>
+  daily_active_users: Array<{date: string, count: number}>
+}
+
+interface FeatureUsageAnalytics {
+  result: string
+  summary: {
+    total_feature_uses: number
+    unique_features: number
+    unique_users: number
+  }
+  feature_stats: Array<{feature: string, count: number, unique_users: number}>
+  daily_stats: Array<{date: string, feature: string, count: number}>
+}
+
+interface ErrorAnalytics {
+  result: string
+  summary: {
+    total_errors: number
+    error_rate: number
+    unique_error_types: number
+  }
+  error_by_type: Array<{error_type: string, count: number}>
+  error_by_endpoint: Array<{endpoint: string, count: number}>
+  daily_error_stats: Array<{date: string, count: number}>
+}
+
 interface AnalyticsTabProps {
   analyticsSubTab: string
   visitorData: VisitorData[]
@@ -181,6 +251,16 @@ interface AnalyticsTabProps {
   fileTypeLoading: boolean
   excludedUsers: string[]
   setExcludedUsers: (users: string[]) => void
+  apiUsageAnalytics: ApiUsageAnalytics | null
+  apiUsageLoading: boolean
+  userEngagementAnalytics: UserEngagementAnalytics | null
+  userEngagementLoading: boolean
+  retentionAnalytics: RetentionAnalytics | null
+  retentionLoading: boolean
+  featureUsageAnalytics: FeatureUsageAnalytics | null
+  featureUsageLoading: boolean
+  errorAnalytics: ErrorAnalytics | null
+  errorLoading: boolean
   loadVisitorData: (days: number) => Promise<void>
   loadLoginData: (days: number) => Promise<void>
   loadScopesAnalytics: () => Promise<void>
@@ -188,7 +268,15 @@ interface AnalyticsTabProps {
   loadConversationUsers: (days: number) => Promise<void>
   loadDashboardVisitStats: () => Promise<void>
   loadWorkspaceVisitStats: () => Promise<void>
+  loadVisitorData: (days: number) => Promise<void>
   loadFileTypeAnalytics: (days: number, usersToExclude?: string[]) => Promise<void>
+  loadApiUsageAnalytics: (days: number) => Promise<void>
+  loadUserEngagementAnalytics: (days: number) => Promise<void>
+  loadRetentionAnalytics: () => Promise<void>
+  loadFeatureUsageAnalytics: (days: number) => Promise<void>
+  loadErrorAnalytics: (days: number) => Promise<void>
+  analyticsDays: number
+  setAnalyticsDays: (days: number) => void
   convertToEasternTime: (timestamp: string) => string
 }
 
@@ -219,6 +307,16 @@ export function AnalyticsTab({
   fileTypeLoading,
   excludedUsers,
   setExcludedUsers,
+  apiUsageAnalytics,
+  apiUsageLoading,
+  userEngagementAnalytics,
+  userEngagementLoading,
+  retentionAnalytics,
+  retentionLoading,
+  featureUsageAnalytics,
+  featureUsageLoading,
+  errorAnalytics,
+  errorLoading,
   loadVisitorData,
   loadLoginData,
   loadScopesAnalytics,
@@ -227,6 +325,13 @@ export function AnalyticsTab({
   loadDashboardVisitStats,
   loadWorkspaceVisitStats,
   loadFileTypeAnalytics,
+  loadApiUsageAnalytics,
+  loadUserEngagementAnalytics,
+  loadRetentionAnalytics,
+  loadFeatureUsageAnalytics,
+  loadErrorAnalytics,
+  analyticsDays,
+  setAnalyticsDays,
   convertToEasternTime
 }: AnalyticsTabProps) {
   const [visitorIpExclusions, setVisitorIpExclusions] = useState<string[]>([])
@@ -467,6 +572,16 @@ export function AnalyticsTab({
         return 'AI Conversations'
       case 'filetypes':
         return 'File Types Analytics'
+      case 'api-usage':
+        return 'API Usage Analytics'
+      case 'engagement':
+        return 'User Engagement Analytics'
+      case 'retention':
+        return 'User Retention Analytics'
+      case 'features':
+        return 'Feature Usage Analytics'
+      case 'errors':
+        return 'Error Tracking Analytics'
       default:
         return 'Analytics'
     }
@@ -480,29 +595,39 @@ export function AnalyticsTab({
           <select 
             onChange={(e) => {
               const days = parseInt(e.target.value)
+              setAnalyticsDays(days)
               loadVisitorData(days)
               loadLoginData(days)
               loadScopesAnalytics()
               loadConversationsAnalytics(days, conversationUserFilter)
               loadConversationUsers(days)
               loadFileTypeAnalytics(days)
+              loadApiUsageAnalytics(days)
+              loadUserEngagementAnalytics(days)
+              loadFeatureUsageAnalytics(days)
+              loadErrorAnalytics(days)
             }}
             className="bg-card text-foreground border border-zinc-300 dark:border-white/[0.06] rounded px-3 py-2"
-            defaultValue="30"
+            value={analyticsDays}
           >
             <option value="7">Last 7 days</option>
             <option value="30">Last 30 days</option>
             <option value="90">Last 90 days</option>
           </select>
           <Button onClick={() => {
-            loadVisitorData(30)
-            loadLoginData(30)
+            loadVisitorData(analyticsDays)
+            loadLoginData(analyticsDays)
             loadScopesAnalytics()
-            loadConversationsAnalytics(30, conversationUserFilter)
-            loadConversationUsers(30)
+            loadConversationsAnalytics(analyticsDays, conversationUserFilter)
+            loadConversationUsers(analyticsDays)
             loadDashboardVisitStats()
             loadWorkspaceVisitStats()
-            loadFileTypeAnalytics(30)
+            loadFileTypeAnalytics(analyticsDays)
+            loadApiUsageAnalytics(analyticsDays)
+            loadUserEngagementAnalytics(analyticsDays)
+            loadRetentionAnalytics()
+            loadFeatureUsageAnalytics(analyticsDays)
+            loadErrorAnalytics(analyticsDays)
           }} variant="outline" className="border-zinc-300 dark:border-white/[0.06]">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
@@ -2543,6 +2668,55 @@ export function AnalyticsTab({
           usersLoading={usersLoading}
           loadConversationsAnalytics={loadConversationsAnalytics}
           convertToEasternTime={convertToEasternTime}
+        />
+      )}
+
+      {/* API Usage Tab */}
+      {analyticsSubTab === 'api-usage' && (
+        <ApiUsageTab
+          apiUsageAnalytics={apiUsageAnalytics}
+          apiUsageLoading={apiUsageLoading}
+          loadApiUsageAnalytics={loadApiUsageAnalytics}
+          days={analyticsDays}
+        />
+      )}
+
+      {/* User Engagement Tab */}
+      {analyticsSubTab === 'engagement' && (
+        <UserEngagementTab
+          userEngagementAnalytics={userEngagementAnalytics}
+          userEngagementLoading={userEngagementLoading}
+          loadUserEngagementAnalytics={loadUserEngagementAnalytics}
+          days={analyticsDays}
+        />
+      )}
+
+      {/* Retention Tab */}
+      {analyticsSubTab === 'retention' && (
+        <RetentionTab
+          retentionAnalytics={retentionAnalytics}
+          retentionLoading={retentionLoading}
+          loadRetentionAnalytics={loadRetentionAnalytics}
+        />
+      )}
+
+      {/* Feature Usage Tab */}
+      {analyticsSubTab === 'features' && (
+        <FeatureUsageTab
+          featureUsageAnalytics={featureUsageAnalytics}
+          featureUsageLoading={featureUsageLoading}
+          loadFeatureUsageAnalytics={loadFeatureUsageAnalytics}
+          days={analyticsDays}
+        />
+      )}
+
+      {/* Error Tracking Tab */}
+      {analyticsSubTab === 'errors' && (
+        <ErrorTrackingTab
+          errorAnalytics={errorAnalytics}
+          errorLoading={errorLoading}
+          loadErrorAnalytics={loadErrorAnalytics}
+          days={analyticsDays}
         />
       )}
 

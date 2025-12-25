@@ -139,16 +139,16 @@
   },
   "active": "9454596cb4bc6a15",
   "lastOpenFiles": [
-    "packages/frontend/pages/Workspaces/handlers/handleLeftPanelResize.ts",
-    "packages/frontend/components/MiddlePanel/MeetingViewer/MeetingJoinComposer.tsx",
-    "packages/frontend/components/MiddlePanel/MeetingViewer/MeetingViewer.tsx",
-    "packages/frontend/components/MiddlePanel/MeetingViewer",
-    "packages/frontend/components/MiddlePanel/TaskViewer/TaskComposer.tsx",
-    "packages/frontend/components/MiddlePanel/TaskViewer/TaskViewer.tsx",
-    "packages/frontend/components/MiddlePanel/TaskViewer",
-    "packages/frontend/components/LeftPanel/components/MeetingsTab/MeetingsTab.tsx",
-    "packages/frontend/components/LeftPanel/components/MeetingsTab/components/MeetingsListView.tsx",
-    "packages/frontend/components/LeftPanel/components/MeetingsTab/components",
-    "packages/frontend/components/LeftPanel/components/MeetingsTab/handlers/handleRefreshMeetings.ts"
+    "packages/frontend/pages/Admin/ErrorTrackingTab.tsx",
+    "packages/frontend/pages/Admin/FeatureUsageTab.tsx",
+    "packages/frontend/pages/Admin/RetentionTab.tsx",
+    "packages/frontend/pages/Admin/UserEngagementTab.tsx",
+    "packages/frontend/pages/Admin/ApiUsageTab.tsx",
+    "packages/frontend/utils/errorTracker.ts",
+    "packages/frontend/utils/featureUsageTracker.ts",
+    "packages/frontend/utils/userEngagementTracker.ts",
+    "packages/frontend/components/MiddlePanel/Dashboard/Dashboard.tsx",
+    "packages/frontend/components/MiddlePanel/Dashboard",
+    "packages/frontend/components/modals/settings-tabs/handlers/appearanceHandlers.ts"
   ]
 }

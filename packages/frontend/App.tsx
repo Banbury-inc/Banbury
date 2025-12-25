@@ -17,6 +17,8 @@ import Login from './pages/Login';
 import MeetingAgent from './pages/MeetingAgent/MeetingAgent';
 import Workspaces from './pages/Workspaces';
 import { ApiService } from '../backend/api/apiService';
+import { getErrorTracker } from './utils/errorTracker';
+import { getUserEngagementTracker } from './utils/userEngagementTracker';
 
 import './index.css';
 
@@ -28,6 +30,38 @@ const PageTracker = () => {
     const fullPath = `${location.pathname}${location.search}${location.hash}`;
     ApiService.Tracking.trackPageView(fullPath);
   }, [location.pathname, location.search, location.hash]);
+
+  return null;
+};
+
+const AnalyticsInitializer = () => {
+  useEffect(() => {
+    // Initialize error tracking
+    const errorTracker = getErrorTracker();
+    errorTracker.initialize();
+
+    // Initialize user engagement tracking if user is authenticated
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('authToken');
+      const username = localStorage.getItem('username');
+      
+      if (token && username) {
+        const engagementTracker = getUserEngagementTracker();
+        engagementTracker.startSession(undefined, username);
+
+        // End session on page unload
+        const handleBeforeUnload = () => {
+          engagementTracker.endSession(undefined, username);
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+          window.removeEventListener('beforeunload', handleBeforeUnload);
+          engagementTracker.endSession(undefined, username);
+        };
+      }
+    }
+  }, []);
 
   return null;
 };
@@ -47,6 +81,7 @@ const App = (): JSX.Element => {
       >
         <BrowserRouter>
           <PageTracker />
+          <AnalyticsInitializer />
           <Routes>
             <Route path='/workspaces' element={<Workspaces />} />
             <Route path='/knowledge' element={<Knowledge />} />
