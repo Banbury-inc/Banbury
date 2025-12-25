@@ -278,9 +278,9 @@ export function FilesTab({
           <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden @container">
             {/* Provider Selector */}
             <Select key={`provider-${fileProvider}`} value={fileProvider} onValueChange={(value) => handleProviderChange(value as FileProvider)}>
-              <SelectTrigger size="xs" className="min-w-0 w-auto">
+              <SelectTrigger size="xs" className="min-w-0 w-auto max-w-full overflow-hidden">
                 <SelectValue>
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
                     {(() => {
                       const Icon = getProviderIcon(fileProvider)
                       if (fileProvider === 'google-drive' || fileProvider === 'onedrive') {
@@ -288,7 +288,7 @@ export function FilesTab({
                       }
                       return <Icon className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.5} />
                     })()}
-                    <Typography variant="xs" className="font-medium truncate hidden @[280px]:inline">
+                    <Typography variant="xs" className="font-medium truncate hidden @[280px]:inline min-w-0">
                       {getProviderDisplayName(fileProvider)}
                     </Typography>
                   </div>
@@ -321,14 +321,14 @@ export function FilesTab({
 
             {/* View Mode Selector */}
             <Select key={`view-mode-${fileProvider}-${getCurrentViewMode()}`} value={getCurrentViewMode()} onValueChange={handleViewModeChange}>
-              <SelectTrigger size="xs" className="min-w-0 w-auto">
+              <SelectTrigger size="xs" className="min-w-0 w-auto max-w-full overflow-hidden">
                 <SelectValue>
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
                     {(() => {
                       const Icon = getViewModeIcon(fileProvider)
                       return <Icon className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.5} />
                     })()}
-                    <Typography variant="xs" className="font-medium truncate hidden @[280px]:inline">
+                    <Typography variant="xs" className="font-medium truncate hidden @[280px]:inline min-w-0">
                       {getViewModeDisplayName(fileProvider)}
                     </Typography>
                   </div>
