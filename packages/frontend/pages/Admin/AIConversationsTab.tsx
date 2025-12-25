@@ -6,6 +6,7 @@ import { Label } from '../../components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
 import { ConversationMessageBubble } from './conversations/ConversationMessageBubble'
 import { createAIConversationsHandlers } from './handlers/ai-conversations-handlers'
+import { getModelDisplayName, getDefaultModelForProvider, type ModelProvider } from '../../components/RightPanel/composer/handlers/getModelDisplayName'
 
 interface ConversationData {
   _id: string
@@ -17,6 +18,8 @@ interface ConversationData {
   last_message_at?: string
   messages: unknown[]
   metadata?: unknown
+  model_id?: string
+  model_provider?: string
 }
 
 interface ConversationsAnalytics {
@@ -175,6 +178,7 @@ export function AIConversationsTab({
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">User</th>
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">Conversation Title</th>
                     <th className="text-center py-3 px-4 text-muted-foreground font-medium">Messages</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Model</th>
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">Created</th>
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">Last Activity</th>
                   </tr>
@@ -198,6 +202,13 @@ export function AIConversationsTab({
                           <span className="text-foreground font-medium">{conversation.message_count}</span>
                         </td>
                         <td className="py-3 px-4 text-muted-foreground text-sm">
+                          {conversation.model_id 
+                            ? getModelDisplayName(conversation.model_id)
+                            : conversation.model_provider && (conversation.model_provider === 'anthropic' || conversation.model_provider === 'openai')
+                              ? getModelDisplayName(getDefaultModelForProvider(conversation.model_provider as ModelProvider))
+                              : 'Unknown'}
+                        </td>
+                        <td className="py-3 px-4 text-muted-foreground text-sm">
                           {convertToEasternTime(conversation.created_at)}
                         </td>
                         <td className="py-3 px-4 text-muted-foreground text-sm">
@@ -206,7 +217,7 @@ export function AIConversationsTab({
                       </tr>
                       {expandedConversation === conversation._id && (
                         <tr>
-                          <td colSpan={5} className="p-0">
+                          <td colSpan={6} className="p-0">
                             <div className="bg-accent/30 border-l-4 border-primary">
                               {conversationDetailsLoading ? (
                                 <div className="p-6 text-center">
