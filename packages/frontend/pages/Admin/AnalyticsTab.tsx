@@ -45,6 +45,15 @@ interface VisitorStats {
   city_stats: Array<{_id: string, count: number}>
   hourly_stats: Array<{_id: number, count: number}>
   daily_stats: Array<{date: string, count: number}>
+  device_type_breakdown?: Record<string, number>
+  browser_breakdown?: Record<string, number>
+  os_breakdown?: Record<string, number>
+  top_pages?: Record<string, number>
+  unique_visitors?: number
+  return_visitors?: number
+  total_return_visits?: number
+  referrer_breakdown?: Record<string, number>
+  content_type_breakdown?: Record<string, number>
 }
 
 interface LoginData {
@@ -226,6 +235,38 @@ export function AnalyticsTab({
   const [visitorLocationInput, setVisitorLocationInput] = useState<string>('')
   const [visitorLocationFilter, setVisitorLocationFilter] = useState<string>('')
   const [userExclusionInput, setUserExclusionInput] = useState<string>('')
+
+  // Helper functions to parse browser and OS from user agent
+  const parseBrowser = (userAgent?: string): string => {
+    if (!userAgent || userAgent === 'Unknown') return 'Unknown'
+    const ua = userAgent.toLowerCase()
+    if (ua.includes('chrome') && !ua.includes('edg')) return 'Chrome'
+    if (ua.includes('firefox')) return 'Firefox'
+    if (ua.includes('safari') && !ua.includes('chrome')) return 'Safari'
+    if (ua.includes('edg') || ua.includes('edge')) return 'Edge'
+    if (ua.includes('opera') || ua.includes('opr')) return 'Opera'
+    if (ua.includes('msie') || ua.includes('trident')) return 'Internet Explorer'
+    if (ua.includes('samsung')) return 'Samsung Internet'
+    return 'Other'
+  }
+
+  const parseOS = (userAgent?: string): string => {
+    if (!userAgent || userAgent === 'Unknown') return 'Unknown'
+    const ua = userAgent.toLowerCase()
+    if (ua.includes('windows')) {
+      if (ua.includes('windows nt 10')) return 'Windows 10/11'
+      if (ua.includes('windows nt 6.3')) return 'Windows 8.1'
+      if (ua.includes('windows nt 6.2')) return 'Windows 8'
+      if (ua.includes('windows nt 6.1')) return 'Windows 7'
+      return 'Windows'
+    }
+    if (ua.includes('mac os x') || ua.includes('macintosh')) return 'macOS'
+    if (ua.includes('iphone') || ua.includes('ipad') || ua.includes('ipod')) return 'iOS'
+    if (ua.includes('android')) return 'Android'
+    if (ua.includes('linux')) return 'Linux'
+    if (ua.includes('ubuntu')) return 'Ubuntu'
+    return 'Other'
+  }
 
   const getFilteredVisitors = () => {
     if (!visitorData || visitorData.length === 0) return []
@@ -838,6 +879,186 @@ export function AnalyticsTab({
             <div className="text-muted-foreground text-sm">Last {workspaceVisitStats?.period_days || 30} days</div>
           </CardContent>
         </Card>
+          </div>
+
+          {/* New Analytics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-foreground text-sm">Unique Visitors</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">
+                  {visitorStats?.unique_visitors?.toLocaleString() || '0'}
+                </div>
+                <div className="text-muted-foreground text-sm">One-time visitors</div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-foreground text-sm">Return Visitors</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">
+                  {visitorStats?.return_visitors?.toLocaleString() || '0'}
+                </div>
+                <div className="text-muted-foreground text-sm">
+                  {visitorStats?.total_return_visits ? `${visitorStats.total_return_visits} return visits` : 'Returning users'}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-foreground text-sm">Return Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">
+                  {visitorStats?.unique_visitors && visitorStats?.return_visitors 
+                    ? `${((visitorStats.return_visitors / (visitorStats.unique_visitors + visitorStats.return_visitors)) * 100).toFixed(1)}%`
+                    : '0%'}
+                </div>
+                <div className="text-muted-foreground text-sm">Percentage of returning users</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Device, Browser, OS, and Top Pages Analytics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Device Type Breakdown */}
+            {visitorStats?.device_type_breakdown && Object.keys(visitorStats.device_type_breakdown).length > 0 && (
+              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                <CardHeader>
+                  <CardTitle className="text-foreground">Device Type Breakdown</CardTitle>
+                  <CardDescription className="text-muted-foreground">Visitors by device type</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {Object.entries(visitorStats.device_type_breakdown)
+                      .sort(([,a], [,b]) => b - a)
+                      .map(([device, count]) => {
+                        const total = Object.values(visitorStats.device_type_breakdown!).reduce((a, b) => a + b, 0)
+                        const percentage = ((count / total) * 100).toFixed(1)
+                        return (
+                          <div key={device}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-foreground capitalize">{device}</span>
+                              <span className="text-muted-foreground font-medium">{count} ({percentage}%)</span>
+                            </div>
+                            <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
+                              <div
+                                className={`h-2 rounded-full ${
+                                  device === 'desktop' ? 'bg-green-500' :
+                                  device === 'mobile' ? 'bg-blue-500' :
+                                  device === 'tablet' ? 'bg-purple-500' :
+                                  'bg-zinc-500'
+                                }`}
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Browser Breakdown */}
+            {visitorStats?.browser_breakdown && Object.keys(visitorStats.browser_breakdown).length > 0 && (
+              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                <CardHeader>
+                  <CardTitle className="text-foreground">Browser Breakdown</CardTitle>
+                  <CardDescription className="text-muted-foreground">Visitors by browser</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {Object.entries(visitorStats.browser_breakdown)
+                      .sort(([,a], [,b]) => b - a)
+                      .slice(0, 8)
+                      .map(([browser, count]) => {
+                        const total = Object.values(visitorStats.browser_breakdown!).reduce((a, b) => a + b, 0)
+                        const percentage = ((count / total) * 100).toFixed(1)
+                        return (
+                          <div key={browser}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-foreground">{browser}</span>
+                              <span className="text-muted-foreground font-medium">{count} ({percentage}%)</span>
+                            </div>
+                            <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
+                              <div
+                                className="h-2 rounded-full bg-blue-500"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* OS Breakdown */}
+            {visitorStats?.os_breakdown && Object.keys(visitorStats.os_breakdown).length > 0 && (
+              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                <CardHeader>
+                  <CardTitle className="text-foreground">Operating System Breakdown</CardTitle>
+                  <CardDescription className="text-muted-foreground">Visitors by operating system</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {Object.entries(visitorStats.os_breakdown)
+                      .sort(([,a], [,b]) => b - a)
+                      .slice(0, 8)
+                      .map(([os, count]) => {
+                        const total = Object.values(visitorStats.os_breakdown!).reduce((a, b) => a + b, 0)
+                        const percentage = ((count / total) * 100).toFixed(1)
+                        return (
+                          <div key={os}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-foreground">{os}</span>
+                              <span className="text-muted-foreground font-medium">{count} ({percentage}%)</span>
+                            </div>
+                            <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
+                              <div
+                                className="h-2 rounded-full bg-purple-500"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Top Pages */}
+            {visitorStats?.top_pages && Object.keys(visitorStats.top_pages).length > 0 && (
+              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                <CardHeader>
+                  <CardTitle className="text-foreground">Top Pages</CardTitle>
+                  <CardDescription className="text-muted-foreground">Most visited pages</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {Object.entries(visitorStats.top_pages)
+                      .sort(([,a], [,b]) => b - a)
+                      .slice(0, 10)
+                      .map(([page, count]) => (
+                        <div key={page} className="flex items-center justify-between py-2 border-b border-zinc-200 dark:border-white/[0.04] last:border-0">
+                          <span className="text-foreground text-sm font-mono truncate flex-1" title={page}>
+                            {page === '/' ? 'Home' : page}
+                          </span>
+                          <span className="text-muted-foreground font-medium ml-2">{count.toLocaleString()}</span>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
       <Card className="bg-card border-zinc-300 dark:border-white/[0.06] mb-4">
@@ -2155,6 +2376,14 @@ export function AnalyticsTab({
                             <div className="text-foreground text-xs capitalize">{visitor.device_type}</div>
                           </div>
                         )}
+                        <div>
+                          <div className="text-muted-foreground text-xs">Browser</div>
+                          <div className="text-foreground text-xs">{parseBrowser(visitor.user_agent)}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground text-xs">OS</div>
+                          <div className="text-foreground text-xs">{parseOS(visitor.user_agent)}</div>
+                        </div>
                         {visitor.campaign_id && (
                           <div className="col-span-2">
                             <div className="text-muted-foreground text-xs">Campaign</div>
@@ -2184,6 +2413,8 @@ export function AnalyticsTab({
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">Campaign</th>
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">Content Type</th>
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">Device</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Browser</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">OS</th>
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">Location</th>
                     <th className="text-left py-3 px-4 text-muted-foreground font-medium">Time</th>
                   </tr>
@@ -2265,6 +2496,16 @@ export function AnalyticsTab({
                         ) : (
                           <span className="text-muted-foreground text-xs">Unknown</span>
                         )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="text-foreground text-sm">
+                          {parseBrowser(visitor.user_agent)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="text-foreground text-sm">
+                          {parseOS(visitor.user_agent)}
+                        </span>
                       </td>
                       <td className="py-3 px-4">
                         <div>

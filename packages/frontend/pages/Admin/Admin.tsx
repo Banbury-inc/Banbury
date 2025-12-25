@@ -128,6 +128,15 @@ interface VisitorStats {
   city_stats: Array<{_id: string, count: number}>
   hourly_stats: Array<{_id: number, count: number}>
   daily_stats: Array<{date: string, count: number}>
+  device_type_breakdown?: Record<string, number>
+  browser_breakdown?: Record<string, number>
+  os_breakdown?: Record<string, number>
+  top_pages?: Record<string, number>
+  unique_visitors?: number
+  return_visitors?: number
+  total_return_visits?: number
+  referrer_breakdown?: Record<string, number>
+  content_type_breakdown?: Record<string, number>
 }
 
 interface LoginData {
@@ -392,7 +401,17 @@ export default function Admin() {
         country_stats: countryStatsArray,
         city_stats: cityStatsArray,
         hourly_stats: [],
-        daily_stats: dailyStatsArray
+        daily_stats: dailyStatsArray,
+        // Enhanced analytics from backend
+        device_type_breakdown: response.summary?.device_type_breakdown || {},
+        browser_breakdown: response.summary?.browser_breakdown || {},
+        os_breakdown: response.summary?.os_breakdown || {},
+        top_pages: response.summary?.top_pages || {},
+        unique_visitors: response.summary?.unique_visitors || 0,
+        return_visitors: response.summary?.return_visitors || 0,
+        total_return_visits: response.summary?.total_return_visits || 0,
+        referrer_breakdown: response.summary?.referrer_breakdown || {},
+        content_type_breakdown: response.summary?.content_type_breakdown || {}
       }
       
       setVisitorStats(stats)
