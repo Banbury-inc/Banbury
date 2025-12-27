@@ -227,6 +227,10 @@ const generateImage: any = tool(
       const folder = (input?.folder || 'images').replace(/^\/+|\/+$/g, '');
       const baseName = (input?.fileBaseName || 'Generated Image').toString().trim();
 
+      // Get image generation model from tool preferences
+      const toolPreferences = (runtime as any)?.req?.body?.toolPreferences || {};
+      const imageModel = toolPreferences.image_generation_model || 'dall-e-3';
+
       // 1) Call OpenAI images API
       const resp = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
@@ -234,7 +238,7 @@ const generateImage: any = tool(
           'Content-Type': 'application/json',
           Authorization: `Bearer ${openaiKey}`,
         },
-        body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size, response_format: 'b64_json' }),
+        body: JSON.stringify({ model: imageModel, prompt, n: 1, size, response_format: 'b64_json' }),
       });
 
       if (!resp.ok) {

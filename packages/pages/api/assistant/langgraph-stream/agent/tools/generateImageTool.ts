@@ -16,6 +16,9 @@ export const generateImageTool = tool(
       return JSON.stringify({ ok: false, error: 'Missing auth token in server context' })
     }
 
+    const toolPreferences = getServerContextValue<any>('toolPreferences') || {}
+    const imageModel = toolPreferences.image_generation_model || 'dall-e-3'
+
     try {
       const prompt = (input?.prompt || '').toString().trim()
       if (!prompt) return JSON.stringify({ ok: false, error: 'Missing prompt' })
@@ -26,7 +29,7 @@ export const generateImageTool = tool(
       const resp = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
-        body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size, response_format: 'b64_json' }),
+        body: JSON.stringify({ model: imageModel, prompt, n: 1, size, response_format: 'b64_json' }),
       })
       if (!resp.ok) {
         const text = await resp.text().catch(() => '')

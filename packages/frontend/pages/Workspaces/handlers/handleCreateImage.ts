@@ -76,11 +76,27 @@ export async function handleCreateImage(
 ) {
   if (!userInfo?.username) return
 
-  const { prompt, size = '1024x1024', model, fileBaseName, folder = 'images' } = options
+  const { prompt, size = '1024x1024', model: providedModel, fileBaseName, folder = 'images' } = options
 
   if (!prompt || prompt.trim().length === 0) {
     toast({ title: 'Missing prompt', description: 'Please provide an image prompt.', variant: 'destructive' })
     return
+  }
+
+  // Get model from options or fallback to preferences or default
+  let imageModel = providedModel;
+  if (!imageModel) {
+    try {
+      const saved = localStorage.getItem('toolPreferences');
+      if (saved) {
+        const prefs = JSON.parse(saved);
+        imageModel = prefs.image_generation_model || 'dall-e-3';
+      } else {
+        imageModel = 'dall-e-3';
+      }
+    } catch {
+      imageModel = 'dall-e-3';
+    }
   }
 
   setUploading(true)
@@ -89,7 +105,7 @@ export async function handleCreateImage(
     const resp = await fetch('/api/images/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, size, model }),
+      body: JSON.stringify({ prompt, size, model: imageModel }),
     })
 
     if (!resp.ok) {

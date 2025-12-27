@@ -45,6 +45,7 @@ export function normalizeToolPreferences({
     langgraph_mode: true,
     model_provider: toolPreferences.model_provider === "openai" ? "openai" : "anthropic",
     model_id: toolPreferences.model_id,
+    image_generation_model: typeof toolPreferences.image_generation_model === "string" ? toolPreferences.image_generation_model : "dall-e-3",
   }
 }
 

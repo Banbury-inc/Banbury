@@ -54,6 +54,7 @@ export interface ComposerToolPreferences {
   memory: boolean;
   model_provider: "anthropic" | "openai";
   model_id?: string;
+  image_generation_model?: string;
 }
 
 export const toolConfigs: ToolConfig[] = [

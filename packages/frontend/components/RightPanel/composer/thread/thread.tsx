@@ -120,6 +120,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     memory: boolean;
     model_provider: "anthropic" | "openai";
     model_id: string;
+    image_generation_model?: string;
   }
 
   const deriveToolPreferences = (raw?: any): ThreadToolPreferences => {
@@ -166,6 +167,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       memory: data.memory !== false,
       model_provider: provider,
       model_id: modelId,
+      image_generation_model: typeof data.image_generation_model === "string" ? data.image_generation_model : "dall-e-3",
     };
   };
 

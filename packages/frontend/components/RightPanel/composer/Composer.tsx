@@ -14,6 +14,7 @@ import {
   Chrome,
   MessageSquare,
   Brain,
+  Image,
 } from "lucide-react";
 
 import { ChatTiptapComposer } from "../../ChatTiptapComposer";
@@ -90,6 +91,7 @@ interface ComposerToolPreferences {
   memory: boolean;
   model_provider: "anthropic" | "openai";
   model_id?: string;
+  image_generation_model?: string;
 }
 
 interface ComposerProps {
@@ -284,6 +286,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
   const isMeasuringRef = useRef<boolean>(true);
   const [visibleButtons, setVisibleButtons] = useState({
     model: true,
+    imageModel: true,
     fileAttachment: true,
     tools: true,
     mic: true,
@@ -681,6 +684,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         // Not enough space for any buttons, hide all
         setVisibleButtons({
           model: false,
+          imageModel: false,
           fileAttachment: false,
           tools: false,
           mic: false,
@@ -705,9 +709,10 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         }
 
         let totalWidth = 0
-        const buttonKeys: Array<keyof typeof visibleButtons> = ['model', 'fileAttachment', 'tools', 'mic', 'globe']
+        const buttonKeys: Array<keyof typeof visibleButtons> = ['model', 'imageModel', 'fileAttachment', 'tools', 'mic', 'globe']
         const newVisibility: typeof visibleButtons = {
           model: false,
+          imageModel: false,
           fileAttachment: false,
           tools: false,
           mic: false,
@@ -850,6 +855,55 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                       </span>
                       <div className="flex items-center">
                         <Typography variant="xs">{model.name}</Typography>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+        {(isMeasuring || visibleButtons.imageModel) && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="primary"
+                size="xs"
+                className="h-7 w-7"
+                title={`Image Model: ${toolPreferences.image_generation_model === 'dall-e-2' ? 'DALL-E 2' : 'DALL-E 3'}`}
+                aria-label="Image Generation Model"
+              >
+                <Image height={16} width={16} strokeWidth={1} />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent 
+              side="top" 
+              align="start" 
+              className="w-48 p-0 bg-popover text-popover-foreground border shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+            >
+              <div className="p-1 flex flex-col">
+                {[
+                  { id: 'dall-e-3', name: 'DALL-E 3', description: 'Most capable, highest quality' },
+                  { id: 'dall-e-2', name: 'DALL-E 2', description: 'Faster, lower cost' },
+                ].map((model) => {
+                  const isSelected = (toolPreferences.image_generation_model || 'dall-e-3') === model.id
+                  return (
+                    <div
+                      key={model.id}
+                      className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => {
+                        onUpdateToolPreferences({ 
+                          ...toolPreferences, 
+                          image_generation_model: model.id
+                        })
+                      }}
+                    >
+                      <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                        {isSelected && <Check className="size-4" />}
+                      </span>
+                      <div className="flex flex-col">
+                        <Typography variant="xs" className="font-medium">{model.name}</Typography>
+                        <Typography variant="xs" className="text-xs text-muted-foreground">{model.description}</Typography>
                       </div>
                     </div>
                   )

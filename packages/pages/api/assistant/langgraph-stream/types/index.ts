@@ -51,6 +51,7 @@ export interface ToolPreferences {
   slack?: boolean
   model_provider?: "anthropic" | "openai"
   model_id?: string
+  image_generation_model?: string
 }
 
 export interface DateTimeContext {
