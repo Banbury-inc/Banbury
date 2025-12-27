@@ -16,6 +16,7 @@ import { generateImageTool } from "./tools/generateImageTool";
 import { createMemoryTool } from "./tools/createMemoryTool";
 import { searchMemoryTool } from "./tools/searchMemoryTool";
 import { createFileTool } from "./tools/createFileTool";
+import { createFolderTool } from "./tools/createFolderTool";
 import { downloadFromUrlTool } from "./tools/downloadFromUrlTool";
 import { searchFilesTool } from "./tools/searchFilesTool";
 import { getCurrentDateTimeTool } from "./tools/getCurrentDateTimeTool";
@@ -160,6 +161,7 @@ const tools = [
   createMemoryTool,
   searchMemoryTool,
   createFileTool,
+  createFolderTool,
   downloadFromUrlTool,
   searchFilesTool,
   getCurrentDateTimeTool,

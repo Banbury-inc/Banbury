@@ -139,6 +139,7 @@
   },
   "active": "9454596cb4bc6a15",
   "lastOpenFiles": [
+    "packages/pages/api/assistant/langgraph-stream/agent/tools/createFolderTool.ts",
     "packages/frontend/pages/Admin/ErrorTrackingTab.tsx",
     "packages/frontend/pages/Admin/FeatureUsageTab.tsx",
     "packages/frontend/pages/Admin/RetentionTab.tsx",
@@ -148,7 +149,6 @@
     "packages/frontend/utils/featureUsageTracker.ts",
     "packages/frontend/utils/userEngagementTracker.ts",
     "packages/frontend/components/MiddlePanel/Dashboard/Dashboard.tsx",
-    "packages/frontend/components/MiddlePanel/Dashboard",
-    "packages/frontend/components/modals/settings-tabs/handlers/appearanceHandlers.ts"
+    "packages/frontend/components/MiddlePanel/Dashboard"
   ]
 }
