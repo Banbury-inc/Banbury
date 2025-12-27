@@ -47,6 +47,7 @@ import {
   getDefaultModelForProvider,
   type ModelProvider 
 } from "./handlers/getModelDisplayName";
+import { toolConfigs } from "./handlers/toolConfig";
 
 import type { FC } from "react";
 import { Typography } from "frontend/components/ui/typography";
@@ -67,6 +68,26 @@ interface ComposerToolPreferences {
   browser: boolean;
   x_api: boolean;
   slack: boolean;
+  // Document editing tools
+  sheet_ai: boolean;
+  docx_ai: boolean;
+  pptx_ai: boolean;
+  tldraw_ai: boolean;
+  document_ai: boolean;
+  // File management tools
+  create_file: boolean;
+  create_folder: boolean;
+  download_from_url: boolean;
+  search_files: boolean;
+  // Calendar tools
+  calendar: boolean;
+  msCalendar: boolean;
+  // Development tools
+  github: boolean;
+  // Media tools
+  generate_image: boolean;
+  // System tools
+  memory: boolean;
   model_provider: "anthropic" | "openai";
   model_id?: string;
 }
@@ -861,92 +882,36 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
             <PopoverContent 
               side="top" 
               align="start" 
-              className="w-56 p-0 bg-popover text-popover-foreground border shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+              className="w-72 p-0 bg-popover text-popover-foreground border shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
             >
-              <div className="p-1 flex flex-col">
-                <div
-                  className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => onUpdateToolPreferences({ ...toolPreferences, web_search: !toolPreferences.web_search })}
-                >
-                  <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                    {toolPreferences.web_search && <Check className="size-4" />}
-                  </span>
-                  <div className="flex items-center [&_svg]:!text-gray-400">
-                    <Search size={16} strokeWidth={1} className="mr-2" />
-                    <Typography variant="xs" className="text-xs font-medium">Web Search</Typography>
-                  </div>
-                </div>
-                <div
-                  className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => onUpdateToolPreferences({ ...toolPreferences, read_file: !toolPreferences.read_file })}
-                >
-                  <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                    {toolPreferences.read_file && <Check className="size-4" />}
-                  </span>
-                  <div className="flex items-center [&_svg]:!text-blue-500">
-                    <FileText size={16} strokeWidth={1} className="mr-2" />
-                    <Typography variant="xs" className="text-xs font-medium">Read File</Typography>
-                  </div>
-                </div>
-                <div
-                  className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => onUpdateToolPreferences({ ...toolPreferences, gmail: !toolPreferences.gmail })}
-                >
-                  <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                    {toolPreferences.gmail && <Check className="size-4" />}
-                  </span>
-                  <div className="flex items-center [&_svg]:!text-red-500">
-                    <Mail size={16} strokeWidth={1} className="mr-2" />
-                    <Typography variant="xs" className="text-xs font-medium">Gmail</Typography>
-                  </div>
-                </div>
-                <div
-                  className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => onUpdateToolPreferences({ ...toolPreferences, browser: !toolPreferences.browser })}
-                >
-                  <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                    {toolPreferences.browser && <Check className="size-4" />}
-                  </span>
-                  <div className="flex items-center [&_svg]:!text-green-500">
-                    <Chrome size={16} strokeWidth={1} className="mr-2" />
-                    <Typography variant="xs" className="text-xs font-medium">Browser</Typography>
-                  </div>
-                </div>
-                <div
-                  className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => onUpdateToolPreferences({ ...toolPreferences, x_api: !toolPreferences.x_api })}
-                >
-                  <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                    {toolPreferences.x_api && <Check className="size-4" />}
-                  </span>
-                  <div className="flex items-center [&_svg]:!text-blue-400">
-                    <MessageSquare size={16} strokeWidth={1} className="mr-2" />
-                    <Typography variant="xs" className="text-xs font-medium">X (Twitter)</Typography>
-                  </div>
-                </div>
-                <div
-                  className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => onUpdateToolPreferences({ ...toolPreferences, slack: !toolPreferences.slack })}
-                >
-                  <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                    {toolPreferences.slack && <Check className="size-4" />}
-                  </span>
-                  <div className="flex items-center [&_svg]:!text-purple-500">
-                    <MessageSquare size={16} strokeWidth={1} className="mr-2" />
-                    <Typography variant="xs" className="text-xs font-medium">Slack</Typography>
-                  </div>
-                </div>
-                <div
-                  className="relative flex w-full cursor-not-allowed items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none opacity-50 data-[disabled]:pointer-events-none"
-                >
-                  <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                    <Check className="size-4" />
-                  </span>
-                  <div className="flex items-center [&_svg]:!text-yellow-400">
-                    <Brain size={16} strokeWidth={1} className="mr-2" />
-                    <Typography variant="xs" className="text-xs font-medium">Memory</Typography>
-                  </div>
-                </div>
+              <div className="p-1 flex flex-col max-h-96 overflow-y-auto">
+                {toolConfigs.map((tool) => {
+                  const Icon = tool.icon;
+                  const isEnabled = toolPreferences[tool.key] ?? tool.defaultEnabled;
+                  
+                  return (
+                    <div
+                      key={tool.key}
+                      className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => {
+                        onUpdateToolPreferences({ 
+                          ...toolPreferences, 
+                          [tool.key]: !isEnabled 
+                        });
+                      }}
+                    >
+                      <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                        {isEnabled && <Check className="size-4" />}
+                      </span>
+                      <div className="flex items-center">
+                        <Icon size={16} strokeWidth={1} className={`mr-2 ${tool.iconColor}`} />
+                        <Typography variant="xs" className="text-xs font-medium">
+                          {tool.label}
+                        </Typography>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </PopoverContent>
           </Popover>

@@ -28,6 +28,27 @@ export interface ToolPreferences {
   langgraph_mode?: boolean
   x_api?: boolean
   tiptap_ai?: boolean
+  // Document editing tools
+  sheet_ai?: boolean
+  docx_ai?: boolean
+  pptx_ai?: boolean
+  tldraw_ai?: boolean
+  document_ai?: boolean
+  // File management tools
+  create_file?: boolean
+  create_folder?: boolean
+  download_from_url?: boolean
+  search_files?: boolean
+  // Calendar tools
+  calendar?: boolean
+  msCalendar?: boolean
+  // Development tools
+  github?: boolean
+  // Media tools
+  generate_image?: boolean
+  // System tools
+  memory?: boolean
+  slack?: boolean
   model_provider?: "anthropic" | "openai"
   model_id?: string
 }

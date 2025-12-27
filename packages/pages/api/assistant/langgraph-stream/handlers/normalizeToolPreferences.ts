@@ -20,7 +20,28 @@ export function normalizeToolPreferences({
     gmailSend: toolPreferences.gmailSend !== false,
     browser: browserEnabled,
     browserbase: browserEnabled,
-    x_api: toolPreferences.x_api === true,
+    x_api: toolPreferences.x_api !== false,
+    slack: toolPreferences.slack !== false,
+    // Document editing tools
+    sheet_ai: toolPreferences.sheet_ai !== false,
+    docx_ai: toolPreferences.docx_ai !== false,
+    pptx_ai: toolPreferences.pptx_ai !== false,
+    tldraw_ai: toolPreferences.tldraw_ai !== false,
+    document_ai: toolPreferences.document_ai !== false,
+    // File management tools
+    create_file: toolPreferences.create_file !== false,
+    create_folder: toolPreferences.create_folder !== false,
+    download_from_url: toolPreferences.download_from_url !== false,
+    search_files: toolPreferences.search_files !== false,
+    // Calendar tools
+    calendar: toolPreferences.calendar !== false,
+    msCalendar: toolPreferences.msCalendar !== false,
+    // Development tools
+    github: toolPreferences.github !== false,
+    // Media tools
+    generate_image: toolPreferences.generate_image !== false,
+    // System tools
+    memory: toolPreferences.memory !== false,
     langgraph_mode: true,
     model_provider: toolPreferences.model_provider === "openai" ? "openai" : "anthropic",
     model_id: toolPreferences.model_id,
