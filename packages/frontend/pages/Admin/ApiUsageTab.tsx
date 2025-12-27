@@ -45,6 +45,8 @@ export function ApiUsageTab({
   excludedUsers,
   setExcludedUsers
 }: ApiUsageTabProps) {
+  const [userExclusionInput, setUserExclusionInput] = useState<string>('')
+
   if (apiUsageLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -62,8 +64,6 @@ export function ApiUsageTab({
   }
 
   const { summary, endpoint_stats, daily_stats, hourly_stats, user_stats } = apiUsageAnalytics
-
-  const [userExclusionInput, setUserExclusionInput] = useState<string>('')
 
   const addUserExclusion = async () => {
     if (userExclusionInput.trim() && !excludedUsers.includes(userExclusionInput.trim())) {

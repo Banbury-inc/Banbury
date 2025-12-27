@@ -37,6 +37,8 @@ export function RetentionTab({
   excludedUsers,
   setExcludedUsers
 }: RetentionTabProps) {
+  const [userExclusionInput, setUserExclusionInput] = useState<string>('')
+
   if (retentionLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -54,7 +56,6 @@ export function RetentionTab({
   }
 
   const { dau, wau, mau, retention_cohorts, daily_active_users } = retentionAnalytics
-  const [userExclusionInput, setUserExclusionInput] = useState<string>('')
 
   const addUserExclusion = async () => {
     if (userExclusionInput.trim() && !excludedUsers.includes(userExclusionInput.trim())) {

@@ -44,6 +44,8 @@ export function ErrorTrackingTab({
   excludedUsers,
   setExcludedUsers
 }: ErrorTrackingTabProps) {
+  const [userExclusionInput, setUserExclusionInput] = useState<string>('')
+
   if (errorLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -61,7 +63,6 @@ export function ErrorTrackingTab({
   }
 
   const { summary, error_by_type, error_by_endpoint, daily_error_stats } = errorAnalytics
-  const [userExclusionInput, setUserExclusionInput] = useState<string>('')
 
   const addUserExclusion = async () => {
     if (userExclusionInput.trim() && !excludedUsers.includes(userExclusionInput.trim())) {

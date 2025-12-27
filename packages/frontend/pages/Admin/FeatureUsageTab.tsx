@@ -35,6 +35,8 @@ export function FeatureUsageTab({
   excludedUsers,
   setExcludedUsers
 }: FeatureUsageTabProps) {
+  const [userExclusionInput, setUserExclusionInput] = useState<string>('')
+
   if (featureUsageLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -52,7 +54,6 @@ export function FeatureUsageTab({
   }
 
   const { summary, feature_stats, daily_stats } = featureUsageAnalytics
-  const [userExclusionInput, setUserExclusionInput] = useState<string>('')
 
   const addUserExclusion = async () => {
     if (userExclusionInput.trim() && !excludedUsers.includes(userExclusionInput.trim())) {

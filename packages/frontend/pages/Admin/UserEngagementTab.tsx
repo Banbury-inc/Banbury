@@ -50,6 +50,8 @@ export function UserEngagementTab({
   excludedUsers,
   setExcludedUsers
 }: UserEngagementTabProps) {
+  const [userExclusionInput, setUserExclusionInput] = useState<string>('')
+
   if (userEngagementLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -67,7 +69,6 @@ export function UserEngagementTab({
   }
 
   const { summary, daily_stats, session_duration_distribution } = userEngagementAnalytics
-  const [userExclusionInput, setUserExclusionInput] = useState<string>('')
 
   const addUserExclusion = async () => {
     if (userExclusionInput.trim() && !excludedUsers.includes(userExclusionInput.trim())) {
