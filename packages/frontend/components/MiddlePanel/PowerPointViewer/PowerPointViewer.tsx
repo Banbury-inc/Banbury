@@ -116,6 +116,19 @@ export interface Slide {
   index: number
   elements: SlideElement[]
   background?: string
+  backgroundStyle?: FillStyle // Enhanced background support
+  decorativeElements?: Array<{
+    id: string
+    shape: 'circle' | 'rect' | 'line' | 'triangle' | 'blob'
+    x: number
+    y: number
+    width?: number
+    height?: number
+    color: string
+    opacity: number
+    rotation?: number
+    scale?: number
+  }>
   layout?: SlideLayoutType
   theme?: ThemeType
   transition?: TransitionType
@@ -636,22 +649,45 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
   }, [currentSlideIndex, saveToHistory])
 
   // Handle applying theme
-  const handleApplyTheme = useCallback((themeType: ThemeType) => {
+  const handleApplyTheme = useCallback(async (themeType: ThemeType) => {
     saveToHistory()
-    setSlides(prev => {
-      const newSlides = [...prev]
-      const currentSlide = newSlides[currentSlideIndex]
-      const { background, elements } = applyThemeToSlide(currentSlide, themeType)
-      newSlides[currentSlideIndex] = {
-        ...currentSlide,
-        theme: themeType,
-        background,
-        elements,
-      }
-      return newSlides
-    })
-    setHasUnsavedChanges(true)
-  }, [currentSlideIndex, saveToHistory])
+    try {
+      const result = await applyThemeToSlide(slides[currentSlideIndex], themeType)
+      setSlides(prev => {
+        const newSlides = [...prev]
+        const currentSlide = newSlides[currentSlideIndex]
+        newSlides[currentSlideIndex] = {
+          ...currentSlide,
+          theme: themeType,
+          background: typeof result.background === 'string' ? result.background : undefined,
+          backgroundStyle: result.backgroundStyle || (typeof result.background !== 'string' ? result.background : undefined),
+          decorativeElements: result.decorativeElements,
+          elements: result.elements,
+        }
+        return newSlides
+      })
+      setHasUnsavedChanges(true)
+    } catch (error) {
+      console.error('Failed to apply theme:', error)
+      // Fallback to sync version for backward compatibility
+      const { applyThemeToSlideSync } = await import('./handlers/handle-apply-theme')
+      const result = applyThemeToSlideSync(slides[currentSlideIndex], themeType)
+      setSlides(prev => {
+        const newSlides = [...prev]
+        const currentSlide = newSlides[currentSlideIndex]
+        newSlides[currentSlideIndex] = {
+          ...currentSlide,
+          theme: themeType,
+          background: typeof result.background === 'string' ? result.background : undefined,
+          backgroundStyle: result.backgroundStyle || (typeof result.background !== 'string' ? result.background : undefined),
+          decorativeElements: result.decorativeElements,
+          elements: result.elements,
+        }
+        return newSlides
+      })
+      setHasUnsavedChanges(true)
+    }
+  }, [currentSlideIndex, saveToHistory, slides])
 
   // Handle applying template to entire presentation
   const handleApplyTemplate = useCallback(async (templateId: string) => {

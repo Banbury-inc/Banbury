@@ -17,7 +17,7 @@ export function normalizeFill(fill: string | FillStyle | undefined): FillStyle |
 /**
  * Convert FillStyle to CSS background value
  */
-export function fillStyleToCSS(fill: FillStyle | undefined): string {
+export function fillStyleToCSS(fill: FillStyle | any | undefined): string {
   if (!fill) return 'transparent'
   
   if (fill.kind === 'solid') {
@@ -28,6 +28,14 @@ export function fillStyleToCSS(fill: FillStyle | undefined): string {
     const start = fill.startColor.startsWith('#') ? fill.startColor : `#${fill.startColor}`
     const end = fill.endColor.startsWith('#') ? fill.endColor : `#${fill.endColor}`
     return `linear-gradient(${fill.angleDeg}deg, ${start}, ${end})`
+  }
+  
+  if (fill.kind === 'radialGradient') {
+    const start = fill.startColor.startsWith('#') ? fill.startColor : `#${fill.startColor}`
+    const end = fill.endColor.startsWith('#') ? fill.endColor : `#${fill.endColor}`
+    const centerX = fill.centerX !== undefined ? `${fill.centerX}%` : '50%'
+    const centerY = fill.centerY !== undefined ? `${fill.centerY}%` : '50%'
+    return `radial-gradient(circle at ${centerX} ${centerY}, ${start}, ${end})`
   }
   
   return 'transparent'

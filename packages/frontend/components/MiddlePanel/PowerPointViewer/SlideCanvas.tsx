@@ -1,9 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import Image from 'next/image'
-import { Slide, SlideElement } from './PowerPointViewer'
+import { Slide, SlideElement, FillStyle } from './PowerPointViewer'
 import { getShapeDefinition, renderShapeSvg } from './shape-catalog'
 import { Move } from 'lucide-react'
-import { fillStyleToCSS } from './utils/fill-utils'
+import { fillStyleToCSS, normalizeFill } from './utils/fill-utils'
 
 interface SlideCanvasProps {
   slide: Slide
@@ -307,9 +307,18 @@ export function SlideCanvas({
         <div className="absolute inset-4 mx-auto" style={{ aspectRatio: '16/9', maxWidth: '100%', maxHeight: '100%' }}>
           <div 
             ref={slideContentRef} 
-            className="relative w-full h-full shadow-lg rounded-sm"
-            style={{ backgroundColor: slide.background || '#ffffff' }}
+            className="relative w-full h-full shadow-lg rounded-sm overflow-hidden"
+            style={getBackgroundStyle(slide)}
           >
+            {/* Decorative elements layer (rendered behind content) */}
+            {slide.decorativeElements && slide.decorativeElements.length > 0 && (
+              <div className="absolute inset-0 pointer-events-none">
+                {slide.decorativeElements.map((decorative) => (
+                  <DecorativeElementRenderer key={decorative.id} element={decorative} />
+                ))}
+              </div>
+            )}
+            
             {slide.elements.map((element) => (
               <ElementRenderer
                 key={element.id}
@@ -784,10 +793,139 @@ function ResizeHandles({
           transform: 'translateY(-50%)',
           border: `${scaledBorderWidth}px solid hsl(var(--background))`,
         }}
-        onMouseDown={(e) => onResizeStart(e, 'right')}
+          onMouseDown={(e) => onResizeStart(e, 'right')}
       />
     </>
   )
+}
+
+// Helper function to get background style for slide
+function getBackgroundStyle(slide: Slide): React.CSSProperties {
+  // Check if slide has backgroundStyle (FillStyle)
+  if (slide.backgroundStyle) {
+    const fill = normalizeFill(slide.backgroundStyle)
+    if (fill) {
+      return {
+        background: fillStyleToCSS(fill),
+      }
+    }
+  }
+
+  // Fallback to solid color background
+  return {
+    backgroundColor: slide.background || '#ffffff',
+  }
+}
+
+// Render decorative element
+function DecorativeElementRenderer({ 
+  element 
+}: { 
+  element: {
+    id: string
+    shape: 'circle' | 'rect' | 'line' | 'triangle' | 'blob'
+    x: number
+    y: number
+    width?: number
+    height?: number
+    color: string
+    opacity: number
+    rotation?: number
+    scale?: number
+  }
+}) {
+  const style: React.CSSProperties = {
+    position: 'absolute',
+    left: `${element.x}%`,
+    top: `${element.y}%`,
+    opacity: element.opacity,
+    transform: element.rotation 
+      ? `rotate(${element.rotation}deg) scale(${element.scale || 1})`
+      : element.scale 
+        ? `scale(${element.scale})`
+        : undefined,
+    transformOrigin: 'center',
+  }
+
+  if (element.width !== undefined) {
+    style.width = `${element.width}%`
+  }
+  if (element.height !== undefined) {
+    style.height = `${element.height}%`
+  }
+
+  switch (element.shape) {
+    case 'circle':
+      return (
+        <div
+          style={{
+            ...style,
+            borderRadius: '50%',
+            backgroundColor: element.color,
+            width: element.width ? `${element.width}%` : '20%',
+            height: element.height ? `${element.height}%` : '20%',
+          }}
+        />
+      )
+    
+    case 'rect':
+      return (
+        <div
+          style={{
+            ...style,
+            backgroundColor: element.color,
+            width: element.width ? `${element.width}%` : '30%',
+            height: element.height ? `${element.height}%` : '30%',
+          }}
+        />
+      )
+    
+    case 'line':
+      return (
+        <div
+          style={{
+            ...style,
+            backgroundColor: element.color,
+            width: element.width ? `${element.width}%` : '100%',
+            height: element.height ? `${element.height}%` : '2px',
+            top: `${element.y}%`,
+            left: `${element.x}%`,
+          }}
+        />
+      )
+    
+    case 'triangle':
+      return (
+        <div
+          style={{
+            ...style,
+            width: 0,
+            height: 0,
+            borderLeft: `${element.width ? element.width / 2 : 10}% solid transparent`,
+            borderRight: `${element.width ? element.width / 2 : 10}% solid transparent`,
+            borderBottom: `${element.height ? element.height : 15}% solid ${element.color}`,
+            backgroundColor: 'transparent',
+          }}
+        />
+      )
+    
+    case 'blob':
+      // For blob, use a circle with border-radius for organic shape
+      return (
+        <div
+          style={{
+            ...style,
+            borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%',
+            backgroundColor: element.color,
+            width: element.width ? `${element.width}%` : '25%',
+            height: element.height ? `${element.height}%` : '25%',
+          }}
+        />
+      )
+    
+    default:
+      return null
+  }
 }
 
 export default SlideCanvas

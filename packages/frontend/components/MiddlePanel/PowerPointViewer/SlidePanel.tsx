@@ -5,6 +5,7 @@ import { Slide } from './PowerPointViewer'
 import { renderShapeSvg } from './shape-catalog'
 import { useContextMenu } from '../../ui/context-menu'
 import { getSlideContextMenuItems } from './SlidePanel/handlers/handle-slide-context-menu'
+import { fillStyleToCSS, normalizeFill, fillStyleToColorString } from './utils/fill-utils'
 
 interface SlidePanelProps {
   slides: Slide[]
@@ -92,10 +93,8 @@ export function SlidePanel({
 
           {/* Slide thumbnail */}
           <div
-            className="aspect-[16/9] rounded-sm overflow-hidden"
-            style={{
-              backgroundColor: slide.background || '#ffffff',
-            }}
+            className="aspect-[16/9] rounded-sm overflow-hidden relative"
+            style={getBackgroundStyle(slide)}
           >
             <SlideThumbnail slide={slide} />
           </div>
@@ -105,10 +104,148 @@ export function SlidePanel({
   )
 }
 
+// Helper function to get background style for slide (matches SlideCanvas)
+function getBackgroundStyle(slide: Slide): React.CSSProperties {
+  // Check if slide has backgroundStyle (FillStyle)
+  if (slide.backgroundStyle) {
+    const fill = normalizeFill(slide.backgroundStyle)
+    if (fill) {
+      return {
+        background: fillStyleToCSS(fill),
+      }
+    }
+  }
+
+  // Fallback to solid color background
+  return {
+    backgroundColor: slide.background || '#ffffff',
+  }
+}
+
+// Render decorative element (matches SlideCanvas)
+function DecorativeElementRenderer({ 
+  element 
+}: { 
+  element: {
+    id: string
+    shape: 'circle' | 'rect' | 'line' | 'triangle' | 'blob'
+    x: number
+    y: number
+    width?: number
+    height?: number
+    color: string
+    opacity: number
+    rotation?: number
+    scale?: number
+  }
+}) {
+  const style: React.CSSProperties = {
+    position: 'absolute',
+    left: `${element.x}%`,
+    top: `${element.y}%`,
+    opacity: element.opacity,
+    transform: element.rotation 
+      ? `rotate(${element.rotation}deg) scale(${element.scale || 1})`
+      : element.scale 
+        ? `scale(${element.scale})`
+        : undefined,
+    transformOrigin: 'center',
+  }
+
+  if (element.width !== undefined) {
+    style.width = `${element.width}%`
+  }
+  if (element.height !== undefined) {
+    style.height = `${element.height}%`
+  }
+
+  switch (element.shape) {
+    case 'circle':
+      return (
+        <div
+          style={{
+            ...style,
+            borderRadius: '50%',
+            backgroundColor: element.color,
+            width: element.width ? `${element.width}%` : '20%',
+            height: element.height ? `${element.height}%` : '20%',
+          }}
+        />
+      )
+    
+    case 'rect':
+      return (
+        <div
+          style={{
+            ...style,
+            backgroundColor: element.color,
+            width: element.width ? `${element.width}%` : '30%',
+            height: element.height ? `${element.height}%` : '30%',
+          }}
+        />
+      )
+    
+    case 'line':
+      return (
+        <div
+          style={{
+            ...style,
+            backgroundColor: element.color,
+            width: element.width ? `${element.width}%` : '100%',
+            height: element.height ? `${element.height}%` : '2px',
+            top: `${element.y}%`,
+            left: `${element.x}%`,
+          }}
+        />
+      )
+    
+    case 'triangle':
+      return (
+        <div
+          style={{
+            ...style,
+            width: 0,
+            height: 0,
+            borderLeft: `${element.width ? element.width / 2 : 10}% solid transparent`,
+            borderRight: `${element.width ? element.width / 2 : 10}% solid transparent`,
+            borderBottom: `${element.height ? element.height : 15}% solid ${element.color}`,
+            backgroundColor: 'transparent',
+          }}
+        />
+      )
+    
+    case 'blob':
+      // For blob, use a circle with border-radius for organic shape
+      return (
+        <div
+          style={{
+            ...style,
+            borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%',
+            backgroundColor: element.color,
+            width: element.width ? `${element.width}%` : '25%',
+            height: element.height ? `${element.height}%` : '25%',
+          }}
+        />
+      )
+    
+    default:
+      return null
+  }
+}
+
 // Mini thumbnail preview of slide content
 function SlideThumbnail({ slide }: { slide: Slide }) {
   return (
-    <div className="w-full h-full relative p-1" style={{ backgroundColor: slide.background || '#ffffff' }}>
+    <div className="w-full h-full relative p-1">
+      {/* Decorative elements layer (rendered behind content) */}
+      {slide.decorativeElements && slide.decorativeElements.length > 0 && (
+        <div className="absolute inset-0 pointer-events-none">
+          {slide.decorativeElements.map((decorative) => (
+            <DecorativeElementRenderer key={decorative.id} element={decorative} />
+          ))}
+        </div>
+      )}
+      
       {slide.elements.map((element) => {
         if (element.type === 'text') {
           return (
@@ -134,7 +271,8 @@ function SlideThumbnail({ slide }: { slide: Slide }) {
         }
 
         if (element.type === 'shape') {
-          const fill = element.fill || '#e0e0e0'
+          // Normalize fill to string for renderShapeSvg
+          const fill = fillStyleToColorString(element.fill) || '#e0e0e0'
           const stroke = element.stroke || '#9e9e9e'
           const strokeWidth = element.strokeWidth ?? 1
           const rotation = element.rotation ?? 0

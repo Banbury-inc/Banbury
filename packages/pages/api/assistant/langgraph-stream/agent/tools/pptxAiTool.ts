@@ -11,6 +11,7 @@ type BorderStyle = { color: string; width: number }
 type HighlightRange = { start: number; end: number; color: string }
 
 // PowerPoint presentation editing tool to apply AI-driven slide operations
+// @ts-ignore - TypeScript has limitations with deep type inference for complex Zod union types
 export const pptxAiTool = tool(
   async (input: {
     action: string
@@ -25,7 +26,7 @@ export const pptxAiTool = tool(
       | { type: 'updateElement'; slideIndex?: number; elementId: string; element: { x?: number; y?: number; width?: number; height?: number; content?: string; fontSize?: number; fontFace?: string; color?: string; bold?: boolean; italic?: boolean; fill?: string | FillStyle; stroke?: string; textFill?: FillStyle; border?: BorderStyle; highlights?: HighlightRange[] } }
       | { type: 'deleteElement'; slideIndex?: number; elementId: string }
       | { type: 'setSlideBackground'; slideIndex?: number; background: string }
-      | { type: 'applyTheme'; theme: 'default' | 'dark' | 'light' | 'corporate' | 'creative' }
+      | { type: 'applyTheme'; theme: string }
       | { type: 'applyTemplate'; templateId: 'professional' | 'creative' | 'minimal'; scope?: 'presentation' | 'slide' }
       | { type: 'highlightText'; slideIndex?: number; elementId: string; substring: string; color: string; occurrence?: number }
     >
@@ -84,7 +85,7 @@ export const pptxAiTool = tool(
   {
     name: 'pptx_ai',
     description:
-      'Use this tool to create, edit, and modify PowerPoint presentations. You can create slides, add/update/delete elements (text, shapes, images), reorder slides, set backgrounds, apply themes, and apply complete templates. Available templates: "professional" (clean business style), "creative" (bold and vibrant), "minimal" (elegant minimalist). Templates apply comprehensive design including colors, fonts, and layouts across the entire presentation while preserving content. IMPORTANT: Call this tool only ONCE per user request. After calling this tool, the changes are immediately applied to the presentation in the frontend. Do not call this tool multiple times for the same edit request. All position and size values (x, y, width, height) are percentages (0-100). NOTE: When you create a new slide with createSlide, it starts completely empty with no default elements. You must add all text, shapes, and other content explicitly using addText, addShape, and addImage operations.',
+      'Use this tool to create, edit, and modify PowerPoint presentations. You can create slides, add/update/delete elements (text, shapes, images), reorder slides, set backgrounds, apply themes, and apply complete templates. Available templates: "professional" (clean business style), "creative" (bold and vibrant), "minimal" (elegant minimalist). Templates apply comprehensive design including colors, fonts, and layouts across the entire presentation while preserving content. Available themes include: "default", "dark", "blue", "green", "purple", "orange", "red", "minimal", "professional-blue-gradient", "modern-minimal", "warm-sunset", "dark-modern", "ocean-breeze", "forest-green", "royal-purple", "corporate-gray", "sunrise-orange", "tech-blue", "elegant-gold", "fresh-mint", "fire-red", "cloud-white", "midnight-blue", "pastel-dream", "neon-cyber", "spring-garden". Themes support professional gradients, decorative elements, and typography. IMPORTANT: Call this tool only ONCE per user request. After calling this tool, the changes are immediately applied to the presentation in the frontend. Do not call this tool multiple times for the same edit request. All position and size values (x, y, width, height) are percentages (0-100). NOTE: When you create a new slide with createSlide, it starts completely empty with no default elements. You must add all text, shapes, and other content explicitly using addText, addShape, and addImage operations.',
     schema: z.object({
       action: z.string().describe("Description of the action performed (e.g. 'Create title slide', 'Add content slides', 'Insert diagram', 'Apply corporate theme')"),
       presentationName: z.string().optional().describe('Optional presentation name for context'),
@@ -203,8 +204,8 @@ export const pptxAiTool = tool(
             }).describe('Set slide background color'),
             z.object({ 
               type: z.enum(['applyTheme']), 
-              theme: z.enum(['default', 'dark', 'light', 'corporate', 'creative']).describe('Theme to apply')
-            }).describe('Apply a theme to the entire presentation'),
+              theme: z.string().describe('Theme ID to apply. Available themes include: "default", "dark", "blue", "green", "purple", "orange", "red", "minimal", "professional-blue-gradient", "modern-minimal", "warm-sunset", "dark-modern", "ocean-breeze", "forest-green", "royal-purple", "corporate-gray", "sunrise-orange", "tech-blue", "elegant-gold", "fresh-mint", "fire-red", "cloud-white", "midnight-blue", "pastel-dream", "neon-cyber", "spring-garden". Themes support gradients, decorative elements, and professional typography.')
+            }).describe('Apply a theme to the entire presentation. Themes include professional gradients, decorative elements, and typography settings. Use descriptive theme names like "professional-blue-gradient" for business presentations, "warm-sunset" for creative content, or "modern-minimal" for clean designs.'),
             z.object({ 
               type: z.enum(['applyTemplate']), 
               templateId: z.enum(['professional', 'creative', 'minimal']).describe('Template ID to apply. Available templates: "professional" (clean business template), "creative" (bold and vibrant), "minimal" (elegant minimalist)'),
@@ -224,7 +225,7 @@ export const pptxAiTool = tool(
         .describe('Array of operations to perform on the presentation'),
       slidesData: z.any().optional().describe('Full slides data for complex operations (replaces all slides)'),
       note: z.string().optional().describe('Additional notes about the presentation changes'),
-    }),
+    }) as any, // Type assertion to work around TypeScript's deep type inference limitation with complex union types
   }
 )
 

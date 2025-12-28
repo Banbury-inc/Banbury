@@ -321,7 +321,22 @@ function applyOperations(
       }
 
       case 'applyTheme': {
-        // Theme application is a no-op for now (could be extended)
+        // Apply theme to all slides using the enhanced theme system
+        if (op.theme) {
+          // Use sync version for immediate application (async would require refactoring)
+          const { applyThemeToSlideSync } = require('./handle-apply-theme')
+          newSlides = newSlides.map(slide => {
+            const result = applyThemeToSlideSync(slide, op.theme as any)
+            return {
+              ...slide,
+              theme: op.theme as any,
+              background: typeof result.background === 'string' ? result.background : undefined,
+              backgroundStyle: result.backgroundStyle || (typeof result.background !== 'string' ? result.background : undefined),
+              decorativeElements: result.decorativeElements,
+              elements: result.elements,
+            }
+          })
+        }
         break;
       }
 
