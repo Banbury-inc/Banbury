@@ -3,14 +3,80 @@ import { z } from "zod"
 import { CONFIG } from "../../../../../../frontend/config/config"
 import { getServerContextValue } from "../../../../../../frontend/assistant/langraph/serverContext"
 
-// Image generation tool using OpenAI Images API, then upload to S3 via Banbury API
+function isGoogleImageModel(model: string): boolean {
+  return model.startsWith('gemini') || model === 'gemini-2.5-flash-image'
+}
+
+async function generateImageWithGoogle(prompt: string, model: string): Promise<string> {
+  const apiKey = process.env.GOOGLE_API_KEY
+  if (!apiKey) {
+    throw new Error('GOOGLE_API_KEY is not configured')
+  }
+
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      contents: [{
+        parts: [{
+          text: prompt
+        }]
+      }]
+    }),
+  })
+
+  if (!response.ok) {
+    const err = await response.text().catch(() => '')
+    throw new Error(`Google API error: ${err || response.statusText}`)
+  }
+
+  const data = await response.json() as any
+  
+  // Extract image from Google's response format
+  const candidate = data.candidates?.[0]
+  const content = candidate?.content
+  const parts = content?.parts || []
+  
+  // Find the image part (Google returns base64 encoded images)
+  const imagePart = parts.find((part: any) => part.inlineData)
+  if (!imagePart?.inlineData?.data) {
+    throw new Error('No image returned by Google API')
+  }
+
+  return imagePart.inlineData.data
+}
+
+async function generateImageWithOpenAI(prompt: string, model: string, size: string): Promise<string> {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY is not configured')
+  }
+
+  const resp = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({ model, prompt, n: 1, size, response_format: 'b64_json' }),
+  })
+  
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '')
+    throw new Error(`OpenAI API error: ${text || resp.statusText}`)
+  }
+  
+  const data: any = await resp.json()
+  const b64 = data?.data?.[0]?.b64_json as string | undefined
+  if (!b64) {
+    throw new Error('No image returned by OpenAI API')
+  }
+  
+  return b64
+}
+
+// Image generation tool using OpenAI Images API or Google Generative AI API, then upload to S3 via Banbury API
 export const generateImageTool = tool(
   async (input: { prompt: string; size?: '256x256' | '512x512' | '1024x1024'; folder?: string; fileBaseName?: string }) => {
-    const openaiKey = process.env.OPENAI_API_KEY
-    if (!openaiKey) {
-      return JSON.stringify({ ok: false, error: 'OPENAI_API_KEY not configured' })
-    }
-
     const token = getServerContextValue<string>('authToken')
     if (!token) {
       return JSON.stringify({ ok: false, error: 'Missing auth token in server context' })
@@ -26,18 +92,12 @@ export const generateImageTool = tool(
       const folder = (input?.folder || 'images').replace(/^\/+|\/+$/g, '')
       const baseName = (input?.fileBaseName || 'Generated Image').toString().trim()
 
-      const resp = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
-        body: JSON.stringify({ model: imageModel, prompt, n: 1, size, response_format: 'b64_json' }),
-      })
-      if (!resp.ok) {
-        const text = await resp.text().catch(() => '')
-        return JSON.stringify({ ok: false, error: `Provider error: ${text || resp.statusText}` })
+      let b64: string
+      if (isGoogleImageModel(imageModel)) {
+        b64 = await generateImageWithGoogle(prompt, imageModel)
+      } else {
+        b64 = await generateImageWithOpenAI(prompt, imageModel, size)
       }
-      const data: any = await resp.json()
-      const b64 = data?.data?.[0]?.b64_json as string | undefined
-      if (!b64) return JSON.stringify({ ok: false, error: 'No image returned by provider' })
 
       const apiBase = CONFIG.url
       const buffer = Buffer.from(b64, 'base64')
@@ -66,7 +126,7 @@ export const generateImageTool = tool(
       return JSON.stringify({
         ok: true,
         file_info: uploaded?.file_info || { file_name: fileName, file_path: filePath },
-        provider: 'openai',
+        provider: isGoogleImageModel(imageModel) ? 'google' : 'openai',
         size,
         message: 'Image generated and uploaded successfully',
       })

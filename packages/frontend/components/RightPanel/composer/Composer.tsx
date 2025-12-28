@@ -896,7 +896,13 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                 variant="primary"
                 size="xs"
                 className="h-7 w-7"
-                title={`Image Model: ${toolPreferences.image_generation_model === 'dall-e-2' ? 'DALL-E 2' : 'DALL-E 3'}`}
+                title={`Image Model: ${
+                  toolPreferences.image_generation_model === 'dall-e-2' 
+                    ? 'DALL-E 2' 
+                    : toolPreferences.image_generation_model === 'gemini-2.5-flash-image'
+                    ? 'Nano Banana'
+                    : 'DALL-E 3'
+                }`}
                 aria-label="Image Generation Model"
               >
                 <Image height={16} width={16} strokeWidth={1} />
@@ -911,6 +917,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                 {[
                   { id: 'dall-e-3', name: 'DALL-E 3', description: 'Most capable, highest quality' },
                   { id: 'dall-e-2', name: 'DALL-E 2', description: 'Faster, lower cost' },
+                  { id: 'gemini-2.5-flash-image', name: 'Nano Banana', description: 'Google DeepMind image generation' },
                 ].map((model) => {
                   const isSelected = (toolPreferences.image_generation_model || 'dall-e-3') === model.id
                   return (
