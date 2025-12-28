@@ -22,6 +22,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../../../ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '../../../ui/dropdown-menu';
 import { Input } from '../../../ui/old-input';
+import { Typography } from '../../../ui/typography';
 import { ApiService } from '../../../../../backend/api/apiService';
 import { cn } from '../../../../utils';
 import { FileSystemItem } from '../../../../utils/fileTreeUtils';
@@ -240,7 +241,7 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
         <div key={item.id}>
           <div
             className={cn(
-              "flex items-center gap-2 px-3 py-2 hover:bg-accent cursor-pointer transition-colors",
+              "flex items-center gap-2 px-3 py-2 hover:bg-accent cursor-pointer transition-colors duration-150 rounded-md",
               item.type === 'file' ? 'text-foreground' : 'text-muted-foreground'
             )}
             style={{ paddingLeft: `${(level * 12) + 12}px` }}
@@ -259,7 +260,7 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
             )}
             {!hasChildren && <div className="w-4" />}
             <FileIconComponent className={cn("h-4 w-4 flex-shrink-0", fileIconData.color)} />
-            <span className="text-sm truncate">{item.name}</span>
+            <Typography variant="small" className="truncate">{item.name}</Typography>
           </div>
           {hasChildren && isExpanded && renderFileTree(item.children!, level + 1)}
         </div>
@@ -288,8 +289,7 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className="w-80 max-h-96 overflow-hidden bg-accent border-border"
-          style={{ zIndex: 999999 }}
+          className="w-80 max-h-96 p-0 !bg-popover !text-popover-foreground !border-border"
           side="top"
           align="start"
         >
@@ -300,20 +300,20 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
                 placeholder="Search files..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-accent border-border text-sm"
+                className="pl-10 bg-popover border-border text-sm"
                 autoFocus
               />
             </div>
           </div>
           
-          <div className="overflow-y-auto max-h-80">
+          <div className="overflow-y-auto max-h-80 bg-popover">
             {loading ? (
-              <div className="flex items-center justify-center p-4 text-muted-foreground">
-                Loading files...
+              <div className="flex items-center justify-center p-4 bg-popover">
+                <Typography variant="muted">Loading files...</Typography>
               </div>
             ) : fileSystem.length === 0 ? (
-              <div className="flex items-center justify-center p-4 text-muted-foreground">
-                No files found
+              <div className="flex items-center justify-center p-4 bg-popover">
+                <Typography variant="muted">No files found</Typography>
               </div>
             ) : (
               renderFileTree(fileSystem)
@@ -334,7 +334,7 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
                 className="flex items-center gap-2 p-2 bg-accent rounded-md border border-border"
               >
                 <FileIconComponent className={cn("h-4 w-4 flex-shrink-0", fileIconData.color)} />
-                <span className="text-sm text-foreground truncate flex-1">{file.name}</span>
+                <Typography variant="small" className="truncate flex-1">{file.name}</Typography>
                 <Button
                   variant="ghost"
                   size="xs"
