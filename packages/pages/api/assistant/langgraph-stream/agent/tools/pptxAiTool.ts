@@ -92,22 +92,22 @@ export const pptxAiTool = tool(
         .array(
           z.union([
             z.object({ 
-              type: z.literal('createSlide'), 
+              type: z.enum(['createSlide']), 
               slideIndex: z.number().optional().describe('Position to insert slide (0-indexed). If not provided, adds at end'),
               layout: z.enum(['title', 'content', 'twoColumn', 'blank']).optional().describe('Slide layout type'),
               background: z.string().optional().describe('Background color as hex (e.g., "#ffffff")')
             }).describe('Create a new slide'),
             z.object({ 
-              type: z.literal('deleteSlide'), 
+              type: z.enum(['deleteSlide']), 
               slideIndex: z.number().describe('Index of slide to delete (0-indexed)')
             }).describe('Delete a slide'),
             z.object({ 
-              type: z.literal('reorderSlides'), 
+              type: z.enum(['reorderSlides']), 
               fromIndex: z.number().describe('Current index of slide'), 
               toIndex: z.number().describe('New index position')
             }).describe('Move a slide to a new position'),
             z.object({ 
-              type: z.literal('addText'), 
+              type: z.enum(['addText']), 
               slideIndex: z.number().optional().describe('Slide index (0-indexed). Defaults to current slide'),
               element: z.object({
                 x: z.number().describe('X position as percentage (0-100)'),
@@ -123,15 +123,15 @@ export const pptxAiTool = tool(
                 align: z.enum(['left', 'center', 'right']).optional(),
                 valign: z.enum(['top', 'middle', 'bottom']).optional(),
                 textFill: z.union([
-                  z.object({ kind: z.literal('solid'), color: z.string() }),
-                  z.object({ kind: z.literal('linearGradient'), startColor: z.string(), endColor: z.string(), angleDeg: z.number() })
+                  z.object({ kind: z.enum(['solid']), color: z.string() }),
+                  z.object({ kind: z.enum(['linearGradient']), startColor: z.string(), endColor: z.string(), angleDeg: z.number() })
                 ]).optional().describe('Text box background fill (solid or gradient)'),
                 border: z.object({ color: z.string(), width: z.number() }).optional().describe('Text box border'),
                 highlights: z.array(z.object({ start: z.number(), end: z.number(), color: z.string() })).optional().describe('Text highlight ranges')
               })
             }).describe('Add a text box to a slide with advanced formatting options'),
             z.object({ 
-              type: z.literal('addShape'), 
+              type: z.enum(['addShape']), 
               slideIndex: z.number().optional(),
               element: z.object({
                 x: z.number().describe('X position as percentage'),
@@ -141,15 +141,15 @@ export const pptxAiTool = tool(
                 shapeType: z.enum(['rect', 'ellipse', 'triangle', 'arrow', 'line']).describe('Type of shape'),
                 fill: z.union([
                   z.string(),
-                  z.object({ kind: z.literal('solid'), color: z.string() }),
-                  z.object({ kind: z.literal('linearGradient'), startColor: z.string(), endColor: z.string(), angleDeg: z.number() })
+                  z.object({ kind: z.enum(['solid']), color: z.string() }),
+                  z.object({ kind: z.enum(['linearGradient']), startColor: z.string(), endColor: z.string(), angleDeg: z.number() })
                 ]).optional().describe('Fill color as hex string or FillStyle object (solid or gradient)'),
                 stroke: z.string().optional().describe('Stroke color as hex'),
                 strokeWidth: z.number().optional().describe('Stroke width in pixels')
               })
             }).describe('Add a shape to a slide with optional gradient fill'),
             z.object({ 
-              type: z.literal('addImage'), 
+              type: z.enum(['addImage']), 
               slideIndex: z.number().optional(),
               element: z.object({
                 x: z.number(),
@@ -163,7 +163,7 @@ export const pptxAiTool = tool(
               })
             }).describe('Add an image to a slide. Use imageUrl for web images, driveFileId for Google Drive images (from attached files with drive:// path), or s3FileId+s3FileName for S3 files (from attached files without drive:// path). At least one image source must be provided.'),
             z.object({ 
-              type: z.literal('updateElement'), 
+              type: z.enum(['updateElement']), 
               slideIndex: z.number().optional(),
               elementId: z.string().describe('ID of the element to update'),
               element: z.object({
@@ -179,39 +179,39 @@ export const pptxAiTool = tool(
                 italic: z.boolean().optional(),
                 fill: z.union([
                   z.string(),
-                  z.object({ kind: z.literal('solid'), color: z.string() }),
-                  z.object({ kind: z.literal('linearGradient'), startColor: z.string(), endColor: z.string(), angleDeg: z.number() })
+                  z.object({ kind: z.enum(['solid']), color: z.string() }),
+                  z.object({ kind: z.enum(['linearGradient']), startColor: z.string(), endColor: z.string(), angleDeg: z.number() })
                 ]).optional(),
                 stroke: z.string().optional(),
                 textFill: z.union([
-                  z.object({ kind: z.literal('solid'), color: z.string() }),
-                  z.object({ kind: z.literal('linearGradient'), startColor: z.string(), endColor: z.string(), angleDeg: z.number() })
+                  z.object({ kind: z.enum(['solid']), color: z.string() }),
+                  z.object({ kind: z.enum(['linearGradient']), startColor: z.string(), endColor: z.string(), angleDeg: z.number() })
                 ]).optional(),
                 border: z.object({ color: z.string(), width: z.number() }).optional(),
                 highlights: z.array(z.object({ start: z.number(), end: z.number(), color: z.string() })).optional()
               })
             }).describe('Update an existing element with new properties'),
             z.object({ 
-              type: z.literal('deleteElement'), 
+              type: z.enum(['deleteElement']), 
               slideIndex: z.number().optional(),
               elementId: z.string().describe('ID of the element to delete')
             }).describe('Delete an element from a slide'),
             z.object({ 
-              type: z.literal('setSlideBackground'), 
+              type: z.enum(['setSlideBackground']), 
               slideIndex: z.number().optional(),
               background: z.string().describe('Background color as hex')
             }).describe('Set slide background color'),
             z.object({ 
-              type: z.literal('applyTheme'), 
+              type: z.enum(['applyTheme']), 
               theme: z.enum(['default', 'dark', 'light', 'corporate', 'creative']).describe('Theme to apply')
             }).describe('Apply a theme to the entire presentation'),
             z.object({ 
-              type: z.literal('applyTemplate'), 
+              type: z.enum(['applyTemplate']), 
               templateId: z.enum(['professional', 'creative', 'minimal']).describe('Template ID to apply. Available templates: "professional" (clean business template), "creative" (bold and vibrant), "minimal" (elegant minimalist)'),
               scope: z.enum(['presentation', 'slide']).optional().describe('Scope of template application. "presentation" applies to all slides (default), "slide" applies to current slide only')
             }).describe('Apply a complete template (design, colors, fonts, and layouts) to the presentation. This preserves content while applying consistent styling.'),
             z.object({ 
-              type: z.literal('highlightText'), 
+              type: z.enum(['highlightText']), 
               slideIndex: z.number().optional(),
               elementId: z.string().describe('ID of the text element'),
               substring: z.string().describe('Text substring to highlight'),

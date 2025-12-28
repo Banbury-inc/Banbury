@@ -63,7 +63,7 @@ export const tldrawAiTool = tool(
         .array(
           z.union([
             z.object({ 
-              type: z.literal('createShape'), 
+              type: z.enum(['createShape']), 
               shapeType: z.enum(['rectangle', 'ellipse', 'text', 'note', 'arrow', 'line']),
               x: z.number(), 
               y: z.number(), 
@@ -74,7 +74,7 @@ export const tldrawAiTool = tool(
               note: z.string().optional()
             }),
             z.object({ 
-              type: z.literal('updateShape'), 
+              type: z.enum(['updateShape']), 
               shapeId: z.string(), 
               x: z.number().optional(), 
               y: z.number().optional(), 
@@ -84,30 +84,30 @@ export const tldrawAiTool = tool(
               color: z.string().optional(),
               note: z.string().optional()
             }),
-            z.object({ type: z.literal('deleteShape'), shapeId: z.string() }),
-            z.object({ type: z.literal('moveShape'), shapeId: z.string(), x: z.number(), y: z.number() }),
-            z.object({ type: z.literal('addText'), shapeId: z.string(), text: z.string() }),
+            z.object({ type: z.enum(['deleteShape']), shapeId: z.string() }),
+            z.object({ type: z.enum(['moveShape']), shapeId: z.string(), x: z.number(), y: z.number() }),
+            z.object({ type: z.enum(['addText']), shapeId: z.string(), text: z.string() }),
             z.object({ 
-              type: z.literal('connectShapes'), 
+              type: z.enum(['connectShapes']), 
               fromShapeId: z.string(), 
               toShapeId: z.string(), 
               arrowType: z.enum(['arrow', 'line']).optional()
             }),
-            z.object({ type: z.literal('groupShapes'), shapeIds: z.array(z.string()), groupName: z.string().optional() }),
-            z.object({ type: z.literal('ungroupShapes'), groupId: z.string() }),
+            z.object({ type: z.enum(['groupShapes']), shapeIds: z.array(z.string()), groupName: z.string().optional() }),
+            z.object({ type: z.enum(['ungroupShapes']), groupId: z.string() }),
             z.object({ 
-              type: z.literal('duplicateShape'), 
+              type: z.enum(['duplicateShape']), 
               shapeId: z.string(), 
               offsetX: z.number().optional(), 
               offsetY: z.number().optional() 
             }),
             z.object({ 
-              type: z.literal('setCanvasBackground'), 
+              type: z.enum(['setCanvasBackground']), 
               color: z.string().optional(), 
               pattern: z.string().optional() 
             }),
             z.object({ 
-              type: z.literal('addAnnotation'), 
+              type: z.enum(['addAnnotation']), 
               x: z.number(), 
               y: z.number(), 
               text: z.string(),

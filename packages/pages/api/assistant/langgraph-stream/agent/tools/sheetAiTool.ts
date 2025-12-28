@@ -72,38 +72,38 @@ export const sheetAiTool = tool(
         .array(
           z.union([
             z.object({ 
-              type: z.literal('setCell'), 
+              type: z.enum(['setCell']), 
               row: z.number().describe('Row index (0-indexed, where 0 is the first row)'), 
               col: z.number().describe('Column index (0-indexed, where 0 is column A)'), 
-              value: z.union([z.string(), z.number()]).describe('The value to set in the cell')
+              value: z.coerce.string().describe('The value to set in the cell (strings and numbers are both accepted)')
             }).describe('Set a single cell value. Example: {type: "setCell", row: 0, col: 0, value: "Header"} sets cell A1 to "Header"'),
             z.object({
-              type: z.literal('setRange'),
+              type: z.enum(['setRange']),
               range: z.object({ 
                 startRow: z.number().describe('Starting row index (0-indexed)'), 
                 startCol: z.number().describe('Starting column index (0-indexed)'), 
                 endRow: z.number().describe('Ending row index (0-indexed, inclusive)'), 
                 endCol: z.number().describe('Ending column index (0-indexed, inclusive)')
               }),
-              values: z.array(z.array(z.union([z.string(), z.number()]))).describe('2D array of values to set. Each inner array represents a row. Example: [["A", "B"], ["1", "2"]] sets two rows with two columns each'),
+              values: z.array(z.array(z.coerce.string())).describe('2D array of values to set. Each inner array represents a row. Example: [["A", "B"], ["1", "2"]] sets two rows with two columns each'),
             }).describe('Set values for a range of cells. Example: {type: "setRange", range: {startRow: 0, startCol: 0, endRow: 1, endCol: 1}, values: [["A", "B"], ["C", "D"]]} sets a 2x2 range'),
             z.object({ 
-              type: z.literal('insertRows'), 
+              type: z.enum(['insertRows']), 
               index: z.number().describe('Row index where to insert (0-indexed, rows will be inserted before this index)'), 
               count: z.number().optional().describe('Number of rows to insert (default: 1)')
             }).describe('Insert one or more empty rows. Example: {type: "insertRows", index: 1, count: 2} inserts 2 empty rows before row 2'),
             z.object({ 
-              type: z.literal('deleteRows'), 
+              type: z.enum(['deleteRows']), 
               index: z.number().describe('Row index where to start deleting (0-indexed)'), 
               count: z.number().optional().describe('Number of rows to delete (default: 1)')
             }).describe('Delete one or more rows. Example: {type: "deleteRows", index: 1, count: 2} deletes 2 rows starting from row 2'),
             z.object({ 
-              type: z.literal('insertCols'), 
+              type: z.enum(['insertCols']), 
               index: z.number().describe('Column index where to insert (0-indexed, columns will be inserted before this index)'), 
               count: z.number().optional().describe('Number of columns to insert (default: 1)')
             }).describe('Insert one or more empty columns. Example: {type: "insertCols", index: 0, count: 1} inserts 1 empty column at the beginning (before column A)'),
             z.object({ 
-              type: z.literal('deleteCols'), 
+              type: z.enum(['deleteCols']), 
               index: z.number().describe('Column index where to start deleting (0-indexed)'), 
               count: z.number().optional().describe('Number of columns to delete (default: 1)')
             }).describe('Delete one or more columns. Example: {type: "deleteCols", index: 1, count: 1} deletes column B'),

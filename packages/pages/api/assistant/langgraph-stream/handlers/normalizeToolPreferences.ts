@@ -43,7 +43,7 @@ export function normalizeToolPreferences({
     // System tools
     memory: toolPreferences.memory !== false,
     langgraph_mode: true,
-    model_provider: toolPreferences.model_provider === "openai" ? "openai" : "anthropic",
+    model_provider: toolPreferences.model_provider === "openai" ? "openai" : toolPreferences.model_provider === "google" ? "google" : "anthropic",
     model_id: toolPreferences.model_id,
     image_generation_model: typeof toolPreferences.image_generation_model === "string" ? toolPreferences.image_generation_model : "dall-e-3",
   }

@@ -1,4 +1,4 @@
-import { HumanMessage, SystemMessage, AIMessage, BaseMessage, ToolMessage } from "@langchain/core/messages"
+import { HumanMessage, SystemMessage, AIMessage, BaseMessage, ToolMessage, ChatMessage } from "@langchain/core/messages"
 import type { AssistantUiMessage } from "../types"
 import { extractTextFromDocx } from "./handleExtractTextFromDocx"
 import { extractTextFromXlsx } from "./handleExtractTextFromXLSX"
@@ -90,11 +90,32 @@ function createAnthropicContent(fileData: string, mimeType: string): any {
   }
 }
 
-function processUserMessage(content: any[], provider: "anthropic" | "openai"): HumanMessage | null {
+function processUserMessage(content: any[], provider: "anthropic" | "openai" | "google"): HumanMessage | ChatMessage | null {
   const textParts = content.filter((p) => p.type === "text").map((p: any) => p.text)
   const fileAttachments = content.filter((p) => p.type === "file-attachment") as any[]
   
   const userText = textParts.join("\n\n")
+  
+  // For Google, use ChatMessage with role="human" because getMessageAuthor checks message.role for ChatMessage
+  // For other providers, use HumanMessage as usual
+  if (provider === "google") {
+    if (fileAttachments.length > 0) {
+      const attachmentSummary = fileAttachments
+        .map((fa) => {
+          const sizeEstimate = fa?.fileData ? ` (~${Math.round((fa.fileData.length * 3) / 4 / 1024)} KB)` : ''
+          return `Attachment: ${fa?.fileName || 'Unnamed file'}${sizeEstimate}`
+        })
+        .join('\n')
+      const combined = [userText, attachmentSummary].filter(Boolean).join('\n\n') || 'User attached files.'
+      return new ChatMessage({ content: combined, role: "human" })
+    }
+    
+    if (userText) {
+      return new ChatMessage({ content: userText, role: "human" })
+    }
+    
+    return null
+  }
   
   if (fileAttachments.length > 0) {
     if (provider === "anthropic") {
@@ -125,17 +146,17 @@ function processUserMessage(content: any[], provider: "anthropic" | "openai"): H
       })
       .join('\n')
     const combined = [userText, attachmentSummary].filter(Boolean).join('\n\n') || 'User attached files.'
-    return new HumanMessage(combined)
+    return new HumanMessage({ content: combined })
   }
   
   if (userText) {
-    return new HumanMessage(userText)
+    return new HumanMessage({ content: userText })
   }
   
   return null
 }
 
-function processAssistantMessage(content: any[]): BaseMessage[] {
+function processAssistantMessage(content: any[], provider?: "anthropic" | "openai" | "google"): BaseMessage[] {
   const textParts = content.filter((p) => p.type === "text").map((p: any) => p.text)
   const toolCalls = content.filter((p) => p.type === "tool-call") as any[]
   
@@ -146,60 +167,111 @@ function processAssistantMessage(content: any[]): BaseMessage[] {
   
   const messages: BaseMessage[] = []
   
-  if (completedToolCalls.length > 0) {
-    // For messages with tool calls, maintain the proper sequence:
-    // 1. Assistant message with tool_calls
-    // 2. Tool result messages
-    
-    messages.push(new AIMessage({ 
-      content: textParts.join("\n\n"), 
-      tool_calls: completedToolCalls.map((c: any) => ({ 
-        name: c.toolName, 
-        args: c.args, 
-        id: c.toolCallId 
+  // For Google, use ChatMessage with role="model" because getMessageAuthor checks message.role for ChatMessage
+  // For other providers, use AIMessage as usual
+  if (provider === "google") {
+    if (completedToolCalls.length > 0) {
+      // For messages with tool calls, maintain the proper sequence:
+      // 1. Assistant message with tool_calls
+      // 2. Tool result messages
+      
+      messages.push(new ChatMessage({ 
+        content: textParts.join("\n\n"), 
+        role: "model",
+        tool_calls: completedToolCalls.map((c: any) => ({ 
+          name: c.toolName, 
+          args: c.args, 
+          id: c.toolCallId 
+        }))
       }))
-    }))
-    
-    // Add tool result messages immediately after
-    for (const toolCall of completedToolCalls) {
-      messages.push(new ToolMessage({
-        content: typeof toolCall.result === 'string' ? toolCall.result : JSON.stringify(toolCall.result),
-        tool_call_id: toolCall.toolCallId
+      
+      // Add tool result messages immediately after
+      for (const toolCall of completedToolCalls) {
+        messages.push(new ToolMessage({
+          content: typeof toolCall.result === 'string' ? toolCall.result : JSON.stringify(toolCall.result),
+          tool_call_id: toolCall.toolCallId
+        }))
+      }
+    } else if (textParts.length > 0) {
+      // If there are only text parts (no completed tool calls), just add the text message
+      messages.push(new ChatMessage({ 
+        content: textParts.join("\n\n"),
+        role: "model"
       }))
     }
-  } else if (textParts.length > 0) {
-    // If there are only text parts (no completed tool calls), just add the text message
-    messages.push(new AIMessage({ 
-      content: textParts.join("\n\n")
-    }))
+  } else {
+    if (completedToolCalls.length > 0) {
+      // For messages with tool calls, maintain the proper sequence:
+      // 1. Assistant message with tool_calls
+      // 2. Tool result messages
+      
+      messages.push(new AIMessage({ 
+        content: textParts.join("\n\n"), 
+        tool_calls: completedToolCalls.map((c: any) => ({ 
+          name: c.toolName, 
+          args: c.args, 
+          id: c.toolCallId 
+        }))
+      }))
+      
+      // Add tool result messages immediately after
+      for (const toolCall of completedToolCalls) {
+        messages.push(new ToolMessage({
+          content: typeof toolCall.result === 'string' ? toolCall.result : JSON.stringify(toolCall.result),
+          tool_call_id: toolCall.toolCallId
+        }))
+      }
+    } else if (textParts.length > 0) {
+      // If there are only text parts (no completed tool calls), just add the text message
+      messages.push(new AIMessage({ 
+        content: textParts.join("\n\n")
+      }))
+    }
   }
   
   return messages
 }
 
-export function toLangChainMessages(messages: AssistantUiMessage[], provider: "anthropic" | "openai"): BaseMessage[] {
+export function toLangChainMessages(messages: AssistantUiMessage[], provider: "anthropic" | "openai" | "google"): BaseMessage[] {
   const lc: BaseMessage[] = []
   
   for (const msg of messages) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'toLangChainMessages.ts:183',message:'Processing message in toLangChainMessages',data:{msgRole:msg.role,provider,hasContent:!!msg.content,contentLength:msg.content?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    
     if (msg.role === "system") {
       const text = msg.content
         .filter((p) => p.type === "text")
         .map((p: any) => p.text)
         .join("\n\n")
-      if (text) lc.push(new SystemMessage(text))
+      if (text) {
+        // Google's API doesn't support SystemMessage directly - convert to ChatMessage with role="human"
+        if (provider === "google") {
+          lc.push(new ChatMessage({ content: `System: ${text}`, role: "human" }))
+        } else {
+          lc.push(new SystemMessage(text))
+        }
+      }
       continue
     }
     
     if (msg.role === "user") {
+      // Pass the actual provider so processUserMessage can add Google-specific kwargs
       const userMessage = processUserMessage(msg.content, provider)
       if (userMessage) lc.push(userMessage)
       continue
     }
     
     if (msg.role === "assistant") {
-      const assistantMessages = processAssistantMessage(msg.content)
+      const assistantMessages = processAssistantMessage(msg.content, provider)
       lc.push(...assistantMessages)
+      continue
     }
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'toLangChainMessages.ts:203',message:'Unhandled message role',data:{msgRole:msg.role,provider},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
   }
   
   return lc

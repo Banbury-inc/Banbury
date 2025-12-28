@@ -118,7 +118,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     generate_image: boolean;
     // System tools
     memory: boolean;
-    model_provider: "anthropic" | "openai";
+    model_provider: "anthropic" | "openai" | "google";
     model_id: string;
     image_generation_model?: string;
   }
@@ -131,7 +131,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         ? Boolean(data.browserbase)
         : false;
 
-    const provider = data.model_provider === "openai" ? "openai" : "anthropic";
+    const provider = data.model_provider === "openai" ? "openai" : data.model_provider === "google" ? "google" : "anthropic";
     const fallbackModelId = getDefaultModelForProvider(provider);
     const rawModelId = typeof data.model_id === "string" ? data.model_id : fallbackModelId;
     const modelId = getModelById(rawModelId)?.id || fallbackModelId;

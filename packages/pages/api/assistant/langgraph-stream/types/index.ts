@@ -49,7 +49,7 @@ export interface ToolPreferences {
   // System tools
   memory?: boolean
   slack?: boolean
-  model_provider?: "anthropic" | "openai"
+  model_provider?: "anthropic" | "openai" | "google"
   model_id?: string
   image_generation_model?: string
 }

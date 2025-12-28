@@ -1,5 +1,6 @@
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOpenAI } from "@langchain/openai";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage, SystemMessage, AIMessage, ToolMessage } from "@langchain/core/messages";
 import { StateGraph, START, END, MessagesAnnotation } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
@@ -84,19 +85,39 @@ interface AgentState {
   error?: string;
 }
 
-type ModelProvider = "anthropic" | "openai"
+type ModelProvider = "anthropic" | "openai" | "google"
 
 function getDefaultModelForProvider(provider: ModelProvider): string {
-  return provider === "openai" ? "gpt-4o-mini" : "claude-sonnet-4-20250514"
+  if (provider === "openai") return "gpt-4o-mini";
+  if (provider === "google") return "gemini-2.0-flash-exp";
+  return "claude-sonnet-4-20250514";
 }
 
 function createChatModel(provider: ModelProvider, modelId?: string) {
-  const actualModelId = modelId || getDefaultModelForProvider(provider)
+  let actualModelId = modelId || getDefaultModelForProvider(provider)
+  
+  // Map deprecated or unsupported Google model names to supported ones
+  if (provider === "google") {
+    const modelMappings: Record<string, string> = {
+      "gemini-pro": "gemini-2.0-flash-exp", // Map deprecated gemini-pro to gemini-2.0-flash-exp
+      "gemini-1.5-pro": "gemini-2.0-flash-exp", // Map gemini-1.5-pro to gemini-2.0-flash-exp (not available in v1beta)
+      "gemini-1.5-flash": "gemini-2.0-flash-exp", // Map gemini-1.5-flash to gemini-2.0-flash-exp (not available in v1beta)
+    }
+    actualModelId = modelMappings[actualModelId] || actualModelId
+  }
   
   if (provider === "openai") {
     return new ChatOpenAI({
       model: actualModelId,
       apiKey: process.env.OPENAI_API_KEY,
+      temperature: 0.2,
+    })
+  }
+
+  if (provider === "google") {
+    return new ChatGoogleGenerativeAI({
+      model: actualModelId,
+      apiKey: process.env.GOOGLE_API_KEY,
       temperature: 0.2,
     })
   }
@@ -111,7 +132,9 @@ function createChatModel(provider: ModelProvider, modelId?: string) {
 
 function resolveModelProvider(): ModelProvider {
   const prefs = getServerContextValue<any>("toolPreferences")
-  return prefs?.model_provider === "openai" ? "openai" : "anthropic"
+  if (prefs?.model_provider === "openai") return "openai";
+  if (prefs?.model_provider === "google") return "google";
+  return "anthropic";
 }
 
 function resolveModelId(): string | undefined {

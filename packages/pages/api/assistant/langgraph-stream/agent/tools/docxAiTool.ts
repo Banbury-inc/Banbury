@@ -62,16 +62,16 @@ export const docxAiTool = tool(
       operations: z
         .array(
           z.union([
-            z.object({ type: z.literal('insertText'), position: z.number(), text: z.string() }),
-            z.object({ type: z.literal('replaceText'), startPosition: z.number(), endPosition: z.number(), text: z.string() }),
-            z.object({ type: z.literal('insertParagraph'), position: z.number(), text: z.string(), style: z.string().optional() }),
-            z.object({ type: z.literal('replaceParagraph'), paragraphIndex: z.number(), text: z.string(), style: z.string().optional() }),
-            z.object({ type: z.literal('insertHeading'), position: z.number(), text: z.string(), level: z.number() }),
-            z.object({ type: z.literal('replaceHeading'), headingIndex: z.number(), text: z.string(), level: z.number().optional() }),
-            z.object({ type: z.literal('insertList'), position: z.number(), items: z.array(z.string()), listType: z.enum(['bulleted', 'numbered']) }),
-            z.object({ type: z.literal('insertTable'), position: z.number(), rows: z.array(z.array(z.string())), hasHeaders: z.boolean().optional() }),
+            z.object({ type: z.enum(['insertText']), position: z.number(), text: z.string() }),
+            z.object({ type: z.enum(['replaceText']), startPosition: z.number(), endPosition: z.number(), text: z.string() }),
+            z.object({ type: z.enum(['insertParagraph']), position: z.number(), text: z.string(), style: z.string().optional() }),
+            z.object({ type: z.enum(['replaceParagraph']), paragraphIndex: z.number(), text: z.string(), style: z.string().optional() }),
+            z.object({ type: z.enum(['insertHeading']), position: z.number(), text: z.string(), level: z.number() }),
+            z.object({ type: z.enum(['replaceHeading']), headingIndex: z.number(), text: z.string(), level: z.number().optional() }),
+            z.object({ type: z.enum(['insertList']), position: z.number(), items: z.array(z.string()), listType: z.enum(['bulleted', 'numbered']) }),
+            z.object({ type: z.enum(['insertTable']), position: z.number(), rows: z.array(z.array(z.string())), hasHeaders: z.boolean().optional() }),
             z.object({ 
-              type: z.literal('formatText'), 
+              type: z.enum(['formatText']), 
               startPosition: z.number(), 
               endPosition: z.number(), 
               formatting: z.object({
@@ -82,9 +82,9 @@ export const docxAiTool = tool(
                 color: z.string().optional()
               })
             }),
-            z.object({ type: z.literal('insertImage'), position: z.number(), imageUrl: z.string(), alt: z.string().optional(), width: z.number().optional(), height: z.number().optional() }),
+            z.object({ type: z.enum(['insertImage']), position: z.number(), imageUrl: z.string(), alt: z.string().optional(), width: z.number().optional(), height: z.number().optional() }),
             z.object({ 
-              type: z.literal('setPageSettings'), 
+              type: z.enum(['setPageSettings']), 
               margins: z.object({ top: z.number(), bottom: z.number(), left: z.number(), right: z.number() }).optional(),
               orientation: z.enum(['portrait', 'landscape']).optional()
             }),

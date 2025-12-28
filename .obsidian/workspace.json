@@ -139,16 +139,21 @@
   },
   "active": "9454596cb4bc6a15",
   "lastOpenFiles": [
-    "packages/frontend/components/RightPanel/composer/handlers/toolConfig.ts",
-    "packages/pages/api/assistant/langgraph-stream/agent/tools/createFolderTool.ts",
-    "packages/frontend/pages/Admin/ErrorTrackingTab.tsx",
-    "packages/frontend/pages/Admin/FeatureUsageTab.tsx",
-    "packages/frontend/pages/Admin/RetentionTab.tsx",
-    "packages/frontend/pages/Admin/UserEngagementTab.tsx",
-    "packages/frontend/pages/Admin/ApiUsageTab.tsx",
-    "packages/frontend/utils/errorTracker.ts",
-    "packages/frontend/utils/featureUsageTracker.ts",
-    "packages/frontend/utils/userEngagementTracker.ts",
-    "packages/frontend/components/MiddlePanel/Dashboard/Dashboard.tsx"
+    "packages/node_modules/@langchain/google-genai/node_modules/uuid/dist/esm/bin/uuid",
+    "packages/node_modules/@langchain/google-genai/node_modules/uuid/dist/cjs-browser/version.js",
+    "packages/node_modules/@langchain/google-genai/node_modules/uuid/dist/cjs-browser/version.d.ts",
+    "packages/node_modules/@langchain/google-genai/node_modules/uuid/dist/cjs-browser/validate.js",
+    "packages/node_modules/@langchain/google-genai/node_modules/uuid/dist/cjs-browser/validate.d.ts",
+    "packages/node_modules/@langchain/google-genai/node_modules/uuid/dist/cjs-browser/v7.js",
+    "packages/node_modules/@langchain/google-genai/node_modules/uuid/dist/cjs-browser/v7.d.ts",
+    "packages/node_modules/@langchain/google-genai/node_modules/uuid/dist/cjs-browser/v6ToV1.js",
+    "packages/node_modules/@langchain/google-genai/node_modules/uuid/dist/cjs-browser/v6ToV1.d.ts",
+    "packages/node_modules/@langchain/google-genai/node_modules/uuid/dist/cjs-browser/v6.js",
+    "packages/node_modules/@langchain/google-genai/node_modules/uuid/dist/cjs-browser/v6.d.ts",
+    "packages/node_modules/@langchain/google-genai/node_modules/uuid/README.md",
+    "packages/node_modules/@langchain/google-genai/node_modules/uuid/LICENSE.md",
+    "packages/node_modules/@langchain/google-genai/README.md",
+    "packages/node_modules/@langchain/google-genai/CHANGELOG.md",
+    "packages/node_modules/@google/generative-ai/README.md"
   ]
 }

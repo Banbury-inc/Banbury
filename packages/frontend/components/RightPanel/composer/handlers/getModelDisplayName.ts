@@ -1,4 +1,4 @@
-export type ModelProvider = "anthropic" | "openai"
+export type ModelProvider = "anthropic" | "openai" | "google"
 
 export interface ModelConfig {
   id: string
@@ -133,6 +133,31 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     provider: "anthropic",
     description: "Fastest Claude model",
   },
+  // Google Gemini Models
+  {
+    id: "gemini-2.0-flash-exp",
+    name: "Gemini 2.0 Flash (Experimental)",
+    provider: "google",
+    description: "Latest experimental Gemini model with advanced capabilities",
+  },
+  {
+    id: "gemini-1.5-pro",
+    name: "Gemini 1.5 Pro",
+    provider: "google",
+    description: "High-performance Gemini model for complex tasks",
+  },
+  {
+    id: "gemini-1.5-flash",
+    name: "Gemini 1.5 Flash",
+    provider: "google",
+    description: "Fast and efficient Gemini model",
+  },
+  {
+    id: "gemini-pro",
+    name: "Gemini Pro",
+    provider: "google",
+    description: "Standard Gemini model",
+  },
 ]
 
 export function getModelById(modelId: string): ModelConfig | undefined {
@@ -150,6 +175,9 @@ export function getModelsByProvider(provider: ModelProvider): ModelConfig[] {
 
 export function getDefaultModelForProvider(provider: ModelProvider): string {
   const models = getModelsByProvider(provider)
-  return models[0]?.id || (provider === "openai" ? "gpt-4o-mini" : "claude-sonnet-4-20250514")
+  if (models[0]) return models[0].id
+  if (provider === "openai") return "gpt-4o-mini"
+  if (provider === "google") return "gemini-1.5-pro"
+  return "claude-sonnet-4-20250514"
 }
 

@@ -19,7 +19,7 @@ interface ToolPreferences {
   browser: boolean
   x_api: boolean
   slack: boolean
-  model_provider: "anthropic" | "openai"
+  model_provider: "anthropic" | "openai" | "google"
 }
 
 function normalizeToolPreferences(raw: any): ToolPreferences {
@@ -46,7 +46,7 @@ function normalizeToolPreferences(raw: any): ToolPreferences {
     browser: Boolean(raw.browser),
     x_api: Boolean(raw.x_api),
     slack: Boolean(raw.slack),
-    model_provider: raw.model_provider === "openai" ? "openai" : "anthropic",
+    model_provider: raw.model_provider === "openai" ? "openai" : raw.model_provider === "google" ? "google" : "anthropic",
   }
 }
 

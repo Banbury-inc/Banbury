@@ -859,6 +859,32 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                     </div>
                   )
                 })}
+                {AVAILABLE_MODELS.filter(m => m.provider === "google").map(model => {
+                  const isSelected = (toolPreferences.model_id || getDefaultModelForProvider(toolPreferences.model_provider)) === model.id
+                  return (
+                    <div
+                      key={model.id}
+                      className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => {
+                        const selectedModel = getModelById(model.id)
+                        if (selectedModel) {
+                          onUpdateToolPreferences({ 
+                            ...toolPreferences, 
+                            model_id: model.id,
+                            model_provider: selectedModel.provider 
+                          })
+                        }
+                      }}
+                    >
+                      <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                        {isSelected && <Check className="size-4" />}
+                      </span>
+                      <div className="flex items-center">
+                        <Typography variant="xs">{model.name}</Typography>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </PopoverContent>
           </Popover>

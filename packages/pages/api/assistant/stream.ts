@@ -3,6 +3,7 @@ import { z } from "zod";
 import { tool } from "@langchain/core/tools";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOpenAI } from "@langchain/openai";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
 
 // Simple DOCX text extraction function
@@ -313,19 +314,39 @@ const generateImage: any = tool(
 ) as any;
 
 
-type ModelProvider = "anthropic" | "openai";
+type ModelProvider = "anthropic" | "openai" | "google";
 
 function getDefaultModelForProvider(provider: ModelProvider): string {
-  return provider === "openai" ? "gpt-4o-mini" : "claude-sonnet-4-20250514"
+  if (provider === "openai") return "gpt-4o-mini";
+  if (provider === "google") return "gemini-2.0-flash-exp";
+  return "claude-sonnet-4-20250514";
 }
 
 function createChatModel(provider: ModelProvider, modelId?: string) {
-  const actualModelId = modelId || getDefaultModelForProvider(provider)
+  let actualModelId = modelId || getDefaultModelForProvider(provider)
+  
+  // Map deprecated or unsupported Google model names to supported ones
+  if (provider === "google") {
+    const modelMappings: Record<string, string> = {
+      "gemini-pro": "gemini-2.0-flash-exp", // Map deprecated gemini-pro to gemini-2.0-flash-exp
+      "gemini-1.5-pro": "gemini-2.0-flash-exp", // Map gemini-1.5-pro to gemini-2.0-flash-exp (not available in v1beta)
+      "gemini-1.5-flash": "gemini-2.0-flash-exp", // Map gemini-1.5-flash to gemini-2.0-flash-exp (not available in v1beta)
+    }
+    actualModelId = modelMappings[actualModelId] || actualModelId
+  }
   
   if (provider === "openai") {
     return new ChatOpenAI({
       model: actualModelId,
       apiKey: process.env.OPENAI_API_KEY,
+      temperature: 0.2,
+    });
+  }
+
+  if (provider === "google") {
+    return new ChatGoogleGenerativeAI({
+      model: actualModelId,
+      apiKey: process.env.GOOGLE_API_KEY,
       temperature: 0.2,
     });
   }
@@ -339,7 +360,9 @@ function createChatModel(provider: ModelProvider, modelId?: string) {
 }
 
 function resolveModelProvider(provider?: string): ModelProvider {
-  return provider === "openai" ? "openai" : "anthropic";
+  if (provider === "openai") return "openai";
+  if (provider === "google") return "google";
+  return "anthropic";
 }
 
 function toLangChainMessages(messages: AssistantUiMessage[], provider: ModelProvider): any[] {
@@ -356,22 +379,22 @@ function toLangChainMessages(messages: AssistantUiMessage[], provider: ModelProv
       
       let userContent = textParts.join("\n\n");
       
-      // Create Anthropic-compatible message with attachments
+      // Create provider-compatible message with attachments
       if (fileAttachments.length > 0) {
-        if (provider === "anthropic") {
-        const anthropicContent: any[] = [];
+        if (provider === "anthropic" || provider === "google") {
+        const multimodalContent: any[] = [];
         
         // Add text content first
         if (userContent) {
-          anthropicContent.push({ type: "text", text: userContent });
+          multimodalContent.push({ type: "text", text: userContent });
         }
         
-        // Add file attachments in Anthropic format
+        // Add file attachments in provider-compatible format
         for (const fa of fileAttachments) {
           if (fa.fileData && fa.mimeType) {
             
-            // Normalize MIME type for Anthropic compatibility
-            let anthropicMimeType = fa.mimeType;
+            // Normalize MIME type for provider compatibility
+            let mimeType = fa.mimeType;
             const fileExtension = fa.fileName?.split('.').pop()?.toLowerCase();
             
             // Handle generic octet-stream based on file extension
@@ -429,10 +452,10 @@ function toLangChainMessages(messages: AssistantUiMessage[], provider: ModelProv
                 'sql': 'text/x-sql',
                 'sh': 'text/x-shellscript'
               };
-              anthropicMimeType = mimeMap[ext || ''] || fa.mimeType;
+              mimeType = mimeMap[ext || ''] || fa.mimeType;
             }
             
-            // Anthropic-supported MIME types (more restrictive than we thought)
+            // Supported MIME types for multimodal providers
             const supportedTypes = [
               // Documents (only PDF supported for document type)
               'application/pdf',
@@ -483,27 +506,27 @@ function toLangChainMessages(messages: AssistantUiMessage[], provider: ModelProv
               'application/rtf'
             ];
             
-            if (officeDocumentTypes.includes(anthropicMimeType)) {
+            if (officeDocumentTypes.includes(mimeType)) {
               try {
                 const buffer = Buffer.from(fa.fileData, 'base64');
-                anthropicMimeType = 'text/plain';
+                mimeType = 'text/plain';
                 const textContent = extractTextFromDocx(buffer, fa.fileName);
-                anthropicContent.push({
+                multimodalContent.push({
                   type: "text",
                   text: textContent
                 });
                 continue;
               } catch (error) {
-                anthropicMimeType = 'application/octet-stream';
+                mimeType = 'application/octet-stream';
               }
             }
             
-            if (!supportedTypes.includes(anthropicMimeType) && anthropicMimeType !== 'application/pdf') {
+            if (!supportedTypes.includes(mimeType) && mimeType !== 'application/pdf') {
               try {
                 const buffer = Buffer.from(fa.fileData, 'base64');
                 const textContent = buffer.toString('utf8');
-                anthropicMimeType = 'text/plain';
-                anthropicContent.push({
+                mimeType = 'text/plain';
+                multimodalContent.push({
                   type: "text",
                   text: textContent
                 });
@@ -513,30 +536,30 @@ function toLangChainMessages(messages: AssistantUiMessage[], provider: ModelProv
               }
             }
             
-            // Choose the correct attachment type for Anthropic
-            if (anthropicMimeType.startsWith('image/')) {
-              anthropicContent.push({
+            // Choose the correct attachment type for multimodal providers
+            if (mimeType.startsWith('image/')) {
+              multimodalContent.push({
                 type: "image",
                 source: {
                   type: "base64",
-                  media_type: anthropicMimeType,
+                  media_type: mimeType,
                   data: fa.fileData
                 }
               });
-            } else if (anthropicMimeType === 'application/pdf') {
-              // Only PDFs can use document content type
-              anthropicContent.push({
+            } else if (mimeType === 'application/pdf') {
+              // PDFs can use document content type
+              multimodalContent.push({
                 type: "document",
                 source: {
                   type: "base64",
-                  media_type: anthropicMimeType,
+                  media_type: mimeType,
                   data: fa.fileData
                 }
               });
             } else {
               // All other files (including converted DOCX) are sent as text content
               const textContent = Buffer.from(fa.fileData, 'base64').toString('utf8');
-              anthropicContent.push({
+              multimodalContent.push({
                 type: "text",
                 text: textContent
               });
@@ -544,7 +567,7 @@ function toLangChainMessages(messages: AssistantUiMessage[], provider: ModelProv
           }
         }
         
-        lc.push(new HumanMessage({ content: anthropicContent }));
+        lc.push(new HumanMessage({ content: multimodalContent }));
         } else {
           const attachmentSummary = fileAttachments
             .map((fa) => {
