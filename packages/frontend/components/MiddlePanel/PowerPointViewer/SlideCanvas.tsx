@@ -34,6 +34,34 @@ export function SlideCanvas({
   })
   const canvasRef = useRef<HTMLDivElement>(null)
   const slideContentRef = useRef<HTMLDivElement>(null)
+  const [scaleFactor, setScaleFactor] = useState(1)
+
+  // Reference size: 960px width (16:9 aspect ratio)
+  const REFERENCE_WIDTH = 960
+
+  // Calculate scale factor based on slide container size
+  useEffect(() => {
+    if (!slideContentRef.current) return
+
+    const updateScale = () => {
+      if (!slideContentRef.current) return
+      const rect = slideContentRef.current.getBoundingClientRect()
+      // Use width for scale calculation (both width and height should scale proportionally)
+      const scale = rect.width / REFERENCE_WIDTH
+      setScaleFactor(scale)
+    }
+
+    // Initial calculation
+    updateScale()
+
+    // Use ResizeObserver to track size changes
+    const resizeObserver = new ResizeObserver(updateScale)
+    resizeObserver.observe(slideContentRef.current)
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [slide])
 
   // Handle element selection
   const handleElementClick = useCallback((e: React.MouseEvent, elementId: string) => {
@@ -287,6 +315,7 @@ export function SlideCanvas({
                 key={element.id}
                 element={element}
                 isSelected={element.id === selectedElementId}
+                scaleFactor={scaleFactor}
                 onClick={(e) => handleElementClick(e, element.id)}
                 onMouseDown={(e) => handleMouseDown(e, element.id)}
                 onTextChange={(content) => handleTextChange(element.id, content)}
@@ -317,6 +346,7 @@ export function SlideCanvas({
 function ElementRenderer({
   element,
   isSelected,
+  scaleFactor,
   onClick,
   onMouseDown,
   onTextChange,
@@ -327,6 +357,7 @@ function ElementRenderer({
 }: {
   element: SlideElement
   isSelected: boolean
+  scaleFactor: number
   onClick: (e: React.MouseEvent) => void
   onMouseDown: (e: React.MouseEvent) => void
   onTextChange: (content: string) => void
@@ -413,14 +444,18 @@ function ElementRenderer({
       }
     }
 
+    const scaledFontSize = (element.fontSize || 18) * scaleFactor
+    const scaledBorderWidth = element.border ? element.border.width * scaleFactor : undefined
+    const scaledPadding = 4 * scaleFactor
+
     return (
       <div
         className={isSelected ? 'border-2 border-primary rounded-sm' : 'border-2 border-transparent rounded-sm'}
         style={{
           ...baseStyles,
           background: element.textFill ? fillStyleToCSS(element.textFill) : 'transparent',
-          border: element.border ? `${element.border.width}px solid ${element.border.color}` : undefined,
-          padding: '4px',
+          border: element.border ? `${scaledBorderWidth}px solid ${element.border.color}` : undefined,
+          padding: `${scaledPadding}px`,
         }}
         onClick={onClick}
         onMouseDown={onMouseDown}
@@ -430,7 +465,7 @@ function ElementRenderer({
           suppressContentEditableWarning
           className="w-full h-full outline-none"
           style={{
-            fontSize: `${element.fontSize || 18}px`,
+            fontSize: `${scaledFontSize}px`,
             fontFamily: element.fontFace || 'Arial',
             fontWeight: element.bold ? 'bold' : 'normal',
             fontStyle: element.italic ? 'italic' : 'normal',
@@ -465,7 +500,7 @@ function ElementRenderer({
         </div>
         {isSelected && (
           <>
-            <ResizeHandles onResizeStart={onResizeStart} />
+            <ResizeHandles onResizeStart={onResizeStart} scaleFactor={scaleFactor} />
             <div className="absolute -top-6 left-0 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded">
               <Move className="h-3 w-3 inline mr-1" />
               Text
@@ -479,10 +514,11 @@ function ElementRenderer({
   if (element.type === 'shape') {
     const fill = element.fill || '#4a90d9'
     const stroke = element.stroke || '#2d5a8c'
-    const strokeWidth = element.strokeWidth ?? 2
+    const scaledStrokeWidth = (element.strokeWidth ?? 2) * scaleFactor
     const rotation = element.rotation ?? 0
     const shapeType = element.shapeType || 'rect'
     const shapeLabel = getShapeDefinition(shapeType)?.label || 'Shape'
+    const scaledFontSize = 14 * scaleFactor
 
     return (
       <div
@@ -500,19 +536,22 @@ function ElementRenderer({
         onMouseDown={onMouseDown}
       >
         <div className="w-full h-full">
-          {renderShapeSvg(shapeType, { fill, stroke, strokeWidth, text: element.content })}
+          {renderShapeSvg(shapeType, { fill, stroke, strokeWidth: scaledStrokeWidth, text: element.content })}
         </div>
         {element.content && (
           <div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none text-sm font-medium"
-            style={{ color: element.stroke || '#1f2937' }}
+            className="absolute inset-0 flex items-center justify-center pointer-events-none font-medium"
+            style={{ 
+              color: element.stroke || '#1f2937',
+              fontSize: `${scaledFontSize}px`
+            }}
           >
             {element.content}
           </div>
         )}
         {isSelected && (
           <>
-            <ResizeHandles onResizeStart={onResizeStart} />
+            <ResizeHandles onResizeStart={onResizeStart} scaleFactor={scaleFactor} />
             <div className="absolute -top-6 left-0 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded">
               <Move className="h-3 w-3 inline mr-1" />
               {shapeLabel}
@@ -544,7 +583,7 @@ function ElementRenderer({
         )}
         {isSelected && (
           <>
-            <ResizeHandles onResizeStart={onResizeStart} />
+            <ResizeHandles onResizeStart={onResizeStart} scaleFactor={scaleFactor} />
             <div className="absolute -top-6 left-0 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded">
               <Move className="h-3 w-3 inline mr-1" />
               Image
@@ -557,8 +596,10 @@ function ElementRenderer({
 
   if (element.type === 'table' && element.cells) {
     const borderColor = element.borderColor || '#cccccc'
-    const borderWidth = element.borderWidth || 1
+    const scaledBorderWidth = (element.borderWidth || 1) * scaleFactor
     const headerRow = element.headerRow || false
+    const scaledPadding = 4 * scaleFactor
+    const scaledPaddingHorizontal = 8 * scaleFactor
 
     return (
       <div
@@ -570,7 +611,7 @@ function ElementRenderer({
         <table
           className="w-full h-full border-collapse"
           style={{
-            border: `${borderWidth}px solid ${borderColor}`,
+            border: `${scaledBorderWidth}px solid ${borderColor}`,
           }}
         >
           <tbody>
@@ -586,17 +627,17 @@ function ElementRenderer({
                     key={colIndex}
                     contentEditable
                     suppressContentEditableWarning
-                    className="outline-none p-1"
+                    className="outline-none"
                     style={{
-                      border: `${borderWidth}px solid ${borderColor}`,
-                      fontSize: `${cell.fontSize || 14}px`,
+                      border: `${scaledBorderWidth}px solid ${borderColor}`,
+                      fontSize: `${(cell.fontSize || 14) * scaleFactor}px`,
                       fontFamily: cell.fontFace || 'Arial',
                       fontWeight: (headerRow && rowIndex === 0) || cell.bold ? 'bold' : 'normal',
                       fontStyle: cell.italic ? 'italic' : 'normal',
                       color: cell.color ? `#${cell.color}` : '#363636',
                       textAlign: cell.align || 'left',
                       backgroundColor: cell.backgroundColor || 'transparent',
-                      padding: '4px 8px',
+                      padding: `${scaledPadding}px ${scaledPaddingHorizontal}px`,
                     }}
                     onBlur={(e) => {
                       if (onTableCellChange) {
@@ -620,7 +661,7 @@ function ElementRenderer({
         </table>
         {isSelected && (
           <>
-            <ResizeHandles onResizeStart={onResizeStart} />
+            <ResizeHandles onResizeStart={onResizeStart} scaleFactor={scaleFactor} />
             <div className="absolute -top-6 left-0 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded">
               <Move className="h-3 w-3 inline mr-1" />
               Table ({element.rows || 0}x{element.columns || 0})
@@ -635,11 +676,19 @@ function ElementRenderer({
 }
 
 // Resize handles component
-function ResizeHandles({ onResizeStart }: { onResizeStart: (e: React.MouseEvent, handle: string) => void }) {
-  const handleSize = 8
+function ResizeHandles({ 
+  onResizeStart, 
+  scaleFactor 
+}: { 
+  onResizeStart: (e: React.MouseEvent, handle: string) => void
+  scaleFactor: number
+}) {
+  const baseHandleSize = 8
+  const handleSize = baseHandleSize * scaleFactor
   const handleOffset = handleSize / 2
+  const scaledBorderWidth = 2 * scaleFactor
 
-  const baseClass = "resize-handle absolute bg-primary border-2 border-background rounded-full pointer-events-auto z-20"
+  const baseClass = "resize-handle absolute bg-primary rounded-full pointer-events-auto z-20"
 
   return (
     <>
@@ -651,6 +700,7 @@ function ResizeHandles({ onResizeStart }: { onResizeStart: (e: React.MouseEvent,
           height: `${handleSize}px`,
           left: `-${handleOffset}px`,
           top: `-${handleOffset}px`,
+          border: `${scaledBorderWidth}px solid hsl(var(--background))`,
         }}
         onMouseDown={(e) => onResizeStart(e, 'top-left')}
       />
@@ -661,6 +711,7 @@ function ResizeHandles({ onResizeStart }: { onResizeStart: (e: React.MouseEvent,
           height: `${handleSize}px`,
           right: `-${handleOffset}px`,
           top: `-${handleOffset}px`,
+          border: `${scaledBorderWidth}px solid hsl(var(--background))`,
         }}
         onMouseDown={(e) => onResizeStart(e, 'top-right')}
       />
@@ -671,6 +722,7 @@ function ResizeHandles({ onResizeStart }: { onResizeStart: (e: React.MouseEvent,
           height: `${handleSize}px`,
           right: `-${handleOffset}px`,
           bottom: `-${handleOffset}px`,
+          border: `${scaledBorderWidth}px solid hsl(var(--background))`,
         }}
         onMouseDown={(e) => onResizeStart(e, 'bottom-right')}
       />
@@ -681,6 +733,7 @@ function ResizeHandles({ onResizeStart }: { onResizeStart: (e: React.MouseEvent,
           height: `${handleSize}px`,
           left: `-${handleOffset}px`,
           bottom: `-${handleOffset}px`,
+          border: `${scaledBorderWidth}px solid hsl(var(--background))`,
         }}
         onMouseDown={(e) => onResizeStart(e, 'bottom-left')}
       />
@@ -693,6 +746,7 @@ function ResizeHandles({ onResizeStart }: { onResizeStart: (e: React.MouseEvent,
           left: '50%',
           top: `-${handleOffset}px`,
           transform: 'translateX(-50%)',
+          border: `${scaledBorderWidth}px solid hsl(var(--background))`,
         }}
         onMouseDown={(e) => onResizeStart(e, 'top')}
       />
@@ -704,6 +758,7 @@ function ResizeHandles({ onResizeStart }: { onResizeStart: (e: React.MouseEvent,
           left: '50%',
           bottom: `-${handleOffset}px`,
           transform: 'translateX(-50%)',
+          border: `${scaledBorderWidth}px solid hsl(var(--background))`,
         }}
         onMouseDown={(e) => onResizeStart(e, 'bottom')}
       />
@@ -715,6 +770,7 @@ function ResizeHandles({ onResizeStart }: { onResizeStart: (e: React.MouseEvent,
           left: `-${handleOffset}px`,
           top: '50%',
           transform: 'translateY(-50%)',
+          border: `${scaledBorderWidth}px solid hsl(var(--background))`,
         }}
         onMouseDown={(e) => onResizeStart(e, 'left')}
       />
@@ -726,6 +782,7 @@ function ResizeHandles({ onResizeStart }: { onResizeStart: (e: React.MouseEvent,
           right: `-${handleOffset}px`,
           top: '50%',
           transform: 'translateY(-50%)',
+          border: `${scaledBorderWidth}px solid hsl(var(--background))`,
         }}
         onMouseDown={(e) => onResizeStart(e, 'right')}
       />
