@@ -69,7 +69,12 @@ const WordViewer: React.FC<WordViewerProps> = ({
           // Check if this is our custom edited DOCX format
           const isEditedDocx = contentType === 'application/vnd.banbury.docx-html';
           
-          if (contentType.includes('text/html') || contentType.includes('html') || fileExtension === 'html' || isEditedDocx) {
+          // Handle plain text files (txt, log, etc.)
+          if (contentType.includes('text/plain') || fileExtension === 'txt' || fileExtension === 'log') {
+            const text = await blob.text();
+            // Convert plain text to HTML by preserving line breaks
+            htmlContent = text.split('\n').map(line => `<p>${line || ' '}</p>`).join('');
+          } else if (contentType.includes('text/html') || contentType.includes('html') || fileExtension === 'html' || isEditedDocx) {
             // It's an HTML file (including edited DOCX) - read it directly
             const text = await blob.text();
             
@@ -133,7 +138,12 @@ const WordViewer: React.FC<WordViewerProps> = ({
           // Check if this is our custom edited DOCX format
           const isEditedDocx = contentType === 'application/vnd.banbury.docx-html';
           
-          if (contentType.includes('text/html') || contentType.includes('html') || fileExtension === 'html' || isEditedDocx) {
+          // Handle plain text files (txt, log, etc.)
+          if (contentType.includes('text/plain') || fileExtension === 'txt' || fileExtension === 'log') {
+            const text = await blob.text();
+            // Convert plain text to HTML by preserving line breaks
+            htmlContent = text.split('\n').map(line => `<p>${line || ' '}</p>`).join('');
+          } else if (contentType.includes('text/html') || contentType.includes('html') || fileExtension === 'html' || isEditedDocx) {
             const text = await blob.text();
             const hasOriginalFormatMeta = text.includes('meta name="original-format" content="docx"');
             const hasEditorMeta = text.includes('meta name="editor" content="banbury-editor"');

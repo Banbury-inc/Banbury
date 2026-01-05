@@ -210,7 +210,7 @@ const Workspaces = (): React.ReactNode => {
   };
 
   const isDocumentFile = (fileName: string): boolean => {
-    const documentExtensions = ['.docx', '.doc']
+    const documentExtensions = ['.docx', '.doc', '.txt', '.rtf', '.odt']
     const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
     return documentExtensions.includes(extension)
   };

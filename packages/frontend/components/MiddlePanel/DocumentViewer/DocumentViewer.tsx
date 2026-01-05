@@ -326,6 +326,28 @@ export function DocumentViewer({ file, userInfo, onSaveComplete }: DocumentViewe
 </html>`;
         blob = new Blob([htmlContent], { type: 'text/html' });
         contentType = 'text/html';
+      } else if (fileExtension === 'txt' || fileExtension === 'log') {
+        // For plain text files, extract text from HTML and save as plain text
+        // Preserve line breaks by converting <p> tags to newlines
+        const textWithBreaks = currentContent
+          .replace(/<p[^>]*>/gi, '')
+          .replace(/<\/p>/gi, '\n')
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<[^>]+>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&#x27;/g, "'")
+          .replace(/&#x2F;/g, '/')
+          .split('\n')
+          .map(line => line.trim())
+          .join('\n')
+          .trim();
+        blob = new Blob([textWithBreaks], { type: 'text/plain' });
+        contentType = 'text/plain';
       } else {
         // For other files, save just the content with appropriate type
         blob = new Blob([currentContent], { type: 'text/html' });
