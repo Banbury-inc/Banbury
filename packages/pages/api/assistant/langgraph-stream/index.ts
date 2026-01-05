@@ -230,6 +230,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             totalTokens,
             model: normalizedToolPreferences.model_id || normalizedToolPreferences.model_provider,
           })
+          
+          // Track token usage in cloud backend for usage limits
+          if (token && totalTokens > 0) {
+            const backendUrl = process.env.CLOUD_BACKEND_URL || 'https://www.api.dev.banbury.io'
+            fetch(`${backendUrl}/users/track_token_usage/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                input_tokens: inputTokens,
+                output_tokens: outputTokens,
+                total_tokens: totalTokens,
+                model: normalizedToolPreferences.model_id || normalizedToolPreferences.model_provider
+              })
+            }).catch(() => {
+              // Silently ignore tracking errors - non-critical
+            })
+          }
         }
       }
     } catch {

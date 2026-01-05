@@ -49,8 +49,6 @@ const meta: Meta<typeof Composer> = {
       username: "testuser",
       email: "test@example.com",
     },
-    isWebSearchEnabled: false,
-    onToggleWebSearch: fn(),
     toolPreferences: {
       web_search: true,
       tiptap_ai: true,
@@ -80,7 +78,15 @@ export const Default: Story = {}
 
 export const WithWebSearchEnabled: Story = {
   args: {
-    isWebSearchEnabled: true,
+    toolPreferences: {
+      web_search: true,
+      tiptap_ai: true,
+      read_file: true,
+      gmail: false,
+      langgraph_mode: false,
+      browser: false,
+      x_api: false,
+    },
   },
 }
 
@@ -186,7 +192,6 @@ export const WithAllAttachments: Story = {
 
 export const WithAllToolsEnabled: Story = {
   args: {
-    isWebSearchEnabled: true,
     toolPreferences: {
       web_search: true,
       tiptap_ai: true,

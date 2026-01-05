@@ -3,22 +3,17 @@ import * as AssistantUI from "@assistant-ui/react";
 import {
   ChevronRightIcon,
   Square,
-  Globe,
   Wrench,
   Mic,
   MicOff,
   ChevronDown,
-  Search,
-  FileText,
-  Mail,
-  Chrome,
-  MessageSquare,
-  Brain,
+  Plus,
+  Paperclip,
   Image,
 } from "lucide-react";
 
 import { ChatTiptapComposer } from "../../ChatTiptapComposer";
-import { FileAttachment } from "./components/file-attachment";
+import { FileAttachmentPicker } from "./components/file-attachment-picker";
 import { FileAttachmentDisplay } from "./components/file-attachment-display";
 import { PendingChangesBar } from "./components/pending-changes-bar";
 import { ContextWheel } from "./components/context-wheel";
@@ -28,10 +23,9 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
   DropdownMenuSeparator,
 } from "../../ui/dropdown-menu";
 import { Popover, PopoverTrigger, PopoverContent } from "../../ui/popover";
@@ -49,6 +43,11 @@ import {
   type ModelProvider 
 } from "./handlers/getModelDisplayName";
 import { toolConfigs } from "./handlers/toolConfig";
+import { 
+  toggleToolPreference, 
+  setImageGenerationModel,
+  IMAGE_GENERATION_MODELS 
+} from "./handlers/composer-plus-menu-handlers";
 
 import type { FC } from "react";
 import { Typography } from "frontend/components/ui/typography";
@@ -60,7 +59,7 @@ const {
   useThreadRuntime,
 } = AssistantUI as any;
 
-interface ComposerToolPreferences {
+export interface ComposerToolPreferences {
   web_search: boolean;
   tiptap_ai: boolean;
   read_file: boolean;
@@ -105,8 +104,6 @@ interface ComposerProps {
     username: string;
     email?: string;
   } | null;
-  isWebSearchEnabled: boolean;
-  onToggleWebSearch: () => void;
   toolPreferences: ComposerToolPreferences;
   onUpdateToolPreferences: (prefs: ComposerToolPreferences) => void;
   attachmentPayloads: Record<string, { fileData: string; mimeType: string }>;
@@ -122,7 +119,7 @@ interface ComposerProps {
   assistantTabId?: string;
 }
 
-export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll, messageBuffer, assistantTabId }) => {
+export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll, messageBuffer, assistantTabId }) => {
   const composer = useComposerRuntime();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -236,8 +233,6 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
             onEmailAttach={onEmailAttach}
             onEmailRemove={onEmailRemove}
             userInfo={userInfo}
-            isWebSearchEnabled={isWebSearchEnabled}
-            onToggleWebSearch={onToggleWebSearch}
             toolPreferences={toolPreferences}
             onUpdateToolPreferences={(prefs) => onUpdateToolPreferences(prefs)}
             onSend={() => handleSend({ composer, onSend: onSend, tabId: assistantTabId })}
@@ -262,8 +257,6 @@ interface ComposerActionProps {
     username: string;
     email?: string;
   } | null;
-  isWebSearchEnabled: boolean;
-  onToggleWebSearch: () => void;
   toolPreferences: ComposerToolPreferences;
   onUpdateToolPreferences: (prefs: ComposerToolPreferences) => void;
   onSend: () => void;
@@ -273,7 +266,7 @@ interface ComposerActionProps {
   assistantTabId?: string;
 }
 
-const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, isWebSearchEnabled, onToggleWebSearch, toolPreferences, onUpdateToolPreferences, onSend, messageBuffer, inputRef, assistantTabId }) => {
+const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, onSend, messageBuffer, inputRef, assistantTabId }) => {
   const composer = useComposerRuntime();
   const threadRuntime = useThreadRuntime();
   const [hasText, setHasText] = useState(false);
@@ -286,12 +279,10 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
   const isMeasuringRef = useRef<boolean>(true);
   const [visibleButtons, setVisibleButtons] = useState({
     model: true,
-    imageModel: true,
-    fileAttachment: true,
-    tools: true,
+    plus: true,
     mic: true,
-    globe: true,
   });
+  const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
   const [isMeasuring, setIsMeasuring] = useState(true);
 
   // Track streaming content length to trigger context budget recalculation
@@ -684,11 +675,8 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         // Not enough space for any buttons, hide all
         setVisibleButtons({
           model: false,
-          imageModel: false,
-          fileAttachment: false,
-          tools: false,
+          plus: false,
           mic: false,
-          globe: false,
         })
         setIsMeasuring(false)
         isMeasuringRef.current = false
@@ -709,14 +697,11 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         }
 
         let totalWidth = 0
-        const buttonKeys: Array<keyof typeof visibleButtons> = ['model', 'imageModel', 'fileAttachment', 'tools', 'mic', 'globe']
+        const buttonKeys: Array<keyof typeof visibleButtons> = ['model', 'plus', 'mic']
         const newVisibility: typeof visibleButtons = {
           model: false,
-          imageModel: false,
-          fileAttachment: false,
-          tools: false,
+          plus: false,
           mic: false,
-          globe: false,
         }
 
         // Calculate which buttons fit, starting with highest priority
@@ -889,119 +874,111 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
             </PopoverContent>
           </Popover>
         )}
-        {(isMeasuring || visibleButtons.imageModel) && (
-          <Popover>
-            <PopoverTrigger asChild>
+        {(isMeasuring || visibleButtons.plus) && (
+          <DropdownMenu open={isPlusMenuOpen} onOpenChange={setIsPlusMenuOpen}>
+            <DropdownMenuTrigger asChild>
               <Button
                 variant="primary"
                 size="xs"
                 className="h-7 w-7"
-                title={`Image Model: ${
-                  toolPreferences.image_generation_model === 'dall-e-2' 
-                    ? 'DALL-E 2' 
-                    : toolPreferences.image_generation_model === 'gemini-2.5-flash-image'
-                    ? 'Nano Banana'
-                    : 'DALL-E 3'
-                }`}
-                aria-label="Image Generation Model"
+                title="More actions"
+                aria-label="More actions"
               >
-                <Image height={16} width={16} strokeWidth={1} />
+                <Plus height={16} width={16} strokeWidth={1} />
               </Button>
-            </PopoverTrigger>
-            <PopoverContent 
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
               side="top" 
-              align="start" 
-              className="w-48 p-0 bg-popover text-popover-foreground border shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+              align="start"
+              className="w-48"
             >
-              <div className="p-1 flex flex-col">
-                {[
-                  { id: 'dall-e-3', name: 'DALL-E 3', description: 'Most capable, highest quality' },
-                  { id: 'dall-e-2', name: 'DALL-E 2', description: 'Faster, lower cost' },
-                  { id: 'gemini-2.5-flash-image', name: 'Nano Banana', description: 'Google DeepMind image generation' },
-                ].map((model) => {
-                  const isSelected = (toolPreferences.image_generation_model || 'dall-e-3') === model.id
-                  return (
-                    <div
-                      key={model.id}
-                      className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                      onClick={() => {
-                        onUpdateToolPreferences({ 
-                          ...toolPreferences, 
-                          image_generation_model: model.id
-                        })
-                      }}
-                    >
-                      <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                        {isSelected && <Check className="size-4" />}
-                      </span>
-                      <div className="flex flex-col">
-                        <Typography variant="xs" className="font-medium">{model.name}</Typography>
-                        <Typography variant="xs" className="text-xs text-muted-foreground">{model.description}</Typography>
+              {/* Attach File Submenu */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Paperclip className="mr-2 h-4 w-4" />
+                  <Typography variant="xs">Attach file</Typography>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="p-0">
+                  <FileAttachmentPicker
+                    onFileAttach={(file) => {
+                      onFileAttach(file)
+                      setIsPlusMenuOpen(false)
+                    }}
+                    userInfo={userInfo}
+                    isOpen={isPlusMenuOpen}
+                  />
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+
+              {/* Image Model Submenu */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Image className="mr-2 h-4 w-4" />
+                  <Typography variant="xs">Image model</Typography>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-56 p-1">
+                  {IMAGE_GENERATION_MODELS.map((model) => {
+                    const isSelected = (toolPreferences.image_generation_model || 'dall-e-3') === model.id
+                    return (
+                      <div
+                        key={model.id}
+                        className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => {
+                          onUpdateToolPreferences(setImageGenerationModel(toolPreferences, model.id))
+                        }}
+                      >
+                        <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                          {isSelected && <Check className="size-4" />}
+                        </span>
+                        <div className="flex flex-col">
+                          <Typography variant="xs" className="font-medium">{model.name}</Typography>
+                          <Typography variant="xs" className="text-xs text-muted-foreground">{model.description}</Typography>
+                        </div>
                       </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </PopoverContent>
-          </Popover>
-        )}
-        {(isMeasuring || visibleButtons.fileAttachment) && (
-          <FileAttachment
-            onFileAttach={onFileAttach}
-            attachedFiles={[]}
-            onFileRemove={onFileRemove}
-            userInfo={userInfo}
-          />
-        )}
-        {(isMeasuring || visibleButtons.tools) && (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="primary"
-                size="xs"
-                className="h-7 w-7"
-                title="Tools"
-                aria-label="Tools"
-              >
-                <Wrench height={16} width={16} strokeWidth={1} />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent 
-              side="top" 
-              align="start" 
-              className="w-72 p-0 bg-popover text-popover-foreground border shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
-            >
-              <div className="p-1 flex flex-col max-h-96 overflow-y-auto">
-                {toolConfigs.map((tool) => {
-                  const Icon = tool.icon;
-                  const isEnabled = toolPreferences[tool.key] ?? tool.defaultEnabled;
-                  
-                  return (
-                    <div
-                      key={tool.key}
-                      className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                      onClick={() => {
-                        onUpdateToolPreferences({ 
-                          ...toolPreferences, 
-                          [tool.key]: !isEnabled 
-                        });
-                      }}
-                    >
-                      <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                        {isEnabled && <Check className="size-4" />}
-                      </span>
-                      <div className="flex items-center">
-                        <Icon size={16} strokeWidth={1} className={`mr-2 ${tool.iconColor}`} />
-                        <Typography variant="xs" className="text-xs font-medium">
-                          {tool.label}
-                        </Typography>
+                    )
+                  })}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+
+              <DropdownMenuSeparator />
+
+              {/* Tools Submenu */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Wrench className="mr-2 h-4 w-4" />
+                  <Typography variant="xs">Tools</Typography>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-72 p-1 max-h-96 overflow-y-auto">
+                  {toolConfigs.map((tool) => {
+                    const Icon = tool.icon
+                    const isEnabled = toolPreferences[tool.key] ?? tool.defaultEnabled
+                    
+                    return (
+                      <div
+                        key={tool.key}
+                        className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => {
+                          onUpdateToolPreferences(
+                            toggleToolPreference(toolPreferences, tool.key as keyof typeof toolPreferences, isEnabled)
+                          )
+                        }}
+                      >
+                        <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                          {isEnabled && <Check className="size-4" />}
+                        </span>
+                        <div className="flex items-center">
+                          <Icon size={16} strokeWidth={1} className={`mr-2 ${tool.iconColor}`} />
+                          <Typography variant="xs" className="text-xs font-medium">
+                            {tool.label}
+                          </Typography>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </PopoverContent>
-          </Popover>
+                    )
+                  })}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
         {(isMeasuring || visibleButtons.mic) && (
           <Button
@@ -1018,22 +995,6 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
             disabled={!(typeof window !== 'undefined' && (((window as any).SpeechRecognition) || ((window as any).webkitSpeechRecognition)))}
           >
             {isRecording ? <MicOff height={16} width={16} strokeWidth={1} /> : <Mic height={16} width={16} strokeWidth={1} />}
-          </Button>
-        )}
-        {(isMeasuring || visibleButtons.globe) && (
-          <Button
-            variant="primary"
-            size="xs"
-            className={`h-7 w-7 ${
-              isWebSearchEnabled 
-                ? "bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white" 
-                : ""
-            }`}
-            onClick={onToggleWebSearch}
-            title={isWebSearchEnabled ? "Disable web search" : "Enable web search"}
-            aria-label={isWebSearchEnabled ? "Disable web search" : "Enable web search"}
-          >
-            <Globe height={16} width={16} strokeWidth={1} />
           </Button>
         )}
       </div>

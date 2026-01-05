@@ -86,7 +86,6 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   }, [assistantTabId]);
   const [drawioModalOpen, setDrawioModalOpen] = useState(false);
   const [selectedDrawioFile, setSelectedDrawioFile] = useState<FileSystemItem | null>(null);
-  const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true);
   const [pendingChanges, setPendingChanges] = useState<Array<{ id: string; type: string; description: string }>>([]);
 
   interface ThreadToolPreferences {
@@ -232,11 +231,6 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   const handleDrawioModalClose = () => {
     setDrawioModalOpen(false);
     setSelectedDrawioFile(null);
-  };
-
-  const toggleWebSearch = () => {
-    setIsWebSearchEnabled(prev => !prev);
-    setToolPreferences(prev => ({ ...prev, web_search: !prev.web_search }));
   };
 
   // Conversation management functions
@@ -907,7 +901,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     return () => window.removeEventListener('workspace-tab-closed', handler as EventListener);
   }, []);
 
-  // Persist tool preferences and keep web search toggle in sync with menu
+  // Persist tool preferences to localStorage
   useEffect(() => {
     try {
       // Always force langgraph_mode to true when saving
@@ -916,10 +910,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       prefsToSave.browserbase = Boolean(toolPreferences.browser);
       localStorage.setItem("toolPreferences", JSON.stringify(prefsToSave));
     } catch {}
-    if (isWebSearchEnabled !== toolPreferences.web_search) {
-      setIsWebSearchEnabled(toolPreferences.web_search);
-    }
-  }, [toolPreferences, isWebSearchEnabled]);
+  }, [toolPreferences]);
 
   // Pre-download spreadsheet, canvas, and presentation blobs and cache as base64 + mimeType (size-capped)
   useEffect(() => {
@@ -1056,8 +1047,6 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         onEmailAttach={handleEmailAttach}
         onEmailRemove={handleEmailRemove}
         userInfo={userInfo}
-        isWebSearchEnabled={isWebSearchEnabled}
-        onToggleWebSearch={toggleWebSearch}
         toolPreferences={toolPreferences}
         onUpdateToolPreferences={(prefs) => setToolPreferences(deriveToolPreferences(prefs))}
         attachmentPayloads={attachmentPayloads}
