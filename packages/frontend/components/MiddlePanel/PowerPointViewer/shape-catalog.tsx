@@ -1,4 +1,6 @@
 import { ReactElement } from 'react'
+import type { StrokeStyle } from './types/pptx-types'
+import { getStrokeSVGAttributes } from './utils/stroke-utils'
 
 export type ShapeType =
   | 'rect'
@@ -62,7 +64,7 @@ export type ShapeType =
 
 export interface ShapeRenderProps {
   fill: string
-  stroke?: string
+  stroke?: string | StrokeStyle
   strokeWidth?: number
   text?: string
 }
@@ -75,6 +77,11 @@ export interface ShapeDefinition {
 }
 
 const viewBox = '0 0 100 100'
+
+function getStrokeColor(stroke: string | StrokeStyle | undefined, fallback: string = '#1f2937'): string {
+  if (!stroke) return fallback
+  return typeof stroke === 'string' ? stroke : stroke.color
+}
 
 function regularPolygonPoints(sides: number, radius = 44, cx = 50, cy = 50): string {
   if (sides < 3) return ''
@@ -101,7 +108,7 @@ function starPoints(points: number, outer = 44, inner = 18, cx = 50, cy = 50): s
   return coords.join(' ')
 }
 
-function renderCenteredText(text: string | undefined, fill: string, stroke?: string, size = 26): ReactElement | null {
+function renderCenteredText(text: string | undefined, fill: string, stroke?: string | StrokeStyle, size = 26): ReactElement | null {
   if (!text?.trim()) return null
   return (
     <text
@@ -111,7 +118,7 @@ function renderCenteredText(text: string | undefined, fill: string, stroke?: str
       dominantBaseline="middle"
       fontFamily="Arial, sans-serif"
       fontSize={size}
-      fill={stroke || '#1f2937'}
+      fill={getStrokeColor(stroke, '#1f2937')}
     >
       {text}
     </text>
@@ -119,232 +126,346 @@ function renderCenteredText(text: string | undefined, fill: string, stroke?: str
 }
 
 const shapeRenderers: Record<ShapeType, (props: ShapeRenderProps) => ReactElement> = {
-  rect: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <rect x="6" y="6" width="88" height="88" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  rect: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+      <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+        <rect x="0" y="0" width="100" height="100" fill={fill} {...strokeAttrs} />
+      </svg>
+    )
+  },
+  'round-rect': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+      <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+        <rect x="0" y="0" width="100" height="100" rx="14" ry="14" fill={fill} {...strokeAttrs} />
+      </svg>
+    )
+  },
+  'snip-top-right': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+      <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+        <path d="M0 0 H80 L100 20 V100 H0 Z" fill={fill} {...strokeAttrs} />
+      </svg>
+    )
+  },
+  'snip-top-left': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+      <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+        <path d="M20 0 H100 V100 H0 V20 Z" fill={fill} {...strokeAttrs} />
+      </svg>
+    )
+  },
+  'snip-top-both': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+      <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+        <path d="M20 0 H80 L100 20 V100 H0 V20 Z" fill={fill} {...strokeAttrs} />
+      </svg>
+    )
+  },
+  'parallelogram-right': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+      <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+        <polygon points="15,0 100,0 85,100 0,100" fill={fill} {...strokeAttrs} />
+      </svg>
+    )
+  },
+  'parallelogram-left': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+      <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+        <polygon points="0,0 85,0 100,100 15,100" fill={fill} {...strokeAttrs} />
+      </svg>
+    )
+  },
+  trapezoid: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <polygon points="15,0 85,0 100,100 0,100" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  'round-rect': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <rect x="8" y="8" width="84" height="84" rx="14" ry="14" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  chevron: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M0 0 L50 100 L100 0 L75 0 L50 60 L25 0 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  'snip-top-right': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M6 6 H74 L94 26 V94 H6 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  diamond: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <polygon points="50,0 100,50 50,100 0,50" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  'snip-top-left': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M26 6 H94 V94 H6 V26 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  pentagon: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <polygon points={regularPolygonPoints(5, 50)} fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  'snip-top-both': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M26 6 H74 L94 26 V94 H6 V26 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  hexagon: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <polygon points={regularPolygonPoints(6, 50)} fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  'parallelogram-right': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points="18,6 94,6 82,94 6,94" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  octagon: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <polygon points={regularPolygonPoints(8, 50)} fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  'parallelogram-left': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points="6,6 82,6 94,94 18,94" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  decagon: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <polygon points={regularPolygonPoints(10, 50)} fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  trapezoid: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points="18,12 82,12 94,88 6,88" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  dodecagon: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <polygon points={regularPolygonPoints(12, 50)} fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  chevron: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M10 15 L50 85 L90 15 L70 15 L50 55 L30 15 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  circle: ({ fill, stroke, strokeWidth, text }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+      <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+        <circle cx="50" cy="50" r="50" fill={fill} {...strokeAttrs} />
+        {renderCenteredText(text, fill, stroke, 26)}
+      </svg>
+    )
+  },
+  ellipse: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <ellipse cx="50" cy="50" rx="50" ry="50" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  diamond: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points="50,6 94,50 50,94 6,50" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  triangle: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <polygon points="50,0 100,100 0,100" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  pentagon: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points={regularPolygonPoints(5)} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  'right-triangle': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <polygon points="0,0 100,0 0,100" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  hexagon: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points={regularPolygonPoints(6)} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  'arrow-right': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M0 35 H60 V15 L100 50 L60 85 V65 H0 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  octagon: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points={regularPolygonPoints(8)} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  'arrow-left': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M100 35 H40 V15 L0 50 L40 85 V65 H100 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  decagon: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points={regularPolygonPoints(10)} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  'arrow-up': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M65 100 V40 H85 L50 0 L15 40 H35 V100 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  dodecagon: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points={regularPolygonPoints(12)} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  'arrow-down': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M65 0 V60 H85 L50 100 L15 60 H35 V0 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  circle: ({ fill, stroke, strokeWidth, text }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <circle cx="50" cy="50" r="44" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      {renderCenteredText(text, fill, stroke, 26)}
+  )
+  },
+  'double-arrow': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M15 35 L50 0 L85 35 H65 V65 H85 L50 100 L15 65 H35 V35 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  ellipse: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <ellipse cx="50" cy="50" rx="44" ry="32" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  'bent-arrow': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M0 15 H60 V0 L100 40 L60 80 V60 H20 V100 H0 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  triangle: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points="50,6 94,94 6,94" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-    </svg>
-  ),
-  'right-triangle': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points="6,6 94,6 6,94" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-    </svg>
-  ),
-  'arrow-right': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M10 40 H60 V22 L90 50 L60 78 V60 H10 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-    </svg>
-  ),
-  'arrow-left': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M90 40 H40 V22 L10 50 L40 78 V60 H90 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-    </svg>
-  ),
-  'arrow-up': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M60 90 V40 H78 L50 10 L22 40 H40 V90 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-    </svg>
-  ),
-  'arrow-down': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M60 10 V60 H78 L50 90 L22 60 H40 V10 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-    </svg>
-  ),
-  'double-arrow': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M22 40 L50 10 L78 40 H60 V60 H78 L50 90 L22 60 H40 V40 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-    </svg>
-  ),
-  'bent-arrow': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M18 22 H58 V10 L90 42 L58 74 V60 H34 V90 H18 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-    </svg>
-  ),
-  'curved-arrow': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
+  )
+  },
+  'curved-arrow': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
       <path
-        d="M70 16 C42 14 22 32 22 54 C22 68 32 80 46 84 L34 70 H58 L72 92 L58 108"
+        d="M75 0 C40 0 15 25 15 55 C15 72 27 87 45 92 L30 75 H60 L77 100 L60 115"
         fill="none"
-        stroke={stroke || fill}
+        stroke={getStrokeColor(stroke, fill)}
         strokeWidth={strokeWidth || 4}
         strokeLinecap="round"
       />
-      <path d="M62 18 L78 10 L82 28 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+      <path d="M68 2 L87 0 L90 20 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
+  )
+  },
   line: ({ stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <line x1="10" y1="50" x2="90" y2="50" stroke={stroke || '#1f2937'} strokeWidth={strokeWidth || 4} />
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <line x1="0" y1="50" x2="100" y2="50" stroke={getStrokeColor(stroke)} strokeWidth={strokeWidth || 4} />
     </svg>
   ),
   'line-diagonal': ({ stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <line x1="18" y1="82" x2="82" y2="18" stroke={stroke || '#1f2937'} strokeWidth={strokeWidth || 4} />
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <line x1="0" y1="100" x2="100" y2="0" stroke={getStrokeColor(stroke)} strokeWidth={strokeWidth || 4} />
     </svg>
   ),
   cross: ({ stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <g stroke={stroke || '#1f2937'} strokeWidth={strokeWidth || 8}>
-        <line x1="18" y1="50" x2="82" y2="50" />
-        <line x1="50" y1="18" x2="50" y2="82" />
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <g stroke={getStrokeColor(stroke)} strokeWidth={strokeWidth || 8}>
+        <line x1="0" y1="50" x2="100" y2="50" />
+        <line x1="50" y1="0" x2="50" y2="100" />
       </g>
     </svg>
   ),
-  plus: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M42 18 H58 V42 H82 V58 H58 V82 H42 V58 H18 V42 H42 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  plus: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M40 0 H60 V40 H100 V60 H60 V100 H40 V60 H0 V40 H40 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  'star-4': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points="50,6 62,38 94,50 62,62 50,94 38,62 6,50 38,38" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  'star-4': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <polygon points={starPoints(4, 50, 20)} fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  'star-5': ({ fill, stroke, strokeWidth, text }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points={starPoints(5)} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      {renderCenteredText(text, fill, stroke)}
+  )
+  },
+  'star-5': ({ fill, stroke, strokeWidth, text }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+      <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+        <polygon points={starPoints(5, 50, 20)} fill={fill} {...strokeAttrs} />
+        {renderCenteredText(text, fill, stroke)}
+      </svg>
+    )
+  },
+  'star-6': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <polygon points={starPoints(6, 50, 20)} fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  'star-6': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points={starPoints(6)} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  'star-7': ({ fill, stroke, strokeWidth, text }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+      <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+        <polygon points={starPoints(7, 50, 20)} fill={fill} {...strokeAttrs} />
+        {renderCenteredText(text, fill, stroke)}
+      </svg>
+    )
+  },
+  'star-8': ({ fill, stroke, strokeWidth, text }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+      <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+        <polygon points={starPoints(8, 50, 20)} fill={fill} {...strokeAttrs} />
+        {renderCenteredText(text, fill, stroke)}
+      </svg>
+    )
+  },
+  'star-10': ({ fill, stroke, strokeWidth, text }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+      <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+        <polygon points={starPoints(10, 50, 20)} fill={fill} {...strokeAttrs} />
+        {renderCenteredText(text, fill, stroke)}
+      </svg>
+    )
+  },
+  'star-12': ({ fill, stroke, strokeWidth, text }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+      <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+        <polygon points={starPoints(12, 50, 20)} fill={fill} {...strokeAttrs} />
+        {renderCenteredText(text, fill, stroke)}
+      </svg>
+    )
+  },
+  heart: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M50 100 L10 60 C0 45 5 15 25 5 C38 0 50 5 50 15 C50 5 62 0 75 5 C95 15 100 45 90 60 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  'star-7': ({ fill, stroke, strokeWidth, text }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points={starPoints(7)} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      {renderCenteredText(text, fill, stroke)}
+  )
+  },
+  smiley: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    const strokeColor = getStrokeColor(stroke)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <circle cx="50" cy="50" r="50" fill={fill} {...strokeAttrs} />
+      <circle cx="36" cy="44" r="4" fill={strokeColor} />
+      <circle cx="64" cy="44" r="4" fill={strokeColor} />
+      <path d="M32 60 Q50 74 68 60" fill="none" stroke={strokeColor} strokeWidth={strokeWidth ? Math.max(2, strokeWidth) : 3} strokeLinecap="round" />
     </svg>
-  ),
-  'star-8': ({ fill, stroke, strokeWidth, text }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points={starPoints(8)} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      {renderCenteredText(text, fill, stroke)}
+  )
+  },
+  lightning: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M60 0 L10 60 H45 L30 100 L90 45 H60 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  'star-10': ({ fill, stroke, strokeWidth, text }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points={starPoints(10)} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      {renderCenteredText(text, fill, stroke)}
-    </svg>
-  ),
-  'star-12': ({ fill, stroke, strokeWidth, text }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points={starPoints(12)} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      {renderCenteredText(text, fill, stroke)}
-    </svg>
-  ),
-  heart: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M50 90 L18 58 C6 44 10 22 28 16 C38 12 48 16 50 24 C52 16 62 12 72 16 C90 22 94 44 82 58 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-    </svg>
-  ),
-  smiley: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <circle cx="50" cy="50" r="44" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      <circle cx="36" cy="44" r="4" fill={stroke || '#1f2937'} />
-      <circle cx="64" cy="44" r="4" fill={stroke || '#1f2937'} />
-      <path d="M32 60 Q50 74 68 60" fill="none" stroke={stroke || '#1f2937'} strokeWidth={strokeWidth ? Math.max(2, strokeWidth) : 3} strokeLinecap="round" />
-    </svg>
-  ),
-  lightning: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M56 6 L18 58 H44 L34 94 L82 42 H58 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-    </svg>
-  ),
-  sun: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <circle cx="50" cy="50" r="20" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      <g stroke={stroke || fill} strokeWidth={strokeWidth || 3} strokeLinecap="round">
-        <line x1="50" y1="6" x2="50" y2="18" />
+  )
+  },
+  sun: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <circle cx="50" cy="50" r="20" fill={fill} {...strokeAttrs} />
+      <g stroke={getStrokeColor(stroke, fill)} strokeWidth={strokeWidth || 3} strokeLinecap="round">
+        <line x1="50" y1="0" x2="50" y2="12" />
         <line x1="50" y1="82" x2="50" y2="94" />
-        <line x1="6" y1="50" x2="18" y2="50" />
+        <line x1="0" y1="50" x2="12" y2="50" />
         <line x1="82" y1="50" x2="94" y2="50" />
         <line x1="20" y1="20" x2="30" y2="30" />
         <line x1="70" y1="70" x2="80" y2="80" />
@@ -352,102 +473,136 @@ const shapeRenderers: Record<ShapeType, (props: ShapeRenderProps) => ReactElemen
         <line x1="30" y1="70" x2="20" y2="80" />
       </g>
     </svg>
-  ),
-  moon: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M64 10 C44 12 30 28 30 50 C30 72 44 88 64 90 C50 84 42 70 42 50 C42 30 50 16 64 10 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  moon: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M64 10 C44 12 30 28 30 50 C30 72 44 88 64 90 C50 84 42 70 42 50 C42 30 50 16 64 10 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  cloud: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M30 70 H78 C88 70 94 64 94 54 C94 44 86 38 78 38 C75 26 64 18 52 22 C44 12 26 16 22 30 C12 32 6 40 6 50 C6 62 16 70 30 70 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  cloud: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M25 80 H85 C95 80 100 72 100 60 C100 48 90 40 80 40 C77 25 65 15 50 20 C40 8 20 12 15 28 C5 30 0 40 0 52 C0 68 12 80 25 80 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
+  )
+  },
   donut: ({ stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <circle cx="50" cy="50" r="40" fill="none" stroke={stroke || '#1f2937'} strokeWidth={strokeWidth || 8} />
-      <circle cx="50" cy="50" r="18" fill="none" stroke={stroke || '#1f2937'} strokeWidth={strokeWidth || 8} />
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <circle cx="50" cy="50" r="40" fill="none" stroke={getStrokeColor(stroke)} strokeWidth={strokeWidth || 8} />
+      <circle cx="50" cy="50" r="20" fill="none" stroke={getStrokeColor(stroke)} strokeWidth={strokeWidth || 8} />
     </svg>
   ),
-  'pie-quarter': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M50 6 A44 44 0 0 1 94 50 H50 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      <circle cx="50" cy="50" r="44" fill="none" stroke={stroke} strokeWidth={strokeWidth} />
+  'pie-quarter': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M50 0 A50 50 0 0 1 100 50 H50 Z" fill={fill} {...strokeAttrs} />
+      <circle cx="50" cy="50" r="50" fill="none" {...strokeAttrs} />
     </svg>
-  ),
-  'pie-half': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M50 6 A44 44 0 0 1 94 50 A44 44 0 0 1 50 94 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      <circle cx="50" cy="50" r="44" fill="none" stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  'pie-half': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M50 0 A50 50 0 0 1 100 50 A50 50 0 0 1 50 100 Z" fill={fill} {...strokeAttrs} />
+      <circle cx="50" cy="50" r="50" fill="none" {...strokeAttrs} />
     </svg>
-  ),
-  'pie-three-quarter': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M50 6 A44 44 0 0 1 94 50 A44 44 0 0 1 74 86 A44 44 0 0 1 6 50 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      <circle cx="50" cy="50" r="44" fill="none" stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  'pie-three-quarter': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M50 0 A50 50 0 0 1 100 50 A50 50 0 0 1 75 93 A50 50 0 0 1 0 50 Z" fill={fill} {...strokeAttrs} />
+      <circle cx="50" cy="50" r="50" fill="none" {...strokeAttrs} />
     </svg>
-  ),
-  cylinder: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <ellipse cx="50" cy="18" rx="34" ry="12" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      <rect x="16" y="18" width="68" height="64" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      <ellipse cx="50" cy="82" rx="34" ry="12" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  cylinder: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <ellipse cx="50" cy="12" rx="42" ry="12" fill={fill} {...strokeAttrs} />
+      <rect x="8" y="12" width="84" height="76" fill={fill} {...strokeAttrs} />
+      <ellipse cx="50" cy="88" rx="42" ry="12" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  cube: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <polygon points="26,20 62,8 94,26 58,38" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      <polygon points="26,20 58,38 58,78 26,94" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-      <polygon points="58,38 94,26 94,66 58,78" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  cube: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <polygon points="20,15 65,0 100,20 55,35" fill={fill} {...strokeAttrs} />
+      <polygon points="20,15 55,35 55,85 20,100" fill={fill} {...strokeAttrs} />
+      <polygon points="55,35 100,20 100,70 55,85" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  frame: ({ fill, stroke, strokeWidth }) => (
+  )
+  },
+  frame: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
     <svg viewBox={viewBox} className="w-full h-full" fillRule="evenodd">
-      <path d="M8 8 H92 V92 H8 Z M26 26 V74 H74 V26 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+      <path d="M0 0 H100 V100 H0 Z M20 20 V80 H80 V20 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  'folded-corner': ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M10 10 H68 L90 32 V90 H10 Z M68 10 V32 H90" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  'folded-corner': ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M0 0 H75 L100 25 V100 H0 Z M75 0 V25 H100" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
-  plaque: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M26 10 H74 C86 10 90 22 90 34 V66 C90 78 86 90 74 90 H26 C14 90 10 78 10 66 V34 C10 22 14 10 26 10 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  )
+  },
+  plaque: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M20 0 H80 C92 0 100 12 100 28 V72 C100 88 92 100 80 100 H20 C8 100 0 88 0 72 V28 C0 12 8 0 20 0 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
+  )
+  },
   'bracket-left': ({ stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M62 12 H34 V88 H62" fill="none" stroke={stroke || '#1f2937'} strokeWidth={strokeWidth || 6} />
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M70 0 H30 V100 H70" fill="none" stroke={getStrokeColor(stroke)} strokeWidth={strokeWidth || 6} />
     </svg>
   ),
   'bracket-right': ({ stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M38 12 H66 V88 H38" fill="none" stroke={stroke || '#1f2937'} strokeWidth={strokeWidth || 6} />
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M30 0 H70 V100 H30" fill="none" stroke={getStrokeColor(stroke)} strokeWidth={strokeWidth || 6} />
     </svg>
   ),
-  callout: ({ fill, stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M16 22 H84 V62 H60 L46 82 L44 62 H16 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+  callout: ({ fill, stroke, strokeWidth }) => {
+    const strokeAttrs = getStrokeSVGAttributes(stroke, strokeWidth)
+    return (
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M5 15 H95 V70 H65 L45 95 L40 70 H5 Z" fill={fill} {...strokeAttrs} />
     </svg>
-  ),
+  )
+  },
   'no-symbol': ({ stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <circle cx="50" cy="50" r="40" fill="none" stroke={stroke || '#1f2937'} strokeWidth={strokeWidth || 8} />
-      <line x1="26" y1="26" x2="74" y2="74" stroke={stroke || '#1f2937'} strokeWidth={strokeWidth || 8} />
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <circle cx="50" cy="50" r="40" fill="none" stroke={getStrokeColor(stroke)} strokeWidth={strokeWidth || 8} />
+      <line x1="15" y1="15" x2="85" y2="85" stroke={getStrokeColor(stroke)} strokeWidth={strokeWidth || 8} />
     </svg>
   ),
   check: ({ stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <path d="M18 50 L40 72 L82 28" fill="none" stroke={stroke || '#1f2937'} strokeWidth={strokeWidth || 8} strokeLinecap="round" strokeLinejoin="round" />
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <path d="M10 50 L40 80 L90 20" fill="none" stroke={getStrokeColor(stroke)} strokeWidth={strokeWidth || 8} strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
   'x-mark': ({ stroke, strokeWidth }) => (
-    <svg viewBox={viewBox} className="w-full h-full">
-      <line x1="26" y1="26" x2="74" y2="74" stroke={stroke || '#1f2937'} strokeWidth={strokeWidth || 8} strokeLinecap="round" />
-      <line x1="74" y1="26" x2="26" y2="74" stroke={stroke || '#1f2937'} strokeWidth={strokeWidth || 8} strokeLinecap="round" />
+    <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="none">
+      <line x1="15" y1="15" x2="85" y2="85" stroke={getStrokeColor(stroke)} strokeWidth={strokeWidth || 8} strokeLinecap="round" />
+      <line x1="85" y1="15" x2="15" y2="85" stroke={getStrokeColor(stroke)} strokeWidth={strokeWidth || 8} strokeLinecap="round" />
     </svg>
-  ),
+  )
 }
 
 export const shapeCatalog: ShapeDefinition[] = [

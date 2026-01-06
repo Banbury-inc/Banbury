@@ -920,4 +920,146 @@ export default class Files {
       throw ApiService.enhanceError(error, 'Failed to search users')
     }
   }
+
+  /**
+   * Copy a Google Drive file to Local (S3) storage
+   */
+  static async copyDriveFileToLocal(driveFileId: string): Promise<{
+    success: boolean
+    local_file_id?: string
+    local_path?: string
+    file_name?: string
+  }> {
+    try {
+      ApiService.loadAuthToken()
+      
+      const response = await ApiService.post<{
+        result?: string
+        local_file_id?: string
+        local_path?: string
+        file_name?: string
+        error?: string
+      }>('/files/transfer/drive_to_s3/', { drive_file_id: driveFileId })
+
+      if (response.result === 'success') {
+        return {
+          success: true,
+          local_file_id: response.local_file_id,
+          local_path: response.local_path,
+          file_name: response.file_name
+        }
+      } else if (response.error) {
+        throw new Error(response.error)
+      }
+      throw new Error('Failed to copy file from Google Drive')
+    } catch (error) {
+      console.error('copyDriveFileToLocal error:', error)
+      throw ApiService.enhanceError(error, 'Failed to copy file from Google Drive to Local')
+    }
+  }
+
+  /**
+   * Copy a OneDrive file to Local (S3) storage
+   */
+  static async copyOneDriveFileToLocal(oneDriveItemId: string): Promise<{
+    success: boolean
+    local_file_id?: string
+    local_path?: string
+    file_name?: string
+  }> {
+    try {
+      ApiService.loadAuthToken()
+      
+      const response = await ApiService.post<{
+        result?: string
+        local_file_id?: string
+        local_path?: string
+        file_name?: string
+        error?: string
+      }>('/files/transfer/onedrive_to_s3/', { onedrive_item_id: oneDriveItemId })
+
+      if (response.result === 'success') {
+        return {
+          success: true,
+          local_file_id: response.local_file_id,
+          local_path: response.local_path,
+          file_name: response.file_name
+        }
+      } else if (response.error) {
+        throw new Error(response.error)
+      }
+      throw new Error('Failed to copy file from OneDrive')
+    } catch (error) {
+      console.error('copyOneDriveFileToLocal error:', error)
+      throw ApiService.enhanceError(error, 'Failed to copy file from OneDrive to Local')
+    }
+  }
+
+  /**
+   * Copy a Local (S3) file to Google Drive
+   */
+  static async copyLocalFileToDrive(s3FileId: string): Promise<{
+    success: boolean
+    drive_file_id?: string
+    drive_file_name?: string
+  }> {
+    try {
+      ApiService.loadAuthToken()
+      
+      const response = await ApiService.post<{
+        result?: string
+        drive_file_id?: string
+        drive_file_name?: string
+        error?: string
+      }>('/files/transfer/s3_to_drive/', { s3_file_id: s3FileId })
+
+      if (response.result === 'success') {
+        return {
+          success: true,
+          drive_file_id: response.drive_file_id,
+          drive_file_name: response.drive_file_name
+        }
+      } else if (response.error) {
+        throw new Error(response.error)
+      }
+      throw new Error('Failed to copy file to Google Drive')
+    } catch (error) {
+      console.error('copyLocalFileToDrive error:', error)
+      throw ApiService.enhanceError(error, 'Failed to copy file to Google Drive')
+    }
+  }
+
+  /**
+   * Copy a Local (S3) file to OneDrive
+   */
+  static async copyLocalFileToOneDrive(s3FileId: string): Promise<{
+    success: boolean
+    onedrive_item_id?: string
+    onedrive_file_name?: string
+  }> {
+    try {
+      ApiService.loadAuthToken()
+      
+      const response = await ApiService.post<{
+        result?: string
+        onedrive_item_id?: string
+        onedrive_file_name?: string
+        error?: string
+      }>('/files/transfer/s3_to_onedrive/', { s3_file_id: s3FileId })
+
+      if (response.result === 'success') {
+        return {
+          success: true,
+          onedrive_item_id: response.onedrive_item_id,
+          onedrive_file_name: response.onedrive_file_name
+        }
+      } else if (response.error) {
+        throw new Error(response.error)
+      }
+      throw new Error('Failed to copy file to OneDrive')
+    } catch (error) {
+      console.error('copyLocalFileToOneDrive error:', error)
+      throw ApiService.enhanceError(error, 'Failed to copy file to OneDrive')
+    }
+  }
 }

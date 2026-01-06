@@ -1,4 +1,4 @@
-import { RefreshCw, Folder, Search, X } from "lucide-react"
+import { RefreshCw, Folder, Search, X, FileText, FileSpreadsheet, FileBarChart } from "lucide-react"
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { OneDriveFileTreeItem } from "./OneDriveFileTreeItem"
 import { Button } from "../../../../ui/button"
@@ -8,6 +8,12 @@ import { Typography } from "../../../../ui/typography"
 import { handleFetchOneDriveFiles, OneDriveViewMode } from "../handlers/handleFetchOneDriveFiles"
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
 import { filterOneDriveFiles } from "../handlers/handleFileTypeFilter"
+import {
+  handleCreateOneDriveDocumentSubmit,
+  handleCreateOneDriveSpreadsheetSubmit,
+  handleCreateOneDrivePresentationSubmit,
+  OneDriveFileCreationState
+} from "../handlers/handleCreateOneDriveFile"
 
 interface OneDriveViewProps {
   viewMode?: OneDriveViewMode
@@ -43,6 +49,27 @@ export function OneDriveView({
   
   // Favorites (Banbury-managed)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
+
+  // Document creation state
+  const [isCreatingDocument, setIsCreatingDocument] = useState(false)
+  const [newDocumentName, setNewDocumentName] = useState('New Document.docx')
+  const [isCreatingDocumentPending, setIsCreatingDocumentPending] = useState(false)
+  const [pendingDocumentName, setPendingDocumentName] = useState<string | null>(null)
+  const documentInputRef = useRef<HTMLInputElement | null>(null)
+
+  // Spreadsheet creation state
+  const [isCreatingSpreadsheet, setIsCreatingSpreadsheet] = useState(false)
+  const [newSpreadsheetName, setNewSpreadsheetName] = useState('New Spreadsheet.xlsx')
+  const [isCreatingSpreadsheetPending, setIsCreatingSpreadsheetPending] = useState(false)
+  const [pendingSpreadsheetName, setPendingSpreadsheetName] = useState<string | null>(null)
+  const spreadsheetInputRef = useRef<HTMLInputElement | null>(null)
+
+  // Presentation creation state
+  const [isCreatingPresentation, setIsCreatingPresentation] = useState(false)
+  const [newPresentationName, setNewPresentationName] = useState('New Presentation.pptx')
+  const [isCreatingPresentationPending, setIsCreatingPresentationPending] = useState(false)
+  const [pendingPresentationName, setPendingPresentationName] = useState<string | null>(null)
+  const presentationInputRef = useRef<HTMLInputElement | null>(null)
 
   // Check OneDrive connection
   const checkConnection = useCallback(async () => {
@@ -218,6 +245,129 @@ export function OneDriveView({
     return filterOneDriveFiles(files, activeFilters)
   }, [files, activeFilters])
 
+  // Helper function to select filename without extension
+  const selectFilenameWithoutExtension = (input: HTMLInputElement) => {
+    const value = input.value
+    const lastDotIndex = value.lastIndexOf('.')
+    if (lastDotIndex > 0) {
+      input.setSelectionRange(0, lastDotIndex)
+    } else {
+      input.select()
+    }
+  }
+
+  // Creation handlers
+  const handleCreateDocument = useCallback(() => {
+    setIsCreatingDocument(true)
+    setNewDocumentName('New Document.docx')
+  }, [])
+
+  const handleCreateSpreadsheet = useCallback(() => {
+    setIsCreatingSpreadsheet(true)
+    setNewSpreadsheetName('New Spreadsheet.xlsx')
+  }, [])
+
+  const handleCreatePowerpoint = useCallback(() => {
+    setIsCreatingPresentation(true)
+    setNewPresentationName('New Presentation.pptx')
+  }, [])
+
+  // Build state objects for handlers
+  const documentState: OneDriveFileCreationState = {
+    isCreating: isCreatingDocument,
+    setIsCreating: setIsCreatingDocument,
+    newName: newDocumentName,
+    setNewName: setNewDocumentName,
+    isPending: isCreatingDocumentPending,
+    setIsPending: setIsCreatingDocumentPending,
+    pendingName: pendingDocumentName,
+    setPendingName: setPendingDocumentName,
+  }
+
+  const spreadsheetState: OneDriveFileCreationState = {
+    isCreating: isCreatingSpreadsheet,
+    setIsCreating: setIsCreatingSpreadsheet,
+    newName: newSpreadsheetName,
+    setNewName: setNewSpreadsheetName,
+    isPending: isCreatingSpreadsheetPending,
+    setIsPending: setIsCreatingSpreadsheetPending,
+    pendingName: pendingSpreadsheetName,
+    setPendingName: setPendingSpreadsheetName,
+  }
+
+  const presentationState: OneDriveFileCreationState = {
+    isCreating: isCreatingPresentation,
+    setIsCreating: setIsCreatingPresentation,
+    newName: newPresentationName,
+    setNewName: setNewPresentationName,
+    isPending: isCreatingPresentationPending,
+    setIsPending: setIsCreatingPresentationPending,
+    pendingName: pendingPresentationName,
+    setPendingName: setPendingPresentationName,
+  }
+
+  const handleDocumentSubmit = useCallback(async () => {
+    await handleCreateOneDriveDocumentSubmit(documentState, () => fetchFiles())
+  }, [documentState, fetchFiles])
+
+  const handleSpreadsheetSubmit = useCallback(async () => {
+    await handleCreateOneDriveSpreadsheetSubmit(spreadsheetState, () => fetchFiles())
+  }, [spreadsheetState, fetchFiles])
+
+  const handlePresentationSubmit = useCallback(async () => {
+    await handleCreateOneDrivePresentationSubmit(presentationState, () => fetchFiles())
+  }, [presentationState, fetchFiles])
+
+  // Focus inputs when creating
+  useEffect(() => {
+    if (isCreatingDocument && documentInputRef.current) {
+      const timeoutId = setTimeout(() => {
+        if (documentInputRef.current) {
+          documentInputRef.current.focus()
+          selectFilenameWithoutExtension(documentInputRef.current)
+        }
+      }, 10)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [isCreatingDocument])
+
+  useEffect(() => {
+    if (isCreatingSpreadsheet && spreadsheetInputRef.current) {
+      const timeoutId = setTimeout(() => {
+        if (spreadsheetInputRef.current) {
+          spreadsheetInputRef.current.focus()
+          selectFilenameWithoutExtension(spreadsheetInputRef.current)
+        }
+      }, 10)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [isCreatingSpreadsheet])
+
+  useEffect(() => {
+    if (isCreatingPresentation && presentationInputRef.current) {
+      const timeoutId = setTimeout(() => {
+        if (presentationInputRef.current) {
+          presentationInputRef.current.focus()
+          selectFilenameWithoutExtension(presentationInputRef.current)
+        }
+      }, 10)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [isCreatingPresentation])
+
+  // Register handlers on window and cleanup on unmount
+  useEffect(() => {
+    (window as any).__handleCreateDocument = handleCreateDocument;
+    (window as any).__handleCreateSpreadsheet = handleCreateSpreadsheet;
+    (window as any).__handleCreatePowerpoint = handleCreatePowerpoint;
+
+    return () => {
+      delete (window as any).__handleCreateDocument
+      delete (window as any).__handleCreateSpreadsheet
+      delete (window as any).__handleCreatePowerpoint
+    }
+  }, [handleCreateDocument, handleCreateSpreadsheet, handleCreatePowerpoint])
+
   return (
     <div
       className="h-full overflow-y-auto sidebar-scrollbar"
@@ -293,7 +443,7 @@ export function OneDriveView({
         </div>
       )}
 
-      {!checkingConnection && connected && !loading && filteredFiles.length === 0 && !error && (
+      {!checkingConnection && connected && !loading && filteredFiles.length === 0 && !error && !isCreatingDocument && !isCreatingSpreadsheet && !isCreatingPresentation && !isCreatingDocumentPending && !isCreatingSpreadsheetPending && !isCreatingPresentationPending && (
         <div className="px-3 py-2">
           <Typography variant="muted">
             {activeFilters.size > 0 ? 'No matching files' : (
@@ -306,6 +456,105 @@ export function OneDriveView({
               </>
             )}
           </Typography>
+        </div>
+      )}
+
+      {/* Document creation row */}
+      {viewMode === 'root' && isCreatingDocument && (
+        <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
+          <div className="w-3" />
+          <FileText className="h-4 w-4 text-blue-500" />
+          <input
+            type="text"
+            value={newDocumentName}
+            onChange={(e) => setNewDocumentName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleDocumentSubmit()
+              else if (e.key === 'Escape') {
+                setIsCreatingDocument(false)
+                setNewDocumentName('New Document.docx')
+              }
+            }}
+            onBlur={handleDocumentSubmit}
+            className="text-sm bg-muted text-foreground px-1 py-0 rounded border-none outline-none flex-1"
+            ref={documentInputRef}
+            onFocus={(e) => selectFilenameWithoutExtension(e.currentTarget)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+      {viewMode === 'root' && isCreatingDocumentPending && pendingDocumentName && (
+        <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
+          <div className="w-3" />
+          <RefreshCw className="h-4 w-4 animate-spin" />
+          <Typography variant="xs" className="truncate min-w-0 flex-1">{pendingDocumentName}</Typography>
+          <Typography variant="muted" className="text-xs">Creating...</Typography>
+        </div>
+      )}
+
+      {/* Spreadsheet creation row */}
+      {viewMode === 'root' && isCreatingSpreadsheet && (
+        <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
+          <div className="w-3" />
+          <FileSpreadsheet className="h-4 w-4 text-green-500" />
+          <input
+            type="text"
+            value={newSpreadsheetName}
+            onChange={(e) => setNewSpreadsheetName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSpreadsheetSubmit()
+              else if (e.key === 'Escape') {
+                setIsCreatingSpreadsheet(false)
+                setNewSpreadsheetName('New Spreadsheet.xlsx')
+              }
+            }}
+            onBlur={handleSpreadsheetSubmit}
+            className="text-sm bg-muted text-foreground px-1 py-0 rounded border-none outline-none flex-1"
+            ref={spreadsheetInputRef}
+            onFocus={(e) => selectFilenameWithoutExtension(e.currentTarget)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+      {viewMode === 'root' && isCreatingSpreadsheetPending && pendingSpreadsheetName && (
+        <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
+          <div className="w-3" />
+          <RefreshCw className="h-4 w-4 animate-spin" />
+          <Typography variant="xs" className="truncate min-w-0 flex-1">{pendingSpreadsheetName}</Typography>
+          <Typography variant="muted" className="text-xs">Creating...</Typography>
+        </div>
+      )}
+
+      {/* Presentation creation row */}
+      {viewMode === 'root' && isCreatingPresentation && (
+        <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
+          <div className="w-3" />
+          <FileBarChart className="h-4 w-4 text-orange-400" />
+          <input
+            type="text"
+            value={newPresentationName}
+            onChange={(e) => setNewPresentationName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handlePresentationSubmit()
+              else if (e.key === 'Escape') {
+                setIsCreatingPresentation(false)
+                setNewPresentationName('New Presentation.pptx')
+              }
+            }}
+            onBlur={handlePresentationSubmit}
+            className="text-sm bg-muted text-foreground px-1 py-0 rounded border-none outline-none flex-1"
+            ref={presentationInputRef}
+            onFocus={(e) => selectFilenameWithoutExtension(e.currentTarget)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+      {viewMode === 'root' && isCreatingPresentationPending && pendingPresentationName && (
+        <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
+          <div className="w-3" />
+          <RefreshCw className="h-4 w-4 animate-spin" />
+          <Typography variant="xs" className="truncate min-w-0 flex-1">{pendingPresentationName}</Typography>
+          <Typography variant="muted" className="text-xs">Creating...</Typography>
         </div>
       )}
 

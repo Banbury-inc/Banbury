@@ -4,11 +4,12 @@ import { Slide, SlideElement, FillStyle } from './PowerPointViewer'
 import { getShapeDefinition, renderShapeSvg } from './shape-catalog'
 import { Move } from 'lucide-react'
 import { fillStyleToCSS, normalizeFill } from './utils/fill-utils'
-import type { Paragraph, TextRun } from './types/pptx-types'
+import { strokeStyleToCSS } from './utils/stroke-utils'
+import type { Paragraph, TextRun, StrokeStyle, BorderStyle } from './types/pptx-types'
 
 interface SlideCanvasProps {
   slide: Slide
-  onUpdateElements: (elements: SlideElement[]) => void
+  onUpdateElements: (elements: SlideElement[], saveHistory?: boolean) => void
   selectedElementId: string | null
   onSelectElement: (elementId: string | null) => void
   onTextSelectionChange?: (selection: { start: number; end: number } | null) => void
@@ -36,6 +37,7 @@ export function SlideCanvas({
   const canvasRef = useRef<HTMLDivElement>(null)
   const slideContentRef = useRef<HTMLDivElement>(null)
   const [scaleFactor, setScaleFactor] = useState(1)
+  const hasHistorySavedRef = useRef(false)
 
   // Reference size: 960px width (16:9 aspect ratio)
   const REFERENCE_WIDTH = 960
@@ -83,13 +85,26 @@ export function SlideCanvas({
     }
   }, [onSelectElement, onTextSelectionChange])
 
+  // Handle text focus (save history before editing)
+  const handleTextFocus = useCallback(() => {
+    if (!hasHistorySavedRef.current) {
+      hasHistorySavedRef.current = true
+      onUpdateElements(slide.elements, true) // Save current state to history
+    }
+  }, [slide.elements, onUpdateElements])
+
   // Handle text content change
   const handleTextChange = useCallback((elementId: string, newContent: string) => {
     const newElements = slide.elements.map(e =>
-      e.id === elementId ? { ...e, content: newContent, paragraphs: undefined } : e
+      e.id === elementId ? { ...e, content: newContent } : e
     )
     onUpdateElements(newElements)
   }, [slide.elements, onUpdateElements])
+  
+  // Reset history saved flag when selection changes
+  useEffect(() => {
+    hasHistorySavedRef.current = false
+  }, [selectedElementId])
 
   // Handle table cell content change
   const handleTableCellChange = useCallback((elementId: string, rowIndex: number, colIndex: number, newContent: string) => {
@@ -98,7 +113,7 @@ export function SlideCanvas({
         const newCells = e.cells.map((row, rIdx) =>
           rIdx === rowIndex
             ? row.map((cell, cIdx) =>
-                cIdx === colIndex ? { ...cell, content: newContent, paragraphs: undefined } : cell
+                cIdx === colIndex ? { ...cell, content: newContent } : cell
               )
             : row
         )
@@ -134,6 +149,7 @@ export function SlideCanvas({
       y: e.clientY - canvasRect.top - elementY,
     })
     setIsDragging(true)
+    hasHistorySavedRef.current = false
     onSelectElement(elementId)
   }, [slide.elements, onSelectElement])
 
@@ -155,12 +171,19 @@ export function SlideCanvas({
       elementX: element.x,
       elementY: element.y,
     })
+    hasHistorySavedRef.current = false
     onSelectElement(elementId)
   }, [slide.elements, onSelectElement])
 
   // Handle element resize move
   const handleResizeMove = useCallback((e: MouseEvent) => {
     if (!isResizing || !selectedElementId || !resizeHandle || !slideContentRef.current) return
+
+    // Save history only once at the start of resize
+    if (!hasHistorySavedRef.current) {
+      hasHistorySavedRef.current = true
+      onUpdateElements(slide.elements, true) // Save current state to history
+    }
 
     const slideRect = slideContentRef.current.getBoundingClientRect()
     const deltaX = ((e.clientX - resizeStart.x) / slideRect.width) * 100
@@ -254,6 +277,12 @@ export function SlideCanvas({
     if (isResizing) return
     if (!isDragging || !selectedElementId || !canvasRef.current) return
 
+    // Save history only once at the start of drag
+    if (!hasHistorySavedRef.current) {
+      hasHistorySavedRef.current = true
+      onUpdateElements(slide.elements, true) // Save current state to history
+    }
+
     const canvasRect = canvasRef.current.getBoundingClientRect()
     const newX = ((e.clientX - canvasRect.left - dragOffset.x) / canvasRect.width) * 100
     const newY = ((e.clientY - canvasRect.top - dragOffset.y) / canvasRect.height) * 100
@@ -328,6 +357,7 @@ export function SlideCanvas({
                 scaleFactor={scaleFactor}
                 onClick={(e) => handleElementClick(e, element.id)}
                 onMouseDown={(e) => handleMouseDown(e, element.id)}
+                onTextFocus={handleTextFocus}
                 onTextChange={(content) => handleTextChange(element.id, content)}
                 onTableCellChange={element.type === 'table' ? (rowIndex, colIndex, content) => handleTableCellChange(element.id, rowIndex, colIndex, content) : undefined}
                 onSelectElement={onSelectElement}
@@ -359,6 +389,7 @@ function ElementRenderer({
   scaleFactor,
   onClick,
   onMouseDown,
+  onTextFocus,
   onTextChange,
   onTableCellChange,
   onSelectElement,
@@ -370,6 +401,7 @@ function ElementRenderer({
   scaleFactor: number
   onClick: (e: React.MouseEvent) => void
   onMouseDown: (e: React.MouseEvent) => void
+  onTextFocus: () => void
   onTextChange: (content: string) => void
   onTableCellChange?: (rowIndex: number, colIndex: number, content: string) => void
   onSelectElement: (elementId: string) => void
@@ -553,7 +585,11 @@ function ElementRenderer({
         style={{
           ...baseStyles,
           background: element.textFill ? fillStyleToCSS(element.textFill) : element.fill ? (typeof element.fill === 'string' ? element.fill : fillStyleToCSS(element.fill)) : 'transparent',
-          border: element.border ? `${scaledBorderWidth}px solid ${element.border.color}` : element.stroke ? `${(element.strokeWidth || 1) * scaleFactor}px solid ${element.stroke}` : undefined,
+          border: element.border
+            ? strokeStyleToCSS(element.border, (element.border.width || 1) * scaleFactor)
+            : element.stroke
+              ? `${(element.strokeWidth || 1) * scaleFactor}px solid ${element.stroke}`
+              : undefined,
           padding: `${scaledPadding}px`,
           boxShadow,
         }}
@@ -578,6 +614,7 @@ function ElementRenderer({
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
           }}
+          onFocus={onTextFocus}
           onBlur={(e) => onTextChange(e.currentTarget.textContent || '')}
           onSelect={handleSelectionChange}
           onMouseUp={handleSelectionChange}
@@ -614,7 +651,7 @@ function ElementRenderer({
   if (element.type === 'shape') {
     // Normalize fill (handle both string and FillStyle)
     const fill = element.fill ? (typeof element.fill === 'string' ? element.fill : fillStyleToCSS(element.fill)) : '#4a90d9'
-    const stroke = element.stroke || '#2d5a8c'
+    const stroke = element.border || element.stroke || '#2d5a8c'
     const scaledStrokeWidth = (element.strokeWidth ?? 2) * scaleFactor
     const rotation = element.rotation ?? 0
     const shapeType = element.shapeType || 'rect'
@@ -812,6 +849,7 @@ function ElementRenderer({
                         backgroundColor: cell.backgroundColor || 'transparent',
                         padding: `${scaledPadding}px ${scaledPaddingHorizontal}px`,
                       }}
+                      onFocus={onTextFocus}
                       onBlur={(e) => {
                         if (onTableCellChange) {
                           onTableCellChange(rowIndex, colIndex, e.currentTarget.textContent || '')

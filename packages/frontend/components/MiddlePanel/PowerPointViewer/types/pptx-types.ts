@@ -103,7 +103,23 @@ export interface EnhancedTableCell {
 }
 
 /**
- * Border style
+ * Comprehensive stroke style for borders and lines
+ * Supports full PPTX stroke properties including dash patterns, caps, joins, and transparency
+ */
+export interface StrokeStyle {
+  color: string
+  width: number // In points
+  dashPattern?: 'solid' | 'dash' | 'dot' | 'dashDot' | 'dashDotDot' | 'lgDash' | 'lgDashDot' | 'lgDashDotDot' | 'sysDash' | 'sysDot'
+  lineCap?: 'flat' | 'round' | 'square'
+  lineJoin?: 'bevel' | 'miter' | 'round'
+  alpha?: number  // 0-1 for transparency (0 = fully transparent, 1 = fully opaque)
+  compound?: 'single' | 'double' | 'thickThin' | 'thinThick' | 'triple'
+  alignment?: 'center' | 'inset' | 'outset'
+}
+
+/**
+ * Border style (legacy, use StrokeStyle for new code)
+ * @deprecated Use StrokeStyle instead for full feature support
  */
 export interface BorderStyle {
   color: string

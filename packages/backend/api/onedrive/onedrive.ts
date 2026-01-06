@@ -225,6 +225,37 @@ export default class OneDrive {
   }
 
   /**
+   * Upload a new file to OneDrive
+   */
+  static async uploadFile(file: File | Blob, filename: string, parentId?: string): Promise<OneDriveFile> {
+    const formData = new FormData()
+    
+    // If it's a Blob without a name, wrap it in a File
+    if (file instanceof Blob && !(file instanceof File)) {
+      const fileWithName = new File([file], filename, { type: file.type })
+      formData.append('file', fileWithName)
+    } else {
+      formData.append('file', file)
+    }
+    
+    if (parentId) {
+      formData.append('parent_id', parentId)
+    }
+    
+    const resp = await axios.post(
+      `${ApiService.baseURL}/authentication/onedrive/files/upload/`,
+      formData,
+      {
+        headers: {
+          ...this.withAuthHeaders(),
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+    )
+    return resp.data
+  }
+
+  /**
    * Create a folder
    */
   static async createFolder(parentId: string, name: string): Promise<OneDriveFile> {

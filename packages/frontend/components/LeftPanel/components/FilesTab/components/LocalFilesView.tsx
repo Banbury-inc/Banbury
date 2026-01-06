@@ -9,12 +9,14 @@ import {
   Star,
 } from "lucide-react"
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { toggleFileSelection } from "../../../handlers/handle-multi-select"
+import { toggleFileSelection, collectSelectedFileItems } from "../../../handlers/handle-multi-select"
 import { FileTreeItem, DragState } from "./FileTreeItem"
 import { ApiService } from "../../../../../../backend/api/apiService"
+import OneDrive from "../../../../../../backend/api/onedrive/onedrive"
 import { buildFileTree, FileSystemItem, flattenFileTree } from "../../../../../utils/fileTreeUtils"
 import { Typography } from "../../../../ui/typography"
 import { ShareFileDialog } from "../../../../share-file/ShareFileDialog"
+import { useToast } from "../../../../ui/use-toast"
 import { handleCreateDocumentSubmit } from "../handlers/handleCreateDocumentSubmit"
 import { handleCreateSpreadsheetSubmit } from "../handlers/handleCreateSpreadsheetSubmit"
 import { handleCreateDrawioSubmit as handleCreateDrawioSubmitHandler } from "../handlers/handleCreateDrawioSubmit"
@@ -23,6 +25,14 @@ import { handleCreateRootFolderSubmit } from "../handlers/handleCreateRootFolder
 import { getRecentFileIds, addRecentFileId } from "../handlers/handleRecentFiles"
 import { fetchStarredFileIds, starFile, unstarFile } from "../handlers/handleStarredFiles"
 import { filterFileTree, filterFlatFileList } from "../handlers/handleFileTypeFilter"
+import { 
+  removeFileFromTree, 
+  removeFolderFromTree, 
+  removeMultipleFilesFromTree, 
+  removeMultipleFoldersFromTree,
+  insertFileIntoTree, 
+  insertFolderIntoTree 
+} from "../handlers/optimisticDeleteHelpers"
 
 interface LocalFilesViewProps {
   viewMode: 'local' | 'recent' | 'starred' | 'shared'
@@ -75,6 +85,7 @@ export function LocalFilesView({
   folderInputRef,
   activeFilters = new Set(),
 }: LocalFilesViewProps) {
+  const { toast } = useToast()
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [fileSystem, setFileSystem] = useState<FileSystemItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -133,6 +144,10 @@ export function LocalFilesView({
   // Share dialog state
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [fileToShare, setFileToShare] = useState<{ id: string; name: string; type: 's3' | 'drive' } | null>(null)
+  
+  // Cloud provider availability state
+  const [driveAvailable, setDriveAvailable] = useState(false)
+  const [oneDriveConnected, setOneDriveConnected] = useState(false)
   
   // Drag and drop state
   const [dragState, setDragState] = useState<DragState>({
@@ -241,12 +256,29 @@ export function LocalFilesView({
     onFolderRenamed?.(oldPath, newPath)
   }
 
-  const handleFolderDeleted = (folderPath: string) => {
-    // Refresh the file tree when a folder is deleted
-    fetchUserFiles()
+  const handleFileDeleted = useCallback((fileId: string) => {
+    // Optimistically remove the file from the UI
+    setFileSystem(prevFileSystem => removeFileFromTree(prevFileSystem, fileId))
+    // Propagate up if parent wants to react (e.g., close tabs)
+    onFileDeleted?.(fileId)
+  }, [onFileDeleted])
+
+  const handleFileDeleteFailed = useCallback((file: FileSystemItem) => {
+    // Restore the file to the UI
+    setFileSystem(prevFileSystem => insertFileIntoTree(prevFileSystem, file))
+  }, [])
+
+  const handleFolderDeleted = useCallback((folderPath: string) => {
+    // Optimistically remove the folder from the UI
+    setFileSystem(prevFileSystem => removeFolderFromTree(prevFileSystem, folderPath))
     // Propagate up if parent wants to react (e.g., close tabs)
     onFolderDeleted?.(folderPath)
-  }
+  }, [onFolderDeleted])
+
+  const handleFolderDeleteFailed = useCallback((folder: FileSystemItem) => {
+    // Restore the folder to the UI
+    setFileSystem(prevFileSystem => insertFolderIntoTree(prevFileSystem, folder))
+  }, [])
 
   const onShiftToggleSelection = (item: FileSystemItem) => {
     const next = toggleFileSelection({ selectedIds, itemId: item.id, isShiftKey: true })
@@ -398,6 +430,29 @@ export function LocalFilesView({
       })
     }
   }, [userInfo?.username])
+
+  // Check cloud provider availability on mount
+  useEffect(() => {
+    const checkProviders = async () => {
+      try {
+        // Check Google Drive availability
+        const isDriveAvailable = await ApiService.Scopes.isFeatureAvailable('drive')
+        setDriveAvailable(isDriveAvailable)
+      } catch {
+        setDriveAvailable(false)
+      }
+
+      try {
+        // Check OneDrive connection status
+        const oneDriveStatus = await OneDrive.getStatus()
+        setOneDriveConnected(oneDriveStatus.connected)
+      } catch {
+        setOneDriveConnected(false)
+      }
+    }
+
+    checkProviders()
+  }, [])
 
   // Fetch shared files when 'shared' view mode is active
   useEffect(() => {
@@ -801,35 +856,88 @@ export function LocalFilesView({
     const selectedItems = collectSelectedFileItems(fileSystem, selectedIds)
     if (!selectedItems.length) return
     if (!userInfo?.username) {
-      alert('User information not available')
+      toast({
+        title: 'User information not available',
+        description: 'Please try again.',
+        variant: 'destructive',
+      })
       return
     }
     
-    try {
-      const fileItems = selectedItems.filter(it => it.type === 'file' && it.file_id)
-      const folderItems = selectedItems.filter(it => it.type === 'folder')
-      
-      // Delete files
-      const fileDeletions = fileItems.map(async it => {
-        if (it.file_id) {
+    const fileItems = selectedItems.filter(it => it.type === 'file' && it.file_id)
+    const folderItems = selectedItems.filter(it => it.type === 'folder')
+    
+    // Optimistically remove all selected items from the UI
+    const fileIdsToDelete = new Set(fileItems.map(it => it.file_id).filter(Boolean) as string[])
+    const folderPathsToDelete = new Set(folderItems.map(it => it.path))
+    
+    setFileSystem(prevFileSystem => {
+      let updated = removeMultipleFilesFromTree(prevFileSystem, fileIdsToDelete)
+      updated = removeMultipleFoldersFromTree(updated, folderPathsToDelete)
+      return updated
+    })
+    
+    // Clear selection immediately
+    clearSelection()
+    
+    // Track failed deletions for restoration
+    const failedFiles: FileSystemItem[] = []
+    const failedFolders: FileSystemItem[] = []
+    
+    // Delete files
+    const fileDeletions = fileItems.map(async it => {
+      if (it.file_id) {
+        try {
           await ApiService.Files.deleteS3File(it.file_id)
           onFileDeleted?.(it.file_id)
+        } catch (error) {
+          failedFiles.push(it)
+          throw error
         }
-      })
-      
-      // Delete folders
-      const folderDeletions = folderItems.map(async it => {
+      }
+    })
+    
+    // Delete folders
+    const folderDeletions = folderItems.map(async it => {
+      try {
         const result = await ApiService.Files.deleteFolder(it.path, userInfo.username)
         onFolderDeleted?.(it.path)
         return result
+      } catch (error) {
+        failedFolders.push(it)
+        throw error
+      }
+    })
+    
+    // Wait for all deletions and handle failures
+    const results = await Promise.allSettled([...fileDeletions, ...folderDeletions])
+    const failedCount = results.filter(r => r.status === 'rejected').length
+    const successCount = results.filter(r => r.status === 'fulfilled').length
+    
+    // Restore failed deletions
+    if (failedFiles.length > 0 || failedFolders.length > 0) {
+      setFileSystem(prevFileSystem => {
+        let updated = prevFileSystem
+        failedFiles.forEach(file => {
+          updated = insertFileIntoTree(updated, file)
+        })
+        failedFolders.forEach(folder => {
+          updated = insertFolderIntoTree(updated, folder)
+        })
+        return updated
       })
       
-      await Promise.all([...fileDeletions, ...folderDeletions])
-      fetchUserFiles()
-    } catch (error) {
-      alert('Failed to delete some items. Please try again.')
-    } finally {
-      clearSelection()
+      toast({
+        title: 'Some items failed to delete',
+        description: `${successCount} deleted, ${failedCount} failed`,
+        variant: 'destructive',
+      })
+    } else if (successCount > 0) {
+      toast({
+        title: 'Items deleted',
+        description: `Successfully deleted ${successCount} item${successCount > 1 ? 's' : ''}`,
+        variant: 'success',
+      })
     }
   }
 
@@ -849,6 +957,15 @@ export function LocalFilesView({
     }
     if (onCreatePowerpoint) {
       (window as any).__handleCreatePowerpoint = handleCreatePowerpoint
+    }
+
+    // Cleanup on unmount
+    return () => {
+      delete (window as any).__handleCreateDocument
+      delete (window as any).__handleCreateSpreadsheet
+      delete (window as any).__handleCreateDrawio
+      delete (window as any).__handleCreateTldraw
+      delete (window as any).__handleCreatePowerpoint
     }
   }, [onCreateDocument, onCreateSpreadsheet, onCreateDrawio, onCreateTldraw, onCreatePowerpoint])
 
@@ -1192,11 +1309,13 @@ export function LocalFilesView({
                     toggleExpanded={() => {}}
                     onFileSelect={handleFileSelectWithRecent}
                     selectedFile={selectedFile}
-                    onFileDeleted={onFileDeleted}
+                    onFileDeleted={handleFileDeleted}
+                    onFileDeleteFailed={handleFileDeleteFailed}
                     onFileRenamed={onFileRenamed}
                     onFolderCreated={handleFolderCreated}
                     onFolderRenamed={handleFolderRenamed}
                     onFolderDeleted={handleFolderDeleted}
+                    onFolderDeleteFailed={handleFolderDeleteFailed}
                     onUploadFile={handleFileUpload}
                     onUploadFolder={handleFolderUpload}
                     userInfo={userInfo}
@@ -1214,6 +1333,8 @@ export function LocalFilesView({
                     onStarFile={handleStarFile}
                     onUnstarFile={handleUnstarFile}
                     onShareFile={handleShareFile}
+                    driveAvailable={driveAvailable}
+                    oneDriveConnected={oneDriveConnected}
                   />
                 ))
               )}
@@ -1237,11 +1358,13 @@ export function LocalFilesView({
                     toggleExpanded={() => {}}
                     onFileSelect={handleFileSelectWithRecent}
                     selectedFile={selectedFile}
-                    onFileDeleted={onFileDeleted}
+                    onFileDeleted={handleFileDeleted}
+                    onFileDeleteFailed={handleFileDeleteFailed}
                     onFileRenamed={onFileRenamed}
                     onFolderCreated={handleFolderCreated}
                     onFolderRenamed={handleFolderRenamed}
                     onFolderDeleted={handleFolderDeleted}
+                    onFolderDeleteFailed={handleFolderDeleteFailed}
                     onUploadFile={handleFileUpload}
                     onUploadFolder={handleFolderUpload}
                     userInfo={userInfo}
@@ -1259,6 +1382,8 @@ export function LocalFilesView({
                     onStarFile={handleStarFile}
                     onUnstarFile={handleUnstarFile}
                     onShareFile={handleShareFile}
+                    driveAvailable={driveAvailable}
+                    oneDriveConnected={oneDriveConnected}
                   />
                 ))
               )}
@@ -1287,11 +1412,13 @@ export function LocalFilesView({
                     toggleExpanded={() => {}}
                     onFileSelect={handleFileSelectWithRecent}
                     selectedFile={selectedFile}
-                    onFileDeleted={onFileDeleted}
+                    onFileDeleted={handleFileDeleted}
+                    onFileDeleteFailed={handleFileDeleteFailed}
                     onFileRenamed={onFileRenamed}
                     onFolderCreated={handleFolderCreated}
                     onFolderRenamed={handleFolderRenamed}
                     onFolderDeleted={handleFolderDeleted}
+                    onFolderDeleteFailed={handleFolderDeleteFailed}
                     onUploadFile={handleFileUpload}
                     onUploadFolder={handleFolderUpload}
                     userInfo={userInfo}
@@ -1309,6 +1436,8 @@ export function LocalFilesView({
                     onStarFile={handleStarFile}
                     onUnstarFile={handleUnstarFile}
                     onShareFile={handleShareFile}
+                    driveAvailable={driveAvailable}
+                    oneDriveConnected={oneDriveConnected}
                   />
                 ))
               )}
@@ -1325,11 +1454,13 @@ export function LocalFilesView({
               toggleExpanded={toggleExpanded}
               onFileSelect={handleFileSelectWithRecent}
               selectedFile={selectedFile}
-              onFileDeleted={onFileDeleted}
+              onFileDeleted={handleFileDeleted}
+              onFileDeleteFailed={handleFileDeleteFailed}
               onFileRenamed={onFileRenamed}
               onFolderCreated={handleFolderCreated}
               onFolderRenamed={handleFolderRenamed}
               onFolderDeleted={handleFolderDeleted}
+              onFolderDeleteFailed={handleFolderDeleteFailed}
               onUploadFile={handleFileUpload}
               onUploadFolder={handleFolderUpload}
               userInfo={userInfo}
@@ -1347,6 +1478,8 @@ export function LocalFilesView({
               onStarFile={handleStarFile}
               onUnstarFile={handleUnstarFile}
               onShareFile={handleShareFile}
+              driveAvailable={driveAvailable}
+              oneDriveConnected={oneDriveConnected}
             />
           ))}
         </div>

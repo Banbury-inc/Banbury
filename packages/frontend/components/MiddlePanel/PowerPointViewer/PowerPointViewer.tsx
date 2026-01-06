@@ -33,7 +33,7 @@ import { applyLayoutToSlide } from './handlers/handle-apply-layout'
 import { applyThemeToSlide } from './handlers/handle-apply-theme'
 import { applyTransitionToSlide } from './handlers/handle-apply-transition'
 import { ShapeType } from './shape-catalog'
-import type { Paragraph, ThemeColors, Shadow } from './types/pptx-types'
+import type { Paragraph, ThemeColors, Shadow, BorderStyle, StrokeStyle } from './types/pptx-types'
 
 export interface TableCell {
   content: string
@@ -118,7 +118,7 @@ export interface SlideElement {
   headerRow?: boolean
   // New advanced formatting properties
   textFill?: FillStyle  // Background fill for text boxes
-  border?: BorderStyle  // Border for text boxes
+  border?: BorderStyle | StrokeStyle  // Border for text boxes (StrokeStyle for full PPTX support)
   highlights?: HighlightRange[]  // Text highlight ranges
   // Placeholder role for template application
   placeholder?: PlaceholderRole
@@ -596,8 +596,29 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
               rotation,
               // Include shape formatting for text boxes
               fill: shapeFormatting.fill,
-              stroke: shapeFormatting.stroke,
+              stroke: typeof shapeFormatting.stroke === 'string' ? shapeFormatting.stroke : shapeFormatting.stroke?.color,
               strokeWidth: shapeFormatting.strokeWidth,
+              border: typeof shapeFormatting.stroke === 'object' ? shapeFormatting.stroke : undefined,
+              shadow: shapeFormatting.shadow,
+            })
+          } else {
+            // Handle empty text body as shape (Google Slides exports these)
+            const shapeGeometry = shapeParser.parseShapeGeometry(spPr)
+            const shapeType = shapeParser.mapShapeType(shapeGeometry)
+
+            elements.push({
+              id: `shape-${i + 1}`,
+              type: 'shape',
+              x,
+              y,
+              width,
+              height,
+              rotation,
+              shapeType: shapeType as ShapeType,
+              fill: shapeFormatting.fill,
+              stroke: typeof shapeFormatting.stroke === 'string' ? shapeFormatting.stroke : shapeFormatting.stroke?.color,
+              strokeWidth: shapeFormatting.strokeWidth,
+              border: typeof shapeFormatting.stroke === 'object' ? shapeFormatting.stroke : undefined,
               shadow: shapeFormatting.shadow,
             })
           }
@@ -616,8 +637,9 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
             rotation,
             shapeType: shapeType as ShapeType,
             fill: shapeFormatting.fill,
-            stroke: shapeFormatting.stroke,
+            stroke: typeof shapeFormatting.stroke === 'string' ? shapeFormatting.stroke : shapeFormatting.stroke?.color,
             strokeWidth: shapeFormatting.strokeWidth,
+            border: typeof shapeFormatting.stroke === 'object' ? shapeFormatting.stroke : undefined,
             shadow: shapeFormatting.shadow,
           })
         }
@@ -1089,7 +1111,10 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
   }, [currentSlideIndex, saveToHistory])
 
   // Handle updating slide elements
-  const handleUpdateSlide = useCallback((updatedElements: SlideElement[]) => {
+  const handleUpdateSlide = useCallback((updatedElements: SlideElement[], saveHistory = false) => {
+    if (saveHistory) {
+      saveToHistory()
+    }
     setSlides(prev => {
       const newSlides = [...prev]
       newSlides[currentSlideIndex] = {
@@ -1099,7 +1124,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
       return newSlides
     })
     setHasUnsavedChanges(true)
-  }, [currentSlideIndex])
+  }, [currentSlideIndex, saveToHistory])
 
   // Handle adding element
   const handleAddElement = useCallback((element: SlideElement) => {

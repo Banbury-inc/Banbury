@@ -158,6 +158,37 @@ export default class Drive {
   }
 
   /**
+   * Upload a new file to Google Drive
+   */
+  static async uploadFile(file: File | Blob, filename: string, parentFolderId?: string): Promise<DriveFile> {
+    const formData = new FormData()
+    
+    // If it's a Blob without a name, wrap it in a File
+    if (file instanceof Blob && !(file instanceof File)) {
+      const fileWithName = new File([file], filename, { type: file.type })
+      formData.append('file', fileWithName)
+    } else {
+      formData.append('file', file)
+    }
+    
+    if (parentFolderId) {
+      formData.append('parent_folder_id', parentFolderId)
+    }
+    
+    const resp = await axios.post(
+      `${ApiService.baseURL}/files/google_drive/upload_file/`,
+      formData,
+      {
+        headers: {
+          ...this.withAuthHeaders(),
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+    )
+    return resp.data
+  }
+
+  /**
    * Search files in Google Drive
    */
   static async searchFiles(query: string, pageSize: number = 20): Promise<DriveFileListResponse> {

@@ -1,400 +1,643 @@
-import Link from 'next/link';
-import { Button } from '../components/ui/button';
-import { useState, useEffect } from 'react';
-import { ApiService } from '../../backend/api/apiService';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { Check, Zap, Shield, Clock, HardDrive, Sparkles, Headphones } from 'lucide-react'
 
-// Initialize Stripe
-const stripePromise = loadStripe('pk_live_51PGNdQJ2FLdDk2RmRpHZE9kX2yHJ9rIiVr5t8JfmV5eB1LyazU2uei7Qe0GdkpTnsMOz69w6hPNsU3KDmbUxyGOx00WxE03DQP');
+import { Button } from '../components/ui/button'
+import { Badge } from '../components/ui/badge'
+import { Card, CardContent, CardFooter, CardHeader } from '../components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '../components/ui/dialog'
 
-// Helper function to get user information from localStorage
-function getUserInfo() {
-  if (typeof window === 'undefined') return null;
-  
-  const userEmail = localStorage.getItem('userEmail');
-  const username = localStorage.getItem('username');
-  
-  return {
-    email: userEmail || '',
-    name: username || ''
-  };
+import {
+  STRIPE_PUBLIC_KEY,
+  PRO_PRICE_ID,
+  getUserInfo,
+  startProCheckout,
+  handlePaymentSuccess,
+  verifyPaymentSuccess,
+  createPaymentIntent,
+  getReturnUrl,
+} from './handlers/pricing'
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stripe initialization
+// ─────────────────────────────────────────────────────────────────────────────
+
+const stripePromise = loadStripe(STRIPE_PUBLIC_KEY)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Static content
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface PlanFeature {
+  text: string
+  included: boolean
 }
 
-// Helper function to verify payment success with backend
-async function verifyPaymentSuccess(paymentIntentId: string) {
-  try {
-    const response = await ApiService.post('/billing/verify-payment-intent/', {
-      payment_intent_id: paymentIntentId
-    }) as any;
-    
-    if (response.payment_succeeded) {
-      return response;
-    } else {
-      throw new Error('Payment not successful');
-    }
-  } catch (error) {
-    console.error('Error verifying payment:', error);
-    throw error;
-  }
+interface Plan {
+  id: string
+  name: string
+  price: number
+  period: string
+  description: string
+  features: PlanFeature[]
+  cta: string
+  popular?: boolean
 }
 
-// Helper function to check payment status
-async function checkPaymentStatus() {
-  try {
-    const response = await ApiService.get('/billing/check-payment-status/') as any;
-    return response;
-  } catch (error) {
-    console.error('Error checking payment status:', error);
-    throw error;
-  }
+const PLANS: Plan[] = [
+  {
+    id: 'free',
+    name: 'Free',
+    price: 0,
+    period: 'month',
+    description: 'Perfect for getting started and exploring the platform.',
+    features: [
+      { text: 'Core features included', included: true },
+      { text: '10 GB Storage', included: true },
+      { text: '100 AI Requests / month', included: true },
+      { text: 'Community support', included: true },
+      { text: 'Basic integrations', included: true },
+    ],
+    cta: 'Get started',
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    price: 10,
+    period: 'month',
+    description: 'For professionals who need unlimited power.',
+    features: [
+      { text: 'Everything in Free', included: true },
+      { text: 'Unlimited Storage', included: true },
+      { text: 'Unlimited AI Requests', included: true },
+      { text: 'Priority support', included: true },
+      { text: 'Advanced integrations', included: true },
+      { text: 'API access', included: true },
+    ],
+    cta: 'Get Pro',
+    popular: true,
+  },
+]
+
+interface FeatureHighlight {
+  icon: React.ComponentType<{ className?: string }>
+  title: string
+  description: string
 }
 
-// Checkout Form Component
-function CheckoutForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [paymentElementReady, setPaymentElementReady] = useState(false);
-  const [userInfo, setUserInfo] = useState(getUserInfo());
+const FEATURE_HIGHLIGHTS: FeatureHighlight[] = [
+  {
+    icon: Sparkles,
+    title: 'AI-Powered',
+    description: 'Leverage cutting-edge AI to automate tasks and boost productivity.',
+  },
+  {
+    icon: HardDrive,
+    title: 'Secure Storage',
+    description: 'Your data is encrypted and safely stored in the cloud.',
+  },
+  {
+    icon: Zap,
+    title: 'Lightning Fast',
+    description: 'Optimized performance for instant responses and real-time sync.',
+  },
+  {
+    icon: Shield,
+    title: 'Enterprise Security',
+    description: 'Bank-grade encryption and compliance with industry standards.',
+  },
+  {
+    icon: Clock,
+    title: 'Always Available',
+    description: '99.9% uptime guarantee with redundant infrastructure.',
+  },
+  {
+    icon: Headphones,
+    title: 'Dedicated Support',
+    description: 'Get help when you need it from our expert support team.',
+  },
+]
 
-  // Update user info when component mounts or localStorage changes
+interface ComparisonRow {
+  feature: string
+  free: string | boolean
+  pro: string | boolean
+}
+
+const COMPARISON_TABLE: ComparisonRow[] = [
+  { feature: 'Storage', free: '10 GB', pro: 'Unlimited' },
+  { feature: 'AI Requests', free: '100 / month', pro: 'Unlimited' },
+  { feature: 'File uploads', free: true, pro: true },
+  { feature: 'Collaboration', free: true, pro: true },
+  { feature: 'API access', free: false, pro: true },
+  { feature: 'Priority support', free: false, pro: true },
+  { feature: 'Advanced integrations', free: false, pro: true },
+  { feature: 'Custom workflows', free: false, pro: true },
+]
+
+interface FAQ {
+  question: string
+  answer: string
+}
+
+const FAQS: FAQ[] = [
+  {
+    question: 'Can I cancel my subscription anytime?',
+    answer: 'Yes, you can cancel your Pro subscription at any time. Your access will continue until the end of your billing period.',
+  },
+  {
+    question: 'What payment methods do you accept?',
+    answer: 'We accept all major credit cards, debit cards, Apple Pay, and Google Pay through our secure payment processor, Stripe.',
+  },
+  {
+    question: 'Is there a free trial for Pro?',
+    answer: 'We offer a generous free tier that lets you explore all core features. You can upgrade to Pro anytime when you need more capacity.',
+  },
+  {
+    question: 'What happens to my data if I downgrade?',
+    answer: 'Your data remains safe. If you exceed free tier limits, you\'ll have read-only access until you reduce usage or upgrade again.',
+  },
+  {
+    question: 'Do you offer discounts for annual billing?',
+    answer: 'We currently offer monthly billing only. Annual plans with discounts are coming soon.',
+  },
+]
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Checkout Form Component (client-only, uses Stripe hooks)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface CheckoutFormProps {
+  onSuccess: () => void
+  onCancel: () => void
+}
+
+function CheckoutForm({ onSuccess, onCancel }: CheckoutFormProps) {
+  const stripe = useStripe()
+  const elements = useElements()
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isPaymentElementReady, setIsPaymentElementReady] = useState(false)
+  const [userInfo, setUserInfo] = useState(getUserInfo())
+
   useEffect(() => {
-    const info = getUserInfo();
-    setUserInfo(info);
-    
-    // Listen for storage changes (in case user info is updated elsewhere)
-    const handleStorageChange = () => {
-      const updatedInfo = getUserInfo();
-      setUserInfo(updatedInfo);
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    const info = getUserInfo()
+    setUserInfo(info)
+
+    const handleStorageChange = () => setUserInfo(getUserInfo())
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
 
   const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+    event.preventDefault()
+    if (!stripe || !elements) return
 
-    if (!stripe || !elements) {
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
+    setIsLoading(true)
+    setError(null)
 
     try {
-      // Confirm the payment
-      const { error: submitError } = await elements.submit();
+      const { error: submitError } = await elements.submit()
       if (submitError) {
-        setError(submitError.message || 'Payment failed');
-        setIsLoading(false);
-        return;
+        setError(submitError.message || 'Payment failed')
+        setIsLoading(false)
+        return
       }
 
-      // Create payment intent on your backend
-      const response = await ApiService.post('/billing/create-payment-intent/', {
-        price_id: 'price_1S0mgfJ2ajHEyFo7q8TEcrO1'
-      }) as any;
+      const response = await createPaymentIntent(PRO_PRICE_ID)
 
-      if (!response.client_secret) {
-        throw new Error('Failed to create payment intent');
-      }
-
-      // Confirm the payment with Stripe
       const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
         elements,
         clientSecret: response.client_secret,
-        confirmParams: {
-          return_url: `${window.location.origin}/dashboard?success=true`,
-        },
-        redirect: 'if_required'
-      });
+        confirmParams: { return_url: getReturnUrl() },
+        redirect: 'if_required',
+      })
 
       if (confirmError) {
-        setError(confirmError.message || 'Payment failed');
+        setError(confirmError.message || 'Payment failed')
       } else if (paymentIntent) {
-        // Verify payment success with our backend
-        await verifyPaymentSuccess(paymentIntent.id);
-        onSuccess();
+        await verifyPaymentSuccess(paymentIntent.id)
+        onSuccess()
       }
-    } catch (err: any) {
-      setError(err.message || 'Payment failed');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Payment failed'
+      setError(message)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="bg-zinc-800 rounded-lg p-4">
-        <PaymentElement 
+      <div className="rounded-lg bg-muted/50 p-4">
+        <PaymentElement
           options={{
             layout: {
               type: 'accordion',
               defaultCollapsed: false,
               radios: true,
-              spacedAccordionItems: true
+              spacedAccordionItems: true,
             },
             defaultValues: {
               billingDetails: {
                 name: userInfo?.name || '',
-                email: userInfo?.email || ''
-              }
+                email: userInfo?.email || '',
+              },
             },
             fields: {
               billingDetails: {
                 name: userInfo?.name ? 'auto' : 'never',
                 email: userInfo?.email ? 'auto' : 'never',
                 phone: 'auto',
-                address: 'auto'
-              }
+                address: 'auto',
+              },
             },
-            wallets: {
-              applePay: 'auto',
-              googlePay: 'auto'
-            }
+            wallets: { applePay: 'auto', googlePay: 'auto' },
           }}
-          onReady={() => setPaymentElementReady(true)}
+          onReady={() => setIsPaymentElementReady(true)}
         />
       </div>
-      
+
       {error && (
-        <div className="bg-red-900 border border-red-700 text-red-100 px-4 py-3 rounded-lg">
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
-      
+
       <div className="flex gap-3">
         <Button
           type="submit"
-          disabled={!stripe || !paymentElementReady || isLoading}
-          className="flex-1 bg-white hover:bg-zinc-300"
+          disabled={!stripe || !isPaymentElementReady || isLoading}
+          className="flex-1"
+          size="lg"
         >
-          {isLoading ? 'Processing...' : 'Subscribe to Pro - $10/month'}
+          {isLoading ? 'Processing...' : 'Subscribe to Pro — $10/month'}
         </Button>
-        <Button
-          type="button"
-          onClick={onCancel}
-          variant="outline"
-          className="border-zinc-300 bg-zinc-800 text-zinc-300 hover:bg-zinc-800"
-        >
+        <Button type="button" onClick={onCancel} variant="outline" size="lg">
           Cancel
         </Button>
       </div>
     </form>
-  );
+  )
 }
 
-export default function Pricing(): JSX.Element {
-  const [isLoading, setIsLoading] = useState(false);
-  const [showCheckout, setShowCheckout] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
+// ─────────────────────────────────────────────────────────────────────────────
+// Pricing Card Component
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const handleProSubscription = async () => {
-    setIsLoading(true);
-    try {
-      // Get auth token
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        // Redirect to login if not authenticated
-        window.location.href = '/login';
-        return;
-      }
+interface PricingCardProps {
+  plan: Plan
+  onSelectPro: () => void
+  isLoading: boolean
+}
 
-      // Create payment intent
-      const response = await ApiService.post('/billing/create-payment-intent/', {
-        price_id: 'price_1S0mgfJ2ajHEyFo7q8TEcrO1'
-      }) as any;
-
-      if (response.client_secret) {
-        setClientSecret(response.client_secret);
-        setShowCheckout(true);
-      } else {
-        throw new Error('Failed to create payment intent');
-      }
-    } catch (error) {
-      console.error('Error creating payment intent:', error);
-      alert('Failed to start checkout process. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCheckoutSuccess = async () => {
-    try {
-      // Check payment status one more time to ensure everything is updated
-      const paymentStatus = await checkPaymentStatus();
-      
-      setShowCheckout(false);
-      setClientSecret(null);
-      
-      // Redirect to dashboard with success message
-      window.location.href = '/dashboard?success=true&subscription=pro&payment_verified=true';
-    } catch (error) {
-      console.error('Error during success handling:', error);
-      // Still redirect even if status check fails
-      setShowCheckout(false);
-      setClientSecret(null);
-      window.location.href = '/dashboard?success=true&subscription=pro';
-    }
-  };
-
-  const handleCheckoutCancel = () => {
-    setShowCheckout(false);
-    setClientSecret(null);
-  };
+function PricingCard({ plan, onSelectPro, isLoading }: PricingCardProps) {
+  const isPro = plan.id === 'pro'
 
   return (
-    <div className="min-h-screen w-full" style={{ background: '#000000' }}>
-      {/* Checkout Modal */}
-      {showCheckout && clientSecret && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-white">Subscribe to Pro</h3>
-              <button
-                onClick={handleCheckoutCancel}
-                className="text-zinc-400 hover:text-white"
-              >
-                ×
-              </button>
+    <Card
+      className={`relative flex flex-col ${
+        plan.popular
+          ? 'border-primary/50 bg-card shadow-lg shadow-primary/5'
+          : 'bg-card/50'
+      }`}
+    >
+      {plan.popular && (
+        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
+          Most Popular
+        </Badge>
+      )}
+
+      <CardHeader className="pb-2">
+        <p className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          {plan.name}
+        </p>
+        <div className="mt-2 flex items-baseline gap-1">
+          <span className="text-4xl font-bold text-foreground">${plan.price}</span>
+          <span className="text-muted-foreground">/ {plan.period}</span>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">{plan.description}</p>
+      </CardHeader>
+
+      <CardContent className="flex-1">
+        <ul className="space-y-3">
+          {plan.features.map((feature) => (
+            <li key={feature.text} className="flex items-start gap-3">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <span className="text-sm text-foreground">{feature.text}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+
+      <CardFooter>
+        {isPro ? (
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={onSelectPro}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Processing...' : plan.cta}
+          </Button>
+        ) : (
+          <Button asChild size="lg" variant="outline" className="w-full">
+            <Link href="/register">{plan.cta}</Link>
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Feature Grid Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+function FeatureGrid() {
+  return (
+    <section className="mx-auto max-w-5xl px-4 py-16 md:px-6 md:py-24">
+      <div className="mb-12 text-center">
+        <h2 className="text-3xl font-semibold tracking-tight text-foreground">
+          Everything you need to succeed
+        </h2>
+        <p className="mt-3 text-lg text-muted-foreground">
+          Powerful features designed to help you work smarter, not harder.
+        </p>
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {FEATURE_HIGHLIGHTS.map((feature) => {
+          const Icon = feature.icon
+          return (
+            <div
+              key={feature.title}
+              className="group rounded-xl border border-border/50 bg-card/30 p-6 transition-colors hover:border-border hover:bg-card/50"
+            >
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <Icon className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="mb-2 font-semibold text-foreground">{feature.title}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {feature.description}
+              </p>
             </div>
-            
-            <Elements 
-              stripe={stripePromise} 
-              options={{ 
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Comparison Table Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ComparisonTable() {
+  return (
+    <section className="mx-auto max-w-4xl px-4 py-16 md:px-6 md:py-24">
+      <div className="mb-12 text-center">
+        <h2 className="text-3xl font-semibold tracking-tight text-foreground">
+          Compare plans
+        </h2>
+        <p className="mt-3 text-lg text-muted-foreground">
+          See what&apos;s included in each plan.
+        </p>
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-border">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/30">
+              <th className="px-6 py-4 font-semibold text-foreground">Feature</th>
+              <th className="px-6 py-4 text-center font-semibold text-foreground">Free</th>
+              <th className="px-6 py-4 text-center font-semibold text-foreground">Pro</th>
+            </tr>
+          </thead>
+          <tbody>
+            {COMPARISON_TABLE.map((row, idx) => (
+              <tr
+                key={row.feature}
+                className={idx < COMPARISON_TABLE.length - 1 ? 'border-b border-border/50' : ''}
+              >
+                <td className="px-6 py-4 text-foreground">{row.feature}</td>
+                <td className="px-6 py-4 text-center">
+                  {typeof row.free === 'boolean' ? (
+                    row.free ? (
+                      <Check className="mx-auto h-4 w-4 text-primary" />
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )
+                  ) : (
+                    <span className="text-muted-foreground">{row.free}</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 text-center">
+                  {typeof row.pro === 'boolean' ? (
+                    row.pro ? (
+                      <Check className="mx-auto h-4 w-4 text-primary" />
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )
+                  ) : (
+                    <span className="font-medium text-foreground">{row.pro}</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FAQ Section Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+function FAQSection() {
+  return (
+    <section className="mx-auto max-w-3xl px-4 py-16 md:px-6 md:py-24">
+      <div className="mb-12 text-center">
+        <h2 className="text-3xl font-semibold tracking-tight text-foreground">
+          Frequently asked questions
+        </h2>
+        <p className="mt-3 text-lg text-muted-foreground">
+          Have questions? We&apos;ve got answers.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {FAQS.map((faq) => (
+          <details
+            key={faq.question}
+            className="group rounded-lg border border-border bg-card/30 transition-colors hover:bg-card/50 [&[open]]:bg-card/50"
+          >
+            <summary className="flex cursor-pointer items-center justify-between px-6 py-4 font-medium text-foreground marker:content-none">
+              {faq.question}
+              <span className="ml-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </summary>
+            <div className="px-6 pb-4 text-sm leading-relaxed text-muted-foreground">
+              {faq.answer}
+            </div>
+          </details>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Final CTA Section Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface FinalCTAProps {
+  onGetPro: () => void
+  isLoading: boolean
+}
+
+function FinalCTA({ onGetPro, isLoading }: FinalCTAProps) {
+  return (
+    <section className="border-t border-border/50 bg-muted/20">
+      <div className="mx-auto max-w-4xl px-4 py-16 text-center md:px-6 md:py-24">
+        <h2 className="text-3xl font-semibold tracking-tight text-foreground">
+          Ready to get started?
+        </h2>
+        <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
+          Join thousands of users who are already boosting their productivity. Start free or go Pro today.
+        </p>
+        <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <Button asChild size="lg" variant="outline">
+            <Link href="/register">Start for free</Link>
+          </Button>
+          <Button size="lg" onClick={onGetPro} disabled={isLoading}>
+            {isLoading ? 'Processing...' : 'Get Pro — $10/month'}
+          </Button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main Pricing Page Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default function Pricing(): JSX.Element {
+  const [isLoading, setIsLoading] = useState(false)
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+
+  const handleProSubscription = async () => {
+    setIsLoading(true)
+    const result = await startProCheckout()
+    setIsLoading(false)
+
+    if (result.success && result.clientSecret) {
+      setClientSecret(result.clientSecret)
+      setIsCheckoutOpen(true)
+    } else if (result.error) {
+      alert(result.error)
+    }
+  }
+
+  const handleCheckoutSuccess = async () => {
+    setIsCheckoutOpen(false)
+    setClientSecret(null)
+    await handlePaymentSuccess()
+  }
+
+  const handleCheckoutCancel = () => {
+    setIsCheckoutOpen(false)
+    setClientSecret(null)
+  }
+
+  return (
+    <div className="min-h-screen w-full bg-background">
+      {/* Checkout Dialog */}
+      <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Subscribe to Pro</DialogTitle>
+            <DialogDescription>
+              Unlock unlimited storage and AI requests for $10/month.
+            </DialogDescription>
+          </DialogHeader>
+
+          {clientSecret && (
+            <Elements
+              stripe={stripePromise}
+              options={{
                 clientSecret,
-                appearance: {
-                  theme: 'night',
-                }
+                appearance: { theme: 'night' },
               }}
             >
-              <CheckoutForm 
+              <CheckoutForm
                 onSuccess={handleCheckoutSuccess}
                 onCancel={handleCheckoutCancel}
               />
             </Elements>
-          </div>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
-      <section className="max-w-6xl mx-auto px-4 md:px-6 py-16 md:py-24">
-        <div className="text-center mb-12 md:mb-16">
-          <h1
-            className="text-4xl md:text-5xl font-semibold tracking-tight mb-3"
-            style={{ color: '#ffffff' }}
-          >
-            Simple, transparent pricing
+      {/* Hero Section */}
+      <section className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
+        <div className="mb-16 text-center">
+          <Badge variant="secondary" className="mb-4">
+            Simple pricing
+          </Badge>
+          <h1 className="text-4xl font-semibold tracking-tight text-foreground md:text-5xl lg:text-6xl">
+            Plans that scale with you
           </h1>
-          <p
-            className="text-lg md:text-xl"
-            style={{ color: '#a1a1aa' }}
-          >
-            Start for free. No credit card required.
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground md:text-xl">
+            Start for free. Upgrade when you&apos;re ready. No credit card required.
           </p>
         </div>
-        <section className="max-w-4xl mx-auto"> 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-            <div className="rounded-2xl p-6 md:p-8"
-              style={{
-                background: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.08)'
-              }}
-            >
-              <div className="mb-6">
-                <span
-                  className="text-sm uppercase tracking-wider"
-                  style={{ color: '#a1a1aa' }}
-                >
-                  Free
-                </span>
-                <h2
-                  className="mt-2 text-3xl font-semibold"
-                  style={{ color: '#ffffff' }}
-                >
-                  $0 <span className="text-base font-normal" style={{ color: '#a1a1aa' }}>/ month</span>
-                </h2>
-              </div>
 
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full" style={{ background: '#22c55e' }} />
-                  <span style={{ color: '#e4e4e7' }}>Core features included</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full" style={{ background: '#22c55e' }} />
-                  <span style={{ color: '#e4e4e7' }}>10 GB Storage</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full" style={{ background: '#22c55e' }} />
-                  <span style={{ color: '#e4e4e7' }}>100 AI Requests</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full" style={{ background: '#22c55e' }} />
-                  <span style={{ color: '#e4e4e7' }}>24/7 Support</span>
-                </li>
-              </ul>
-
-              <Button asChild size="lg" className="w-full" style={{ minHeight: '44px' }}>
-                <Link href="/register">Get started</Link>
-              </Button>
-            </div>
-            
-            <div className="rounded-2xl p-6 md:p-8"
-              style={{
-                background: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.08)'
-              }}
-            >
-              <div className="mb-6">
-                <span
-                  className="text-sm uppercase tracking-wider"
-                  style={{ color: '#a1a1aa' }}
-                >
-                Pro 
-                </span>
-                <h2
-                  className="mt-2 text-3xl font-semibold"
-                  style={{ color: '#ffffff' }}
-                >
-                  $10 <span className="text-base font-normal" style={{ color: '#a1a1aa' }}>/ month</span>
-                </h2>
-              </div>
-
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full" style={{ background: '#22c55e' }} />
-                  <span style={{ color: '#e4e4e7' }}>Core features included</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full" style={{ background: '#22c55e' }} />
-                  <span style={{ color: '#e4e4e7' }}>Unlimited Storage</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full" style={{ background: '#22c55e' }} />
-                  <span style={{ color: '#e4e4e7' }}>Unlimited AI Requests</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full" style={{ background: '#22c55e' }} />
-                  <span style={{ color: '#e4e4e7' }}>24/7 Support</span>
-                </li>
-              </ul>
-
-              <Button 
-                size="lg" 
-                className="w-full" 
-                style={{ minHeight: '44px' }}
-                onClick={handleProSubscription}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Processing...' : 'Get Pro'}
-              </Button>
-            </div>
-          </div>
-        </section>
+        {/* Pricing Cards */}
+        <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
+          {PLANS.map((plan) => (
+            <PricingCard
+              key={plan.id}
+              plan={plan}
+              onSelectPro={handleProSubscription}
+              isLoading={isLoading}
+            />
+          ))}
+        </div>
       </section>
+
+      {/* Feature Grid */}
+      <FeatureGrid />
+
+      {/* Comparison Table */}
+      <ComparisonTable />
+
+      {/* FAQ Section */}
+      <FAQSection />
+
+      {/* Final CTA */}
+      <FinalCTA onGetPro={handleProSubscription} isLoading={isLoading} />
     </div>
-  );
+  )
 }

@@ -29,6 +29,9 @@ import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
 import { Typography } from "../../../../ui/typography"
 import { ApiService } from "../../../../../../backend/api/apiService"
 import { useToast } from "../../../../ui/use-toast"
+import { GoogleDriveIcon, OneDriveIcon } from "../../../../icons"
+import { handleCopyLocalToDrive } from "../handlers/handleCopyLocalToDrive"
+import { handleCopyLocalToOneDrive } from "../handlers/handleCopyLocalToOneDrive"
 
 // Drag and drop state interfaces
 export interface DragState {
@@ -46,10 +49,12 @@ export interface FileTreeItemProps {
   onFileSelect?: (file: FileSystemItem) => void
   selectedFile?: FileSystemItem | null
   onFileDeleted?: (fileId: string) => void
+  onFileDeleteFailed?: (file: FileSystemItem) => void
   onFileRenamed?: (oldPath: string, newPath: string) => void
   onFolderCreated?: (folderPath: string) => void
   onFolderRenamed?: (oldPath: string, newPath: string) => void
   onFolderDeleted?: (folderPath: string) => void
+  onFolderDeleteFailed?: (folder: FileSystemItem) => void
   onUploadFile?: () => void
   onUploadFolder?: () => void
   userInfo?: {
@@ -70,6 +75,8 @@ export interface FileTreeItemProps {
   onStarFile?: (fileId: string) => void
   onUnstarFile?: (fileId: string) => void
   onShareFile?: (file: FileSystemItem) => void
+  driveAvailable?: boolean
+  oneDriveConnected?: boolean
 }
 
 // Comprehensive file type detection functions
@@ -211,9 +218,13 @@ interface FileContextMenuProps {
   isStarred?: boolean
   onToggleStar?: () => void
   onShare?: () => void
+  onCopyToDrive?: () => void
+  onCopyToOneDrive?: () => void
+  driveAvailable?: boolean
+  oneDriveConnected?: boolean
 }
 
-function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFile, onUploadFolder, isFolder, deleteLabel, isStarred, onToggleStar, onShare }: FileContextMenuProps) {
+function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFile, onUploadFolder, isFolder, deleteLabel, isStarred, onToggleStar, onShare, onCopyToDrive, onCopyToOneDrive, driveAvailable, oneDriveConnected }: FileContextMenuProps) {
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
@@ -276,6 +287,39 @@ function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFi
               </Typography>
             </ContextMenu.Item>
           )}
+          {!isFolder && (
+            <>
+              <ContextMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-700 my-1" />
+              <ContextMenu.Item 
+                className={`flex items-center gap-2 px-2 py-1.5 rounded outline-none ${
+                  driveAvailable 
+                    ? 'hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer' 
+                    : 'opacity-50 cursor-not-allowed'
+                }`}
+                onSelect={driveAvailable ? onCopyToDrive : undefined}
+                disabled={!driveAvailable}
+              >
+                <GoogleDriveIcon size={16} className="w-4 h-4" />
+                <Typography variant="xs" className="text-zinc-900 dark:text-white">
+                  Copy to Google Drive
+                </Typography>
+              </ContextMenu.Item>
+              <ContextMenu.Item 
+                className={`flex items-center gap-2 px-2 py-1.5 rounded outline-none ${
+                  oneDriveConnected 
+                    ? 'hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer' 
+                    : 'opacity-50 cursor-not-allowed'
+                }`}
+                onSelect={oneDriveConnected ? onCopyToOneDrive : undefined}
+                disabled={!oneDriveConnected}
+              >
+                <OneDriveIcon size={16} className="w-4 h-4" />
+                <Typography variant="xs" className="text-zinc-900 dark:text-white">
+                  Copy to OneDrive
+                </Typography>
+              </ContextMenu.Item>
+            </>
+          )}
           <ContextMenu.Item 
             className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
             onSelect={onRename}
@@ -309,11 +353,13 @@ export function FileTreeItem({
   toggleExpanded, 
   onFileSelect, 
   selectedFile, 
-  onFileDeleted, 
+  onFileDeleted,
+  onFileDeleteFailed, 
   onFileRenamed, 
   onFolderCreated, 
   onFolderRenamed, 
   onFolderDeleted,
+  onFolderDeleteFailed,
   onUploadFile,
   onUploadFolder,
   userInfo, 
@@ -331,6 +377,8 @@ export function FileTreeItem({
   onStarFile,
   onUnstarFile,
   onShareFile,
+  driveAvailable,
+  oneDriveConnected,
 }: FileTreeItemProps) {
   
   // Helper function to select filename without extension
@@ -444,16 +492,34 @@ export function FileTreeItem({
   const handleDelete = async () => {
     if (!item.file_id) return
     
+    // Optimistically remove the file from the UI
+    onFileDeleted?.(item.file_id)
+    
     try {
       await ApiService.Files.deleteS3File(item.file_id)
-      onFileDeleted?.(item.file_id)
+      // Deletion successful, show success toast
+      toast({
+        title: 'File deleted',
+        description: `${item.name} has been deleted`,
+        variant: 'success',
+      })
     } catch (error) {
-      alert('Failed to delete file. Please try again.')
+      // Deletion failed, restore the file
+      onFileDeleteFailed?.(item)
+      toast({
+        title: 'Failed to delete file',
+        description: 'Please try again.',
+        variant: 'destructive',
+      })
     }
   }
 
   const handleDeleteFolder = async () => {
     if (item.type !== 'folder') return
+    
+    // Optimistically remove the folder from the UI
+    onFolderDeleted?.(item.path)
+    
     try {
       if (!userInfo?.username) throw new Error('User information not available')
       const result = await ApiService.Files.deleteFolder(item.path, userInfo.username)
@@ -465,13 +531,13 @@ export function FileTreeItem({
         variant: result.failed > 0 ? 'destructive' : 'success',
       })
     } catch (error) {
+      // Deletion failed, restore the folder
+      onFolderDeleteFailed?.(item)
       toast({
         title: 'Failed to delete folder',
         description: 'Please try again.',
         variant: 'destructive',
       })
-    } finally {
-      onFolderDeleted?.(item.path)
     }
   }
 
@@ -649,6 +715,22 @@ export function FileTreeItem({
               }
             } : undefined}
             onShare={item.type === 'file' && item.file_id ? () => onShareFile?.(item) : undefined}
+            driveAvailable={driveAvailable}
+            oneDriveConnected={oneDriveConnected}
+            onCopyToDrive={item.type === 'file' && item.file_id ? () => {
+              handleCopyLocalToDrive({
+                s3FileId: item.file_id!,
+                fileName: item.name,
+                showToast: toast
+              })
+            } : undefined}
+            onCopyToOneDrive={item.type === 'file' && item.file_id ? () => {
+              handleCopyLocalToOneDrive({
+                s3FileId: item.file_id!,
+                fileName: item.name,
+                showToast: toast
+              })
+            } : undefined}
           >
             {buttonContent}
           </FileContextMenu>
@@ -725,6 +807,8 @@ export function FileTreeItem({
               onStarFile={onStarFile}
               onUnstarFile={onUnstarFile}
               onShareFile={onShareFile}
+              driveAvailable={driveAvailable}
+              oneDriveConnected={oneDriveConnected}
             />
           ))}
         </>

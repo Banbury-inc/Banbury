@@ -1,8 +1,225 @@
 import { BaseParser } from './BaseParser'
 import { emuToPercent } from '../utils/emu-converter'
 import { parseColor } from '../utils/color-resolver'
-import type { ThemeColors, Shadow, GradientFill } from '../types/pptx-types'
+import type { ThemeColors, Shadow, GradientFill, StrokeStyle } from '../types/pptx-types'
 import type { SlideElement, FillStyle } from '../PowerPointViewer'
+import { mapDashPattern, mapLineCap, mapLineJoin, mapCompoundLine, mapStrokeAlignment } from '../utils/stroke-utils'
+
+/**
+ * Comprehensive mapping from PPTX preset geometry to app ShapeType
+ * Based on Office Open XML ECMA-376 standard
+ */
+const PPTX_TO_APP_SHAPE_MAP: Record<string, string> = {
+  // Basic shapes
+  'rect': 'rect',
+  'rectangle': 'rect',
+  'roundRect': 'round-rect',
+  'ellipse': 'ellipse',
+  'circle': 'circle',
+
+  // Triangles
+  'triangle': 'triangle',
+  'rtTriangle': 'right-triangle',
+
+  // Polygons
+  'diamond': 'diamond',
+  'pentagon': 'pentagon',
+  'hexagon': 'hexagon',
+  'octagon': 'octagon',
+  'decagon': 'decagon',
+  'dodecagon': 'dodecagon',
+
+  // Directional arrows (CRITICAL FIX)
+  'rightArrow': 'arrow-right',
+  'leftArrow': 'arrow-left',
+  'upArrow': 'arrow-up',
+  'downArrow': 'arrow-down',
+  'leftRightArrow': 'double-arrow',
+  'upDownArrow': 'double-arrow',
+  'bentArrow': 'bent-arrow',
+  'bentUpArrow': 'bent-arrow',
+  'curvedRightArrow': 'curved-arrow',
+  'curvedLeftArrow': 'curved-arrow',
+  'curvedUpArrow': 'curved-arrow',
+  'curvedDownArrow': 'curved-arrow',
+
+  // Arrow callouts → closest arrow type
+  'rightArrowCallout': 'arrow-right',
+  'leftArrowCallout': 'arrow-left',
+  'upArrowCallout': 'arrow-up',
+  'downArrowCallout': 'arrow-down',
+
+  // Parallelograms and trapezoids
+  'parallelogram': 'parallelogram-right',
+  'trapezoid': 'trapezoid',
+  'chevron': 'chevron',
+
+  // Stars (CRITICAL FIX)
+  'star4': 'star-4',
+  'star5': 'star-5',
+  'star6': 'star-6',
+  'star7': 'star-7',
+  'star8': 'star-8',
+  'star10': 'star-10',
+  'star12': 'star-12',
+  'star16': 'star-12',  // Fallback
+  'star24': 'star-12',  // Fallback
+
+  // Decorative
+  'heart': 'heart',
+  'smileyFace': 'smiley',
+  'lightningBolt': 'lightning',
+  'sun': 'sun',
+  'moon': 'moon',
+  'cloud': 'cloud',
+  'cloudCallout': 'cloud',
+
+  // Pie and donut
+  'donut': 'donut',
+  'pie': 'pie-quarter',
+  'pieWedge': 'pie-quarter',
+  'arc': 'donut',
+  'chord': 'pie-quarter',
+  'blockArc': 'donut',
+
+  // 3D shapes
+  'cylinder': 'cylinder',
+  'can': 'cylinder',
+  'cube': 'cube',
+
+  // Frames
+  'frame': 'frame',
+  'halfFrame': 'frame',
+  'plaque': 'plaque',
+  'foldedCorner': 'folded-corner',
+
+  // Brackets
+  'leftBracket': 'bracket-left',
+  'rightBracket': 'bracket-right',
+  'leftBrace': 'bracket-left',
+  'rightBrace': 'bracket-right',
+  'bracketPair': 'bracket-left',
+  'bracePair': 'bracket-left',
+
+  // Callouts
+  'callout1': 'callout',
+  'callout2': 'callout',
+  'callout3': 'callout',
+  'accentCallout1': 'callout',
+  'accentCallout2': 'callout',
+  'accentCallout3': 'callout',
+  'borderCallout1': 'callout',
+  'borderCallout2': 'callout',
+  'borderCallout3': 'callout',
+  'wedgeRectCallout': 'callout',
+  'wedgeRRectCallout': 'callout',
+  'wedgeEllipseCallout': 'callout',
+
+  // Lines and plus
+  'line': 'line',
+  'straightConnector1': 'line',
+  'plus': 'plus',
+  'mathPlus': 'plus',
+  'cross': 'cross',
+
+  // Snipped rectangles
+  'snip1Rectangle': 'snip-top-right',
+  'snip2SameRectangle': 'snip-top-both',
+  'snip2DiagonalRectangle': 'snip-top-both',
+  'snipRoundRectangle': 'snip-top-right',
+
+  // Rounded rectangles (variants)
+  'round1Rectangle': 'round-rect',
+  'round2SameRectangle': 'round-rect',
+  'round2DiagonalRectangle': 'round-rect',
+
+  // Flowchart shapes → basic shapes
+  'flowChartProcess': 'rect',
+  'flowChartDecision': 'diamond',
+  'flowChartInputOutput': 'parallelogram-right',
+  'flowChartPredefinedProcess': 'rect',
+  'flowChartInternalStorage': 'rect',
+  'flowChartDocument': 'rect',
+  'flowChartMultidocument': 'rect',
+  'flowChartTerminator': 'round-rect',
+  'flowChartPreparation': 'hexagon',
+  'flowChartManualInput': 'trapezoid',
+  'flowChartManualOperation': 'trapezoid',
+  'flowChartConnector': 'circle',
+  'flowChartOffpageConnector': 'pentagon',
+  'flowChartPunchedCard': 'rect',
+  'flowChartPunchedTape': 'rect',
+  'flowChartSummingJunction': 'circle',
+  'flowChartOr': 'circle',
+  'flowChartCollate': 'triangle',
+  'flowChartSort': 'diamond',
+  'flowChartExtract': 'triangle',
+  'flowChartMerge': 'triangle',
+  'flowChartOnlineStorage': 'cylinder',
+  'flowChartDelay': 'round-rect',
+  'flowChartMagneticDisk': 'cylinder',
+  'flowChartMagneticDrum': 'cylinder',
+  'flowChartDisplay': 'round-rect',
+  'flowChartAlternateProcess': 'round-rect',
+
+  // Action buttons → round rect
+  'actionButtonBlank': 'round-rect',
+  'actionButtonHome': 'round-rect',
+  'actionButtonHelp': 'round-rect',
+  'actionButtonInformation': 'round-rect',
+  'actionButtonForwardNext': 'round-rect',
+  'actionButtonBackPrevious': 'round-rect',
+  'actionButtonEnd': 'round-rect',
+  'actionButtonBeginning': 'round-rect',
+  'actionButtonReturn': 'round-rect',
+  'actionButtonDocument': 'round-rect',
+  'actionButtonSound': 'round-rect',
+  'actionButtonMovie': 'round-rect',
+
+  // Special shapes → closest match
+  'teardrop': 'ellipse',
+  'homePlate': 'pentagon',
+  'corner': 'right-triangle',
+  'diagStripe': 'parallelogram-right',
+  'diagonalStripe': 'parallelogram-right',
+  'funnel': 'trapezoid',
+  'gear6': 'hexagon',
+  'gear9': 'octagon',
+  'heptagon': 'hexagon',
+  'irregularSeal1': 'star-8',
+  'irregularSeal2': 'star-10',
+  'ribbon': 'rect',
+  'ribbon2': 'rect',
+  'ellipseRibbon': 'ellipse',
+  'ellipseRibbon2': 'ellipse',
+  'leftRightRibbon': 'rect',
+  'verticalScroll': 'round-rect',
+  'horizontalScroll': 'round-rect',
+  'wave': 'round-rect',
+  'doubleWave': 'round-rect',
+  'bevel': 'octagon',
+
+  // Math symbols
+  'mathEqual': 'line',
+  'mathMinus': 'line',
+  'mathMultiply': 'x-mark',
+  'mathDivide': 'line',
+  'mathNotEqual': 'line',
+
+  // Special arrow types
+  'notchedRightArrow': 'arrow-right',
+  'stripedRightArrow': 'arrow-right',
+  'quadArrow': 'double-arrow',
+  'leftUpArrow': 'bent-arrow',
+  'leftRightUpArrow': 'double-arrow',
+  'uturnArrow': 'curved-arrow',
+  'circularArrow': 'curved-arrow',
+  'leftCircularArrow': 'curved-arrow',
+  'swooshArrow': 'curved-arrow',
+
+  // Other
+  'noSmoking': 'no-symbol',
+}
 
 /**
  * ShapeParser - Parses shape elements with fills, strokes, shadows, and effects
@@ -23,13 +240,13 @@ export class ShapeParser extends BaseParser {
     themeColors?: ThemeColors
   ): {
     fill?: string | FillStyle
-    stroke?: string
+    stroke?: string | StrokeStyle
     strokeWidth?: number
     shadow?: Shadow
   } {
     const result: {
       fill?: string | FillStyle
-      stroke?: string
+      stroke?: string | StrokeStyle
       strokeWidth?: number
       shadow?: Shadow
     } = {}
@@ -43,8 +260,10 @@ export class ShapeParser extends BaseParser {
     const ln = this.getFirstElement(spPr, 'a:ln')
     if (ln) {
       const strokeInfo = this.parseStroke(ln, themeColors)
-      result.stroke = strokeInfo.color
-      result.strokeWidth = strokeInfo.width
+      if (strokeInfo) {
+        result.stroke = strokeInfo
+        result.strokeWidth = strokeInfo.width
+      }
     }
 
     // Parse shadow
@@ -162,12 +381,20 @@ export class ShapeParser extends BaseParser {
   }
 
   /**
-   * Parse stroke/line
+   * Parse stroke/line with comprehensive PPTX stroke properties
    */
   private parseStroke(
     ln: Element,
     themeColors?: ThemeColors
-  ): { color: string; width: number } {
+  ): StrokeStyle | undefined {
+    if (!ln) return undefined
+
+    // Check for no fill first
+    const noFill = this.getFirstElement(ln, 'a:noFill')
+    if (noFill) {
+      return undefined // No stroke
+    }
+
     // Get width (in EMUs)
     const w = this.getAttributeNumber(ln, 'w', 12700) // Default: 1pt = 12700 EMUs
     const widthPt = w / 12700 // Convert to points
@@ -175,18 +402,61 @@ export class ShapeParser extends BaseParser {
     // Get color
     const solidFill = this.getFirstElement(ln, 'a:solidFill')
     let color = '#000000'
+    let alpha: number | undefined
 
     if (solidFill) {
       color = parseColor(solidFill, themeColors)
-    } else {
-      // Check for no fill
-      const noFill = this.getFirstElement(ln, 'a:noFill')
-      if (noFill) {
-        color = 'transparent'
+
+      // Check for alpha modifier
+      const alphaElem = this.getFirstElement(solidFill, 'a:alpha')
+      if (alphaElem) {
+        const alphaVal = this.getAttributeNumber(alphaElem, 'val', 100000)
+        alpha = alphaVal / 100000 // Convert to 0-1 range
       }
     }
 
-    return { color, width: widthPt }
+    const result: StrokeStyle = {
+      color,
+      width: widthPt,
+    }
+
+    // Add alpha if present
+    if (alpha !== undefined) {
+      result.alpha = alpha
+    }
+
+    // Parse dash pattern
+    const prstDash = this.getFirstElement(ln, 'a:prstDash')
+    if (prstDash) {
+      const val = this.getAttribute(prstDash, 'val')
+      result.dashPattern = mapDashPattern(val)
+    }
+
+    // Parse line cap
+    const cap = this.getAttribute(ln, 'cap')
+    if (cap) {
+      result.lineCap = mapLineCap(cap)
+    }
+
+    // Parse line join
+    const join = this.getAttribute(ln, 'algn')
+    if (join) {
+      result.lineJoin = mapLineJoin(join)
+    }
+
+    // Parse compound type
+    const cmpd = this.getAttribute(ln, 'cmpd')
+    if (cmpd) {
+      result.compound = mapCompoundLine(cmpd)
+    }
+
+    // Parse alignment
+    const algn = this.getAttribute(ln, 'algn')
+    if (algn) {
+      result.alignment = mapStrokeAlignment(algn)
+    }
+
+    return result
   }
 
   /**
@@ -310,37 +580,23 @@ export class ShapeParser extends BaseParser {
 
   /**
    * Map PPTX shape types to our shape catalog types
+   * Uses the comprehensive PPTX_TO_APP_SHAPE_MAP constant defined at the top of this file
    */
   public mapShapeType(pptxShapeType: string | undefined): string {
     if (!pptxShapeType) return 'rect'
 
-    // Map common PPTX shape types to our shape catalog
-    const shapeMap: Record<string, string> = {
-      'rect': 'rect',
-      'ellipse': 'ellipse',
-      'roundRect': 'roundRect',
-      'triangle': 'triangle',
-      'rtTriangle': 'triangle',
-      'diamond': 'diamond',
-      'pentagon': 'pentagon',
-      'hexagon': 'hexagon',
-      'octagon': 'octagon',
-      'star5': 'star',
-      'star6': 'star',
-      'star': 'star',
-      'leftArrow': 'arrow',
-      'rightArrow': 'arrow',
-      'upArrow': 'arrow',
-      'downArrow': 'arrow',
-      'line': 'line',
-      'plus': 'plus',
-      'heart': 'heart',
-      'moon': 'moon',
-      'cloud': 'cloud',
-      'sun': 'sun',
-      'smileyFace': 'smileyFace',
+    if (pptxShapeType === 'custom') {
+      console.warn('Custom geometry shape detected, defaulting to rect')
+      return 'rect'
     }
 
-    return shapeMap[pptxShapeType] || 'rect'
+    const mappedType = PPTX_TO_APP_SHAPE_MAP[pptxShapeType]
+
+    if (!mappedType) {
+      console.warn(`Unmapped PPTX shape type: ${pptxShapeType}, defaulting to rect`)
+      return 'rect'
+    }
+
+    return mappedType
   }
 }

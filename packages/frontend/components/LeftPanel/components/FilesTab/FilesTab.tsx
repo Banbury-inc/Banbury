@@ -492,6 +492,7 @@ export function FilesTab({
             >
               <RefreshCw className={isRefreshing ? 'h-4 w-4 animate-spin text-muted-foreground' : 'h-4 w-4 text-muted-foreground'} />
             </Button>
+            {/* Local Files + Menu */}
             {fileProvider === 'local' && (
               <Select
                 value=""
@@ -565,6 +566,92 @@ export function FilesTab({
                     <div className="flex items-center">
                       <Folder size={16} strokeWidth={1} className="mr-2" />
                       <Typography variant="xs" className="font-medium">Folder</Typography>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            {/* Google Drive + Menu (only in My Drive view) */}
+            {fileProvider === 'google-drive' && googleDriveViewMode === 'my-drive' && (
+              <Select
+                value=""
+                onValueChange={(value) => {
+                  switch (value) {
+                    case 'document':
+                      handleCreateDocument()
+                      break
+                    case 'spreadsheet':
+                      handleCreateSpreadsheet()
+                      break
+                    case 'presentation':
+                      handleCreatePowerpoint()
+                      break
+                  }
+                }}
+              >
+                <SelectTrigger size="xs" className="bg-foreground hover:bg-foreground hover:text-primary-foreground flex-shrink-0">
+                  <Plus className="h-4 w-4 text-primary-foreground" strokeWidth={1} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="document" className="[&_svg]:!text-blue-500">
+                    <div className="flex items-center">
+                      <FileText size={16} strokeWidth={1} className="mr-2" />
+                      <Typography variant="xs" className="font-medium">Document</Typography>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="spreadsheet" className="[&_svg]:!text-green-500">
+                    <div className="flex items-center">
+                      <FileSpreadsheet size={16} strokeWidth={1} className="mr-2" />
+                      <Typography variant="xs" className="font-medium">Spreadsheet</Typography>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="presentation" className="[&_svg]:!text-orange-400">
+                    <div className="flex items-center">
+                      <FileBarChart size={16} strokeWidth={1} className="mr-2" />
+                      <Typography variant="xs" className="font-medium">Presentation</Typography>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            {/* OneDrive + Menu (only in My Files view) */}
+            {fileProvider === 'onedrive' && oneDriveViewMode === 'root' && (
+              <Select
+                value=""
+                onValueChange={(value) => {
+                  switch (value) {
+                    case 'document':
+                      handleCreateDocument()
+                      break
+                    case 'spreadsheet':
+                      handleCreateSpreadsheet()
+                      break
+                    case 'presentation':
+                      handleCreatePowerpoint()
+                      break
+                  }
+                }}
+              >
+                <SelectTrigger size="xs" className="bg-foreground hover:bg-foreground hover:text-primary-foreground flex-shrink-0">
+                  <Plus className="h-4 w-4 text-primary-foreground" strokeWidth={1} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="document" className="[&_svg]:!text-blue-500">
+                    <div className="flex items-center">
+                      <FileText size={16} strokeWidth={1} className="mr-2" />
+                      <Typography variant="xs" className="font-medium">Document</Typography>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="spreadsheet" className="[&_svg]:!text-green-500">
+                    <div className="flex items-center">
+                      <FileSpreadsheet size={16} strokeWidth={1} className="mr-2" />
+                      <Typography variant="xs" className="font-medium">Spreadsheet</Typography>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="presentation" className="[&_svg]:!text-orange-400">
+                    <div className="flex items-center">
+                      <FileBarChart size={16} strokeWidth={1} className="mr-2" />
+                      <Typography variant="xs" className="font-medium">Presentation</Typography>
                     </div>
                   </SelectItem>
                 </SelectContent>

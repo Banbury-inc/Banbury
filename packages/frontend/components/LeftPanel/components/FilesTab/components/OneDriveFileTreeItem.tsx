@@ -1,3 +1,4 @@
+import * as ContextMenu from "@radix-ui/react-context-menu"
 import { 
   ChevronDown, 
   ChevronRight, 
@@ -11,10 +12,13 @@ import {
   FileSpreadsheet,
   FileBarChart,
   Star,
+  HardDrive,
 } from "lucide-react"
 import { OneDriveFile } from "../../../../../../backend/api/onedrive/onedrive"
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
 import { Typography } from "../../../../ui/typography"
+import { useToast } from "../../../../ui/use-toast"
+import { handleCopyOneDriveToLocal } from "../handlers/handleCopyOneDriveToLocal"
 
 interface OneDriveFileTreeItemProps {
   file: OneDriveFile
@@ -56,12 +60,21 @@ export function OneDriveFileTreeItem({
   selectedFile,
   favorites = new Set()
 }: OneDriveFileTreeItemProps) {
+  const { toast } = useToast()
   const isFolder = !!file.folder
   const isExpanded = expandedItems.has(file.id)
   const isLoading = loadingFolders.has(file.id)
   const children = folderContents.get(file.id) || []
   const isSelected = selectedFile?.file_id === file.id
   const isFavorite = favorites.has(file.id)
+
+  const handleCopyToLocal = async () => {
+    await handleCopyOneDriveToLocal({
+      oneDriveItemId: file.id,
+      fileName: file.name,
+      showToast: toast
+    })
+  }
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -98,33 +111,58 @@ export function OneDriveFileTreeItem({
     return <File className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
   }
 
+  const buttonContent = (
+    <button
+      onClick={handleClick}
+      className={`w-full flex items-center gap-2 text-left px-3 py-2 hover:bg-muted cursor-pointer transition-colors ${
+        isSelected ? 'bg-muted text-foreground' : 'text-muted-foreground'
+      }`}
+      style={{ paddingLeft: `${(level * 12) + 12}px` }}
+    >
+      {isFolder && (
+        isLoading ? (
+          <RefreshCw className="h-3 w-3 animate-spin" />
+        ) : isExpanded ? (
+          <ChevronDown className="h-4 w-4" strokeWidth={1} />
+        ) : (
+          <ChevronRight className="h-4 w-4" strokeWidth={1} />
+        )
+      )}
+      {!isFolder && <div className="w-3" />}
+      {getFileIcon()}
+      <Typography variant="xs" className="truncate min-w-0 flex-1">
+        {file.name}
+      </Typography>
+      {isFavorite && (
+        <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 flex-shrink-0" />
+      )}
+    </button>
+  )
+
   return (
     <>
-      <button
-        onClick={handleClick}
-        className={`w-full flex items-center gap-2 text-left px-3 py-2 hover:bg-muted cursor-pointer transition-colors ${
-          isSelected ? 'bg-muted text-foreground' : 'text-muted-foreground'
-        }`}
-        style={{ paddingLeft: `${(level * 12) + 12}px` }}
-      >
-        {isFolder && (
-          isLoading ? (
-            <RefreshCw className="h-3 w-3 animate-spin" />
-          ) : isExpanded ? (
-            <ChevronDown className="h-4 w-4" strokeWidth={1} />
-          ) : (
-            <ChevronRight className="h-4 w-4" strokeWidth={1} />
-          )
-        )}
-        {!isFolder && <div className="w-3" />}
-        {getFileIcon()}
-        <Typography variant="xs" className="truncate min-w-0 flex-1">
-          {file.name}
-        </Typography>
-        {isFavorite && (
-          <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 flex-shrink-0" />
-        )}
-      </button>
+      {!isFolder ? (
+        <ContextMenu.Root>
+          <ContextMenu.Trigger asChild>
+            {buttonContent}
+          </ContextMenu.Trigger>
+          <ContextMenu.Portal>
+            <ContextMenu.Content className="min-w-[160px] bg-white dark:bg-zinc-800 rounded-md p-1 shadow-lg border border-zinc-300 dark:border-zinc-700 z-50">
+              <ContextMenu.Item
+                className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+                onSelect={handleCopyToLocal}
+              >
+                <HardDrive className="w-4 h-4" strokeWidth={1} />
+                <Typography variant="xs" className="text-zinc-900 dark:text-white">
+                  Copy to Local
+                </Typography>
+              </ContextMenu.Item>
+            </ContextMenu.Content>
+          </ContextMenu.Portal>
+        </ContextMenu.Root>
+      ) : (
+        buttonContent
+      )}
 
       {/* Render children if folder is expanded */}
       {isFolder && isExpanded && !isLoading && children.length > 0 && (
