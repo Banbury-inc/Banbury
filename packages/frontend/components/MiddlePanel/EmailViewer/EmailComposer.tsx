@@ -170,10 +170,10 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
 
   const handleSend = useCallback(async () => {
     const normalizedTo = normalizeRecipients(form.to)
-    if (!normalizedTo || !form.subject || isContentEmpty(form.body)) {
+    if (!normalizedTo || isContentEmpty(form.body)) {
       toast({
         title: "Missing required fields",
-        description: "Please fill in all required fields (To, Subject, and Message).",
+        description: "Please fill in all required fields (To and Message).",
         variant: "destructive",
       })
       return
@@ -275,7 +275,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
   }, [])
 
   // Enable keyboard shortcut (Ctrl+Enter / Cmd+Enter) when form is valid and not sending
-  const canSend = parseRecipients(form.to).length > 0 && form.subject && !isContentEmpty(form.body) && !sending
+  const canSend = parseRecipients(form.to).length > 0 && !isContentEmpty(form.body) && !sending
   useKeyboardShortcuts({
     onSend: handleSend,
     enabled: canSend
