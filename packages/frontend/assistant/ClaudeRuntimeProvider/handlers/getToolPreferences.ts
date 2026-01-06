@@ -8,6 +8,7 @@ interface ToolPreferences {
   browserbase: boolean;
   x_api: boolean;
   slack: boolean;
+  use_skills: boolean;
 }
 
 export function getToolPreferences(): ToolPreferences {
@@ -21,6 +22,7 @@ export function getToolPreferences(): ToolPreferences {
     browserbase: true, // Enable Browserbase tool by default
     x_api: false, // Disable X API by default for security
     slack: false, // Disable Slack by default for security
+    use_skills: false, // Disabled by default until API access confirmed
   };
 
   try {
@@ -35,7 +37,8 @@ export function getToolPreferences(): ToolPreferences {
         x_api: (parsed && typeof parsed.x_api === 'boolean') ? parsed.x_api : false,
         gmailSend: (parsed && typeof parsed.gmailSend === 'boolean') ? parsed.gmailSend : true,
         slack: (parsed && typeof parsed.slack === 'boolean') ? parsed.slack : false,
-      }; // Force LangGraph + ensure browserbase present + ensure x_api present + ensure gmailSend present + ensure slack present
+        use_skills: (parsed && typeof parsed.use_skills === 'boolean') ? parsed.use_skills : false,
+      }; // Force LangGraph + ensure browserbase present + ensure x_api present + ensure gmailSend present + ensure slack present + ensure use_skills present
     }
   } catch {}
 

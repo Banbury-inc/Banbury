@@ -48,6 +48,8 @@ export function normalizeToolPreferences({
     model_id: toolPreferences.model_id,
     image_generation_model: typeof toolPreferences.image_generation_model === "string" ? toolPreferences.image_generation_model : "dall-e-3",
     video_generation_model: typeof toolPreferences.video_generation_model === "string" ? toolPreferences.video_generation_model : "sora-2",
+    // Skills mode: disabled by default until beta access confirmed, only available for Anthropic
+    use_skills: toolPreferences.use_skills === true && (toolPreferences.model_provider === "anthropic" || !toolPreferences.model_provider),
   }
 }
 

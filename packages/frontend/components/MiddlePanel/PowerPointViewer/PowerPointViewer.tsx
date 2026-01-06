@@ -33,16 +33,27 @@ import { applyLayoutToSlide } from './handlers/handle-apply-layout'
 import { applyThemeToSlide } from './handlers/handle-apply-theme'
 import { applyTransitionToSlide } from './handlers/handle-apply-transition'
 import { ShapeType } from './shape-catalog'
+import type { Paragraph, ThemeColors, Shadow } from './types/pptx-types'
 
 export interface TableCell {
   content: string
+  paragraphs?: Paragraph[] // Rich text content from PPTX
   fontSize?: number
   fontFace?: string
   color?: string
   bold?: boolean
   italic?: boolean
   align?: 'left' | 'center' | 'right'
+  valign?: 'top' | 'middle' | 'bottom'
   backgroundColor?: string
+  borders?: {
+    top?: { color: string; width: number }
+    right?: { color: string; width: number }
+    bottom?: { color: string; width: number }
+    left?: { color: string; width: number }
+  }
+  colspan?: number
+  rowspan?: number
 }
 
 // Fill style types for text boxes and shapes
@@ -80,6 +91,7 @@ export interface SlideElement {
   width: number
   height: number
   content?: string
+  paragraphs?: Paragraph[]  // Rich text paragraphs from PPTX parsing
   fontSize?: number
   fontFace?: string
   color?: string
@@ -92,6 +104,7 @@ export interface SlideElement {
   stroke?: string
   strokeWidth?: number
   rotation?: number
+  shadow?: Shadow  // Shadow effect from PPTX
   imageUrl?: string
   driveFileId?: string
   s3FileId?: string
@@ -117,6 +130,8 @@ export interface Slide {
   elements: SlideElement[]
   background?: string
   backgroundStyle?: FillStyle // Enhanced background support
+  backgroundImage?: string // Background image data (base64 or URL)
+  themeColors?: ThemeColors // Resolved theme colors from PPTX
   decorativeElements?: Array<{
     id: string
     shape: 'circle' | 'rect' | 'line' | 'triangle' | 'blob'
@@ -234,10 +249,41 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
   // Parse PPTX file to extract slides
   const parsePptxFile = async (blob: Blob): Promise<Slide[]> => {
     try {
+      // Performance tracking
+      const { PerformanceTimer, detectGoogleSlidesExport, clearParserErrors } = await import('./utils/parser-error-handler')
+      const timer = new PerformanceTimer()
+
+      // Clear previous errors
+      clearParserErrors()
+
       const JSZip = (await import('jszip')).default
       const zip = await JSZip.loadAsync(blob)
+      timer.mark('zip-loaded')
+
+      // Detect Google Slides export
+      const isGoogleSlides = detectGoogleSlidesExport(zip)
+      if (isGoogleSlides) {
+        console.log('[PowerPointViewer] Detected Google Slides export')
+      }
 
       const slides: Slide[] = []
+
+      // Parse theme first
+      const { ThemeParser } = await import('./parsers/ThemeParser')
+      const { SlideParser } = await import('./parsers/SlideParser')
+      const themeParser = new ThemeParser(zip)
+      const slideParser = new SlideParser(zip)
+
+      let themeColors: any = null
+      try {
+        const themeResult = await themeParser.parseTheme()
+        themeColors = themeResult.colors
+        console.log('[PowerPointViewer] Parsed theme colors:', themeColors)
+      } catch (error) {
+        console.warn('[PowerPointViewer] Failed to parse theme, using defaults:', error)
+        // Continue without theme - will use fallback colors
+      }
+      timer.mark('theme-parsed')
 
       // Find all slide XML files
       const slideFiles = Object.keys(zip.files)
@@ -249,22 +295,150 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
         })
 
       for (let i = 0; i < slideFiles.length; i++) {
-        const slideFile = slideFiles[i]
-        const slideXml = await zip.file(slideFile)?.async('string')
+        try {
+          const slideFile = slideFiles[i]
+          const slideXml = await zip.file(slideFile)?.async('string')
 
-        if (slideXml) {
-          const elements = parseSlideXml(slideXml)
+          if (!slideXml) {
+            console.warn(`[PowerPointViewer] Slide ${i + 1} XML not found`)
+            continue
+          }
+
+          // Parse slide XML document
+          const parser = new DOMParser()
+          const slideDoc = parser.parseFromString(slideXml, 'application/xml')
+
+          // Validate XML
+          const parserError = slideDoc.querySelector('parsererror')
+          if (parserError) {
+            console.error(`[PowerPointViewer] XML parsing error in slide ${i + 1}:`, parserError.textContent)
+            continue
+          }
+
+          // Parse relationships for this slide
+          const { parseRelationships, getSlideRelationshipsPath, resolveRelationshipPath, extractImageAsBase64 } =
+            await import('./utils/relationship-resolver')
+          const relsPath = getSlideRelationshipsPath(i)
+          const relationships = await parseRelationships(zip, relsPath)
+
+          // Parse elements (text and shapes) with error handling
+          let elements: any[] = []
+          try {
+            elements = await parseSlideXml(slideXml, zip, themeColors)
+          } catch (error) {
+            console.error(`[PowerPointViewer] Error parsing slide ${i + 1} elements:`, error)
+            // Continue with empty elements rather than failing entire presentation
+          }
+
+          // Parse images with error handling
+          try {
+            const { ImageParser } = await import('./parsers/ImageParser')
+            const imageParser = new ImageParser(zip)
+            const spTree = slideDoc.getElementsByTagName('p:spTree')[0]
+            if (spTree) {
+              const imageResults = imageParser.parseImages(spTree, `slide${i + 1}-image`)
+
+              // Resolve images and extract as base64
+              for (const { element, relationshipId } of imageResults) {
+                try {
+                  const imagePath = resolveRelationshipPath(relationshipId, relationships, 'ppt/slides')
+                  if (imagePath) {
+                    const imageData = await extractImageAsBase64(zip, imagePath)
+                    if (imageData) {
+                      elements.push({
+                        ...element,
+                        imageUrl: imageData,
+                      })
+                    }
+                  }
+                } catch (error) {
+                  console.warn(`[PowerPointViewer] Failed to extract image ${relationshipId}:`, error)
+                  // Continue without this image
+                }
+              }
+
+              // Parse tables with error handling
+              try {
+                const { TableParser } = await import('./parsers/TableParser')
+                const tableParser = new TableParser(zip)
+                const tables = tableParser.parseTables(spTree, themeColors || undefined, `slide${i + 1}-table`)
+
+                // Add tables to elements
+                elements.push(...tables)
+              } catch (error) {
+                console.warn(`[PowerPointViewer] Failed to parse tables in slide ${i + 1}:`, error)
+                // Continue without tables
+              }
+            }
+          } catch (error) {
+            console.warn(`[PowerPointViewer] Failed to parse images/tables in slide ${i + 1}:`, error)
+            // Continue without images/tables
+          }
+
+          // Parse background with error handling
+          let backgroundInfo: any = {}
+          try {
+            backgroundInfo = slideParser.parseBackground(slideDoc, themeColors)
+
+            // If background has a relationship ID (image), resolve it
+            if (backgroundInfo.backgroundImage && relationships.has(backgroundInfo.backgroundImage)) {
+              try {
+                const bgImagePath = resolveRelationshipPath(backgroundInfo.backgroundImage, relationships, 'ppt/slides')
+                if (bgImagePath) {
+                  const bgImageData = await extractImageAsBase64(zip, bgImagePath)
+                  if (bgImageData) {
+                    backgroundInfo.backgroundImage = bgImageData
+                  }
+                }
+              } catch (error) {
+                console.warn(`[PowerPointViewer] Failed to extract background image for slide ${i + 1}:`, error)
+                // Continue without background image
+                delete backgroundInfo.backgroundImage
+              }
+            }
+          } catch (error) {
+            console.warn(`[PowerPointViewer] Failed to parse background for slide ${i + 1}:`, error)
+            // Continue with default background
+          }
+
           slides.push({
             id: `slide-${i + 1}`,
             index: i,
             elements,
             layout: 'content',
+            themeColors: themeColors || undefined,
+            ...backgroundInfo,
+          })
+        } catch (error) {
+          console.error(`[PowerPointViewer] Failed to parse slide ${i + 1}:`, error)
+          // Add a placeholder slide to maintain slide count
+          slides.push({
+            id: `slide-${i + 1}`,
+            index: i,
+            elements: [{
+              id: 'error-text',
+              type: 'text',
+              x: 10,
+              y: 40,
+              width: 80,
+              height: 20,
+              content: `Error loading slide ${i + 1}`,
+              fontSize: 24,
+              fontFace: 'Arial',
+              color: 'FF0000',
+              align: 'center',
+              valign: 'middle',
+            }],
+            layout: 'blank',
           })
         }
       }
 
+      timer.mark('slides-parsed')
+
       // If no slides found, create a default empty slide
       if (slides.length === 0) {
+        console.warn('[PowerPointViewer] No slides found in PPTX, creating default slide')
         slides.push({
           id: 'slide-1',
           index: 0,
@@ -273,9 +447,33 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
         })
       }
 
+      // Log performance metrics
+      timer.log('Total PPTX parsing')
+      timer.log('ZIP loading', 'zip-loaded')
+      timer.log('Theme parsing', 'theme-parsed')
+      timer.log('Slides parsing', 'slides-parsed')
+
+      // Log parsing summary
+      console.log(`[PowerPointViewer] Successfully parsed ${slides.length} slides`)
+      const totalElements = slides.reduce((sum, slide) => sum + slide.elements.length, 0)
+      console.log(`[PowerPointViewer] Total elements: ${totalElements}`)
+
+      // Log unsupported features if any
+      const { getUnsupportedFeatures } = await import('./utils/parser-error-handler')
+      const unsupportedFeatures = getUnsupportedFeatures()
+      if (unsupportedFeatures.length > 0) {
+        console.info('[PowerPointViewer] Unsupported features encountered:', unsupportedFeatures)
+      }
+
       return slides
     } catch (err) {
-      console.error('Error parsing PPTX:', err)
+      console.error('[PowerPointViewer] Critical error parsing PPTX:', err)
+      toast({
+        title: 'Error loading presentation',
+        description: 'Some features may not display correctly.',
+        variant: 'destructive',
+      })
+
       // Return a default slide on error
       return [{
         id: 'slide-1',
@@ -287,10 +485,10 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
           y: 40,
           width: 80,
           height: 20,
-          content: 'New Presentation',
-          fontSize: 44,
+          content: 'Error loading presentation',
+          fontSize: 32,
           fontFace: 'Arial',
-          color: '363636',
+          color: 'FF0000',
           bold: true,
           align: 'center',
           valign: 'middle',
@@ -300,34 +498,131 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     }
   }
 
-  // Parse slide XML to extract elements
-  const parseSlideXml = (xml: string): SlideElement[] => {
+  // Parse slide XML to extract elements with full formatting
+  const parseSlideXml = async (xml: string, zip: any, themeColors?: ThemeColors | null): Promise<SlideElement[]> => {
     const elements: SlideElement[] = []
     const parser = new DOMParser()
     const doc = parser.parseFromString(xml, 'application/xml')
 
-    // Extract text elements from <a:t> tags
-    const textElements = doc.getElementsByTagName('a:t')
-    let yPosition = 20
+    // Import parsers dynamically
+    const { TextParser } = await import('./parsers/TextParser')
+    const { ShapeParser } = await import('./parsers/ShapeParser')
+    const { emuToPercent } = await import('./utils/emu-converter')
+    const textParser = new TextParser(zip)
+    const shapeParser = new ShapeParser(zip)
 
-    for (let i = 0; i < textElements.length; i++) {
-      const text = textElements[i].textContent?.trim()
-      if (text) {
-        elements.push({
-          id: `text-${i + 1}`,
-          type: 'text',
-          x: 5,
-          y: yPosition,
-          width: 90,
-          height: 10,
-          content: text,
-          fontSize: i === 0 ? 32 : 18,
-          fontFace: 'Arial',
-          color: '363636',
-          align: 'left',
-          valign: 'middle',
-        })
-        yPosition += 15
+    // Find all shapes in <p:spTree> (shape tree)
+    const spTree = doc.getElementsByTagName('p:spTree')[0]
+    if (!spTree) {
+      // Fallback to old method if no spTree found
+      return []
+    }
+
+    // Get all shape elements (<p:sp>)
+    const shapes = spTree.getElementsByTagName('p:sp')
+
+    for (let i = 0; i < shapes.length; i++) {
+      const shape = shapes[i]
+
+      try {
+        // Parse transform (position and size)
+        const spPr = shape.getElementsByTagName('p:spPr')[0]
+        if (!spPr) continue
+
+        const xfrm = spPr.getElementsByTagName('a:xfrm')[0]
+        if (!xfrm) continue
+
+        const off = xfrm.getElementsByTagName('a:off')[0]
+        const ext = xfrm.getElementsByTagName('a:ext')[0]
+        if (!off || !ext) continue
+
+        // Get position and size in EMUs
+        const xEmu = parseInt(off.getAttribute('x') || '0')
+        const yEmu = parseInt(off.getAttribute('y') || '0')
+        const cxEmu = parseInt(ext.getAttribute('cx') || '0')
+        const cyEmu = parseInt(ext.getAttribute('cy') || '0')
+
+        // Convert to percentages
+        const x = emuToPercent(xEmu, true)
+        const y = emuToPercent(yEmu, false)
+        const width = emuToPercent(cxEmu, true)
+        const height = emuToPercent(cyEmu, false)
+
+        // Get rotation
+        const rot = parseInt(xfrm.getAttribute('rot') || '0')
+        const rotation = rot !== 0 ? rot / 60000 : undefined
+
+        // Parse shape formatting (fill, stroke, shadow)
+        const shapeFormatting = shapeParser.parseShapeFormatting(spPr, themeColors || undefined)
+
+        // Parse text body (if present)
+        const txBody = shape.getElementsByTagName('p:txBody')[0]
+
+        if (txBody) {
+          // This is a text box or shape with text
+          const paragraphs = textParser.parseTextBody(txBody, themeColors || undefined)
+
+          if (paragraphs.length > 0) {
+            // Extract plain text for backward compatibility
+            const content = textParser.extractPlainText(paragraphs)
+
+            // Get default formatting from first run
+            const fontSize = textParser.getDefaultFontSize(paragraphs)
+            const fontFace = textParser.getDefaultFontFace(paragraphs)
+            const firstRun = paragraphs[0]?.runs[0]
+            const color = firstRun?.color?.replace('#', '') || '363636'
+            const bold = firstRun?.bold || false
+            const italic = firstRun?.italic || false
+
+            // Get paragraph alignment
+            const align = paragraphs[0]?.alignment || 'left'
+
+            elements.push({
+              id: `text-${i + 1}`,
+              type: 'text',
+              x,
+              y,
+              width,
+              height,
+              content,
+              paragraphs, // Rich text paragraphs
+              fontSize,
+              fontFace,
+              color,
+              bold,
+              italic,
+              align,
+              valign: 'top',
+              rotation,
+              // Include shape formatting for text boxes
+              fill: shapeFormatting.fill,
+              stroke: shapeFormatting.stroke,
+              strokeWidth: shapeFormatting.strokeWidth,
+              shadow: shapeFormatting.shadow,
+            })
+          }
+        } else {
+          // This is a shape without text
+          const shapeGeometry = shapeParser.parseShapeGeometry(spPr)
+          const shapeType = shapeParser.mapShapeType(shapeGeometry)
+
+          elements.push({
+            id: `shape-${i + 1}`,
+            type: 'shape',
+            x,
+            y,
+            width,
+            height,
+            rotation,
+            shapeType: shapeType as ShapeType,
+            fill: shapeFormatting.fill,
+            stroke: shapeFormatting.stroke,
+            strokeWidth: shapeFormatting.strokeWidth,
+            shadow: shapeFormatting.shadow,
+          })
+        }
+      } catch (err) {
+        console.error(`Error parsing shape ${i}:`, err)
       }
     }
 
@@ -423,6 +718,68 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
       window.removeEventListener('powerpoint-ai-response-reject', rejectHandler as EventListener)
     }
   }, [slides, currentSlideIndex, selectedElementId])
+
+  // Listen for Skills-generated files (new file-based workflow)
+  useEffect(() => {
+    const handler = async (event: CustomEvent) => {
+      const detail = event?.detail || {}
+      const { fileId, fileName, fileType } = detail
+
+      console.log('[PowerPointViewer] Received powerpoint-file-generated event:', detail)
+
+      if (fileType !== 'pptx') {
+        console.log('[PowerPointViewer] Ignoring non-pptx file:', fileType)
+        return // Only handle PowerPoint files
+      }
+
+      if (!fileId || !fileName) {
+        console.warn('[PowerPointViewer] File-generated event missing fileId or fileName')
+        return
+      }
+
+      console.log('[PowerPointViewer] Downloading Skills-generated file:', fileName)
+
+      try {
+        // Download file from S3
+        const result = await ApiService.downloadFromS3(fileId, fileName)
+        if (!result.success || !result.blob) {
+          throw new Error('Failed to download generated presentation')
+        }
+
+        // Parse the PPTX file
+        const parsedSlides = await parsePptxFile(result.blob)
+
+        // Replace current slides with generated ones
+        setSlides(parsedSlides)
+        setCurrentSlideIndex(0)
+        setSelectedElementId(null)
+        setHasUnsavedChanges(true) // Mark as unsaved so user can save to their location
+
+        // Save to history
+        pushToHistory(parsedSlides, 0)
+        setUndoAvailable(canUndo())
+        setRedoAvailable(canRedo())
+
+        toast({
+          title: 'Presentation generated',
+          description: 'Your presentation has been created using Claude Skills',
+          variant: 'default'
+        })
+      } catch (error) {
+        console.error('Error loading Skills-generated file:', error)
+        toast({
+          title: 'Error loading presentation',
+          description: error instanceof Error ? error.message : 'Failed to load generated presentation',
+          variant: 'destructive'
+        })
+      }
+    }
+
+    window.addEventListener('powerpoint-file-generated', handler as EventListener)
+    return () => {
+      window.removeEventListener('powerpoint-file-generated', handler as EventListener)
+    }
+  }, [])
 
   // Resolve image references (driveFileId, s3FileId, web URLs) to data URLs
   useEffect(() => {

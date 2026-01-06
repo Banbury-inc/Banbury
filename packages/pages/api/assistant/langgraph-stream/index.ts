@@ -11,6 +11,8 @@ import { toLangChainMessages } from "./handlers/toLangChainMessages"
 import { normalizeToolPreferences } from "./handlers/normalizeToolPreferences"
 import { processStreamChunk } from "./handlers/processStreamChunk"
 import { parseErrorMessage } from "./handlers/parseErrorMessage"
+import { detectDocumentRequest } from "../claude-skills-stream/handlers/detectDocumentRequest"
+import claudeSkillsHandler from "../claude-skills-stream"
 
 export const config = API_CONFIG
 
@@ -57,6 +59,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:53',message:'Normalized toolPreferences after normalization',data:{normalizedToolPreferences},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'A'})}).catch(()=>{});
     // #endregion
     const modelProvider = normalizedToolPreferences.model_provider === "openai" ? "openai" : normalizedToolPreferences.model_provider === "google" ? "google" : "anthropic"
+
+    // SKILLS MODE ROUTING: Route to Claude Skills endpoint if conditions are met
+    const isAnthropicProvider = modelProvider === "anthropic"
+    const useSkills = normalizedToolPreferences.use_skills === true
+    const isDocumentRequest = detectDocumentRequest(body.messages)
+
+    if (isAnthropicProvider && useSkills && isDocumentRequest) {
+      // Route to Skills endpoint for document generation
+      return claudeSkillsHandler(req, res)
+    }
+
+    // Continue with legacy LangGraph mode for all other requests
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:56',message:'Model provider determination',data:{normalizedProvider:normalizedToolPreferences.model_provider,determinedProvider:modelProvider,modelId:normalizedToolPreferences.model_id},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'C'})}).catch(()=>{});
     // #endregion

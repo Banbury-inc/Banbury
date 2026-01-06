@@ -170,6 +170,51 @@ export async function* processStreamEvents({
           contentParts.push({ type: "text", text: `❌ Error: ${errorMessage}` });
           yield { content: contentParts, status: { type: "incomplete", reason: "error" } };
           return; // Stop processing further events
+        } else if (evt.type === "file-generated") {
+          // Handle Skills-generated files (PowerPoint, Word, Excel, PDF)
+          const { fileType, fileId, fileName, downloadUrl } = evt;
+
+          console.log(`[Skills] File generated: ${fileType} - ${fileName} (fileId: ${fileId}, path: ${downloadUrl})`)
+
+          // Dispatch event based on file type (for viewers already open)
+          if (fileType === 'pptx') {
+            window.dispatchEvent(new CustomEvent('powerpoint-file-generated', {
+              detail: { fileType, fileId, fileName, downloadUrl }
+            }));
+          } else if (fileType === 'docx') {
+            window.dispatchEvent(new CustomEvent('word-file-generated', {
+              detail: { fileType, fileId, fileName, downloadUrl }
+            }));
+          } else if (fileType === 'xlsx') {
+            window.dispatchEvent(new CustomEvent('excel-file-generated', {
+              detail: { fileType, fileId, fileName, downloadUrl }
+            }));
+          } else if (fileType === 'pdf') {
+            window.dispatchEvent(new CustomEvent('pdf-file-generated', {
+              detail: { fileType, fileId, fileName, downloadUrl }
+            }));
+          }
+
+          // Also dispatch assistant-file-created to trigger auto-open
+          console.log('[Skills] Dispatching assistant-file-created event to auto-open file')
+          window.dispatchEvent(new CustomEvent('assistant-file-created', {
+            detail: {
+              result: {
+                file_info: {
+                  file_id: fileId,
+                  file_name: fileName,
+                  file_path: downloadUrl
+                }
+              }
+            }
+          }));
+
+          // Add a text message to indicate file was generated
+          contentParts.push({
+            type: "text",
+            text: `✅ Generated ${fileType.toUpperCase()} file: ${fileName}`
+          });
+          shouldYield = true;
         } else if (evt.type === "error-details") {
           // Handle error details (stack traces, etc.)
           console.error('[processStreamEvents] Error details:', evt.stack);

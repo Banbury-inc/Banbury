@@ -4,6 +4,7 @@ import { Slide, SlideElement, FillStyle } from './PowerPointViewer'
 import { getShapeDefinition, renderShapeSvg } from './shape-catalog'
 import { Move } from 'lucide-react'
 import { fillStyleToCSS, normalizeFill } from './utils/fill-utils'
+import type { Paragraph, TextRun } from './types/pptx-types'
 
 interface SlideCanvasProps {
   slide: Slide
@@ -85,7 +86,7 @@ export function SlideCanvas({
   // Handle text content change
   const handleTextChange = useCallback((elementId: string, newContent: string) => {
     const newElements = slide.elements.map(e =>
-      e.id === elementId ? { ...e, content: newContent } : e
+      e.id === elementId ? { ...e, content: newContent, paragraphs: undefined } : e
     )
     onUpdateElements(newElements)
   }, [slide.elements, onUpdateElements])
@@ -97,7 +98,7 @@ export function SlideCanvas({
         const newCells = e.cells.map((row, rIdx) =>
           rIdx === rowIndex
             ? row.map((cell, cIdx) =>
-                cIdx === colIndex ? { ...cell, content: newContent } : cell
+                cIdx === colIndex ? { ...cell, content: newContent, paragraphs: undefined } : cell
               )
             : row
         )
@@ -385,7 +386,87 @@ function ElementRenderer({
   }
 
   if (element.type === 'text') {
-    // Render highlighted text if highlights exist
+    // Render rich text paragraphs if available
+    const renderRichText = () => {
+      if (element.paragraphs && element.paragraphs.length > 0) {
+        return (
+          <>
+            {element.paragraphs.map((paragraph, pIdx) => {
+              const paragraphStyle: React.CSSProperties = {
+                textAlign: paragraph.alignment || 'left',
+                lineHeight: paragraph.lineSpacing ? `${paragraph.lineSpacing}` : undefined,
+                marginTop: paragraph.spaceBefore ? `${paragraph.spaceBefore}px` : undefined,
+                marginBottom: paragraph.spaceAfter ? `${paragraph.spaceAfter}px` : undefined,
+                paddingLeft: paragraph.indentLevel ? `${paragraph.indentLevel * 20}px` : undefined,
+                marginBottom: pIdx < element.paragraphs!.length - 1 ? '0.5em' : undefined,
+              }
+
+              // Render bullet/number if needed
+              const bulletPrefix = paragraph.bulletType === 'bullet'
+                ? (paragraph.bulletChar || '•') + ' '
+                : paragraph.bulletType === 'number'
+                ? `${pIdx + 1}. `
+                : ''
+
+              return (
+                <div key={paragraph.id} style={paragraphStyle}>
+                  {bulletPrefix}
+                  {paragraph.runs.map((run, rIdx) => {
+                    const runStyle: React.CSSProperties = {
+                      fontSize: run.fontSize ? `${run.fontSize * scaleFactor}px` : undefined,
+                      fontFamily: run.fontFace || undefined,
+                      color: run.color || undefined,
+                      fontWeight: run.bold ? 'bold' : 'normal',
+                      fontStyle: run.italic ? 'italic' : 'normal',
+                      textDecoration: run.underline
+                        ? run.underline === 'double'
+                          ? 'underline double'
+                          : run.underline === 'wave'
+                          ? 'underline wavy'
+                          : 'underline'
+                        : run.strikethrough
+                        ? 'line-through'
+                        : undefined,
+                      verticalAlign: run.superscript
+                        ? 'super'
+                        : run.subscript
+                        ? 'sub'
+                        : undefined,
+                      backgroundColor: run.highlight || undefined,
+                    }
+
+                    if (run.link) {
+                      return (
+                        <a
+                          key={rIdx}
+                          href={run.link}
+                          style={runStyle}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {run.text}
+                        </a>
+                      )
+                    }
+
+                    return (
+                      <span key={rIdx} style={runStyle}>
+                        {run.text}
+                      </span>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </>
+        )
+      }
+
+      // Fallback to legacy content rendering
+      return renderTextWithHighlights()
+    }
+
+    // Render highlighted text if highlights exist (legacy)
     const renderTextWithHighlights = () => {
       if (!element.highlights || element.highlights.length === 0) {
         return element.content
@@ -457,14 +538,24 @@ function ElementRenderer({
     const scaledBorderWidth = element.border ? element.border.width * scaleFactor : undefined
     const scaledPadding = 4 * scaleFactor
 
+    // Build shadow CSS if shadow exists
+    let boxShadow: string | undefined
+    if (element.shadow) {
+      const scaledOffsetX = element.shadow.offsetX * scaleFactor
+      const scaledOffsetY = element.shadow.offsetY * scaleFactor
+      const scaledBlur = element.shadow.blur * scaleFactor
+      boxShadow = `${scaledOffsetX}px ${scaledOffsetY}px ${scaledBlur}px ${element.shadow.color}`
+    }
+
     return (
       <div
         className={isSelected ? 'border-2 border-primary rounded-sm' : 'border-2 border-transparent rounded-sm'}
         style={{
           ...baseStyles,
-          background: element.textFill ? fillStyleToCSS(element.textFill) : 'transparent',
-          border: element.border ? `${scaledBorderWidth}px solid ${element.border.color}` : undefined,
+          background: element.textFill ? fillStyleToCSS(element.textFill) : element.fill ? (typeof element.fill === 'string' ? element.fill : fillStyleToCSS(element.fill)) : 'transparent',
+          border: element.border ? `${scaledBorderWidth}px solid ${element.border.color}` : element.stroke ? `${(element.strokeWidth || 1) * scaleFactor}px solid ${element.stroke}` : undefined,
           padding: `${scaledPadding}px`,
+          boxShadow,
         }}
         onClick={onClick}
         onMouseDown={onMouseDown}
@@ -505,7 +596,7 @@ function ElementRenderer({
             // Allow focus for text editing
           }}
         >
-          {renderTextWithHighlights()}
+          {renderRichText()}
         </div>
         {isSelected && (
           <>
@@ -521,13 +612,23 @@ function ElementRenderer({
   }
 
   if (element.type === 'shape') {
-    const fill = element.fill || '#4a90d9'
+    // Normalize fill (handle both string and FillStyle)
+    const fill = element.fill ? (typeof element.fill === 'string' ? element.fill : fillStyleToCSS(element.fill)) : '#4a90d9'
     const stroke = element.stroke || '#2d5a8c'
     const scaledStrokeWidth = (element.strokeWidth ?? 2) * scaleFactor
     const rotation = element.rotation ?? 0
     const shapeType = element.shapeType || 'rect'
     const shapeLabel = getShapeDefinition(shapeType)?.label || 'Shape'
     const scaledFontSize = 14 * scaleFactor
+
+    // Build shadow CSS if shadow exists
+    let boxShadow: string | undefined
+    if (element.shadow) {
+      const scaledOffsetX = element.shadow.offsetX * scaleFactor
+      const scaledOffsetY = element.shadow.offsetY * scaleFactor
+      const scaledBlur = element.shadow.blur * scaleFactor
+      boxShadow = `${scaledOffsetX}px ${scaledOffsetY}px ${scaledBlur}px ${element.shadow.color}`
+    }
 
     return (
       <div
@@ -540,6 +641,7 @@ function ElementRenderer({
           backgroundColor: 'transparent',
           transform: `rotate(${rotation}deg)`,
           transformOrigin: 'center',
+          boxShadow,
         }}
         onClick={onClick}
         onMouseDown={onMouseDown}
@@ -572,10 +674,16 @@ function ElementRenderer({
   }
 
   if (element.type === 'image') {
+    const rotation = element.rotation ?? 0
+
     return (
       <div
         className={`bg-muted flex items-center justify-center overflow-hidden relative ${isSelected ? 'border-2 border-primary rounded-sm' : 'border-2 border-muted rounded-sm'}`}
-        style={baseStyles}
+        style={{
+          ...baseStyles,
+          transform: rotation !== 0 ? `rotate(${rotation}deg)` : undefined,
+          transformOrigin: 'center',
+        }}
         onClick={onClick}
         onMouseDown={onMouseDown}
       >
@@ -610,6 +718,38 @@ function ElementRenderer({
     const scaledPadding = 4 * scaleFactor
     const scaledPaddingHorizontal = 8 * scaleFactor
 
+    // Helper to render cell content (rich text or plain)
+    const renderCellContent = (cell: typeof element.cells[0][0]) => {
+      if (cell.paragraphs && cell.paragraphs.length > 0) {
+        // Render rich text
+        return (
+          <>
+            {cell.paragraphs.map((paragraph, pIdx) => (
+              <div key={pIdx} style={{ marginBottom: pIdx < cell.paragraphs!.length - 1 ? '0.25em' : undefined }}>
+                {paragraph.runs.map((run, rIdx) => {
+                  const runStyle: React.CSSProperties = {
+                    fontSize: run.fontSize ? `${run.fontSize * scaleFactor}px` : undefined,
+                    fontFamily: run.fontFace || undefined,
+                    color: run.color || undefined,
+                    fontWeight: run.bold ? 'bold' : 'normal',
+                    fontStyle: run.italic ? 'italic' : 'normal',
+                    textDecoration: run.underline ? 'underline' : run.strikethrough ? 'line-through' : undefined,
+                  }
+                  return (
+                    <span key={rIdx} style={runStyle}>
+                      {run.text}
+                    </span>
+                  )
+                })}
+              </div>
+            ))}
+          </>
+        )
+      }
+      // Fallback to plain content
+      return cell.content
+    }
+
     return (
       <div
         className={`${isSelected ? 'border-2 border-primary rounded-sm ring-2 ring-primary/20' : 'border-2 border-transparent rounded-sm'}`}
@@ -631,39 +771,64 @@ function ElementRenderer({
                   backgroundColor: headerRow && rowIndex === 0 ? 'rgba(0, 0, 0, 0.05)' : rowIndex % 2 === 0 ? 'transparent' : 'rgba(0, 0, 0, 0.02)',
                 }}
               >
-                {row.map((cell, colIndex) => (
-                  <td
-                    key={colIndex}
-                    contentEditable
-                    suppressContentEditableWarning
-                    className="outline-none"
-                    style={{
-                      border: `${scaledBorderWidth}px solid ${borderColor}`,
-                      fontSize: `${(cell.fontSize || 14) * scaleFactor}px`,
-                      fontFamily: cell.fontFace || 'Arial',
-                      fontWeight: (headerRow && rowIndex === 0) || cell.bold ? 'bold' : 'normal',
-                      fontStyle: cell.italic ? 'italic' : 'normal',
-                      color: cell.color ? `#${cell.color}` : '#363636',
-                      textAlign: cell.align || 'left',
-                      backgroundColor: cell.backgroundColor || 'transparent',
-                      padding: `${scaledPadding}px ${scaledPaddingHorizontal}px`,
-                    }}
-                    onBlur={(e) => {
-                      if (onTableCellChange) {
-                        onTableCellChange(rowIndex, colIndex, e.currentTarget.textContent || '')
-                      }
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onSelectElement(element.id)
-                    }}
-                    onMouseDown={(e) => {
-                      e.stopPropagation()
-                    }}
-                  >
-                    {cell.content}
-                  </td>
-                ))}
+                {row.map((cell, colIndex) => {
+                  // Build border style from individual borders
+                  const cellBorderStyle: React.CSSProperties = {}
+                  if (cell.borders) {
+                    if (cell.borders.top) {
+                      cellBorderStyle.borderTop = `${cell.borders.top.width * scaleFactor}px solid ${cell.borders.top.color}`
+                    }
+                    if (cell.borders.right) {
+                      cellBorderStyle.borderRight = `${cell.borders.right.width * scaleFactor}px solid ${cell.borders.right.color}`
+                    }
+                    if (cell.borders.bottom) {
+                      cellBorderStyle.borderBottom = `${cell.borders.bottom.width * scaleFactor}px solid ${cell.borders.bottom.color}`
+                    }
+                    if (cell.borders.left) {
+                      cellBorderStyle.borderLeft = `${cell.borders.left.width * scaleFactor}px solid ${cell.borders.left.color}`
+                    }
+                  } else {
+                    // Fallback to table-wide border
+                    cellBorderStyle.border = `${scaledBorderWidth}px solid ${borderColor}`
+                  }
+
+                  return (
+                    <td
+                      key={colIndex}
+                      contentEditable
+                      suppressContentEditableWarning
+                      className="outline-none"
+                      colSpan={cell.colspan}
+                      rowSpan={cell.rowspan}
+                      style={{
+                        ...cellBorderStyle,
+                        fontSize: `${(cell.fontSize || 14) * scaleFactor}px`,
+                        fontFamily: cell.fontFace || 'Arial',
+                        fontWeight: (headerRow && rowIndex === 0) || cell.bold ? 'bold' : 'normal',
+                        fontStyle: cell.italic ? 'italic' : 'normal',
+                        color: cell.color ? `#${cell.color}` : '#363636',
+                        textAlign: cell.align || 'left',
+                        verticalAlign: cell.valign || 'top',
+                        backgroundColor: cell.backgroundColor || 'transparent',
+                        padding: `${scaledPadding}px ${scaledPaddingHorizontal}px`,
+                      }}
+                      onBlur={(e) => {
+                        if (onTableCellChange) {
+                          onTableCellChange(rowIndex, colIndex, e.currentTarget.textContent || '')
+                        }
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onSelectElement(element.id)
+                      }}
+                      onMouseDown={(e) => {
+                        e.stopPropagation()
+                      }}
+                    >
+                      {renderCellContent(cell)}
+                    </td>
+                  )
+                })}
               </tr>
             ))}
           </tbody>
@@ -801,7 +966,17 @@ function ResizeHandles({
 
 // Helper function to get background style for slide
 function getBackgroundStyle(slide: Slide): React.CSSProperties {
-  // Check if slide has backgroundStyle (FillStyle)
+  // Check if slide has background image
+  if (slide.backgroundImage) {
+    return {
+      backgroundImage: `url(${slide.backgroundImage})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    }
+  }
+
+  // Check if slide has backgroundStyle (FillStyle - gradient or solid)
   if (slide.backgroundStyle) {
     const fill = normalizeFill(slide.backgroundStyle)
     if (fill) {

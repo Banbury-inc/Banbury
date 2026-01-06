@@ -54,6 +54,8 @@ export interface ToolPreferences {
   model_id?: string
   image_generation_model?: string
   video_generation_model?: string
+  // Skills mode (Anthropic only)
+  use_skills?: boolean
 }
 
 export interface DateTimeContext {
