@@ -5,6 +5,52 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
+  async redirects() {
+    return [
+      // Redirect capitalized URLs to lowercase
+      {
+        source: '/Features',
+        destination: '/features',
+        permanent: true,
+      },
+      {
+        source: '/News',
+        destination: '/news',
+        permanent: true,
+      },
+      {
+        source: '/Terms_of_use',
+        destination: '/terms_of_use',
+        permanent: true,
+      },
+      {
+        source: '/Privacy_policy',
+        destination: '/privacy_policy',
+        permanent: true,
+      },
+      // Redirect non-existent pages to appropriate destinations
+      {
+        source: '/NeuraNet',
+        destination: '/knowledge',
+        permanent: true,
+      },
+      {
+        source: '/Cloud',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/cloud',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/api',
+        destination: '/api-docs',
+        permanent: true,
+      },
+    ];
+  },
   eslint: {
     ignoreDuringBuilds: true // Temporarily disable ESLint during builds to reduce memory usage
   },

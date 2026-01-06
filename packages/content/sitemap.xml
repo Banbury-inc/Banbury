@@ -86,17 +86,12 @@
         <changefreq>weekly</changefreq>
     </url>
     <url>
-        <loc>https://banbury.io/api</loc>
-        <priority>0.8</priority>
-        <changefreq>weekly</changefreq>
-    </url>
-    <url>
         <loc>https://banbury.io/news</loc>
         <priority>0.8</priority>
         <changefreq>daily</changefreq>
     </url>
     <url>
-        <loc>https://banbury.io/NeuraNet</loc>
+        <loc>https://banbury.io/api-docs</loc>
         <priority>0.8</priority>
         <changefreq>weekly</changefreq>
     </url>
