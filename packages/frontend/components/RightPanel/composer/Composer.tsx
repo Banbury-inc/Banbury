@@ -10,6 +10,7 @@ import {
   Plus,
   Paperclip,
   Image,
+  Video,
 } from "lucide-react";
 
 import { ChatTiptapComposer } from "../../ChatTiptapComposer";
@@ -43,10 +44,12 @@ import {
   type ModelProvider 
 } from "./handlers/getModelDisplayName";
 import { toolConfigs } from "./handlers/toolConfig";
-import { 
-  toggleToolPreference, 
+import {
+  toggleToolPreference,
   setImageGenerationModel,
-  IMAGE_GENERATION_MODELS 
+  setVideoGenerationModel,
+  IMAGE_GENERATION_MODELS,
+  VIDEO_GENERATION_MODELS
 } from "./handlers/composer-plus-menu-handlers";
 
 import type { FC } from "react";
@@ -86,11 +89,13 @@ export interface ComposerToolPreferences {
   github: boolean;
   // Media tools
   generate_image: boolean;
+  generate_video: boolean;
   // System tools
   memory: boolean;
   model_provider: "anthropic" | "openai";
   model_id?: string;
   image_generation_model?: string;
+  video_generation_model?: string;
 }
 
 interface ComposerProps {
@@ -925,6 +930,36 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                         className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
                         onClick={() => {
                           onUpdateToolPreferences(setImageGenerationModel(toolPreferences, model.id))
+                        }}
+                      >
+                        <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                          {isSelected && <Check className="size-4" />}
+                        </span>
+                        <div className="flex flex-col">
+                          <Typography variant="xs" className="font-medium">{model.name}</Typography>
+                          <Typography variant="xs" className="text-xs text-muted-foreground">{model.description}</Typography>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+
+              {/* Video Model Submenu */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Video className="mr-2 h-4 w-4" />
+                  <Typography variant="xs">Video model</Typography>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-56 p-1">
+                  {VIDEO_GENERATION_MODELS.map((model) => {
+                    const isSelected = (toolPreferences.video_generation_model || 'sora-2') === model.id
+                    return (
+                      <div
+                        key={model.id}
+                        className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => {
+                          onUpdateToolPreferences(setVideoGenerationModel(toolPreferences, model.id))
                         }}
                       >
                         <span className="absolute right-2 flex size-3.5 items-center justify-center">

@@ -17,6 +17,7 @@ import {
   CalendarDays,
   Github,
   Image,
+  Video,
   Database,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -51,10 +52,12 @@ export interface ComposerToolPreferences {
   msCalendar: boolean;
   github: boolean;
   generate_image: boolean;
+  generate_video: boolean;
   memory: boolean;
   model_provider: "anthropic" | "openai";
   model_id?: string;
   image_generation_model?: string;
+  video_generation_model?: string;
 }
 
 export const toolConfigs: ToolConfig[] = [
@@ -210,6 +213,13 @@ export const toolConfigs: ToolConfig[] = [
     label: "Generate Image",
     icon: Image,
     iconColor: "text-pink-500",
+    defaultEnabled: true,
+  },
+  {
+    key: "generate_video",
+    label: "Generate Video",
+    icon: Video,
+    iconColor: "text-purple-500",
     defaultEnabled: true,
   },
 ];

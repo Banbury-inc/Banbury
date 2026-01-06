@@ -14,6 +14,7 @@ import { docxAiTool } from "./tools/docxAiTool";
 import { tldrawAiTool } from "./tools/tldrawAiTool";
 import { pptxAiTool } from "./tools/pptxAiTool";
 import { generateImageTool } from "./tools/generateImageTool";
+import { generateVideoTool } from "./tools/generateVideoTool";
 import { createMemoryTool } from "./tools/createMemoryTool";
 import { searchMemoryTool } from "./tools/searchMemoryTool";
 import { createFileTool } from "./tools/createFileTool";
@@ -181,6 +182,7 @@ const tools = [
   tldrawAiTool,
   pptxAiTool,
   generateImageTool,
+  generateVideoTool,
   createMemoryTool,
   searchMemoryTool,
   createFileTool,

@@ -115,11 +115,13 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     github: boolean;
     // Media tools
     generate_image: boolean;
+    generate_video: boolean;
     // System tools
     memory: boolean;
     model_provider: "anthropic" | "openai" | "google";
     model_id: string;
     image_generation_model?: string;
+    video_generation_model?: string;
   }
 
   const deriveToolPreferences = (raw?: any): ThreadToolPreferences => {
@@ -162,11 +164,13 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       github: data.github !== false,
       // Media tools
       generate_image: data.generate_image !== false,
+      generate_video: data.generate_video !== false,
       // System tools
       memory: data.memory !== false,
       model_provider: provider,
       model_id: modelId,
       image_generation_model: typeof data.image_generation_model === "string" ? data.image_generation_model : "dall-e-3",
+      video_generation_model: typeof data.video_generation_model === "string" ? data.video_generation_model : "sora-2",
     };
   };
 

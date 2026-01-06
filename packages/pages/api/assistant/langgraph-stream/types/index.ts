@@ -46,12 +46,14 @@ export interface ToolPreferences {
   github?: boolean
   // Media tools
   generate_image?: boolean
+  generate_video?: boolean
   // System tools
   memory?: boolean
   slack?: boolean
   model_provider?: "anthropic" | "openai" | "google"
   model_id?: string
   image_generation_model?: string
+  video_generation_model?: string
 }
 
 export interface DateTimeContext {

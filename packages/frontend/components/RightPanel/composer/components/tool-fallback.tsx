@@ -7,9 +7,9 @@ export const ToolFallback: ToolCallMessagePartComponent = ({
   argsText,
   result,
 }) => {
-  // Dispatch a creation event when generate_image succeeds
+  // Dispatch a creation event when generate_image or generate_video succeeds
   try {
-    if (toolName === 'generate_image' && typeof result === 'string') {
+    if ((toolName === 'generate_image' || toolName === 'generate_video') && typeof result === 'string') {
       const parsed = JSON.parse(result);
       if (parsed?.ok && parsed?.file_info) {
         window.dispatchEvent(new CustomEvent('assistant-file-created', { detail: { result: parsed } }));

@@ -40,12 +40,14 @@ export function normalizeToolPreferences({
     github: toolPreferences.github !== false,
     // Media tools
     generate_image: toolPreferences.generate_image !== false,
+    generate_video: toolPreferences.generate_video !== false,
     // System tools
     memory: toolPreferences.memory !== false,
     langgraph_mode: true,
     model_provider: toolPreferences.model_provider === "openai" ? "openai" : toolPreferences.model_provider === "google" ? "google" : "anthropic",
     model_id: toolPreferences.model_id,
     image_generation_model: typeof toolPreferences.image_generation_model === "string" ? toolPreferences.image_generation_model : "dall-e-3",
+    video_generation_model: typeof toolPreferences.video_generation_model === "string" ? toolPreferences.video_generation_model : "sora-2",
   }
 }
 
