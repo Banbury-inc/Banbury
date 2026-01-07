@@ -741,7 +741,66 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     }
   }, [slides, currentSlideIndex, selectedElementId])
 
-  // Listen for Skills-generated files (new file-based workflow)
+  // Listen for Skills file updates (live preview during generation)
+  useEffect(() => {
+    const updateHandler = async (event: CustomEvent) => {
+      const detail = event?.detail || {}
+      const { fileId, fileName, fileType, isIntermediate } = detail
+
+      console.log('[PowerPointViewer] Received powerpoint-file-update event:', detail)
+
+      if (fileType !== 'pptx') {
+        console.log('[PowerPointViewer] Ignoring non-pptx file:', fileType)
+        return
+      }
+
+      if (!fileId || !fileName) {
+        console.warn('[PowerPointViewer] File-update event missing fileId or fileName')
+        return
+      }
+
+      console.log('[PowerPointViewer] Downloading updated file:', fileName)
+
+      try {
+        // Download file from S3
+        const result = await ApiService.downloadFromS3(fileId, fileName)
+        if (!result.success || !result.blob) {
+          throw new Error('Failed to download presentation update')
+        }
+
+        // Parse the PPTX file
+        const parsedSlides = await parsePptxFile(result.blob)
+
+        // Replace current slides with updated ones
+        setSlides(parsedSlides)
+        setCurrentSlideIndex(0)
+        setSelectedElementId(null)
+        setHasUnsavedChanges(true)
+
+        // Save to history
+        pushToHistory(parsedSlides, 0)
+        setUndoAvailable(canUndo())
+        setRedoAvailable(canRedo())
+
+        if (isIntermediate) {
+          toast({
+            title: 'Live preview updated',
+            description: 'Presentation is being generated in real-time',
+            variant: 'default'
+          })
+        }
+      } catch (error) {
+        console.error('Error loading file update:', error)
+      }
+    }
+
+    window.addEventListener('powerpoint-file-update', updateHandler as EventListener)
+    return () => {
+      window.removeEventListener('powerpoint-file-update', updateHandler as EventListener)
+    }
+  }, [])
+
+  // Listen for Skills-generated files (final version)
   useEffect(() => {
     const handler = async (event: CustomEvent) => {
       const detail = event?.detail || {}
@@ -783,7 +842,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
         setRedoAvailable(canRedo())
 
         toast({
-          title: 'Presentation generated',
+          title: 'Presentation completed',
           description: 'Your presentation has been created using Claude Skills',
           variant: 'default'
         })

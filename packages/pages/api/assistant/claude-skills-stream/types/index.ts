@@ -20,6 +20,15 @@ export interface FileGeneratedEvent {
   downloadUrl?: string
 }
 
+export interface FileUpdateEvent {
+  type: 'file-update'
+  fileType: 'pptx' | 'docx' | 'xlsx' | 'pdf'
+  fileId: string
+  fileName: string
+  downloadUrl?: string
+  isIntermediate: boolean // true for progressive updates, false for final
+}
+
 export interface FileMetadata {
   id: string
   filename: string

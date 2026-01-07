@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import Anthropic from '@anthropic-ai/sdk'
-import type { SkillsStreamRequestBody, FileGeneratedEvent } from './types'
+import type { SkillsStreamRequestBody, FileGeneratedEvent, FileUpdateEvent } from './types'
 import { extractFileIds } from './handlers/extractFileIds'
 import { downloadFromContainer } from './handlers/downloadFromContainer'
 import { uploadToS3 } from './utils/uploadToS3'
@@ -114,6 +114,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     let response: any
     let fullTextContent = ''
+    const contentBlocks: any[] = []
+    const processedFileIds = new Set<string>()
+    let currentBlockIndex = -1
 
     try {
       const stream = await messagesApi.create({
@@ -162,10 +165,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
           case 'content_block_start':
             // New content block started
+            currentBlockIndex++
+            contentBlocks[currentBlockIndex] = {
+              type: event.content_block?.type,
+              index: event.index ?? currentBlockIndex
+            }
+            if (event.content_block) {
+              Object.assign(contentBlocks[currentBlockIndex], event.content_block)
+            }
             break
 
           case 'content_block_delta':
-            // Streaming text delta
+            // Streaming content delta
             if (event.delta?.type === 'text_delta' && event.delta?.text) {
               const text = event.delta.text
               fullTextContent += text
@@ -173,11 +184,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 type: 'text-delta',
                 text: text
               })
+
+              // Update content block
+              const blockIdx = event.index ?? currentBlockIndex
+              if (contentBlocks[blockIdx]) {
+                if (!contentBlocks[blockIdx].text) {
+                  contentBlocks[blockIdx].text = ''
+                }
+                contentBlocks[blockIdx].text += text
+              }
             }
             break
 
           case 'content_block_stop':
-            // Content block ended
+            // Content block ended - check for files
+            const blockIdx = event.index ?? currentBlockIndex
+            const block = contentBlocks[blockIdx]
+
+            if (block) {
+              console.log('[Skills] Content block stopped:', JSON.stringify(block, null, 2))
+
+              // Try to extract file IDs from this block
+              const tempResponse = { content: [block] }
+              const fileIds = extractFileIds(tempResponse)
+
+              if (fileIds.length > 0) {
+                console.log('[Skills] Found file IDs in intermediate block:', fileIds)
+
+                // Process files immediately (live updates)
+                for (const fileId of fileIds) {
+                  if (!processedFileIds.has(fileId)) {
+                    processedFileIds.add(fileId)
+                    await processGeneratedFiles([fileId], client, token, send, true) // true = isIntermediate
+                  }
+                }
+              }
+            }
             break
 
           case 'message_delta':
@@ -196,6 +238,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         response = (stream as any).finalMessage || (stream as any).message
       }
 
+      // If response still doesn't have content, reconstruct from blocks
+      if (!response?.content && contentBlocks.length > 0) {
+        response = { content: contentBlocks }
+      }
+
     } finally {
       clearInterval(keepAlive)
       clearInterval(progress)
@@ -205,14 +252,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('[Skills] Full response:', JSON.stringify(response, null, 2))
     console.log('[Skills] Response content blocks:', response?.content?.map((b: any) => ({ type: b.type, hasContent: !!b.content })))
 
-    // Check for generated files
+    // Check for generated files (final check, might have already been processed during streaming)
     const fileIds = extractFileIds(response)
-    console.log('[Skills] Extracted file IDs:', fileIds)
+    console.log('[Skills] Extracted file IDs from final response:', fileIds)
 
-    if (fileIds.length > 0) {
-      console.log('[Skills] Processing generated files:', fileIds)
-      // Process files
-      await processGeneratedFiles(fileIds, client, token, send)
+    // Filter out already-processed files
+    const newFileIds = fileIds.filter(id => !processedFileIds.has(id))
+
+    if (newFileIds.length > 0) {
+      console.log('[Skills] Processing remaining files:', newFileIds)
+      // Process files (final, not intermediate)
+      await processGeneratedFiles(newFileIds, client, token, send, false)
+    } else if (fileIds.length > 0) {
+      console.log('[Skills] All files were already processed during streaming')
     } else {
       console.log('[Skills] No file IDs found in response')
     }
@@ -267,15 +319,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 /**
  * Process generated files: download from container and upload to S3
+ * @param isIntermediate - If true, sends file-update events for live preview. If false, sends file-generated events for final version.
  */
 async function processGeneratedFiles(
   fileIds: string[],
   client: Anthropic,
   authToken: string,
-  send: (event: any) => void
+  send: (event: any) => void,
+  isIntermediate: boolean = false
 ) {
   for (const fileId of fileIds) {
-    console.log(`[Skills] Processing file ${fileId}`)
+    console.log(`[Skills] Processing file ${fileId} (intermediate: ${isIntermediate})`)
     try {
       // Download file from container
       console.log(`[Skills] Downloading file ${fileId} from container`)
@@ -306,15 +360,30 @@ async function processGeneratedFiles(
       console.log(`[Skills] Upload result:`, uploadResult)
 
       if (uploadResult.ok && uploadResult.file_info) {
-        const event: FileGeneratedEvent = {
-          type: 'file-generated',
-          fileType,
-          fileId: uploadResult.file_info.file_id || fileId,
-          fileName: uploadResult.file_info.file_name,
-          downloadUrl: uploadResult.file_info.file_path
+        if (isIntermediate) {
+          // Send file-update event for live preview
+          const event: FileUpdateEvent = {
+            type: 'file-update',
+            fileType,
+            fileId: uploadResult.file_info.file_id || fileId,
+            fileName: uploadResult.file_info.file_name,
+            downloadUrl: uploadResult.file_info.file_path,
+            isIntermediate: true
+          }
+          console.log(`[Skills] Sending file-update event (intermediate):`, event)
+          send(event)
+        } else {
+          // Send file-generated event for final version
+          const event: FileGeneratedEvent = {
+            type: 'file-generated',
+            fileType,
+            fileId: uploadResult.file_info.file_id || fileId,
+            fileName: uploadResult.file_info.file_name,
+            downloadUrl: uploadResult.file_info.file_path
+          }
+          console.log(`[Skills] Sending file-generated event (final):`, event)
+          send(event)
         }
-        console.log(`[Skills] Sending file-generated event:`, event)
-        send(event)
       } else {
         send({
           type: 'error',

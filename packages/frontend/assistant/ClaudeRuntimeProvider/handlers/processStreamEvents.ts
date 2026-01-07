@@ -170,11 +170,60 @@ export async function* processStreamEvents({
           contentParts.push({ type: "text", text: `❌ Error: ${errorMessage}` });
           yield { content: contentParts, status: { type: "incomplete", reason: "error" } };
           return; // Stop processing further events
+        } else if (evt.type === "file-update") {
+          // Handle Skills file updates (live preview during generation)
+          const { fileType, fileId, fileName, downloadUrl, isIntermediate } = evt;
+
+          console.log(`[Skills] File update: ${fileType} - ${fileName} (fileId: ${fileId}, path: ${downloadUrl}, intermediate: ${isIntermediate})`)
+
+          // Dispatch update event based on file type
+          if (fileType === 'pptx') {
+            window.dispatchEvent(new CustomEvent('powerpoint-file-update', {
+              detail: { fileType, fileId, fileName, downloadUrl, isIntermediate }
+            }));
+          } else if (fileType === 'docx') {
+            window.dispatchEvent(new CustomEvent('word-file-update', {
+              detail: { fileType, fileId, fileName, downloadUrl, isIntermediate }
+            }));
+          } else if (fileType === 'xlsx') {
+            window.dispatchEvent(new CustomEvent('excel-file-update', {
+              detail: { fileType, fileId, fileName, downloadUrl, isIntermediate }
+            }));
+          } else if (fileType === 'pdf') {
+            window.dispatchEvent(new CustomEvent('pdf-file-update', {
+              detail: { fileType, fileId, fileName, downloadUrl, isIntermediate }
+            }));
+          }
+
+          // For the first update, also dispatch assistant-file-created to auto-open
+          if (isIntermediate) {
+            console.log('[Skills] Dispatching assistant-file-created event for live preview')
+            window.dispatchEvent(new CustomEvent('assistant-file-created', {
+              detail: {
+                result: {
+                  file_info: {
+                    file_id: fileId,
+                    file_name: fileName,
+                    file_path: downloadUrl
+                  }
+                }
+              }
+            }));
+          }
+
+          // Add a text message for first update only
+          if (isIntermediate) {
+            contentParts.push({
+              type: "text",
+              text: `🔄 Generating ${fileType.toUpperCase()} file: ${fileName} (live preview)...`
+            });
+          }
+          shouldYield = true;
         } else if (evt.type === "file-generated") {
-          // Handle Skills-generated files (PowerPoint, Word, Excel, PDF)
+          // Handle Skills-generated files (PowerPoint, Word, Excel, PDF) - final version
           const { fileType, fileId, fileName, downloadUrl } = evt;
 
-          console.log(`[Skills] File generated: ${fileType} - ${fileName} (fileId: ${fileId}, path: ${downloadUrl})`)
+          console.log(`[Skills] File generated (final): ${fileType} - ${fileName} (fileId: ${fileId}, path: ${downloadUrl})`)
 
           // Dispatch event based on file type (for viewers already open)
           if (fileType === 'pptx') {
@@ -195,7 +244,7 @@ export async function* processStreamEvents({
             }));
           }
 
-          // Also dispatch assistant-file-created to trigger auto-open
+          // Also dispatch assistant-file-created to trigger auto-open (if not already opened by update)
           console.log('[Skills] Dispatching assistant-file-created event to auto-open file')
           window.dispatchEvent(new CustomEvent('assistant-file-created', {
             detail: {
