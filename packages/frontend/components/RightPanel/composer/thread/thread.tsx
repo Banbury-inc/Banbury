@@ -40,7 +40,7 @@ import { createHandleDrawioFileView } from "../../handlers/handle-drawio-file-vi
 import { Composer } from "../Composer";
 import { UserMessage } from "./components/UserMessage";
 import { BranchPicker } from "./components/BranchPicker";
-import { getDefaultModelForProvider, getModelById } from "../handlers/getModelDisplayName";
+import { getDefaultModelForProvider, getModelById, DEFAULT_VISIBLE_MODELS } from "../handlers/getModelDisplayName";
 import { Typography, typographyVariants } from "../../../ui/typography";
 import {
   getStoredKeybinds,
@@ -122,6 +122,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     model_id: string;
     image_generation_model?: string;
     video_generation_model?: string;
+    visibleModels?: string[];
   }
 
   const deriveToolPreferences = (raw?: any): ThreadToolPreferences => {
@@ -171,6 +172,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       model_id: modelId,
       image_generation_model: typeof data.image_generation_model === "string" ? data.image_generation_model : "dall-e-3",
       video_generation_model: typeof data.video_generation_model === "string" ? data.video_generation_model : "sora-2",
+      visibleModels: Array.isArray(data.visibleModels) ? data.visibleModels : DEFAULT_VISIBLE_MODELS,
     };
   };
 
@@ -915,6 +917,42 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       localStorage.setItem("toolPreferences", JSON.stringify(prefsToSave));
     } catch {}
   }, [toolPreferences]);
+
+  // Listen for storage events to sync tool preferences from other components (e.g., settings modal)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      try {
+        const saved = localStorage.getItem("toolPreferences");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const updatedPrefs = deriveToolPreferences(parsed);
+          setToolPreferences(prevPrefs => {
+            // Compare visibleModels specifically since that's what changes in settings
+            const prevVisibleModels = prevPrefs.visibleModels || DEFAULT_VISIBLE_MODELS;
+            const newVisibleModels = updatedPrefs.visibleModels || DEFAULT_VISIBLE_MODELS;
+            const visibleModelsChanged = JSON.stringify([...prevVisibleModels].sort()) !== JSON.stringify([...newVisibleModels].sort());
+            
+            // Also check other key properties that might change
+            const otherPropsChanged = 
+              prevPrefs.model_provider !== updatedPrefs.model_provider ||
+              prevPrefs.model_id !== updatedPrefs.model_id;
+            
+            if (visibleModelsChanged || otherPropsChanged) {
+              return updatedPrefs;
+            }
+            return prevPrefs;
+          });
+        }
+      } catch {}
+    };
+
+    // Listen for storage events (both native cross-tab and custom same-tab events)
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   // Pre-download spreadsheet, canvas, and presentation blobs and cache as base64 + mimeType (size-capped)
   useEffect(() => {
