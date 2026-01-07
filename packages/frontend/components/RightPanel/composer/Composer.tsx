@@ -11,6 +11,7 @@ import {
   Paperclip,
   Image,
   Video,
+  Upload,
 } from "lucide-react";
 
 import { ChatTiptapComposer } from "../../ChatTiptapComposer";
@@ -28,6 +29,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
   DropdownMenuSeparator,
+  DropdownMenuItem,
 } from "../../ui/dropdown-menu";
 import { Popover, PopoverTrigger, PopoverContent } from "../../ui/popover";
 import { Check } from "lucide-react";
@@ -36,12 +38,12 @@ import { ThreadScrollToBottom } from "./ThreadScrollToBottom";
 import { handleSend } from "./handlers/handleSend";
 import { computeContextBudget } from "./handlers/contextBudget";
 import { getDocumentContextPreview } from "../../../assistant/ClaudeRuntimeProvider/handlers/getDocumentContextPreview";
-import { 
-  getModelDisplayName, 
-  AVAILABLE_MODELS, 
+import {
+  getModelDisplayName,
+  AVAILABLE_MODELS,
   getModelById,
   getDefaultModelForProvider,
-  type ModelProvider 
+  type ModelProvider
 } from "./handlers/getModelDisplayName";
 import { toolConfigs } from "./handlers/toolConfig";
 import {
@@ -51,6 +53,7 @@ import {
   IMAGE_GENERATION_MODELS,
   VIDEO_GENERATION_MODELS
 } from "./handlers/composer-plus-menu-handlers";
+import { handleLocalFileUpload } from "../../handlers/handle-local-file-upload";
 
 import type { FC } from "react";
 import { Typography } from "frontend/components/ui/typography";
@@ -230,7 +233,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
             />
           </div>
 
-          <ComposerAction 
+          <ComposerAction
             attachedFiles={attachedFiles}
             attachedEmails={attachedEmails}
             onFileAttach={onFileAttach}
@@ -240,6 +243,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
             userInfo={userInfo}
             toolPreferences={toolPreferences}
             onUpdateToolPreferences={(prefs) => onUpdateToolPreferences(prefs)}
+            onAttachmentPayload={onAttachmentPayload}
             onSend={() => handleSend({ composer, onSend: onSend, tabId: assistantTabId })}
             messageBuffer={messageBuffer}
             inputRef={inputRef}
@@ -264,6 +268,7 @@ interface ComposerActionProps {
   } | null;
   toolPreferences: ComposerToolPreferences;
   onUpdateToolPreferences: (prefs: ComposerToolPreferences) => void;
+  onAttachmentPayload: (fileId: string, payload: { fileData: string; mimeType: string }) => void;
   onSend: () => void;
   // Fallback message buffer for context calculation when runtime messages aren't available
   messageBuffer?: any[] | null;
@@ -271,7 +276,7 @@ interface ComposerActionProps {
   assistantTabId?: string;
 }
 
-const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, onSend, messageBuffer, inputRef, assistantTabId }) => {
+const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, onAttachmentPayload, onSend, messageBuffer, inputRef, assistantTabId }) => {
   const composer = useComposerRuntime();
   const threadRuntime = useThreadRuntime();
   const [hasText, setHasText] = useState(false);
@@ -914,6 +919,23 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                   />
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
+
+              {/* Upload Local File */}
+              <DropdownMenuItem
+                onClick={() => {
+                  handleLocalFileUpload({
+                    userInfo,
+                    onFileAttach,
+                    onAttachmentPayload,
+                    onError: (error) => console.error('Upload error:', error),
+                    onSuccess: (count) => console.log(`Successfully uploaded ${count} file(s)`)
+                  })
+                  setIsPlusMenuOpen(false)
+                }}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                <Typography variant="xs">Upload local file</Typography>
+              </DropdownMenuItem>
 
               {/* Image Model Submenu */}
               <DropdownMenuSub>
