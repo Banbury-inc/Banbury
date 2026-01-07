@@ -181,3 +181,21 @@ export function getDefaultModelForProvider(provider: ModelProvider): string {
   return "claude-sonnet-4-20250514"
 }
 
+// Default visible models - only the latest/best models from each provider
+export const DEFAULT_VISIBLE_MODELS = [
+  // OpenAI - Latest flagship and efficient models
+  "gpt-5.2",
+  "gpt-4o",
+  "gpt-4o-mini",
+  "o3",
+  "o3-mini",
+  // Anthropic - Latest models
+  "claude-opus-4-5-20251101",
+  "claude-sonnet-4-20250514",
+  "claude-3-5-sonnet-20241022",
+  // Google - Latest models
+  "gemini-2.0-flash-exp",
+  "gemini-1.5-pro",
+  "gemini-1.5-flash",
+]
+
