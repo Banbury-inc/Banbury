@@ -44,6 +44,7 @@ export function TaskComposer({ onBack, onTaskCreated }: TaskComposerProps) {
     date.setMonth(date.getMonth() + 1)
     return date
   })
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([])
   const [formData, setFormData] = useState<CreateTaskData>({
     title: '',
     description: '',
@@ -51,7 +52,8 @@ export function TaskComposer({ onBack, onTaskCreated }: TaskComposerProps) {
     scheduledDate: new Date(),
     estimatedDuration: 60,
     tags: [],
-    assignedTo: ''
+    assignedTo: '',
+    attachedFiles: []
   })
 
   const handleInputChange = (field: keyof CreateTaskData, value: string | number | Date) => {
@@ -66,6 +68,26 @@ export function TaskComposer({ onBack, onTaskCreated }: TaskComposerProps) {
     setFormData(prev => ({
       ...prev,
       tags
+    }))
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files) {
+      const newFiles = Array.from(files)
+      setAttachedFiles(prev => [...prev, ...newFiles])
+      setFormData(prev => ({
+        ...prev,
+        attachedFiles: [...(prev.attachedFiles || []), ...newFiles]
+      }))
+    }
+  }
+
+  const handleRemoveFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index))
+    setFormData(prev => ({
+      ...prev,
+      attachedFiles: (prev.attachedFiles || []).filter((_, i) => i !== index)
     }))
   }
 
@@ -163,8 +185,10 @@ export function TaskComposer({ onBack, onTaskCreated }: TaskComposerProps) {
         scheduledDate: new Date(),
         estimatedDuration: 60,
         tags: [],
-        assignedTo: ''
+        assignedTo: '',
+        attachedFiles: []
       })
+      setAttachedFiles([])
       setIsRecurring(false)
       setRecurringPattern('none')
       setEndDate(() => {
@@ -237,6 +261,38 @@ export function TaskComposer({ onBack, onTaskCreated }: TaskComposerProps) {
                 rows={3}
               />
             </div>
+
+            {/* File Attachments Section */}
+            <div>
+              <Label htmlFor="fileAttachment">Attach Files</Label>
+              <Input
+                id="fileAttachment"
+                type="file"
+                multiple
+                onChange={handleFileChange}
+                className="cursor-pointer"
+              />
+              {attachedFiles.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  {attachedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 bg-muted rounded-md text-sm"
+                    >
+                      <span className="truncate flex-1">{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFile(index)}
+                        className="ml-2 text-destructive hover:text-destructive/80"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div>
               <Label htmlFor="scheduledDate">Scheduled Date & Time</Label>
               <Input
