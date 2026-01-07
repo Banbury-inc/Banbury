@@ -95,7 +95,7 @@ export interface ComposerToolPreferences {
   generate_video: boolean;
   // System tools
   memory: boolean;
-  model_provider: "anthropic" | "openai";
+  model_provider: "anthropic" | "openai" | "google";
   model_id?: string;
   image_generation_model?: string;
   video_generation_model?: string;
@@ -1008,16 +1008,19 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                 <DropdownMenuSubContent className="w-72 p-1 max-h-96 overflow-y-auto">
                   {toolConfigs.map((tool) => {
                     const Icon = tool.icon
-                    const isEnabled = toolPreferences[tool.key] ?? tool.defaultEnabled
+                    const isEnabled = (toolPreferences[tool.key] as boolean) ?? tool.defaultEnabled
                     
                     return (
                       <div
                         key={tool.key}
                         className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
                         onClick={() => {
-                          onUpdateToolPreferences(
-                            toggleToolPreference(toolPreferences, tool.key as keyof typeof toolPreferences, isEnabled)
-                          )
+                          const toolKey = tool.key as keyof ComposerToolPreferences
+                          if (typeof toolPreferences[toolKey] === 'boolean') {
+                            onUpdateToolPreferences(
+                              toggleToolPreference(toolPreferences, toolKey, isEnabled)
+                            )
+                          }
                         }}
                       >
                         <span className="absolute right-2 flex size-3.5 items-center justify-center">
