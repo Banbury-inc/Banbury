@@ -113,10 +113,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     send({ type: 'thinking', message: 'Generating with Claude Skills…' })
 
     let response: any
+    let fullTextContent = ''
+
     try {
-      response = await messagesApi.create({
+      const stream = await messagesApi.create({
         model: modelId,
         max_tokens: 4096,
+        stream: true,
         container: {
           skills: [
             {
@@ -147,6 +150,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           name: 'code_execution'
         }]
       } as any, { headers: { 'anthropic-beta': anthropicBetaHeader } } as any)
+
+      // Process streaming events
+      for await (const event of stream) {
+        console.log('[Skills] Stream event:', event.type)
+
+        switch (event.type) {
+          case 'message_start':
+            // Message started
+            break
+
+          case 'content_block_start':
+            // New content block started
+            break
+
+          case 'content_block_delta':
+            // Streaming text delta
+            if (event.delta?.type === 'text_delta' && event.delta?.text) {
+              const text = event.delta.text
+              fullTextContent += text
+              send({
+                type: 'text-delta',
+                text: text
+              })
+            }
+            break
+
+          case 'content_block_stop':
+            // Content block ended
+            break
+
+          case 'message_delta':
+            // Message metadata update (usage, etc.)
+            break
+
+          case 'message_stop':
+            // Final message event - contains the complete response
+            response = event.message || (stream as any).finalMessage
+            break
+        }
+      }
+
+      // If response wasn't set in message_stop, try to get it from the stream
+      if (!response) {
+        response = (stream as any).finalMessage || (stream as any).message
+      }
+
     } finally {
       clearInterval(keepAlive)
       clearInterval(progress)
@@ -154,17 +203,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Log full response structure for debugging
     console.log('[Skills] Full response:', JSON.stringify(response, null, 2))
-    console.log('[Skills] Response content blocks:', response.content?.map((b: any) => ({ type: b.type, hasContent: !!b.content })))
-
-    // Stream text content
-    for (const block of response.content) {
-      if (block.type === 'text') {
-        send({
-          type: 'text-delta',
-          text: block.text
-        })
-      }
-    }
+    console.log('[Skills] Response content blocks:', response?.content?.map((b: any) => ({ type: b.type, hasContent: !!b.content })))
 
     // Check for generated files
     const fileIds = extractFileIds(response)
