@@ -26,6 +26,7 @@ interface VimModeHandlerParams {
   setHelpDialogOpen?: (open: boolean) => void
   toggleFullscreen?: () => void
   openUrlInCurrentCell?: () => void
+  stateRef?: React.MutableRefObject<VimState | null>
 }
 
 export function createVimModeHandler(params: VimModeHandlerParams) {
@@ -43,9 +44,11 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
     setHelpDialogOpen,
     toggleFullscreen,
     openUrlInCurrentCell,
+    stateRef,
   } = params
 
-  let state: VimState = {
+  // Use persistent state from ref if available, otherwise create new state
+  let state: VimState = stateRef?.current || {
     mode: 'normal',
     commandBuffer: '',
     pendingOperator: null,
@@ -53,6 +56,14 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
     yankType: null,
     visualStartCell: null,
   }
+  
+  // Store state in ref for persistence across handler recreations
+  if (stateRef) {
+    stateRef.current = state
+  }
+
+  // Track when we're intentionally entering insert mode to prevent Handsontable from closing the editor
+  let enteringInsertMode = false
 
   function getHot() {
     return hotTableRef.current?.hotInstance
@@ -80,7 +91,7 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
 
     // Handle active editor before navigation to prevent value loss
     const currentPos = getCurrentPosition()
-    if (currentPos) {
+    if (currentPos && !enteringInsertMode) {
       const editor = hot.getActiveEditor()
       if (editor && editor.isOpened && editor.isOpened()) {
         const editorValue = editor.getValue ? editor.getValue() : null
@@ -350,7 +361,12 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
     if (startEditing) {
       state.mode = 'insert'
       setTimeout(() => {
-        hot.getActiveEditor()?.beginEditing()
+        const editor = hot.getActiveEditor()
+        // Close editor first if it's already opened to avoid toggling behavior
+        if (editor?.isOpened?.() && !editor?.isInFullEditMode?.()) {
+          editor.close?.()
+        }
+        editor?.beginEditing()
       }, 0)
     }
   }
@@ -526,7 +542,12 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
         yankCells(cells)
         clearCells(cells)
         state.mode = 'insert'
-        hot.getActiveEditor()?.beginEditing()
+        const editor = hot.getActiveEditor()
+        // Close editor first if it's already opened to avoid toggling behavior
+        if (editor?.isOpened?.() && !editor?.isInFullEditMode?.()) {
+          editor.close?.()
+        }
+        editor?.beginEditing()
         return
       }
     }
@@ -573,7 +594,12 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
         yankCells(cells)
         clearCells(cells)
         state.mode = 'insert'
-        hot.getActiveEditor()?.beginEditing()
+        const ceditor = hot.getActiveEditor()
+        // Close editor first if it's already opened to avoid toggling behavior
+        if (ceditor?.isOpened?.() && !ceditor?.isInFullEditMode?.()) {
+          ceditor.close?.()
+        }
+        ceditor?.beginEditing()
         break
     }
   }
@@ -604,7 +630,12 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
           yankCells(cells)
           clearCells(cells)
           state.mode = 'insert'
-          hot.getActiveEditor()?.beginEditing()
+          const lineEditor = hot.getActiveEditor()
+          // Close editor first if it's already opened to avoid toggling behavior
+          if (lineEditor?.isOpened?.() && !lineEditor?.isInFullEditMode?.()) {
+            lineEditor.close?.()
+          }
+          lineEditor?.beginEditing()
           return
       }
     } else if (state.mode === 'visual-column') {
@@ -626,7 +657,12 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
           yankCells(cells)
           clearCells(cells)
           state.mode = 'insert'
-          hot.getActiveEditor()?.beginEditing()
+          const colEditor = hot.getActiveEditor()
+          // Close editor first if it's already opened to avoid toggling behavior
+          if (colEditor?.isOpened?.() && !colEditor?.isInFullEditMode?.()) {
+            colEditor.close?.()
+          }
+          colEditor?.beginEditing()
           return
       }
     } else {
@@ -652,7 +688,12 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
           clearCells(cells)
           state.mode = 'insert'
           state.visualStartCell = null
-          hot.getActiveEditor()?.beginEditing()
+          const vEditor = hot.getActiveEditor()
+          // Close editor first if it's already opened to avoid toggling behavior
+          if (vEditor?.isOpened?.() && !vEditor?.isInFullEditMode?.()) {
+            vEditor.close?.()
+          }
+          vEditor?.beginEditing()
           return
       }
     }
@@ -956,9 +997,24 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
 
       // Enter insert mode
       case 'i': {
+        enteringInsertMode = true
         state.mode = 'insert'
         const hot = getHot()
-        hot?.getActiveEditor()?.beginEditing()
+        const editor = hot?.getActiveEditor()
+        // If editor is partially open, enable full edit mode directly
+        if (editor?.isOpened?.() && !editor?.isInFullEditMode?.()) {
+          if (editor.enableFullEditMode) {
+            editor.enableFullEditMode()
+          }
+          const textarea = editor.TEXTAREA
+          if (textarea) {
+            textarea.focus()
+          }
+          setTimeout(() => { enteringInsertMode = false }, 50)
+        } else {
+          editor?.beginEditing()
+          setTimeout(() => { enteringInsertMode = false }, 50)
+        }
         state.commandBuffer = ''
         return true
       }
@@ -967,6 +1023,10 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
         state.mode = 'insert'
         const hot = getHot()
         const editor = hot?.getActiveEditor()
+        // Close editor first if it's already opened to avoid toggling behavior
+        if (editor?.isOpened?.() && !editor?.isInFullEditMode?.()) {
+          editor.close?.()
+        }
         editor?.beginEditing()
         setTimeout(() => {
           const textarea = editor?.TEXTAREA
@@ -984,7 +1044,12 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
         if (pos) moveToCell(pos.row, 0)
         state.mode = 'insert'
         const hot = getHot()
-        hot?.getActiveEditor()?.beginEditing()
+        const editor = hot?.getActiveEditor()
+        // Close editor first if it's already opened to avoid toggling behavior
+        if (editor?.isOpened?.() && !editor?.isInFullEditMode?.()) {
+          editor.close?.()
+        }
+        editor?.beginEditing()
         state.commandBuffer = ''
         return true
       }
@@ -994,7 +1059,12 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
         const hot = getHot()
         if (pos && hot) moveToCell(pos.row, hot.countCols() - 1)
         state.mode = 'insert'
-        hot?.getActiveEditor()?.beginEditing()
+        const editor = hot?.getActiveEditor()
+        // Close editor first if it's already opened to avoid toggling behavior
+        if (editor?.isOpened?.() && !editor?.isInFullEditMode?.()) {
+          editor.close?.()
+        }
+        editor?.beginEditing()
         state.commandBuffer = ''
         return true
       }
@@ -1073,6 +1143,7 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
     const key = event.key
 
     if (key === 'Escape' || key === 'Enter') {
+      enteringInsertMode = false
       state.mode = 'normal'
       const hot = getHot()
       hot?.getActiveEditor()?.finishEditing()
@@ -1178,6 +1249,10 @@ export function createVimModeHandler(params: VimModeHandlerParams) {
       yankRegister: null,
       yankType: null,
       visualStartCell: null,
+    }
+    // Update ref if using persistent state
+    if (stateRef) {
+      stateRef.current = state
     }
   }
 

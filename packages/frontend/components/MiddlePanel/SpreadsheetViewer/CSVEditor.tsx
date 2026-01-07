@@ -131,6 +131,9 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
 
   // Help dialog and editor focus state (declared early for vim handler)
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
+  
+  // Persistent vim state ref to survive handler recreation
+  const vimStateRef = useRef<{ mode: 'normal' | 'insert' | 'visual' | 'visual-line' | 'visual-column', commandBuffer: string, pendingOperator: string | null, yankRegister: any[][] | null, yankType: 'cells' | 'rows' | 'columns' | null, visualStartCell: { row: number, col: number } | null } | null>(null);
   const [isEditorFocused, setIsEditorFocused] = useState(true);
 
   const pendingCellMetaRef = useRef<Record<string, { 
@@ -650,8 +653,8 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   }, [applyCellStyle, removeCellStyle]);
 
   // Create vim mode handler with all callbacks
-  const vimModeHandler = useMemo(() =>
-    createVimModeHandler({
+  const vimModeHandler = useMemo(() => {
+    return createVimModeHandler({
       hotTableRef,
       setHasChanges,
       handleUndo,
@@ -665,7 +668,9 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
       setHelpDialogOpen,
       toggleFullscreen,
       openUrlInCurrentCell,
-    }), [
+      stateRef: vimStateRef,
+    });
+  }, [
       setHasChanges,
       handleUndo,
       handleRedo,
