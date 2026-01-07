@@ -383,9 +383,9 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto border border-zinc-200 dark:border-white/[0.06] rounded-lg">
+          <div className="hidden md:block max-h-[calc(100vh-300px)] overflow-auto border border-zinc-200 dark:border-white/[0.06] rounded-lg">
             <table className="w-full min-w-full">
-              <thead>
+              <thead className="sticky top-0 bg-card z-10">
                 <tr className="border-b border-zinc-200 dark:border-white/[0.06]">
                   {isColumnVisible('user') && (
                     <th 
