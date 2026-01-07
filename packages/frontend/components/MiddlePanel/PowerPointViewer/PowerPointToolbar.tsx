@@ -459,9 +459,14 @@ export function PowerPointToolbar({
 
   const handleTextBorderWidthChange = useCallback((width: number) => {
     if (selectedElement?.type === 'text') {
-      const color = selectedElement.border?.color || '#000000'
-      const updates = setTextBorder(selectedElement, color, width)
-      onUpdateElement(updates)
+      if (width === 0) {
+        const updates = clearTextBorder(selectedElement)
+        onUpdateElement(updates)
+      } else {
+        const color = selectedElement.border?.color || '#000000'
+        const updates = setTextBorder(selectedElement, color, width)
+        onUpdateElement(updates)
+      }
     }
   }, [selectedElement, onUpdateElement])
 
@@ -1069,7 +1074,7 @@ export function PowerPointToolbar({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="primary" size="xs" title="Border Width" className="min-w-[60px] ml-1 justify-between">
-                    <span className="text-xs">{selectedElement.border?.width || 1}pt</span>
+                    <span className="text-xs">{selectedElement.border?.width ?? 0}pt</span>
                     <ChevronDown size={14} className="ml-1" />
                   </Button>
                 </DropdownMenuTrigger>

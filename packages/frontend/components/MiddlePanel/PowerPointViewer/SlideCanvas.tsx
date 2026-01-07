@@ -626,8 +626,8 @@ function ElementRenderer({
         style={{
           ...baseStyles,
           background: element.textFill ? fillStyleToCSS(element.textFill) : element.fill ? (typeof element.fill === 'string' ? element.fill : fillStyleToCSS(element.fill)) : 'transparent',
-          border: element.border
-            ? strokeStyleToCSS(element.border, (element.border.width || 1) * scaleFactor)
+          border: element.border && element.border.width > 0
+            ? strokeStyleToCSS(element.border, element.border.width * scaleFactor)
             : element.stroke
               ? `${(element.strokeWidth || 1) * scaleFactor}px solid ${element.stroke}`
               : undefined,
@@ -781,8 +781,8 @@ function ElementRenderer({
           ...baseStyles,
           transform: rotation !== 0 ? `rotate(${rotation}deg)` : undefined,
           transformOrigin: 'center',
-          border: element.border
-            ? strokeStyleToCSS(element.border, (element.border.width || 1) * scaleFactor)
+          border: element.border && element.border.width > 0
+            ? strokeStyleToCSS(element.border, element.border.width * scaleFactor)
             : element.stroke
               ? `${(element.strokeWidth || 1) * scaleFactor}px solid ${element.stroke}`
               : '2px solid hsl(var(--muted))',

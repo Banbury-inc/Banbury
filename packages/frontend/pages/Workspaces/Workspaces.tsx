@@ -5,9 +5,10 @@ import { ClaudeRuntimeProvider } from '../../assistant/ClaudeRuntimeProvider/Cla
 import { LeftPanel } from "../../components/LeftPanel/LeftPanel";
 import { MiddlePanel } from "../../components/MiddlePanel/MiddlePanel";
 import { NavSidebar } from "../../components/nav-sidebar";
+import { WorkspacesTopBar } from "../../components/WorkspacesTopBar/WorkspacesTopBar";
 import { FileSystemItem } from '../../utils/fileTreeUtils';
 import 'allotment/dist/style.css';
-import { X, FolderOpen, Trash2, Menu, Files, MessageSquare, Brain, LogOut, UserStarIcon } from 'lucide-react';
+import { X, FolderOpen, Trash2, Menu, Files, MessageSquare, Brain, LogOut, UserStarIcon, PanelRight } from 'lucide-react';
 import BanburyLogo from '../../assets/images/Logo.png';
 import { SplitZones } from '../../components/common/SplitZones';
 import { useRouter } from 'next/router';
@@ -21,6 +22,7 @@ import { TooltipProvider } from "../../components/ui/tooltip";
 import { Toaster } from "../../components/ui/toaster";
 import { useToast } from "../../components/ui/use-toast";
 import { ApiService } from '../../../backend/api/apiService';
+import { AdminContent } from "../../components/AdminContent/AdminContent";
 import { extractEmailContent } from '../../utils/emailUtils';
 import { handleCreateSpreadsheet } from './handlers/handleCreateSpreadsheet';
 import { handleCreateWordDocument } from './handlers/handleCreateWordDocument';
@@ -41,7 +43,7 @@ import { handleReplyToEmail } from './handlers/handleReplyToEmail';
 import { handleComposeEmail } from './handlers/handleComposeEmail';
 import { loadConversations, saveCurrentConversation, loadConversation, deleteConversation } from './handlers/conversationManagement';
 import { findPanel, getAllTabs, updatePanelActiveTab, addTabToPanel, removeTabFromPanel } from './handlers/panelUtils';
-import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
+import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, openAdminInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
 import { isDrawioFile, isTldrawFile, isPowerPointFile } from './handlers/fileTypeUtils';
 import { createWorkspacesKeyboardHandler } from './handlers/createWorkspacesKeyboardHandler';
 import { Kbd, KbdGroup } from '../../components/ui/kbd';
@@ -97,7 +99,8 @@ const Workspaces = (): React.ReactNode => {
   const [isAssistantPanelCollapsed, setIsAssistantPanelCollapsed] = useState(false);
   const [isMac, setIsMac] = useState(false);
   const [fileSearchOpen, setFileSearchOpen] = useState(false);
-  
+  const [activeLeftPanelTab, setActiveLeftPanelTab] = useState<string>('files');
+
   // Left panel resize functionality
   const { leftPanelWidth, isResizing, handleResizeStart } = useLeftPanelResize({
     isFileSidebarCollapsed,
@@ -331,6 +334,19 @@ const Workspaces = (): React.ReactNode => {
       setSelectedEmail
     );
   }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout, setSelectedEmail]);
+
+  const openAdminInTabCallback = useCallback((adminTabType: string, targetPanelId: string = activePanelId) => {
+    openAdminInTab(
+      adminTabType,
+      targetPanelId,
+      panelLayout,
+      getAllTabs,
+      updatePanelActiveTab,
+      addTabToPanel,
+      setActivePanelId,
+      setPanelLayout
+    );
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
 
   const handleCloseTabCallback = useCallback((tabId: string, panelId: string) => {
     handleCloseTab(tabId, panelId, findPanel, removeTabFromPanel, setPanelLayout, setSelectedFile, setSelectedEmail);
@@ -1407,9 +1423,11 @@ const Workspaces = (): React.ReactNode => {
 
           {/* Navigation Sidebar - Fixed (hidden on mobile) */}
           <div className="hidden md:block">
-            <NavSidebar 
-              onLogout={handleLogout} 
-              onToggleLeftPanel={() => setIsFileSidebarCollapsed(prev => !prev)}
+            <NavSidebar
+              onLogout={handleLogout}
+              activeTab={activeLeftPanelTab}
+              onTabChange={setActiveLeftPanelTab}
+              showAdminToggle={userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com'}
             />
           </div>
           
@@ -1504,7 +1522,15 @@ const Workspaces = (): React.ReactNode => {
           )}
           
           {/* Main Content Area with Resizable Panels */}
-          <div className={`flex flex-1 ${isMobile ? 'pt-[44px]' : 'md:ml-16'} flex-col overflow-hidden min-h-0`}>
+          <div className={`flex flex-1 ${isMobile ? 'pt-[44px]' : 'md:ml-[48px]'} flex-col overflow-hidden min-h-0`}>
+            {/* Workspaces Top Bar */}
+            <WorkspacesTopBar
+              isFileSidebarCollapsed={isFileSidebarCollapsed}
+              isAssistantPanelCollapsed={isAssistantPanelCollapsed}
+              onToggleFileSidebar={() => setIsFileSidebarCollapsed(prev => !prev)}
+              onToggleAssistantPanel={() => setIsAssistantPanelCollapsed(prev => !prev)}
+            />
+
             {/* Mobile File Sidebar Drawer */}
             {isMobile && (
               <Sheet open={mobileFileSidebarOpen} onOpenChange={setMobileFileSidebarOpen}>
@@ -1514,9 +1540,15 @@ const Workspaces = (): React.ReactNode => {
                       <SheetTitle className="text-foreground mobile-text text-base font-semibold">Files</SheetTitle>
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <LeftPanel 
+                      <LeftPanel
                         currentView="workspaces"
                         userInfo={userInfo}
+                        activeTab={activeLeftPanelTab}
+                        onTabChange={setActiveLeftPanelTab}
+                        onAdminTabClick={(tabId) => {
+                          openAdminInTabCallback(tabId, activePanelId);
+                          setMobileFileSidebarOpen(false);
+                        }}
                         onFileSelect={(file) => {
                           handleFileSelect(file);
                           setMobileFileSidebarOpen(false);
@@ -1728,9 +1760,12 @@ const Workspaces = (): React.ReactNode => {
                         )}
                         {/* File Sidebar Content */}
                         <div className="flex-1 overflow-hidden">
-                          <LeftPanel 
+                          <LeftPanel
                             currentView="workspaces"
                             userInfo={userInfo}
+                            activeTab={activeLeftPanelTab}
+                            onTabChange={setActiveLeftPanelTab}
+                            onAdminTabClick={(tabId) => openAdminInTabCallback(tabId, activePanelId)}
                             onFileSelect={handleFileSelect}
                             selectedFile={selectedFile}
                             refreshTrigger={refreshTrigger}
@@ -1767,7 +1802,7 @@ const Workspaces = (): React.ReactNode => {
                 <div className="flex-1 min-w-0 overflow-hidden min-h-0">
                   <Allotment className="h-full">
                 
-                {/* Main Content Panel - Only show when files are open */}
+                {/* Main Content Panel - Show when tabs are open */}
                 {getAllTabs(panelLayout).length > 0 && (
                   <Allotment.Pane minSize={isMobile ? 300 : 400} preferredSize={isMobile ? 800 : 1200}>
                     <MiddlePanel

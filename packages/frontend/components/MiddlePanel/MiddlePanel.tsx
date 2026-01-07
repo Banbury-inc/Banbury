@@ -21,7 +21,7 @@ export function MiddlePanel({
   hasFilesOpen = true,
 }: MiddlePanelProps): JSX.Element {
   const isMobile = useIsMobile()
-  
+
   return (
     <main className="h-full bg-background relative border-0">
       {/* Expand button for file sidebar when collapsed - positioned on left border */}

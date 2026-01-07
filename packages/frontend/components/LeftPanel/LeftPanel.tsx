@@ -1,12 +1,4 @@
-import { 
-  Folder, 
-  Mail,
-  Calendar as CalendarIcon,
-  CheckSquare,
-  Video,
-} from "lucide-react"
 import { useRouter } from 'next/router'
-import { useState } from 'react'
 import { EmailTab } from "./components/EmailTab"
 import { CalendarTab } from "./components/CalendarTab"
 import { FilesTab } from "./components/FilesTab/FilesTab"
@@ -15,7 +7,7 @@ import { MeetingsTab } from "./components/MeetingsTab/MeetingsTab"
 import { FileSystemItem } from "../../utils/fileTreeUtils"
 import { Task } from "../../pages/TaskStudio/types"
 import { MeetingSession } from "../../types/meeting-types"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/old-tabs"
+import { adminTabs } from './components/AdminTabs/adminTabConfig'
 
 interface AppSidebarProps {
   currentView: 'dashboard' | 'workspaces'
@@ -23,6 +15,9 @@ interface AppSidebarProps {
     username: string
     email?: string
   } | null
+  activeTab?: string
+  onTabChange?: (tab: string) => void
+  onAdminTabClick?: (tabId: string) => void
   onFileSelect?: (file: FileSystemItem) => void
   selectedFile?: FileSystemItem | null
   onRefreshComplete?: () => void
@@ -54,62 +49,16 @@ interface AppSidebarProps {
   onJoinMeeting?: () => void
 }
 
-export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, onRefreshComplete, refreshTrigger, onFileDeleted, onFileRenamed, onFileMoved, onFolderCreated, onFolderRenamed, onFolderDeleted, triggerRootFolderCreation, onEmailSelect, onComposeEmail, onCreateDocument, onCreateSpreadsheet, onCreateNotebook, onCreateDrawio, onCreateTldraw, onCreatePowerpoint, onCreateFolder, onGenerateImage, onEventSelect, onOpenCalendar, onTaskSelect, selectedTask, onCreateTask, onMeetingSelect, selectedMeeting, onJoinMeeting }: AppSidebarProps) {
+export function LeftPanel({ currentView, userInfo, activeTab, onTabChange, onAdminTabClick, onFileSelect, selectedFile, onRefreshComplete, refreshTrigger, onFileDeleted, onFileRenamed, onFileMoved, onFolderCreated, onFolderRenamed, onFolderDeleted, triggerRootFolderCreation, onEmailSelect, onComposeEmail, onCreateDocument, onCreateSpreadsheet, onCreateNotebook, onCreateDrawio, onCreateTldraw, onCreatePowerpoint, onCreateFolder, onGenerateImage, onEventSelect, onOpenCalendar, onTaskSelect, selectedTask, onCreateTask, onMeetingSelect, selectedMeeting, onJoinMeeting }: AppSidebarProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<string>('files')
+  const currentActiveTab = activeTab || 'files'
 
   return (
     <div className="h-full w-full bg-card border-r border-zinc-200 dark:border-white/[0.06] flex flex-col relative z-10 shadow-soft left-panel-container">
-      {/* Search Bar - Above tabs */}
-      {/* {onFileSelect && (
-        <div className="px-4 py-3 bg-background border-b border-zinc-200 dark:border-white/[0.06]">
-          <InlineFileSearch
-            onFileSelect={onFileSelect}
-            onEmailSelect={onEmailSelect} />
-        </div>
-      )} */}
-      
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="mx-4 mt-3 tab-list-responsive bg-accent min-w-0 overflow-hidden">
-          <TabsTrigger value="files" className="flex items-center justify-center min-w-0 overflow-hidden flex-shrink-0" title="Files">
-            <Folder className="h-4 w-4 flex-shrink-0" strokeWidth={1} />
-          </TabsTrigger>
-          <TabsTrigger value="email" className="flex items-center justify-center min-w-0 overflow-hidden flex-shrink-0" title="Email">
-            <Mail className="h-4 w-4 flex-shrink-0" strokeWidth={1} />
-          </TabsTrigger>
-          <TabsTrigger value="calendar" className="flex items-center justify-center min-w-0 overflow-hidden flex-shrink-0" title="Calendar">
-            <CalendarIcon className="h-4 w-4 flex-shrink-0" strokeWidth={1} />
-          </TabsTrigger>
-          <TabsTrigger value="tasks" className="flex items-center justify-center min-w-0 overflow-hidden flex-shrink-0" title="Tasks">
-            <CheckSquare className="h-4 w-4 flex-shrink-0" strokeWidth={1} />
-          </TabsTrigger>
-          <TabsTrigger value="meetings" className="flex items-center justify-center min-w-0 overflow-hidden flex-shrink-0" title="Meetings">
-            <Video className="h-4 w-4 flex-shrink-0" strokeWidth={1} />
-          </TabsTrigger>
-        </TabsList>
-        
-        <style>{`
-          /* Container query setup */
-          .left-panel-container {
-            container-type: inline-size;
-            container-name: left-panel;
-          }
-          
-          /* Hide labels when panel width is less than 320px (adjusted for 5 tabs) */
-          @container left-panel (max-width: 320px) {
-            .tab-label {
-              display: none !important;
-            }
-            .tab-list-responsive button {
-              padding-left: 0.5rem;
-              padding-right: 0.5rem;
-            }
-          }
-        `}</style>
-
-        {activeTab === 'files' && (
-          <TabsContent value="files" className="flex-1 flex flex-col mt-0 overflow-hidden">
+      {/* Tab Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {currentActiveTab === 'files' && (
+          <div className="flex-1 flex flex-col mt-0 overflow-hidden">
             <FilesTab
               userInfo={userInfo}
               onFileSelect={onFileSelect}
@@ -131,48 +80,78 @@ export function LeftPanel({ currentView, userInfo, onFileSelect, selectedFile, o
               onCreatePowerpoint={onCreatePowerpoint}
               onCreateFolder={onCreateFolder}
             />
-          </TabsContent>
+          </div>
         )}
-        
-        {activeTab === 'email' && (
-          <TabsContent value="email" className="flex-1 flex flex-col mt-0 overflow-hidden">
+
+        {currentActiveTab === 'email' && (
+          <div className="flex-1 flex flex-col mt-0 overflow-hidden">
             <EmailTab 
               onOpenEmailApp={() => router.push('/email')} 
               onMessageSelect={onEmailSelect}
               onComposeEmail={onComposeEmail}
             />
-          </TabsContent>
+          </div>
         )}
-        
-        {activeTab === 'calendar' && (
-          <TabsContent value="calendar" className="flex-1 flex flex-col mt-0 overflow-hidden">
+
+        {currentActiveTab === 'calendar' && (
+          <div className="flex-1 flex flex-col mt-0 overflow-hidden">
             <CalendarTab 
               onOpenCalendarApp={onOpenCalendar}
               onEventSelect={onEventSelect}
             />
-          </TabsContent>
+          </div>
         )}
-        
-        {activeTab === 'tasks' && (
-          <TabsContent value="tasks" className="flex-1 flex flex-col mt-0 overflow-hidden">
+
+        {currentActiveTab === 'tasks' && (
+          <div className="flex-1 flex flex-col mt-0 overflow-hidden">
             <TasksTab
               onTaskSelect={onTaskSelect}
               selectedTask={selectedTask}
               onCreateTask={onCreateTask}
             />
-          </TabsContent>
+          </div>
         )}
-        
-        {activeTab === 'meetings' && (
-          <TabsContent value="meetings" className="flex-1 flex flex-col mt-0 overflow-hidden">
+
+        {currentActiveTab === 'meetings' && (
+          <div className="flex-1 flex flex-col mt-0 overflow-hidden">
             <MeetingsTab
               onMeetingSelect={onMeetingSelect}
               selectedMeeting={selectedMeeting}
               onJoinMeeting={onJoinMeeting}
             />
-          </TabsContent>
+          </div>
         )}
-      </Tabs>
+
+        {currentActiveTab === 'admin' && (
+          <div className="flex-1 flex flex-col mt-0 overflow-hidden">
+            <div className="h-full w-full bg-card">
+              {/* Admin Header */}
+              <div className="px-4 py-3 border-b border-zinc-200 dark:border-white/[0.06]">
+                <h2 className="text-lg font-semibold text-foreground">Admin Panel</h2>
+              </div>
+
+              {/* Admin Tab Navigation */}
+              <div className="flex-1 overflow-y-auto">
+                <div className="flex flex-col p-2 gap-1">
+                  {adminTabs.map((tab) => {
+                    const Icon = tab.icon
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => onAdminTabClick?.(tab.id)}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 text-muted-foreground hover:bg-accent dark:hover:bg-accent hover:text-foreground"
+                      >
+                        <Icon className="h-5 w-5 flex-shrink-0" strokeWidth={1.5} />
+                        <span className="text-sm font-medium">{tab.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

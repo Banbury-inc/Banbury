@@ -57,7 +57,14 @@ export interface MeetingTab {
   type: 'meeting'
 }
 
-export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab
+export interface AdminTab {
+  id: string
+  adminTabType: 'overview' | 'users' | 'analytics-overview' | 'visitors' | 'conversations' | 'filetypes' | 'api-usage' | 'engagement' | 'retention' | 'features' | 'errors'
+  title: string
+  type: 'admin'
+}
+
+export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab
 
 export interface Panel {
   id: string
@@ -86,4 +93,20 @@ export interface DragState {
   dropZone: 'left' | 'right' | 'top' | 'bottom' | null
   dropTargetPanel: string | null
 }
+
+// Left panel tab types
+export type WorkspaceLeftPanelTabId = 'files' | 'email' | 'calendar' | 'tasks' | 'meetings' | 'admin'
+export type AdminTabId =
+  | 'admin-overview'
+  | 'admin-users'
+  | 'admin-analytics-overview'
+  | 'admin-visitors'
+  | 'admin-conversations'
+  | 'admin-filetypes'
+  | 'admin-api-usage'
+  | 'admin-engagement'
+  | 'admin-retention'
+  | 'admin-features'
+  | 'admin-errors'
+export type LeftPanelTabId = WorkspaceLeftPanelTabId | AdminTabId
 

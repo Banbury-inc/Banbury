@@ -73,7 +73,7 @@ export function setTextBorder(element: SlideElement, color: string, width: numbe
  */
 export function clearTextBorder(element: SlideElement): Partial<SlideElement> {
   if (element.type !== 'text') return {}
-  return { border: undefined }
+  return { border: undefined, stroke: undefined, strokeWidth: undefined }
 }
 
 /**

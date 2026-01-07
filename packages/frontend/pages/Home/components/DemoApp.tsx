@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { LeftPanel } from '../../../components/LeftPanel/LeftPanel'
 import { RightPanel } from '../../../components/RightPanel/RightPanel'
 import { MiddlePanel } from '../../../components/MiddlePanel/MiddlePanel'
+import { NavSidebar } from '../../../components/nav-sidebar'
 import { PanelGroup, WorkspaceTab } from '../../Workspaces/types'
 import { FileSystemItem } from '../../../utils/fileTreeUtils'
 import { TooltipProvider } from '../../../components/ui/tooltip'
@@ -392,6 +393,7 @@ export default function DemoApp() {
   const [selectedEmail, setSelectedEmail] = useState<GmailMessage | null>(null)
   const [conversations, setConversations] = useState(mockConversations)
   const [panelLayoutState, setPanelLayoutState] = useState<PanelGroup>(panelLayout)
+  const [activeNavTab, setActiveNavTab] = useState('files')
 
   // Cleanup mocks on unmount
   useEffect(() => {
@@ -410,6 +412,10 @@ export default function DemoApp() {
 
   const handleToggleAssistantPanel = () => {
     setIsAssistantPanelCollapsed(!isAssistantPanelCollapsed)
+  }
+
+  const handleNavTabChange = (tab: string) => {
+    setActiveNavTab(tab)
   }
 
   const handleFileSelect = (file: FileSystemItem) => {
@@ -722,6 +728,14 @@ export default function DemoApp() {
           />
           
           <div className="h-[500px] sm:h-[600px] lg:h-[600px] w-full max-w-7xl flex overflow-hidden rounded-lg sm:rounded-xl border border-white/10 sm:border-2 shadow-xl sm:shadow-2xl bg-zinc-900/50 backdrop-blur-sm relative z-10">
+        {/* Nav Sidebar - Wrapper to contain fixed positioning within demo */}
+        <div className="relative h-full w-[48px] flex-shrink-0 overflow-hidden [&_.fixed]:!absolute">
+          <NavSidebar 
+            activeTab={activeNavTab}
+            onTabChange={handleNavTabChange}
+            showAdminToggle={false}
+          />
+        </div>
         {/* Left Panel */}
         <div 
           className={`h-full flex-shrink-0 hidden md:block transition-all duration-300 ease-in-out overflow-hidden ${

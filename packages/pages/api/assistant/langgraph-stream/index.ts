@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next"
 import { SystemMessage, HumanMessage, ChatMessage } from "@langchain/core/messages"
-import { createReactAgentForProvider } from "./agent/agent"
+import { createReactAgentForProvider, createDocumentAgentForProvider } from "./agent/agent"
 import { runWithServerContext } from "../../../../frontend/assistant/langraph/serverContext"
 import type { StreamRequestBody } from "./types"
-import { SYSTEM_PROMPT, API_CONFIG } from "./constants"
+import { SYSTEM_PROMPT, DOCUMENT_SYSTEM_PROMPT, API_CONFIG } from "./constants"
 import { normalizeMessages } from "./handlers/normalizeMessages"
 import { enrichWithDocumentContext } from "./handlers/enrichWithDocumentContext"
 import { downloadFiles } from "./handlers/downloadFiles"
@@ -12,7 +12,7 @@ import { normalizeToolPreferences } from "./handlers/normalizeToolPreferences"
 import { processStreamChunk } from "./handlers/processStreamChunk"
 import { parseErrorMessage } from "./handlers/parseErrorMessage"
 import { detectDocumentRequest } from "../claude-skills-stream/handlers/detectDocumentRequest"
-import claudeSkillsHandler from "../claude-skills-stream"
+// NOTE: Claude Skills routing removed - document requests now use local pptxgenjs-based generation
 
 export const config = API_CONFIG
 
@@ -60,17 +60,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // #endregion
     const modelProvider = normalizedToolPreferences.model_provider === "openai" ? "openai" : normalizedToolPreferences.model_provider === "google" ? "google" : "anthropic"
 
-    // SKILLS MODE ROUTING: Route to Claude Skills endpoint if conditions are met
-    const isAnthropicProvider = modelProvider === "anthropic"
-    const useSkills = normalizedToolPreferences.use_skills === true
+    // Detect if this is a document-related request (will be used to select appropriate system prompt)
     const isDocumentRequest = detectDocumentRequest(body.messages)
 
-    if (isAnthropicProvider && useSkills && isDocumentRequest) {
-      // Route to Skills endpoint for document generation
-      return claudeSkillsHandler(req, res)
-    }
-
-    // Continue with legacy LangGraph mode for all other requests
+    // All requests now use local tools (pptxgenjs for PPTX, etc.) instead of Claude Skills
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:56',message:'Model provider determination',data:{normalizedProvider:normalizedToolPreferences.model_provider,determinedProvider:modelProvider,modelId:normalizedToolPreferences.model_id},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'C'})}).catch(()=>{});
     // #endregion
@@ -93,7 +86,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const dateTimeSuffix = body.dateTimeContext
         ? `\n\nCurrent date and time: ${body.dateTimeContext.formatted}. ISO timestamp: ${body.dateTimeContext.isoString}`
         : ""
-      const systemText = SYSTEM_PROMPT + dateTimeSuffix
+      // Use document-specialized prompt for document requests, general prompt otherwise
+      const basePrompt = isDocumentRequest ? DOCUMENT_SYSTEM_PROMPT : SYSTEM_PROMPT
+      const systemText = basePrompt + dateTimeSuffix
       // Google's API doesn't support SystemMessage - convert to ChatMessage for Google provider
       if (modelProvider === "google") {
         const systemAsUserMessage = new ChatMessage({ content: `System: ${systemText}`, role: "human" })
@@ -120,11 +115,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         webSearchDefaults: body.webSearchOptions || {}
       }, async () => {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:87',message:'Before createReactAgentForProvider',data:{modelProvider,allMessagesCount:allMessages.length,firstMessageType:allMessages[0]?._getType?.()},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'C'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:87',message:'Before createReactAgentForProvider',data:{modelProvider,isDocumentRequest,allMessagesCount:allMessages.length,firstMessageType:allMessages[0]?._getType?.()},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'C'})}).catch(()=>{});
         // #endregion
-        const reactAgent = createReactAgentForProvider(modelProvider)
+        // Use document-specialized agent for document requests, general agent otherwise
+        const reactAgent = isDocumentRequest 
+          ? createDocumentAgentForProvider(modelProvider)
+          : createReactAgentForProvider(modelProvider)
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:89',message:'After createReactAgentForProvider, before stream',data:{modelProvider},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'C'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:89',message:'After createAgent, before stream',data:{modelProvider,isDocumentRequest,agentType:isDocumentRequest?'document':'general'},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'C'})}).catch(()=>{});
         // #endregion
         // Use a custom streaming approach for character-by-character updates
         // #region agent log

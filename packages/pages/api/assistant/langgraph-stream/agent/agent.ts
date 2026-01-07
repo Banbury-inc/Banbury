@@ -78,6 +78,7 @@ import {
   githubGetFileContentsTool,
   githubSearchCodeTool,
 } from "./tools/githubTools";
+import { pptxParseOutlineTool } from "./tools/pptxParseOutlineTool";
 
 // Define our agent state
 interface AgentState {
@@ -147,6 +148,37 @@ export function createReactAgentForProvider(provider: ModelProvider) {
   const modelId = resolveModelId()
   const llm = createChatModel(provider, modelId)
   return createReactAgent({ llm, tools })
+}
+
+/**
+ * Document-specialized tools for document creation/editing requests.
+ * This is a constrained toolset focused on document operations.
+ */
+const documentTools = [
+  // Core document creation/editing tools
+  createFileTool,
+  pptxAiTool,
+  pptxParseOutlineTool, // Parse attached PPTX files to understand structure before editing
+  sheetAiTool,
+  docxAiTool,
+  tldrawAiTool,
+  // Supporting tools that may be needed for document tasks
+  webSearchTool, // For research when creating documents
+  searchFilesTool, // To find existing files to reference
+  downloadFromUrlTool, // To download images/assets for documents
+  generateImageTool, // To generate images for documents
+  createFolderTool, // To organize created documents
+  getCurrentDateTimeTool, // For date-aware documents
+]
+
+/**
+ * Creates a document-specialized React agent with a constrained toolset.
+ * Used when detectDocumentRequest() returns true.
+ */
+export function createDocumentAgentForProvider(provider: ModelProvider) {
+  const modelId = resolveModelId()
+  const llm = createChatModel(provider, modelId)
+  return createReactAgent({ llm, tools: documentTools })
 }
 
 // Function to get current date/time context

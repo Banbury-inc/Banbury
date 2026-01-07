@@ -30,6 +30,7 @@ import { TaskViewer } from '../../../components/MiddlePanel/TaskViewer/TaskViewe
 import { TaskComposer } from '../../../components/MiddlePanel/TaskViewer/TaskComposer';
 import { MeetingViewer } from '../../../components/MiddlePanel/MeetingViewer/MeetingViewer';
 import { MeetingJoinComposer } from '../../../components/MiddlePanel/MeetingViewer/MeetingJoinComposer';
+import { AdminContent } from '../../../components/AdminContent/AdminContent';
 
 interface RenderPanelProps {
   panel: Panel;
@@ -127,6 +128,7 @@ export const renderPanel = ({
                 else if (t.type === 'ai') label = t.label;
                 else if (t.type === 'task') label = t.title;
                 else if (t.type === 'meeting') label = t.title;
+                else if (t.type === 'admin') label = t.title;
                 return { id: t.id, label };
               })}
               activeTab={panel.activeTabId || panel.tabs[0]?.id}
@@ -526,7 +528,16 @@ export const renderPanel = ({
                     );
                   }
                 }
-                
+
+                // Handle admin tabs
+                if (tab.type === 'admin') {
+                  return (
+                    <div className="h-full overflow-y-auto">
+                      <AdminContent activeTab={`admin-${tab.adminTabType}`} />
+                    </div>
+                  );
+                }
+
                 return null;
               }
               
