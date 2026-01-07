@@ -60,12 +60,61 @@ export const taskHandlers = {
   // Create a new task
   createTask: async (taskData: CreateTaskData): Promise<Task> => {
     try {
-      const response = await ApiService.post<TaskResponse>('/tasks/taskstudio/create/', taskData)
-      
+      // If there are attached files, upload them first
+      let fileIds: string[] = []
+      if (taskData.attachedFiles && taskData.attachedFiles.length > 0) {
+        const token = localStorage.getItem('authToken')
+        const username = localStorage.getItem('username')
+
+        if (!token || !username) {
+          throw new Error('Authentication required to upload files')
+        }
+
+        // Upload each file to S3
+        const uploadPromises = taskData.attachedFiles.map(async (file) => {
+          const formData = new FormData()
+          formData.append('file', file)
+          formData.append('device_name', username)
+          formData.append('file_path', `tasks/${file.name}`)
+          formData.append('file_parent', 'tasks')
+
+          const uploadResponse = await fetch(`${ApiService.baseURL}/files/upload_to_s3/`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formData
+          })
+
+          if (!uploadResponse.ok) {
+            throw new Error(`Failed to upload file: ${file.name}`)
+          }
+
+          const uploadData = await uploadResponse.json()
+          return uploadData.file_id
+        })
+
+        fileIds = await Promise.all(uploadPromises)
+      }
+
+      // Create task with file IDs
+      const taskPayload = {
+        title: taskData.title,
+        description: taskData.description,
+        priority: taskData.priority,
+        scheduledDate: taskData.scheduledDate,
+        estimatedDuration: taskData.estimatedDuration,
+        tags: taskData.tags,
+        assignedTo: taskData.assignedTo,
+        fileIds: fileIds.length > 0 ? fileIds : undefined
+      }
+
+      const response = await ApiService.post<TaskResponse>('/tasks/taskstudio/create/', taskPayload)
+
       if (!response.success) {
         throw new Error(response.error || 'Failed to create task')
       }
-      
+
       const t: any = response.task
       return {
         ...t,

@@ -26,6 +26,7 @@ export interface CreateTaskData {
   estimatedDuration: number
   tags?: string[]
   assignedTo?: string
+  attachedFiles?: File[]
 }
 
 export interface UpdateTaskData {
