@@ -20,6 +20,7 @@ import { createTableOperationsHandlers } from './handlers/handle-table-operation
 import { handleEditDropdownOptions } from './handlers/handle-edit-dropdown-options';
 import { parseCSV, convertToCSV, convertToCSVWithMeta } from './utils/csv-parser';
 import { createFormulaSuggestionHandlers } from './handlers/handle-formula-suggestions';
+import { createFormulaNavigationHandler } from './handlers/handle-formula-navigation';
 import CSVEditorToolbar from './components/CSVEditorToolbar';
 import { SheetTabs } from './components/SheetTabs';
 import { Button } from '../../ui/button'
@@ -416,12 +417,26 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
     }
   }, []); // Remove data dependency to prevent infinite re-renders
 
+  // Create formula navigation handler
+  const formulaNavigationHandler = useMemo(() => {
+    return createFormulaNavigationHandler({
+      hotTableRef,
+    });
+  }, []);
+
   // Attach formula suggestions to the in-cell editor lifecycle
   useEffect(() => {
     const { attach, detach } = createFormulaSuggestionHandlers({ hotTableRef })
     attach()
     return () => detach()
   }, [])
+
+  // Attach formula navigation handlers
+  useEffect(() => {
+    const { attach, detach } = formulaNavigationHandler
+    attach()
+    return () => detach()
+  }, [formulaNavigationHandler])
 
   // Conditional formatting handlers
   const getConditionalRules = useCallback(() => conditionalRules, [conditionalRules])
@@ -1251,7 +1266,8 @@ const searchFieldKeyupCallback = useCallback(
       handleClear,
       setHelpDialogOpen,
       isVimMode,
-      vimModeHandler
+      vimModeHandler,
+      formulaNavigationHandler
     });
 
     document.addEventListener('keydown', keyboardHandler);
@@ -1278,7 +1294,8 @@ const searchFieldKeyupCallback = useCallback(
     handleClear,
     setHelpDialogOpen,
     isVimMode,
-    vimModeHandler
+    vimModeHandler,
+    formulaNavigationHandler
   ]);
 
   // Simple Conditional Formatting Dialog state

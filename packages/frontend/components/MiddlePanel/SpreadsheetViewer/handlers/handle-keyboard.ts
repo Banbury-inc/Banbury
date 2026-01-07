@@ -1,4 +1,5 @@
 import { createVimModeHandler } from './handle-vim-mode'
+import { createFormulaNavigationHandler } from './handle-formula-navigation'
 
 interface KeyboardHandlerParams {
   isEditorFocused: boolean
@@ -20,6 +21,7 @@ interface KeyboardHandlerParams {
   setHelpDialogOpen: (open: boolean) => void
   isVimMode?: boolean
   vimModeHandler?: ReturnType<typeof createVimModeHandler>
+  formulaNavigationHandler?: ReturnType<typeof createFormulaNavigationHandler>
 }
 
 export function createKeyboardHandler({
@@ -41,12 +43,23 @@ export function createKeyboardHandler({
   handleClear,
   setHelpDialogOpen,
   isVimMode,
-  vimModeHandler
+  vimModeHandler,
+  formulaNavigationHandler
 }: KeyboardHandlerParams) {
   return function handleKeyDown(event: KeyboardEvent) {
     // Only handle shortcuts when the editor is focused
     if (!isEditorFocused) {
       return
+    }
+
+    // Formula navigation mode delegation (takes precedence over vim mode)
+    if (formulaNavigationHandler?.isFormulaNavigationActive()) {
+      const handled = formulaNavigationHandler.handleKeyDown(event)
+      if (handled) {
+        event.preventDefault()
+        event.stopPropagation()
+        return
+      }
     }
 
     // Vim mode delegation

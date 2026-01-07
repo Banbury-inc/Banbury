@@ -66,7 +66,7 @@ export function SlidePanel({
   }, [showContextMenu, slides.length, onDeleteSlide, onDuplicateSlide, onInsertSlideBefore, onInsertSlideAfter])
 
   return (
-    <div className="w-48 border-r overflow-y-auto flex flex-col gap-2 p-2">
+    <div className="h-full border-r overflow-y-auto flex flex-col gap-2 p-2">
       <div className="text-xs font-medium text-muted-foreground px-2 py-1">
         Slides
       </div>

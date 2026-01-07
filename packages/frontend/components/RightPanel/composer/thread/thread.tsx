@@ -48,6 +48,7 @@ import {
   parseKeyString,
   type KeybindsState,
 } from "../../../modals/settings-tabs/handlers/keybindHandlers";
+import { isViewableFileExtended } from "../../../../pages/Workspaces/handlers/fileTypeUtils";
 
 import type { FC } from "react";
 
@@ -554,24 +555,8 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         return;
       }
       
-      // Only attach if it's a viewable file type (aligned with Workspaces)
-      const isViewableFile = (fileName: string): boolean => {
-        const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'];
-        const documentExtensions = ['.docx', '.doc', '.pdf'];
-        const spreadsheetExtensions = ['.csv', '.xlsx', '.xls'];
-        const presentationExtensions = ['.pptx', '.ppt'];
-        const canvasExtensions = ['.tldraw'];
-        const codeExtensions = [
-          '.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala',
-          '.html', '.htm', '.css', '.scss', '.sass', '.less', '.xml', '.json', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf', '.sh', '.bash', '.zsh', '.fish',
-          '.sql', '.r', '.m', '.mat', '.ipynb', '.jl', '.dart', '.lua', '.pl', '.pm', '.tcl', '.vbs', '.ps1', '.bat', '.cmd', '.coffee', '.litcoffee', '.iced',
-          '.md', '.markdown', '.tex', '.rtex', '.bib', '.vue', '.svelte'
-        ];
-        const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
-        return [...imageExtensions, ...documentExtensions, ...spreadsheetExtensions, ...presentationExtensions, ...canvasExtensions, ...codeExtensions].includes(extension);
-      };
-      
-      if (isViewableFile(selectedFile.name)) {
+      // Only attach if it's a viewable file type (supports local, Drive, and OneDrive files)
+      if (isViewableFileExtended(selectedFile)) {
         // Use handleFileAttach which includes duplicate checking (checks attachedFiles state)
         // This provides a second layer of protection against duplicates
         handleFileAttach(selectedFile);

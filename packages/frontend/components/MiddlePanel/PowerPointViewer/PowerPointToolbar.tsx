@@ -72,6 +72,7 @@ import {
   Save,
   Download,
   Share2,
+  Play,
   RefreshCw,
   MoreHorizontal,
   ChevronDown,
@@ -138,6 +139,7 @@ interface PowerPointToolbarProps {
   onSave: () => void
   onDownload: () => void
   onShare?: () => void
+  onStartPresentation?: () => void
   saving: boolean
   hasUnsavedChanges: boolean
   
@@ -170,6 +172,7 @@ export function PowerPointToolbar({
   onSave,
   onDownload,
   onShare,
+  onStartPresentation,
   saving,
   hasUnsavedChanges,
   currentTemplateId,
@@ -1331,6 +1334,22 @@ export function PowerPointToolbar({
       <div className="flex items-center gap-1 flex-shrink-0 whitespace-nowrap ml-2">
         <div className="w-px h-6 bg-border mx-2" />
 
+        {/* Present Button */}
+        {onStartPresentation && (
+          <>
+            <Button
+              variant="default"
+              size="xs"
+              onClick={onStartPresentation}
+              className="gap-1"
+              title="Start Presentation"
+            >
+              <Play size={14} />
+              Present
+            </Button>
+            <div className="w-px h-6 bg-border mx-2" />
+          </>
+        )}
 
         {/* Share, Save & Download */}
         <div className="flex items-center gap-1">

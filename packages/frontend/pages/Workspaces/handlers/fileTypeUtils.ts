@@ -153,16 +153,18 @@ export const isDriveFileViewable = (mimeType?: string, fileName?: string): boole
          isDrivePresentationFile(mimeType)
 }
 
-// Extended isViewableFile that handles both local and Drive files
+// Extended isViewableFile that handles local, Drive, and OneDrive files
 export const isViewableFileExtended = (file: { name: string; path?: string; mimeType?: string }): boolean => {
   // Check if it's a Drive file
   const isDriveFile = file.path?.startsWith('drive://')
-  
-  if (isDriveFile) {
-    // Use Drive-specific detection
+  // Check if it's a OneDrive file
+  const isOneDriveFile = file.path?.startsWith('onedrive://')
+
+  if (isDriveFile || isOneDriveFile) {
+    // Use mimeType-based detection for cloud providers
     return isDriveFileViewable(file.mimeType, file.name)
   }
-  
+
   // Use local file detection
   return isViewableFile(file.name)
 }

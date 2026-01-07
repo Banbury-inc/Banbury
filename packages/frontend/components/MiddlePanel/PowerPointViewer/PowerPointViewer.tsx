@@ -5,6 +5,7 @@ import { FileSystemItem } from '../../../utils/fileTreeUtils'
 import { SlidePanel } from './SlidePanel'
 import { SlideCanvas } from './SlideCanvas'
 import { PowerPointToolbar } from './PowerPointToolbar'
+import { SlideshowPresenter } from './SlideshowPresenter'
 import { handlePowerPointSave } from './handlers/handle-powerpoint-save'
 import { slidesToPptx } from './utils/pptx-export-utils'
 import {
@@ -23,6 +24,7 @@ import {
 } from './handlers/powerpoint-image-handlers'
 import { Card } from '../../ui/card'
 import { ContextMenuProvider } from '../../ui/context-menu'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../../ui/resizable'
 import {
   duplicateSlide,
   insertSlideBefore,
@@ -171,6 +173,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
   const [currentFile, setCurrentFile] = useState<FileSystemItem>(file)
   const [undoAvailable, setUndoAvailable] = useState(false)
   const [redoAvailable, setRedoAvailable] = useState(false)
+  const [isPresentingSlideshow, setIsPresentingSlideshow] = useState(false)
   const { toast } = useToast()
   const lastFetchKeyRef = useRef<string | null>(null)
 
@@ -1258,6 +1261,15 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     setSelectedElementId(null)
   }, [slides.length])
 
+  // Slideshow handlers
+  const handleStartPresentation = useCallback(() => {
+    setIsPresentingSlideshow(true)
+  }, [])
+
+  const handleExitPresentation = useCallback(() => {
+    setIsPresentingSlideshow(false)
+  }, [])
+
   // Keyboard navigation and shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1326,9 +1338,16 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
 
   return (
     <ContextMenuProvider>
-      <div className="h-full flex flex-col bg-card">
-        {/* Toolbar */}
-        <PowerPointToolbar
+      {isPresentingSlideshow ? (
+        <SlideshowPresenter
+          slides={slides}
+          initialSlideIndex={currentSlideIndex}
+          onExit={handleExitPresentation}
+        />
+      ) : (
+        <div className="h-full flex flex-col bg-card">
+          {/* Toolbar */}
+          <PowerPointToolbar
           slides={slides}
           currentSlideIndex={currentSlideIndex}
           currentSlide={currentSlide}
@@ -1352,49 +1371,62 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
           canRedo={redoAvailable}
           onSave={handleSave}
           onDownload={handleDownload}
+          onStartPresentation={handleStartPresentation}
           saving={saving}
           hasUnsavedChanges={hasUnsavedChanges}
         />
 
         {/* Main content area */}
-        <div className="flex-1 flex overflow-hidden">
+        <ResizablePanelGroup direction="horizontal" className="flex-1 overflow-hidden">
           {/* Slide panel (thumbnails) */}
-          <SlidePanel
-            slides={slides}
-            currentSlideIndex={currentSlideIndex}
-            onSlideSelect={handleSlideSelect}
-            onSlidesReorder={(fromIndex, toIndex) => {
-              saveToHistory()
-              setSlides(prev => {
-                const newSlides = [...prev]
-                const [moved] = newSlides.splice(fromIndex, 1)
-                newSlides.splice(toIndex, 0, moved)
-                return newSlides.map((s, i) => ({ ...s, index: i }))
-              })
-              setHasUnsavedChanges(true)
-            }}
-            onDeleteSlide={handleDeleteSlideByIndex}
-            onDuplicateSlide={handleDuplicateSlide}
-            onInsertSlideBefore={handleInsertSlideBefore}
-            onInsertSlideAfter={handleInsertSlideAfter}
-          />
+          <ResizablePanel
+            defaultSize={Number(localStorage.getItem('pptSlidePanelSize')) || 20}
+            minSize={15}
+            maxSize={35}
+            onResize={(size) => localStorage.setItem('pptSlidePanelSize', size.toString())}
+          >
+            <SlidePanel
+              slides={slides}
+              currentSlideIndex={currentSlideIndex}
+              onSlideSelect={handleSlideSelect}
+              onSlidesReorder={(fromIndex, toIndex) => {
+                saveToHistory()
+                setSlides(prev => {
+                  const newSlides = [...prev]
+                  const [moved] = newSlides.splice(fromIndex, 1)
+                  newSlides.splice(toIndex, 0, moved)
+                  return newSlides.map((s, i) => ({ ...s, index: i }))
+                })
+                setHasUnsavedChanges(true)
+              }}
+              onDeleteSlide={handleDeleteSlideByIndex}
+              onDuplicateSlide={handleDuplicateSlide}
+              onInsertSlideBefore={handleInsertSlideBefore}
+              onInsertSlideAfter={handleInsertSlideAfter}
+            />
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
 
           {/* Main slide canvas */}
-          <div className="flex-1 overflow-auto">
-            <Card className="w-full h-full flex items-center justify-center bg-muted/50">
-              {currentSlide && (
-                <SlideCanvas
-                  slide={currentSlide}
-                  onUpdateElements={handleUpdateSlide}
-                  selectedElementId={selectedElementId}
-                  onSelectElement={setSelectedElementId}
-                  onTextSelectionChange={setTextSelection}
-                />
-              )}
-            </Card>
-          </div>
+          <ResizablePanel defaultSize={80}>
+            <div className="flex-1 overflow-auto h-full">
+              <Card className="w-full h-full flex items-center justify-center bg-muted/50">
+                {currentSlide && (
+                  <SlideCanvas
+                    slide={currentSlide}
+                    onUpdateElements={handleUpdateSlide}
+                    selectedElementId={selectedElementId}
+                    onSelectElement={setSelectedElementId}
+                    onTextSelectionChange={setTextSelection}
+                  />
+                )}
+              </Card>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
         </div>
-      </div>
+      )}
     </ContextMenuProvider>
   )
 }
