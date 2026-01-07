@@ -301,7 +301,6 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="text-foreground font-medium text-sm truncate">
-                            {user.first_name} {user.last_name}
                           </div>
                           <div className="text-muted-foreground text-xs truncate">@{user.username}</div>
                           {user.email && (
@@ -546,7 +545,6 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
                             <div className="text-foreground font-medium text-sm truncate">
                               {user.first_name} {user.last_name}
                             </div>
-                            <div className="text-muted-foreground text-xs truncate">@{user.username}</div>
                           </div>
                         </div>
                       </td>
@@ -643,7 +641,7 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
                       </td>
                     )}
                     {isColumnVisible('lastLogin') && (
-                      <td className="py-2 px-1 text-center text-muted-foreground text-xs">
+                      <td className="py-2 px-1 text-center text-muted-foreground text-xs whitespace-nowrap">
                         {user.lastLoginDate ? convertToEasternTime(user.lastLoginDate) : 'Never'}
                       </td>
                     )}
@@ -653,7 +651,7 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
                       </td>
                     )}
                     {isColumnVisible('lastWorkspaceVisit') && (
-                      <td className="py-2 px-1 text-center text-muted-foreground text-xs">
+                      <td className="py-2 px-1 text-center text-muted-foreground text-xs whitespace-nowrap">
                         {user.lastWorkspaceVisitDate ? convertToEasternTime(user.lastWorkspaceVisitDate) : 'Never'}
                       </td>
                     )}
