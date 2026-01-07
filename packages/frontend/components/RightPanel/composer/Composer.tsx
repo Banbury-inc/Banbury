@@ -934,7 +934,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                 }}
               >
                 <Upload className="mr-2 h-4 w-4" />
-                <Typography variant="xs">Upload local file</Typography>
+                <Typography variant="xs">Upload file</Typography>
               </DropdownMenuItem>
 
               {/* Image Model Submenu */}
