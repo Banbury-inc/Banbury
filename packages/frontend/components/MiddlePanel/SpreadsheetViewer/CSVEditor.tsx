@@ -11,6 +11,8 @@ import { createBorderHandlers } from './handlers/handle-borders';
 import { createFormatHandlers } from './handlers/handle-formats';
 import { createFontHandlers } from './handlers/handle-font';
 import { createKeyboardHandler } from './handlers/handle-keyboard';
+import { createVimModeHandler } from './handlers/handle-vim-mode';
+import type { VimMode } from './handlers/handle-vim-mode';
 import { createCSVLoadHandler } from './handlers/handle-csv-load';
 import { createFormulaEngine } from './handlers/handle-formulas';
 import { createCopyPasteHandlers } from './handlers/handle-copy-paste';
@@ -34,6 +36,8 @@ import { ChartEditor } from './components/ChartEditor';
 import { createChartHandlers, extractChartData } from './handlers/handle-charts';
 import type { ChartDefinition } from './types/chart-types';
 import { createLinkHandlers } from './handlers/handle-links';
+import { createFullscreenHandler } from './handlers/handle-fullscreen';
+import { createOpenCellUrlHandler } from './handlers/handle-open-cell-url';
 // Register all Handsontable modules
 registerAllModules();
 
@@ -117,6 +121,17 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   const [searchResultCount, setSearchResultCount] = useState(0);
   const searchMatchesRef = useRef<Array<{ row: number; col: number }>>([]);
   const searchCurrentIndexRef = useRef<number>(-1);
+
+  // Vim mode state
+  const [isVimMode, setIsVimMode] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('vimMode') === 'true'
+  })
+  const [vimDisplayMode, setVimDisplayMode] = useState<VimMode>('normal')
+
+  // Help dialog and editor focus state (declared early for vim handler)
+  const [helpDialogOpen, setHelpDialogOpen] = useState(false);
+  const [isEditorFocused, setIsEditorFocused] = useState(true);
 
   const pendingCellMetaRef = useRef<Record<string, { 
     type: 'dropdown' | 'checkbox' | 'numeric' | 'date' | 'text'; 
@@ -267,6 +282,15 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
       setFormulaEngine(engine)
     })()
     return () => { active = false }
+  }, [])
+
+  // Listen for vim mode changes from settings
+  useEffect(() => {
+    function handleStorageChange() {
+      setIsVimMode(localStorage.getItem('vimMode') === 'true')
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
   useEffect(() => {
@@ -587,6 +611,84 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
     }), [setHasChanges]
   );
 
+  // Fullscreen and URL handlers for vim mode
+  const { toggleFullscreen } = useMemo(() => 
+    createFullscreenHandler({ containerRef }), [containerRef]
+  );
+
+  const { openUrlInCurrentCell } = useMemo(() => 
+    createOpenCellUrlHandler({ hotTableRef }), []
+  );
+
+  // Wrap option handler for vim mode
+  const applyWrapOption = useCallback((option: 'wrap' | 'overflow' | 'clip') => {
+    const wrapStyleProperties: Array<'whiteSpace' | 'overflow' | 'textOverflow' | 'wordBreak' | 'overflowWrap'> = [
+      'whiteSpace', 'overflow', 'textOverflow', 'wordBreak', 'overflowWrap'
+    ];
+    wrapStyleProperties.forEach(property => {
+      try { removeCellStyle(property); } catch {}
+    });
+
+    if (option === 'overflow') {
+      applyCellStyle('whiteSpace', 'nowrap');
+      applyCellStyle('overflow', 'visible');
+      applyCellStyle('textOverflow', 'clip');
+      applyCellStyle('wordBreak', 'normal');
+      applyCellStyle('overflowWrap', 'normal');
+    } else if (option === 'wrap') {
+      applyCellStyle('whiteSpace', 'normal');
+      applyCellStyle('wordBreak', 'break-word');
+      applyCellStyle('overflow', 'hidden');
+      applyCellStyle('textOverflow', 'clip');
+      applyCellStyle('overflowWrap', 'anywhere');
+    } else {
+      // clip
+      applyCellStyle('whiteSpace', 'nowrap');
+      applyCellStyle('overflow', 'hidden');
+      applyCellStyle('textOverflow', 'clip');
+    }
+  }, [applyCellStyle, removeCellStyle]);
+
+  // Create vim mode handler with all callbacks
+  const vimModeHandler = useMemo(() =>
+    createVimModeHandler({
+      hotTableRef,
+      setHasChanges,
+      handleUndo,
+      handleRedo,
+      handleCopy,
+      handlePaste,
+      handleAlignLeft,
+      handleAlignCenter,
+      handleAlignRight,
+      applyWrapOption,
+      setHelpDialogOpen,
+      toggleFullscreen,
+      openUrlInCurrentCell,
+    }), [
+      setHasChanges,
+      handleUndo,
+      handleRedo,
+      handleCopy,
+      handlePaste,
+      handleAlignLeft,
+      handleAlignCenter,
+      handleAlignRight,
+      applyWrapOption,
+      toggleFullscreen,
+      openUrlInCurrentCell,
+    ]
+  );
+
+  // Poll for vim mode changes (for display updates)
+  useEffect(() => {
+    if (!isVimMode) return
+    const interval = setInterval(() => {
+      setVimDisplayMode(vimModeHandler.getMode())
+    }, 100)
+    return () => clearInterval(interval)
+  }, [isVimMode, vimModeHandler])
+
   
 const searchFieldKeyupCallback = useCallback(
   (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -697,9 +799,6 @@ const searchFieldKeyupCallback = useCallback(
     
     return null;
   };
-
-  const [helpDialogOpen, setHelpDialogOpen] = useState(false);
-  const [isEditorFocused, setIsEditorFocused] = useState(true);
 
   // Load CSV/XLSX content (only when src changes)
   useEffect(() => {
@@ -1145,7 +1244,9 @@ const searchFieldKeyupCallback = useCallback(
       handleAddRow,
       handleAddColumn,
       handleClear,
-      setHelpDialogOpen
+      setHelpDialogOpen,
+      isVimMode,
+      vimModeHandler
     });
 
     document.addEventListener('keydown', keyboardHandler);
@@ -1170,7 +1271,9 @@ const searchFieldKeyupCallback = useCallback(
     handleAddRow,
     handleAddColumn,
     handleClear,
-    setHelpDialogOpen
+    setHelpDialogOpen,
+    isVimMode,
+    vimModeHandler
   ]);
 
   // Simple Conditional Formatting Dialog state
@@ -2118,6 +2221,30 @@ const searchFieldKeyupCallback = useCallback(
           maxRows={data.length}
           maxCols={data.reduce((max, row) => Math.max(max, row.length), 0)}
         />
+      )}
+
+      {/* Vim mode indicator */}
+      {isVimMode && (
+        <div style={{
+          position: 'absolute',
+          bottom: 48,
+          right: 8,
+          padding: '4px 12px',
+          backgroundColor: vimDisplayMode === 'insert'
+            ? '#3b82f6'
+            : vimDisplayMode.startsWith('visual')
+            ? '#a855f7'
+            : '#10b981',
+          color: '#ffffff',
+          borderRadius: 4,
+          fontSize: 12,
+          fontWeight: 600,
+          zIndex: 1000,
+          pointerEvents: 'none',
+          textTransform: 'uppercase'
+        }}>
+          {vimDisplayMode.replace('-', ' ')}
+        </div>
       )}
 
       {/* Sheet tabs navigation - always visible */}

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Keyboard, RotateCcw } from 'lucide-react'
 import { Button } from '../../ui/button'
+import { Switch } from '../../ui/switch'
+import { Label } from 'frontend/components/ui/label'
 import { Typography } from 'frontend/components/ui/typography'
 import { Separator } from 'frontend/components/ui/separator'
 import { Kbd, KbdGroup } from '../../ui/kbd'
@@ -169,7 +171,11 @@ export function KeybindsTab() {
   const [keybinds, setKeybinds] = useState<KeybindsState>(getStoredKeybinds)
   const [editingId, setEditingId] = useState<keyof KeybindsState | null>(null)
   const [isMac, setIsMac] = useState(false)
-  
+  const [isVimMode, setIsVimMode] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('vimMode') === 'true'
+  })
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0)
@@ -209,7 +215,13 @@ export function KeybindsTab() {
     const defaultKeybinds = resetAllKeybinds()
     setKeybinds(defaultKeybinds)
   }
-  
+
+  function handleVimModeToggle(checked: boolean) {
+    setIsVimMode(checked)
+    localStorage.setItem('vimMode', checked ? 'true' : 'false')
+    window.dispatchEvent(new Event('storage'))
+  }
+
   const keybindEntries: Array<{ id: keyof KeybindsState; config: KeybindConfig }> = [
     { id: 'newAgent', config: keybinds.newAgent },
     { id: 'searchFiles', config: keybinds.searchFiles },
@@ -266,6 +278,33 @@ export function KeybindsTab() {
         <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">
           <strong>Tip:</strong> Press a letter or number key (with optional Shift) while editing to set a new shortcut. Press Escape to cancel or Enter to confirm.
         </Typography>
+      </div>
+
+      <Separator className="my-6" />
+
+      <div className="space-y-4">
+        <Typography variant="h4" className="text-zinc-900 dark:text-white">
+          Editor Settings
+        </Typography>
+
+        <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
+          <div className="flex-1">
+            <Label htmlFor="vim-mode-switch">
+              <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">
+                Vim Keybindings (Spreadsheet)
+              </Typography>
+            </Label>
+            <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 mt-1">
+              Enable vim modal editing in spreadsheet editor with Normal, Insert, and Visual modes
+            </Typography>
+          </div>
+          <Switch
+            id="vim-mode-switch"
+            checked={isVimMode}
+            onCheckedChange={handleVimModeToggle}
+            className="data-[state=checked]:bg-blue-600"
+          />
+        </div>
       </div>
     </div>
   )

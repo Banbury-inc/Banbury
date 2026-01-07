@@ -17,7 +17,7 @@ export function AppearanceTab({ isDarkMode, onThemeToggle }: AppearanceTabProps)
           Theme Settings
         </Typography>
         <Separator />
-        
+
         <div className="flex items-center gap-2">
           <Label htmlFor="dark-mode-switch">
             <Typography variant="p" className="text-zinc-900 dark:text-white">Dark Mode</Typography>

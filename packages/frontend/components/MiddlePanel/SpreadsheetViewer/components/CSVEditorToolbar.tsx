@@ -423,6 +423,41 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
     { shortcut: 'Escape', description: 'Cancel editing' },
   ];
 
+  // Vim mode shortcuts (shown when Vim mode is enabled)
+  const vimShortcuts = [
+    // Movement
+    { shortcut: 'h / j / k / l', description: 'Move cursor left/down/up/right' },
+    { shortcut: 'Ctrl+J / K', description: 'Move row(s) down/up' },
+    { shortcut: 'Ctrl+H / L', description: 'Move column(s) left/right' },
+    { shortcut: 'Ctrl+d / u', description: 'Scroll half page down/up' },
+    { shortcut: 'gg', description: 'Go to top of sheet' },
+    { shortcut: 'G', description: 'Go to bottom of sheet' },
+    { shortcut: '0 / $', description: 'Go to first/last column' },
+    // Selection
+    { shortcut: 'v', description: 'Begin selecting cells' },
+    { shortcut: 'V', description: 'Begin selecting rows' },
+    { shortcut: 'Alt+v', description: 'Begin selecting columns' },
+    // Editing
+    { shortcut: 'i', description: 'Edit cell' },
+    { shortcut: 'a', description: 'Append to cell (cursor at end)' },
+    { shortcut: 'u', description: 'Undo' },
+    { shortcut: 'Ctrl+r', description: 'Redo' },
+    { shortcut: 'o / O', description: 'Insert row below/above and edit' },
+    { shortcut: 's / S', description: 'Insert row below/above' },
+    { shortcut: 'dd', description: 'Delete current row (or selected rows/cols)' },
+    { shortcut: 'x', description: 'Clear cell contents' },
+    { shortcut: 'yy', description: 'Copy current row (or selected rows/cols)' },
+    { shortcut: 'yc', description: 'Copy selected cells' },
+    { shortcut: 'p', description: 'Paste' },
+    // Formatting
+    { shortcut: ';al / ;ac / ;ar', description: 'Align left/center/right' },
+    { shortcut: ';ww / ;wo / ;wc', description: 'Wrap/Overflow/Clip cell' },
+    // Other
+    { shortcut: '?', description: 'Show help dialog' },
+    { shortcut: ';wf', description: 'Toggle full screen' },
+    { shortcut: ';o', description: 'Open URL in cell' },
+  ];
+
   return (
     <>
       {/* Responsive Toolbar */}
@@ -887,31 +922,63 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
       <Dialog
         open={helpDialogOpen}
         onClose={handleCloseHelpDialog}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
         <DialogTitle>
           Keyboard Shortcuts
         </DialogTitle>
         <DialogContent>
-          <List>
-            {keyboardShortcuts.map((item, index) => (
-              <ListItem key={index} sx={{ py: 0.5 }}>
-                <ListItemText
-                  primary={
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {item.shortcut}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {item.description}
-                      </Typography>
-                    </Box>
-                  }
-                />
-              </ListItem>
-            ))}
-          </List>
+          <Box sx={{ display: 'flex', gap: 4 }}>
+            {/* Standard Shortcuts */}
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                Standard Shortcuts
+              </Typography>
+              <List dense>
+                {keyboardShortcuts.map((item, index) => (
+                  <ListItem key={index} sx={{ py: 0.25 }}>
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace', fontSize: '12px' }}>
+                            {item.shortcut}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '12px', ml: 2 }}>
+                            {item.description}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+            {/* Vim Mode Shortcuts */}
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                Vim Mode Shortcuts
+              </Typography>
+              <List dense>
+                {vimShortcuts.map((item, index) => (
+                  <ListItem key={index} sx={{ py: 0.25 }}>
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace', fontSize: '12px' }}>
+                            {item.shortcut}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '12px', ml: 2 }}>
+                            {item.description}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseHelpDialog}>

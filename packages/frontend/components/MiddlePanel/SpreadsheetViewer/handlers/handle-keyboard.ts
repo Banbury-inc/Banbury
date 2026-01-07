@@ -1,3 +1,5 @@
+import { createVimModeHandler } from './handle-vim-mode'
+
 interface KeyboardHandlerParams {
   isEditorFocused: boolean
   isSearchOpen: boolean
@@ -16,6 +18,8 @@ interface KeyboardHandlerParams {
   handleAddColumn: () => void
   handleClear: () => void
   setHelpDialogOpen: (open: boolean) => void
+  isVimMode?: boolean
+  vimModeHandler?: ReturnType<typeof createVimModeHandler>
 }
 
 export function createKeyboardHandler({
@@ -35,14 +39,26 @@ export function createKeyboardHandler({
   handleAddRow,
   handleAddColumn,
   handleClear,
-  setHelpDialogOpen
+  setHelpDialogOpen,
+  isVimMode,
+  vimModeHandler
 }: KeyboardHandlerParams) {
   return function handleKeyDown(event: KeyboardEvent) {
-    // Only handle shortcuts when the editor is focused and not in an input field
+    // Only handle shortcuts when the editor is focused
     if (!isEditorFocused) {
       return
     }
-    
+
+    // Vim mode delegation
+    if (isVimMode && vimModeHandler) {
+      const handled = vimModeHandler.handleKeyDown(event)
+      if (handled) {
+        event.preventDefault()
+        event.stopPropagation()
+        return
+      }
+    }
+
     const activeElement = document.activeElement
     if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
       return
