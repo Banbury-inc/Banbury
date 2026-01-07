@@ -820,11 +820,11 @@ export default function Admin() {
       </div>
       <div className="flex-1 md:ml-16 flex flex-col md:flex-row">
         {/* Mobile Header */}
-        <div className="md:hidden sticky top-0 z-30 bg-card border-b border-zinc-300 dark:border-white/[0.06] px-4 py-3 flex items-center justify-between">
+        <div className="md:hidden sticky top-0 z-30 bg-card border-b border-zinc-200 dark:border-white/[0.06] px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="border-zinc-300 dark:border-white/[0.06]">
+                <Button variant="ghost" size="icon" className="border-zinc-200 dark:border-white/[0.06]">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -869,14 +869,14 @@ export default function Admin() {
             variant="ghost" 
             size="icon" 
             onClick={() => router.push('/workspaces')}
-            className="border-zinc-300 dark:border-white/[0.06]"
+            className="border-zinc-200 dark:border-white/[0.06]"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Desktop Sidebar */}
-        <div className="hidden md:block w-64 bg-card border-r border-zinc-300 dark:border-white/[0.06] p-4">
+        <div className="hidden md:block w-64 bg-card border-r border-zinc-200 dark:border-white/[0.06] p-4">
           <h2 className="text-foreground text-lg font-semibold mb-6">Admin Panel</h2>
           <nav className="space-y-2">
             {tabs.map((tab) => {
@@ -905,14 +905,14 @@ export default function Admin() {
             <div className="space-y-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
                 <h1 className="text-2xl font-bold text-foreground">System Overview</h1>
-                <Button onClick={loadAdminData} variant="outline" className="border-zinc-300 dark:border-white/[0.06]">
+                <Button onClick={loadAdminData} variant="outline" className="border-zinc-200 dark:border-white/[0.06]">
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Refresh
                 </Button>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-foreground text-sm">Total Users</CardTitle>
                   </CardHeader>
@@ -921,7 +921,7 @@ export default function Admin() {
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-foreground text-sm">Total Files</CardTitle>
                   </CardHeader>

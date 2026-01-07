@@ -627,7 +627,7 @@ export function AnalyticsTab({
               loadFeatureUsageAnalytics(days)
               loadErrorAnalytics(days)
             }}
-            className="bg-card text-foreground border border-zinc-300 dark:border-white/[0.06] rounded px-3 py-2"
+            className="bg-card text-foreground border border-zinc-200 dark:border-white/[0.06] rounded px-3 py-2"
             value={analyticsDays}
           >
             <option value="7">Last 7 days</option>
@@ -648,7 +648,7 @@ export function AnalyticsTab({
             loadRetentionAnalytics(retentionExcludedUsers)
             loadFeatureUsageAnalytics(analyticsDays, featureUsageExcludedUsers)
             loadErrorAnalytics(analyticsDays, errorExcludedUsers)
-          }} variant="outline" className="border-zinc-300 dark:border-white/[0.06]">
+          }} variant="outline" className="border-zinc-200 dark:border-white/[0.06]">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -664,7 +664,7 @@ export function AnalyticsTab({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                  className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                 >
                   <Filter className="h-4 w-4 mr-2" />
                   Filter Analytics Data
@@ -675,7 +675,7 @@ export function AnalyticsTab({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-card border-zinc-300 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
+              <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-card border-zinc-200 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-foreground font-semibold mb-1">Filter Analytics Data</h3>
@@ -693,13 +693,13 @@ export function AnalyticsTab({
                         value={visitorIpInput}
                         onChange={(e) => setVisitorIpInput(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && addIpExclusion()}
-                        className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
+                        className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
                       />
                       <Button 
                         onClick={addIpExclusion}
                         variant="outline"
                         size="sm"
-                        className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                        className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                       >
                         Add
                       </Button>
@@ -738,13 +738,13 @@ export function AnalyticsTab({
                         value={visitorLocationInput}
                         onChange={(e) => setVisitorLocationInput(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && addLocationExclusion()}
-                        className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
+                        className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
                       />
                       <Button 
                         onClick={addLocationExclusion}
                         variant="outline"
                         size="sm"
-                        className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                        className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                       >
                         Add
                       </Button>
@@ -781,14 +781,14 @@ export function AnalyticsTab({
                       placeholder="Enter location to filter..."
                       value={visitorLocationFilter}
                       onChange={(e) => setVisitorLocationFilter(e.target.value)}
-                      className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
+                      className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
                     />
                   </div>
                   <div className="flex flex-col gap-2 pt-2">
                     <Button 
                       onClick={clearAllFilters}
                       variant="outline"
-                      className="w-full border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                      className="w-full border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                     >
                       Clear All Filters
                     </Button>
@@ -805,7 +805,7 @@ export function AnalyticsTab({
 
           {/* Enhanced Tracking Summary */}
           {getFilteredVisitors().some(v => v.tracking_version) && (
-            <Card className="bg-card border-zinc-300 dark:border-white/[0.06] mb-4">
+            <Card className="bg-card border-zinc-200 dark:border-white/[0.06] mb-4">
               <CardHeader>
                 <CardTitle className="text-foreground">Enhanced Tracking Summary</CardTitle>
                 <CardDescription className="text-muted-foreground">Insights from social media and campaign tracking</CardDescription>
@@ -902,7 +902,7 @@ export function AnalyticsTab({
           )}
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-foreground text-sm">Total Visitors</CardTitle>
           </CardHeader>
@@ -914,7 +914,7 @@ export function AnalyticsTab({
           </CardContent>
         </Card>
         
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-foreground text-sm">Recent Visitors</CardTitle>
           </CardHeader>
@@ -929,7 +929,7 @@ export function AnalyticsTab({
           </CardContent>
         </Card>
         
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-foreground text-sm">Total Logins</CardTitle>
           </CardHeader>
@@ -941,7 +941,7 @@ export function AnalyticsTab({
           </CardContent>
         </Card>
         
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-foreground text-sm">Recent Logins</CardTitle>
           </CardHeader>
@@ -953,7 +953,7 @@ export function AnalyticsTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-foreground text-sm">AI Conversations</CardTitle>
           </CardHeader>
@@ -965,7 +965,7 @@ export function AnalyticsTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-foreground text-sm">AI Messages</CardTitle>
           </CardHeader>
@@ -977,7 +977,7 @@ export function AnalyticsTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-foreground text-sm">Total Dashboard Visits</CardTitle>
           </CardHeader>
@@ -989,7 +989,7 @@ export function AnalyticsTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-foreground text-sm">Recent Dashboard Visits</CardTitle>
           </CardHeader>
@@ -1001,7 +1001,7 @@ export function AnalyticsTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-foreground text-sm">Total Workspace Visits</CardTitle>
           </CardHeader>
@@ -1013,7 +1013,7 @@ export function AnalyticsTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-foreground text-sm">Recent Workspace Visits</CardTitle>
           </CardHeader>
@@ -1028,7 +1028,7 @@ export function AnalyticsTab({
 
           {/* New Analytics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+            <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
               <CardHeader className="pb-2">
                 <CardTitle className="text-foreground text-sm">Unique Visitors</CardTitle>
               </CardHeader>
@@ -1040,7 +1040,7 @@ export function AnalyticsTab({
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+            <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
               <CardHeader className="pb-2">
                 <CardTitle className="text-foreground text-sm">Return Visitors</CardTitle>
               </CardHeader>
@@ -1054,7 +1054,7 @@ export function AnalyticsTab({
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+            <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
               <CardHeader className="pb-2">
                 <CardTitle className="text-foreground text-sm">Return Rate</CardTitle>
               </CardHeader>
@@ -1073,7 +1073,7 @@ export function AnalyticsTab({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Device Type Breakdown */}
             {visitorStats?.device_type_breakdown && Object.keys(visitorStats.device_type_breakdown).length > 0 && (
-              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+              <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                 <CardHeader>
                   <CardTitle className="text-foreground">Device Type Breakdown</CardTitle>
                   <CardDescription className="text-muted-foreground">Visitors by device type</CardDescription>
@@ -1112,7 +1112,7 @@ export function AnalyticsTab({
 
             {/* Browser Breakdown */}
             {visitorStats?.browser_breakdown && Object.keys(visitorStats.browser_breakdown).length > 0 && (
-              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+              <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                 <CardHeader>
                   <CardTitle className="text-foreground">Browser Breakdown</CardTitle>
                   <CardDescription className="text-muted-foreground">Visitors by browser</CardDescription>
@@ -1147,7 +1147,7 @@ export function AnalyticsTab({
 
             {/* OS Breakdown */}
             {visitorStats?.os_breakdown && Object.keys(visitorStats.os_breakdown).length > 0 && (
-              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+              <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                 <CardHeader>
                   <CardTitle className="text-foreground">Operating System Breakdown</CardTitle>
                   <CardDescription className="text-muted-foreground">Visitors by operating system</CardDescription>
@@ -1182,7 +1182,7 @@ export function AnalyticsTab({
 
             {/* Top Pages */}
             {visitorStats?.top_pages && Object.keys(visitorStats.top_pages).length > 0 && (
-              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+              <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                 <CardHeader>
                   <CardTitle className="text-foreground">Top Pages</CardTitle>
                   <CardDescription className="text-muted-foreground">Most visited pages</CardDescription>
@@ -1206,7 +1206,7 @@ export function AnalyticsTab({
             )}
           </div>
 
-      <Card className="bg-card border-zinc-300 dark:border-white/[0.06] mb-4">
+      <Card className="bg-card border-zinc-200 dark:border-white/[0.06] mb-4">
         <CardHeader>
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
             <div>
@@ -1217,7 +1217,7 @@ export function AnalyticsTab({
               onClick={() => loadVisitorData(30)} 
               variant="outline" 
               size="sm"
-              className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent sm:self-start"
+              className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent sm:self-start"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -1327,7 +1327,7 @@ export function AnalyticsTab({
       {/* Page-Specific Visitors Over Time Graphs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         {/* Home Page Visitors */}
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader>
             <CardTitle className="text-foreground text-base">Home Page Visitors</CardTitle>
             <CardDescription className="text-muted-foreground text-xs">
@@ -1421,7 +1421,7 @@ export function AnalyticsTab({
         </Card>
 
         {/* Docs Page Visitors */}
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader>
             <CardTitle className="text-foreground text-base">Docs Page Visitors</CardTitle>
             <CardDescription className="text-muted-foreground text-xs">
@@ -1515,7 +1515,7 @@ export function AnalyticsTab({
         </Card>
 
         {/* Workspaces Page Visitors */}
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader>
             <CardTitle className="text-foreground text-base">Workspaces Page Visitors</CardTitle>
             <CardDescription className="text-muted-foreground text-xs">Daily trends for workspaces page</CardDescription>
@@ -1606,7 +1606,7 @@ export function AnalyticsTab({
         </Card>
 
         {/* Login / Auth Page Visitors */}
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader>
             <CardTitle className="text-foreground text-base">Login / Auth Visitors</CardTitle>
             <CardDescription className="text-muted-foreground text-xs">
@@ -1700,7 +1700,7 @@ export function AnalyticsTab({
         </Card>
 
         {/* Task Studio Page Visitors */}
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader>
             <CardTitle className="text-foreground text-base">Task Studio Visitors</CardTitle>
             <CardDescription className="text-muted-foreground text-xs">
@@ -1794,7 +1794,7 @@ export function AnalyticsTab({
         </Card>
 
         {/* Meetings Page Visitors */}
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader>
             <CardTitle className="text-foreground text-base">Meetings Visitors</CardTitle>
             <CardDescription className="text-muted-foreground text-xs">
@@ -1913,7 +1913,7 @@ export function AnalyticsTab({
               const colorScheme = colors[index % colors.length]
               
               return (
-                <Card key={page} className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                <Card key={page} className="bg-card border-zinc-200 dark:border-white/[0.06]">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-foreground text-base capitalize">{page}</CardTitle>
@@ -2005,7 +2005,7 @@ export function AnalyticsTab({
         </div>
       )}
 
-      <Card className="bg-card border-zinc-300 dark:border-white/[0.06] mb-4">
+      <Card className="bg-card border-zinc-200 dark:border-white/[0.06] mb-4">
         <CardHeader>
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
             <div>
@@ -2016,7 +2016,7 @@ export function AnalyticsTab({
               onClick={() => loadLoginData(30)} 
               variant="outline" 
               size="sm"
-              className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent sm:self-start"
+              className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent sm:self-start"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -2124,7 +2124,7 @@ export function AnalyticsTab({
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader>
             <CardTitle className="text-foreground">Top Countries</CardTitle>
             <CardDescription className="text-muted-foreground">
@@ -2155,7 +2155,7 @@ export function AnalyticsTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader>
             <CardTitle className="text-foreground">Authentication Methods</CardTitle>
             <CardDescription className="text-muted-foreground">Login methods breakdown</CardDescription>
@@ -2187,7 +2187,7 @@ export function AnalyticsTab({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader>
             <CardTitle className="text-foreground">Top Users by Logins</CardTitle>
             <CardDescription className="text-muted-foreground">Most active users in the selected period</CardDescription>
@@ -2215,7 +2215,7 @@ export function AnalyticsTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader>
             <CardTitle className="text-foreground">Recent Logins</CardTitle>
             <CardDescription className="text-muted-foreground">Latest user authentication events</CardDescription>
@@ -2266,7 +2266,7 @@ export function AnalyticsTab({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                  className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                 >
                   <Filter className="h-4 w-4 mr-2" />
                   Filter Visitors
@@ -2277,7 +2277,7 @@ export function AnalyticsTab({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-card border-zinc-300 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
+              <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-card border-zinc-200 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-foreground font-semibold mb-1">Filter Visitors</h3>
@@ -2295,13 +2295,13 @@ export function AnalyticsTab({
                         value={visitorIpInput}
                         onChange={(e) => setVisitorIpInput(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && addIpExclusion()}
-                        className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
+                        className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
                       />
                       <Button 
                         onClick={addIpExclusion}
                         variant="outline"
                         size="sm"
-                        className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                        className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                       >
                         Add
                       </Button>
@@ -2340,13 +2340,13 @@ export function AnalyticsTab({
                         value={visitorLocationInput}
                         onChange={(e) => setVisitorLocationInput(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && addLocationExclusion()}
-                        className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
+                        className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
                       />
                       <Button 
                         onClick={addLocationExclusion}
                         variant="outline"
                         size="sm"
-                        className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                        className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                       >
                         Add
                       </Button>
@@ -2383,14 +2383,14 @@ export function AnalyticsTab({
                       placeholder="Enter location to filter..."
                       value={visitorLocationFilter}
                       onChange={(e) => setVisitorLocationFilter(e.target.value)}
-                      className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
+                      className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
                     />
                   </div>
                   <div className="flex flex-col gap-2 pt-2">
                     <Button 
                       onClick={clearAllFilters}
                       variant="outline"
-                      className="w-full border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                      className="w-full border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                     >
                       Clear All Filters
                     </Button>
@@ -2405,7 +2405,7 @@ export function AnalyticsTab({
             </Popover>
           </div>
 
-          <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+          <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
             <CardHeader>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -2431,7 +2431,7 @@ export function AnalyticsTab({
                       size="sm"
                       onClick={() => setVisitorPage(prevVisitorPage({ page: currentPage }))}
                       disabled={!canGoPrev({ page: currentPage })}
-                      className="border-zinc-300 dark:border-white/[0.06]"
+                      className="border-zinc-200 dark:border-white/[0.06]"
                     >
                       Prev
                     </Button>
@@ -2440,7 +2440,7 @@ export function AnalyticsTab({
                       size="sm"
                       onClick={() => setVisitorPage(nextVisitorPage({ page: currentPage, totalPages }))}
                       disabled={!canGoNext({ page: currentPage, totalPages })}
-                      className="border-zinc-300 dark:border-white/[0.06]"
+                      className="border-zinc-200 dark:border-white/[0.06]"
                     >
                       Next
                     </Button>
@@ -2466,7 +2466,7 @@ export function AnalyticsTab({
                   const paged = getPageSlice({ items: filteredVisitors, page: currentPage, pageSize: visitorPageSize })
                   return paged
                 })().map((visitor) => (
-                  <Card key={visitor._id} className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                  <Card key={visitor._id} className="bg-card border-zinc-200 dark:border-white/[0.06]">
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
@@ -2765,7 +2765,7 @@ export function AnalyticsTab({
                   <PopoverTrigger asChild>
                     <Button 
                       variant="outline" 
-                      className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                      className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                     >
                       <Filter className="h-4 w-4 mr-2" />
                       Filter by User
@@ -2776,7 +2776,7 @@ export function AnalyticsTab({
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-card border-zinc-300 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
+                  <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-card border-zinc-200 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
                     <div className="space-y-4">
                       <div>
                         <h3 className="text-foreground font-semibold mb-1">Filter by User</h3>
@@ -2794,13 +2794,13 @@ export function AnalyticsTab({
                             value={userExclusionInput}
                             onChange={(e) => setUserExclusionInput(e.target.value)}
                             onKeyPress={(e) => e.key === 'Enter' && addUserExclusion()}
-                            className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
+                            className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
                           />
                           <Button 
                             onClick={addUserExclusion}
                             variant="outline"
                             size="sm"
-                            className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                            className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                           >
                             Add
                           </Button>
@@ -2842,7 +2842,7 @@ export function AnalyticsTab({
 
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Total Files</CardTitle>
                   </CardHeader>
@@ -2856,7 +2856,7 @@ export function AnalyticsTab({
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Total Storage</CardTitle>
                   </CardHeader>
@@ -2870,7 +2870,7 @@ export function AnalyticsTab({
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">File Types</CardTitle>
                   </CardHeader>
@@ -2884,7 +2884,7 @@ export function AnalyticsTab({
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Categories</CardTitle>
                   </CardHeader>
@@ -2900,7 +2900,7 @@ export function AnalyticsTab({
               </div>
 
               {/* File Types by Category */}
-              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+              <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                 <CardHeader>
                   <CardTitle className="text-foreground">Files by Category</CardTitle>
                   <CardDescription className="text-muted-foreground">
@@ -2937,7 +2937,7 @@ export function AnalyticsTab({
               </Card>
 
               {/* Top File Types */}
-              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+              <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                 <CardHeader>
                   <CardTitle className="text-foreground">Top File Types</CardTitle>
                   <CardDescription className="text-muted-foreground">
@@ -2977,7 +2977,7 @@ export function AnalyticsTab({
               </Card>
 
               {/* Daily Upload Trends */}
-              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+              <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                 <CardHeader>
                   <CardTitle className="text-foreground">Daily Upload Trends</CardTitle>
                   <CardDescription className="text-muted-foreground">
@@ -3030,7 +3030,7 @@ export function AnalyticsTab({
               </Card>
 
               {/* File Types Over Time by Category - Stacked Area Chart */}
-              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+              <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                 <CardHeader>
                   <CardTitle className="text-foreground">File Types Over Time by Category</CardTitle>
                   <CardDescription className="text-muted-foreground">
@@ -3139,7 +3139,7 @@ export function AnalyticsTab({
                   const color = colors[index % colors.length]
                   
                   return categoryData.length > 0 ? (
-                    <Card key={category.category} className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                    <Card key={category.category} className="bg-card border-zinc-200 dark:border-white/[0.06]">
                       <CardHeader className="pb-2">
                         <CardTitle className="text-foreground text-sm">{category.category} Uploads</CardTitle>
                         <CardDescription className="text-muted-foreground text-xs">
@@ -3187,7 +3187,7 @@ export function AnalyticsTab({
               </div>
 
               {/* Recent File Type Activity */}
-              <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+              <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
                 <CardHeader>
                   <CardTitle className="text-foreground">Recent Activity (Last {fileTypeAnalytics.summary.period_days} Days)</CardTitle>
                   <CardDescription className="text-muted-foreground">
@@ -3226,7 +3226,7 @@ export function AnalyticsTab({
               </Card>
             </>
           ) : (
-            <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+            <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
               <CardContent className="pt-6">
                 <div className="text-center py-8 text-muted-foreground">
                   No file type analytics available

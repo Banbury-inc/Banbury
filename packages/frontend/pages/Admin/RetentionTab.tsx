@@ -84,14 +84,14 @@ export function RetentionTab({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-foreground">User Retention Analytics</h2>
-        <Button onClick={() => loadRetentionAnalytics(excludedUsers)} variant="outline" className="border-zinc-300 dark:border-white/[0.06]">
+        <Button onClick={() => loadRetentionAnalytics(excludedUsers)} variant="outline" className="border-zinc-200 dark:border-white/[0.06]">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
 
       {/* User Exclusion Filter */}
-      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+      <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center gap-2">
             <Filter className="h-4 w-4" />
@@ -115,13 +115,13 @@ export function RetentionTab({
                   value={userExclusionInput}
                   onChange={(e) => setUserExclusionInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addUserExclusion()}
-                  className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
+                  className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
                 />
                 <Button 
                   onClick={addUserExclusion}
                   variant="outline"
                   size="sm"
-                  className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                  className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                 >
                   Add
                 </Button>
@@ -162,7 +162,7 @@ export function RetentionTab({
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Daily Active Users (DAU)</CardTitle>
           </CardHeader>
@@ -172,7 +172,7 @@ export function RetentionTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Weekly Active Users (WAU)</CardTitle>
           </CardHeader>
@@ -182,7 +182,7 @@ export function RetentionTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Monthly Active Users (MAU)</CardTitle>
           </CardHeader>
@@ -192,7 +192,7 @@ export function RetentionTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Retention Rate</CardTitle>
           </CardHeader>
@@ -204,7 +204,7 @@ export function RetentionTab({
       </div>
 
       {/* Daily Active Users Chart */}
-      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+      <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
           <CardTitle className="text-foreground">Daily Active Users</CardTitle>
           <CardDescription>Unique users active per day over the last 30 days</CardDescription>
@@ -233,7 +233,7 @@ export function RetentionTab({
       </Card>
 
       {/* Cohort Retention Table */}
-      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+      <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
           <CardTitle className="text-foreground">Cohort Retention</CardTitle>
           <CardDescription>User retention by signup cohort</CardDescription>
@@ -242,7 +242,7 @@ export function RetentionTab({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-300 dark:border-white/[0.06]">
+                <tr className="border-b border-zinc-200 dark:border-white/[0.06]">
                   <th className="text-left py-2 px-4 font-medium text-foreground">Cohort</th>
                   <th className="text-right py-2 px-4 font-medium text-foreground">Total Users</th>
                   <th className="text-right py-2 px-4 font-medium text-foreground">Day 0</th>
@@ -258,7 +258,7 @@ export function RetentionTab({
                   const day30Rate = total > 0 ? ((cohort.day_30 / total) * 100).toFixed(1) : '0'
                   
                   return (
-                    <tr key={index} className="border-b border-zinc-300 dark:border-white/[0.06]">
+                    <tr key={index} className="border-b border-zinc-200 dark:border-white/[0.06]">
                       <td className="py-2 px-4 text-foreground">{cohort.cohort}</td>
                       <td className="py-2 px-4 text-right text-foreground">{total}</td>
                       <td className="py-2 px-4 text-right text-foreground">{day0Rate}% ({cohort.day_0})</td>

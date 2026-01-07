@@ -469,19 +469,19 @@ export function AdminContent({ activeTab }: AdminContentProps) {
   }
 
   return (
-    <div className="h-full overflow-y-auto p-4 sm:p-6">
+    <div className="h-full overflow-y-auto p-4 sm:p-6 bg-card">
       {activeTab === 'admin-overview' && (
         <div className="space-y-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
             <h1 className="text-2xl font-bold text-foreground">System Overview</h1>
-            <Button onClick={loadAdminData} variant="outline" className="border-zinc-300 dark:border-white/[0.06]">
+            <Button onClick={loadAdminData} variant="outline" className="border-zinc-200 dark:border-white/[0.06]">
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+            <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
               <CardHeader className="pb-2">
                 <CardTitle className="text-foreground text-sm">Total Users</CardTitle>
               </CardHeader>
@@ -490,7 +490,7 @@ export function AdminContent({ activeTab }: AdminContentProps) {
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+            <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
               <CardHeader className="pb-2">
                 <CardTitle className="text-foreground text-sm">Total Files</CardTitle>
               </CardHeader>

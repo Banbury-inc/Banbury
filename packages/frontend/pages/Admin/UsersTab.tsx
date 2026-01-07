@@ -251,7 +251,7 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
         <h1 className="text-2xl font-bold text-foreground">User Management</h1>
       </div>
       
-      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+      <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start">
             <div>
@@ -260,7 +260,7 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="sm:ml-auto border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent">
+                <Button variant="outline" size="sm" className="sm:ml-auto border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent">
                   <Settings2 className="h-4 w-4 mr-2" />
                   Columns
                 </Button>
@@ -292,7 +292,7 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
                 user.username
               )
               return (
-                <Card key={user._id} className="bg-card border-zinc-300 dark:border-white/[0.06]">
+                <Card key={user._id} className="bg-card border-zinc-200 dark:border-white/[0.06]">
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -384,10 +384,10 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto border border-zinc-300 dark:border-white/[0.06] rounded-lg">
+          <div className="hidden md:block overflow-x-auto border border-zinc-200 dark:border-white/[0.06] rounded-lg">
             <table className="w-full min-w-full">
               <thead>
-                <tr className="border-b border-zinc-300 dark:border-white/[0.06]">
+                <tr className="border-b border-zinc-200 dark:border-white/[0.06]">
                   {isColumnVisible('user') && (
                     <th 
                       className="text-left py-2 px-2 text-muted-foreground font-medium text-sm cursor-pointer hover:bg-accent/50 transition-colors select-none"

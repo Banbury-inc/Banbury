@@ -94,14 +94,14 @@ export function UserEngagementTab({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-foreground">User Engagement Analytics</h2>
-        <Button onClick={() => loadUserEngagementAnalytics(days, excludedUsers)} variant="outline" className="border-zinc-300 dark:border-white/[0.06]">
+        <Button onClick={() => loadUserEngagementAnalytics(days, excludedUsers)} variant="outline" className="border-zinc-200 dark:border-white/[0.06]">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
 
       {/* User Exclusion Filter */}
-      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+      <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center gap-2">
             <Filter className="h-4 w-4" />
@@ -125,13 +125,13 @@ export function UserEngagementTab({
                   value={userExclusionInput}
                   onChange={(e) => setUserExclusionInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addUserExclusion()}
-                  className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
+                  className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
                 />
                 <Button 
                   onClick={addUserExclusion}
                   variant="outline"
                   size="sm"
-                  className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                  className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                 >
                   Add
                 </Button>
@@ -172,7 +172,7 @@ export function UserEngagementTab({
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Total Sessions</CardTitle>
           </CardHeader>
@@ -181,7 +181,7 @@ export function UserEngagementTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Avg Session Duration</CardTitle>
           </CardHeader>
@@ -190,7 +190,7 @@ export function UserEngagementTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Total Active Time</CardTitle>
           </CardHeader>
@@ -199,7 +199,7 @@ export function UserEngagementTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Avg Active Time/Session</CardTitle>
           </CardHeader>
@@ -210,7 +210,7 @@ export function UserEngagementTab({
       </div>
 
       {/* Daily Sessions Chart */}
-      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+      <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
           <CardTitle className="text-foreground">Daily Sessions</CardTitle>
           <CardDescription>Sessions and active time per day</CardDescription>
@@ -249,7 +249,7 @@ export function UserEngagementTab({
       </Card>
 
       {/* Session Duration Distribution */}
-      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+      <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
           <CardTitle className="text-foreground">Session Duration Distribution</CardTitle>
           <CardDescription>Distribution of session durations</CardDescription>

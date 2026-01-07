@@ -532,7 +532,7 @@ export const renderPanel = ({
                 // Handle admin tabs
                 if (tab.type === 'admin') {
                   return (
-                    <div className="h-full overflow-y-auto">
+                    <div className="h-full overflow-y-auto bg-card">
                       <AdminContent activeTab={`admin-${tab.adminTabType}`} />
                     </div>
                   );

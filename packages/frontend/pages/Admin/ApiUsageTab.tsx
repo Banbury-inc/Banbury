@@ -89,14 +89,14 @@ export function ApiUsageTab({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-foreground">API Usage Analytics</h2>
-        <Button onClick={() => loadApiUsageAnalytics(days, excludedUsers)} variant="outline" className="border-zinc-300 dark:border-white/[0.06]">
+        <Button onClick={() => loadApiUsageAnalytics(days, excludedUsers)} variant="outline" className="border-zinc-200 dark:border-white/[0.06]">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
 
       {/* User Exclusion Filter */}
-      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+      <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center gap-2">
             <Filter className="h-4 w-4" />
@@ -120,13 +120,13 @@ export function ApiUsageTab({
                   value={userExclusionInput}
                   onChange={(e) => setUserExclusionInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addUserExclusion()}
-                  className="bg-card text-foreground border-zinc-300 dark:border-white/[0.06] focus:border-blue-500"
+                  className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
                 />
                 <Button 
                   onClick={addUserExclusion}
                   variant="outline"
                   size="sm"
-                  className="border-zinc-300 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                  className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
                 >
                   Add
                 </Button>
@@ -167,7 +167,7 @@ export function ApiUsageTab({
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Total Requests</CardTitle>
           </CardHeader>
@@ -177,7 +177,7 @@ export function ApiUsageTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Unique Endpoints</CardTitle>
           </CardHeader>
@@ -186,7 +186,7 @@ export function ApiUsageTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Avg Response Time</CardTitle>
           </CardHeader>
@@ -195,7 +195,7 @@ export function ApiUsageTab({
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Error Rate</CardTitle>
           </CardHeader>
@@ -206,7 +206,7 @@ export function ApiUsageTab({
       </div>
 
       {/* Daily Requests Chart */}
-      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+      <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
           <CardTitle className="text-foreground">Daily API Requests</CardTitle>
           <CardDescription>Total requests per day over the period</CardDescription>
@@ -235,7 +235,7 @@ export function ApiUsageTab({
       </Card>
 
       {/* Hourly Distribution */}
-      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+      <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
           <CardTitle className="text-foreground">Hourly Distribution</CardTitle>
           <CardDescription>Requests by hour of day</CardDescription>
@@ -254,7 +254,7 @@ export function ApiUsageTab({
       </Card>
 
       {/* Top Endpoints */}
-      <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+      <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
           <CardTitle className="text-foreground">Top Endpoints</CardTitle>
           <CardDescription>Most frequently called endpoints</CardDescription>
@@ -263,7 +263,7 @@ export function ApiUsageTab({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-300 dark:border-white/[0.06]">
+                <tr className="border-b border-zinc-200 dark:border-white/[0.06]">
                   <th className="text-left py-2 px-4 font-medium text-foreground">Endpoint</th>
                   <th className="text-right py-2 px-4 font-medium text-foreground">Requests</th>
                   <th className="text-right py-2 px-4 font-medium text-foreground">Avg Response (ms)</th>
@@ -273,7 +273,7 @@ export function ApiUsageTab({
               </thead>
               <tbody>
                 {endpoint_stats.slice(0, 20).map((stat, index) => (
-                  <tr key={index} className="border-b border-zinc-300 dark:border-white/[0.06]">
+                  <tr key={index} className="border-b border-zinc-200 dark:border-white/[0.06]">
                     <td className="py-2 px-4 text-foreground font-mono text-xs">{stat.endpoint}</td>
                     <td className="py-2 px-4 text-right text-foreground">{stat.count.toLocaleString()}</td>
                     <td className="py-2 px-4 text-right text-foreground">{stat.avg_response_time.toFixed(2)}</td>
@@ -289,7 +289,7 @@ export function ApiUsageTab({
 
       {/* Top Users */}
       {user_stats.length > 0 && (
-        <Card className="bg-card border-zinc-300 dark:border-white/[0.06]">
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader>
             <CardTitle className="text-foreground">Top Users by API Usage</CardTitle>
             <CardDescription>Users with most API requests</CardDescription>
@@ -298,14 +298,14 @@ export function ApiUsageTab({
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-300 dark:border-white/[0.06]">
+                  <tr className="border-b border-zinc-200 dark:border-white/[0.06]">
                     <th className="text-left py-2 px-4 font-medium text-foreground">Username</th>
                     <th className="text-right py-2 px-4 font-medium text-foreground">Requests</th>
                   </tr>
                 </thead>
                 <tbody>
                   {user_stats.map((stat, index) => (
-                    <tr key={index} className="border-b border-zinc-300 dark:border-white/[0.06]">
+                    <tr key={index} className="border-b border-zinc-200 dark:border-white/[0.06]">
                       <td className="py-2 px-4 text-foreground">{stat.username}</td>
                       <td className="py-2 px-4 text-right text-foreground">{stat.count.toLocaleString()}</td>
                     </tr>
