@@ -54,7 +54,7 @@ export interface ComposerToolPreferences {
   generate_image: boolean;
   generate_video: boolean;
   memory: boolean;
-  model_provider: "anthropic" | "openai";
+  model_provider: "anthropic" | "openai" | "google";
   model_id?: string;
   image_generation_model?: string;
   video_generation_model?: string;

@@ -11,6 +11,7 @@ import {
   Paperclip,
   Image,
   Video,
+  Upload,
 } from "lucide-react";
 
 import { ChatTiptapComposer } from "../../ChatTiptapComposer";
@@ -28,6 +29,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
   DropdownMenuSeparator,
+  DropdownMenuItem,
 } from "../../ui/dropdown-menu";
 import { Popover, PopoverTrigger, PopoverContent } from "../../ui/popover";
 import { Check } from "lucide-react";
@@ -52,6 +54,7 @@ import {
   IMAGE_GENERATION_MODELS,
   VIDEO_GENERATION_MODELS
 } from "./handlers/composer-plus-menu-handlers";
+import { handleLocalFileUpload } from "../../handlers/handle-local-file-upload";
 
 import type { FC } from "react";
 import { Typography } from "frontend/components/ui/typography";
@@ -93,10 +96,11 @@ export interface ComposerToolPreferences {
   generate_video: boolean;
   // System tools
   memory: boolean;
-  model_provider: "anthropic" | "openai";
+  model_provider: "anthropic" | "openai" | "google";
   model_id?: string;
   image_generation_model?: string;
   video_generation_model?: string;
+  visibleModels?: string[];
 }
 
 interface ComposerProps {
@@ -231,7 +235,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
             />
           </div>
 
-          <ComposerAction 
+          <ComposerAction
             attachedFiles={attachedFiles}
             attachedEmails={attachedEmails}
             onFileAttach={onFileAttach}
@@ -241,6 +245,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
             userInfo={userInfo}
             toolPreferences={toolPreferences}
             onUpdateToolPreferences={(prefs) => onUpdateToolPreferences(prefs)}
+            onAttachmentPayload={onAttachmentPayload}
             onSend={() => handleSend({ composer, onSend: onSend, tabId: assistantTabId })}
             messageBuffer={messageBuffer}
             inputRef={inputRef}
@@ -265,6 +270,7 @@ interface ComposerActionProps {
   } | null;
   toolPreferences: ComposerToolPreferences;
   onUpdateToolPreferences: (prefs: ComposerToolPreferences) => void;
+  onAttachmentPayload: (fileId: string, payload: { fileData: string; mimeType: string }) => void;
   onSend: () => void;
   // Fallback message buffer for context calculation when runtime messages aren't available
   messageBuffer?: any[] | null;
@@ -272,7 +278,7 @@ interface ComposerActionProps {
   assistantTabId?: string;
 }
 
-const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, onSend, messageBuffer, inputRef, assistantTabId }) => {
+const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, onAttachmentPayload, onSend, messageBuffer, inputRef, assistantTabId }) => {
   const composer = useComposerRuntime();
   const threadRuntime = useThreadRuntime();
   const [hasText, setHasText] = useState(false);
@@ -925,6 +931,23 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
 
+              {/* Upload Local File */}
+              <DropdownMenuItem
+                onClick={() => {
+                  handleLocalFileUpload({
+                    userInfo,
+                    onFileAttach,
+                    onAttachmentPayload,
+                    onError: (error) => console.error('Upload error:', error),
+                    onSuccess: (count) => console.log(`Successfully uploaded ${count} file(s)`)
+                  })
+                  setIsPlusMenuOpen(false)
+                }}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                <Typography variant="xs">Upload file</Typography>
+              </DropdownMenuItem>
+
               {/* Image Model Submenu */}
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
@@ -996,16 +1019,19 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                 <DropdownMenuSubContent className="w-72 p-1 max-h-96 overflow-y-auto">
                   {toolConfigs.map((tool) => {
                     const Icon = tool.icon
-                    const isEnabled = toolPreferences[tool.key] ?? tool.defaultEnabled
+                    const isEnabled = (toolPreferences[tool.key] as boolean) ?? tool.defaultEnabled
                     
                     return (
                       <div
                         key={tool.key}
                         className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
                         onClick={() => {
-                          onUpdateToolPreferences(
-                            toggleToolPreference(toolPreferences, tool.key as keyof typeof toolPreferences, isEnabled)
-                          )
+                          const toolKey = tool.key as keyof ComposerToolPreferences
+                          if (typeof toolPreferences[toolKey] === 'boolean') {
+                            onUpdateToolPreferences(
+                              toggleToolPreference(toolPreferences, toolKey, isEnabled)
+                            )
+                          }
                         }}
                       >
                         <span className="absolute right-2 flex size-3.5 items-center justify-center">
