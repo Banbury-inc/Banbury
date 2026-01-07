@@ -100,6 +100,7 @@ export interface ComposerToolPreferences {
   model_id?: string;
   image_generation_model?: string;
   video_generation_model?: string;
+  visibleModels?: string[];
 }
 
 interface ComposerProps {
