@@ -152,6 +152,30 @@ export default class OneDrive {
   }
 
   /**
+   * Add an item to favorites
+   */
+  static async addFavorite(itemId: string): Promise<{ success: boolean }> {
+    const resp = await axios.post(
+      `${ApiService.baseURL}/authentication/onedrive/favorites/${encodeURIComponent(itemId)}/`,
+      {},
+      { headers: this.withAuthHeaders() }
+    )
+    return resp.data
+  }
+
+  /**
+   * Remove an item from favorites
+   */
+  static async removeFavorite(itemId: string): Promise<{ success: boolean }> {
+    const resp = await axios.post(
+      `${ApiService.baseURL}/authentication/onedrive/favorites/${encodeURIComponent(itemId)}/remove/`,
+      {},
+      { headers: this.withAuthHeaders() }
+    )
+    return resp.data
+  }
+
+  /**
    * Get trash/deleted items
    */
   static async getTrash(): Promise<OneDriveFileListResponse> {

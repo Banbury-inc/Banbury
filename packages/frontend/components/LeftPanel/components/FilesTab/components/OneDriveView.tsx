@@ -368,6 +368,43 @@ export function OneDriveView({
     }
   }, [handleCreateDocument, handleCreateSpreadsheet, handleCreatePowerpoint])
 
+  // Handle file deleted - remove from local state
+  const handleFileDeleted = useCallback((fileId: string) => {
+    setFiles(prev => prev.filter(f => f.id !== fileId))
+    setFolderContents(prev => {
+      const newMap = new Map(prev)
+      for (const [folderId, files] of newMap) {
+        newMap.set(folderId, files.filter(f => f.id !== fileId))
+      }
+      return newMap
+    })
+  }, [])
+
+  // Handle file renamed - update local state
+  const handleFileRenamed = useCallback((fileId: string, newName: string) => {
+    setFiles(prev => prev.map(f => f.id === fileId ? { ...f, name: newName } : f))
+    setFolderContents(prev => {
+      const newMap = new Map(prev)
+      for (const [folderId, files] of newMap) {
+        newMap.set(folderId, files.map(f => f.id === fileId ? { ...f, name: newName } : f))
+      }
+      return newMap
+    })
+  }, [])
+
+  // Handle favorite changed - update local state
+  const handleFavoriteChanged = useCallback((fileId: string, isFavorite: boolean) => {
+    setFavorites(prev => {
+      const newSet = new Set(prev)
+      if (isFavorite) {
+        newSet.add(fileId)
+      } else {
+        newSet.delete(fileId)
+      }
+      return newSet
+    })
+  }, [])
+
   return (
     <div
       className="h-full overflow-y-auto sidebar-scrollbar"
@@ -586,6 +623,9 @@ export function OneDriveView({
             onFileSelect={onFileSelect}
             selectedFile={selectedFile}
             favorites={favorites}
+            onFileDeleted={handleFileDeleted}
+            onFileRenamed={handleFileRenamed}
+            onFavoriteChanged={handleFavoriteChanged}
           />
         ))
       }

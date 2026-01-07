@@ -269,5 +269,54 @@ export default class Drive {
       fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, createdTime, size, webViewLink, iconLink, thumbnailLink, parents, starred, trashed)'
     })
   }
+
+  /**
+   * Rename a file or folder in Google Drive
+   */
+  static async renameFile(fileId: string, newName: string): Promise<DriveFile> {
+    const resp = await axios.patch(
+      `${ApiService.baseURL}/authentication/drive/files/${encodeURIComponent(fileId)}/rename/`,
+      { name: newName },
+      { headers: this.withAuthHeaders() }
+    )
+    return resp.data
+  }
+
+  /**
+   * Delete a file or folder (moves to trash by default)
+   */
+  static async deleteFile(fileId: string, permanent: boolean = false): Promise<{ message: string; id: string }> {
+    const url = new URL(`${ApiService.baseURL}/authentication/drive/files/${encodeURIComponent(fileId)}/delete/`)
+    if (permanent) url.searchParams.append('permanent', 'true')
+
+    const resp = await axios.delete(url.toString(), {
+      headers: this.withAuthHeaders()
+    })
+    return resp.data
+  }
+
+  /**
+   * Star a file or folder in Google Drive
+   */
+  static async starFile(fileId: string): Promise<{ message: string; id: string; starred: boolean }> {
+    const resp = await axios.post(
+      `${ApiService.baseURL}/authentication/drive/files/${encodeURIComponent(fileId)}/star/`,
+      {},
+      { headers: this.withAuthHeaders() }
+    )
+    return resp.data
+  }
+
+  /**
+   * Unstar a file or folder in Google Drive
+   */
+  static async unstarFile(fileId: string): Promise<{ message: string; id: string; starred: boolean }> {
+    const resp = await axios.post(
+      `${ApiService.baseURL}/authentication/drive/files/${encodeURIComponent(fileId)}/unstar/`,
+      {},
+      { headers: this.withAuthHeaders() }
+    )
+    return resp.data
+  }
 }
 

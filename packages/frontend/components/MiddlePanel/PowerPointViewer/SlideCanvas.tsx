@@ -4,8 +4,37 @@ import { Slide, SlideElement, FillStyle } from './PowerPointViewer'
 import { getShapeDefinition, renderShapeSvg } from './shape-catalog'
 import { Move } from 'lucide-react'
 import { fillStyleToCSS, normalizeFill } from './utils/fill-utils'
-import { strokeStyleToCSS } from './utils/stroke-utils'
+import { strokeStyleToCSS, hexToRgba } from './utils/stroke-utils'
 import type { Paragraph, TextRun, StrokeStyle, BorderStyle } from './types/pptx-types'
+
+/**
+ * Extract border color from element's border/stroke property
+ * This is used for the selection bounding box to match the shape's actual border
+ */
+function getBorderColor(element: SlideElement): string | undefined {
+  // Check if element has a border property (can be StrokeStyle or BorderStyle)
+  if (element.border) {
+    if (typeof element.border === 'string') {
+      return element.border
+    }
+    // BorderStyle or StrokeStyle object
+    if (typeof element.border === 'object' && 'color' in element.border) {
+      const color = element.border.color
+      // Apply alpha if present (StrokeStyle only)
+      if ('alpha' in element.border && element.border.alpha !== undefined) {
+        return hexToRgba(color, element.border.alpha)
+      }
+      return color
+    }
+  }
+
+  // Check if element has a stroke property (legacy, can be string)
+  if (element.stroke && typeof element.stroke === 'string') {
+    return element.stroke
+  }
+
+  return undefined
+}
 
 interface SlideCanvasProps {
   slide: Slide
@@ -428,9 +457,12 @@ function ElementRenderer({
                 textAlign: paragraph.alignment || 'left',
                 lineHeight: paragraph.lineSpacing ? `${paragraph.lineSpacing}` : undefined,
                 marginTop: paragraph.spaceBefore ? `${paragraph.spaceBefore}px` : undefined,
-                marginBottom: paragraph.spaceAfter ? `${paragraph.spaceAfter}px` : undefined,
+                marginBottom: paragraph.spaceAfter
+                  ? `${paragraph.spaceAfter}px`
+                  : pIdx < element.paragraphs!.length - 1
+                    ? '0.5em'
+                    : undefined,
                 paddingLeft: paragraph.indentLevel ? `${paragraph.indentLevel * 20}px` : undefined,
-                marginBottom: pIdx < element.paragraphs!.length - 1 ? '0.5em' : undefined,
               }
 
               // Render bullet/number if needed
@@ -579,9 +611,18 @@ function ElementRenderer({
       boxShadow = `${scaledOffsetX}px ${scaledOffsetY}px ${scaledBlur}px ${element.shadow.color}`
     }
 
+    // Get border color for bounding box (use outline so it doesn't conflict with the element's own border)
+    const boundingBoxColor = getBorderColor(element)
+    const selectionOutlineStyle = isSelected
+      ? {
+          outline: `2px solid ${boundingBoxColor || 'hsl(var(--primary))'}`,
+          outlineOffset: '-2px',
+        }
+      : {}
+
     return (
       <div
-        className={isSelected ? 'border-2 border-primary rounded-sm' : 'border-2 border-transparent rounded-sm'}
+        className="rounded-sm"
         style={{
           ...baseStyles,
           background: element.textFill ? fillStyleToCSS(element.textFill) : element.fill ? (typeof element.fill === 'string' ? element.fill : fillStyleToCSS(element.fill)) : 'transparent',
@@ -592,6 +633,7 @@ function ElementRenderer({
               : undefined,
           padding: `${scaledPadding}px`,
           boxShadow,
+          ...selectionOutlineStyle,
         }}
         onClick={onClick}
         onMouseDown={onMouseDown}
@@ -667,9 +709,18 @@ function ElementRenderer({
       boxShadow = `${scaledOffsetX}px ${scaledOffsetY}px ${scaledBlur}px ${element.shadow.color}`
     }
 
+    // Get border color for bounding box (use outline so it doesn't conflict with the shape's own styling)
+    const boundingBoxColor = getBorderColor(element)
+    const selectionOutlineStyle = isSelected
+      ? {
+          outline: `2px solid ${boundingBoxColor || 'hsl(var(--primary))'}`,
+          outlineOffset: '-2px',
+        }
+      : {}
+
     return (
       <div
-        className={isSelected ? 'relative border-2 border-primary rounded-sm' : 'relative border-2 border-muted rounded-sm'}
+        className="relative rounded-sm"
         style={{
           ...baseStyles,
           display: 'flex',
@@ -679,6 +730,7 @@ function ElementRenderer({
           transform: `rotate(${rotation}deg)`,
           transformOrigin: 'center',
           boxShadow,
+          ...selectionOutlineStyle,
         }}
         onClick={onClick}
         onMouseDown={onMouseDown}
@@ -713,13 +765,28 @@ function ElementRenderer({
   if (element.type === 'image') {
     const rotation = element.rotation ?? 0
 
+    // Get border color for bounding box
+    const boundingBoxColor = getBorderColor(element)
+    const selectionOutlineStyle = isSelected
+      ? {
+          outline: `2px solid ${boundingBoxColor || 'hsl(var(--primary))'}`,
+          outlineOffset: '-2px',
+        }
+      : {}
+
     return (
       <div
-        className={`bg-muted flex items-center justify-center overflow-hidden relative ${isSelected ? 'border-2 border-primary rounded-sm' : 'border-2 border-muted rounded-sm'}`}
+        className="bg-muted flex items-center justify-center overflow-hidden relative rounded-sm"
         style={{
           ...baseStyles,
           transform: rotation !== 0 ? `rotate(${rotation}deg)` : undefined,
           transformOrigin: 'center',
+          border: element.border
+            ? strokeStyleToCSS(element.border, (element.border.width || 1) * scaleFactor)
+            : element.stroke
+              ? `${(element.strokeWidth || 1) * scaleFactor}px solid ${element.stroke}`
+              : '2px solid hsl(var(--muted))',
+          ...selectionOutlineStyle,
         }}
         onClick={onClick}
         onMouseDown={onMouseDown}
@@ -755,6 +822,15 @@ function ElementRenderer({
     const scaledPadding = 4 * scaleFactor
     const scaledPaddingHorizontal = 8 * scaleFactor
 
+    // Get border color for bounding box
+    const boundingBoxColor = borderColor // Use table's border color
+    const selectionOutlineStyle = isSelected
+      ? {
+          outline: `2px solid ${boundingBoxColor || 'hsl(var(--primary))'}`,
+          outlineOffset: '-2px',
+        }
+      : {}
+
     // Helper to render cell content (rich text or plain)
     const renderCellContent = (cell: typeof element.cells[0][0]) => {
       if (cell.paragraphs && cell.paragraphs.length > 0) {
@@ -789,8 +865,11 @@ function ElementRenderer({
 
     return (
       <div
-        className={`${isSelected ? 'border-2 border-primary rounded-sm ring-2 ring-primary/20' : 'border-2 border-transparent rounded-sm'}`}
-        style={baseStyles}
+        className="rounded-sm"
+        style={{
+          ...baseStyles,
+          ...selectionOutlineStyle,
+        }}
         onClick={onClick}
         onMouseDown={onMouseDown}
       >

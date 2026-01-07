@@ -389,7 +389,13 @@ export function PowerPointToolbar({
 
   const handleStrokeColorChange = useCallback((color: string) => {
     if (selectedElement?.type === 'shape') {
-      onUpdateElement({ stroke: color })
+      // If element has a border object (from PPTX), update its color
+      // Otherwise, update the simple stroke property
+      if (selectedElement.border) {
+        onUpdateElement({ border: { ...selectedElement.border, color } })
+      } else {
+        onUpdateElement({ stroke: color })
+      }
     }
     setStrokeColorOpen(false)
   }, [selectedElement, onUpdateElement])

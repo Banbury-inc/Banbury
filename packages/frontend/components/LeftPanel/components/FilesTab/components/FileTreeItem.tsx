@@ -1,13 +1,9 @@
-import * as ContextMenu from "@radix-ui/react-context-menu"
 import { 
   ChevronDown, 
   ChevronRight, 
   File, 
   Folder, 
   RefreshCw, 
-  Edit2, 
-  Trash2, 
-  FolderPlus, 
   FileText,
   FileImage,
   FileVideo,
@@ -18,20 +14,19 @@ import {
   FileJson,
   FileType,
   FileBarChart,
-  FilePlus,
   FileCog,
   Network,
   Star,
-  Share2,
 } from "lucide-react"
 import { useState, useEffect, useRef } from 'react'
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
 import { Typography } from "../../../../ui/typography"
 import { ApiService } from "../../../../../../backend/api/apiService"
 import { useToast } from "../../../../ui/use-toast"
-import { GoogleDriveIcon, OneDriveIcon } from "../../../../icons"
 import { handleCopyLocalToDrive } from "../handlers/handleCopyLocalToDrive"
 import { handleCopyLocalToOneDrive } from "../handlers/handleCopyLocalToOneDrive"
+import { handleLocalFileDownload } from "../handlers/handleLocalFileDownload"
+import { CloudFileContextMenu } from "./CloudFileContextMenu"
 
 // Drag and drop state interfaces
 export interface DragState {
@@ -205,146 +200,6 @@ const getFileIcon = (fileName: string): { icon: any, color: string } => {
   return { icon: File, color: 'text-gray-400' }
 }
 
-// File Context Menu Component
-interface FileContextMenuProps {
-  children: React.ReactNode
-  onRename: () => void
-  onDelete?: () => void
-  onNewFolder?: () => void
-  onUploadFile?: () => void
-  onUploadFolder?: () => void
-  isFolder?: boolean
-  deleteLabel?: string
-  isStarred?: boolean
-  onToggleStar?: () => void
-  onShare?: () => void
-  onCopyToDrive?: () => void
-  onCopyToOneDrive?: () => void
-  driveAvailable?: boolean
-  oneDriveConnected?: boolean
-}
-
-function FileContextMenu({ children, onRename, onDelete, onNewFolder, onUploadFile, onUploadFolder, isFolder, deleteLabel, isStarred, onToggleStar, onShare, onCopyToDrive, onCopyToOneDrive, driveAvailable, oneDriveConnected }: FileContextMenuProps) {
-  return (
-    <ContextMenu.Root>
-      <ContextMenu.Trigger asChild>
-        {children}
-      </ContextMenu.Trigger>
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="min-w-[160px] bg-white dark:bg-zinc-800 rounded-md p-1 shadow-lg border border-zinc-300 dark:border-zinc-700 z-50">
-          {onUploadFile && (
-            <ContextMenu.Item 
-              className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
-              onSelect={onUploadFile}
-            >
-              <FilePlus className="w-4 h-4" />
-              <Typography variant="xs" className="text-zinc-900 dark:text-white">
-                Upload File
-              </Typography>
-            </ContextMenu.Item>
-          )}
-          {onUploadFolder && (
-            <ContextMenu.Item 
-              className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
-              onSelect={onUploadFolder}
-            >
-              <FolderPlus className="w-4 h-4" strokeWidth={1} />
-              <Typography variant="xs" className="text-zinc-900 dark:text-white">
-                Upload Folder
-              </Typography>
-            </ContextMenu.Item>
-          )}
-          {isFolder && onNewFolder && (
-            <ContextMenu.Item 
-              className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
-              onSelect={onNewFolder}
-            >
-              <FolderPlus className="w-4 h-4" strokeWidth={1} />
-              <Typography variant="xs" className="text-zinc-900 dark:text-white">
-                New Folder
-              </Typography>
-            </ContextMenu.Item>
-          )}
-          {onToggleStar && !isFolder && (
-            <ContextMenu.Item 
-              className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
-              onSelect={onToggleStar}
-            >
-              <Star className={`w-4 h-4 ${isStarred ? 'text-yellow-500 fill-yellow-500' : ''}`} strokeWidth={1} />
-              <Typography variant="xs" className="text-zinc-900 dark:text-white">
-                {isStarred ? 'Unstar' : 'Star'}
-              </Typography>
-            </ContextMenu.Item>
-          )}
-          {onShare && !isFolder && (
-            <ContextMenu.Item 
-              className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
-              onSelect={onShare}
-            >
-              <Share2 className="w-4 h-4" strokeWidth={1} />
-              <Typography variant="xs" className="text-zinc-900 dark:text-white">
-                Share
-              </Typography>
-            </ContextMenu.Item>
-          )}
-          {!isFolder && (
-            <>
-              <ContextMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-700 my-1" />
-              <ContextMenu.Item 
-                className={`flex items-center gap-2 px-2 py-1.5 rounded outline-none ${
-                  driveAvailable 
-                    ? 'hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer' 
-                    : 'opacity-50 cursor-not-allowed'
-                }`}
-                onSelect={driveAvailable ? onCopyToDrive : undefined}
-                disabled={!driveAvailable}
-              >
-                <GoogleDriveIcon size={16} className="w-4 h-4" />
-                <Typography variant="xs" className="text-zinc-900 dark:text-white">
-                  Copy to Google Drive
-                </Typography>
-              </ContextMenu.Item>
-              <ContextMenu.Item 
-                className={`flex items-center gap-2 px-2 py-1.5 rounded outline-none ${
-                  oneDriveConnected 
-                    ? 'hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer' 
-                    : 'opacity-50 cursor-not-allowed'
-                }`}
-                onSelect={oneDriveConnected ? onCopyToOneDrive : undefined}
-                disabled={!oneDriveConnected}
-              >
-                <OneDriveIcon size={16} className="w-4 h-4" />
-                <Typography variant="xs" className="text-zinc-900 dark:text-white">
-                  Copy to OneDrive
-                </Typography>
-              </ContextMenu.Item>
-            </>
-          )}
-          <ContextMenu.Item 
-            className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
-            onSelect={onRename}
-          >
-            <Edit2 className="w-4 h-4" strokeWidth={1} />
-            <Typography variant="xs" className="text-zinc-900 dark:text-white">
-              Rename
-            </Typography>
-          </ContextMenu.Item>
-          {onDelete && (
-            <ContextMenu.Item 
-              className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
-              onSelect={onDelete}
-            >
-              <Trash2 className="w-4 h-4" strokeWidth={1} />
-              <Typography variant="xs" className="text-red-600 dark:text-red-400">
-                {deleteLabel || 'Delete'}
-              </Typography>
-            </ContextMenu.Item>
-          )}
-        </ContextMenu.Content>
-      </ContextMenu.Portal>
-    </ContextMenu.Root>
-  )
-}
 
 export function FileTreeItem({ 
   item, 
@@ -627,6 +482,15 @@ export function FileTreeItem({
       setNewFolderName('New Folder')
     }
   }
+
+  const handleDownload = async () => {
+    if (!item.file_id) return
+    await handleLocalFileDownload({
+      fileId: item.file_id,
+      fileName: item.name,
+      showToast: toast
+    })
+  }
   
   const buttonContent = (
     isRenaming ? (
@@ -689,8 +553,12 @@ export function FileTreeItem({
     <>
       <div className="w-full h-full">
         {(item.type === 'file' && item.file_id) || item.type === 'folder' ? (
-          <FileContextMenu 
-            onRename={handleRename} 
+          <CloudFileContextMenu 
+            provider="local"
+            isFolder={item.type === 'folder'}
+            isStarred={item.file_id ? starredFileIds?.has(item.file_id) : false}
+            onDownload={item.type === 'file' && item.file_id ? handleDownload : undefined}
+            onRename={handleRename}
             onDelete={
               item.type === 'file' && item.file_id
                 ? (selectionCount > 1 && isMultiSelected ? onDeleteSelectedFiles : handleDelete)
@@ -704,8 +572,6 @@ export function FileTreeItem({
             onNewFolder={item.type === 'folder' ? handleCreateFolder : undefined}
             onUploadFile={onUploadFile}
             onUploadFolder={onUploadFolder}
-            isFolder={item.type === 'folder'}
-            isStarred={item.file_id ? starredFileIds?.has(item.file_id) : false}
             onToggleStar={item.file_id ? () => {
               const isCurrentlyStarred = starredFileIds?.has(item.file_id!)
               if (isCurrentlyStarred) {
@@ -733,7 +599,7 @@ export function FileTreeItem({
             } : undefined}
           >
             {buttonContent}
-          </FileContextMenu>
+          </CloudFileContextMenu>
         ) : (
           buttonContent
         )}

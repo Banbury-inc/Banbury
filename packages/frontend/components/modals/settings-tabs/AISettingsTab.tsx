@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Brain, Mail, Sparkles } from 'lucide-react'
+import { Brain, Mail } from 'lucide-react'
 import { Switch } from '../../ui/switch'
 import { Typography } from 'frontend/components/ui/typography'
 import { Label } from 'frontend/components/ui/label'
@@ -16,7 +16,6 @@ interface ToolPreferences {
   x_api: boolean
   slack: boolean
   model_provider: "anthropic" | "openai" | "google"
-  use_skills: boolean
 }
 
 export function AISettingsTab() {
@@ -36,7 +35,6 @@ export function AISettingsTab() {
           x_api: typeof parsed.x_api === 'boolean' ? parsed.x_api : false,
           slack: typeof parsed.slack === 'boolean' ? parsed.slack : false,
           model_provider: parsed.model_provider === 'google' ? 'google' : (parsed.model_provider === 'openai' ? 'openai' : 'anthropic'),
-          use_skills: parsed.use_skills === true, // Disabled by default until API access confirmed
         }
       }
     } catch {}
@@ -51,7 +49,6 @@ export function AISettingsTab() {
       x_api: false,
       slack: false,
       model_provider: 'anthropic',
-      use_skills: false, // Disabled by default until API access confirmed
     }
   })
 
@@ -59,18 +56,6 @@ export function AISettingsTab() {
     const updatedPreferences = {
       ...toolPreferences,
       gmailSend: checked,
-    }
-    setToolPreferences(updatedPreferences)
-    localStorage.setItem('toolPreferences', JSON.stringify(updatedPreferences))
-
-    // Dispatch storage event for other components to pick up
-    window.dispatchEvent(new Event('storage'))
-  }
-
-  function handleSkillsToggle(checked: boolean) {
-    const updatedPreferences = {
-      ...toolPreferences,
-      use_skills: checked,
     }
     setToolPreferences(updatedPreferences)
     localStorage.setItem('toolPreferences', JSON.stringify(updatedPreferences))
@@ -88,33 +73,6 @@ export function AISettingsTab() {
       <Separator />
 
       <div className="space-y-6">
-        {/* Claude Agent Skills (Anthropic only) */}
-        {toolPreferences.model_provider === 'anthropic' && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Sparkles className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
-                <div className="flex-1">
-                  <Label htmlFor="skills-toggle">
-                    <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">
-                      Claude Agent Skills
-                    </Typography>
-                  </Label>
-                  <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 mt-1">
-                    Use Claude's built-in Skills for PowerPoint, Word, Excel, and PDF generation. Note: Requires beta API access from Anthropic.
-                  </Typography>
-                </div>
-              </div>
-              <Switch
-                id="skills-toggle"
-                checked={toolPreferences.use_skills}
-                onCheckedChange={handleSkillsToggle}
-                className="data-[state=checked]:bg-blue-600"
-              />
-            </div>
-          </div>
-        )}
-
         {/* Gmail Send Message Tool */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">

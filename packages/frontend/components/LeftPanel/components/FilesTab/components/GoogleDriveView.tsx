@@ -337,6 +337,42 @@ export function GoogleDriveView({
     }
   }, [handleCreateDocument, handleCreateSpreadsheet, handleCreatePowerpoint])
 
+  // Handle file deleted - remove from local state
+  const handleFileDeleted = useCallback((fileId: string) => {
+    setDriveFiles(prev => prev.filter(f => f.id !== fileId))
+    setDriveFolderContents(prev => {
+      const newMap = new Map(prev)
+      for (const [folderId, files] of newMap) {
+        newMap.set(folderId, files.filter(f => f.id !== fileId))
+      }
+      return newMap
+    })
+  }, [])
+
+  // Handle file renamed - update local state
+  const handleFileRenamed = useCallback((fileId: string, newName: string) => {
+    setDriveFiles(prev => prev.map(f => f.id === fileId ? { ...f, name: newName } : f))
+    setDriveFolderContents(prev => {
+      const newMap = new Map(prev)
+      for (const [folderId, files] of newMap) {
+        newMap.set(folderId, files.map(f => f.id === fileId ? { ...f, name: newName } : f))
+      }
+      return newMap
+    })
+  }, [])
+
+  // Handle star changed - update local state
+  const handleStarChanged = useCallback((fileId: string, starred: boolean) => {
+    setDriveFiles(prev => prev.map(f => f.id === fileId ? { ...f, starred } : f))
+    setDriveFolderContents(prev => {
+      const newMap = new Map(prev)
+      for (const [folderId, files] of newMap) {
+        newMap.set(folderId, files.map(f => f.id === fileId ? { ...f, starred } : f))
+      }
+      return newMap
+    })
+  }, [])
+
   return (
     <div 
       className="h-full overflow-y-auto sidebar-scrollbar"
@@ -519,6 +555,9 @@ export function GoogleDriveView({
             loadingFolders={loadingDriveFolders}
             onFileSelect={onFileSelect}
             selectedFile={selectedFile}
+            onFileDeleted={handleFileDeleted}
+            onFileRenamed={handleFileRenamed}
+            onStarChanged={handleStarChanged}
           />
         ))
       }

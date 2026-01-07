@@ -1,4 +1,3 @@
-import * as ContextMenu from "@radix-ui/react-context-menu"
 import { 
   ChevronDown, 
   ChevronRight, 
@@ -12,13 +11,21 @@ import {
   FileSpreadsheet,
   FileBarChart,
   Star,
-  HardDrive,
 } from "lucide-react"
+import { useState, useEffect, useRef } from 'react'
 import { OneDriveFile } from "../../../../../../backend/api/onedrive/onedrive"
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
 import { Typography } from "../../../../ui/typography"
 import { useToast } from "../../../../ui/use-toast"
 import { handleCopyOneDriveToLocal } from "../handlers/handleCopyOneDriveToLocal"
+import { CloudFileContextMenu } from "./CloudFileContextMenu"
+import { 
+  handleOneDriveRename, 
+  handleOneDriveDelete, 
+  handleOneDriveAddFavorite, 
+  handleOneDriveRemoveFavorite, 
+  handleOneDriveDownload 
+} from "../handlers/handleOneDriveFileActions"
 
 interface OneDriveFileTreeItemProps {
   file: OneDriveFile
@@ -30,6 +37,9 @@ interface OneDriveFileTreeItemProps {
   onFileSelect?: (file: FileSystemItem) => void
   selectedFile?: FileSystemItem | null
   favorites?: Set<string>
+  onFileDeleted?: (fileId: string) => void
+  onFileRenamed?: (fileId: string, newName: string) => void
+  onFavoriteChanged?: (fileId: string, isFavorite: boolean) => void
 }
 
 function convertOneDriveFileToFileSystemItem(oneDriveFile: OneDriveFile): FileSystemItem {
@@ -58,7 +68,10 @@ export function OneDriveFileTreeItem({
   loadingFolders,
   onFileSelect,
   selectedFile,
-  favorites = new Set()
+  favorites = new Set(),
+  onFileDeleted,
+  onFileRenamed,
+  onFavoriteChanged
 }: OneDriveFileTreeItemProps) {
   const { toast } = useToast()
   const isFolder = !!file.folder
@@ -67,6 +80,27 @@ export function OneDriveFileTreeItem({
   const children = folderContents.get(file.id) || []
   const isSelected = selectedFile?.file_id === file.id
   const isFavorite = favorites.has(file.id)
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [newName, setNewName] = useState(file.name)
+  const inputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    if (isRenaming && inputRef.current) {
+      requestAnimationFrame(() => {
+        if (inputRef.current) {
+          inputRef.current.focus()
+          // Select filename without extension
+          const value = inputRef.current.value
+          const lastDotIndex = value.lastIndexOf('.')
+          if (lastDotIndex > 0 && !isFolder) {
+            inputRef.current.setSelectionRange(0, lastDotIndex)
+          } else {
+            inputRef.current.select()
+          }
+        }
+      })
+    }
+  }, [isRenaming, isFolder])
 
   const handleCopyToLocal = async () => {
     await handleCopyOneDriveToLocal({
@@ -76,7 +110,75 @@ export function OneDriveFileTreeItem({
     })
   }
 
+  const handleDownload = async () => {
+    await handleOneDriveDownload({
+      itemId: file.id,
+      fileName: file.name,
+      showToast: toast
+    })
+  }
+
+  const handleRename = () => {
+    setIsRenaming(true)
+    setNewName(file.name)
+  }
+
+  const handleRenameSubmit = async () => {
+    if (newName.trim() === '' || newName === file.name) {
+      setIsRenaming(false)
+      return
+    }
+    
+    const success = await handleOneDriveRename({
+      itemId: file.id,
+      fileName: file.name,
+      newName: newName.trim(),
+      showToast: toast,
+      onSuccess: () => onFileRenamed?.(file.id, newName.trim())
+    })
+    
+    if (!success) setNewName(file.name)
+    setIsRenaming(false)
+  }
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleRenameSubmit()
+    } else if (e.key === 'Escape') {
+      setIsRenaming(false)
+      setNewName(file.name)
+    }
+  }
+
+  const handleDelete = async () => {
+    await handleOneDriveDelete({
+      itemId: file.id,
+      fileName: file.name,
+      showToast: toast,
+      onSuccess: () => onFileDeleted?.(file.id)
+    })
+  }
+
+  const handleToggleFavorite = async () => {
+    if (isFavorite) {
+      await handleOneDriveRemoveFavorite({
+        itemId: file.id,
+        fileName: file.name,
+        showToast: toast,
+        onSuccess: () => onFavoriteChanged?.(file.id, false)
+      })
+    } else {
+      await handleOneDriveAddFavorite({
+        itemId: file.id,
+        fileName: file.name,
+        showToast: toast,
+        onSuccess: () => onFavoriteChanged?.(file.id, true)
+      })
+    }
+  }
+
   const handleClick = (e: React.MouseEvent) => {
+    if (isRenaming) return
     e.stopPropagation()
     if (isFolder) {
       toggleExpanded(file.id)
@@ -111,7 +213,33 @@ export function OneDriveFileTreeItem({
     return <File className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
   }
 
-  const buttonContent = (
+  const buttonContent = isRenaming ? (
+    <div
+      className={`w-full flex items-center gap-2 text-left px-3 py-2 min-w-0 ${
+        isSelected ? 'bg-muted text-foreground' : 'text-muted-foreground'
+      }`}
+      style={{ paddingLeft: `${(level * 12) + 12}px` }}
+    >
+      {isFolder && (
+        isExpanded ? 
+          <ChevronDown className="h-4 w-4" strokeWidth={1} /> : 
+          <ChevronRight className="h-4 w-4" strokeWidth={1} />
+      )}
+      {!isFolder && <div className="w-3" />}
+      {getFileIcon()}
+      <input
+        type="text"
+        value={newName}
+        onChange={(e) => setNewName(e.target.value)}
+        onBlur={handleRenameSubmit}
+        onKeyDown={handleRenameKeyDown}
+        className="text-sm bg-muted text-foreground px-1 py-0 rounded border-none outline-none flex-1"
+        autoFocus
+        ref={inputRef}
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>
+  ) : (
     <button
       onClick={handleClick}
       className={`w-full flex items-center gap-2 text-left px-3 py-2 hover:bg-muted cursor-pointer transition-colors ${
@@ -141,28 +269,18 @@ export function OneDriveFileTreeItem({
 
   return (
     <>
-      {!isFolder ? (
-        <ContextMenu.Root>
-          <ContextMenu.Trigger asChild>
-            {buttonContent}
-          </ContextMenu.Trigger>
-          <ContextMenu.Portal>
-            <ContextMenu.Content className="min-w-[160px] bg-white dark:bg-zinc-800 rounded-md p-1 shadow-lg border border-zinc-300 dark:border-zinc-700 z-50">
-              <ContextMenu.Item
-                className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
-                onSelect={handleCopyToLocal}
-              >
-                <HardDrive className="w-4 h-4" strokeWidth={1} />
-                <Typography variant="xs" className="text-zinc-900 dark:text-white">
-                  Copy to Local
-                </Typography>
-              </ContextMenu.Item>
-            </ContextMenu.Content>
-          </ContextMenu.Portal>
-        </ContextMenu.Root>
-      ) : (
-        buttonContent
-      )}
+      <CloudFileContextMenu
+        provider="onedrive"
+        isFolder={isFolder}
+        isStarred={isFavorite}
+        onDownload={!isFolder ? handleDownload : undefined}
+        onRename={handleRename}
+        onDelete={handleDelete}
+        onToggleStar={handleToggleFavorite}
+        onCopyToLocal={!isFolder ? handleCopyToLocal : undefined}
+      >
+        {buttonContent}
+      </CloudFileContextMenu>
 
       {/* Render children if folder is expanded */}
       {isFolder && isExpanded && !isLoading && children.length > 0 && (
@@ -188,6 +306,9 @@ export function OneDriveFileTreeItem({
                 onFileSelect={onFileSelect}
                 selectedFile={selectedFile}
                 favorites={favorites}
+                onFileDeleted={onFileDeleted}
+                onFileRenamed={onFileRenamed}
+                onFavoriteChanged={onFavoriteChanged}
               />
             ))}
         </>

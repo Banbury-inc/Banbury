@@ -37,7 +37,8 @@ export function getToolPreferences(): ToolPreferences {
         x_api: (parsed && typeof parsed.x_api === 'boolean') ? parsed.x_api : false,
         gmailSend: (parsed && typeof parsed.gmailSend === 'boolean') ? parsed.gmailSend : true,
         slack: (parsed && typeof parsed.slack === 'boolean') ? parsed.slack : false,
-        use_skills: (parsed && typeof parsed.use_skills === 'boolean') ? parsed.use_skills : false,
+        // Auto-enable skills for Anthropic provider
+        use_skills: (parsed?.model_provider === 'anthropic'),
       }; // Force LangGraph + ensure browserbase present + ensure x_api present + ensure gmailSend present + ensure slack present + ensure use_skills present
     }
   } catch {}
