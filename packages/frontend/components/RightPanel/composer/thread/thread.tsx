@@ -40,7 +40,7 @@ import { createHandleDrawioFileView } from "../../handlers/handle-drawio-file-vi
 import { Composer } from "../Composer";
 import { UserMessage } from "./components/UserMessage";
 import { BranchPicker } from "./components/BranchPicker";
-import { getDefaultModelForProvider, getModelById } from "../handlers/getModelDisplayName";
+import { getDefaultModelForProvider, getModelById, DEFAULT_VISIBLE_MODELS } from "../handlers/getModelDisplayName";
 import { Typography, typographyVariants } from "../../../ui/typography";
 import {
   getStoredKeybinds,
@@ -122,6 +122,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     model_id: string;
     image_generation_model?: string;
     video_generation_model?: string;
+    visibleModels?: string[];
   }
 
   const deriveToolPreferences = (raw?: any): ThreadToolPreferences => {
@@ -171,6 +172,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       model_id: modelId,
       image_generation_model: typeof data.image_generation_model === "string" ? data.image_generation_model : "dall-e-3",
       video_generation_model: typeof data.video_generation_model === "string" ? data.video_generation_model : "sora-2",
+      visibleModels: Array.isArray(data.visibleModels) ? data.visibleModels : DEFAULT_VISIBLE_MODELS,
     };
   };
 

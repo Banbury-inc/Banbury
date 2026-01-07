@@ -58,6 +58,7 @@ export interface ComposerToolPreferences {
   model_id?: string;
   image_generation_model?: string;
   video_generation_model?: string;
+  visibleModels?: string[];
 }
 
 export const toolConfigs: ToolConfig[] = [
