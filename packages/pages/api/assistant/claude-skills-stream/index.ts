@@ -152,10 +152,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       clearInterval(progress)
     }
 
-    // Log full response structure for debugging
-    console.log('[Skills] Full response:', JSON.stringify(response, null, 2))
-    console.log('[Skills] Response content blocks:', response.content?.map((b: any) => ({ type: b.type, hasContent: !!b.content })))
-
     // Stream text content
     for (const block of response.content) {
       if (block.type === 'text') {
@@ -168,14 +164,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Check for generated files
     const fileIds = extractFileIds(response)
-    console.log('[Skills] Extracted file IDs:', fileIds)
 
     if (fileIds.length > 0) {
-      console.log('[Skills] Processing generated files:', fileIds)
       // Process files
       await processGeneratedFiles(fileIds, client, token, send)
-    } else {
-      console.log('[Skills] No file IDs found in response')
     }
 
     // Send completion
@@ -236,12 +228,9 @@ async function processGeneratedFiles(
   send: (event: any) => void
 ) {
   for (const fileId of fileIds) {
-    console.log(`[Skills] Processing file ${fileId}`)
     try {
       // Download file from container
-      console.log(`[Skills] Downloading file ${fileId} from container`)
       const { blob, metadata } = await downloadFromContainer(client, fileId)
-      console.log(`[Skills] Downloaded file:`, metadata)
 
       // Determine file type and folder
       const ext = metadata.filename.split('.').pop()?.toLowerCase() || ''
@@ -256,7 +245,6 @@ async function processGeneratedFiles(
       const folder = folderMap[ext] || 'documents'
 
       // Upload to S3
-      console.log(`[Skills] Uploading ${metadata.filename} to S3 in folder ${folder}`)
       const uploadResult = await uploadToS3(
         blob,
         metadata.filename,
@@ -264,7 +252,6 @@ async function processGeneratedFiles(
         authToken,
         metadata
       )
-      console.log(`[Skills] Upload result:`, uploadResult)
 
       if (uploadResult.ok && uploadResult.file_info) {
         const event: FileGeneratedEvent = {
@@ -274,7 +261,6 @@ async function processGeneratedFiles(
           fileName: uploadResult.file_info.file_name,
           downloadUrl: uploadResult.file_info.file_path
         }
-        console.log(`[Skills] Sending file-generated event:`, event)
         send(event)
       } else {
         send({

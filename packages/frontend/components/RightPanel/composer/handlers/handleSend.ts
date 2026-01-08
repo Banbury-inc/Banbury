@@ -1,33 +1,64 @@
 import { extractEmailContent } from "../../../../utils/emailUtils"
+import type React from "react"
 
 interface HandleSendParams {
   composer: any
   onSend?: () => void
   tabId?: string
+  // Optional refs for direct element access (more robust than DOM queries)
+  composerContainerRef?: React.RefObject<HTMLDivElement>
+  proseMirrorRef?: React.RefObject<HTMLElement>
+  inputRef?: React.RefObject<HTMLTextAreaElement>
 }
 
-export function handleSend({ composer, onSend, tabId }: HandleSendParams) {
+export function handleSend({
+  composer,
+  onSend,
+  tabId,
+  composerContainerRef,
+  proseMirrorRef,
+  inputRef
+}: HandleSendParams) {
+  // Strategy 1: Try to use refs (most reliable)
+  let input = inputRef?.current;
+  let proseMirror = proseMirrorRef?.current;
+
+  // Strategy 2: Fall back to scoped DOM queries if refs are not available
+  if (!input || !proseMirror) {
+    const scope = tabId
+      ? document.querySelector(`[data-tab-id="${tabId}"]`)
+      : document;
+
+    if (!scope && tabId) {
+      console.warn('[handleSend] Could not find tab scope, falling back to document', { tabId });
+    }
+
+    const queryScope = scope || document;
+
+    if (!input) {
+      input = queryScope.querySelector('textarea[aria-label="Message input"]') as HTMLTextAreaElement | null;
+    }
+
+    if (!proseMirror) {
+      // Get the first ProseMirror element from scoped query
+      const proseMirrorElements = queryScope.querySelectorAll('.ProseMirror');
+      if (proseMirrorElements.length > 0) {
+        proseMirror = proseMirrorElements[0] as HTMLElement;
+      }
+    }
+  }
+
   // Prefer the hidden textarea value, which tiptap keeps in sync (preserves newlines)
-  const input = document.querySelector('textarea[aria-label="Message input"]') as HTMLTextAreaElement | null
   let text = input?.value ?? ''
 
   // Fallback: Get the text directly from the Tiptap editor DOM if the textarea is empty
-  if (!text.trim()) {
-    const proseMirrorElements = document.querySelectorAll('.ProseMirror')
-
-    for (const element of Array.from(proseMirrorElements)) {
-      const isInChatComposer = element.closest('.bg-zinc-800') || element.closest('.min-h-16')
-
-      if (isInChatComposer) {
-        // Extract paragraphs to preserve line breaks when possible
-        const paragraphs = Array.from(element.querySelectorAll('p'))
-        if (paragraphs.length > 0) {
-          text = paragraphs.map((p) => (p.textContent || '').trimEnd()).join('\n\n')
-        } else {
-          text = element.textContent || ''
-        }
-        break
-      }
+  if (!text.trim() && proseMirror) {
+    // Extract paragraphs to preserve line breaks when possible
+    const paragraphs = Array.from(proseMirror.querySelectorAll('p'))
+    if (paragraphs.length > 0) {
+      text = paragraphs.map((p) => (p.textContent || '').trimEnd()).join('\n\n')
+    } else {
+      text = proseMirror.textContent || ''
     }
   }
   
@@ -143,7 +174,7 @@ export function handleSend({ composer, onSend, tabId }: HandleSendParams) {
   }
     
   if (text.trim().length > 0) {
-    const input = document.querySelector('textarea[aria-label="Message input"]') as HTMLTextAreaElement
+    // Reuse the input element we already found (either from ref or scoped query)
     if (input) {
       // Set the input value and trigger all possible events
       input.value = text // Keep only the user's message visible

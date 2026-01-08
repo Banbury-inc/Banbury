@@ -110,10 +110,6 @@ async function runScript(
   workspaceDir: string,
   timeout: number = 120000
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  // #region agent log
-  fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'executeScriptTool.ts:168',message:'runScript entry',data:{scriptPath,workspaceDir},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
-  // #endregion
-  
   return new Promise((resolve) => {
     const stdout: string[] = []
     const stderr: string[] = []
@@ -142,10 +138,6 @@ async function runScript(
       ...findNodeModulesPaths()
     ].filter(p => fs.existsSync(p))
     
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'executeScriptTool.ts:214',message:'before spawn',data:{scriptPath,workspaceDir,modulePaths},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'F'})}).catch(()=>{});
-    // #endregion
-    
     const proc = spawn('node', [scriptPath], {
       cwd: workspaceDir,
       env: {
@@ -159,23 +151,14 @@ async function runScript(
     proc.stdout.on('data', (data) => {
       const output = data.toString()
       stdout.push(output)
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'executeScriptTool.ts:228',message:'stdout chunk',data:{output:output.substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'F'})}).catch(()=>{});
-      // #endregion
     })
     
     proc.stderr.on('data', (data) => {
       const error = data.toString()
       stderr.push(error)
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'executeScriptTool.ts:235',message:'stderr chunk',data:{error:error.substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'F'})}).catch(()=>{});
-      // #endregion
     })
     
     proc.on('close', (code) => {
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'executeScriptTool.ts:242',message:'script closed',data:{exitCode:code,stdoutLength:stdout.join('').length,stderrLength:stderr.join('').length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'F'})}).catch(()=>{});
-      // #endregion
       resolve({
         stdout: stdout.join(''),
         stderr: stderr.join(''),

@@ -29,6 +29,7 @@ type ChatTiptapComposerProps = {
   placeholder?: string;
   className?: string;
   onSend?: () => void;
+  onEditorMount?: (editor: Editor) => void;
 };
 
 type FileMentionItem = {
@@ -113,7 +114,7 @@ const getDocumentEditorContent = (currentEditorDom?: Element | null): string => 
   return '';
 };
 
-export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenInputRef, userInfo, onFileAttach, onAttachmentPayload, placeholder = 'Send a message...', className, onSend }) => {
+export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenInputRef, userInfo, onFileAttach, onAttachmentPayload, placeholder = 'Send a message...', className, onSend, onEditorMount }) => {
   const [files, setFiles] = React.useState<FileSystemItem[]>([]);
   const [loading, setLoading] = React.useState<boolean>(false);
   const filesRef = React.useRef<FileSystemItem[]>([]);
@@ -607,6 +608,11 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
   useEffect(() => {
     setEditor(editorInstance);
     if (editorInstance) {
+      // Call onEditorMount callback if provided
+      if (onEditorMount) {
+        onEditorMount(editorInstance);
+      }
+
       // Delay focus to ensure editor is fully mounted
       setTimeout(() => {
         try {

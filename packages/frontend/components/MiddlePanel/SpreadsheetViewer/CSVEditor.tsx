@@ -477,42 +477,60 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
       })(changes, source);
       
       // Handle link removal when cell content changes
-      if (source === 'edit' && changes) {
+      if ((source === 'edit' || source === 'paste' || source === 'autofill') && changes) {
         const hotInstance = hotTableRef.current?.hotInstance;
         if (!hotInstance) return;
-        
+
+        // Batch all link changes to avoid multiple state updates
+        const linkUpdates: { [key: string]: string | undefined } = {};
+        let hasLinkChanges = false;
+
         for (const [row, col, oldValue, newValue] of changes) {
           const cellKey = `${row}-${col}`;
           const hasLink = cellLinks[cellKey];
-          
+
           if (hasLink) {
             // Check if the new value is still a URL
             const isStillUrl = isUrl(newValue);
-            
+
             if (!isStillUrl) {
               // Remove the link if the new value is not a URL
-              setCellLinks(prev => {
-                const next = { ...prev };
-                delete next[cellKey];
-                return next;
-              });
-              setHasChanges(true);
+              linkUpdates[cellKey] = undefined;
+              hasLinkChanges = true;
             } else {
               // Update the link URL if it changed
               const detectedUrl = isUrl(newValue);
               if (detectedUrl && detectedUrl !== hasLink) {
-                setCellLinks(prev => ({ ...prev, [cellKey]: detectedUrl }));
-                setHasChanges(true);
+                linkUpdates[cellKey] = detectedUrl;
+                hasLinkChanges = true;
               }
             }
           } else {
             // Check if a new URL was entered
             const detectedUrl = isUrl(newValue);
             if (detectedUrl) {
-              setCellLinks(prev => ({ ...prev, [cellKey]: detectedUrl }));
-              setHasChanges(true);
+              linkUpdates[cellKey] = detectedUrl;
+              hasLinkChanges = true;
             }
           }
+        }
+
+        // Apply all link changes in a single batched state update
+        if (hasLinkChanges) {
+          requestAnimationFrame(() => {
+            setCellLinks(prev => {
+              const next = { ...prev };
+              for (const [key, value] of Object.entries(linkUpdates)) {
+                if (value === undefined) {
+                  delete next[key];
+                } else {
+                  next[key] = value;
+                }
+              }
+              return next;
+            });
+            setHasChanges(true);
+          });
         }
       }
     },

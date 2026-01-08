@@ -204,9 +204,9 @@ export function PlanTiptapEditor({
   }
 
   return (
-    <div className={cn("h-full overflow-auto bg-card", styles.darkScrollbar)}>
+    <div className={cn("plan-tiptap-wrapper h-full overflow-auto bg-card", styles.darkScrollbar)}>
       <style>{`
-        .ProseMirror {
+        .plan-tiptap-wrapper .ProseMirror {
           outline: none;
           padding: 1rem;
           min-height: 200px;
@@ -214,7 +214,7 @@ export function PlanTiptapEditor({
           background: hsl(var(--card));
         }
         
-        .ProseMirror h1 {
+        .plan-tiptap-wrapper .ProseMirror h1 {
           font-size: 2rem;
           font-weight: 600;
           margin-top: 1.5rem;
@@ -223,7 +223,7 @@ export function PlanTiptapEditor({
           color: hsl(var(--foreground));
         }
         
-        .ProseMirror h2 {
+        .plan-tiptap-wrapper .ProseMirror h2 {
           font-size: 1.5rem;
           font-weight: 600;
           margin-top: 1.25rem;
@@ -232,7 +232,7 @@ export function PlanTiptapEditor({
           color: hsl(var(--foreground));
         }
         
-        .ProseMirror h3 {
+        .plan-tiptap-wrapper .ProseMirror h3 {
           font-size: 1.25rem;
           font-weight: 600;
           margin-top: 1rem;
@@ -241,7 +241,7 @@ export function PlanTiptapEditor({
           color: hsl(var(--foreground));
         }
         
-        .ProseMirror h4 {
+        .plan-tiptap-wrapper .ProseMirror h4 {
           font-size: 1.1rem;
           font-weight: 600;
           margin-top: 0.875rem;
@@ -250,20 +250,20 @@ export function PlanTiptapEditor({
           color: hsl(var(--foreground));
         }
         
-        .ProseMirror p {
+        .plan-tiptap-wrapper .ProseMirror p {
           margin: 0.5rem 0;
           line-height: 1.6;
           color: hsl(var(--foreground));
         }
         
-        .ProseMirror ul[data-type="taskList"] {
+        .plan-tiptap-wrapper .ProseMirror ul[data-type="taskList"] {
           list-style: none;
           padding-left: 0;
           margin: 0.5rem 0;
         }
         
-        .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"],
-        .ProseMirror ul[data-type="taskList"] li.task-item {
+        .plan-tiptap-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"],
+        .plan-tiptap-wrapper .ProseMirror ul[data-type="taskList"] li.task-item {
           display: inline-flex;
           align-items: baseline;
           gap: 0.5rem;
@@ -272,61 +272,61 @@ export function PlanTiptapEditor({
           width: 100%;
         }
         
-        .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label,
-        .ProseMirror ul[data-type="taskList"] li.task-item > label {
+        .plan-tiptap-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label,
+        .plan-tiptap-wrapper .ProseMirror ul[data-type="taskList"] li.task-item > label {
           display: inline-flex;
           align-items: baseline;
           flex-shrink: 0;
         }
         
-        .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label > input[type="checkbox"],
-        .ProseMirror ul[data-type="taskList"] li.task-item > label > input[type="checkbox"] {
+        .plan-tiptap-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label > input[type="checkbox"],
+        .plan-tiptap-wrapper .ProseMirror ul[data-type="taskList"] li.task-item > label > input[type="checkbox"] {
           cursor: pointer;
           flex-shrink: 0;
           margin: 0;
           margin-top: 0.25em;
         }
         
-        .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > div,
-        .ProseMirror ul[data-type="taskList"] li.task-item > div {
+        .plan-tiptap-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > div,
+        .plan-tiptap-wrapper .ProseMirror ul[data-type="taskList"] li.task-item > div {
           flex: 1;
           min-width: 0;
           display: inline-block;
         }
         
-        .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > div > *,
-        .ProseMirror ul[data-type="taskList"] li.task-item > div > * {
+        .plan-tiptap-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > div > *,
+        .plan-tiptap-wrapper .ProseMirror ul[data-type="taskList"] li.task-item > div > * {
           display: inline;
           margin: 0;
         }
         
-        .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] p,
-        .ProseMirror ul[data-type="taskList"] li.task-item p {
+        .plan-tiptap-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] p,
+        .plan-tiptap-wrapper .ProseMirror ul[data-type="taskList"] li.task-item p {
           display: inline !important;
           margin: 0 !important;
         }
         
-        .ProseMirror ul:not([data-type="taskList"]) {
+        .plan-tiptap-wrapper .ProseMirror ul:not([data-type="taskList"]) {
           list-style-type: disc;
           padding-left: 1.5rem;
           margin: 0.5rem 0;
         }
         
-        .ProseMirror li {
+        .plan-tiptap-wrapper .ProseMirror li {
           margin: 0.25rem 0;
           color: hsl(var(--foreground));
         }
         
-        .ProseMirror strong {
+        .plan-tiptap-wrapper .ProseMirror strong {
           font-weight: 600;
           color: hsl(var(--foreground));
         }
         
-        .ProseMirror em {
+        .plan-tiptap-wrapper .ProseMirror em {
           font-style: italic;
         }
         
-        .ProseMirror code {
+        .plan-tiptap-wrapper .ProseMirror code {
           background: hsl(var(--muted));
           color: hsl(var(--foreground));
           padding: 0.125rem 0.375rem;
@@ -335,7 +335,7 @@ export function PlanTiptapEditor({
           font-size: 0.875em;
         }
         
-        .ProseMirror pre {
+        .plan-tiptap-wrapper .ProseMirror pre {
           background: hsl(var(--muted));
           color: hsl(var(--foreground));
           padding: 1rem;
@@ -344,7 +344,7 @@ export function PlanTiptapEditor({
           margin: 1rem 0;
         }
         
-        .ProseMirror pre code {
+        .plan-tiptap-wrapper .ProseMirror pre code {
           background: none;
           padding: 0;
         }

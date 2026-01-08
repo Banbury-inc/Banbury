@@ -43,8 +43,6 @@ export async function parseRelationships(
         relationshipsMap.set(id, { id, type, target })
       }
     }
-
-    console.log(`[RelationshipResolver] Parsed ${relationshipsMap.size} relationships from ${relsPath}`)
   } catch (error) {
     console.error(`[RelationshipResolver] Error parsing relationships from ${relsPath}:`, error)
   }

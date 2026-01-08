@@ -28,14 +28,8 @@ export function setVisibleCalendarIds(ids: string[]): void {
 }
 
 export function toggleCalendarVisibility(calendarId: string): void {
-  // #region agent log
-  fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'calendarVisibility.ts:toggleCalendarVisibility:entry',message:'Toggle called',data:{calendarId,calendarIdType:typeof calendarId,calendarIdLength:calendarId.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1-H5'})}).catch(()=>{});
-  // #endregion
   const current = getVisibleCalendarIds()
   const isVisible = current.includes(calendarId)
-  // #region agent log
-  fetch('http://127.0.0.1:7244/ingest/b014ea10-a539-4e5f-9832-890e328944bb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'calendarVisibility.ts:toggleCalendarVisibility:state',message:'Current visibility state',data:{current,isVisible,willBe:isVisible?current.filter(id=>id!==calendarId):[...current,calendarId]},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H5'})}).catch(()=>{});
-  // #endregion
   if (isVisible) {
     // Allow removing all calendars - user can have zero visible calendars
     setVisibleCalendarIds(current.filter(id => id !== calendarId))

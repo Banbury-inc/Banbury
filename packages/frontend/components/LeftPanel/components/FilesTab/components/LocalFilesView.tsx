@@ -321,19 +321,15 @@ export function LocalFilesView({
     const handleCreated = (e: Event) => {
       try {
         const detail: any = (e as CustomEvent).detail
-        console.log('[LocalFilesView] Received assistant-file-created event:', detail)
         
         // Attempt to open the created file based on returned info
         const info = detail?.result?.file_info || detail?.result
         const createdPath: string | undefined = info?.file_path || info?.path
         const createdName: string | undefined = info?.file_name || info?.name
         if (!createdPath || !createdName || !userInfo?.username) {
-          console.log('[LocalFilesView] Missing required info, refreshing files:', { createdPath, createdName, hasUsername: !!userInfo?.username })
           fetchUserFiles()
           return
         }
-
-        console.log('[LocalFilesView] Polling for file:', { createdPath, createdName })
 
         let attempts = 0
         const maxAttempts = 8
@@ -348,7 +344,6 @@ export function LocalFilesView({
             if (result.success && Array.isArray(result.files)) {
               const f = result.files.find(f => f.file_path === createdPath)
               if (f && f.file_id) {
-                console.log('[LocalFilesView] Found file, opening:', f)
                 const item = {
                   id: f.file_path,
                   name: f.file_name,
@@ -367,10 +362,7 @@ export function LocalFilesView({
 
           attempts += 1
           if (attempts < maxAttempts) {
-            console.log(`[LocalFilesView] File not found yet, retry ${attempts}/${maxAttempts}`)
             setTimeout(pollAndOpen, delayMs)
-          } else {
-            console.log('[LocalFilesView] Max attempts reached, file not found')
           }
         }
 

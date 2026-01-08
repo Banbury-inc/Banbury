@@ -11,6 +11,7 @@ import {
 import { Panel, WorkspaceTab, DragState, UserInfo, PanelGroup, AiTab } from '../types'
 import { FileSystemItem } from '../../../utils/fileTreeUtils'
 import { getAllTabs } from './panelUtils'
+import { TodoList } from '../../../components/RightPanel/TodoList'
 
 interface Conversation {
   _id: string
@@ -163,6 +164,13 @@ export function renderAssistantPanel({
         </div>
       </div>
 
+      {/* Todo List for active thread */}
+      {activeTabId && (
+        <TodoList
+          threadId={(allTabs.find(t => t.id === activeTabId) as AiTab | undefined)?.threadId || ''}
+        />
+      )}
+
       {/* Tab Content */}
       <div className="flex-1 min-h-0 overflow-hidden relative">
         {allTabs.map((tab) => {
@@ -176,6 +184,7 @@ export function renderAssistantPanel({
               >
                 <AiConversationTabPane
                   tabId={tab.id}
+                  threadId={tab.threadId}
                   userInfo={userInfo}
                   selectedFile={selectedFile}
                   selectedEmail={selectedEmail}

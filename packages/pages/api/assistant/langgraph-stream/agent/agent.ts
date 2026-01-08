@@ -4,6 +4,7 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage, SystemMessage, AIMessage, ToolMessage } from "@langchain/core/messages";
 import { StateGraph, START, END, MessagesAnnotation } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { createAgent, todoListMiddleware } from "langchain";
 import { CONFIG } from "../../../../../frontend/config/config";
 import { getServerContextValue } from "../../../../../frontend/assistant/langraph/serverContext";
 import type { BaseMessage } from "@langchain/core/messages";
@@ -149,8 +150,43 @@ function resolveModelId(): string | undefined {
 
 export function createReactAgentForProvider(provider: ModelProvider) {
   const modelId = resolveModelId()
-  const llm = createChatModel(provider, modelId)
-  return createReactAgent({ llm, tools })
+  
+  // Build model identifier string for createAgent
+  // Format: "provider:model-id"
+  let modelString: string
+  if (provider === "openai") {
+    modelString = `openai:${modelId}`
+  } else if (provider === "google") {
+    modelString = `google-genai:${modelId}`
+  } else {
+    modelString = `anthropic:${modelId}`
+  }
+  
+  // Note: System prompt will be provided dynamically via the prompt parameter
+  // when invoking the agent, not here in the agent creation.
+  // The middleware will append its todo-related guidance to that base prompt.
+  return createAgent({
+    model: modelString,
+    tools,
+    middleware: [
+      todoListMiddleware({
+        systemPrompt: `ONLY use the write_todos tool for COMPLEX tasks that genuinely require multiple distinct steps (3+) and would benefit from explicit progress tracking.
+
+DO NOT use this tool for:
+- Simple, single-step tasks
+- Tasks that can be completed in one or two actions  
+- Straightforward requests that don't need breakdown
+
+DO use this tool when:
+- The task is complex and has 3+ distinct, independent steps
+- Progress tracking would help manage a lengthy workflow
+- The task involves multiple phases that could fail independently
+- Breaking down the work would improve organization and clarity
+
+Remember: Writing todos takes time and tokens. Use it when truly helpful for complex many-step problems, not for simple few-step requests.`,
+      }),
+    ],
+  })
 }
 
 /**

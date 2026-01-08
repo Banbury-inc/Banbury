@@ -18,8 +18,6 @@ export async function downloadFromContainer(
     const baseUrl = 'https://api.anthropic.com/v1'
     const betaHeader = 'files-api-2025-04-14'
 
-    console.log(`[downloadFromContainer] Fetching metadata for file ${fileId}`)
-
     // Try different endpoint structures for file metadata
     const possibleEndpoints = [
       `${baseUrl}/beta/files/${fileId}/metadata`,
@@ -33,7 +31,6 @@ export async function downloadFromContainer(
 
     // Try each endpoint until one works
     for (const endpoint of possibleEndpoints) {
-      console.log(`[downloadFromContainer] Trying endpoint: ${endpoint}`)
       try {
         const response = await fetch(endpoint, {
           method: 'GET',
@@ -47,16 +44,13 @@ export async function downloadFromContainer(
 
         if (response.ok) {
           metadataResponse = response
-          console.log(`[downloadFromContainer] Success with endpoint: ${endpoint}`)
           break
         } else {
           const errorText = await response.text()
           lastError = `${response.status}: ${errorText}`
-          console.log(`[downloadFromContainer] Endpoint ${endpoint} failed: ${lastError}`)
         }
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error)
-        console.log(`[downloadFromContainer] Endpoint ${endpoint} threw error: ${lastError}`)
       }
     }
 
@@ -66,11 +60,8 @@ export async function downloadFromContainer(
     }
 
     const metadata = await metadataResponse.json()
-    console.log(`[downloadFromContainer] File metadata:`, metadata)
 
     // Download file content using direct API call - try multiple endpoints
-    console.log(`[downloadFromContainer] Downloading file content for ${fileId}`)
-    
     const downloadEndpoints = [
       `${baseUrl}/beta/files/${fileId}/download`,
       `${baseUrl}/files/${fileId}/download`,
@@ -82,7 +73,6 @@ export async function downloadFromContainer(
     let downloadError: string = ''
 
     for (const endpoint of downloadEndpoints) {
-      console.log(`[downloadFromContainer] Trying download endpoint: ${endpoint}`)
       try {
         const response = await fetch(endpoint, {
           method: 'GET',
@@ -95,16 +85,13 @@ export async function downloadFromContainer(
 
         if (response.ok) {
           downloadResponse = response
-          console.log(`[downloadFromContainer] Download success with endpoint: ${endpoint}`)
           break
         } else {
           const errorText = await response.text()
           downloadError = `${response.status}: ${errorText}`
-          console.log(`[downloadFromContainer] Download endpoint ${endpoint} failed: ${downloadError}`)
         }
       } catch (error) {
         downloadError = error instanceof Error ? error.message : String(error)
-        console.log(`[downloadFromContainer] Download endpoint ${endpoint} threw error: ${downloadError}`)
       }
     }
 
@@ -116,7 +103,6 @@ export async function downloadFromContainer(
     // Convert response to Blob
     const arrayBuffer = await downloadResponse.arrayBuffer()
     const blob = new Blob([arrayBuffer])
-    console.log(`[downloadFromContainer] Downloaded ${blob.size} bytes`)
 
     return {
       blob,

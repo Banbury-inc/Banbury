@@ -1,8 +1,18 @@
 import { handleToolResult } from "./handleToolResult";
+import type { TodoEvent } from "../../../types/todo-types";
 
 interface ProcessStreamEventsParams {
   reader: ReadableStreamDefaultReader<Uint8Array>;
   contentParts: any[];
+}
+
+// Dispatch todo events to the global event bus for the todo store to handle
+function dispatchTodoEvent(event: TodoEvent): void {
+  try {
+    window.dispatchEvent(new CustomEvent('assistant-todo-event', { detail: event }));
+  } catch {
+    // Ignore event dispatch errors
+  }
 }
 
 export async function* processStreamEvents({
@@ -11,6 +21,7 @@ export async function* processStreamEvents({
 }: ProcessStreamEventsParams): AsyncGenerator<{ content: any[]; status: any }> {
   const decoder = new TextDecoder();
   let buffer = "";
+  let streamIsIdle = false; // Track if stream is idle between content
 
   while (true) {
     const { done, value } = await reader.read();
@@ -50,7 +61,8 @@ export async function* processStreamEvents({
             } 
           };
         } else if (evt.type === "tool-call-start" && evt.part) {
-          // Handle tool-call-start event
+          // Handle tool-call-start event and clear idle state
+          streamIsIdle = false;
           contentParts.push(evt.part);
           shouldYield = true;
         } else if (evt.type === "text-delta" && evt.text) {
@@ -62,6 +74,8 @@ export async function* processStreamEvents({
           } else {
             contentParts.push({ type: "text", text: evt.text });
           }
+          // Clear idle state since content is actively streaming
+          streamIsIdle = false;
           shouldYield = true;
         } else if (evt.type === "thinking") {
           // Handle thinking messages - could be displayed as temporary status
@@ -86,32 +100,35 @@ export async function* processStreamEvents({
             } 
           };
         } else if (evt.type === "tool-status") {
-          // Handle tool status messages
-          yield { 
-            content: contentParts, 
-            status: { 
+          // Handle tool status messages and clear idle state
+          streamIsIdle = false;
+          yield {
+            content: contentParts,
+            status: {
               type: "running",
-              details: { 
-                toolStatus: { 
-                  tool: evt.tool, 
-                  message: evt.message 
+              details: {
+                toolStatus: {
+                  tool: evt.tool,
+                  message: evt.message
                 }
               }
-            } 
+            }
           };
         } else if (evt.type === "tool-completion") {
-          // Handle tool completion
-          yield { 
-            content: contentParts, 
-            status: { 
+          // Handle tool completion and set idle state
+          streamIsIdle = true;
+          yield {
+            content: contentParts,
+            status: {
               type: "running",
-              details: { 
-                toolCompleted: { 
-                  tool: evt.tool, 
-                  message: evt.message 
-                }
+              details: {
+                toolCompleted: {
+                  tool: evt.tool,
+                  message: evt.message
+                },
+                waitingForContent: true
               }
-            } 
+            }
           };
 
           // Fallback: if the provider sends viewerUrl only in the completion message
@@ -137,6 +154,18 @@ export async function* processStreamEvents({
             // Continue processing even if tool result handling fails
             shouldYield = true;
           }
+
+          // Set idle state and yield status to show "Processing..." indicator
+          streamIsIdle = true;
+          yield {
+            content: contentParts,
+            status: {
+              type: "running",
+              details: {
+                waitingForContent: true
+              }
+            }
+          };
         } else if (evt.type === "completion-summary") {
           // Handle completion summary
           yield { 
@@ -187,8 +216,6 @@ export async function* processStreamEvents({
           // Handle Skills-generated files (PowerPoint, Word, Excel, PDF)
           const { fileType, fileId, fileName, downloadUrl } = evt;
 
-          console.log(`[Skills] File generated: ${fileType} - ${fileName} (fileId: ${fileId}, path: ${downloadUrl})`)
-
           // Dispatch event based on file type (for viewers already open)
           if (fileType === 'pptx') {
             window.dispatchEvent(new CustomEvent('powerpoint-file-generated', {
@@ -209,7 +236,6 @@ export async function* processStreamEvents({
           }
 
           // Also dispatch assistant-file-created to trigger auto-open
-          console.log('[Skills] Dispatching assistant-file-created event to auto-open file')
           window.dispatchEvent(new CustomEvent('assistant-file-created', {
             detail: {
               result: {
@@ -232,7 +258,28 @@ export async function* processStreamEvents({
           // Handle error details (stack traces, etc.)
           console.error('[processStreamEvents] Error details:', evt.stack);
           // Don't yield here, just log the details
+        } else if (
+          evt.type === "todo-list-init" ||
+          evt.type === "todo-item-add" ||
+          evt.type === "todo-item-update" ||
+          evt.type === "todo-item-remove" ||
+          evt.type === "todo-active-change"
+        ) {
+          // Handle todo events - dispatch to the todo store via custom event
+          dispatchTodoEvent(evt as TodoEvent);
+          // Don't yield - these are metadata events, not content
         } else if (evt.type === "message-end" || evt.type === "done") {
+          // Dispatch event to notify that the assistant has finished responding
+          try {
+            window.dispatchEvent(new CustomEvent('assistant-stream-done', { 
+              detail: { 
+                success: true,
+                status: evt.status || { type: "complete" }
+              } 
+            }));
+          } catch {
+            // Ignore event dispatch errors
+          }
           yield { content: contentParts, status: evt.status || { type: "complete" } };
           return; // Don't process further after message end
         }

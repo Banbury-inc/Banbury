@@ -943,6 +943,19 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     };
   }, []);
 
+  // Listen for switch-to-agent-mode events (e.g., when running a plan)
+  useEffect(() => {
+    const handleSwitchToAgentMode = () => {
+      setToolPreferences(prev => ({ ...prev, plan_mode: false }));
+    };
+
+    window.addEventListener('assistant-switch-to-agent-mode', handleSwitchToAgentMode);
+
+    return () => {
+      window.removeEventListener('assistant-switch-to-agent-mode', handleSwitchToAgentMode);
+    };
+  }, []);
+
   // Pre-download spreadsheet, canvas, and presentation blobs and cache as base64 + mimeType (size-capped)
   useEffect(() => {
     const isSpreadsheet = (fileName: string) => {
@@ -1348,6 +1361,13 @@ const StreamingStatus: FC = () => {
               <CheckIcon className="w-4 h-4 mr-2" strokeWidth={1} />
               <Typography variant="xs" className="font-medium">{statusDetails.toolCompleted.tool}:</Typography>
               <Typography variant="xs" className="ml-1">{statusDetails.toolCompleted.message}</Typography>
+            </div>
+          )}
+
+          {statusDetails.waitingForContent && (
+            <div className="flex items-center text-blue-600 dark:text-blue-400 mt-2 pt-2 border-t border-blue-200 dark:border-blue-800/30">
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500 mr-2"></div>
+              <Typography variant="xs">Processing...</Typography>
             </div>
           )}
         </div>

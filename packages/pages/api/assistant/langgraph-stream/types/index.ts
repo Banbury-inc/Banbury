@@ -106,3 +106,71 @@ export interface StreamRequestBody {
   planContext?: PlanContext
 }
 
+// Todo types for the LangChain todo middleware
+export type TodoStatus = "pending" | "in_progress" | "completed" | "failed"
+export type TodoSource = "plan" | "agent"
+
+export interface TodoItem {
+  id: string
+  description: string
+  status: TodoStatus
+  source: TodoSource
+  createdAt: string
+  updatedAt: string
+  depends?: string[]
+  metadata?: Record<string, unknown>
+}
+
+export interface ThreadTodoState {
+  threadId: string
+  todos: TodoItem[]
+  activeTodoId: string | null
+  lastUpdated: string
+}
+
+// SSE event types for todo updates
+export type TodoEventType = 
+  | "todo-list-init"
+  | "todo-item-add"
+  | "todo-item-update"
+  | "todo-item-remove"
+  | "todo-active-change"
+
+export interface TodoEventBase {
+  type: TodoEventType
+  threadId: string
+}
+
+export interface TodoListInitEvent extends TodoEventBase {
+  type: "todo-list-init"
+  todos: TodoItem[]
+  activeTodoId: string | null
+}
+
+export interface TodoItemAddEvent extends TodoEventBase {
+  type: "todo-item-add"
+  todo: TodoItem
+}
+
+export interface TodoItemUpdateEvent extends TodoEventBase {
+  type: "todo-item-update"
+  todoId: string
+  updates: Partial<Pick<TodoItem, "description" | "status" | "depends" | "metadata">>
+}
+
+export interface TodoItemRemoveEvent extends TodoEventBase {
+  type: "todo-item-remove"
+  todoId: string
+}
+
+export interface TodoActiveChangeEvent extends TodoEventBase {
+  type: "todo-active-change"
+  activeTodoId: string | null
+}
+
+export type TodoEvent = 
+  | TodoListInitEvent
+  | TodoItemAddEvent
+  | TodoItemUpdateEvent
+  | TodoItemRemoveEvent
+  | TodoActiveChangeEvent

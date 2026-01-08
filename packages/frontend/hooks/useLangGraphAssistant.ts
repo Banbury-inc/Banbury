@@ -328,7 +328,6 @@ export function useLangGraphAssistant(initialThreadId?: string) {
                 parsed = raw;
               }
               const detail = { result: parsed };
-              console.log('[LangGraph] Dispatching assistant-file-created event:', detail);
               window.dispatchEvent(new CustomEvent('assistant-file-created', { detail }));
             }
           } catch (err) {

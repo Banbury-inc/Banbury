@@ -43,17 +43,19 @@ export async function handlePowerPointSave({
     const isOneDriveFile = currentFile.path?.startsWith('onedrive://')
     const isGoogleSlides = currentFile.mimeType?.includes('vnd.google-apps.presentation')
 
-    // Create File object
+    // Create File object with PPTX MIME type (actual content type)
     const fileToUpload = new File([blob], currentFile.name, {
       type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     })
 
     if (isDriveFile && isGoogleSlides) {
-      // Save to Google Drive
+      // Save to Google Drive as Google Slides
+      // Pass target MIME type to tell backend to keep it as Google Slides
       await ApiService.Drive.updateFile(
         currentFile.file_id,
         fileToUpload,
-        currentFile.name
+        currentFile.name,
+        'application/vnd.google-apps.presentation' // target MIME type to maintain Google Slides format
       )
 
       toast({

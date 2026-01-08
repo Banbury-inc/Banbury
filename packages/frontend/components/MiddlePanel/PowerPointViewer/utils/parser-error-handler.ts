@@ -183,8 +183,5 @@ export class PerformanceTimer {
 
   log(operation: string, fromLabel?: string): void {
     const duration = this.getDuration(fromLabel)
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Performance] ${operation}: ${duration.toFixed(2)}ms`)
-    }
   }
 }

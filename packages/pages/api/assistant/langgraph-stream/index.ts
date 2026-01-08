@@ -52,31 +52,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     })
 
     // Normalize tool preferences before message conversion
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:51',message:'Raw toolPreferences from request',data:{rawToolPreferences:body.toolPreferences},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     const normalizedToolPreferences = normalizeToolPreferences({ toolPreferences: body.toolPreferences })
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:53',message:'Normalized toolPreferences after normalization',data:{normalizedToolPreferences},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     const modelProvider = normalizedToolPreferences.model_provider === "openai" ? "openai" : normalizedToolPreferences.model_provider === "google" ? "google" : "anthropic"
 
     // Detect if this is a document-related request (will be used to select appropriate system prompt)
     const isDocumentRequest = detectDocumentRequest(body.messages)
 
     // All requests now use local tools (pptxgenjs for PPTX, etc.) instead of Claude Skills
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:56',message:'Model provider determination',data:{normalizedProvider:normalizedToolPreferences.model_provider,determinedProvider:modelProvider,modelId:normalizedToolPreferences.model_id},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
 
     // Convert to LangChain messages
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:65',message:'Before toLangChainMessages call',data:{modelProvider,messagesCount:messagesWithFileData.length,firstMessageRole:messagesWithFileData[0]?.role},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     const lcMessages = toLangChainMessages(messagesWithFileData, modelProvider)
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:66',message:'After toLangChainMessages call',data:{lcMessagesCount:lcMessages.length,firstLcMessageType:lcMessages[0]?._getType?.()},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     
     // Only add system message if not already present
     let allMessages = lcMessages
@@ -142,21 +127,42 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
     // Start assistant message
     send({ type: "message-start", role: "assistant" })
 
+    // Seed todos from planContext if executing a plan
+    const threadId = body.threadId || `ephemeral-${Date.now()}`
+    if (body.planContext && body.planContext.todos.length > 0) {
+      // Send todo-list-init event with plan todos
+      const planTodos = body.planContext.todos.map(t => ({
+        id: t.id,
+        description: t.description,
+        status: t.status,
+        source: "plan" as const,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }))
+      send({
+        type: "todo-list-init",
+        threadId,
+        todos: planTodos,
+        activeTodoId: body.planContext.currentTodoId || null,
+      })
+    }
+
     // Prefer the prebuilt React agent streaming to manage tool loops
     let finalResult: any = null
 
-    // Run the agent with server context so tools can access the auth token
+    // Run the agent with server context so tools can access the auth token, send function, and todo context
     try {
       await runWithServerContext({ 
         authToken: token, 
         toolPreferences: normalizedToolPreferences,
         dateTimeContext: body.dateTimeContext,
         documentContext: body.documentContext,
-        webSearchDefaults: body.webSearchOptions || {}
+        webSearchDefaults: body.webSearchOptions || {},
+        // Todo middleware context
+        sendEvent: send,
+        threadId,
+        planContext: body.planContext,
       }, async () => {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:87',message:'Before createReactAgentForProvider',data:{modelProvider,isDocumentRequest,isPlanMode,allMessagesCount:allMessages.length,firstMessageType:allMessages[0]?._getType?.()},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         // Select agent based on mode:
         // 1. Plan mode: Read-only tools for researching and creating plans
         // 2. Document request: Document-specialized tools
@@ -185,27 +191,24 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
                        agentType === "document" ? "Specialized for document creation and editing" :
                        "Full capabilities enabled"
         })
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:89',message:'After createAgent, before stream',data:{modelProvider,isDocumentRequest,agentType:isDocumentRequest?'document':'general'},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
+        
+        // For the general agent with middleware, extract and pass system prompt separately
+        let messagesToStream = allMessages
+        let systemPrompt: string | undefined = undefined
+        
+        if (agentType === "general") {
+          // Extract system message if present
+          const firstMessage = allMessages[0]
+          if (firstMessage && firstMessage._getType() === "system") {
+            systemPrompt = typeof firstMessage.content === "string" ? firstMessage.content : ""
+            // Remove system message from messages array for middleware-based agent
+            messagesToStream = allMessages.slice(1)
+          }
+        }
+        
         // Use a custom streaming approach for character-by-character updates
-        // #region agent log
-        const messageTypes = allMessages.map(m => m._getType?.())
-        const messageDetails = allMessages.map(m => ({
-          type: m._getType?.(),
-          typeProperty: (m as any).type,
-          contentType: typeof m.content === 'string' ? 'string' : 'complex',
-          contentPreview: typeof m.content === 'string' ? m.content.substring(0, 100) : 'complex',
-          hasAdditionalKwargs: !!m.additional_kwargs,
-          additionalKwargsKeys: m.additional_kwargs ? Object.keys(m.additional_kwargs) : [],
-          authorValue: m.additional_kwargs?.author,
-          fullAdditionalKwargs: m.additional_kwargs,
-          messageClass: m.constructor.name
-        }))
-        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:104',message:'Before stream call - message details',data:{modelProvider,allMessagesCount:allMessages.length,messageTypes,messageDetails},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error-v3',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         const stream = await reactAgent.stream(
-          { messages: allMessages }, 
+          systemPrompt ? { messages: messagesToStream, prompt: systemPrompt } : { messages: messagesToStream }, 
           { 
             streamMode: "values",
             recursionLimit: body.recursionLimit || 25 // Use recursion limit from request or default to 25 to prevent infinite loops
@@ -224,7 +227,7 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
         for await (const chunk of stream) {
           const result = await processStreamChunk({
             chunk,
-            allMessages,
+            allMessages: messagesToStream,
             processedAiMessages,
             processedToolCalls,
             currentToolExecution,
@@ -238,15 +241,6 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
     })
     } catch (graphError) {
       // LangGraph execution error
-      // #region agent log
-      const errorDetails = graphError instanceof Error ? {
-        message: graphError.message,
-        stack: graphError.stack,
-        name: graphError.name,
-        cause: (graphError as any).cause
-      } : { error: String(graphError) }
-      fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:118',message:'Graph execution error caught',data:{errorDetails,normalizedToolPreferences,modelProvider,allMessagesSnapshot:allMessages.map(m=>({type:m._getType?.(),contentType:typeof m.content,hasAdditionalKwargs:!!m.additional_kwargs,additionalKwargsKeys:m.additional_kwargs?Object.keys(m.additional_kwargs):[]}))},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error-v2',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
       
       // Stream detailed error information
       const errorMessage = graphError instanceof Error ? graphError.message : "Graph execution failed"

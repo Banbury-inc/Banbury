@@ -5,12 +5,18 @@ export type { AiTab }
 
 let tabCounter = 0
 
-export function createAiTab(label?: string): AiTab {
+function generateThreadId(): string {
+  // Generate a stable, unique thread ID for conversation tracking
+  return `thread-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+}
+
+export function createAiTab(label?: string, existingThreadId?: string): AiTab {
   tabCounter++
   return {
     id: `ai-tab-${Date.now()}-${tabCounter}`,
     label: label || `Chat ${tabCounter}`,
     type: 'ai',
+    threadId: existingThreadId || generateThreadId(),
   }
 }
 
@@ -20,6 +26,7 @@ export function createInitialAiTab(): AiTab {
     id: `ai-tab-${Date.now()}-1`,
     label: 'Chat 1',
     type: 'ai',
+    threadId: generateThreadId(),
   }
 }
 

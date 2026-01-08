@@ -19,6 +19,9 @@ import {
   isDefaultAiTabLabel,
   deriveAiTabTitleFromText,
 } from './handlers/aiTabTitle'
+import { TodoList } from './TodoList'
+import { registerTabThreadId } from '../MiddlePanel/PlanViewer/handlers/planTodoBridge'
+import { subscribeTodoEventListener } from './handlers/todoStoreHandlers'
 
 interface Conversation {
   _id: string
@@ -66,14 +69,38 @@ export function RightPanel({
     }
   }, [activeAiTabId, aiTabs])
 
+  // Subscribe to todo events at the RightPanel level so it's always active
+  useEffect(() => {
+    const unsubscribe = subscribeTodoEventListener()
+    return unsubscribe
+  }, [])
+
   // Register/update window delegate for routing assistant-ai-request to active tab
+  // This runs synchronously during render to ensure it's available immediately
   useEffect(() => {
     // Store reference to current active tab for the delegate
     (window as any).__banburyActiveAiTabId = activeAiTabId
+    
+    // Store aiTabs on window so PlanViewer can look up threadIds
+    (window as any).__banburyAiTabs = aiTabs
+    
+    // Register ALL tab threadIds for PlanViewer bridge
+    aiTabs.forEach(tab => {
+      registerTabThreadId(tab.id, tab.threadId)
+    })
+    
     return () => {
       delete (window as any).__banburyActiveAiTabId
+      delete (window as any).__banburyAiTabs
     }
-  }, [activeAiTabId])
+  }, [activeAiTabId, aiTabs])
+  
+  // Also register immediately on first render (before effects run)
+  // This ensures the data is available for any synchronous access
+  if (typeof window !== 'undefined') {
+    (window as any).__banburyActiveAiTabId = activeAiTabId
+    ;(window as any).__banburyAiTabs = aiTabs
+  }
 
   const handleTabAdd = useCallback(() => {
     const newTab = createAiTab()
@@ -238,6 +265,13 @@ export function RightPanel({
         </div>
       </div>
 
+      {/* Todo List for active thread */}
+      {activeAiTabId && (
+        <TodoList
+          threadId={aiTabs.find(t => t.id === activeAiTabId)?.threadId || ''}
+        />
+      )}
+
       {/* Thread Components - keep all mounted but hide inactive */}
       <div className="flex-1 min-h-0 overflow-hidden relative">
         {aiTabs.map((tab) => (
@@ -247,6 +281,7 @@ export function RightPanel({
           >
             <AiConversationTabPane
               tabId={tab.id}
+              threadId={tab.threadId}
               userInfo={userInfo}
               selectedFile={selectedFile}
               selectedEmail={selectedEmail}

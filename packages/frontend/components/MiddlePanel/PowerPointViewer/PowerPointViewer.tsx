@@ -265,9 +265,6 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
 
       // Detect Google Slides export
       const isGoogleSlides = detectGoogleSlidesExport(zip)
-      if (isGoogleSlides) {
-        console.log('[PowerPointViewer] Detected Google Slides export')
-      }
 
       const slides: Slide[] = []
 
@@ -281,7 +278,6 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
       try {
         const themeResult = await themeParser.parseTheme()
         themeColors = themeResult.colors
-        console.log('[PowerPointViewer] Parsed theme colors:', themeColors)
       } catch (error) {
         console.warn('[PowerPointViewer] Failed to parse theme, using defaults:', error)
         // Continue without theme - will use fallback colors
@@ -455,11 +451,6 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
       timer.log('ZIP loading', 'zip-loaded')
       timer.log('Theme parsing', 'theme-parsed')
       timer.log('Slides parsing', 'slides-parsed')
-
-      // Log parsing summary
-      console.log(`[PowerPointViewer] Successfully parsed ${slides.length} slides`)
-      const totalElements = slides.reduce((sum, slide) => sum + slide.elements.length, 0)
-      console.log(`[PowerPointViewer] Total elements: ${totalElements}`)
 
       // Log unsupported features if any
       const { getUnsupportedFeatures } = await import('./utils/parser-error-handler')
@@ -750,10 +741,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
       const detail = event?.detail || {}
       const { fileId, fileName, fileType } = detail
 
-      console.log('[PowerPointViewer] Received powerpoint-file-generated event:', detail)
-
       if (fileType !== 'pptx') {
-        console.log('[PowerPointViewer] Ignoring non-pptx file:', fileType)
         return // Only handle PowerPoint files
       }
 
@@ -761,8 +749,6 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
         console.warn('[PowerPointViewer] File-generated event missing fileId or fileName')
         return
       }
-
-      console.log('[PowerPointViewer] Downloading Skills-generated file:', fileName)
 
       try {
         // Download file from S3

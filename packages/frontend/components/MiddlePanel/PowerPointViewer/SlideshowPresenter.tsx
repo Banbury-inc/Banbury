@@ -43,7 +43,6 @@ export function SlideshowPresenter({ slides, initialSlideIndex, onExit }: Slides
       isFullscreenRef.current = true
     } catch (error) {
       // Fullscreen request failed - continue in normal mode
-      console.log('Fullscreen not available:', error)
       isFullscreenRef.current = false
     }
   }, [])
@@ -74,7 +73,6 @@ export function SlideshowPresenter({ slides, initialSlideIndex, onExit }: Slides
       }
     } catch (error) {
       // Ignore exit errors
-      console.log('Fullscreen exit error:', error)
     }
     isFullscreenRef.current = false
   }, [])

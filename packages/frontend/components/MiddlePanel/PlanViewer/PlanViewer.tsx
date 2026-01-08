@@ -5,11 +5,9 @@ import {
   Loader2,
   Save,
   StopCircle,
-  Trash2,
   CheckCircle2,
   Circle,
   AlertCircle,
-  Clock,
   RefreshCw,
   ListTodo,
   ChevronDown,
@@ -22,6 +20,12 @@ import styles from "../../../styles/scrollbar.module.css"
 import { PlanTiptapEditor } from "./PlanTiptapEditor"
 import { ApiService } from "../../../../backend/api/apiService"
 import { FileSystemItem } from "../../../utils/fileTreeUtils"
+import {
+  dispatchPlanTodosInit,
+  dispatchPlanTodoUpdate,
+  dispatchActiveTodoChange,
+  getActiveThreadId,
+} from "./handlers/planTodoBridge"
 
 export interface PlanTodo {
   id: string
@@ -59,12 +63,6 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
   const [selectedTodos, setSelectedTodos] = useState<Set<string>>(new Set())
   const [isExecuting, setIsExecuting] = useState(false)
   const [currentTodoId, setCurrentTodoId] = useState<string | null>(null)
-  const [executionLogs, setExecutionLogs] = useState<Array<{
-    id: string
-    timestamp: Date
-    message: string
-    type: "info" | "success" | "error" | "progress"
-  }>>([])
   const [todosExpanded, setTodosExpanded] = useState(true)
   
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -241,18 +239,6 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
     })
   }, [])
 
-  // Add execution log with unique ID
-  const logCounterRef = useRef(0)
-  const addLog = useCallback((message: string, type: "info" | "success" | "error" | "progress" = "info") => {
-    logCounterRef.current += 1
-    setExecutionLogs(prev => [...prev, {
-      id: `log-${Date.now()}-${logCounterRef.current}`,
-      timestamp: new Date(),
-      message,
-      type,
-    }])
-  }, [])
-
   // Update todo status
   const updateTodoStatus = useCallback((todoId: string, status: PlanTodo["status"]) => {
     setPlan(prev => {
@@ -262,6 +248,12 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
         todos: prev.todos.map(t => t.id === todoId ? { ...t, status } : t),
       }
     })
+    
+    // Bridge: dispatch todo update to Right Panel todo store
+    const threadId = getActiveThreadId()
+    if (threadId) {
+      dispatchPlanTodoUpdate(threadId, todoId, status)
+    }
   }, [])
 
   // Execute a single todo via the right panel assistant
@@ -270,7 +262,7 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
     planContext: { planTitle: string; todos: PlanTodo[]; currentTodoId: string; isSubAgent?: boolean }
   ): Promise<boolean> => {
     if (abortControllerRef.current?.signal.aborted) {
-      addLog(`Execution aborted for: ${todo.description}`, "error")
+      console.error('[PlanViewer] Execution aborted for:', todo.description)
       updateTodoStatus(todo.id, "failed")
       return false
     }
@@ -278,7 +270,6 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
     // Check if there's an active AI tab in the right panel
     const activeAiTabId = (window as any).__banburyActiveAiTabId
     if (!activeAiTabId) {
-      addLog("No AI assistant tab is active. Opening assistant panel...", "info")
       // Dispatch event to open the AI panel
       window.dispatchEvent(new CustomEvent('open-ai-panel'))
       // Wait a moment for the panel to open
@@ -287,34 +278,49 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
       // Check again
       const newActiveTabId = (window as any).__banburyActiveAiTabId
       if (!newActiveTabId) {
-        addLog("Please open the AI assistant panel (right side) to run the plan", "error")
+        console.error('[PlanViewer] No AI assistant tab available to run plan')
         updateTodoStatus(todo.id, "failed")
         return false
       }
     }
 
-    addLog(`Starting: ${todo.description}`, "progress")
     setCurrentTodoId(todo.id)
     updateTodoStatus(todo.id, "in_progress")
+    
+    // Bridge: dispatch active todo change to Right Panel
+    const threadIdForActive = getActiveThreadId()
+    if (threadIdForActive) {
+      dispatchActiveTodoChange(threadIdForActive, todo.id)
+    }
 
     return new Promise((resolve) => {
+      // Declare timeoutId first so it can be referenced in handleTaskComplete
+      let timeoutId: ReturnType<typeof setTimeout>
+
       // Listen for task completion
       const handleTaskComplete = (event: CustomEvent) => {
-        const { taskId, success, error } = event.detail
-        if (taskId !== todo.id) return // Not our task
+        const { taskId, success } = event.detail
+        
+        if (taskId !== todo.id) {
+          return // Not our task
+        }
 
         window.removeEventListener('assistant-plan-task-complete', handleTaskComplete as EventListener)
         clearTimeout(timeoutId)
 
         if (success) {
-          addLog(`Completed: ${todo.description}`, "success")
           updateTodoStatus(todo.id, "completed")
           setCurrentTodoId(null)
+          // Bridge: clear active todo
+          const tid = getActiveThreadId()
+          if (tid) dispatchActiveTodoChange(tid, null)
           resolve(true)
         } else {
-          addLog(`Failed: ${todo.description} - ${error || "Unknown error"}`, "error")
           updateTodoStatus(todo.id, "failed")
           setCurrentTodoId(null)
+          // Bridge: clear active todo
+          const tid = getActiveThreadId()
+          if (tid) dispatchActiveTodoChange(tid, null)
           resolve(false)
         }
       }
@@ -333,7 +339,6 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
 Please execute this task completely. When finished, explain what you accomplished.`
 
       // Dispatch event to the right panel assistant
-      console.log('[PlanViewer] Dispatching plan task execute event:', todo.id)
       window.dispatchEvent(new CustomEvent('assistant-plan-task-execute', {
         detail: {
           taskId: todo.id,
@@ -346,23 +351,34 @@ Please execute this task completely. When finished, explain what you accomplishe
       }))
 
       // Timeout after 10 minutes
-      const timeoutId = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         window.removeEventListener('assistant-plan-task-complete', handleTaskComplete as EventListener)
-        addLog(`Task timed out: ${todo.description}`, "error")
+        console.error('[PlanViewer] Task timed out:', todo.description)
         updateTodoStatus(todo.id, "failed")
         setCurrentTodoId(null)
+        // Bridge: clear active todo on timeout
+        const tid = getActiveThreadId()
+        if (tid) dispatchActiveTodoChange(tid, null)
         resolve(false)
       }, 10 * 60 * 1000)
     })
-  }, [addLog, updateTodoStatus])
+  }, [updateTodoStatus])
 
   // Execute plan sequentially - one task at a time via the right panel assistant
   const executeSequential = useCallback(async () => {
     if (!plan) return
 
+    // Switch to agent mode (not plan mode) when running a plan
+    window.dispatchEvent(new CustomEvent('assistant-switch-to-agent-mode'))
+
     setIsExecuting(true)
-    setExecutionLogs([])
     abortControllerRef.current = new AbortController()
+
+    // Bridge: Initialize todos in the Right Panel todo store
+    const threadId = getActiveThreadId()
+    if (threadId) {
+      dispatchPlanTodosInit(threadId, plan.todos, null)
+    }
 
     // Build structured plan context for the agent
     const planContext = {
@@ -371,22 +387,19 @@ Please execute this task completely. When finished, explain what you accomplishe
       currentTodoId: "", // Will be set per-task
       isSubAgent: false
     }
-    
-    addLog("Starting plan execution in assistant panel...", "info")
-    addLog("Each task will run sequentially with shared context", "info")
 
     let completedCount = 0
     let failedCount = 0
 
     try {
-      for (const todo of plan.todos) {
+      for (let i = 0; i < plan.todos.length; i++) {
+        const todo = plan.todos[i]
+        
         if (todo.status === "completed") {
-          addLog(`Skipping completed task: ${todo.description}`, "info")
           completedCount++
           continue
         }
         if (abortControllerRef.current.signal.aborted) {
-          addLog("Execution aborted by user", "error")
           break
         }
         
@@ -406,29 +419,33 @@ Please execute this task completely. When finished, explain what you accomplishe
       
       // Update plan status based on results
       if (failedCount === 0 && completedCount === plan.todos.length) {
-        addLog("All tasks completed successfully!", "success")
         setPlan(prev => prev ? { ...prev, status: "completed" } : prev)
-      } else if (completedCount > 0) {
-        addLog(`Completed ${completedCount}/${plan.todos.length} tasks (${failedCount} failed)`, "info")
-      } else {
-        addLog("No tasks were completed", "error")
+      } else if (failedCount > 0 && completedCount === 0) {
         setPlan(prev => prev ? { ...prev, status: "failed" } : prev)
       }
     } catch (err) {
-      addLog("Plan execution stopped due to error", "error")
+      console.error('[PlanViewer] Plan execution stopped due to error:', err)
     } finally {
       setIsExecuting(false)
     }
-  }, [plan, addLog, executeTodo])
+  }, [plan, executeTodo])
 
   // Delegate selected todos - runs them one at a time via assistant
   // Note: For true parallel execution, we'd need multiple assistant instances
   const delegateSelected = useCallback(async () => {
     if (!plan || selectedTodos.size === 0) return
 
+    // Switch to agent mode (not plan mode) when running tasks
+    window.dispatchEvent(new CustomEvent('assistant-switch-to-agent-mode'))
+
     setIsExecuting(true)
-    setExecutionLogs([])
     abortControllerRef.current = new AbortController()
+
+    // Bridge: Initialize todos in the Right Panel todo store
+    const threadId = getActiveThreadId()
+    if (threadId) {
+      dispatchPlanTodosInit(threadId, plan.todos, null)
+    }
 
     const planContext = {
       planTitle: plan.title,
@@ -438,35 +455,48 @@ Please execute this task completely. When finished, explain what you accomplishe
     }
     
     const todosToDelegate = plan.todos.filter(t => selectedTodos.has(t.id))
-    
-    addLog(`Running ${todosToDelegate.length} selected task(s) in assistant...`, "info")
-
-    let completedCount = 0
 
     try {
       for (const todo of todosToDelegate) {
         if (abortControllerRef.current.signal.aborted) break
         
-        const success = await executeTodo(todo, planContext)
-        if (success) completedCount++
+        await executeTodo(todo, planContext)
         
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
-      
-      addLog(`Completed ${completedCount}/${todosToDelegate.length} selected tasks`, "success")
     } catch (err) {
-      addLog("Some tasks failed", "error")
+      console.error('[PlanViewer] Some tasks failed:', err)
     } finally {
       setIsExecuting(false)
       setSelectedTodos(new Set())
     }
-  }, [plan, selectedTodos, addLog, executeTodo])
+  }, [plan, selectedTodos, executeTodo])
 
   // Stop execution
   const stopExecution = useCallback(() => {
     abortControllerRef.current?.abort()
-    addLog("Stopping execution...", "info")
-  }, [addLog])
+    
+    // Mark any in-progress todos as failed
+    if (currentTodoId) {
+      updateTodoStatus(currentTodoId, "failed")
+    }
+    
+    // Immediately update UI state
+    setIsExecuting(false)
+    setCurrentTodoId(null)
+    setSelectedTodos(new Set())
+    
+    // Bridge: clear active todo on stop
+    const threadId = getActiveThreadId()
+    if (threadId) {
+      dispatchActiveTodoChange(threadId, null)
+    }
+    
+    // Dispatch event to cancel the current task in the assistant
+    window.dispatchEvent(new CustomEvent('assistant-plan-task-cancel', {
+      detail: { taskId: currentTodoId }
+    }))
+  }, [currentTodoId, updateTodoStatus])
 
   // Get status icon for todo
   const getStatusIcon = (status: PlanTodo["status"], isCurrentlyExecuting: boolean) => {
@@ -656,48 +686,6 @@ Please execute this task completely. When finished, explain what you accomplishe
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Execution Logs */}
-      {executionLogs.length > 0 && (
-        <div className="border-t border-zinc-200 dark:border-white/[0.06] bg-muted/20">
-          <div className="p-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <Typography variant="small" className="font-medium">Execution Log</Typography>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="xs" 
-                onClick={() => setExecutionLogs([])}
-              >
-                <Trash2 className="h-3 w-3 mr-1" />
-                Clear
-              </Button>
-            </div>
-            <div className={cn(styles.darkScrollbar, "max-h-32 overflow-y-auto rounded border border-zinc-200 dark:border-white/[0.06] bg-background/50 p-2")}>
-              {executionLogs.map((log) => (
-                <div key={log.id} className="flex items-start gap-2 py-0.5">
-                  <Typography variant="xs" className="text-muted-foreground font-mono shrink-0">
-                    {log.timestamp.toLocaleTimeString()}
-                  </Typography>
-                  <Typography 
-                    variant="xs" 
-                    className={cn(
-                      "font-mono",
-                      log.type === "success" && "text-green-600 dark:text-green-400",
-                      log.type === "error" && "text-red-600 dark:text-red-400",
-                      log.type === "progress" && "text-blue-600 dark:text-blue-400",
-                    )}
-                  >
-                    {log.message}
-                  </Typography>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       )}
 

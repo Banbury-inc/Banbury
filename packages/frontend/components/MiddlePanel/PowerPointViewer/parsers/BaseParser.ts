@@ -153,9 +153,6 @@ export abstract class BaseParser {
    * Log debug information if needed
    */
   protected debug(message: string, ...args: any[]): void {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[${this.constructor.name}] ${message}`, ...args)
-    }
   }
 
   /**

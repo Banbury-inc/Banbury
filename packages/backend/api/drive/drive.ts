@@ -133,9 +133,9 @@ export default class Drive {
    * Update a file in Google Drive
    * For Google Workspace files, the content will be converted to the appropriate format
    */
-  static async updateFile(fileId: string, file: File | Blob, filename?: string): Promise<DriveFile> {
+  static async updateFile(fileId: string, file: File | Blob, filename?: string, targetMimeType?: string): Promise<DriveFile> {
     const formData = new FormData()
-    
+
     // If it's a Blob without a name, wrap it in a File
     if (file instanceof Blob && !(file instanceof File)) {
       const fileWithName = new File([file], filename || 'file', { type: file.type })
@@ -143,7 +143,12 @@ export default class Drive {
     } else {
       formData.append('file', file)
     }
-    
+
+    // Add target MIME type for conversion (e.g., to keep as Google Slides)
+    if (targetMimeType) {
+      formData.append('target_mime_type', targetMimeType)
+    }
+
     const resp = await axios.post(
       `${ApiService.baseURL}/authentication/drive/files/${encodeURIComponent(fileId)}/update/`,
       formData,
@@ -160,9 +165,9 @@ export default class Drive {
   /**
    * Upload a new file to Google Drive
    */
-  static async uploadFile(file: File | Blob, filename: string, parentFolderId?: string): Promise<DriveFile> {
+  static async uploadFile(file: File | Blob, filename: string, parentFolderId?: string, targetMimeType?: string): Promise<DriveFile> {
     const formData = new FormData()
-    
+
     // If it's a Blob without a name, wrap it in a File
     if (file instanceof Blob && !(file instanceof File)) {
       const fileWithName = new File([file], filename, { type: file.type })
@@ -170,11 +175,16 @@ export default class Drive {
     } else {
       formData.append('file', file)
     }
-    
+
     if (parentFolderId) {
       formData.append('parent_folder_id', parentFolderId)
     }
-    
+
+    // Add target MIME type for conversion (e.g., to Google Slides)
+    if (targetMimeType) {
+      formData.append('target_mime_type', targetMimeType)
+    }
+
     const resp = await axios.post(
       `${ApiService.baseURL}/files/google_drive/upload_file/`,
       formData,

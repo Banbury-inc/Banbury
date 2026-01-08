@@ -39,6 +39,7 @@ export interface AiTab {
   id: string
   label: string
   type: 'ai'
+  threadId: string // Stable identifier for conversation thread (used for todo list persistence)
 }
 
 export interface TaskTab {

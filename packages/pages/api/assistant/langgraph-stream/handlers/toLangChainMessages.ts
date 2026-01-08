@@ -236,10 +236,6 @@ export function toLangChainMessages(messages: AssistantUiMessage[], provider: "a
   const lc: BaseMessage[] = []
   
   for (const msg of messages) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'toLangChainMessages.ts:183',message:'Processing message in toLangChainMessages',data:{msgRole:msg.role,provider,hasContent:!!msg.content,contentLength:msg.content?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
-    
     if (msg.role === "system") {
       const text = msg.content
         .filter((p) => p.type === "text")
@@ -268,10 +264,6 @@ export function toLangChainMessages(messages: AssistantUiMessage[], provider: "a
       lc.push(...assistantMessages)
       continue
     }
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'toLangChainMessages.ts:203',message:'Unhandled message role',data:{msgRole:msg.role,provider},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
   }
   
   return lc

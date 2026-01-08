@@ -38,6 +38,7 @@ import { Check } from "lucide-react";
 import { FileSystemItem } from "../../../utils/fileTreeUtils";
 import { ThreadScrollToBottom } from "./ThreadScrollToBottom";
 import { handleSend } from "./handlers/handleSend";
+import { createComposerSendEventListener } from "./handlers/handleComposerSendEvent";
 import { computeContextBudget } from "./handlers/contextBudget";
 import { getDocumentContextPreview } from "../../../assistant/ClaudeRuntimeProvider/handlers/getDocumentContextPreview";
 import {
@@ -136,6 +137,9 @@ interface ComposerProps {
 export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll, messageBuffer, assistantTabId }) => {
   const composer = useComposerRuntime();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const composerContainerRef = useRef<HTMLDivElement | null>(null);
+  const proseMirrorRef = useRef<HTMLElement | null>(null);
+  const sendButtonRef = useRef<HTMLButtonElement | null>(null);
 
   // Add attachments to the composer when files or emails are attached
   useEffect(() => {
@@ -189,11 +193,27 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attachedFiles, attachedEmails, attachmentPayloads]);
 
+  // Listen for assistant-composer-send events to programmatically send messages
+  useEffect(() => {
+    const handler = createComposerSendEventListener({
+      composer,
+      assistantTabId,
+      inputRef,
+      onSend,
+      sendButtonRef,
+    })
+
+    window.addEventListener("assistant-composer-send", handler)
+    return () => {
+      window.removeEventListener("assistant-composer-send", handler)
+    }
+  }, [composer, assistantTabId, onSend])
+
   return (
     <div className="relative mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 px-[var(--thread-padding-x)] pb-4 md:pb-6" style={{ backgroundColor: 'transparent' }}>
       <ThreadScrollToBottom />
 
-      <div className="relative flex w-full flex-col">
+      <div ref={composerContainerRef} className="relative flex w-full flex-col">
         {/* Display attachments (files + emails) above the composer */}
         {(attachedFiles.length > 0 || attachedEmails.length > 0) && (
           <div className="bg-accent border-b border-border rounded-t-md px-2 py-0.5">
@@ -214,7 +234,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
           onRejectAll={onRejectAll}
         />
 
-        <ComposerPrimitive.Root className="relative flex w-full flex-col rounded-md">
+        <ComposerPrimitive.Root className="relative flex w-full flex-col rounded-md" data-tab-id={assistantTabId}>
           {/* Hidden native input to keep @assistant-ui runtime in sync */}
           <ComposerPrimitive.Input
             placeholder="Send a message..."
@@ -235,7 +255,20 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
               onAttachmentPayload={onAttachmentPayload}
               placeholder="Ask anything or type @ to mention a file..."
               className="min-h-16"
-              onSend={() => handleSend({ composer, onSend: onSend, tabId: assistantTabId })}
+              onSend={() => handleSend({
+                composer,
+                onSend: onSend,
+                tabId: assistantTabId,
+                composerContainerRef,
+                proseMirrorRef,
+                inputRef
+              })}
+              onEditorMount={(editor) => {
+                // Capture the ProseMirror DOM element ref
+                if (editor?.view?.dom) {
+                  proseMirrorRef.current = editor.view.dom as HTMLElement;
+                }
+              }}
             />
           </div>
 
@@ -250,9 +283,17 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
             toolPreferences={toolPreferences}
             onUpdateToolPreferences={(prefs) => onUpdateToolPreferences(prefs)}
             onAttachmentPayload={onAttachmentPayload}
-            onSend={() => handleSend({ composer, onSend: onSend, tabId: assistantTabId })}
+            onSend={() => handleSend({
+              composer,
+              onSend: onSend,
+              tabId: assistantTabId,
+              composerContainerRef,
+              proseMirrorRef,
+              inputRef
+            })}
             messageBuffer={messageBuffer}
             inputRef={inputRef}
+            sendButtonRef={sendButtonRef}
             assistantTabId={assistantTabId}
           />
         </ComposerPrimitive.Root>
@@ -279,10 +320,11 @@ interface ComposerActionProps {
   // Fallback message buffer for context calculation when runtime messages aren't available
   messageBuffer?: any[] | null;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  sendButtonRef: React.RefObject<HTMLButtonElement | null>;
   assistantTabId?: string;
 }
 
-const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, onAttachmentPayload, onSend, messageBuffer, inputRef, assistantTabId }) => {
+const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, onAttachmentPayload, onSend, messageBuffer, inputRef, sendButtonRef, assistantTabId }) => {
   const composer = useComposerRuntime();
   const threadRuntime = useThreadRuntime();
   const [hasText, setHasText] = useState(false);
@@ -297,6 +339,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
     model: true,
     plus: true,
     mic: true,
+    modeText: true,
   });
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
   const [isMeasuring, setIsMeasuring] = useState(true);
@@ -693,6 +736,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           model: false,
           plus: false,
           mic: false,
+          modeText: false,
         })
         setIsMeasuring(false)
         isMeasuringRef.current = false
@@ -718,6 +762,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           model: false,
           plus: false,
           mic: false,
+          modeText: false,
         }
 
         // Calculate which buttons fit, starting with highest priority
@@ -734,6 +779,9 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
             break
           }
         }
+
+        // Set modeText to true only if all other buttons are visible (no overflow)
+        newVisibility.modeText = newVisibility.model && newVisibility.plus && newVisibility.mic
 
         setVisibleButtons(newVisibility)
         setIsMeasuring(false)
@@ -801,9 +849,11 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
               ) : (
                 <Infinity height={14} width={14} strokeWidth={1.5} className="mr-1" />
               )}
-              <Typography variant="small" className="text-xs font-medium">
-                {toolPreferences.plan_mode ? "Plan" : "Agent"}
-              </Typography>
+              {visibleButtons.modeText && (
+                <Typography variant="small" className="text-xs font-medium">
+                  {toolPreferences.plan_mode ? "Plan" : "Agent"}
+                </Typography>
+              )}
               <ChevronDown height={16} width={16} strokeWidth={1} />
             </Button>
           </PopoverTrigger>
@@ -1005,7 +1055,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                     onFileAttach,
                     onAttachmentPayload,
                     onError: (error) => console.error('Upload error:', error),
-                    onSuccess: (count) => console.log(`Successfully uploaded ${count} file(s)`)
+                    onSuccess: () => {}
                   })
                   setIsPlusMenuOpen(false)
                 }}
@@ -1150,12 +1200,13 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
 
         <ThreadPrimitive.If running={false}>
           <Button
+            ref={sendButtonRef}
             type="button"
             variant="primary"
             size="xs"
             className={`h-7 w-7 ${
-              hasText 
-                ? 'cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100' 
+              hasText
+                ? 'cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100'
                 : 'opacity-50 bg-zinc-300 dark:bg-zinc-600 text-zinc-500 dark:text-zinc-400 cursor-not-allowed'
             }`}
             title="Send"
