@@ -12,6 +12,8 @@ import {
   Image,
   Video,
   Upload,
+  ClipboardList,
+  Infinity,
 } from "lucide-react";
 
 import { ChatTiptapComposer } from "../../ChatTiptapComposer";
@@ -96,6 +98,8 @@ export interface ComposerToolPreferences {
   generate_video: boolean;
   // System tools
   memory: boolean;
+  // Agent modes
+  plan_mode: boolean;
   model_provider: "anthropic" | "openai" | "google";
   model_id?: string;
   image_generation_model?: string;
@@ -782,6 +786,68 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
   return (
     <div ref={containerRef} className="bg-accent border-0 relative flex items-center justify-between rounded-b-md p-2">
       <div ref={buttonsRef} className="flex pl-4 items-center gap-2">
+        {/* Mode Selector - Agent/Plan */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="primary"
+              size="xs"
+              className="h-7 px-2 gap-1"
+              title="Mode"
+              aria-label="Mode"
+            >
+              {toolPreferences.plan_mode ? (
+                <ClipboardList height={14} width={14} strokeWidth={1.5} className="mr-1" />
+              ) : (
+                <Infinity height={14} width={14} strokeWidth={1.5} className="mr-1" />
+              )}
+              <Typography variant="small" className="text-xs font-medium">
+                {toolPreferences.plan_mode ? "Plan" : "Agent"}
+              </Typography>
+              <ChevronDown height={16} width={16} strokeWidth={1} />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="top"
+            align="start"
+            className="w-48 p-0 bg-popover text-popover-foreground border shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+          >
+            <div className="p-1 flex flex-col">
+              {/* Agent Mode Option */}
+              <div
+                className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                onClick={() => {
+                  onUpdateToolPreferences({
+                    ...toolPreferences,
+                    plan_mode: false
+                  })
+                }}
+              >
+                <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                  {!toolPreferences.plan_mode && <Check className="size-4" />}
+                </span>
+                <Infinity height={16} width={16} strokeWidth={1.5} className="text-muted-foreground" />
+                <Typography variant="xs">Agent</Typography>
+              </div>
+              {/* Plan Mode Option */}
+              <div
+                className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                onClick={() => {
+                  onUpdateToolPreferences({
+                    ...toolPreferences,
+                    plan_mode: true
+                  })
+                }}
+              >
+                <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                  {toolPreferences.plan_mode && <Check className="size-4" />}
+                </span>
+                <ClipboardList height={16} width={16} strokeWidth={1.5} className="text-emerald-500" />
+                <Typography variant="xs">Plan</Typography>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
         {(isMeasuring || visibleButtons.model) && (
           <Popover>
             <PopoverTrigger asChild>

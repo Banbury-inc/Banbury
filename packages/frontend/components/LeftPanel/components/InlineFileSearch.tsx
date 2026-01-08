@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Search, X, File, FileImage, FileVideo, FileAudio, FileText, FileSpreadsheet, FileBarChart, FileCode, FileArchive, FileJson, FileCog, FileType, Mail } from 'lucide-react';
+import { Search, X, File, FileImage, FileVideo, FileAudio, FileText, FileSpreadsheet, FileBarChart, FileCode, FileArchive, FileJson, FileCog, FileType, Mail, ListChecks } from 'lucide-react';
 import { ApiService } from '../../../../backend/api/apiService';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { useToast } from '../../ui/use-toast';
@@ -128,6 +128,11 @@ const isVectorFile = (fileName: string): boolean => {
   return vectorExtensions.includes(extension)
 }
 
+const isPlanFile = (fileName: string): boolean => {
+  const lowerName = fileName.toLowerCase()
+  return lowerName.endsWith('.plan.md') || lowerName.endsWith('.plan.json')
+}
+
 // Function to extract email subject from Gmail API response
 const extractEmailSubject = (email: EmailResult): string => {
   // If we have a subject field from the full message details, use it
@@ -214,6 +219,7 @@ const extractEmailSender = (email: EmailResult): string | null => {
 
 // Function to get the appropriate icon component and color for a file type
 const getFileIcon = (fileName: string): { icon: any, color: string } => {
+  if (isPlanFile(fileName)) return { icon: ListChecks, color: 'text-purple-500' }
   if (isImageFile(fileName)) return { icon: FileImage, color: 'text-green-400' }
   if (isVideoFile(fileName)) return { icon: FileVideo, color: 'text-red-400' }
   if (isAudioFile(fileName)) return { icon: FileAudio, color: 'text-blue-400' }

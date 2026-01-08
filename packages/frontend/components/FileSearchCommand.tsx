@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { FileText, FileImage, FileVideo, FileAudio, FileCode, FileSpreadsheet, FileArchive, FileJson, FileType, Mail, Calendar } from "lucide-react"
+import { FileText, FileImage, FileVideo, FileAudio, FileCode, FileSpreadsheet, FileArchive, FileJson, FileType, Mail, Calendar, ListChecks } from "lucide-react"
 import {
   CommandDialog,
   CommandEmpty,
@@ -33,7 +33,14 @@ interface FileSearchCommandProps {
 }
 
 function getFileIcon(fileName: string) {
-  const extension = fileName.toLowerCase().split('.').pop()
+  const lowerName = fileName.toLowerCase()
+  
+  // Check for plan files first
+  if (lowerName.endsWith('.plan.md') || lowerName.endsWith('.plan.json')) {
+    return <ListChecks className="h-4 w-4 text-purple-500" />
+  }
+  
+  const extension = lowerName.split('.').pop()
   
   switch (extension) {
     case 'pdf':

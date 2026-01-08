@@ -17,6 +17,7 @@ import {
   FileCog,
   Network,
   Star,
+  ListChecks,
 } from "lucide-react"
 import { useState, useEffect, useRef } from 'react'
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
@@ -177,8 +178,14 @@ const isVectorFile = (fileName: string): boolean => {
   return vectorExtensions.includes(extension)
 }
 
+const isPlanFile = (fileName: string): boolean => {
+  const lowerName = fileName.toLowerCase()
+  return lowerName.endsWith('.plan.md') || lowerName.endsWith('.plan.json')
+}
+
 // Function to get the appropriate icon component and color for a file type
 const getFileIcon = (fileName: string): { icon: any, color: string } => {
+  if (isPlanFile(fileName)) return { icon: ListChecks, color: 'text-purple-500' }
   if (isTldrawFile(fileName)) return { icon: Network, color: 'text-purple-400' }
   if (isDrawioFile(fileName)) return { icon: Network, color: 'text-blue-400' }
   if (isImageFile(fileName)) return { icon: FileImage, color: 'text-green-400' }

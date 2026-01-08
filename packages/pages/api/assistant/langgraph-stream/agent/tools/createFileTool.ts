@@ -322,24 +322,27 @@ export const createFileTool = tool(
         // Content can be structured as:
         // - Simple text (create single slide with text)
         // - Markdown-like format with --- separators for multiple slides
-        // - JSON structure for complex presentations
+        // - JSON array for complex presentations: [{title, content, bullets, background}]
+        // Note: For PowerPoint presentations, use pptx_ai tool instead
         
         const contentStr = bodyContent.toString().trim()
         
-        // Check if content is JSON
-        let isJson = false
+        // Check if content is JSON array
+        let isJsonArray = false
         let jsonSlides: any[] = []
         try {
           const parsed = JSON.parse(contentStr)
           if (Array.isArray(parsed)) {
-            isJson = true
+            isJsonArray = true
             jsonSlides = parsed
           }
         } catch {
           // Not JSON, proceed with text parsing
         }
-        
-        if (isJson && jsonSlides.length > 0) {
+
+        if (isJsonArray && jsonSlides.length > 0) {
+          // JSON array format: [{title, content, bullets, background}]
+          
           // Create slides from JSON structure
           for (const slideData of jsonSlides) {
             const slide = pptx.addSlide()
@@ -520,11 +523,11 @@ export const createFileTool = tool(
   },
   {
     name: 'create_file',
-    description: 'Create a new file in the user\'s cloud workspace. Prefer Microsoft Word (.docx) for documents, Excel (.xlsx) for spreadsheets, and PowerPoint (.pptx) for presentations. For presentations, content can be plain text (use --- to separate slides), or JSON array of slide objects with title, content, and bullets fields.',
+    description: 'Create a new file in the user\'s cloud workspace. Prefer Microsoft Word (.docx) for documents, Excel (.xlsx) for spreadsheets, and PowerPoint (.pptx) for presentations. For simple presentations, content can be: (1) plain text with --- to separate slides, or (2) JSON array of {title, content, bullets, background} objects. For professional presentations with precise positioning, use pptx_ai tool instead.',
     schema: z.object({
       fileName: z.string().describe("The new file name. Use '.docx' for documents, '.xlsx' for spreadsheets, '.pptx' for presentations"),
       filePath: z.string().describe("Full path including the file name (e.g., 'presentations/quarterly-report.pptx')"),
-      content: z.string().describe('The file contents as text. For PPTX: use --- to separate slides, or JSON array of {title, content, bullets} objects'),
+      content: z.string().describe('The file contents as text. For PPTX: use --- to separate slides, or JSON array of {title, content, bullets, background} objects'),
       contentType: z.string().optional().describe("Optional MIME type, defaults by extension"),
     }),
   }

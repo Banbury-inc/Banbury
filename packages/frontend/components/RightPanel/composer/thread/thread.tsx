@@ -124,6 +124,8 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     image_generation_model?: string;
     video_generation_model?: string;
     visibleModels?: string[];
+    // Plan mode
+    plan_mode: boolean;
   }
 
   const deriveToolPreferences = (raw?: any): ThreadToolPreferences => {
@@ -174,6 +176,8 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       image_generation_model: typeof data.image_generation_model === "string" ? data.image_generation_model : "dall-e-3",
       video_generation_model: typeof data.video_generation_model === "string" ? data.video_generation_model : "sora-2",
       visibleModels: Array.isArray(data.visibleModels) ? data.visibleModels : DEFAULT_VISIBLE_MODELS,
+      // Plan mode
+      plan_mode: Boolean(data.plan_mode),
     };
   };
 
@@ -1248,6 +1252,33 @@ const StreamingStatus: FC = () => {
 
   if (!statusDetails) return null;
 
+  // Determine agent badge colors based on agent type
+  const getAgentBadgeStyles = (agentType: string) => {
+    switch (agentType) {
+      case "planning":
+        return {
+          bg: "bg-emerald-50 dark:bg-emerald-950/30",
+          border: "border-emerald-200 dark:border-emerald-800/40",
+          text: "text-emerald-700 dark:text-emerald-300",
+          dot: "bg-emerald-500"
+        }
+      case "document":
+        return {
+          bg: "bg-purple-50 dark:bg-purple-950/30",
+          border: "border-purple-200 dark:border-purple-800/40",
+          text: "text-purple-700 dark:text-purple-300",
+          dot: "bg-purple-500"
+        }
+      default:
+        return {
+          bg: "bg-blue-50 dark:bg-blue-950/20",
+          border: "border-blue-200 dark:border-blue-800/30",
+          text: "text-blue-700 dark:text-blue-300",
+          dot: "bg-blue-500"
+        }
+    }
+  }
+
   return (
     <ThreadPrimitive.If running>
       <motion.div
@@ -1257,6 +1288,31 @@ const StreamingStatus: FC = () => {
         className="mx-auto max-w-[var(--thread-max-width)] px-[var(--thread-padding-x)] mb-4"
       >
         <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/30 rounded-lg p-3">
+          {/* Agent Type Badge */}
+          {statusDetails.agentType && (
+            <div className={cn(
+              "flex items-center gap-2 mb-2 pb-2 border-b",
+              getAgentBadgeStyles(statusDetails.agentType).border
+            )}>
+              <div className={cn(
+                "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium",
+                getAgentBadgeStyles(statusDetails.agentType).bg,
+                getAgentBadgeStyles(statusDetails.agentType).text
+              )}>
+                <span className={cn(
+                  "w-1.5 h-1.5 rounded-full animate-pulse",
+                  getAgentBadgeStyles(statusDetails.agentType).dot
+                )}></span>
+                {statusDetails.agentLabel || statusDetails.agentType}
+              </div>
+              {statusDetails.agentDescription && (
+                <Typography variant="xs" className="text-muted-foreground">
+                  {statusDetails.agentDescription}
+                </Typography>
+              )}
+            </div>
+          )}
+
           {statusDetails.thinking && (
             <div className="flex items-center text-blue-700 dark:text-blue-300 mb-2">
               <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-2"></div>

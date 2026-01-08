@@ -396,7 +396,8 @@ export class ShapeParser extends BaseParser {
     }
 
     // Get width (in EMUs)
-    const w = this.getAttributeNumber(ln, 'w', 12700) // Default: 1pt = 12700 EMUs
+    const hasWidthAttr = ln.hasAttribute('w')
+    const w = this.getAttributeNumber(ln, 'w', 0) // No default value
     const widthPt = w / 12700 // Convert to points
 
     // Get color
@@ -413,6 +414,14 @@ export class ShapeParser extends BaseParser {
         const alphaVal = this.getAttributeNumber(alphaElem, 'val', 100000)
         alpha = alphaVal / 100000 // Convert to 0-1 range
       }
+    } else if (!hasWidthAttr) {
+      // If there's no solidFill and no explicit width, there's no visible border
+      return undefined
+    }
+
+    // If width is 0 or extremely small, treat as no border
+    if (widthPt <= 0.01) {
+      return undefined
     }
 
     const result: StrokeStyle = {

@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
   FileBarChart,
   Star,
+  ListChecks,
 } from "lucide-react"
 import { useState, useEffect, useRef } from 'react'
 import { DriveFile } from "../../../../../../backend/api/drive/drive"
@@ -189,6 +190,11 @@ export function DriveFileTreeItem({
   // Get file icon component with matching colors from local files
   const getFileIcon = () => {
     if (isFolder) return <Folder className="h-4 w-4 flex-shrink-0 text-yellow-400" />
+    // Check for plan files by filename
+    const lowerName = file.name.toLowerCase()
+    if (lowerName.endsWith('.plan.md') || lowerName.endsWith('.plan.json')) {
+      return <ListChecks className="h-4 w-4 flex-shrink-0 text-purple-500" />
+    }
     if (file.mimeType?.includes('document')) return <FileText className="h-4 w-4 flex-shrink-0 text-blue-500" />
     if (file.mimeType?.includes('spreadsheet')) return <FileSpreadsheet className="h-4 w-4 flex-shrink-0 text-green-500" />
     if (file.mimeType?.includes('presentation')) return <FileBarChart className="h-4 w-4 flex-shrink-0 text-orange-400" />

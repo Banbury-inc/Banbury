@@ -79,6 +79,9 @@ import {
   githubSearchCodeTool,
 } from "./tools/githubTools";
 import { pptxParseOutlineTool } from "./tools/pptxParseOutlineTool";
+import { writeWorkspaceFileTool } from "./tools/writeWorkspaceFileTool";
+import { executeScriptTool } from "./tools/executeScriptTool";
+import { createPlanTool } from "./tools/createPlanTool";
 
 // Define our agent state
 interface AgentState {
@@ -162,6 +165,9 @@ const documentTools = [
   sheetAiTool,
   docxAiTool,
   tldrawAiTool,
+  // Code execution tools for advanced document generation
+  writeWorkspaceFileTool, // Write scripts and data files to workspace
+  executeScriptTool, // Run Node.js scripts to generate documents (e.g., complex data processing)
   // Supporting tools that may be needed for document tasks
   webSearchTool, // For research when creating documents
   searchFilesTool, // To find existing files to reference
@@ -179,6 +185,35 @@ export function createDocumentAgentForProvider(provider: ModelProvider) {
   const modelId = resolveModelId()
   const llm = createChatModel(provider, modelId)
   return createReactAgent({ llm, tools: documentTools })
+}
+
+/**
+ * Planning mode tools - Minimal read-only research tools + plan file creation.
+ * 
+ * In planning mode, the agent can ONLY:
+ * 1. Research using file search and memory
+ * 2. Create plan files (.plan.md) using the dedicated create_plan tool
+ * 
+ * NO other write/edit tools are available. This ensures the planning agent
+ * cannot modify files, execute code, or perform any actions beyond research
+ * and plan creation.
+ */
+const planningTools = [
+  // Plan file creation - ONLY tool that can create files (restricted to .plan.md)
+  createPlanTool,
+  // Read-only research tools (minimal set)
+  searchFilesTool, // Search existing files to understand codebase
+  searchMemoryTool, // Search memory for relevant past context
+]
+
+/**
+ * Creates a planning-only React agent with read-only tools.
+ * Used when plan_mode is true - agent can only research and create plans.
+ */
+export function createPlanningAgentForProvider(provider: ModelProvider) {
+  const modelId = resolveModelId()
+  const llm = createChatModel(provider, modelId)
+  return createReactAgent({ llm, tools: planningTools })
 }
 
 // Function to get current date/time context
@@ -222,6 +257,8 @@ const tools = [
   downloadFromUrlTool,
   searchFilesTool,
   getCurrentDateTimeTool,
+  writeWorkspaceFileTool,
+  executeScriptTool,
   gmailGetRecentTool,
   gmailSearchTool,
   gmailGetMessageTool,

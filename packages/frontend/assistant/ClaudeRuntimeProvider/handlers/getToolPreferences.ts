@@ -9,6 +9,7 @@ interface ToolPreferences {
   x_api: boolean;
   slack: boolean;
   use_skills: boolean;
+  plan_mode: boolean;
 }
 
 export function getToolPreferences(): ToolPreferences {
@@ -23,6 +24,7 @@ export function getToolPreferences(): ToolPreferences {
     x_api: false, // Disable X API by default for security
     slack: false, // Disable Slack by default for security
     use_skills: false, // Disabled by default until API access confirmed
+    plan_mode: false, // Disabled by default - use Agent mode
   };
 
   try {
@@ -39,7 +41,9 @@ export function getToolPreferences(): ToolPreferences {
         slack: (parsed && typeof parsed.slack === 'boolean') ? parsed.slack : false,
         // Auto-enable skills for Anthropic provider
         use_skills: (parsed?.model_provider === 'anthropic'),
-      }; // Force LangGraph + ensure browserbase present + ensure x_api present + ensure gmailSend present + ensure slack present + ensure use_skills present
+        // Plan mode preference
+        plan_mode: (parsed && typeof parsed.plan_mode === 'boolean') ? parsed.plan_mode : false,
+      };
     }
   } catch {}
 

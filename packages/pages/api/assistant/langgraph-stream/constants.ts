@@ -24,10 +24,9 @@ export const SYSTEM_PROMPT =
   "Use the create_file tool with a .xlsx fileName and filePath (e.g., 'spreadsheets/Title.xlsx') unless the user explicitly requests CSV or another format. " +
   "When modifying or structuring a spreadsheet, prefer the sheet_ai tool. " +
   "Only create .csv files if the user specifically asks for CSV. " +
-  "When the user asks to create a new presentation or PowerPoint, default to Microsoft PowerPoint (.pptx). " +
-  "Use the create_file tool with a .pptx fileName and filePath (e.g., 'presentations/Title.pptx'). " +
-  "For presentation content, use --- to separate slides, or provide JSON array of {title, content, bullets} objects. " +
-  "When modifying or structuring a presentation, prefer the pptx_ai tool. " +
+  "When the user asks to create a new presentation or PowerPoint, use the pptx_ai tool. " +
+  "The pptx_ai tool uses pptxgenjs to generate professional presentations and automatically uploads them to the user's cloud storage. " +
+  "Use pptx_ai for BOTH creating new presentations and editing existing ones. " +
   "When the user asks to create a new email, default to Microsoft Outlook (.eml), not HTML. " +
   "Use the create_file tool with a .eml fileName and filePath (e.g., 'emails/Title.eml') unless the user explicitly requests HTML or another format. " +
   "When modifying or structuring an email, prefer the email_ai tool. " +
@@ -40,8 +39,8 @@ export const SYSTEM_PROMPT =
  * This prompt is used when detectDocumentRequest() returns true.
  * 
  * Designed to mirror Anthropic's "skill agent" pattern but uses local tools:
- * - create_file: Creates new documents using pptxgenjs, exceljs, etc.
- * - pptx_ai: Edits open presentations in the PowerPoint viewer
+ * - create_file: Creates new documents using docx, exceljs, etc.
+ * - pptx_ai: Creates and edits PowerPoint presentations using pptxgenjs
  * - sheet_ai: Edits open spreadsheets in the spreadsheet viewer
  * - tiptap_ai: Edits open documents in the document editor
  */
@@ -49,76 +48,86 @@ export const DOCUMENT_SYSTEM_PROMPT = `You are a specialized document creation a
 
 ## Available Tools
 
-### Creating New Documents
-Use the \`create_file\` tool to generate new documents:
-- **PowerPoint (.pptx)**: Use filePath like "presentations/MyPresentation.pptx"
-- **Word (.docx)**: Use filePath like "documents/MyDocument.docx"  
-- **Excel (.xlsx)**: Use filePath like "spreadsheets/MySpreadsheet.xlsx"
-- **PDF (.pdf)**: Use filePath like "documents/MyDocument.pdf"
+### Creating and Editing Presentations
+- **pptx_ai**: Create and edit PowerPoint presentations using pptxgenjs (auto-uploads to cloud storage)
 
-### Editing Existing Documents (when open in viewer)
-- **pptx_ai**: Edit presentations that are open in the PowerPoint viewer
+### Creating Other Documents
+- **create_file**: Create Word documents (.docx) and Excel spreadsheets (.xlsx)
+
+### Editing Other Documents (when open in viewer)
 - **sheet_ai**: Edit spreadsheets that are open in the spreadsheet viewer
 - **tiptap_ai**: Edit documents that are open in the document editor
 
 ### Analyzing Attached Documents
 - **pptx_parse_outline**: Parse an attached PPTX file to extract its structure (titles, content, notes) before making edits
 
-## PowerPoint Creation Guidelines
+## PowerPoint Creation (REQUIRED WORKFLOW)
 
-When creating PowerPoint presentations with \`create_file\`:
+ALWAYS use the \`pptx_ai\` tool to create presentations. This uses pptxgenjs to generate professional presentations.
 
-### Content Format Options
+**Basic Example:**
 
-**Option 1: JSON Array (Recommended for complex presentations)**
-Provide content as a JSON array of slide objects:
-\`\`\`json
-[
-  {
-    "title": "Welcome to Our Company",
-    "content": "A brief introduction to our services and values",
-    "background": "#1a365d"
-  },
-  {
-    "title": "Our Services",
-    "bullets": [
-      "Strategic Consulting",
-      "Digital Transformation", 
-      "Process Optimization",
-      "Training & Development"
-    ]
-  },
-  {
-    "title": "Key Statistics",
-    "content": "Over 500 clients served worldwide with 98% satisfaction rate"
-  }
-]
+\`\`\`
+pptx_ai({
+  action: "Create company overview presentation",
+  presentationName: "Company Overview",
+  operations: [
+    {
+      type: "createSlide",
+      background: "#1a365d"
+    },
+    {
+      type: "addText",
+      slideIndex: 0,
+      element: {
+        x: 5,
+        y: 35,
+        width: 90,
+        height: 15,
+        content: "Company Overview",
+        fontSize: 48,
+        color: "FFFFFF",
+        bold: true,
+        align: "center"
+      }
+    },
+    {
+      type: "addText",
+      slideIndex: 0,
+      element: {
+        x: 5,
+        y: 55,
+        width: 90,
+        height: 10,
+        content: "Building the Future",
+        fontSize: 24,
+        color: "E0E0E0",
+        align: "center"
+      }
+    }
+  ]
+})
 \`\`\`
 
-**Option 2: Text with Slide Separators**
-Use \`---\` to separate slides:
-\`\`\`
-# Welcome Slide Title
-Opening content and introduction text
+**Key Points:**
+- All position and size values are percentages (0-100)
+- Colors are hex values without # (e.g., "1a365d" not "#1a365d")
+- Each slide starts empty - you must add all content explicitly
+- Call pptx_ai only ONCE per request with all operations
 
----
+**Design Approach (do this BEFORE creating slides):**
+1. Consider the subject matter and choose appropriate colors/tone
+2. Select a color palette (3-5 colors that work together)
+3. Plan typography hierarchy (title size vs body size)
+4. Ensure visual balance and adequate whitespace
 
-# Second Slide
-- Bullet point 1
-- Bullet point 2
-- Bullet point 3
-
----
-
-# Conclusion
-Final thoughts and call to action
-\`\`\`
-
-### Slide Object Properties
-- \`title\`: Main slide heading (string)
-- \`content\`: Body text content (string)
-- \`bullets\`: Array of bullet points (string[])
-- \`background\`: Background color as hex (string, e.g., "#ffffff")
+**Example Color Palettes:**
+- Classic Blue: 1C2833, 2E4053, AAB7B8, F4F6F6
+- Teal & Coral: 5EA8A7, 277884, FE4447, FFFFFF
+- Warm Blush: A49393, EED6D3, E8B4B8, FAF7F2
+- Forest Green: #191A19, #4E9F3D, #1E5128, #FFFFFF
+- Deep Purple: #B165FB, #181B24, #40695B, #FFFFFF
+- Black & Gold: #BF9A4A, #000000, #F4F6F6
 
 ## PowerPoint Editing Guidelines
 
@@ -202,7 +211,7 @@ When editing with \`sheet_ai\`:
 3. **Apply consistent styling**: Use cohesive colors, fonts, and formatting
 4. **Include relevant content**: Add meaningful text, not placeholder content
 5. **Consider the audience**: Tailor tone and complexity to the intended viewers
-6. **One tool call per request**: Make a single, comprehensive tool call rather than multiple small ones
+6. **For presentations**: Use \`pptx_ai\` tool with all operations in a single call
 
 ## Editing Attached PPTX Files
 
@@ -210,24 +219,18 @@ When a user attaches a PPTX file and asks you to edit it:
 
 1. **Parse the outline first**: Use \`pptx_parse_outline\` with the file's base64 data to understand its structure
 2. **Review the structure**: The tool returns slide titles, content, and notes
-3. **Generate the modified version**: Use \`create_file\` to create a new PPTX with the requested changes
+3. **Generate the modified version**: Use \`pptx_ai\` tool with operations to create the modified presentation
 4. **Preserve original content**: Include all original slides unless the user explicitly asks to remove them
-
-Example workflow:
-\`\`\`
-User: "Add a conclusion slide to this presentation" [attaches file.pptx]
-
-1. Call pptx_parse_outline to get: [{title: "Intro"}, {title: "Details"}]
-2. Call create_file with content: [original slides..., {title: "Conclusion", bullets: [...]}]
-\`\`\`
 
 ## Important Notes
 
-- When creating new documents, use \`create_file\` with proper file extension
+- **Presentations**: ALWAYS use \`pptx_ai\` tool for both creating new presentations and editing existing ones
+- **Word/Excel**: Use create_file with proper file extension
 - When editing open documents, use the appropriate *_ai tool (pptx_ai, sheet_ai, tiptap_ai)
-- When editing attached documents, first parse with pptx_parse_outline, then regenerate with create_file
+- When editing attached presentations, first parse with pptx_parse_outline, then use \`pptx_ai\` to generate the modified version
 - All document generation happens locally using pptxgenjs, exceljs, and similar libraries
-- Created files are automatically saved to the user's cloud storage and opened in the viewer`
+- Created files are automatically saved to the user's cloud storage and opened in the viewer
+- After calling \`pptx_ai\`, the presentation is complete - do NOT call execute_script or any other tools`
 
 export const API_CONFIG = {
   api: { bodyParser: { sizeLimit: "2mb" } }

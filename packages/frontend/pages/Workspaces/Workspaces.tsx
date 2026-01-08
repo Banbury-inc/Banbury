@@ -772,6 +772,55 @@ const Workspaces = (): React.ReactNode => {
     }
   }, [activeAssistantPanelId, handleAssistantTabAdd]);
 
+  // Listen for open-ai-panel events to ensure the assistant panel is visible
+  // This is used by plan execution to ensure the user can see the agent running
+  useEffect(() => {
+    const handleOpenAiPanel = () => {
+      console.log('[Workspaces] Received open-ai-panel event, expanding assistant panel')
+      setIsAssistantPanelCollapsed(false)
+      if (isMobile) {
+        setMobileAssistantOpen(true)
+      }
+    }
+
+    window.addEventListener('open-ai-panel', handleOpenAiPanel)
+    return () => {
+      window.removeEventListener('open-ai-panel', handleOpenAiPanel)
+    }
+  }, [isMobile]);
+
+  // Set global active AI tab ID for plan execution coordination
+  // This allows the PlanViewer to know which AI tab to send messages to
+  useEffect(() => {
+    // Helper to find the active panel in the dock layout
+    const findActivePanel = (group: PanelGroup): Panel | null => {
+      if (group.type === 'panel' && group.panel) {
+        if (group.panel.id === activeAssistantPanelId) {
+          return group.panel
+        }
+      }
+      if (group.type === 'split' && group.children) {
+        for (const child of group.children) {
+          const found = findActivePanel(child)
+          if (found) return found
+        }
+      }
+      return null
+    }
+
+    const activePanel = findActivePanel(assistantDockLayout)
+    const activeTabId = activePanel?.activeTabId || activePanel?.tabs[0]?.id
+
+    if (activeTabId) {
+      (window as any).__banburyActiveAiTabId = activeTabId
+      console.log('[Workspaces] Set active AI tab ID:', activeTabId)
+    }
+
+    return () => {
+      delete (window as any).__banburyActiveAiTabId
+    }
+  }, [assistantDockLayout, activeAssistantPanelId]);
+
   const handleCreateWordDocumentWrapper = async (documentName: string) => {
     await handleCreateWordDocument(userInfo, setUploading, toast, triggerSidebarRefresh, documentName);
   };

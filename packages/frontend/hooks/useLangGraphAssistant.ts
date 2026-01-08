@@ -316,6 +316,25 @@ export function useLangGraphAssistant(initialThreadId?: string) {
             toolCall.result = event.part.result;
           }
 
+          // Dispatch events for file creation tools so the UI can react
+          try {
+            const toolName = event.part.toolName;
+            if (toolName === 'create_file' || toolName === 'create_plan' || toolName === 'download_from_url') {
+              const raw = event.part.result;
+              let parsed: any = null;
+              if (typeof raw === 'string') {
+                try { parsed = JSON.parse(raw); } catch {}
+              } else if (raw && typeof raw === 'object') {
+                parsed = raw;
+              }
+              const detail = { result: parsed };
+              console.log('[LangGraph] Dispatching assistant-file-created event:', detail);
+              window.dispatchEvent(new CustomEvent('assistant-file-created', { detail }));
+            }
+          } catch (err) {
+            console.error('[LangGraph] Error dispatching assistant-file-created:', err);
+          }
+
           // Remove from tools in progress
           setState(prev => {
             const newToolsInProgress = new Set(prev.toolsInProgress);

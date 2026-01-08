@@ -31,7 +31,8 @@ import {
   FileJson,
   FileType,
   FileBarChart,
-  FileCog
+  FileCog,
+  ListChecks
 } from 'lucide-react';
 
 interface IDEProps {
@@ -156,7 +157,14 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
 
   // Get file icon based on type
   const getFileIcon = (fileName: string) => {
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+    const lowerName = fileName.toLowerCase();
+    
+    // Check for plan files first
+    if (lowerName.endsWith('.plan.md') || lowerName.endsWith('.plan.json')) {
+      return ListChecks;
+    }
+    
+    const extension = lowerName.substring(lowerName.lastIndexOf('.'));
     
     if (['.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala'].includes(extension)) {
       return FileCode;

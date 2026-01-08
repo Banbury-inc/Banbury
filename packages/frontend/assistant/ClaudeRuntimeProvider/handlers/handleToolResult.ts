@@ -27,7 +27,7 @@ export function handleToolResult({ evt, contentParts }: HandleToolResultParams):
   // Dispatch events for tools so the UI can react (e.g., open files or browser sessions)
   try {
     const toolName = (evt as any).part?.toolName
-    if (toolName === 'create_file' || toolName === 'download_from_url') {
+    if (toolName === 'create_file' || toolName === 'create_plan' || toolName === 'download_from_url') {
       const raw = (evt as any).part?.result
       let parsed: any = null
       if (typeof raw === 'string') {

@@ -36,6 +36,19 @@ export async function* processStreamEvents({
         
         if (evt.type === "message-start") {
           // Handle message start - no action needed, just acknowledge
+        } else if (evt.type === "agent-type") {
+          // Handle agent type event - show which agent is running
+          yield { 
+            content: contentParts, 
+            status: { 
+              type: "running",
+              details: { 
+                agentType: evt.agentType,
+                agentLabel: evt.agentLabel,
+                agentDescription: evt.description
+              }
+            } 
+          };
         } else if (evt.type === "tool-call-start" && evt.part) {
           // Handle tool-call-start event
           contentParts.push(evt.part);

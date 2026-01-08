@@ -97,7 +97,7 @@ export function renderAssistantPanel({
     >
       {/* AI Tabs Bar */}
       <div className="bg-background flex items-stretch border-b border-zinc-200 dark:border-white/[0.06]">
-        <div className="flex items-stretch flex-1 overflow-x-auto">
+        <div className="flex items-stretch flex-1 min-w-0 overflow-x-hidden">
           <OlympusTabs
             tabs={allTabs.map<OlympusTab>((t) => ({ id: t.id, label: getTabLabel(t) }))}
             activeTab={activeTabId}

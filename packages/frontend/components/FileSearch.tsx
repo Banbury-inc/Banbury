@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Search, X, FileText, FileImage, FileVideo, FileAudio, FileCode, FileSpreadsheet, FileArchive, FileJson, FileX, FileType, FileCheck, FileSearch, FileBarChart, FilePieChart, FileDigit, FileHeart, FileLock, FileMinus, FilePlus, FileQuestion, FileSignature, FileStack, FileSymlink, FileTerminal, FileWarning, FileCog, FileKey, FilePen, FileClock, FileDown, FileUp, FileVolume, FileVolume2, FileMusic, FilePlay, FileBarChart2 } from 'lucide-react';
+import { Search, X, FileText, FileImage, FileVideo, FileAudio, FileCode, FileSpreadsheet, FileArchive, FileJson, FileX, FileType, FileCheck, FileSearch, FileBarChart, FilePieChart, FileDigit, FileHeart, FileLock, FileMinus, FilePlus, FileQuestion, FileSignature, FileStack, FileSymlink, FileTerminal, FileWarning, FileCog, FileKey, FilePen, FileClock, FileDown, FileUp, FileVolume, FileVolume2, FileMusic, FilePlay, FileBarChart2, ListChecks } from 'lucide-react';
 import { ApiService } from '../../backend/api/apiService';
 import { FileSystemItem } from '../utils/fileTreeUtils';
 import { useToast } from './ui/use-toast';
@@ -102,7 +102,14 @@ const FileSearchModal: React.FC<FileSearchProps> = ({ onFileSelect, onClose }) =
 
   // Get file icon based on file type
   const getFileIcon = (fileName: string) => {
-    const extension = fileName.toLowerCase().split('.').pop();
+    const lowerName = fileName.toLowerCase();
+    
+    // Check for plan files first
+    if (lowerName.endsWith('.plan.md') || lowerName.endsWith('.plan.json')) {
+      return <ListChecks className="h-4 w-4 text-purple-500" />;
+    }
+    
+    const extension = lowerName.split('.').pop();
     
     switch (extension) {
       case 'pdf':

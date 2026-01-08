@@ -50,6 +50,8 @@ export function normalizeToolPreferences({
     video_generation_model: typeof toolPreferences.video_generation_model === "string" ? toolPreferences.video_generation_model : "sora-2",
     // Skills mode: disabled by default until beta access confirmed, only available for Anthropic
     use_skills: toolPreferences.use_skills === true && (toolPreferences.model_provider === "anthropic" || !toolPreferences.model_provider),
+    // Plan mode: when enabled, agent uses the planner system prompt to generate implementation plans
+    plan_mode: toolPreferences.plan_mode === true,
   }
 }
 

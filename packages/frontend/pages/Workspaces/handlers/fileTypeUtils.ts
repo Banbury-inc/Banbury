@@ -60,6 +60,12 @@ export const isPowerPointFile = (fileName: string): boolean => {
   return presentationExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
 };
 
+export const isPlanFile = (fileName: string): boolean => {
+  const lowerName = fileName.toLowerCase();
+  // Match .plan.md or .plan.json files
+  return lowerName.endsWith('.plan.md') || lowerName.endsWith('.plan.json');
+};
+
 export const isViewableFile = (fileName: string): boolean => {
   return isImageFile(fileName) || 
          isPdfFile(fileName) || 
@@ -71,7 +77,8 @@ export const isViewableFile = (fileName: string): boolean => {
          isNotebookFile(fileName) ||
          isDrawioFile(fileName) ||
          isTldrawFile(fileName) ||
-         isPowerPointFile(fileName);
+         isPowerPointFile(fileName) ||
+         isPlanFile(fileName);
 };
 
 // Google Drive file type detection based on mimeType

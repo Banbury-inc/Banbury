@@ -19,6 +19,7 @@ import {
   Image,
   Video,
   Database,
+  ClipboardList,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -54,6 +55,7 @@ export interface ComposerToolPreferences {
   generate_image: boolean;
   generate_video: boolean;
   memory: boolean;
+  plan_mode: boolean;
   model_provider: "anthropic" | "openai" | "google";
   model_id?: string;
   image_generation_model?: string;
@@ -62,6 +64,14 @@ export interface ComposerToolPreferences {
 }
 
 export const toolConfigs: ToolConfig[] = [
+  // Agent modes
+  {
+    key: "plan_mode",
+    label: "Plan Mode",
+    icon: ClipboardList,
+    iconColor: "text-emerald-500",
+    defaultEnabled: false,
+  },
   // System tools
   {
     key: "web_search",

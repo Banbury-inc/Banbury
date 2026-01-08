@@ -114,6 +114,87 @@ export const AiConversationTabPane: FC<AiConversationTabPaneProps> = ({
     }
   }, [runtime])
 
+  // Execute a plan task and signal completion when done
+  const executePlanTask = useCallback(async (taskId: string, message: string, _planContext: any) => {
+    console.log('[AiConversationTabPane] executePlanTask called:', { taskId, hasRuntime: !!runtime })
+    
+    if (!runtime) {
+      console.error('[AiConversationTabPane] No runtime available!')
+      window.dispatchEvent(new CustomEvent('assistant-plan-task-complete', {
+        detail: { taskId, success: false, error: "No runtime available" }
+      }))
+      return
+    }
+
+    try {
+      // Get the initial message count before sending
+      const initialMessageCount = runtime.messages?.length || 0
+      console.log('[AiConversationTabPane] Initial message count:', initialMessageCount)
+
+      // Send the message through the runtime UI
+      console.log('[AiConversationTabPane] Setting composer value...')
+      runtime.composer.setValue(message)
+      
+      // Small delay to ensure the value is set
+      await new Promise(resolve => setTimeout(resolve, 50))
+      console.log('[AiConversationTabPane] Sending message...')
+      runtime.composer.send()
+
+      // Wait for the assistant to respond and complete
+      // We detect completion by checking:
+      // 1. A new assistant message appeared (message count increased by 2: user + assistant)
+      // 2. The last message has status "complete" or "incomplete"
+      const checkCompletion = (): Promise<boolean> => {
+        return new Promise((resolve) => {
+          let checkCount = 0
+          const maxChecks = 1800 // 5 minutes at 200ms intervals
+          
+          const intervalId = setInterval(() => {
+            checkCount++
+            
+            try {
+              const currentMessages = runtime.messages || []
+              const currentCount = currentMessages.length
+              
+              // Check if we have new messages (at least user message was added)
+              if (currentCount > initialMessageCount) {
+                const lastMessage = currentMessages[currentCount - 1]
+                const status = lastMessage?.status?.type
+                
+                // If the last message is from the assistant and is complete
+                if (lastMessage?.role === "assistant" && (status === "complete" || status === "incomplete")) {
+                  clearInterval(intervalId)
+                  resolve(status === "complete")
+                  return
+                }
+              }
+              
+              // Timeout check
+              if (checkCount >= maxChecks) {
+                clearInterval(intervalId)
+                resolve(false)
+              }
+            } catch {
+              // Continue checking on error
+            }
+          }, 200)
+        })
+      }
+
+      const success = await checkCompletion()
+
+      // Dispatch completion event
+      window.dispatchEvent(new CustomEvent('assistant-plan-task-complete', {
+        detail: { taskId, success }
+      }))
+    } catch (error: any) {
+      console.error('[AiConversationTabPane] Plan task execution failed:', error)
+      window.dispatchEvent(new CustomEvent('assistant-plan-task-complete', {
+        detail: { taskId, success: false, error: error.message }
+      }))
+    }
+  }, [runtime])
+
   // Register this tab's sendMessage function when it becomes active
   useEffect(() => {
     const handleAIRequest = (event: CustomEvent) => {
@@ -124,6 +205,29 @@ export const AiConversationTabPane: FC<AiConversationTabPaneProps> = ({
       const { message } = event.detail
       if (message) {
         sendMessage(message)
+      }
+    }
+
+    // Handle plan task execution requests
+    const handlePlanTaskExecute = (event: CustomEvent) => {
+      // Only handle if this is the active tab
+      const activeTabId = (window as any).__banburyActiveAiTabId
+      console.log('[AiConversationTabPane] Received plan task execute event', { 
+        activeTabId, 
+        tabId, 
+        isMatch: activeTabId === tabId 
+      })
+      
+      if (activeTabId !== tabId) {
+        console.log('[AiConversationTabPane] Ignoring event - not the active tab')
+        return
+      }
+
+      const { taskId, message, planContext } = event.detail
+      console.log('[AiConversationTabPane] Executing plan task:', { taskId, messageLength: message?.length })
+      
+      if (taskId && message) {
+        executePlanTask(taskId, message, planContext)
       }
     }
 
@@ -147,13 +251,15 @@ export const AiConversationTabPane: FC<AiConversationTabPaneProps> = ({
     }
 
     window.addEventListener('assistant-ai-request', handleAIRequest as EventListener)
+    window.addEventListener('assistant-plan-task-execute', handlePlanTaskExecute as EventListener)
     const timeoutId = setTimeout(checkPendingRequest, 500)
 
     return () => {
       window.removeEventListener('assistant-ai-request', handleAIRequest as EventListener)
+      window.removeEventListener('assistant-plan-task-execute', handlePlanTaskExecute as EventListener)
       clearTimeout(timeoutId)
     }
-  }, [tabId, sendMessage])
+  }, [tabId, sendMessage, executePlanTask])
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>

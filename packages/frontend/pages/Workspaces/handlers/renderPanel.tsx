@@ -14,7 +14,8 @@ import NotebookViewer from '../../../components/MiddlePanel/NotebookViewer/Noteb
 import NotebookLabViewer from '../../../components/MiddlePanel/NotebookViewer/NotebookLabViewer';
 import { CONFIG } from '../../../config/config';
 import { PDFViewer } from '../../../components/MiddlePanel/PDFViewer';
-import { isNotebookFile, isDriveImageFile, isDrivePdfFile, isDriveDocumentFile, isDriveSpreadsheetFile, isDriveVideoFile, isDriveCodeFile, isDrivePresentationFile } from './fileTypeUtils';
+import { isNotebookFile, isDriveImageFile, isDrivePdfFile, isDriveDocumentFile, isDriveSpreadsheetFile, isDriveVideoFile, isDriveCodeFile, isDrivePresentationFile, isPlanFile } from './fileTypeUtils';
+import { PlanViewer } from '../../../components/MiddlePanel/PlanViewer/PlanViewer';
 import DrawioViewer from '../../../components/MiddlePanel/CanvasViewer/DrawioViewer';
 import TldrawViewer from '../../../components/MiddlePanel/CanvasViewer/TldrawViewer';
 import { PowerPointViewer } from '../../../components/MiddlePanel/PowerPointViewer/PowerPointViewer';
@@ -355,6 +356,14 @@ export const renderPanel = ({
                         onSaveComplete={triggerSidebarRefresh} 
                       />
                     )
+                  } else if (isPlanFile(file.name)) {
+                    return (
+                      <PlanViewer 
+                        file={file} 
+                        userInfo={userInfo} 
+                        onSaveComplete={triggerSidebarRefresh}
+                      />
+                    );
                   } else if (isCodeFile(file.name)) {
                     return <IDE file={file} userInfo={userInfo} onSaveComplete={triggerSidebarRefresh} />;
                   } else if (isTldrawFile(file.name)) {

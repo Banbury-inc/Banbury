@@ -1,284 +1,673 @@
 # PowerPoint Presentation Skill
 
-This skill enables AI-powered creation and editing of PowerPoint presentations using pptxgenjs.
+This skill enables AI-powered creation and editing of PowerPoint presentations using the `pptx_ai` tool with pptxgenjs library.
 
 ## Overview
 
-The PowerPoint skill provides two primary capabilities:
+The PowerPoint skill uses a unified approach for both creating and editing presentations:
 
-1. **Creation**: Generate new `.pptx` files from natural language descriptions using the `create_file` tool
-2. **Editing**: Modify existing presentations (when open in the viewer) using the `pptx_ai` tool
+- **pptx_ai tool**: Uses pptxgenjs to generate professional `.pptx` files that are automatically uploaded to cloud storage
 
 ## Architecture
 
 ```
-User Request → Document Agent → Tool Selection
-                                    │
-                    ┌───────────────┴───────────────┐
-                    ▼                               ▼
-              create_file                       pptx_ai
-              (new .pptx)                    (edit open pptx)
-                    │                               │
-                    ▼                               ▼
-              pptxgenjs                    PowerPointViewer
-              (backend)                      (frontend)
-                    │                               │
-                    ▼                               ▼
-              Upload to S3                 Apply operations
-                    │                               │
-                    ▼                               ▼
-              Auto-open in               User sees changes
-                viewer                     immediately
+User Request → Document Agent → pptx_ai Tool
+                                      │
+                                      ▼
+                                 pptxgenjs
+                                 (backend)
+                                      │
+                                      ▼
+                              Generate .pptx file
+                                      │
+                                      ▼
+                              Upload to S3
+                                      │
+                                      ▼
+                          User receives file link
 ```
 
-## Tool: create_file (for new presentations)
+## Using pptx_ai Tool
 
-### When to Use
-- User asks to "create a presentation" or "make a PowerPoint"
-- User wants a new document from scratch
-- No existing presentation is currently open
+The `pptx_ai` tool creates PowerPoint presentations using pptxgenjs on the backend. All presentations are automatically uploaded to the user's cloud storage.
 
-### Input Format
+### Basic Example
 
-The `create_file` tool accepts content in two formats:
-
-#### JSON Array Format (Recommended)
-
-```json
-{
-  "fileName": "Company_Overview.pptx",
-  "filePath": "presentations/Company_Overview.pptx",
-  "content": "[{\"title\":\"Welcome\",\"content\":\"Introduction text\",\"bullets\":[\"Point 1\",\"Point 2\"]},{\"title\":\"Details\",\"content\":\"More information\"}]"
-}
-```
-
-Slide object properties:
-- `title` (string): Slide heading
-- `content` (string): Body paragraph text
-- `bullets` (string[]): Bullet point items
-- `background` (string): Hex color like "#1a365d"
-
-#### Markdown-style Format
-
-```markdown
-# First Slide Title
-Introduction content here
-
----
-
-# Second Slide
-- Bullet point one
-- Bullet point two
-
----
-
-# Conclusion
-Closing remarks
-```
-
-### Output
-- Creates a `.pptx` file using pptxgenjs
-- Uploads to user's cloud storage (S3)
-- Dispatches `assistant-file-created` event
-- File auto-opens in PowerPointViewer
-
-## Tool: pptx_ai (for editing open presentations)
-
-### When to Use
-- User has a presentation open in the viewer
-- User asks to "edit", "modify", "update", or "change" slides
-- User wants to add/remove/reorder slides or elements
-
-### Operations
-
-#### Slide Operations
-
-| Operation | Description | Parameters |
-|-----------|-------------|------------|
-| `createSlide` | Add new slide | `slideIndex?`, `layout?`, `background?` |
-| `deleteSlide` | Remove slide | `slideIndex` |
-| `reorderSlides` | Move slide | `fromIndex`, `toIndex` |
-| `setSlideBackground` | Change background | `slideIndex?`, `background` |
-
-#### Element Operations
-
-| Operation | Description | Key Parameters |
-|-----------|-------------|----------------|
-| `addText` | Add text box | `x`, `y`, `width`, `height`, `content`, `fontSize`, `color`, `align` |
-| `addShape` | Add shape | `x`, `y`, `width`, `height`, `shapeType`, `fill`, `stroke` |
-| `addImage` | Add image | `x`, `y`, `width`, `height`, `imageUrl`/`driveFileId`/`s3FileId` |
-| `updateElement` | Modify element | `elementId`, `element` (properties to update) |
-| `deleteElement` | Remove element | `elementId` |
-| `highlightText` | Highlight text | `elementId`, `substring`, `color` |
-
-#### Styling Operations
-
-| Operation | Description | Parameters |
-|-----------|-------------|------------|
-| `applyTheme` | Apply color theme | `theme` (theme name) |
-| `applyTemplate` | Apply full template | `templateId`, `scope?` |
-
-### Position & Size System
-
-All coordinates use **percentage values (0-100)**:
-- `x`: Horizontal position from left edge
-- `y`: Vertical position from top edge
-- `width`: Element width
-- `height`: Element height
-
-Example: A centered title might use `x: 10, y: 35, width: 80, height: 15`
-
-### Available Themes
-
-Basic: `default`, `dark`, `blue`, `green`, `purple`, `orange`, `red`, `minimal`
-
-Professional: `professional-blue-gradient`, `modern-minimal`, `warm-sunset`, `dark-modern`, `ocean-breeze`, `forest-green`, `royal-purple`, `corporate-gray`
-
-Creative: `sunrise-orange`, `tech-blue`, `elegant-gold`, `fresh-mint`, `fire-red`, `cloud-white`, `midnight-blue`, `pastel-dream`, `neon-cyber`, `spring-garden`
-
-### Available Templates
-
-- `professional`: Clean business style with structured layouts
-- `creative`: Bold, vibrant design with dynamic elements
-- `minimal`: Elegant minimalist with ample whitespace
-
-### Shape Types
-
-`rect`, `ellipse`, `triangle`, `arrow`, `line`
-
-### Example: Complete Presentation Edit
-
-```json
-{
-  "action": "Create company introduction slides",
-  "presentationName": "Company Overview",
-  "operations": [
+```typescript
+pptx_ai({
+  action: "Create company overview presentation",
+  presentationName: "Company Overview",
+  operations: [
+    // Slide 1: Title Slide
     {
-      "type": "createSlide",
-      "slideIndex": 0,
-      "layout": "title",
-      "background": "#1e3a5f"
+      type: "createSlide",
+      background: "#1a365d"
     },
     {
-      "type": "addText",
-      "slideIndex": 0,
-      "element": {
-        "x": 10,
-        "y": 30,
-        "width": 80,
-        "height": 20,
-        "content": "Company Overview",
-        "fontSize": 48,
-        "fontFace": "Arial",
-        "color": "FFFFFF",
-        "bold": true,
-        "align": "center"
+      type: "addText",
+      slideIndex: 0,
+      element: {
+        x: 5,
+        y: 35,
+        width: 90,
+        height: 15,
+        content: "Company Overview",
+        fontSize: 48,
+        color: "FFFFFF",
+        bold: true,
+        align: "center"
       }
     },
     {
-      "type": "addText",
-      "slideIndex": 0,
-      "element": {
-        "x": 10,
-        "y": 55,
-        "width": 80,
-        "height": 10,
-        "content": "Building the Future of Technology",
-        "fontSize": 24,
-        "color": "E0E0E0",
-        "align": "center"
+      type: "addText",
+      slideIndex: 0,
+      element: {
+        x: 5,
+        y: 55,
+        width: 90,
+        height: 10,
+        content: "Building the Future of Technology",
+        fontSize: 24,
+        color: "E0E0E0",
+        align: "center"
+      }
+    },
+    
+    // Slide 2: Content Slide
+    {
+      type: "createSlide",
+      background: "#FFFFFF"
+    },
+    {
+      type: "addText",
+      slideIndex: 1,
+      element: {
+        x: 5,
+        y: 10,
+        width: 90,
+        height: 12,
+        content: "Our Services",
+        fontSize: 36,
+        color: "1a365d",
+        bold: true
       }
     },
     {
-      "type": "createSlide",
-      "slideIndex": 1,
-      "layout": "content"
-    },
-    {
-      "type": "addText",
-      "slideIndex": 1,
-      "element": {
-        "x": 5,
-        "y": 5,
-        "width": 90,
-        "height": 12,
-        "content": "Our Services",
-        "fontSize": 36,
-        "bold": true,
-        "color": "1e3a5f"
-      }
-    },
-    {
-      "type": "addText",
-      "slideIndex": 1,
-      "element": {
-        "x": 5,
-        "y": 20,
-        "width": 90,
-        "height": 60,
-        "content": "• Strategic Consulting\n• Digital Transformation\n• Cloud Solutions\n• Data Analytics",
-        "fontSize": 24,
-        "color": "333333"
+      type: "addText",
+      slideIndex: 1,
+      element: {
+        x: 10,
+        y: 30,
+        width: 80,
+        height: 50,
+        content: "• Strategic Consulting\n• Digital Transformation\n• Cloud Solutions",
+        fontSize: 24,
+        color: "333333"
       }
     }
   ]
-}
+})
 ```
 
-## Text Formatting
+## Position & Size System
 
-### Font Options
-- `fontSize`: Points (e.g., 18, 24, 36, 48)
-- `fontFace`: Font family (e.g., "Arial", "Times New Roman", "Helvetica")
-- `color`: Hex without # (e.g., "363636", "FFFFFF")
-- `bold`: Boolean
-- `italic`: Boolean
+All coordinates use **percentage values (0-100)**:
+- `x`: Horizontal position from left edge (0 = left, 100 = right)
+- `y`: Vertical position from top edge (0 = top, 100 = bottom)
+- `width`: Element width as percentage of slide width
+- `height`: Element height as percentage of slide height
 
-### Alignment
-- `align`: "left" | "center" | "right"
-- `valign`: "top" | "middle" | "bottom"
+**Example positions:**
+- Center title: `x: 5, y: 40, width: 90, height: 20`
+- Top-left content: `x: 10, y: 10, width: 40, height: 30`
+- Bottom-right image: `x: 60, y: 60, width: 35, height: 35`
 
-### Advanced Text Features
-- `textFill`: Background fill for text box (solid or gradient)
-- `border`: Border around text box `{ color, width }`
-- `highlights`: Array of `{ start, end, color }` for text highlighting
+## Available Operations
 
-## Fill Styles
+### createSlide
 
-### Solid Fill
-```json
-{ "kind": "solid", "color": "#1e3a5f" }
-```
+Create a new blank slide.
 
-### Gradient Fill
-```json
+```typescript
 {
-  "kind": "linearGradient",
-  "startColor": "#1e3a5f",
-  "endColor": "#4a90d9",
-  "angleDeg": 45
+  type: "createSlide",
+  slideIndex: 0,  // Optional: position to insert (0-indexed)
+  background: "#1a365d"  // Optional: hex color
 }
 ```
 
-## Best Practices
+### addText
 
-1. **Complete in one call**: Make all changes in a single `pptx_ai` call
-2. **Use professional layouts**: Title at top, content below, consistent margins
-3. **Color consistency**: Use theme colors or coordinated palette
-4. **Readable fonts**: 24-48pt for titles, 18-24pt for body text
-5. **Whitespace**: Leave margins (5-10%) on all sides
-6. **Visual hierarchy**: Larger, bolder text for important content
+Add a text box to a slide.
 
-## Error Handling
+```typescript
+{
+  type: "addText",
+  slideIndex: 0,  // Optional: defaults to last created slide
+  element: {
+    x: 10,
+    y: 20,
+    width: 80,
+    height: 15,
+    content: "Your text here",
+    fontSize: 24,  // Optional: points
+    fontFace: "Arial",  // Optional: font family
+    color: "333333",  // Optional: hex without #
+    bold: true,  // Optional
+    italic: false,  // Optional
+    align: "center",  // Optional: left, center, right
+    valign: "middle",  // Optional: top, middle, bottom
+    textFill: {  // Optional: background fill
+      kind: "solid",
+      color: "F0F0F0"
+    },
+    border: {  // Optional: border
+      color: "000000",
+      width: 2
+    }
+  }
+}
+```
 
-The skill handles common errors gracefully:
-- Invalid slide indices are adjusted to valid range
-- Missing optional parameters use sensible defaults
-- Font/color format variations are normalized
-- Element IDs that don't exist are logged but don't crash
+### addShape
+
+Add a shape to a slide.
+
+```typescript
+{
+  type: "addShape",
+  slideIndex: 0,
+  element: {
+    x: 20,
+    y: 30,
+    width: 30,
+    height: 20,
+    shapeType: "rect",  // rect, ellipse, triangle, arrow, line
+    fill: "FF5733",  // Optional: hex color or FillStyle object
+    stroke: "000000",  // Optional: hex color
+    strokeWidth: 2  // Optional: pixels
+  }
+}
+```
+
+**Available shape types:**
+- `rect`: Rectangle
+- `ellipse`: Circle/Oval
+- `triangle`: Triangle
+- `arrow`: Right arrow
+- `line`: Line
+
+### addImage
+
+Add an image to a slide from a URL.
+
+```typescript
+{
+  type: "addImage",
+  slideIndex: 0,
+  element: {
+    x: 25,
+    y: 25,
+    width: 50,
+    height: 50,
+    imageUrl: "https://example.com/image.jpg"
+  }
+}
+```
+
+### setSlideBackground
+
+Set the background color of a slide.
+
+```typescript
+{
+  type: "setSlideBackground",
+  slideIndex: 0,
+  background: "#1a365d"
+}
+```
+
+## Color Guidelines
+
+Colors should be specified as **hex values WITHOUT the # symbol**:
+- ✅ Correct: `"1a365d"`, `"FFFFFF"`, `"FF5733"`
+- ❌ Incorrect: `"#1a365d"`, `"#FFFFFF"`, `"#FF5733"`
+
+### Recommended Color Palettes
+
+**Professional:**
+- Classic Blue: `1C2833`, `2E4053`, `AAB7B8`, `F4F6F6`
+- Corporate Gray: `2C3E50`, `34495E`, `BDC3C7`, `ECF0F1`
+- Business Teal: `16A085`, `1ABC9C`, `D5F4E6`, `FDFEFE`
+
+**Creative:**
+- Teal & Coral: `5EA8A7`, `277884`, `FE4447`, `FFFFFF`
+- Warm Blush: `A49393`, `EED6D3`, `E8B4B8`, `FAF7F2`
+- Deep Purple: `B165FB`, `181B24`, `40695B`, `FFFFFF`
+
+**Modern:**
+- Forest Green: `191A19`, `4E9F3D`, `1E5128`, `FFFFFF`
+- Black & Gold: `BF9A4A`, `000000`, `F4F6F6`
+- Ocean Blue: `003366`, `0055A4`, `87CEEB`, `FFFFFF`
+
+## Typography Guidelines
+
+### Font Sizes
+
+- **Title slides**: 44-60pt for main title, 24-32pt for subtitle
+- **Content slides**: 32-40pt for headings, 18-24pt for body text
+- **Footnotes**: 12-14pt
+
+### Web-Safe Fonts
+
+Use these fonts for cross-platform compatibility:
+- Arial (default)
+- Calibri
+- Times New Roman
+- Georgia
+- Courier New
+- Verdana
+- Tahoma
+- Trebuchet MS
+- Impact
+
+## Complete Example: Multi-Slide Presentation
+
+```typescript
+pptx_ai({
+  action: "Create product launch presentation",
+  presentationName: "Product Launch 2024",
+  operations: [
+    // Slide 1: Title
+    {
+      type: "createSlide",
+      background: "#1a365d"
+    },
+    {
+      type: "addText",
+      slideIndex: 0,
+      element: {
+        x: 5,
+        y: 30,
+        width: 90,
+        height: 15,
+        content: "Product Launch 2024",
+        fontSize: 54,
+        color: "FFFFFF",
+        bold: true,
+        align: "center"
+      }
+    },
+    {
+      type: "addText",
+      slideIndex: 0,
+      element: {
+        x: 5,
+        y: 50,
+        width: 90,
+        height: 10,
+        content: "Revolutionizing the Industry",
+        fontSize: 28,
+        color: "E0E0E0",
+        align: "center"
+      }
+    },
+    {
+      type: "addText",
+      slideIndex: 0,
+      element: {
+        x: 5,
+        y: 75,
+        width: 90,
+        height: 5,
+        content: "January 15, 2024",
+        fontSize: 18,
+        color: "E0E0E0",
+        align: "center"
+      }
+    },
+    
+    // Slide 2: Agenda
+    {
+      type: "createSlide",
+      background: "#FFFFFF"
+    },
+    {
+      type: "addText",
+      slideIndex: 1,
+      element: {
+        x: 5,
+        y: 10,
+        width: 90,
+        height: 12,
+        content: "Agenda",
+        fontSize: 40,
+        color: "1a365d",
+        bold: true
+      }
+    },
+    {
+      type: "addText",
+      slideIndex: 1,
+      element: {
+        x: 10,
+        y: 30,
+        width: 80,
+        height: 50,
+        content: "• Market Overview\n• Product Features\n• Competitive Analysis\n• Go-to-Market Strategy\n• Financial Projections",
+        fontSize: 24,
+        color: "333333"
+      }
+    },
+    
+    // Slide 3: Key Features with Boxes
+    {
+      type: "createSlide",
+      background: "#FFFFFF"
+    },
+    {
+      type: "addText",
+      slideIndex: 2,
+      element: {
+        x: 5,
+        y: 10,
+        width: 90,
+        height: 12,
+        content: "Key Features",
+        fontSize: 40,
+        color: "1a365d",
+        bold: true
+      }
+    },
+    
+    // Feature 1: Fast
+    {
+      type: "addShape",
+      slideIndex: 2,
+      element: {
+        x: 5,
+        y: 35,
+        width: 28,
+        height: 45,
+        shapeType: "rect",
+        fill: "2d5a8c",
+        stroke: "1a365d",
+        strokeWidth: 2
+      }
+    },
+    {
+      type: "addText",
+      slideIndex: 2,
+      element: {
+        x: 5,
+        y: 42,
+        width: 28,
+        height: 10,
+        content: "Fast",
+        fontSize: 24,
+        color: "FFFFFF",
+        bold: true,
+        align: "center"
+      }
+    },
+    {
+      type: "addText",
+      slideIndex: 2,
+      element: {
+        x: 7,
+        y: 55,
+        width: 24,
+        height: 15,
+        content: "Lightning-quick performance",
+        fontSize: 16,
+        color: "E0E0E0",
+        align: "center"
+      }
+    },
+    
+    // Feature 2: Secure
+    {
+      type: "addShape",
+      slideIndex: 2,
+      element: {
+        x: 36,
+        y: 35,
+        width: 28,
+        height: 45,
+        shapeType: "rect",
+        fill: "2d5a8c",
+        stroke: "1a365d",
+        strokeWidth: 2
+      }
+    },
+    {
+      type: "addText",
+      slideIndex: 2,
+      element: {
+        x: 36,
+        y: 42,
+        width: 28,
+        height: 10,
+        content: "Secure",
+        fontSize: 24,
+        color: "FFFFFF",
+        bold: true,
+        align: "center"
+      }
+    },
+    {
+      type: "addText",
+      slideIndex: 2,
+      element: {
+        x: 38,
+        y: 55,
+        width: 24,
+        height: 15,
+        content: "Enterprise-grade security",
+        fontSize: 16,
+        color: "E0E0E0",
+        align: "center"
+      }
+    },
+    
+    // Feature 3: Scalable
+    {
+      type: "addShape",
+      slideIndex: 2,
+      element: {
+        x: 67,
+        y: 35,
+        width: 28,
+        height: 45,
+        shapeType: "rect",
+        fill: "2d5a8c",
+        stroke: "1a365d",
+        strokeWidth: 2
+      }
+    },
+    {
+      type: "addText",
+      slideIndex: 2,
+      element: {
+        x: 67,
+        y: 42,
+        width: 28,
+        height: 10,
+        content: "Scalable",
+        fontSize: 24,
+        color: "FFFFFF",
+        bold: true,
+        align: "center"
+      }
+    },
+    {
+      type: "addText",
+      slideIndex: 2,
+      element: {
+        x: 69,
+        y: 55,
+        width: 24,
+        height: 15,
+        content: "Grows with your business",
+        fontSize: 16,
+        color: "E0E0E0",
+        align: "center"
+      }
+    },
+    
+    // Slide 4: Closing
+    {
+      type: "createSlide",
+      background: "#1a365d"
+    },
+    {
+      type: "addText",
+      slideIndex: 3,
+      element: {
+        x: 5,
+        y: 35,
+        width: 90,
+        height: 15,
+        content: "Thank You",
+        fontSize: 54,
+        color: "FFFFFF",
+        bold: true,
+        align: "center"
+      }
+    },
+    {
+      type: "addText",
+      slideIndex: 3,
+      element: {
+        x: 5,
+        y: 55,
+        width: 90,
+        height: 10,
+        content: "Questions?",
+        fontSize: 32,
+        color: "E0E0E0",
+        align: "center"
+      }
+    }
+  ]
+})
+```
+
+## Design Best Practices
+
+### 1. Plan Before Creating
+
+Before calling `pptx_ai`, consider:
+- **Subject matter**: What's the presentation about?
+- **Audience**: Who will view it?
+- **Tone**: Professional, creative, minimal?
+- **Color palette**: Choose 3-5 complementary colors
+- **Typography**: Select appropriate font sizes for hierarchy
+
+### 2. Layout Guidelines
+
+- **Margins**: Leave at least 5-10% margins on all sides
+- **Alignment**: Use consistent alignment throughout
+- **Whitespace**: Don't overcrowd slides - use plenty of whitespace
+- **Consistency**: Keep fonts, colors, and layouts consistent
+- **Contrast**: Ensure text is readable against backgrounds
+
+### 3. Content Structure
+
+**Title Slide:**
+- Main title (centered, large: 48-60pt)
+- Subtitle or date (centered, smaller: 24-32pt)
+- Optional company logo or image
+
+**Content Slides:**
+- Clear heading at top (32-40pt)
+- 3-5 bullet points maximum (18-24pt)
+- Supporting visuals (charts, images)
+- White space for breathing room
+
+**Closing Slide:**
+- Thank you message (48-60pt)
+- Contact information or call to action (18-24pt)
+
+### 4. Common Patterns
+
+**Two-Column Layout:**
+```typescript
+// Left column text
+{
+  type: "addText",
+  element: {
+    x: 5,
+    y: 25,
+    width: 42,
+    height: 60,
+    content: "Left column content...",
+    fontSize: 20
+  }
+}
+// Right column text
+{
+  type: "addText",
+  element: {
+    x: 53,
+    y: 25,
+    width: 42,
+    height: 60,
+    content: "Right column content...",
+    fontSize: 20
+  }
+}
+```
+
+**Image with Caption:**
+```typescript
+{
+  type: "addImage",
+  element: {
+    x: 25,
+    y: 20,
+    width: 50,
+    height: 50,
+    imageUrl: "https://example.com/image.jpg"
+  }
+},
+{
+  type: "addText",
+  element: {
+    x: 25,
+    y: 72,
+    width: 50,
+    height: 8,
+    content: "Image caption here",
+    fontSize: 14,
+    align: "center",
+    italic: true
+  }
+}
+```
+
+## Important Notes
+
+1. **Call Once**: Call `pptx_ai` only ONCE per user request with all operations
+2. **Empty Slides**: New slides start completely empty - you must add all content
+3. **Slide Indexing**: Slides are 0-indexed (first slide is 0, second is 1, etc.)
+4. **Percentage Coordinates**: All positions and sizes are percentages (0-100)
+5. **Color Format**: Use hex colors WITHOUT # symbol
+6. **Auto-Upload**: Generated presentations are automatically uploaded to cloud storage
+
+## Limitations
+
+The following operations are not currently supported in the pptxgenjs backend:
+- `deleteSlide`: Cannot delete slides from existing presentations
+- `reorderSlides`: Cannot reorder slides
+- `updateElement`: Cannot update existing elements
+- `deleteElement`: Cannot delete existing elements
+- `applyTheme`: Cannot apply themes
+- `applyTemplate`: Cannot apply templates
+- `highlightText`: Cannot highlight text
+
+For now, `pptx_ai` focuses on creating new presentations from scratch. Editing existing presentations will be supported in a future update.
 
 ## Dependencies
 
 - **pptxgenjs** (^3.12.0): Core PowerPoint generation library
-- **jszip**: For parsing existing PPTX files
-- Browser APIs for frontend editing operations

@@ -56,6 +56,8 @@ export interface ToolPreferences {
   video_generation_model?: string
   // Skills mode (Anthropic only)
   use_skills?: boolean
+  // Plan mode: when enabled, agent uses planner system prompt
+  plan_mode?: boolean
 }
 
 export interface DateTimeContext {
@@ -79,6 +81,20 @@ export interface WebSearchOptions {
   excludeDomains?: string[]
 }
 
+export interface PlanTodoContext {
+  id: string
+  description: string
+  status: "pending" | "in_progress" | "completed" | "failed"
+}
+
+export interface PlanContext {
+  planId: string
+  planTitle: string
+  todos: PlanTodoContext[]
+  currentTodoId: string
+  isSubAgent?: boolean
+}
+
 export interface StreamRequestBody {
   messages: any[]
   threadId?: string
@@ -87,5 +103,6 @@ export interface StreamRequestBody {
   dateTimeContext?: DateTimeContext
   recursionLimit?: number
   webSearchOptions?: WebSearchOptions
+  planContext?: PlanContext
 }
 

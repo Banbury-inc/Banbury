@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
   FileBarChart,
   Star,
+  ListChecks,
 } from "lucide-react"
 import { useState, useEffect, useRef } from 'react'
 import { OneDriveFile } from "../../../../../../backend/api/onedrive/onedrive"
@@ -192,6 +193,12 @@ export function OneDriveFileTreeItem({
 
   const getFileIcon = () => {
     if (isFolder) return <Folder className="h-4 w-4 flex-shrink-0 text-yellow-400" />
+    
+    // Check for plan files by filename
+    const lowerName = file.name.toLowerCase()
+    if (lowerName.endsWith('.plan.md') || lowerName.endsWith('.plan.json')) {
+      return <ListChecks className="h-4 w-4 flex-shrink-0 text-purple-500" />
+    }
     
     const mimeType = file.file?.mimeType || ''
     

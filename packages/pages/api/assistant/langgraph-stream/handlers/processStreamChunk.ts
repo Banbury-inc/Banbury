@@ -4,11 +4,13 @@ interface ProcessStreamChunkParams {
   processedAiMessages: Set<string>
   processedToolCalls: Set<string>
   currentToolExecution: any
+  toolExecutionMap: Map<string, any>
   send: (event: any) => void
 }
 
 interface ProcessStreamChunkResult {
   currentToolExecution: any
+  toolExecutionMap: Map<string, any>
   finalResult: any
 }
 
@@ -66,6 +68,7 @@ async function processAiMessage(
   processedAiMessages: Set<string>,
   processedToolCalls: Set<string>,
   currentToolExecution: any,
+  toolExecutionMap: Map<string, any>,
   send: (event: any) => void
 ): Promise<any> {
   // Only process this AI message if we haven't seen it before
@@ -98,6 +101,9 @@ async function processAiMessage(
       throw new Error("Received tool call without a tool name")
     }
     
+    // Store tool execution in map by tool_call_id for later retrieval
+    toolExecutionMap.set(toolCall.id, toolCall)
+    
     // Send tool call start event
     send({
       type: "tool-call-start",
@@ -124,23 +130,34 @@ async function processAiMessage(
 function processToolMessage(
   message: any,
   currentToolExecution: any,
+  toolExecutionMap: Map<string, any>,
   send: (event: any) => void
 ): void {
+  // Look up the tool execution by tool_call_id
+  const toolCallId = message.tool_call_id || ""
+  const toolExecution = toolExecutionMap.get(toolCallId) || currentToolExecution
+  const toolName = toolExecution?.name || "unknown"
+  
   // Send tool execution completion event
   send({
     type: "tool-result",
     part: {
       type: "tool-result",
-      toolCallId: message.tool_call_id || "",
-      toolName: currentToolExecution?.name || "unknown",
+      toolCallId: toolCallId,
+      toolName: toolName,
       result: message.content,
     },
   })
   
   // Stream tool completion status
-  if (currentToolExecution?.name) {
-    const completionMessage = getToolCompletionMessage(currentToolExecution.name)
-    send({ type: "tool-completion", tool: currentToolExecution.name, message: completionMessage })
+  if (toolName && toolName !== "unknown") {
+    const completionMessage = getToolCompletionMessage(toolName)
+    send({ type: "tool-completion", tool: toolName, message: completionMessage })
+  }
+  
+  // Clean up from map after processing
+  if (toolCallId) {
+    toolExecutionMap.delete(toolCallId)
   }
 }
 
@@ -150,6 +167,7 @@ export async function processStreamChunk({
   processedAiMessages,
   processedToolCalls,
   currentToolExecution,
+  toolExecutionMap,
   send
 }: ProcessStreamChunkParams): Promise<ProcessStreamChunkResult> {
   const messages = (chunk as any).messages || []
@@ -181,16 +199,18 @@ export async function processStreamChunk({
         processedAiMessages,
         processedToolCalls,
         updatedToolExecution,
+        toolExecutionMap,
         send
       )
     } else if (type === "tool") {
-      processToolMessage(m, updatedToolExecution, send)
+      processToolMessage(m, updatedToolExecution, toolExecutionMap, send)
       updatedToolExecution = null
     }
   }
   
   return {
     currentToolExecution: updatedToolExecution,
+    toolExecutionMap,
     finalResult: chunk
   }
 }

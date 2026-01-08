@@ -1,9 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next"
 import { SystemMessage, HumanMessage, ChatMessage } from "@langchain/core/messages"
-import { createReactAgentForProvider, createDocumentAgentForProvider } from "./agent/agent"
+import { createReactAgentForProvider, createDocumentAgentForProvider, createPlanningAgentForProvider } from "./agent/agent"
 import { runWithServerContext } from "../../../../frontend/assistant/langraph/serverContext"
 import type { StreamRequestBody } from "./types"
 import { SYSTEM_PROMPT, DOCUMENT_SYSTEM_PROMPT, API_CONFIG } from "./constants"
+import { PLANNER_SYSTEM_PROMPT } from "../planner-stream/constants"
 import { normalizeMessages } from "./handlers/normalizeMessages"
 import { enrichWithDocumentContext } from "./handlers/enrichWithDocumentContext"
 import { downloadFiles } from "./handlers/downloadFiles"
@@ -81,14 +82,53 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let allMessages = lcMessages
     const hasSystemMessage = lcMessages.length > 0 && lcMessages[0]._getType() === "system"
     
+    // Determine if plan mode is enabled (used for both system prompt and agent selection)
+    // IMPORTANT: If planContext is present, we are EXECUTING a plan, so force plan mode OFF
+    // to ensure the general agent with full tools is used for execution.
+    const isPlanMode = normalizedToolPreferences.plan_mode === true && !body.planContext
+    
     if (!hasSystemMessage) {
       // Append date/time context (if provided) directly to the system prompt so the model always sees it
       const dateTimeSuffix = body.dateTimeContext
         ? `\n\nCurrent date and time: ${body.dateTimeContext.formatted}. ISO timestamp: ${body.dateTimeContext.isoString}`
         : ""
-      // Use document-specialized prompt for document requests, general prompt otherwise
-      const basePrompt = isDocumentRequest ? DOCUMENT_SYSTEM_PROMPT : SYSTEM_PROMPT
-      const systemText = basePrompt + dateTimeSuffix
+      
+      // Build plan context suffix if executing within a plan
+      let planContextSuffix = ""
+      if (body.planContext) {
+        const { planTitle, todos, currentTodoId, isSubAgent } = body.planContext
+        const currentTodo = todos.find(t => t.id === currentTodoId)
+        const todoList = todos.map(t => {
+          const checkbox = t.status === "completed" ? "[x]" : "[ ]"
+          const marker = t.id === currentTodoId ? " <- CURRENT TASK" : ""
+          return `- ${checkbox} ${t.description} (${t.status})${marker}`
+        }).join("\n")
+        
+        planContextSuffix = `\n\n## Plan Context
+You are ${isSubAgent ? "a sub-agent delegated to complete a specific task in" : "executing"} the plan: "${planTitle}"
+
+### Current Task
+${currentTodo?.description || "Unknown task"}
+
+### All Plan Tasks
+${todoList}
+
+Focus on completing your current task thoroughly. ${isSubAgent ? "You are working in parallel with other sub-agents on different tasks." : "Execute each task in sequence."}`
+      }
+      
+      // Use appropriate system prompt based on mode:
+      // 1. Plan mode: Use planner prompt to generate comprehensive implementation plans
+      // 2. Document request: Use document-specialized prompt
+      // 3. Default: Use general assistant prompt
+      let basePrompt: string
+      if (isPlanMode) {
+        basePrompt = PLANNER_SYSTEM_PROMPT
+      } else if (isDocumentRequest) {
+        basePrompt = DOCUMENT_SYSTEM_PROMPT
+      } else {
+        basePrompt = SYSTEM_PROMPT
+      }
+      const systemText = basePrompt + dateTimeSuffix + planContextSuffix
       // Google's API doesn't support SystemMessage - convert to ChatMessage for Google provider
       if (modelProvider === "google") {
         const systemAsUserMessage = new ChatMessage({ content: `System: ${systemText}`, role: "human" })
@@ -115,12 +155,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         webSearchDefaults: body.webSearchOptions || {}
       }, async () => {
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:87',message:'Before createReactAgentForProvider',data:{modelProvider,isDocumentRequest,allMessagesCount:allMessages.length,firstMessageType:allMessages[0]?._getType?.()},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'C'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:87',message:'Before createReactAgentForProvider',data:{modelProvider,isDocumentRequest,isPlanMode,allMessagesCount:allMessages.length,firstMessageType:allMessages[0]?._getType?.()},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'C'})}).catch(()=>{});
         // #endregion
-        // Use document-specialized agent for document requests, general agent otherwise
-        const reactAgent = isDocumentRequest 
-          ? createDocumentAgentForProvider(modelProvider)
-          : createReactAgentForProvider(modelProvider)
+        // Select agent based on mode:
+        // 1. Plan mode: Read-only tools for researching and creating plans
+        // 2. Document request: Document-specialized tools
+        // 3. Default: Full tool access
+        let reactAgent
+        let agentType: "planning" | "document" | "general"
+        if (isPlanMode) {
+          reactAgent = createPlanningAgentForProvider(modelProvider)
+          agentType = "planning"
+        } else if (isDocumentRequest) {
+          reactAgent = createDocumentAgentForProvider(modelProvider)
+          agentType = "document"
+        } else {
+          reactAgent = createReactAgentForProvider(modelProvider)
+          agentType = "general"
+        }
+        
+        // Send agent type event to UI for user feedback
+        send({ 
+          type: "agent-type", 
+          agentType,
+          agentLabel: agentType === "planning" ? "Planning Agent" : 
+                      agentType === "document" ? "Document Agent" : 
+                      "General Agent",
+          description: agentType === "planning" ? "Researching and creating plan (read-only mode)" :
+                       agentType === "document" ? "Specialized for document creation and editing" :
+                       "Full capabilities enabled"
+        })
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/81bfc7ff-c606-49ea-8884-64cce2b9a365',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.ts:89',message:'After createAgent, before stream',data:{modelProvider,isDocumentRequest,agentType:isDocumentRequest?'document':'general'},timestamp:Date.now(),sessionId:'debug-session',runId:'author-error',hypothesisId:'C'})}).catch(()=>{});
         // #endregion
@@ -154,6 +218,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       let currentToolExecution: any = null
       // Track processed tool calls to avoid duplicates
       const processedToolCalls = new Set<string>()
+      // Track tool executions by ID to correctly map results
+      const toolExecutionMap = new Map<string, any>()
 
         for await (const chunk of stream) {
           const result = await processStreamChunk({
@@ -162,6 +228,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             processedAiMessages,
             processedToolCalls,
             currentToolExecution,
+            toolExecutionMap,
             send
           })
           
