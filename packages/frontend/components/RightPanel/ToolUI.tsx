@@ -12,11 +12,13 @@ import { TldrawAITool } from './composer/components/TldrawAITool';
 
 interface ToolUIProps {
   toolName: string;
+  toolCallId?: string;
   args: any;
+  argsText?: string;
   result?: any;
 }
 
-export const ToolUI: React.FC<ToolUIProps> = ({ toolName, args, result }) => {
+export const ToolUI: React.FC<ToolUIProps> = ({ toolName, toolCallId, args, argsText, result }) => {
   // Map tool names to their respective UI components
   switch (toolName) {
     case 'sheet_ai':
@@ -32,7 +34,7 @@ export const ToolUI: React.FC<ToolUIProps> = ({ toolName, args, result }) => {
       return <PptxAITool args={args} />;
     
     case 'web_search':
-      return <WebSearchTool args={args} result={result} />;
+      return <WebSearchTool toolName={toolName} toolCallId={toolCallId} args={args} argsText={argsText || JSON.stringify(args)} result={result} />;
     
     case 'tiptap_ai':
       return <TiptapAITool args={args} />;

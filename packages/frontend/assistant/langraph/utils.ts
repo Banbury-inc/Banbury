@@ -99,8 +99,8 @@ export class SessionManager {
       metadata: {
         ...metadata,
         createdAt: Date.now(),
-        backend_parallel_functioncalling: false,
-        frontend_parallel_functioncalling: false,
+        backend_parallel_functioncalling: true,
+        frontend_parallel_functioncalling: true,
         enabled_tools: [
           "web_search",
           "tiptap_ai", 
