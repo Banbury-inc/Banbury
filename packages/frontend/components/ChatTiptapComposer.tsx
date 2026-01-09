@@ -30,6 +30,11 @@ type ChatTiptapComposerProps = {
   className?: string;
   onSend?: () => void;
   onEditorMount?: (editor: Editor) => void;
+  // Message queue props
+  isRunning?: boolean;
+  onQueueMessage?: (text: string) => void;
+  hasQueuedMessages?: boolean;
+  onSendNextQueued?: () => void;
 };
 
 type FileMentionItem = {
@@ -114,7 +119,7 @@ const getDocumentEditorContent = (currentEditorDom?: Element | null): string => 
   return '';
 };
 
-export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenInputRef, userInfo, onFileAttach, onAttachmentPayload, placeholder = 'Send a message...', className, onSend, onEditorMount }) => {
+export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenInputRef, userInfo, onFileAttach, onAttachmentPayload, placeholder = 'Send a message...', className, onSend, onEditorMount, isRunning = false, onQueueMessage, hasQueuedMessages = false, onSendNextQueued }) => {
   const [files, setFiles] = React.useState<FileSystemItem[]>([]);
   const [loading, setLoading] = React.useState<boolean>(false);
   const filesRef = React.useRef<FileSystemItem[]>([]);
@@ -500,9 +505,39 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
         if (event.key === 'Enter' && !event.shiftKey) {
           event.preventDefault();
           const el = hiddenInputRef.current;
+          const chatText = editorInstance?.getText()?.trim() ?? '';
+          
+          // Handle message queueing behavior when agent is running
+          if (isRunning) {
+            if (chatText.length > 0 && onQueueMessage) {
+              // Queue the message instead of sending
+              onQueueMessage(chatText);
+              
+              // Clear the editor
+              try {
+                editorInstance?.commands.clearContent(true);
+                editorInstance?.commands.setContent('');
+                if (el) {
+                  el.value = '';
+                  el.dispatchEvent(new Event('input', { bubbles: true }));
+                  el.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+              } catch {}
+              
+              return true;
+            } else if (chatText.length === 0 && hasQueuedMessages && onSendNextQueued) {
+              // Empty input + Enter while running with queued messages = send next
+              onSendNextQueued();
+              return true;
+            }
+            // If running but no text and no queued messages, do nothing
+            return true;
+          }
+          
+          // Normal send behavior when not running
           if (el) {
             // Get text from the chat composer
-            const chatText = editorInstance?.getText() ?? '';
+            const fullChatText = editorInstance?.getText() ?? '';
 
             // Get document editor content if available
             const documentContent = getDocumentEditorContent(editorInstance?.view.dom);
@@ -515,7 +550,7 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
             }
 
             // Update the UI input field
-            el.value = chatText;
+            el.value = fullChatText;
             el.dispatchEvent(new Event('input', { bubbles: true }));
             el.dispatchEvent(new Event('change', { bubbles: true }));
           }
