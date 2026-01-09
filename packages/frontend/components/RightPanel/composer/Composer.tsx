@@ -350,7 +350,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
 
         {/* Display editing queued message indicator */}
         {isEditingQueuedMessage && (
-          <div className="bg-accent border-b border-border rounded-t-md px-2 py-1 flex items-center justify-between w-full">
+          <div className={`bg-accent border-b border-border px-2 py-1 flex items-center justify-between w-full ${queuedMessages.length === 0 && attachedFiles.length === 0 && attachedEmails.length === 0 && pendingChanges.length === 0 ? 'rounded-t-md' : ''}`}>
             <Typography variant="xs" className="text-zinc-700 dark:text-zinc-300 font-medium">
               editing queued message
             </Typography>
@@ -366,7 +366,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
           </div>
         )}
 
-        <ComposerPrimitive.Root className={`relative flex w-full flex-col rounded-md ${isEditingQueuedMessage ? 'rounded-t-none' : ''}`} data-tab-id={assistantTabId}>
+        <ComposerPrimitive.Root className={`relative flex w-full flex-col rounded-md ${isEditingQueuedMessage || pendingChanges.length > 0 ? 'rounded-t-none' : ''}`} data-tab-id={assistantTabId}>
           {/* Hidden native input to keep @assistant-ui runtime in sync */}
           <ComposerPrimitive.Input
             placeholder="Send a message..."
@@ -379,7 +379,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
           />
 
           {/* Visible Tiptap editor with @ mention for files */}
-          <div className={`bg-accent border-0 ${isEditingQueuedMessage ? 'rounded-t-none' : 'rounded-t-md'} border-t border-zinc-300 dark:border-zinc-700 max-h-[50vh] overflow-y-auto`}>
+          <div className={`bg-accent border-0 ${isEditingQueuedMessage || pendingChanges.length > 0 ? 'rounded-t-none' : 'rounded-t-md'} border-t border-zinc-300 dark:border-zinc-700 max-h-[50vh] overflow-y-auto`}>
             <ChatTiptapComposer
               hiddenInputRef={inputRef}
               userInfo={userInfo}

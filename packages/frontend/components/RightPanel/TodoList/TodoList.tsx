@@ -1,22 +1,31 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import type { SVGProps } from 'react'
 import {
-  CheckCircle2,
+  Check,
   Circle,
-  Loader2,
   XCircle,
   ChevronDown,
   ChevronRight,
   ListTodo,
-  Trash2,
 } from 'lucide-react'
 import { cn } from '../../../utils'
-import { Typography } from '../../ui/typography'
-import { Button } from '../../ui/button'
 import type { TodoItem, ThreadTodoState, TodoStatus } from '../../../types/todo-types'
 import {
   getThreadTodoState,
-  clearCompletedTodos,
 } from '../handlers/todoStoreHandlers'
+
+const Loader2 = (props: SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="1em" height="1em" {...props}>
+    <path d="M12 2v4" />
+    <path d="M12 18v4" />
+    <path d="M4.93 4.93l2.83 2.83" />
+    <path d="M16.24 16.24l2.83 2.83" />
+    <path d="M2 12h4" />
+    <path d="M18 12h4" />
+    <path d="M4.93 19.07l2.83-2.83" />
+    <path d="M16.24 7.76l2.83-2.83" />
+  </svg>
+)
 
 interface TodoListProps {
   threadId: string
@@ -26,13 +35,13 @@ interface TodoListProps {
 function StatusIcon({ status }: { status: TodoStatus }) {
   switch (status) {
     case 'completed':
-      return <CheckCircle2 className="h-4 w-4 text-emerald-500" strokeWidth={1.5} />
+      return <Check className="h-3 w-3 text-green-600" />
     case 'in_progress':
-      return <Loader2 className="h-4 w-4 text-blue-500 animate-spin" strokeWidth={1.5} />
+      return <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />
     case 'failed':
-      return <XCircle className="h-4 w-4 text-red-500" strokeWidth={1.5} />
+      return <XCircle className="h-3 w-3 text-red-500" />
     default:
-      return <Circle className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+      return <Circle className="h-3 w-3 text-muted-foreground" />
   }
 }
 
@@ -47,25 +56,21 @@ function TodoItemRow({
   return (
     <div
       className={cn(
-        'flex items-start gap-2 px-2 py-1.5 rounded-md transition-colors',
-        isActive && 'bg-blue-500/10 border border-blue-500/20',
+        'flex items-center gap-1.5 px-1 py-1 rounded-md transition-colors',
         todo.status === 'completed' && 'opacity-60',
         todo.status === 'failed' && 'bg-red-500/5'
       )}
     >
-      <div className="mt-0.5 flex-shrink-0">
+      <div className="flex-shrink-0">
         <StatusIcon status={todo.status} />
       </div>
       <div className="flex-1 min-w-0">
-        <Typography
-          variant="small"
-          className={cn(
-            'text-xs leading-tight',
-            todo.status === 'completed' && 'line-through text-muted-foreground'
-          )}
-        >
+        <span className={cn(
+          'text-xs font-medium text-foreground/90',
+          todo.status === 'completed' && 'line-through text-muted-foreground'
+        )}>
           {todo.description}
-        </Typography>
+        </span>
         {todo.source === 'agent' && (
           <span className="text-[10px] text-muted-foreground ml-1">(agent)</span>
         )}
@@ -77,18 +82,31 @@ function TodoItemRow({
 export function TodoList({ threadId }: TodoListProps) {
   const [todoState, setTodoState] = useState<ThreadTodoState | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
+  const previousTodoCountRef = useRef<number>(0)
 
   // Load initial state and subscribe to state change events
   useEffect(() => {
     // Load initial state
     const initialState = getThreadTodoState(threadId)
     setTodoState(initialState)
+    previousTodoCountRef.current = initialState?.todos.length || 0
+    // Auto-expand if there are todos initially (e.g., from plan execution)
+    if (initialState && initialState.todos.length > 0) {
+      setIsExpanded(true)
+    }
 
     // Subscribe to state changes (event subscription is handled at RightPanel level)
     const handleStateChange = (event: Event) => {
       const customEvent = event as CustomEvent<{ threadId: string; state: ThreadTodoState }>
       if (customEvent.detail?.threadId === threadId) {
-        setTodoState(customEvent.detail.state)
+        const previousTodoCount = previousTodoCountRef.current
+        const newState = customEvent.detail.state
+        setTodoState(newState)
+        previousTodoCountRef.current = newState.todos.length
+        // Auto-expand when todos are initialized (going from 0 to having todos)
+        if (previousTodoCount === 0 && newState.todos.length > 0) {
+          setIsExpanded(true)
+        }
       }
     }
 
@@ -101,12 +119,13 @@ export function TodoList({ threadId }: TodoListProps) {
 
   // Refresh state when threadId changes
   useEffect(() => {
-    setTodoState(getThreadTodoState(threadId))
-  }, [threadId])
-
-  const handleClearCompleted = useCallback(() => {
-    const newState = clearCompletedTodos(threadId)
+    const newState = getThreadTodoState(threadId)
     setTodoState(newState)
+    previousTodoCountRef.current = newState?.todos.length || 0
+    // Auto-expand if there are todos when switching threads
+    if (newState && newState.todos.length > 0) {
+      setIsExpanded(true)
+    }
   }, [threadId])
 
   // Don't render if no todos
@@ -114,9 +133,7 @@ export function TodoList({ threadId }: TodoListProps) {
     return null
   }
 
-  const completedCount = todoState.todos.filter(t => t.status === 'completed').length
   const totalCount = todoState.todos.length
-  const hasCompleted = completedCount > 0
 
   // Group todos by source
   const planTodos = todoState.todos.filter(t => t.source === 'plan')
@@ -127,43 +144,30 @@ export function TodoList({ threadId }: TodoListProps) {
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-3 py-2 hover:bg-accent/50 transition-colors"
+        className="w-full flex items-center px-1 py-1 hover:bg-accent/50 transition-colors"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {isExpanded ? (
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
           ) : (
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
           )}
           <ListTodo className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
-          <Typography variant="small" className="text-xs font-medium">
-            Todos
-          </Typography>
-        </div>
-        <div className="flex items-center gap-2">
-          <Typography variant="small" className="text-[10px] text-muted-foreground">
-            {completedCount}/{totalCount}
-          </Typography>
-          {/* Progress bar */}
-          <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-emerald-500 transition-all duration-300"
-              style={{ width: `${(completedCount / totalCount) * 100}%` }}
-            />
-          </div>
+          <span className="text-xs font-medium text-foreground/90">Todos</span>
+          <span className="text-xs text-muted-foreground">{totalCount}</span>
         </div>
       </button>
 
       {/* Todo list */}
       {isExpanded && (
-        <div className="px-2 pb-2 space-y-1">
+        <div className="px-1 pb-1">
           {/* Plan todos */}
           {planTodos.length > 0 && (
-            <div className="space-y-0.5">
+            <div>
               {agentTodos.length > 0 && (
-                <Typography variant="small" className="text-[10px] text-muted-foreground px-2 pt-1">
+                <span className="text-xs text-muted-foreground px-1 pt-1 block">
                   Plan Tasks
-                </Typography>
+                </span>
               )}
               {planTodos.map(todo => (
                 <TodoItemRow
@@ -177,11 +181,11 @@ export function TodoList({ threadId }: TodoListProps) {
 
           {/* Agent todos */}
           {agentTodos.length > 0 && (
-            <div className="space-y-0.5">
+            <div>
               {planTodos.length > 0 && (
-                <Typography variant="small" className="text-[10px] text-muted-foreground px-2 pt-2">
+                <span className="text-xs text-muted-foreground px-1 pt-1 block">
                   Agent Tasks
-                </Typography>
+                </span>
               )}
               {agentTodos.map(todo => (
                 <TodoItemRow
@@ -190,21 +194,6 @@ export function TodoList({ threadId }: TodoListProps) {
                   isActive={todoState.activeTodoId === todo.id}
                 />
               ))}
-            </div>
-          )}
-
-          {/* Clear completed button */}
-          {hasCompleted && (
-            <div className="pt-1 px-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearCompleted}
-                className="h-6 text-[10px] text-muted-foreground hover:text-foreground w-full justify-start"
-              >
-                <Trash2 className="h-3 w-3 mr-1" strokeWidth={1.5} />
-                Clear completed
-              </Button>
             </div>
           )}
         </div>

@@ -3,6 +3,16 @@ import type { Preview } from "@storybook/react"
 import { ThemeProvider } from "../frontend/components/ThemeProvider"
 import "../frontend/index.css"
 
+// Polyfill process.env for Next.js components
+if (typeof window !== 'undefined' && typeof (window as any).process === 'undefined') {
+  (window as any).process = {
+    env: {
+      NODE_ENV: 'development',
+      NEXT_PUBLIC_JUPYTER_URL: '',
+      NEXT_PUBLIC_API_BASE_URL: '',
+    }
+  }
+}
 
 const preview: Preview = {
   parameters: {

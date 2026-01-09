@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import type { Meta, StoryObj } from "@storybook/react"
 import { Composer } from "frontend/components/RightPanel/composer/Composer"
 import { AssistantRuntimeProvider } from "@assistant-ui/react"
@@ -275,5 +275,225 @@ export const WithQueuedMessagesAndAttachments: Story = {
         size: 2048000,
       },
     ],
+  },
+}
+
+// Wrapper component to simulate editing queued message state
+function EditingQueuedMessageWrapper({ 
+  initialQueuedMessages, 
+  editingMessageId,
+  onRemoveQueuedMessage,
+  ...props 
+}: React.ComponentProps<typeof Composer> & { 
+  initialQueuedMessages: QueuedMessage[]
+  editingMessageId?: string
+}) {
+  const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>(initialQueuedMessages)
+  const editingMessage = editingMessageId ? initialQueuedMessages.find(m => m.id === editingMessageId) : null
+
+  // Simulate editing by removing the message from queue and setting it in the input
+  useEffect(() => {
+    if (editingMessageId && editingMessage) {
+      // Remove from queue to simulate editing state
+      setQueuedMessages(prev => prev.filter(m => m.id !== editingMessageId))
+      if (onRemoveQueuedMessage) {
+        onRemoveQueuedMessage(editingMessageId)
+      }
+      
+      // Set the text in the composer input after a short delay to simulate the edit action
+      setTimeout(() => {
+        const input = document.querySelector('textarea[placeholder="Send a message..."]') as HTMLTextAreaElement
+        if (input) {
+          input.value = editingMessage.text
+          input.dispatchEvent(new Event('input', { bubbles: true }))
+          input.dispatchEvent(new Event('change', { bubbles: true }))
+          window.dispatchEvent(new CustomEvent('composer-set-text', { detail: { text: editingMessage.text } }))
+        }
+      }, 100)
+    }
+  }, [editingMessageId, editingMessage, onRemoveQueuedMessage])
+
+  const handleRemoveQueuedMessage = (id: string) => {
+    setQueuedMessages(prev => prev.filter(m => m.id !== id))
+    if (onRemoveQueuedMessage) {
+      onRemoveQueuedMessage(id)
+    }
+  }
+
+  return (
+    <Composer
+      {...props}
+      queuedMessages={queuedMessages}
+      onRemoveQueuedMessage={handleRemoveQueuedMessage}
+    />
+  )
+}
+
+export const EditingQueuedMessage: Story = {
+  render: (args) => (
+    <EditingQueuedMessageWrapper
+      {...args}
+      initialQueuedMessages={[
+        createMockQueuedMessage("1", "Can you analyze the quarterly data?"),
+        createMockQueuedMessage("2", "Create a summary report"),
+        createMockQueuedMessage("3", "Export to PDF format"),
+      ]}
+      editingMessageId="2"
+    />
+  ),
+  args: {
+    attachedFiles: [],
+    attachedEmails: [],
+    onFileAttach: fn(),
+    onFileRemove: fn(),
+    onEmailAttach: fn(),
+    onEmailRemove: fn(),
+    userInfo: {
+      username: "testuser",
+      email: "test@example.com",
+    },
+    toolPreferences: {
+      web_search: true,
+      tiptap_ai: true,
+      read_file: true,
+      gmail: false,
+      langgraph_mode: false,
+      browser: false,
+      x_api: false,
+      slack: false,
+      sheet_ai: false,
+      docx_ai: false,
+      pptx_ai: false,
+      tldraw_ai: false,
+      document_ai: false,
+      create_file: false,
+      create_folder: false,
+      download_from_url: false,
+      search_files: false,
+      calendar: false,
+      msCalendar: false,
+      github: false,
+      generate_image: false,
+      generate_video: false,
+      memory: false,
+      plan_mode: false,
+      ask_mode: false,
+      model_provider: "anthropic" as const,
+    },
+    onUpdateToolPreferences: fn(),
+    attachmentPayloads: {},
+    onAttachmentPayload: fn(),
+    onSend: fn(),
+    onFileView: fn(),
+    pendingChanges: [],
+    onAcceptAll: fn(),
+    onRejectAll: fn(),
+    onQueueMessage: fn(),
+    onRemoveQueuedMessage: fn(),
+    onMoveQueuedMessageToFront: fn(),
+    onSendNextQueued: fn(),
+  },
+}
+
+export const WithPendingChangesAndQueuedMessages: Story = {
+  args: {
+    queuedMessages: [
+      createMockQueuedMessage("1", "Review the pending changes"),
+      createMockQueuedMessage("2", "Apply the modifications"),
+    ],
+    pendingChanges: [
+      {
+        id: "change-1",
+        type: "document",
+        description: "Updated project proposal.docx",
+      },
+      {
+        id: "change-2",
+        type: "spreadsheet",
+        description: "Modified financial forecast.xlsx",
+      },
+    ],
+  },
+}
+
+export const EditingQueuedMessageWithPendingChanges: Story = {
+  render: (args) => (
+    <EditingQueuedMessageWrapper
+      {...args}
+      initialQueuedMessages={[
+        createMockQueuedMessage("1", "Review the pending changes"),
+        createMockQueuedMessage("2", "Apply the modifications"),
+        createMockQueuedMessage("3", "Send confirmation email"),
+      ]}
+      editingMessageId="2"
+    />
+  ),
+  args: {
+    attachedFiles: [],
+    attachedEmails: [],
+    onFileAttach: fn(),
+    onFileRemove: fn(),
+    onEmailAttach: fn(),
+    onEmailRemove: fn(),
+    userInfo: {
+      username: "testuser",
+      email: "test@example.com",
+    },
+    toolPreferences: {
+      web_search: true,
+      tiptap_ai: true,
+      read_file: true,
+      gmail: false,
+      langgraph_mode: false,
+      browser: false,
+      x_api: false,
+      slack: false,
+      sheet_ai: false,
+      docx_ai: false,
+      pptx_ai: false,
+      tldraw_ai: false,
+      document_ai: false,
+      create_file: false,
+      create_folder: false,
+      download_from_url: false,
+      search_files: false,
+      calendar: false,
+      msCalendar: false,
+      github: false,
+      generate_image: false,
+      generate_video: false,
+      memory: false,
+      plan_mode: false,
+      ask_mode: false,
+      model_provider: "anthropic" as const,
+    },
+    onUpdateToolPreferences: fn(),
+    attachmentPayloads: {},
+    onAttachmentPayload: fn(),
+    onSend: fn(),
+    onFileView: fn(),
+    pendingChanges: [
+      {
+        id: "change-1",
+        type: "document",
+        description: "Updated project proposal.docx",
+      },
+      {
+        id: "change-2",
+        type: "spreadsheet",
+        description: "Modified financial forecast.xlsx",
+      },
+      {
+        id: "change-3",
+        type: "canvas",
+        description: "Created new wireframe.fig",
+      },
+    ],
+    onAcceptAll: fn(),
+    onRejectAll: fn(),
+    onQueueMessage: fn(),
+    onRemoveQueuedMessage: fn(),
+    onMoveQueuedMessageToFront: fn(),
+    onSendNextQueued: fn(),
   },
 }

@@ -45,6 +45,48 @@ const config = {
       "next/router": path.resolve(__dirname, "./next-router-mock.js")
     }
     
+    // Polyfill process.env for Next.js components (like Image)
+    // Define process.env properties individually for proper replacement
+    const processEnv = {
+      NODE_ENV: 'development',
+      NEXT_PUBLIC_JUPYTER_URL: '',
+      NEXT_PUBLIC_API_BASE_URL: '',
+    }
+    
+    config.define = {
+      ...(config.define || {}),
+      'process.env': JSON.stringify(processEnv),
+      'process.env.NODE_ENV': JSON.stringify(processEnv.NODE_ENV),
+      'process.env.NEXT_PUBLIC_JUPYTER_URL': JSON.stringify(processEnv.NEXT_PUBLIC_JUPYTER_URL),
+      'process.env.NEXT_PUBLIC_API_BASE_URL': JSON.stringify(processEnv.NEXT_PUBLIC_API_BASE_URL),
+    }
+    
+    // Add a plugin to inject process globally
+    const existingPlugins = config.plugins || []
+    config.plugins = [
+      ...existingPlugins,
+      {
+        name: 'storybook-process-polyfill',
+        configureServer(server: any) {
+          server.middlewares.use((_req: any, _res: any, next: () => void) => {
+            next()
+          })
+        },
+        transformIndexHtml(html: string) {
+          return html.replace(
+            '<head>',
+            `<head><script>
+              if (typeof process === 'undefined') {
+                window.process = {
+                  env: ${JSON.stringify(processEnv)}
+                }
+              }
+            </script>`
+          )
+        }
+      }
+    ]
+    
     // Configure esbuild to handle TypeScript and JSX properly
     // Using react-jsx transform (no need for jsxInject)
     config.esbuild = {

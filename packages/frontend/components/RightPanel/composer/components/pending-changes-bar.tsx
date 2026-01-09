@@ -53,7 +53,7 @@ export const PendingChangesBar: FC<PendingChangesBarProps> = ({
       exit={{ opacity: 0, y: -5 }}
       className="w-full"
     >
-      <div className="bg-accent backdrop-blur-sm border-b border-border px-2 py-2">
+      <div className="bg-accent backdrop-blur-sm border-b border-border rounded-t-md px-2 py-2">
         <div className="space-y-1">
           {/* Dropdown header */}
           <div className="flex items-center justify-between gap-2">
