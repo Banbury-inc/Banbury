@@ -35,6 +35,10 @@ const DocsSidebar = ({ activeSection }: DocsSidebarProps): JSX.Element => {
       title: 'Features',
       items: [
         { id: 'features', title: 'Overview', href: '/docs/features' },
+        { id: 'agent-modes', title: 'Agent Modes', href: '/docs/agent-modes' },
+        { id: 'parallel-agents', title: 'Parallel Agents', href: '/docs/parallel-agents' },
+        { id: 'queued-messages', title: 'Queued Messages', href: '/docs/queued-messages' },
+        { id: 'video-generation', title: 'Video Generation', href: '/docs/video-generation' },
         { id: 'gmail-feature', title: 'Gmail', href: '/docs/gmail-feature' },
         { id: 'docs-feature', title: 'Docs', href: '/docs/docs-feature' },
         { id: 'spreadsheets-feature', title: 'Spreadsheets', href: '/docs/spreadsheets-feature' },

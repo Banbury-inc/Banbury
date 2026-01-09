@@ -34,6 +34,10 @@ export default function FeaturesTab() {
             Explore the specific capabilities of each feature by selecting them from the sidebar:
           </Typography>
           <Box sx={{ pl: 2 }}>
+            <Typography variant="p" className="mb-1">• <strong>Agent Modes</strong> — Switch between Agent, Ask, and Planning modes</Typography>
+            <Typography variant="p" className="mb-1">• <strong>Parallel Agents</strong> — Run multiple agents simultaneously for faster execution</Typography>
+            <Typography variant="p" className="mb-1">• <strong>Queued Messages</strong> — Queue up follow-up messages while the agent works</Typography>
+            <Typography variant="p" className="mb-1">• <strong>Video Generation</strong> — Create videos from text descriptions</Typography>
             <Typography variant="p" className="mb-1">• <strong>Docs</strong> — Create, edit, and manage documents</Typography>
             <Typography variant="p" className="mb-1">• <strong>Spreadsheets</strong> — Work with spreadsheet data and formulas</Typography>
             <Typography variant="p" className="mb-1">• <strong>Folders</strong> — Organize and analyze folder contents</Typography>
@@ -50,6 +54,18 @@ export default function FeaturesTab() {
             New and recently updated capabilities:
           </Typography>
           <Box sx={{ pl: 2 }}>
+            <Typography variant="p" className="mb-1">
+              • <Link href="/docs/agent-modes" className="underline underline-offset-4">Agent Modes</Link> — Switch between Agent, Ask (read-only), and Planning modes
+            </Typography>
+            <Typography variant="p" className="mb-1">
+              • <Link href="/docs/parallel-agents" className="underline underline-offset-4">Parallel Agents</Link> — Run multiple agents simultaneously on different tasks
+            </Typography>
+            <Typography variant="p" className="mb-1">
+              • <Link href="/docs/queued-messages" className="underline underline-offset-4">Queued Messages</Link> — Queue follow-up messages while the agent is working
+            </Typography>
+            <Typography variant="p" className="mb-1">
+              • <Link href="/docs/video-generation" className="underline underline-offset-4">Video Generation</Link> — Generate videos using Sora, Veo, Runway, and Luma
+            </Typography>
             <Typography variant="p" className="mb-1">
               • <Link href="/docs/powerpoint-feature" className="underline underline-offset-4">PowerPoint / Presentations</Link> — Work with .pptx presentations (open, edit slides, and download)
             </Typography>
