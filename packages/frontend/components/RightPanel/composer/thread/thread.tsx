@@ -93,6 +93,9 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   // Message queue state
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
 
+  // Get the thread runtime at the component level (moved up for use in message queue handlers)
+  const runtime = useThreadRuntime();
+
   interface ThreadToolPreferences {
     web_search: boolean;
     tiptap_ai: boolean;
@@ -663,9 +666,6 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       }
     }
   }, [selectedEmail, attachedEmails]);
-
-  // Get the thread runtime at the component level
-  const runtime = useThreadRuntime();
 
   // Auto-save conversation when langgraph stream completes
   useEffect(() => {
