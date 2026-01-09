@@ -52,9 +52,9 @@ export const defaultLangGraphConfig: LangGraphConfig = {
     "create_file",
     "search_files"
   ],
-  parallelFunctionCalling: false,
-  backendParallelFunctionCalling: false,
-  frontendParallelFunctionCalling: false,
+  parallelFunctionCalling: true,
+  backendParallelFunctionCalling: true,
+  frontendParallelFunctionCalling: true,
   
   // Memory settings
   memoryCollectorEnabled: true,
