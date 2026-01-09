@@ -1,5 +1,8 @@
 import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
 import { useRouter } from 'next/router';
+import { useState } from 'react';
 
 import DocsSidebar from './components/DocsSidebar';
 import WhatIsBanburyTab from './components/Tabs/WhatIsBanburyTab';
@@ -37,10 +40,15 @@ const Docs = () => {
   const router = useRouter();
   const section = router.query.section as string | undefined;
   const activeSection = section || 'what-is-banbury';
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Page tracking is handled globally by routeTracking.ts
+  const handleMobileToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
 
-
+  const handleMobileClose = () => {
+    setMobileOpen(false);
+  };
 
   return (
     <Box sx={{ 
@@ -49,29 +57,65 @@ const Docs = () => {
       display: 'flex',
       flexDirection: 'column'
     }}>
-      {/* Hero Section */}
+      {/* Mobile Menu Button */}
+      <Box sx={{ 
+        display: { xs: 'flex', md: 'none' },
+        alignItems: 'center',
+        px: 2,
+        py: 1.5,
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        background: 'rgba(255, 255, 255, 0.02)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+      }}>
+        <IconButton
+          color="inherit"
+          aria-label="open navigation menu"
+          onClick={handleMobileToggle}
+          sx={{ 
+            color: '#ffffff',
+            mr: 2,
+          }}
+        >
+          <MenuIcon />
+        </IconButton>
+        <Box 
+          component="span" 
+          sx={{ 
+            color: '#ffffff', 
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          }}
+        >
+          Documentation
+        </Box>
+      </Box>
 
-            {/* Main Content with Sidebar */}
+      {/* Main Content with Sidebar */}
       <Box sx={{ 
         display: 'flex', 
         flexDirection: { xs: 'column', md: 'row' },
-        minHeight: 'calc(100vh - 200px)', // Subtract hero section height
-        height: 'calc(100vh - 200px)',
+        minHeight: { xs: 'calc(100vh - 120px)', md: 'calc(100vh - 200px)' },
+        height: { xs: 'auto', md: 'calc(100vh - 200px)' },
       }}>
-        {/* Sidebar - Fixed position */}
+        {/* Sidebar - Fixed position on desktop, drawer on mobile */}
         <DocsSidebar 
           activeSection={activeSection}
+          mobileOpen={mobileOpen}
+          onMobileClose={handleMobileClose}
         />
         
         {/* Content Area - Scrollable with left margin for fixed sidebar */}
         <Box sx={{ 
           flex: 1, 
-          px: { xs: 3, md: 4 }, 
-          py: { xs: 4, md: 6 },
-          minHeight: 'calc(100vh - 70px)', // Adjust height to account for header
-          height: 'calc(100vh - 70px)',
-          ml: { xs: 0, md: '280px' }, // Left margin to account for fixed sidebar
-          overflowY: 'auto', // Make content scrollable
+          px: { xs: 2, sm: 3, md: 4 }, 
+          py: { xs: 3, md: 6 },
+          minHeight: { xs: 'auto', md: 'calc(100vh - 70px)' },
+          height: { xs: 'auto', md: 'calc(100vh - 70px)' },
+          ml: { xs: 0, md: '280px' },
+          overflowY: { xs: 'visible', md: 'auto' },
           '&::-webkit-scrollbar': {
             width: '8px',
           },
