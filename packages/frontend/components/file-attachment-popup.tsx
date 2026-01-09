@@ -1,8 +1,9 @@
-import { File, Search, ChevronRight, Check } from 'lucide-react';
+import { File, Search, ChevronRight, Check, FolderOpen } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 import { Input } from './ui/old-input';
+import { Typography } from './ui/typography';
 import { ApiService } from '../../backend/api/apiService';
 import { cn } from '../utils';
 import { FileSystemItem } from '../utils/fileTreeUtils';
@@ -388,12 +389,18 @@ export const FileAttachmentPopup: React.FC<FileAttachmentPopupProps> = ({
       
       <div className="overflow-y-auto max-h-80">
         {loading ? (
-          <div className="flex items-center justify-center p-4 text-zinc-400">
-            Loading files...
+          <div className="flex items-center justify-center p-4">
+            <Typography variant="muted">Loading files...</Typography>
           </div>
         ) : fileSystem.length === 0 ? (
-          <div className="flex items-center justify-center p-4 text-zinc-400">
-            No files found
+          <div className="flex flex-col items-center justify-center p-6">
+            <FolderOpen className="h-10 w-10 mb-3 opacity-40 text-muted-foreground" strokeWidth={1.5} />
+            <Typography variant="small" className="mb-1 font-medium text-foreground">
+              No files yet
+            </Typography>
+            <Typography variant="muted" className="text-xs text-center">
+              Upload files to attach them
+            </Typography>
           </div>
         ) : (
           renderFileTree(fileSystem)

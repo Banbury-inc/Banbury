@@ -1,6 +1,7 @@
 import { 
   Search,
   Folder,
+  FolderOpen,
 } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
 
@@ -134,8 +135,14 @@ export const FileAttachmentPicker: React.FC<FileAttachmentPickerProps> = ({
             <Typography variant="muted">Loading files...</Typography>
           </div>
         ) : fileSystem.length === 0 ? (
-          <div className="flex items-center justify-center p-4 bg-popover">
-            <Typography variant="muted">No files found</Typography>
+          <div className="flex flex-col items-center justify-center p-6 bg-popover">
+            <FolderOpen className="h-10 w-10 mb-3 opacity-40 text-muted-foreground" strokeWidth={1.5} />
+            <Typography variant="small" className="mb-1 font-medium text-foreground">
+              No files yet
+            </Typography>
+            <Typography variant="muted" className="text-xs text-center">
+              Upload files to attach them
+            </Typography>
           </div>
         ) : (
           renderFileTree(fileSystem)

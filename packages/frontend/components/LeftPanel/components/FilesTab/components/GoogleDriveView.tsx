@@ -1,4 +1,4 @@
-import { RefreshCw, Folder, FileText, FileSpreadsheet, FileBarChart } from "lucide-react"
+import { RefreshCw, Folder, FileText, FileSpreadsheet, FileBarChart, FolderPlus, Clock, Star, Trash2 } from "lucide-react"
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { DriveFileTreeItem } from "./DriveFileTreeItem"
 import { Button } from "../../../../ui/button"
@@ -415,17 +415,60 @@ export function GoogleDriveView({
       )}
       
       {!checkingDriveAccess && driveAvailable && !driveLoading && filteredDriveFiles.length === 0 && !driveError && !isCreatingDocument && !isCreatingSpreadsheet && !isCreatingPresentation && !isCreatingDocumentPending && !isCreatingSpreadsheetPending && !isCreatingPresentationPending && (
-        <div className="px-3 py-2">
-          <Typography variant="muted">
-            {activeFilters.size > 0 ? 'No matching files' : (
-              <>
-                {viewMode === 'recent' && 'No recent files found'}
-                {viewMode === 'starred' && 'No starred files found'}
-                {viewMode === 'trash' && 'No files in trash'}
-                {viewMode === 'my-drive' && 'No Google Drive files found'}
-              </>
-            )}
-          </Typography>
+        <div className="flex flex-col items-center justify-center py-12 px-4">
+          {activeFilters.size > 0 ? (
+            <>
+              <Folder className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" strokeWidth={1} />
+              <Typography variant="muted">No matching files</Typography>
+            </>
+          ) : (
+            <>
+              {viewMode === 'recent' && (
+                <>
+                  <Clock className="h-14 w-14 mb-4 opacity-40 text-muted-foreground" strokeWidth={1.5} />
+                  <Typography variant="small" className="mb-2 font-medium text-foreground">
+                    No recent files
+                  </Typography>
+                  <Typography variant="muted" className="text-xs text-center max-w-[200px] leading-relaxed">
+                    Files you've recently accessed will appear here
+                  </Typography>
+                </>
+              )}
+              {viewMode === 'starred' && (
+                <>
+                  <Star className="h-14 w-14 mb-4 opacity-40 text-muted-foreground" strokeWidth={1.5} />
+                  <Typography variant="small" className="mb-2 font-medium text-foreground">
+                    No starred files
+                  </Typography>
+                  <Typography variant="muted" className="text-xs text-center max-w-[200px] leading-relaxed">
+                    Star files in Google Drive to quickly access them here
+                  </Typography>
+                </>
+              )}
+              {viewMode === 'trash' && (
+                <>
+                  <Trash2 className="h-14 w-14 mb-4 opacity-40 text-muted-foreground" strokeWidth={1.5} />
+                  <Typography variant="small" className="mb-2 font-medium text-foreground">
+                    Trash is empty
+                  </Typography>
+                  <Typography variant="muted" className="text-xs text-center max-w-[200px] leading-relaxed">
+                    Deleted files will appear here
+                  </Typography>
+                </>
+              )}
+              {viewMode === 'my-drive' && (
+                <>
+                  <FolderPlus className="h-16 w-16 mb-4 opacity-40 text-muted-foreground" strokeWidth={1.5} />
+                  <Typography variant="small" className="mb-2 font-medium text-foreground">
+                    Your Drive is empty
+                  </Typography>
+                  <Typography variant="muted" className="text-xs text-center max-w-[200px] leading-relaxed">
+                    Create documents or upload files to get started
+                  </Typography>
+                </>
+              )}
+            </>
+          )}
         </div>
       )}
 

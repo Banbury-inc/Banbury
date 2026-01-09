@@ -7,6 +7,7 @@ import {
   Network,
   Clock,
   Star,
+  FolderPlus,
 } from "lucide-react"
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { toggleFileSelection, collectSelectedFileItems } from "../../../handlers/handle-multi-select"
@@ -1101,8 +1102,23 @@ export function LocalFilesView({
           )}
           
           {viewMode === 'local' && !filesLoading && !error && filteredFileSystem.length === 0 && !uploadingFolder && (
-            <div className="px-3 py-2">
-              <Typography variant="muted">{activeFilters.size > 0 ? 'No matching files' : 'No files found'}</Typography>
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              {activeFilters.size > 0 ? (
+                <>
+                  <Folder className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" strokeWidth={1} />
+                  <Typography variant="muted">No matching files</Typography>
+                </>
+              ) : (
+                <>
+                  <FolderPlus className="h-16 w-16 mb-4 opacity-40 text-muted-foreground" strokeWidth={1.5} />
+                  <Typography variant="small" className="mb-2 font-medium text-foreground">
+                    Welcome! Let's get started
+                  </Typography>
+                  <Typography variant="muted" className="text-xs text-center max-w-[200px] leading-relaxed">
+                    Upload files or create documents to start organizing your workspace
+                  </Typography>
+                </>
+              )}
             </div>
           )}
 
@@ -1286,8 +1302,23 @@ export function LocalFilesView({
           {viewMode === 'recent' && (
             <>
               {filteredRecentFiles.length === 0 ? (
-                <div className="px-3 py-2">
-                  <Typography variant="muted" className="text-sm">{activeFilters.size > 0 ? 'No matching files' : 'No recent files'}</Typography>
+                <div className="flex flex-col items-center justify-center py-12 px-4">
+                  {activeFilters.size > 0 ? (
+                    <>
+                      <Folder className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" strokeWidth={1} />
+                      <Typography variant="muted">No matching files</Typography>
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-14 w-14 mb-4 opacity-40 text-muted-foreground" strokeWidth={1.5} />
+                      <Typography variant="small" className="mb-2 font-medium text-foreground">
+                        No recent files
+                      </Typography>
+                      <Typography variant="muted" className="text-xs text-center max-w-[200px] leading-relaxed">
+                        Files you've recently accessed will appear here
+                      </Typography>
+                    </>
+                  )}
                 </div>
               ) : (
                 filteredRecentFiles.map((file) => (
@@ -1335,8 +1366,23 @@ export function LocalFilesView({
           {viewMode === 'starred' && (
             <>
               {filteredStarredFiles.length === 0 ? (
-                <div className="px-3 py-2">
-                  <Typography variant="muted" className="text-sm">{activeFilters.size > 0 ? 'No matching files' : 'No starred files'}</Typography>
+                <div className="flex flex-col items-center justify-center py-12 px-4">
+                  {activeFilters.size > 0 ? (
+                    <>
+                      <Folder className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" strokeWidth={1} />
+                      <Typography variant="muted">No matching files</Typography>
+                    </>
+                  ) : (
+                    <>
+                      <Star className="h-14 w-14 mb-4 opacity-40 text-muted-foreground" strokeWidth={1.5} />
+                      <Typography variant="small" className="mb-2 font-medium text-foreground">
+                        No starred files
+                      </Typography>
+                      <Typography variant="muted" className="text-xs text-center max-w-[200px] leading-relaxed">
+                        Star files to quickly access them here
+                      </Typography>
+                    </>
+                  )}
                 </div>
               ) : (
                 filteredStarredFiles.map((file) => (
@@ -1389,8 +1435,23 @@ export function LocalFilesView({
                   <Typography variant="muted">Loading shared files...</Typography>
                 </div>
               ) : filteredSharedFiles.length === 0 ? (
-                <div className="px-3 py-2">
-                  <Typography variant="muted" className="text-sm">{activeFilters.size > 0 ? 'No matching files' : 'No files shared with you'}</Typography>
+                <div className="flex flex-col items-center justify-center py-12 px-4">
+                  {activeFilters.size > 0 ? (
+                    <>
+                      <Folder className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" strokeWidth={1} />
+                      <Typography variant="muted">No matching files</Typography>
+                    </>
+                  ) : (
+                    <>
+                      <Star className="h-14 w-14 mb-4 opacity-40 text-muted-foreground" strokeWidth={1.5} />
+                      <Typography variant="small" className="mb-2 font-medium text-foreground">
+                        No shared files yet
+                      </Typography>
+                      <Typography variant="muted" className="text-xs text-center max-w-[200px] leading-relaxed">
+                        Files shared with you will appear here
+                      </Typography>
+                    </>
+                  )}
                 </div>
               ) : (
                 filteredSharedFiles.map((file) => (
