@@ -1,3 +1,9 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -65,6 +71,13 @@ const nextConfig = {
     scrollRestoration: false,
   },
   webpack: (config, { dev, isServer }) => {
+    // Configure path aliases
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'backend': path.resolve(__dirname, 'backend'),
+      'frontend': path.resolve(__dirname, 'frontend'),
+    };
+
     // Add video file support
     config.module.rules.push({
       test: /\.(mp4|webm|ogg)$/i,

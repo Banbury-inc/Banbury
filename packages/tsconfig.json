@@ -20,7 +20,8 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["frontend/*"]
+      "@/*": ["frontend/*"],
+      "backend/*": ["backend/*"]
     },
     "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": false,

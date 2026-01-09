@@ -16,6 +16,7 @@ import {
   Infinity,
   CornerDownLeft,
   Search,
+  X,
 } from "lucide-react";
 
 import { ChatTiptapComposer } from "../../ChatTiptapComposer";
@@ -151,6 +152,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
   const composerContainerRef = useRef<HTMLDivElement | null>(null);
   const proseMirrorRef = useRef<HTMLElement | null>(null);
   const sendButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [isEditingQueuedMessage, setIsEditingQueuedMessage] = useState(false);
 
   // Check if agent is currently running
   const isRunning = checkIsRunning(threadRuntime);
@@ -213,7 +215,10 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
       composer,
       assistantTabId,
       inputRef,
-      onSend,
+      onSend: () => {
+        setIsEditingQueuedMessage(false)
+        if (onSend) onSend()
+      },
       sendButtonRef,
     })
 
@@ -223,6 +228,88 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
     }
   }, [composer, assistantTabId, onSend])
 
+  // Clear editing state when composer is cleared
+  useEffect(() => {
+    const handleClear = () => {
+      setIsEditingQueuedMessage(false)
+    }
+    window.addEventListener('composer-clear', handleClear)
+    return () => {
+      window.removeEventListener('composer-clear', handleClear)
+    }
+  }, [])
+
+  // Handler for editing a queued message
+  const handleEditQueuedMessage = useCallback((id: string) => {
+    const message = queuedMessages.find(msg => msg.id === id)
+    if (!message) return
+    
+    // Set editing state
+    setIsEditingQueuedMessage(true)
+    
+    // Set the message text in the composer input
+    if (inputRef.current) {
+      inputRef.current.value = message.text
+      inputRef.current.dispatchEvent(new Event('input', { bubbles: true }))
+      inputRef.current.dispatchEvent(new Event('change', { bubbles: true }))
+      inputRef.current.focus()
+    }
+    
+    // Also update the tiptap editor
+    const proseMirror = proseMirrorRef.current
+    if (proseMirror) {
+      window.dispatchEvent(new CustomEvent('composer-set-text', { detail: { text: message.text } }))
+    }
+    
+    // Remove the queued message since we're editing it
+    onRemoveQueuedMessage(id)
+  }, [queuedMessages, onRemoveQueuedMessage])
+
+  // Handler for sending a queued message now
+  const handleSendQueuedMessageNow = useCallback((id: string) => {
+    const message = queuedMessages.find(msg => msg.id === id)
+    if (!message) return
+    
+    // Remove the message from queue
+    onRemoveQueuedMessage(id)
+    
+    // Cancel current run if running
+    try {
+      threadRuntime?.cancelRun?.()
+    } catch {}
+    
+    // Send the message immediately
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('assistant-composer-send', {
+        detail: { tabId: assistantTabId, text: message.text }
+      }))
+    }, 100)
+  }, [queuedMessages, onRemoveQueuedMessage, threadRuntime, assistantTabId])
+
+  // Handler for canceling editing a queued message
+  const handleCancelEditQueuedMessage = useCallback(() => {
+    setIsEditingQueuedMessage(false)
+    // Clear the composer
+    window.dispatchEvent(new CustomEvent('composer-clear'))
+  }, [])
+
+  // Handle Escape key to cancel editing queued message
+  useEffect(() => {
+    if (!isEditingQueuedMessage) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        handleCancelEditQueuedMessage()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isEditingQueuedMessage, handleCancelEditQueuedMessage])
+
   return (
     <div className="relative mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 px-[var(--thread-padding-x)] pb-4 md:pb-6" style={{ backgroundColor: 'transparent' }}>
       <ThreadScrollToBottom />
@@ -230,18 +317,20 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
       <div ref={composerContainerRef} className="relative flex w-full flex-col">
         {/* Display queued messages above attachments */}
         {queuedMessages.length > 0 && (
-          <div className="bg-blue-50 dark:bg-blue-950/20 border-b border-blue-200 dark:border-blue-800/30 rounded-t-md px-2 py-0.5">
+          <div className="bg-accent border-b border-border rounded-t-md px-2 py-0.5 w-[97%] mx-auto">
             <QueuedMessagesDisplay 
               messages={queuedMessages}
               onRemove={onRemoveQueuedMessage}
               onMoveToFront={onMoveQueuedMessageToFront}
+              onEdit={handleEditQueuedMessage}
+              onSendNow={handleSendQueuedMessageNow}
             />
           </div>
         )}
 
         {/* Display attachments (files + emails) above the composer */}
         {(attachedFiles.length > 0 || attachedEmails.length > 0) && (
-          <div className={`bg-accent border-b border-border ${queuedMessages.length === 0 ? 'rounded-t-md' : ''} px-2 py-0.5`}>
+          <div className={`bg-accent border-b border-border ${queuedMessages.length === 0 ? 'rounded-t-md' : ''} px-2 py-0.5 w-[97%] mx-auto`}>
             <FileAttachmentDisplay 
               files={attachedFiles}
               emails={attachedEmails}
@@ -259,7 +348,25 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
           onRejectAll={onRejectAll}
         />
 
-        <ComposerPrimitive.Root className="relative flex w-full flex-col rounded-md" data-tab-id={assistantTabId}>
+        {/* Display editing queued message indicator */}
+        {isEditingQueuedMessage && (
+          <div className="bg-accent border-b border-border rounded-t-md px-2 py-1 flex items-center justify-between w-full">
+            <Typography variant="xs" className="text-zinc-700 dark:text-zinc-300 font-medium">
+              editing queued message
+            </Typography>
+            <Button
+              variant="ghost"
+              size="xs"
+              className="h-auto px-2 py-1 group"
+              onClick={handleCancelEditQueuedMessage}
+              title="Cancel editing"
+            >
+              <Typography variant="xs" className="text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300">cancel</Typography>
+            </Button>
+          </div>
+        )}
+
+        <ComposerPrimitive.Root className={`relative flex w-full flex-col rounded-md ${isEditingQueuedMessage ? 'rounded-t-none' : ''}`} data-tab-id={assistantTabId}>
           {/* Hidden native input to keep @assistant-ui runtime in sync */}
           <ComposerPrimitive.Input
             placeholder="Send a message..."
@@ -272,7 +379,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
           />
 
           {/* Visible Tiptap editor with @ mention for files */}
-          <div className={`bg-accent border-0 ${(attachedFiles.length > 0 || attachedEmails.length > 0 || pendingChanges.length > 0 || queuedMessages.length > 0) ? 'border-t-0 rounded-t-none' : 'border-t border-zinc-300 dark:border-zinc-700 rounded-t-md'} max-h-[50vh] overflow-y-auto`}>
+          <div className={`bg-accent border-0 ${isEditingQueuedMessage ? 'rounded-t-none' : 'rounded-t-md'} border-t border-zinc-300 dark:border-zinc-700 max-h-[50vh] overflow-y-auto`}>
             <ChatTiptapComposer
               hiddenInputRef={inputRef}
               userInfo={userInfo}
@@ -897,9 +1004,9 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              variant="primary"
+              variant="ghost"
               size="xs"
-              className="h-7 px-2 gap-1"
+              className="h-7 px-2 gap-1 hover:bg-accent hover:text-primary"
               title="Mode"
               aria-label="Mode"
             >

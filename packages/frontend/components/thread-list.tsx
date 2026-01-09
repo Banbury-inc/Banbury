@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import type { FC } from "react";
 import { ArchiveIcon, PlusIcon, FolderOpen, RefreshCwIcon } from "lucide-react";
 import { TooltipIconButton } from "@/components/tooltip-icon-button";
-import { Button } from "frontend/components/ui/button";
-import { ApiService } from "backend/api/apiService";
+import { Button } from "./ui/button";
+import { ApiService } from "../../backend/api/apiService";
 
 export const ThreadList: FC = () => {
   const [items, setItems] = useState<any[]>([]);

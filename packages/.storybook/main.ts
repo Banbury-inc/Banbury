@@ -39,7 +39,9 @@ const config = {
     config.resolve = config.resolve || {}
     config.resolve.alias = {
       ...(config.resolve?.alias || {}),
-      "@": path.resolve(__dirname, "../src"),
+      "@": path.resolve(__dirname, "../frontend"),
+      "frontend": path.resolve(__dirname, "../frontend"),
+      "backend": path.resolve(__dirname, "../backend"),
       "next/router": path.resolve(__dirname, "./next-router-mock.js")
     }
     

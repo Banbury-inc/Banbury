@@ -5,6 +5,7 @@ import { AssistantRuntimeProvider } from "@assistant-ui/react"
 import { useLocalRuntime } from "@assistant-ui/react"
 import { fn } from "@storybook/test"
 import { TooltipProvider } from "frontend/components/ui/tooltip"
+import type { QueuedMessage } from "frontend/components/RightPanel/composer/components/queued-messages-display"
 
 // Mock runtime for AssistantUI
 function ComposerWrapper({ children }: { children: React.ReactNode }) {
@@ -241,3 +242,38 @@ export const NoUserInfo: Story = {
   },
 }
 
+// Helper to create mock queued messages
+const createMockQueuedMessage = (id: string, text: string, minutesAgo: number = 0): QueuedMessage => ({
+  id,
+  text,
+  timestamp: Date.now() - minutesAgo * 60 * 1000,
+})
+
+export const WithQueuedMessages: Story = {
+  args: {
+    queuedMessages: [
+      createMockQueuedMessage("1", "Can you also analyze the trends in this data?"),
+      createMockQueuedMessage("2", "Create a summary for the executive team"),
+      createMockQueuedMessage("3", "Export the results to a PDF"),
+    ],
+  },
+}
+
+export const WithQueuedMessagesAndAttachments: Story = {
+  args: {
+    queuedMessages: [
+      createMockQueuedMessage("1", "Analyze the attached document"),
+      createMockQueuedMessage("2", "Create a summary"),
+    ],
+    attachedFiles: [
+      {
+        id: "file-1",
+        name: "report.pdf",
+        path: "/documents/report.pdf",
+        type: "file",
+        file_id: "file-1",
+        size: 2048000,
+      },
+    ],
+  },
+}

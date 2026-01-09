@@ -522,6 +522,10 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
                   el.dispatchEvent(new Event('input', { bubbles: true }));
                   el.dispatchEvent(new Event('change', { bubbles: true }));
                 }
+                // Maintain focus on the editor after clearing
+                setTimeout(() => {
+                  editorInstance?.chain().focus().run();
+                }, 0);
               } catch {}
               
               return true;
@@ -558,6 +562,10 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
           if (onSend) {
             setTimeout(() => {
               onSend();
+              // Maintain focus on the editor after sending
+              setTimeout(() => {
+                editorInstance?.chain().focus().run();
+              }, 100);
             }, 10);
           }
           return true;
@@ -721,6 +729,10 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
           el.dispatchEvent(new Event('change', { bubbles: true }));
           el.dispatchEvent(new CustomEvent('tiptap-update', { bubbles: true, detail: { text: '' } }));
         }
+        // Maintain focus on the editor after clearing
+        setTimeout(() => {
+          editorInstance.chain().focus().run();
+        }, 0);
       } catch (error) {
         console.error('Error clearing editor:', error);
       }

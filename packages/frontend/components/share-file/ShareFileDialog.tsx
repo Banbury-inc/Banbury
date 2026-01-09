@@ -13,8 +13,8 @@ import {
 } from "../ui/dialog"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
-import Files from "backend/api/files/files"
-import { ApiService } from "backend/api/apiService"
+import Files from "../../../backend/api/files/files"
+import { ApiService } from "../../../backend/api/apiService"
 
 interface User {
   username: string
