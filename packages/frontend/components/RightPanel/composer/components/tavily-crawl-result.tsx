@@ -142,6 +142,7 @@ export const TavilyCrawlTool = ({ toolName, toolCallId, argsText, args, result }
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         {crawlResult.favicon && (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img src={crawlResult.favicon} alt="" className="size-3.5 shrink-0" />
                         )}
                         {isExternal && (

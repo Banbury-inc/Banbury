@@ -30,9 +30,7 @@ export function logParserError(parser: string, operation: string, error: Error, 
 export function logUnsupportedFeature(feature: string): void {
   if (!unsupportedFeatures.has(feature)) {
     unsupportedFeatures.add(feature)
-    if (process.env.NODE_ENV === 'development') {
-      console.info(`[PPTX Parser] Unsupported feature: ${feature}`)
-    }
+    // Feature tracking enabled - console logging removed to avoid lint warnings
   }
 }
 

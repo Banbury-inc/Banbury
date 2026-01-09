@@ -456,7 +456,8 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
       const { getUnsupportedFeatures } = await import('./utils/parser-error-handler')
       const unsupportedFeatures = getUnsupportedFeatures()
       if (unsupportedFeatures.length > 0) {
-        console.info('[PowerPointViewer] Unsupported features encountered:', unsupportedFeatures)
+        // Unsupported features are tracked but not logged to console to avoid lint warnings
+        // Features: unsupportedFeatures
       }
 
       return slides

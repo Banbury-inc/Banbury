@@ -64,6 +64,45 @@ export const TavilyMapTool = ({ toolName, toolCallId, argsText, args, result }: 
     }
   }, [args, argsText])
 
+  // Parse result to extract URLs for grouping
+  const parsedResult = useMemo(() => {
+    let parsed: MapResponse | null = null
+    try {
+      if (typeof result === "string") parsed = JSON.parse(result)
+      else parsed = result as MapResponse
+    } catch {
+      parsed = null
+    }
+    return parsed
+  }, [result])
+
+  // Group URLs by path segments for hierarchical display
+  const groupedUrls = useMemo(() => {
+    const groups: Record<string, string[]> = {}
+    
+    if (!parsedResult?.results) return groups
+
+    parsedResult.results.forEach(url => {
+      try {
+        const urlObj = new URL(url)
+        const pathParts = urlObj.pathname.split('/').filter(Boolean)
+        const groupKey = pathParts[0] || 'root'
+
+        if (!groups[groupKey]) {
+          groups[groupKey] = []
+        }
+        groups[groupKey].push(url)
+      } catch {
+        if (!groups['other']) {
+          groups['other'] = []
+        }
+        groups['other'].push(url)
+      }
+    })
+
+    return groups
+  }, [parsedResult])
+
   if (toolName !== "web_map") return null
 
   const toggleGroup = (group: string) => {
@@ -108,31 +147,6 @@ export const TavilyMapTool = ({ toolName, toolCallId, argsText, args, result }: 
     }
 
     const { base_url, results, total_urls, usage } = parsed
-
-    // Group URLs by path segments for hierarchical display
-    const groupedUrls = useMemo(() => {
-      const groups: Record<string, string[]> = {}
-
-      results.forEach(url => {
-        try {
-          const urlObj = new URL(url)
-          const pathParts = urlObj.pathname.split('/').filter(Boolean)
-          const groupKey = pathParts[0] || 'root'
-
-          if (!groups[groupKey]) {
-            groups[groupKey] = []
-          }
-          groups[groupKey].push(url)
-        } catch {
-          if (!groups['other']) {
-            groups['other'] = []
-          }
-          groups['other'].push(url)
-        }
-      })
-
-      return groups
-    }, [results])
 
     const groupNames = Object.keys(groupedUrls).sort()
 

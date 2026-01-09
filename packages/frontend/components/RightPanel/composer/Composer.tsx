@@ -1254,7 +1254,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
               {/* Image Model Submenu */}
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
-                  <Image className="mr-2 h-4 w-4" />
+                  <Image className="mr-2 h-4 w-4" aria-label="Image generation model icon" />
                   <Typography variant="xs">Image model</Typography>
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent className="w-56 p-1">

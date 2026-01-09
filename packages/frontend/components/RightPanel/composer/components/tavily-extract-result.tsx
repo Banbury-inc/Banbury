@@ -142,6 +142,7 @@ export const TavilyExtractTool = ({ toolName, toolCallId, argsText, args, result
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         {extractResult.favicon && (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img src={extractResult.favicon} alt="" className="size-4 shrink-0" />
                         )}
                         <a
@@ -166,6 +167,7 @@ export const TavilyExtractTool = ({ toolName, toolCallId, argsText, args, result
                       {extractResult.images && extractResult.images.length > 0 && (
                         <div className="mt-2 flex gap-2 flex-wrap">
                           {extractResult.images.slice(0, 3).map((img, imgIdx) => (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               key={imgIdx}
                               src={img}

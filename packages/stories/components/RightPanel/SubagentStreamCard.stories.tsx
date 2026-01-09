@@ -748,6 +748,18 @@ export const LongRunningWithManyTools: Story = {
   },
 }
 
+const CollapsedByDefaultComponent = (args: any) => {
+  const [isCollapsed, setIsCollapsed] = React.useState(true)
+  return (
+    <div>
+      <p className="text-sm text-muted-foreground mb-2">
+        Click the card header to toggle collapse/expand
+      </p>
+      <SubagentStreamCard {...args} />
+    </div>
+  )
+}
+
 export const CollapsedByDefault: Story = {
   name: "Collapsed State",
   args: {
@@ -758,15 +770,5 @@ export const CollapsedByDefault: Story = {
     contentParts: researchContentParts,
     durationMs: 2340,
   },
-  render: (args) => {
-    const [isCollapsed, setIsCollapsed] = React.useState(true)
-    return (
-      <div>
-        <p className="text-sm text-muted-foreground mb-2">
-          Click the card header to toggle collapse/expand
-        </p>
-        <SubagentStreamCard {...args} />
-      </div>
-    )
-  },
+  render: CollapsedByDefaultComponent,
 }

@@ -407,22 +407,24 @@ export const SingleSubagent: Story = {
   },
 }
 
+const CollapsedStateComponent = (args: any) => {
+  return (
+    <div>
+      <p className="text-sm text-muted-foreground mb-4">
+        Click the header to expand/collapse the subagent list. The header shows summary stats even when collapsed.
+      </p>
+      <SubagentTool {...args} />
+    </div>
+  )
+}
+
 export const CollapsedState: Story = {
   name: "Collapsed State",
   args: {
     args: completeWorkflowArgs,
     result: mixedResultsWithFailure,
   },
-  render: (args) => {
-    return (
-      <div>
-        <p className="text-sm text-muted-foreground mb-4">
-          Click the header to expand/collapse the subagent list. The header shows summary stats even when collapsed.
-        </p>
-        <SubagentTool {...args} />
-      </div>
-    )
-  },
+  render: CollapsedStateComponent,
 }
 
 export const CustomConcurrencyLimit: Story = {
@@ -493,61 +495,63 @@ export const AllRoleTypes: Story = {
   },
 }
 
+const WithLiveEventSimulationComponent = () => {
+  const [eventLog, setEventLog] = React.useState<string[]>([])
+
+  React.useEffect(() => {
+    const events = [
+      { type: "subagent-spawn-start", subagentCount: 3, roles: ["researcher", "researcher", "researcher"] },
+      { type: "subagent-start", subagentId: "sub-1", role: "researcher", goal: "Research auth" },
+      { type: "subagent-content", subagentId: "sub-1", text: "Searching for authentication..." },
+      { type: "subagent-tool-call-start", subagentId: "sub-1", toolCallId: "tc-1", toolName: "web_search", args: {} },
+      { type: "subagent-start", subagentId: "sub-2", role: "researcher", goal: "Research state" },
+      { type: "subagent-tool-result", subagentId: "sub-1", toolCallId: "tc-1" },
+      { type: "subagent-content", subagentId: "sub-1", text: " Found best practices." },
+      { type: "subagent-end", subagentId: "sub-1", status: "completed", durationMs: 2100 },
+      { type: "subagent-spawn-complete", completedCount: 3, failedCount: 0, totalDurationMs: 5000 },
+    ]
+
+    let index = 0
+    const interval = setInterval(() => {
+      if (index < events.length) {
+        const evt = events[index]
+        window.dispatchEvent(new CustomEvent("assistant-subagent-event", { detail: evt }))
+        setEventLog(prev => [...prev, `${evt.type} (${(evt as any).subagentId || "global"})`])
+        index++
+      } else {
+        clearInterval(interval)
+      }
+    }, 800)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="space-y-4">
+      <div className="text-sm text-muted-foreground">
+        <p className="font-medium mb-2">Event Stream (simulated):</p>
+        <div className="bg-muted/30 rounded p-2 font-mono text-xs space-y-1 max-h-32 overflow-y-auto">
+          {eventLog.map((log, i) => (
+            <div key={i}>{log}</div>
+          ))}
+        </div>
+      </div>
+      <SubagentTool
+        args={{
+          subagents: [
+            { id: "sub-1", role: "researcher", goal: "Research auth" },
+            { id: "sub-2", role: "researcher", goal: "Research state" },
+            { id: "sub-3", role: "researcher", goal: "Research testing" },
+          ],
+        }}
+      />
+    </div>
+  )
+}
+
 export const WithLiveEventSimulation: Story = {
   name: "Live Event Simulation",
-  render: () => {
-    const [eventLog, setEventLog] = React.useState<string[]>([])
-
-    React.useEffect(() => {
-      const events = [
-        { type: "subagent-spawn-start", subagentCount: 3, roles: ["researcher", "researcher", "researcher"] },
-        { type: "subagent-start", subagentId: "sub-1", role: "researcher", goal: "Research auth" },
-        { type: "subagent-content", subagentId: "sub-1", text: "Searching for authentication..." },
-        { type: "subagent-tool-call-start", subagentId: "sub-1", toolCallId: "tc-1", toolName: "web_search", args: {} },
-        { type: "subagent-start", subagentId: "sub-2", role: "researcher", goal: "Research state" },
-        { type: "subagent-tool-result", subagentId: "sub-1", toolCallId: "tc-1" },
-        { type: "subagent-content", subagentId: "sub-1", text: " Found best practices." },
-        { type: "subagent-end", subagentId: "sub-1", status: "completed", durationMs: 2100 },
-        { type: "subagent-spawn-complete", completedCount: 3, failedCount: 0, totalDurationMs: 5000 },
-      ]
-
-      let index = 0
-      const interval = setInterval(() => {
-        if (index < events.length) {
-          const evt = events[index]
-          window.dispatchEvent(new CustomEvent("assistant-subagent-event", { detail: evt }))
-          setEventLog(prev => [...prev, `${evt.type} (${(evt as any).subagentId || "global"})`])
-          index++
-        } else {
-          clearInterval(interval)
-        }
-      }, 800)
-
-      return () => clearInterval(interval)
-    }, [])
-
-    return (
-      <div className="space-y-4">
-        <div className="text-sm text-muted-foreground">
-          <p className="font-medium mb-2">Event Stream (simulated):</p>
-          <div className="bg-muted/30 rounded p-2 font-mono text-xs space-y-1 max-h-32 overflow-y-auto">
-            {eventLog.map((log, i) => (
-              <div key={i}>{log}</div>
-            ))}
-          </div>
-        </div>
-        <SubagentTool
-          args={{
-            subagents: [
-              { id: "sub-1", role: "researcher", goal: "Research auth" },
-              { id: "sub-2", role: "researcher", goal: "Research state" },
-              { id: "sub-3", role: "researcher", goal: "Research testing" },
-            ],
-          }}
-        />
-      </div>
-    )
-  },
+  render: WithLiveEventSimulationComponent,
   parameters: {
     docs: {
       description: {

@@ -259,7 +259,7 @@ const meta: Meta<typeof PlanViewer> = {
       email: 'test@example.com'
     },
     onSaveComplete: () => {
-      console.log('Plan saved!')
+      // Plan saved callback
     }
   },
   parameters: {
