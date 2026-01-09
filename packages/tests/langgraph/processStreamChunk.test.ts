@@ -24,6 +24,7 @@ function buildParams(overrides: Partial<Parameters<typeof processStreamChunk>[0]
     processedAiMessages: new Set<string>(),
     processedToolCalls: new Set<string>(),
     currentToolExecution: null,
+    toolExecutionMap: new Map<string, any>(),
     send,
     ...overrides,
   }
