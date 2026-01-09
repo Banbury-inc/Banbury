@@ -26,10 +26,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   res.setHeader("Content-Type", "text/event-stream")
   res.setHeader("Cache-Control", "no-cache, no-transform")
+  res.setHeader("X-Accel-Buffering", "no")
   // Do not set "Connection" header on HTTP/2; it causes protocol errors
+  
+  // Handle client disconnect
+  req.on("close", () => {
+    if (!res.writableEnded) {
+      res.end()
+    }
+  })
 
   const send = (event: any) => {
-    res.write(`data: ${JSON.stringify(event)}\n\n`)
+    if (!res.writableEnded) {
+      try {
+        res.write(`data: ${JSON.stringify(event)}\n\n`)
+      } catch (writeError) {
+        // Connection may have closed, silently fail
+        console.error("Stream write error:", writeError)
+      }
+    }
   }
 
   try {

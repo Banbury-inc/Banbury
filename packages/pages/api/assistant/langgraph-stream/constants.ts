@@ -283,6 +283,10 @@ politely explain that Ask mode is for research and exploration only, and suggest
 for tasks that require actions.`
 
 export const API_CONFIG = {
-  api: { bodyParser: { sizeLimit: "2mb" } }
+  api: { 
+    bodyParser: { sizeLimit: "2mb" },
+    responseLimit: false,
+    externalResolver: true
+  }
 }
 
