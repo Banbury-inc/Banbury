@@ -192,9 +192,8 @@ interface ToolCallProps {
 let webSearchMountCounter = 0
 
 export const WebSearchTool = ({ toolName, toolCallId, argsText, args, result }: ToolCallProps) => {
-  if (toolName !== "web_search") return null
-  
   // Parse args if only argsText is provided
+  // Note: All hooks must be called unconditionally before any early returns
   const parsedArgs = useMemo(() => {
     if (args) return args
     try {
@@ -213,6 +212,9 @@ export const WebSearchTool = ({ toolName, toolCallId, argsText, args, result }: 
   const id = stableIdRef.current
   
   const { isPrimary, parallelSearches, hasMultiple } = useParallelSearchTracker(id, parsedArgs, result)
+  
+  // Early return for non-web_search tools (after all hooks are called)
+  if (toolName !== "web_search") return null
   
   // If this is a parallel search group and this is the primary search, render the group
   if (hasMultiple && isPrimary) {
