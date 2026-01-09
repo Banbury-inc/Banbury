@@ -9,7 +9,7 @@ import {
   FolderOpen,
   Trash2,
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import BanburyLogo from "../../../../assets/images/New_Logo.png";
 
@@ -40,6 +40,7 @@ import { createHandleDrawioFileView } from "../../handlers/handle-drawio-file-vi
 import { Composer } from "../Composer";
 import { UserMessage } from "./components/UserMessage";
 import { BranchPicker } from "./components/BranchPicker";
+import type { QueuedMessage } from "../components/queued-messages-display";
 import { getDefaultModelForProvider, getModelById, DEFAULT_VISIBLE_MODELS } from "../handlers/getModelDisplayName";
 import { Typography, typographyVariants } from "../../../ui/typography";
 import {
@@ -88,6 +89,9 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   const [drawioModalOpen, setDrawioModalOpen] = useState(false);
   const [selectedDrawioFile, setSelectedDrawioFile] = useState<FileSystemItem | null>(null);
   const [pendingChanges, setPendingChanges] = useState<Array<{ id: string; type: string; description: string }>>([]);
+  
+  // Message queue state
+  const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
 
   interface ThreadToolPreferences {
     web_search: boolean;
@@ -247,6 +251,77 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     setDrawioModalOpen(false);
     setSelectedDrawioFile(null);
   };
+
+  // Message queue handlers
+  const handleQueueMessage = useCallback((text: string) => {
+    const newMessage: QueuedMessage = {
+      id: `queued-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      text: text.trim(),
+      timestamp: Date.now()
+    };
+    setQueuedMessages(prev => [...prev, newMessage]);
+  }, []);
+
+  const handleRemoveQueuedMessage = useCallback((id: string) => {
+    setQueuedMessages(prev => prev.filter(msg => msg.id !== id));
+  }, []);
+
+  const handleMoveQueuedMessageToFront = useCallback((id: string) => {
+    setQueuedMessages(prev => {
+      const index = prev.findIndex(msg => msg.id === id);
+      if (index <= 0) return prev;
+      
+      const message = prev[index];
+      const newQueue = [...prev];
+      newQueue.splice(index, 1);
+      newQueue.unshift(message);
+      return newQueue;
+    });
+  }, []);
+
+  const handleSendNextQueued = useCallback(() => {
+    if (queuedMessages.length === 0) return;
+    
+    const nextMessage = queuedMessages[0];
+    setQueuedMessages(prev => prev.slice(1));
+    
+    // Cancel the current run first
+    try {
+      runtime?.cancelRun?.();
+    } catch {}
+    
+    // Send the next queued message
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('assistant-composer-send', {
+        detail: { tabId: assistantTabId, text: nextMessage.text }
+      }));
+    }, 100);
+  }, [queuedMessages, runtime, assistantTabId]);
+
+  // Auto-send next queued message when run completes
+  useEffect(() => {
+    const handleStreamDone = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { success, status } = customEvent.detail || {};
+      
+      // Only auto-send if the run completed successfully and there are queued messages
+      if (success && status?.type === 'complete' && queuedMessages.length > 0) {
+        // Small delay to ensure UI has updated
+        setTimeout(() => {
+          const nextMessage = queuedMessages[0];
+          setQueuedMessages(prev => prev.slice(1));
+          
+          // Send the next queued message
+          window.dispatchEvent(new CustomEvent('assistant-composer-send', {
+            detail: { tabId: assistantTabId, text: nextMessage.text }
+          }));
+        }, 300);
+      }
+    };
+
+    window.addEventListener('assistant-stream-done', handleStreamDone);
+    return () => window.removeEventListener('assistant-stream-done', handleStreamDone);
+  }, [queuedMessages, assistantTabId]);
 
   // Conversation management functions
   const tryApplyMessagesToRuntime = async (rt: any, msgs: any[]): Promise<{ ok: boolean; path: string; count: number }> => {
@@ -1105,6 +1180,11 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         onRejectAll={handleRejectAll}
         messageBuffer={loadedMessagesBuffer}
         assistantTabId={assistantTabId}
+        queuedMessages={queuedMessages}
+        onQueueMessage={handleQueueMessage}
+        onRemoveQueuedMessage={handleRemoveQueuedMessage}
+        onMoveQueuedMessageToFront={handleMoveQueuedMessageToFront}
+        onSendNextQueued={handleSendNextQueued}
       />
 
       {/* Conversation Dialogs */}

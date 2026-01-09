@@ -14,16 +14,18 @@ import {
   Upload,
   ClipboardList,
   Infinity,
+  CornerDownLeft,
   Search,
 } from "lucide-react";
 
 import { ChatTiptapComposer } from "../../ChatTiptapComposer";
 import { FileAttachmentPicker } from "./components/file-attachment-picker";
 import { FileAttachmentDisplay } from "./components/file-attachment-display";
+import { QueuedMessagesDisplay, type QueuedMessage } from "./components/queued-messages-display";
 import { PendingChangesBar } from "./components/pending-changes-bar";
 import { ContextWheel } from "./components/context-wheel";
 import { Button } from "../../ui/button";
-import { TooltipProvider } from "../../ui/tooltip";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "../../ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -48,7 +50,6 @@ import {
   getModelById,
   getDefaultModelForProvider,
   DEFAULT_VISIBLE_MODELS,
-  type ModelProvider
 } from "./handlers/getModelDisplayName";
 import { toolConfigs } from "./handlers/toolConfig";
 import {
@@ -59,6 +60,7 @@ import {
   VIDEO_GENERATION_MODELS
 } from "./handlers/composer-plus-menu-handlers";
 import { handleLocalFileUpload } from "../../handlers/handle-local-file-upload";
+import { checkIsRunning } from "./handlers/messageQueue";
 
 import type { FC } from "react";
 import { Typography } from "frontend/components/ui/typography";
@@ -134,14 +136,24 @@ interface ComposerProps {
   messageBuffer?: any[] | null;
   // Tab ID for updating tab title on first message
   assistantTabId?: string;
+  // Message queue props
+  queuedMessages: QueuedMessage[];
+  onQueueMessage: (text: string) => void;
+  onRemoveQueuedMessage: (id: string) => void;
+  onMoveQueuedMessageToFront: (id: string) => void;
+  onSendNextQueued: () => void;
 }
 
-export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll, messageBuffer, assistantTabId }) => {
+export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll, messageBuffer, assistantTabId, queuedMessages, onQueueMessage, onRemoveQueuedMessage, onMoveQueuedMessageToFront, onSendNextQueued }) => {
   const composer = useComposerRuntime();
+  const threadRuntime = useThreadRuntime();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const composerContainerRef = useRef<HTMLDivElement | null>(null);
   const proseMirrorRef = useRef<HTMLElement | null>(null);
   const sendButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  // Check if agent is currently running
+  const isRunning = checkIsRunning(threadRuntime);
 
   // Add attachments to the composer when files or emails are attached
   useEffect(() => {
@@ -216,9 +228,20 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
       <ThreadScrollToBottom />
 
       <div ref={composerContainerRef} className="relative flex w-full flex-col">
+        {/* Display queued messages above attachments */}
+        {queuedMessages.length > 0 && (
+          <div className="bg-blue-50 dark:bg-blue-950/20 border-b border-blue-200 dark:border-blue-800/30 rounded-t-md px-2 py-0.5">
+            <QueuedMessagesDisplay 
+              messages={queuedMessages}
+              onRemove={onRemoveQueuedMessage}
+              onMoveToFront={onMoveQueuedMessageToFront}
+            />
+          </div>
+        )}
+
         {/* Display attachments (files + emails) above the composer */}
         {(attachedFiles.length > 0 || attachedEmails.length > 0) && (
-          <div className="bg-accent border-b border-border rounded-t-md px-2 py-0.5">
+          <div className={`bg-accent border-b border-border ${queuedMessages.length === 0 ? 'rounded-t-md' : ''} px-2 py-0.5`}>
             <FileAttachmentDisplay 
               files={attachedFiles}
               emails={attachedEmails}
@@ -249,7 +272,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
           />
 
           {/* Visible Tiptap editor with @ mention for files */}
-          <div className={`bg-accent border-0 ${(attachedFiles.length > 0 || attachedEmails.length > 0 || pendingChanges.length > 0) ? 'border-t-0 rounded-t-none' : 'border-t border-zinc-300 dark:border-zinc-700 rounded-t-md'} max-h-[50vh] overflow-y-auto`}>
+          <div className={`bg-accent border-0 ${(attachedFiles.length > 0 || attachedEmails.length > 0 || pendingChanges.length > 0 || queuedMessages.length > 0) ? 'border-t-0 rounded-t-none' : 'border-t border-zinc-300 dark:border-zinc-700 rounded-t-md'} max-h-[50vh] overflow-y-auto`}>
             <ChatTiptapComposer
               hiddenInputRef={inputRef}
               userInfo={userInfo}
@@ -271,6 +294,10 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
                   proseMirrorRef.current = editor.view.dom as HTMLElement;
                 }
               }}
+              isRunning={isRunning}
+              onQueueMessage={onQueueMessage}
+              hasQueuedMessages={queuedMessages.length > 0}
+              onSendNextQueued={onSendNextQueued}
             />
           </div>
 
@@ -297,6 +324,10 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
             inputRef={inputRef}
             sendButtonRef={sendButtonRef}
             assistantTabId={assistantTabId}
+            isRunning={isRunning}
+            hasQueuedMessages={queuedMessages.length > 0}
+            onSendNextQueued={onSendNextQueued}
+            onQueueMessage={onQueueMessage}
           />
         </ComposerPrimitive.Root>
       </div>
@@ -324,9 +355,14 @@ interface ComposerActionProps {
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
   sendButtonRef: React.RefObject<HTMLButtonElement | null>;
   assistantTabId?: string;
+  // Message queue props
+  isRunning: boolean;
+  hasQueuedMessages: boolean;
+  onSendNextQueued: () => void;
+  onQueueMessage: (text: string) => void;
 }
 
-const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, onAttachmentPayload, onSend, messageBuffer, inputRef, sendButtonRef, assistantTabId }) => {
+const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, onAttachmentPayload, onSend, messageBuffer, inputRef, sendButtonRef, assistantTabId, isRunning, hasQueuedMessages, onSendNextQueued, onQueueMessage }) => {
   const composer = useComposerRuntime();
   const threadRuntime = useThreadRuntime();
   const [hasText, setHasText] = useState(false);
@@ -833,6 +869,27 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
     onSend();
   };
 
+  // Queue message from button click when agent is running
+  const handleQueueFromButton = () => {
+    // Get current text from editor
+    const proseMirror = document.querySelector('.ProseMirror');
+    let text = '';
+    if (proseMirror) {
+      const paragraphs = Array.from(proseMirror.querySelectorAll('p'));
+      if (paragraphs.length > 0) {
+        text = paragraphs.map((p) => (p.textContent || '').trimEnd()).join('\n\n');
+      } else {
+        text = proseMirror.textContent || '';
+      }
+    }
+    
+    if (text.trim() && onQueueMessage) {
+      onQueueMessage(text.trim());
+      // Clear the editor
+      window.dispatchEvent(new CustomEvent('composer-clear'));
+    }
+  };
+
   return (
     <div ref={containerRef} className="bg-accent border-0 relative flex items-center justify-between rounded-b-md p-2">
       <div ref={buttonsRef} className="flex pl-4 items-center gap-2">
@@ -1242,18 +1299,68 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         </ThreadPrimitive.If>
 
         <ThreadPrimitive.If running>
-          <ComposerPrimitive.Cancel asChild>
-            <Button
-              type="button"
-              variant="primary"
-              size="xs"
-              title="Stop generating"
-              aria-label="Stop generating"
-              className="h-7 w-7 cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100" 
-            >
-              <Square height={14} width={14} strokeWidth={1} />
-            </Button>
-          </ComposerPrimitive.Cancel>
+          <div className="flex items-center gap-2">
+            {/* Queue button - shown when agent is running and there's text to queue */}
+            {hasText && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="xs"
+                      title="Add message to queue"
+                      aria-label="Add message to queue"
+                      className="h-7 px-2 gap-1 cursor-pointer bg-amber-600 dark:bg-amber-500 text-white hover:bg-amber-700 dark:hover:bg-amber-600"
+                      onClick={handleQueueFromButton}
+                    >
+                      <Plus height={14} width={14} strokeWidth={1.5} />
+                      <Typography variant="xs" className="font-medium">Queue</Typography>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <Typography variant="xs">Press Enter to add message to queue (will send after current task)</Typography>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {/* Send Next button - shown when agent is running and there are queued messages */}
+            {hasQueuedMessages && !hasText && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="xs"
+                      title="Send next queued message (interrupts current)"
+                      aria-label="Send next queued message"
+                      className="h-7 px-2 gap-1 cursor-pointer bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600"
+                      onClick={onSendNextQueued}
+                    >
+                      <CornerDownLeft height={14} width={14} strokeWidth={1.5} />
+                      <Typography variant="xs" className="font-medium">Send Next</Typography>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <Typography variant="xs">Press Enter to interrupt and send next queued message</Typography>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            <ComposerPrimitive.Cancel asChild>
+              <Button
+                type="button"
+                variant="primary"
+                size="xs"
+                title="Stop generating"
+                aria-label="Stop generating"
+                className="h-7 w-7 cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100" 
+              >
+                <Square height={14} width={14} strokeWidth={1} />
+              </Button>
+            </ComposerPrimitive.Cancel>
+          </div>
         </ThreadPrimitive.If>
       </div>
     </div>
