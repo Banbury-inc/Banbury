@@ -1,15 +1,23 @@
-import { LayoutDashboard, LogOut, User } from 'lucide-react';
+import { LayoutDashboard, LogOut, Menu, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 
 import { Button } from '../components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '../components/ui/sheet';
 
 const Header = (): JSX.Element => {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -135,8 +143,73 @@ const Header = (): JSX.Element => {
           </Button>
         </div>
 
-        {/* Right side - Profile/Login */}
-        <div className="flex items-center justify-end">
+        {/* Right side - Mobile Menu + Profile/Login */}
+        <div className="flex items-center justify-end gap-2">
+          {/* Mobile Navigation Menu */}
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden p-1 hover:bg-zinc-800/50"
+                style={{
+                  minWidth: '44px',
+                  minHeight: '44px',
+                }}
+              >
+                <Menu className="h-6 w-6" style={{ color: '#ffffff' }} />
+                <span className="sr-only">Open navigation menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent 
+              side="right" 
+              className="w-[280px] border-zinc-800"
+              style={{ background: '#000000' }}
+            >
+              <SheetHeader>
+                <SheetTitle className="text-white text-left">Navigation</SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col gap-2 mt-4">
+                <Link 
+                  href="/" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center px-4 py-3 text-zinc-300 hover:text-white hover:bg-zinc-800/50 rounded-md transition-colors"
+                  style={{
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontWeight: 400,
+                    fontSize: '1rem',
+                  }}
+                >
+                  Home
+                </Link>
+                <Link 
+                  href="/pricing" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center px-4 py-3 text-zinc-300 hover:text-white hover:bg-zinc-800/50 rounded-md transition-colors"
+                  style={{
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontWeight: 400,
+                    fontSize: '1rem',
+                  }}
+                >
+                  Pricing
+                </Link>
+                <Link 
+                  href="/docs" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center px-4 py-3 text-zinc-300 hover:text-white hover:bg-zinc-800/50 rounded-md transition-colors"
+                  style={{
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontWeight: 400,
+                    fontSize: '1rem',
+                  }}
+                >
+                  Docs
+                </Link>
+              </nav>
+            </SheetContent>
+          </Sheet>
+
           {isLoggedIn ? (
             <>
               {/* Welcome text - hidden on mobile */}
