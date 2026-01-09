@@ -89,6 +89,6 @@ export const handleFileDeleted = (
     setSelectedFile(null);
   }
   
-  // Refresh the sidebar to update the file list
-  triggerSidebarRefresh();
+  // Don't refresh the sidebar - the optimistic update in LocalFilesView handles UI updates
+  // If deletion fails, the file will be restored via handleFileDeleteFailed
 };
