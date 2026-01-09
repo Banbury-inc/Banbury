@@ -57,6 +57,25 @@ const meta: Meta<typeof Composer> = {
       langgraph_mode: false,
       browser: false,
       x_api: false,
+      slack: false,
+      sheet_ai: false,
+      docx_ai: false,
+      pptx_ai: false,
+      tldraw_ai: false,
+      document_ai: false,
+      create_file: false,
+      create_folder: false,
+      download_from_url: false,
+      search_files: false,
+      calendar: false,
+      msCalendar: false,
+      github: false,
+      generate_image: false,
+      generate_video: false,
+      memory: false,
+      plan_mode: false,
+      ask_mode: false,
+      model_provider: "anthropic" as const,
     },
     onUpdateToolPreferences: fn(),
     attachmentPayloads: {},
@@ -66,6 +85,11 @@ const meta: Meta<typeof Composer> = {
     pendingChanges: [],
     onAcceptAll: fn(),
     onRejectAll: fn(),
+    queuedMessages: [],
+    onQueueMessage: fn(),
+    onRemoveQueuedMessage: fn(),
+    onMoveQueuedMessageToFront: fn(),
+    onSendNextQueued: fn(),
   },
   tags: ["autodocs"],
 }
@@ -76,19 +100,7 @@ type Story = StoryObj<typeof Composer>
 
 export const Default: Story = {}
 
-export const WithWebSearchEnabled: Story = {
-  args: {
-    toolPreferences: {
-      web_search: true,
-      tiptap_ai: true,
-      read_file: true,
-      gmail: false,
-      langgraph_mode: false,
-      browser: false,
-      x_api: false,
-    },
-  },
-}
+export const WithWebSearchEnabled: Story = {}
 
 export const WithAttachedFiles: Story = {
   args: {
@@ -200,6 +212,25 @@ export const WithAllToolsEnabled: Story = {
       langgraph_mode: true,
       browser: true,
       x_api: true,
+      slack: true,
+      sheet_ai: true,
+      docx_ai: true,
+      pptx_ai: true,
+      tldraw_ai: true,
+      document_ai: true,
+      create_file: true,
+      create_folder: true,
+      download_from_url: true,
+      search_files: true,
+      calendar: true,
+      msCalendar: true,
+      github: true,
+      generate_image: true,
+      generate_video: true,
+      memory: true,
+      plan_mode: false,
+      ask_mode: false,
+      model_provider: "anthropic" as const,
     },
   },
 }
