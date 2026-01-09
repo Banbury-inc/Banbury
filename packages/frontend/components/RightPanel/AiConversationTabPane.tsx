@@ -151,7 +151,7 @@ export const AiConversationTabPane: FC<AiConversationTabPaneProps> = ({
     if (planTaskMutexRef.current) {
       console.warn('[AiConversationTabPane] Plan task already in progress, skipping:', taskId)
       window.dispatchEvent(new CustomEvent('assistant-plan-task-complete', {
-        detail: { taskId, success: false, error: "Another task is already in progress" }
+        detail: { taskId, tabId, success: false, error: "Another task is already in progress" }
       }))
       return
     }
@@ -159,7 +159,7 @@ export const AiConversationTabPane: FC<AiConversationTabPaneProps> = ({
     if (!runtime) {
       console.error('[AiConversationTabPane] No runtime available!')
       window.dispatchEvent(new CustomEvent('assistant-plan-task-complete', {
-        detail: { taskId, success: false, error: "No runtime available" }
+        detail: { taskId, tabId, success: false, error: "No runtime available" }
       }))
       return
     }
@@ -226,14 +226,14 @@ export const AiConversationTabPane: FC<AiConversationTabPaneProps> = ({
 
       const success = await waitForStreamDone()
 
-      // Dispatch completion event
+      // Dispatch completion event with tabId for multi-agent coordination
       window.dispatchEvent(new CustomEvent('assistant-plan-task-complete', {
-        detail: { taskId, success }
+        detail: { taskId, tabId, success }
       }))
     } catch (error: any) {
       console.error('[AiConversationTabPane] Plan task execution failed:', error)
       window.dispatchEvent(new CustomEvent('assistant-plan-task-complete', {
-        detail: { taskId, success: false, error: error.message }
+        detail: { taskId, tabId, success: false, error: error.message }
       }))
     } finally {
       // Release mutex
@@ -260,16 +260,22 @@ export const AiConversationTabPane: FC<AiConversationTabPaneProps> = ({
     }
 
     // Handle plan task execution requests
+    // Supports tab-targeted execution via targetTabId, with backward compatibility for active-tab execution
     const handlePlanTaskExecute = (event: CustomEvent) => {
-      // Only handle if this is the active tab
-      const activeTabId = (window as any).__banburyActiveAiTabId
+      const { taskId, message, planContext, targetTabId } = event.detail
       
-      if (activeTabId !== tabId) {
+      // Determine if this tab should handle the request:
+      // 1. If targetTabId is specified, only handle if it matches this tab's id
+      // 2. If targetTabId is not specified (backward compatibility), only handle if this is the active tab
+      const activeTabId = (window as any).__banburyActiveAiTabId
+      const shouldHandle = targetTabId 
+        ? targetTabId === tabId 
+        : activeTabId === tabId
+      
+      if (!shouldHandle) {
         return
       }
 
-      const { taskId, message, planContext } = event.detail
-      
       if (taskId && message && executePlanTaskRef.current) {
         executePlanTaskRef.current(taskId, message, planContext)
       } else {
@@ -278,13 +284,20 @@ export const AiConversationTabPane: FC<AiConversationTabPaneProps> = ({
     }
 
     // Handle plan task cancellation requests
+    // Supports tab-targeted cancellation via targetTabId, with backward compatibility for active-tab cancellation
     const handlePlanTaskCancel = (event: CustomEvent) => {
-      // Only handle if this is the active tab
-      const activeTabId = (window as any).__banburyActiveAiTabId
-      if (activeTabId !== tabId) return
-
-      const { taskId } = event.detail
+      const { taskId, targetTabId } = event.detail
       
+      // Determine if this tab should handle the request:
+      // 1. If targetTabId is specified, only handle if it matches this tab's id
+      // 2. If targetTabId is not specified (backward compatibility), only handle if this is the active tab
+      const activeTabId = (window as any).__banburyActiveAiTabId
+      const shouldHandle = targetTabId 
+        ? targetTabId === tabId 
+        : activeTabId === tabId
+      
+      if (!shouldHandle) return
+
       if (taskId) {
         cancelledTaskIdRef.current = taskId
       }

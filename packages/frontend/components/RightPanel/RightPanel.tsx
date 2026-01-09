@@ -102,8 +102,8 @@ export function RightPanel({
     ;(window as any).__banburyAiTabs = aiTabs
   }
 
-  const handleTabAdd = useCallback(() => {
-    const newTab = createAiTab()
+  const handleTabAdd = useCallback((label?: string) => {
+    const newTab = createAiTab(label)
     setAiTabs((prev) => [...prev, newTab])
     setActiveAiTabId(newTab.id)
   }, [])
@@ -152,9 +152,12 @@ export function RightPanel({
   }, [onClearConversation, activeAiTabId])
 
   // Listen for create-new-ai-tab events to create a new tab
+  // Supports optional detail.label to set a custom tab label (used by PlanViewer agents)
   useEffect(() => {
-    const handleCreateNewTab = () => {
-      handleTabAdd()
+    const handleCreateNewTab = (event: Event) => {
+      const customEvent = event as CustomEvent<{ label?: string }>
+      const label = customEvent.detail?.label
+      handleTabAdd(label)
     }
 
     window.addEventListener('create-new-ai-tab', handleCreateNewTab)

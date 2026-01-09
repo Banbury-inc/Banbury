@@ -11,10 +11,19 @@ import {
   RefreshCw,
   ListTodo,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  UserPlus,
+  Bot
 } from "lucide-react"
 import { Button } from "../../ui/button"
 import { Typography } from "../../ui/typography"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select"
 import { cn } from "../../../utils"
 import styles from "../../../styles/scrollbar.module.css"
 import { PlanTiptapEditor } from "./PlanTiptapEditor"
@@ -26,12 +35,32 @@ import {
   dispatchActiveTodoChange,
   getActiveThreadId,
 } from "./handlers/planTodoBridge"
+import {
+  markTodoCompletedInMarkdown,
+  buildPersistedPlanContent,
+} from "./handlers/planPersistence"
+import {
+  executeParallel,
+  getAvailableAgents,
+  type ExecutionProgress,
+  type AgentInfo,
+} from "./handlers/planExecution"
+import {
+  getAiTabs,
+  getAgentByLabel,
+  getAssignedAgentLabels,
+  sendAllAgentBriefings,
+  sendProgressUpdateToAgents,
+  initAllAgentTodoStores,
+  initAgentTodoStore,
+} from "./handlers/planAgentContext"
 
 export interface PlanTodo {
   id: string
   description: string
   status: "pending" | "in_progress" | "completed" | "failed"
   depends?: string[]
+  assigneeLabel?: string
 }
 
 export interface Plan {
@@ -64,9 +93,29 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
   const [isExecuting, setIsExecuting] = useState(false)
   const [currentTodoId, setCurrentTodoId] = useState<string | null>(null)
   const [todosExpanded, setTodosExpanded] = useState(true)
+  const [availableAgents, setAvailableAgents] = useState<AgentInfo[]>([])
+  const [activeAgentLabels, setActiveAgentLabels] = useState<Set<string>>(new Set())
+  const [executionProgress, setExecutionProgress] = useState<ExecutionProgress | null>(null)
   
   const abortControllerRef = useRef<AbortController | null>(null)
+  // Track which todos are in-progress per agent tab (for cancellation)
+  const inProgressTodosRef = useRef<Map<string, string | null>>(new Map())
   const lastFetchKeyRef = useRef<string | null>(null)
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
+  
+  // Sync available agents from window.__banburyAiTabs using the shared helper
+  useEffect(() => {
+    function syncAgents() {
+      setAvailableAgents(getAvailableAgents())
+    }
+    
+    // Initial sync
+    syncAgents()
+    
+    // Poll for changes (since AI tabs can be created/renamed externally)
+    const interval = setInterval(syncAgents, 1000)
+    return () => clearInterval(interval)
+  }, [])
 
   // Parse markdown into Plan object
   const parsePlanMarkdown = useCallback((markdown: string, fallbackTitle: string): Plan => {
@@ -101,13 +150,23 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
         const depends = dependsMatch 
           ? dependsMatch[1].split(",").map(d => d.trim())
           : undefined
-        const cleanDescription = description.replace(/\s*\(depends:[^)]+\)/, "").trim()
+        
+        // Check for agent: annotation
+        const agentMatch = description.match(/\(agent:\s*([^)]+)\)/)
+        const assigneeLabel = agentMatch ? agentMatch[1].trim() : undefined
+        
+        // Clean description by removing both annotations
+        const cleanDescription = description
+          .replace(/\s*\(depends:[^)]+\)/, "")
+          .replace(/\s*\(agent:[^)]+\)/, "")
+          .trim()
 
         todos.push({
           id,
           description: cleanDescription,
           status: isCompleted ? "completed" : "pending",
           depends,
+          assigneeLabel,
         })
         todoIndex++
       }
@@ -137,11 +196,32 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
     p.todos.forEach(todo => {
       const checkbox = todo.status === "completed" ? "[x]" : "[ ]"
       const depends = todo.depends?.length ? ` (depends: ${todo.depends.join(", ")})` : ""
-      md += `- ${checkbox} id:${todo.id} | ${todo.description}${depends}\n`
+      const agent = todo.assigneeLabel ? ` (agent: ${todo.assigneeLabel})` : ""
+      md += `- ${checkbox} id:${todo.id} | ${todo.description}${depends}${agent}\n`
     })
     md += `\n## Notes\n${p.notes}\n`
     return md
   }, [])
+
+  // Auto-assign first agent to todos without an assignee
+  useEffect(() => {
+    if (!plan || availableAgents.length === 0) return
+    
+    const firstAgentLabel = availableAgents[0].label
+    const unassignedTodos = plan.todos.filter(t => !t.assigneeLabel)
+    
+    if (unassignedTodos.length > 0) {
+      const updatedTodos = plan.todos.map(t => 
+        !t.assigneeLabel ? { ...t, assigneeLabel: firstAgentLabel } : t
+      )
+      const updatedPlan = { ...plan, todos: updatedTodos }
+      
+      setPlan(updatedPlan)
+      // Also update the markdown to persist the assignment
+      setEditMarkdown(planToMarkdown(updatedPlan))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan, availableAgents])
 
   // Load the plan file
   useEffect(() => {
@@ -256,115 +336,74 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
     }
   }, [])
 
-  // Execute a single todo via the right panel assistant
-  const executeTodo = useCallback(async (
-    todo: PlanTodo, 
-    planContext: { planTitle: string; todos: PlanTodo[]; currentTodoId: string; isSubAgent?: boolean }
-  ): Promise<boolean> => {
-    if (abortControllerRef.current?.signal.aborted) {
-      console.error('[PlanViewer] Execution aborted for:', todo.description)
-      updateTodoStatus(todo.id, "failed")
-      return false
-    }
-
-    // Check if there's an active AI tab in the right panel
-    const activeAiTabId = (window as any).__banburyActiveAiTabId
-    if (!activeAiTabId) {
-      // Dispatch event to open the AI panel
-      window.dispatchEvent(new CustomEvent('open-ai-panel'))
-      // Wait a moment for the panel to open
-      await new Promise(resolve => setTimeout(resolve, 1000))
+  // Update todo assignee (agent assignment)
+  const updateTodoAssignee = useCallback((todoId: string, assigneeLabel: string) => {
+    setPlan(prev => {
+      if (!prev) return prev
+      const updatedTodos = prev.todos.map(t => 
+        t.id === todoId ? { ...t, assigneeLabel } : t
+      )
+      const updatedPlan = { ...prev, todos: updatedTodos }
       
-      // Check again
-      const newActiveTabId = (window as any).__banburyActiveAiTabId
-      if (!newActiveTabId) {
-        console.error('[PlanViewer] No AI assistant tab available to run plan')
-        updateTodoStatus(todo.id, "failed")
-        return false
-      }
-    }
-
-    setCurrentTodoId(todo.id)
-    updateTodoStatus(todo.id, "in_progress")
-    
-    // Bridge: dispatch active todo change to Right Panel
-    const threadIdForActive = getActiveThreadId()
-    if (threadIdForActive) {
-      dispatchActiveTodoChange(threadIdForActive, todo.id)
-    }
-
-    return new Promise((resolve) => {
-      // Declare timeoutId first so it can be referenced in handleTaskComplete
-      let timeoutId: ReturnType<typeof setTimeout>
-
-      // Listen for task completion
-      const handleTaskComplete = (event: CustomEvent) => {
-        const { taskId, success } = event.detail
-        
-        if (taskId !== todo.id) {
-          return // Not our task
-        }
-
-        window.removeEventListener('assistant-plan-task-complete', handleTaskComplete as EventListener)
-        clearTimeout(timeoutId)
-
-        if (success) {
-          updateTodoStatus(todo.id, "completed")
-          setCurrentTodoId(null)
-          // Bridge: clear active todo
-          const tid = getActiveThreadId()
-          if (tid) dispatchActiveTodoChange(tid, null)
-          resolve(true)
-        } else {
-          updateTodoStatus(todo.id, "failed")
-          setCurrentTodoId(null)
-          // Bridge: clear active todo
-          const tid = getActiveThreadId()
-          if (tid) dispatchActiveTodoChange(tid, null)
-          resolve(false)
-        }
-      }
-
-      window.addEventListener('assistant-plan-task-complete', handleTaskComplete as EventListener)
-
-      // Build the task message with plan context
-      const taskMessage = `## Plan Task Execution
-
-**Plan:** ${planContext.planTitle}
-
-**Current Task:** ${todo.description}
-
-**Task ID:** ${todo.id}
-
-Please execute this task completely. When finished, explain what you accomplished.`
-
-      // Dispatch event to the right panel assistant
-      window.dispatchEvent(new CustomEvent('assistant-plan-task-execute', {
-        detail: {
-          taskId: todo.id,
-          message: taskMessage,
-          planContext: {
-            ...planContext,
-            currentTodoId: todo.id
-          }
-        }
-      }))
-
-      // Timeout after 10 minutes
-      timeoutId = setTimeout(() => {
-        window.removeEventListener('assistant-plan-task-complete', handleTaskComplete as EventListener)
-        console.error('[PlanViewer] Task timed out:', todo.description)
-        updateTodoStatus(todo.id, "failed")
-        setCurrentTodoId(null)
-        // Bridge: clear active todo on timeout
-        const tid = getActiveThreadId()
-        if (tid) dispatchActiveTodoChange(tid, null)
-        resolve(false)
-      }, 10 * 60 * 1000)
+      // Also update the markdown to persist the assignment
+      setEditMarkdown(planToMarkdown(updatedPlan))
+      
+      return updatedPlan
     })
-  }, [updateTodoStatus])
+  }, [planToMarkdown])
 
-  // Execute plan sequentially - one task at a time via the right panel assistant
+  // Add a new agent (creates a new AI tab)
+  const handleAddAgent = useCallback(() => {
+    // Dispatch event to create a new AI tab
+    // The label will be auto-generated (e.g., "Chat 2", "Chat 3", etc.)
+    window.dispatchEvent(new CustomEvent('create-new-ai-tab'))
+    
+    // Also open the AI panel to make it visible
+    window.dispatchEvent(new CustomEvent('open-ai-panel'))
+  }, [])
+
+  // Persist todo completion to file (updates markdown + saves to S3)
+  const persistTodoCompletion = useCallback(async (todoId: string, updatedPlan: Plan) => {
+    if (!file.file_id) return
+
+    // Queue saves to avoid overlapping requests
+    saveQueueRef.current = saveQueueRef.current.then(async () => {
+      try {
+        // Update the markdown to mark this todo as completed
+        const updatedMarkdown = markTodoCompletedInMarkdown(editMarkdown, todoId)
+        
+        // Update the editor content so it reflects the change
+        setEditMarkdown(updatedMarkdown)
+
+        // Build the content to persist
+        const { content, mimeType } = buildPersistedPlanContent(
+          file.name,
+          updatedMarkdown,
+          updatedPlan
+        )
+
+        const blob = new Blob([content], { type: mimeType })
+
+        const result = await ApiService.Files.updateS3File(
+          file.file_id!,
+          blob,
+          file.name,
+          { file_type: mimeType }
+        )
+
+        if (!result.success) {
+          console.error('[PlanViewer] Failed to autosave todo completion:', result.message)
+        }
+      } catch (err) {
+        console.error('[PlanViewer] Error autosaving todo completion:', err)
+      }
+    })
+
+    return saveQueueRef.current
+  }, [file.file_id, file.name, editMarkdown])
+
+  // Execute plan - uses parallel execution when todos have agent assignments
+  // Each agent runs its assigned todos sequentially, but multiple agents work in parallel
   const executeSequential = useCallback(async () => {
     if (!plan) return
 
@@ -373,65 +412,103 @@ Please execute this task completely. When finished, explain what you accomplishe
 
     setIsExecuting(true)
     abortControllerRef.current = new AbortController()
+    inProgressTodosRef.current = new Map()
 
-    // Bridge: Initialize todos in the Right Panel todo store
-    const threadId = getActiveThreadId()
-    if (threadId) {
-      dispatchPlanTodosInit(threadId, plan.todos, null)
+    // Check if we have any agent assignments
+    const assignedLabels = getAssignedAgentLabels(plan.todos)
+    const hasAgentAssignments = assignedLabels.length > 0
+
+    // If we have agent assignments, send briefings and init their todo stores
+    if (hasAgentAssignments) {
+      sendAllAgentBriefings(plan.title, plan.overview, plan.todos)
+      initAllAgentTodoStores(plan.todos, null)
     }
-
-    // Build structured plan context for the agent
-    const planContext = {
-      planTitle: plan.title,
-      todos: plan.todos,
-      currentTodoId: "", // Will be set per-task
-      isSubAgent: false
-    }
-
-    let completedCount = 0
-    let failedCount = 0
 
     try {
-      for (let i = 0; i < plan.todos.length; i++) {
-        const todo = plan.todos[i]
-        
-        if (todo.status === "completed") {
-          completedCount++
-          continue
-        }
-        if (abortControllerRef.current.signal.aborted) {
-          break
-        }
-        
-        // Execute task and wait for completion before next
-        const success = await executeTodo(todo, planContext)
-        
-        if (success) {
-          completedCount++
-        } else {
-          failedCount++
-          // Continue to next task even if one fails
-        }
-        
-        // Small delay between tasks for UI to settle
-        await new Promise(resolve => setTimeout(resolve, 1000))
-      }
+      const result = await executeParallel(
+        {
+          plan,
+          // No selectedTodos means run all incomplete todos
+          selectedTodos: undefined,
+          onStatusChange: (todoId, status) => {
+            updateTodoStatus(todoId, status)
+            
+            // Track which todo is in-progress for each agent
+            if (status === 'in_progress') {
+              const todo = plan.todos.find(t => t.id === todoId)
+              if (todo) {
+                const agentLabel = todo.assigneeLabel || 'unassigned'
+                const agents = getAvailableAgents()
+                const agent = agents.find(a => a.label.toLowerCase() === agentLabel.toLowerCase()) || agents[0]
+                if (agent) {
+                  inProgressTodosRef.current.set(agent.id, todoId)
+                }
+              }
+              setCurrentTodoId(todoId)
+            } else if (status === 'completed' || status === 'failed') {
+              // Clear from in-progress tracking
+              for (const [agentId, tid] of inProgressTodosRef.current.entries()) {
+                if (tid === todoId) {
+                  inProgressTodosRef.current.set(agentId, null)
+                  break
+                }
+              }
+            }
+            
+            // Persist completion
+            if (status === 'completed') {
+              setPlan(currentPlan => {
+                if (currentPlan) {
+                  const updatedPlan = {
+                    ...currentPlan,
+                    todos: currentPlan.todos.map(t => 
+                      t.id === todoId ? { ...t, status: "completed" as const } : t
+                    ),
+                  }
+                  persistTodoCompletion(todoId, updatedPlan)
+                }
+                return currentPlan
+              })
+              
+              // Send progress update
+              if (hasAgentAssignments) {
+                sendProgressUpdateToAgents(plan.title, plan.todos, todoId, undefined)
+              }
+            } else if (status === 'failed') {
+              if (hasAgentAssignments) {
+                sendProgressUpdateToAgents(plan.title, plan.todos, undefined, todoId)
+              }
+            }
+          },
+          onProgressChange: (progress) => {
+            setExecutionProgress(progress)
+            setActiveAgentLabels(progress.activeAgents)
+          },
+          onComplete: () => {
+            setExecutionProgress(null)
+            setActiveAgentLabels(new Set())
+          },
+        },
+        abortControllerRef.current
+      )
       
       // Update plan status based on results
-      if (failedCount === 0 && completedCount === plan.todos.length) {
+      if (result.failedCount === 0 && result.completedCount === plan.todos.length) {
         setPlan(prev => prev ? { ...prev, status: "completed" } : prev)
-      } else if (failedCount > 0 && completedCount === 0) {
+      } else if (result.failedCount > 0 && result.completedCount === 0) {
         setPlan(prev => prev ? { ...prev, status: "failed" } : prev)
       }
     } catch (err) {
       console.error('[PlanViewer] Plan execution stopped due to error:', err)
     } finally {
       setIsExecuting(false)
+      setCurrentTodoId(null)
+      inProgressTodosRef.current = new Map()
     }
-  }, [plan, executeTodo])
+  }, [plan, updateTodoStatus, persistTodoCompletion])
 
-  // Delegate selected todos - runs them one at a time via assistant
-  // Note: For true parallel execution, we'd need multiple assistant instances
+  // Delegate selected todos - runs them in parallel across assigned agent tabs
+  // Each agent runs its assigned todos sequentially, but multiple agents work in parallel
   const delegateSelected = useCallback(async () => {
     if (!plan || selectedTodos.size === 0) return
 
@@ -441,61 +518,157 @@ Please execute this task completely. When finished, explain what you accomplishe
     setIsExecuting(true)
     abortControllerRef.current = new AbortController()
 
-    // Bridge: Initialize todos in the Right Panel todo store
-    const threadId = getActiveThreadId()
-    if (threadId) {
-      dispatchPlanTodosInit(threadId, plan.todos, null)
-    }
+    // Track in-progress todos per agent for cancellation
+    inProgressTodosRef.current = new Map()
 
-    const planContext = {
-      planTitle: plan.title,
-      todos: plan.todos,
-      currentTodoId: "",
-      isSubAgent: false
-    }
-    
     const todosToDelegate = plan.todos.filter(t => selectedTodos.has(t.id))
 
+    // Check if we have any agent assignments in the selected todos
+    const assignedLabels = getAssignedAgentLabels(todosToDelegate)
+    const hasAgentAssignments = assignedLabels.length > 0
+
+    // If we have agent assignments, send briefings and init their todo stores
+    if (hasAgentAssignments) {
+      sendAllAgentBriefings(plan.title, plan.overview, plan.todos)
+      // Init todo stores for assigned agents with only selected todos context
+      assignedLabels.forEach(label => {
+        const agent = getAgentByLabel(label)
+        if (agent) {
+          initAgentTodoStore(agent, todosToDelegate, null)
+        }
+      })
+    }
+
     try {
-      for (const todo of todosToDelegate) {
-        if (abortControllerRef.current.signal.aborted) break
-        
-        await executeTodo(todo, planContext)
-        
-        await new Promise(resolve => setTimeout(resolve, 1000))
+      const result = await executeParallel(
+        {
+          plan,
+          selectedTodos,
+          onStatusChange: (todoId, status) => {
+            updateTodoStatus(todoId, status)
+            
+            // Track which todo is in-progress for each agent
+            if (status === 'in_progress') {
+              const todo = plan.todos.find(t => t.id === todoId)
+              if (todo) {
+                const agentLabel = todo.assigneeLabel || 'unassigned'
+                const agents = getAvailableAgents()
+                const agent = agents.find(a => a.label.toLowerCase() === agentLabel.toLowerCase()) || agents[0]
+                if (agent) {
+                  inProgressTodosRef.current.set(agent.id, todoId)
+                }
+              }
+              setCurrentTodoId(todoId)
+            } else if (status === 'completed' || status === 'failed') {
+              // Clear from in-progress tracking
+              for (const [agentId, tid] of inProgressTodosRef.current.entries()) {
+                if (tid === todoId) {
+                  inProgressTodosRef.current.set(agentId, null)
+                  break
+                }
+              }
+            }
+            
+            // Persist completion
+            if (status === 'completed') {
+              setPlan(currentPlan => {
+                if (currentPlan) {
+                  const updatedPlan = {
+                    ...currentPlan,
+                    todos: currentPlan.todos.map(t => 
+                      t.id === todoId ? { ...t, status: "completed" as const } : t
+                    ),
+                  }
+                  persistTodoCompletion(todoId, updatedPlan)
+                }
+                return currentPlan
+              })
+              
+              // Send progress update
+              if (hasAgentAssignments) {
+                sendProgressUpdateToAgents(plan.title, plan.todos, todoId, undefined)
+              }
+            } else if (status === 'failed') {
+              if (hasAgentAssignments) {
+                sendProgressUpdateToAgents(plan.title, plan.todos, undefined, todoId)
+              }
+            }
+          },
+          onProgressChange: (progress) => {
+            setExecutionProgress(progress)
+            setActiveAgentLabels(progress.activeAgents)
+          },
+          onComplete: () => {
+            setExecutionProgress(null)
+            setActiveAgentLabels(new Set())
+          },
+        },
+        abortControllerRef.current
+      )
+      
+      // Update plan status based on results
+      if (result.failedCount === 0 && result.completedCount > 0) {
+        const allCompleted = plan.todos.every(t => t.status === 'completed')
+        if (allCompleted) {
+          setPlan(prev => prev ? { ...prev, status: "completed" } : prev)
+        }
       }
     } catch (err) {
-      console.error('[PlanViewer] Some tasks failed:', err)
+      console.error('[PlanViewer] Parallel execution failed:', err)
     } finally {
       setIsExecuting(false)
       setSelectedTodos(new Set())
+      setCurrentTodoId(null)
+      inProgressTodosRef.current = new Map()
     }
-  }, [plan, selectedTodos, executeTodo])
+  }, [plan, selectedTodos, updateTodoStatus, persistTodoCompletion])
 
-  // Stop execution
+  // Stop execution - cancels all in-flight tasks across all agents
   const stopExecution = useCallback(() => {
+    // Abort the controller (signals all parallel execution to stop)
     abortControllerRef.current?.abort()
     
-    // Mark any in-progress todos as failed
-    if (currentTodoId) {
+    // Cancel tasks on all agents that have in-progress todos
+    const agents = getAvailableAgents()
+    for (const agent of agents) {
+      const todoId = inProgressTodosRef.current.get(agent.id)
+      if (todoId) {
+        // Dispatch cancel event to this specific agent
+        window.dispatchEvent(new CustomEvent('assistant-plan-task-cancel', {
+          detail: { taskId: todoId, targetTabId: agent.id }
+        }))
+        
+        // Mark the todo as failed
+        updateTodoStatus(todoId, "failed")
+        
+        // Clear active todo for this agent
+        dispatchActiveTodoChange(agent.threadId, null)
+      }
+    }
+    
+    // Also handle the legacy single-agent case
+    if (currentTodoId && !inProgressTodosRef.current.size) {
       updateTodoStatus(currentTodoId, "failed")
+      
+      // Bridge: clear active todo on stop
+      const threadId = getActiveThreadId()
+      if (threadId) {
+        dispatchActiveTodoChange(threadId, null)
+      }
+      
+      // Dispatch event to cancel the current task in the active assistant
+      window.dispatchEvent(new CustomEvent('assistant-plan-task-cancel', {
+        detail: { taskId: currentTodoId }
+      }))
     }
     
     // Immediately update UI state
     setIsExecuting(false)
     setCurrentTodoId(null)
     setSelectedTodos(new Set())
-    
-    // Bridge: clear active todo on stop
-    const threadId = getActiveThreadId()
-    if (threadId) {
-      dispatchActiveTodoChange(threadId, null)
-    }
-    
-    // Dispatch event to cancel the current task in the assistant
-    window.dispatchEvent(new CustomEvent('assistant-plan-task-cancel', {
-      detail: { taskId: currentTodoId }
-    }))
+    setExecutionProgress(null)
+    setActiveAgentLabels(new Set())
+    inProgressTodosRef.current = new Map()
   }, [currentTodoId, updateTodoStatus])
 
   // Get status icon for todo
@@ -535,6 +708,11 @@ Please execute this task completely. When finished, explain what you accomplishe
   const progressPercent = plan.todos.length > 0 
     ? Math.round((completedCount / plan.todos.length) * 100) 
     : 0
+  const isBuilt = plan.todos.length > 0 && plan.todos.every(t => t.status === "completed")
+  
+  // Agent-related stats
+  const assignedAgentLabels = new Set(plan.todos.map(t => t.assigneeLabel).filter(Boolean))
+  const workingAgentCount = plan.todos.filter(t => t.status === "in_progress" && t.assigneeLabel).length
 
   return (
     <div className="flex h-full flex-col bg-card">
@@ -555,6 +733,27 @@ Please execute this task completely. When finished, explain what you accomplishe
             <Typography variant="xs" className="text-muted-foreground">
               {progressPercent}%
             </Typography>
+            {/* Agent indicator */}
+            {(assignedAgentLabels.size > 0 || (executionProgress && executionProgress.activeAgents.size > 0)) && (
+              <>
+                <span className="text-muted-foreground">•</span>
+                <Typography variant="xs" className="text-muted-foreground flex items-center gap-1">
+                  <Bot className="h-3 w-3" />
+                  {executionProgress && executionProgress.activeAgents.size > 0 ? (
+                    <span className="text-blue-500 flex items-center gap-1">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      {executionProgress.activeAgents.size} agent{executionProgress.activeAgents.size > 1 ? "s" : ""} working
+                    </span>
+                  ) : workingAgentCount > 0 ? (
+                    <span className="text-blue-500">
+                      {workingAgentCount} agent{workingAgentCount > 1 ? "s" : ""} working
+                    </span>
+                  ) : (
+                    <span>{assignedAgentLabels.size} agent{assignedAgentLabels.size > 1 ? "s" : ""} assigned</span>
+                  )}
+                </Typography>
+              </>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -579,14 +778,19 @@ Please execute this task completely. When finished, explain what you accomplishe
           </Button>
           <Button
             size="xs"
-            onClick={isExecuting ? stopExecution : executeSequential}
-            disabled={plan.todos.every(t => t.status === "completed")}
-            variant={isExecuting ? "destructive" : "default"}
+            onClick={isExecuting ? stopExecution : isBuilt ? undefined : executeSequential}
+            disabled={isBuilt}
+            variant={isExecuting ? "destructive" : isBuilt ? "outline" : "default"}
           >
             {isExecuting ? (
               <>
                 <StopCircle className="h-3 w-3 mr-2" />
                 Stop
+              </>
+            ) : isBuilt ? (
+              <>
+                <CheckCircle2 className="h-3 w-3 mr-2 text-green-500" />
+                Built
               </>
             ) : (
               <>
@@ -611,20 +815,30 @@ Please execute this task completely. When finished, explain what you accomplishe
       {/* Todos Panel */}
       {plan.todos.length > 0 && (
         <div className="shrink-0 border-t border-zinc-200 dark:border-white/[0.06]">
-          <button
-            onClick={() => setTodosExpanded(!todosExpanded)}
-            className="flex w-full items-center gap-2 px-4 py-2 hover:bg-muted/50 transition-colors"
-          >
-            {todosExpanded ? (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            )}
-            <ListTodo className="h-4 w-4 text-muted-foreground" />
-            <Typography variant="small" className="font-medium">
-              Todos ({completedCount}/{plan.todos.length})
-            </Typography>
-          </button>
+          <div className="flex w-full items-center gap-2 px-4 py-2">
+            <button
+              onClick={() => setTodosExpanded(!todosExpanded)}
+              className="flex flex-1 items-center gap-2 hover:bg-muted/50 transition-colors rounded px-2 py-1 -mx-2"
+            >
+              {todosExpanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+              <ListTodo className="h-4 w-4 text-muted-foreground" />
+              <Typography variant="small" className="font-medium">
+                Todos ({completedCount}/{plan.todos.length})
+              </Typography>
+            </button>
+            <Button
+              size="xs"
+              onClick={handleAddAgent}
+              variant="ghost"
+              title="Add a new agent (AI tab)"
+            >
+              <UserPlus className="h-3 w-3" />
+            </Button>
+          </div>
           {todosExpanded && (
             <div className={cn(styles.darkScrollbar, "max-h-[250px] overflow-y-auto px-4 pb-3")}>
               <div className="space-y-1">
@@ -644,21 +858,24 @@ Please execute this task completely. When finished, explain what you accomplishe
                         !isExecuting && "cursor-pointer"
                       )}
                     >
-                      {/* Selection checkbox (only when not executing) */}
-                      {!isExecuting && (
-                        <div className={cn(
-                          "h-4 w-4 rounded border flex items-center justify-center shrink-0",
-                          isSelected ? "bg-primary border-primary" : "border-muted-foreground/50"
-                        )}>
-                          {isSelected && (
-                            <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
-                          )}
-                        </div>
-                      )}
-                      
-                      {/* Status icon */}
+                      {/* Selection circle / Status icon */}
                       <div className="shrink-0">
-                        {getStatusIcon(todo.status, isCurrentlyExecuting)}
+                        {isCurrentlyExecuting ? (
+                          <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+                        ) : todo.status === "completed" ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : todo.status === "failed" ? (
+                          <AlertCircle className="h-4 w-4 text-red-500" />
+                        ) : todo.status === "in_progress" ? (
+                          <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+                        ) : !isExecuting ? (
+                          <div className={cn(
+                            "h-4 w-4 rounded-full border shrink-0 transition-colors",
+                            isSelected ? "bg-primary border-primary" : "border-muted-foreground/50 bg-transparent"
+                          )} />
+                        ) : (
+                          <Circle className="h-4 w-4 text-muted-foreground" />
+                        )}
                       </div>
                       
                       {/* Description */}
@@ -672,6 +889,46 @@ Please execute this task completely. When finished, explain what you accomplishe
                         >
                           {todo.description}
                         </Typography>
+                      </div>
+                      
+                      {/* Agent Assignee Selector */}
+                      <div 
+                        className="shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {availableAgents.length > 0 && (() => {
+                          const effectiveAssignee = todo.assigneeLabel || availableAgents[0].label
+                          return (
+                            <Select
+                              value={effectiveAssignee}
+                              onValueChange={(value) => {
+                                updateTodoAssignee(todo.id, value)
+                              }}
+                            >
+                              <SelectTrigger 
+                                size="xs" 
+                                className="h-6 min-w-[90px] max-w-[120px] text-xs"
+                              >
+                                <SelectValue>
+                                  <span className="flex items-center gap-1">
+                                    <Bot className="h-3 w-3" />
+                                    <span className="truncate">{effectiveAssignee}</span>
+                                  </span>
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent align="end">
+                                {availableAgents.map((agent) => (
+                                  <SelectItem key={agent.tabId} value={agent.label}>
+                                    <span className="flex items-center gap-1">
+                                      <Bot className="h-3 w-3" />
+                                      {agent.label}
+                                    </span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )
+                        })()}
                       </div>
                       
                       {/* Dependencies badge */}
@@ -697,8 +954,28 @@ Please execute this task completely. When finished, explain what you accomplishe
               {isExecuting && (
                 <Typography variant="xs" className="text-muted-foreground flex items-center gap-1">
                   <RefreshCw className="h-3 w-3 animate-spin" />
-                  Executing...
+                  {executionProgress ? (
+                    <span>
+                      {executionProgress.activeAgents.size > 1 
+                        ? `${executionProgress.activeAgents.size} agents working in parallel`
+                        : "Executing..."
+                      }
+                      {" "}({executionProgress.completedCount}/{executionProgress.totalTodos} done)
+                    </span>
+                  ) : (
+                    "Executing..."
+                  )}
                 </Typography>
+              )}
+              {isExecuting && (
+                <Button
+                  variant="destructive"
+                  size="xs"
+                  onClick={stopExecution}
+                >
+                  <StopCircle className="h-3 w-3 mr-1" />
+                  Stop All
+                </Button>
               )}
             </div>
 

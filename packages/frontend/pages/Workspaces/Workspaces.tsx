@@ -613,8 +613,8 @@ const Workspaces = (): React.ReactNode => {
     setAssistantDockLayout((prev) => removeTabFromPanel(prev, panelId, tabId));
   }, [removeTabFromPanel]);
 
-  const handleAssistantTabAdd = useCallback((panelId: string) => {
-    const newTab = createAiTab();
+  const handleAssistantTabAdd = useCallback((panelId: string, label?: string) => {
+    const newTab = createAiTab(label);
     setAssistantDockLayout((prev) => addTabToPanel(prev, panelId, newTab));
   }, [addTabToPanel]);
 
@@ -764,11 +764,14 @@ const Workspaces = (): React.ReactNode => {
   }, []);
 
   // Listen for create-new-ai-tab events to create a new tab in the active assistant panel
+  // Supports optional detail.label to set a custom tab label (used by PlanViewer agents)
   useEffect(() => {
-    const handleCreateNewTab = () => {
+    const handleCreateNewTab = (event: Event) => {
+      const customEvent = event as CustomEvent<{ label?: string }>
+      const label = customEvent.detail?.label
       // Use the active assistant panel ID, or fallback to the default
       const targetPanelId = activeAssistantPanelId || 'assistant-main-panel'
-      handleAssistantTabAdd(targetPanelId)
+      handleAssistantTabAdd(targetPanelId, label)
       // Also activate the panel to ensure it's visible
       setActiveAssistantPanelId(targetPanelId)
     }
