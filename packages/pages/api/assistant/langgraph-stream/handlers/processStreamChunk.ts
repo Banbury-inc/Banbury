@@ -16,20 +16,34 @@ interface ProcessStreamChunkResult {
 
 const TOOL_STATUS_MESSAGES: Record<string, string> = {
   web_search: "Searching the web...",
+  web_extract: "Extracting content from URLs...",
+  web_crawl: "Crawling website...",
+  web_map: "Mapping website structure...",
+  web_research: "Starting comprehensive research...",
+  web_get_research: "Retrieving research results...",
+  web_usage: "Fetching API usage statistics...",
   tiptap_ai: "Processing document content...",
   sheet_ai: "Processing spreadsheet edits...",
   store_memory: "Storing information in memory...",
   search_memory: "Searching memory...",
-  create_file: "Creating file..."
+  create_file: "Creating file...",
+  spawn_subagents: "Spawning subagents..."
 }
 
 const TOOL_COMPLETION_MESSAGES: Record<string, string> = {
   web_search: "Web search completed",
+  web_extract: "Content extraction completed",
+  web_crawl: "Website crawl completed",
+  web_map: "Site map generated",
+  web_research: "Research task initiated",
+  web_get_research: "Research results retrieved",
+  web_usage: "Usage statistics retrieved",
   tiptap_ai: "Document processing completed",
   sheet_ai: "Spreadsheet edits ready",
   store_memory: "Memory stored successfully",
   search_memory: "Memory search completed",
-  create_file: "File created successfully"
+  create_file: "File created successfully",
+  spawn_subagents: "Subagents completed"
 }
 
 function getToolStatusMessage(toolName: string): string {

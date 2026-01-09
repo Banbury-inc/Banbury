@@ -37,7 +37,9 @@ export interface Message {
 
 export interface StreamEvent {
   type: "message-start" | "text-delta" | "tool-call" | "tool-result" | "message-end" | "error" | "done" | 
-        "thinking" | "step-progression" | "tool-call-start" | "tool-status" | "tool-completion" | "completion-summary";
+        "thinking" | "step-progression" | "tool-call-start" | "tool-status" | "tool-completion" | "completion-summary" |
+        "subagent-spawn-start" | "subagent-start" | "subagent-content" | "subagent-tool-call-start" | "subagent-tool-result" | 
+        "subagent-end" | "subagent-spawn-complete" | "subagent-spawn-error";
   role?: string;
   text?: string;
   part?: ToolCall;
@@ -50,6 +52,20 @@ export interface StreamEvent {
   tool?: string;
   toolExecutions?: number;
   toolsUsed?: string[];
+  // Subagent event properties
+  subagentId?: string;
+  subagentCount?: number;
+  roles?: string[];
+  goal?: string;
+  durationMs?: number;
+  completedCount?: number;
+  failedCount?: number;
+  errors?: string[];
+  toolName?: string;
+  toolCallId?: string;
+  args?: any;
+  argsText?: string;
+  result?: any;
 }
 
 export interface AssistantState {

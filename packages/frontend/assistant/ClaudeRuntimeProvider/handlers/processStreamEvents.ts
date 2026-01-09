@@ -15,6 +15,15 @@ function dispatchTodoEvent(event: TodoEvent): void {
   }
 }
 
+// Dispatch subagent events to the global event bus for UI visualization
+function dispatchSubagentEvent(event: any): void {
+  try {
+    window.dispatchEvent(new CustomEvent('assistant-subagent-event', { detail: event }));
+  } catch {
+    // Ignore event dispatch errors
+  }
+}
+
 export async function* processStreamEvents({
   reader,
   contentParts,
@@ -68,12 +77,21 @@ export async function* processStreamEvents({
         } else if (evt.type === "text-delta" && evt.text) {
           // Don't accumulate - the backend is already sending true deltas
           // Just append the new text to the existing text content
-          const last = contentParts[contentParts.length - 1];
-          if (last && (last as any).type === "text") {
-            (last as any).text += evt.text;
+          const lastIndex = contentParts.length - 1;
+          const last = contentParts[lastIndex];
+
+          // Check if last part is a regular text part (not a subagent part)
+          if (last && (last as any).type === "text" && !(last as any).subagentId) {
+            // Create new text part object with updated text
+            contentParts[lastIndex] = {
+              ...last,
+              text: (last as any).text + evt.text,
+            };
           } else {
+            // Create new text part for main agent content
             contentParts.push({ type: "text", text: evt.text });
           }
+
           // Clear idle state since content is actively streaming
           streamIsIdle = false;
           shouldYield = true;
@@ -268,6 +286,72 @@ export async function* processStreamEvents({
           // Handle todo events - dispatch to the todo store via custom event
           dispatchTodoEvent(evt as TodoEvent);
           // Don't yield - these are metadata events, not content
+        } else if (evt.type === "subagent-spawn-start") {
+          // Multi-agent spawn started - dispatch event and yield status
+          dispatchSubagentEvent(evt);
+          streamIsIdle = false;
+          yield {
+            content: contentParts,
+            status: {
+              type: "running",
+              details: {
+                subagentSpawn: {
+                  status: "starting",
+                  count: evt.subagentCount,
+                  roles: evt.roles
+                }
+              }
+            }
+          };
+        } else if (evt.type === "subagent-start") {
+          // Individual subagent started - dispatch event only
+          dispatchSubagentEvent(evt);
+        } else if (evt.type === "subagent-content") {
+          // Subagent streaming content - dispatch event only
+          dispatchSubagentEvent(evt);
+        } else if (evt.type === "subagent-tool-call-start") {
+          // Subagent tool call - dispatch event only
+          dispatchSubagentEvent(evt);
+        } else if (evt.type === "subagent-tool-result") {
+          // Subagent tool result - dispatch event only
+          dispatchSubagentEvent(evt);
+        } else if (evt.type === "subagent-end") {
+          // Individual subagent completed - dispatch event only
+          dispatchSubagentEvent(evt);
+        } else if (evt.type === "subagent-spawn-complete") {
+          // All subagents completed
+          dispatchSubagentEvent(evt);
+          streamIsIdle = true;
+          yield {
+            content: contentParts,
+            status: {
+              type: "running",
+              details: {
+                subagentSpawn: {
+                  status: "complete",
+                  completedCount: evt.completedCount,
+                  failedCount: evt.failedCount,
+                  totalDurationMs: evt.totalDurationMs
+                },
+                waitingForContent: true
+              }
+            }
+          };
+        } else if (evt.type === "subagent-spawn-error") {
+          // Subagent spawn validation/error
+          dispatchSubagentEvent(evt);
+          yield {
+            content: contentParts,
+            status: {
+              type: "running",
+              details: {
+                subagentSpawn: {
+                  status: "error",
+                  errors: evt.errors
+                }
+              }
+            }
+          };
         } else if (evt.type === "message-end" || evt.type === "done") {
           // Dispatch event to notify that the assistant has finished responding
           try {

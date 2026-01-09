@@ -20,6 +20,7 @@ import { TldrawAITool } from "../components/TldrawAITool";
 import { DrawioAITool } from "../../../MiddlePanel/CanvasViewer/DrawioAITool";
 import DrawioViewerModal from "../../../MiddlePanel/CanvasViewer/DrawioViewerModal";
 import { MarkdownText } from "../../markdown-text";
+import { ContentRenderer } from "../components/ContentRenderer";
 import { SheetAITool } from "../components/SheetAITool";
 import { TiptapAITool } from "../components/TiptapAITool";
 import { ToolFallback } from "../components/tool-fallback";
@@ -31,6 +32,7 @@ import { handleDocxAIResponse } from "../../handlers/handle-docx-ai-response";
 import { handleTldrawAIResponse } from "../../handlers/handle-tldraw-ai-response";
 import { ToolUI } from "../../ToolUI";
 import { BrowserTool } from "../components/BrowserTool";
+import { SubagentTool } from "../components/SubagentTool";
 import { ApiService } from "../../../../../backend/api/apiService";
 import { useToast } from "../../../ui/use-toast";
 import styles from "../../../../styles/scrollbar.module.css";
@@ -1472,7 +1474,7 @@ const AssistantMessage: FC = () => {
         <div className={cn(typographyVariants({ variant: "small" }), "col-start-1 row-start-1 leading-none break-words overflow-x-auto max-w-full pb-10")}>
           <MessagePrimitive.Content
             components={{
-              Text: MarkdownText,
+              Text: ContentRenderer,
                 tools: { 
                 by_name: {
                   web_search: WebSearchTool,
@@ -1484,6 +1486,7 @@ const AssistantMessage: FC = () => {
                   drawio_ai: DrawioAITool,
                   document_ai: DocumentAITool,
                   browser: BrowserTool,
+                  spawn_subagents: SubagentTool,
                 },
                 Fallback: ToolFallback 
               },

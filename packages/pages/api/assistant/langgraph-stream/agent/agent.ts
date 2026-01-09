@@ -10,6 +10,12 @@ import { getServerContextValue } from "../../../../../frontend/assistant/langrap
 import type { BaseMessage } from "@langchain/core/messages";
 // Import tools from separate files
 import { webSearchTool } from "./tools/webSearchTool";
+import { tavilyExtractTool } from "./tools/tavilyExtractTool";
+import { tavilyCrawlTool } from "./tools/tavilyCrawlTool";
+import { tavilyMapTool } from "./tools/tavilyMapTool";
+import { tavilyResearchTool } from "./tools/tavilyResearchTool";
+import { tavilyGetResearchTool } from "./tools/tavilyGetResearchTool";
+import { tavilyUsageTool } from "./tools/tavilyUsageTool";
 import { sheetAiTool } from "./tools/sheetAiTool";
 import { docxAiTool } from "./tools/docxAiTool";
 import { tldrawAiTool } from "./tools/tldrawAiTool";
@@ -83,6 +89,7 @@ import { pptxParseOutlineTool } from "./tools/pptxParseOutlineTool";
 import { writeWorkspaceFileTool } from "./tools/writeWorkspaceFileTool";
 import { executeScriptTool } from "./tools/executeScriptTool";
 import { createPlanTool } from "./tools/createPlanTool";
+import { spawnSubagentsTool } from "./tools/spawnSubagentsTool";
 
 // Define our agent state
 interface AgentState {
@@ -206,6 +213,7 @@ const documentTools = [
   executeScriptTool, // Run Node.js scripts to generate documents (e.g., complex data processing)
   // Supporting tools that may be needed for document tasks
   webSearchTool, // For research when creating documents
+  tavilyExtractTool, // Extract content from URLs for document creation
   searchFilesTool, // To find existing files to reference
   downloadFromUrlTool, // To download images/assets for documents
   generateImageTool, // To generate images for documents
@@ -256,6 +264,11 @@ const planningTools = [
 const askingTools = [
   // Web search for current information
   webSearchTool,
+  tavilyExtractTool, // Extract content from URLs for research
+  tavilyCrawlTool, // Deep site exploration for research
+  tavilyMapTool, // Site structure analysis for research
+  tavilyResearchTool, // Comprehensive research with multiple searches
+  tavilyGetResearchTool, // Retrieve research results
   // File search to find and explore documents
   searchFilesTool,
   // Memory search for past context
@@ -312,6 +325,12 @@ function getCurrentDateTimeContext(): string {
 // Bind tools to the model and also prepare tools array for React agent
 const tools = [
   webSearchTool,
+  tavilyExtractTool,
+  tavilyCrawlTool,
+  tavilyMapTool,
+  tavilyResearchTool,
+  tavilyGetResearchTool,
+  tavilyUsageTool,
   sheetAiTool,
   docxAiTool,
   tldrawAiTool,
@@ -369,6 +388,8 @@ const tools = [
   stagehandActTool,
   stagehandExtractTool,
   stagehandCloseTool,
+  // Multi-agent orchestration
+  spawnSubagentsTool,
 ]
 // Define agent nodes following athena-intelligence patterns
 async function agentNode(state: AgentState): Promise<AgentState> {

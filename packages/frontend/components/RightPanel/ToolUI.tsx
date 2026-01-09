@@ -4,11 +4,17 @@ import { SheetAITool } from './composer/components/SheetAITool';
 import { DocxAITool } from './composer/components/DocxAITool';
 import { PptxAITool } from './composer/components/PptxAITool';
 import { WebSearchTool } from './composer/components/web-search-result';
+import { TavilyExtractTool } from './composer/components/tavily-extract-result';
+import { TavilyCrawlTool } from './composer/components/tavily-crawl-result';
+import { TavilyMapTool } from './composer/components/tavily-map-result';
+import { TavilyResearchTool } from './composer/components/tavily-research-result';
+import { TavilyUsageTool } from './composer/components/tavily-usage-result';
 import { TiptapAITool } from './composer/components/TiptapAITool';
 import { DocumentAITool } from './composer/components/DocumentAITool';
 import { BrowserTool } from './composer/components/BrowserTool';
 import { ToolFallback } from './composer/components/tool-fallback';
 import { TldrawAITool } from './composer/components/TldrawAITool';
+import { SubagentTool } from './composer/components/SubagentTool';
 
 interface ToolUIProps {
   toolName: string;
@@ -35,7 +41,23 @@ export const ToolUI: React.FC<ToolUIProps> = ({ toolName, toolCallId, args, args
     
     case 'web_search':
       return <WebSearchTool toolName={toolName} toolCallId={toolCallId} args={args} argsText={argsText || JSON.stringify(args)} result={result} />;
-    
+
+    case 'web_extract':
+      return <TavilyExtractTool toolName={toolName} toolCallId={toolCallId} args={args} argsText={argsText || JSON.stringify(args)} result={result} />;
+
+    case 'web_crawl':
+      return <TavilyCrawlTool toolName={toolName} toolCallId={toolCallId} args={args} argsText={argsText || JSON.stringify(args)} result={result} />;
+
+    case 'web_map':
+      return <TavilyMapTool toolName={toolName} toolCallId={toolCallId} args={args} argsText={argsText || JSON.stringify(args)} result={result} />;
+
+    case 'web_research':
+    case 'web_get_research':
+      return <TavilyResearchTool toolName={toolName} toolCallId={toolCallId} args={args} argsText={argsText || JSON.stringify(args)} result={result} />;
+
+    case 'web_usage':
+      return <TavilyUsageTool toolName={toolName} toolCallId={toolCallId} args={args} argsText={argsText || JSON.stringify(args)} result={result} />;
+
     case 'tiptap_ai':
       return <TiptapAITool args={args} />;
     
@@ -159,6 +181,10 @@ export const ToolUI: React.FC<ToolUIProps> = ({ toolName, toolCallId, args, args
         />
       );
     
+    // Multi-agent tool
+    case 'spawn_subagents':
+      return <SubagentTool args={args} result={result} />;
+    
     default:
       return <ToolFallback toolName={toolName} args={args} result={result} />;
   }
@@ -208,6 +234,7 @@ function getToolLabel(toolName: string): string {
     'stagehand_act': 'Browser - Act',
     'stagehand_extract': 'Browser - Extract',
     'stagehand_close': 'Browser - Close',
+    'spawn_subagents': 'Multi-Agent Execution',
   };
 
   return labels[toolName] || toolName;

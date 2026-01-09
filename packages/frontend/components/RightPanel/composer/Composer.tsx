@@ -1407,32 +1407,8 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
 
         <ThreadPrimitive.If running>
           <div className="flex items-center gap-2 flex-shrink-0 flex-nowrap">
-            {/* Queue button - shown when agent is running and there's text to queue */}
-            {hasText && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="primary"
-                      size="xs"
-                      title="Add message to queue"
-                      aria-label="Add message to queue"
-                      className="h-7 px-2 gap-1 cursor-pointer bg-amber-600 dark:bg-amber-500 text-white hover:bg-amber-700 dark:hover:bg-amber-600 flex-shrink-0 whitespace-nowrap"
-                      onClick={handleQueueFromButton}
-                    >
-                      <Plus height={14} width={14} strokeWidth={1.5} />
-                      <Typography variant="xs" className="font-medium">Queue</Typography>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    <Typography variant="xs">Press Enter to add message to queue (will send after current task)</Typography>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
             {/* Send Next button - shown when agent is running and there are queued messages */}
-            {hasQueuedMessages && !hasText && (
+            {hasQueuedMessages && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>

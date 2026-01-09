@@ -31,6 +31,7 @@ declare module "@assistant-ui/react" {
   export const ErrorPrimitive: any;
   export function useComposerRuntime(): any;
   export function useThreadRuntime(): any;
+  export function useMessagePart(selector?: (state: any) => any): any;
 }
 
 

@@ -30,6 +30,7 @@ const REQUIRED_TOOL_ARGUMENTS: Record<string, string[]> = {
   stagehand_observe: ['instruction'],
   stagehand_act: ['suggestion'],
   stagehand_extract: ['instruction', 'schema'],
+  spawn_subagents: ['subagents'],
 }
 
 function isMissing(value: unknown): boolean {

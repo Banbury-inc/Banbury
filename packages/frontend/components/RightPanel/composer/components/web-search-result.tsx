@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState, useMemo } from "react"
+import { useMemo } from "react"
 import ToolCallCard from "./ToolCallCard"
-import { ParallelWebSearchGroup } from "./ParallelWebSearchGroup"
 import type { ReactNode, SVGProps } from "react"
 import { Button } from "frontend/components/ui/button"
 
@@ -30,154 +29,6 @@ const ExternalLinkIcon = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 )
 
-// Global tracker for parallel web searches within a short time window
-interface TrackedSearch {
-  toolCallId: string
-  args: any
-  result?: unknown
-  timestamp: number
-}
-
-// Singleton tracker for parallel web searches
-const parallelSearchTracker = {
-  searches: new Map<string, TrackedSearch>(),
-  primaryId: null as string | null,
-  listeners: new Set<() => void>(),
-  lastGroupTimestamp: 0,
-  
-  register(id: string, args: any, result?: unknown) {
-    const now = Date.now()
-    
-    // If it's been more than 10 seconds since the last search group, start fresh
-    if (now - this.lastGroupTimestamp > 10000 && this.searches.size > 0) {
-      // Check if all existing searches are complete
-      const allComplete = Array.from(this.searches.values()).every(s => s.result !== undefined)
-      if (allComplete) {
-        this.searches.clear()
-        this.primaryId = null
-      }
-    }
-    
-    // Clean up old searches (older than 60 seconds with results)
-    for (const [key, search] of this.searches.entries()) {
-      if (search.result !== undefined && now - search.timestamp > 60000) {
-        this.searches.delete(key)
-      }
-    }
-    
-    // Check if this is a new group (first search after cleanup or no pending searches)
-    const hasPendingSearches = Array.from(this.searches.values()).some(
-      s => s.result === undefined
-    )
-    
-    if (!hasPendingSearches && this.searches.size === 0) {
-      this.primaryId = id
-      this.lastGroupTimestamp = now
-    } else if (this.primaryId === null) {
-      this.primaryId = id
-      this.lastGroupTimestamp = now
-    }
-    
-    this.searches.set(id, {
-      toolCallId: id,
-      args,
-      result,
-      timestamp: now
-    })
-    
-    this.notify()
-  },
-  
-  updateResult(id: string, result: unknown) {
-    const search = this.searches.get(id)
-    if (search) {
-      search.result = result
-      this.notify()
-    }
-  },
-  
-  isPrimary(id: string): boolean {
-    return this.primaryId === id
-  },
-  
-  getParallelSearches(): TrackedSearch[] {
-    const now = Date.now()
-    // Get all searches registered within the same session (within 60 seconds of each other)
-    const searches = Array.from(this.searches.values())
-    if (searches.length === 0) return []
-    
-    // Find the most recent group based on timestamp proximity
-    const sorted = searches.sort((a, b) => a.timestamp - b.timestamp)
-    const recentSearches: TrackedSearch[] = []
-    
-    for (const search of sorted) {
-      // Include if it's within 5 seconds of the group start or still pending
-      if (now - search.timestamp < 60000) {
-        recentSearches.push(search)
-      }
-    }
-    
-    return recentSearches
-  },
-  
-  subscribe(listener: () => void) {
-    this.listeners.add(listener)
-    return () => this.listeners.delete(listener)
-  },
-  
-  notify() {
-    this.listeners.forEach(l => l())
-  },
-  
-  clear() {
-    this.searches.clear()
-    this.primaryId = null
-    this.lastGroupTimestamp = 0
-    this.notify()
-  }
-}
-
-// Hook to use the parallel search tracker
-function useParallelSearchTracker(id: string, args: any, result?: unknown) {
-  const [, forceUpdate] = useState({})
-  const registeredRef = useRef(false)
-  
-  // Register this search on mount
-  useEffect(() => {
-    if (!registeredRef.current) {
-      parallelSearchTracker.register(id, args, result)
-      registeredRef.current = true
-    }
-  }, [id, args, result])
-  
-  // Update result when it changes
-  useEffect(() => {
-    if (result !== undefined) {
-      parallelSearchTracker.updateResult(id, result)
-    }
-  }, [id, result])
-  
-  // Subscribe to updates
-  useEffect(() => {
-    return parallelSearchTracker.subscribe(() => forceUpdate({}))
-  }, [])
-  
-  // Listen for conversation clear events to reset tracker
-  useEffect(() => {
-    const handleClear = () => {
-      parallelSearchTracker.clear()
-    }
-    window.addEventListener('clear-conversation', handleClear)
-    return () => window.removeEventListener('clear-conversation', handleClear)
-  }, [])
-  
-  return {
-    isPrimary: parallelSearchTracker.isPrimary(id),
-    parallelSearches: parallelSearchTracker.getParallelSearches(),
-    hasMultiple: parallelSearchTracker.getParallelSearches().length > 1
-  }
-}
-
 // Props passed by @assistant-ui/react's ToolCallMessagePartComponent
 // Plus additional props we may receive from ToolUI
 interface ToolCallProps {
@@ -188,12 +39,8 @@ interface ToolCallProps {
   result?: unknown
 }
 
-// Track component mount order to generate stable IDs
-let webSearchMountCounter = 0
-
 export const WebSearchTool = ({ toolName, toolCallId, argsText, args, result }: ToolCallProps) => {
   // Parse args if only argsText is provided
-  // Note: All hooks must be called unconditionally before any early returns
   const parsedArgs = useMemo(() => {
     if (args) return args
     try {
@@ -203,38 +50,8 @@ export const WebSearchTool = ({ toolName, toolCallId, argsText, args, result }: 
     }
   }, [args, argsText])
   
-  // Generate a stable ID for this search component using query content for uniqueness
-  const stableIdRef = useRef<string | null>(null)
-  if (!stableIdRef.current) {
-    const querySlug = (parsedArgs.query || "unknown").slice(0, 30).replace(/\s+/g, '-')
-    stableIdRef.current = toolCallId || `search-${webSearchMountCounter++}-${querySlug}`
-  }
-  const id = stableIdRef.current
-  
-  const { isPrimary, parallelSearches, hasMultiple } = useParallelSearchTracker(id, parsedArgs, result)
-  
-  // Early return for non-web_search tools (after all hooks are called)
+  // Early return for non-web_search tools
   if (toolName !== "web_search") return null
-  
-  // If this is a parallel search group and this is the primary search, render the group
-  if (hasMultiple && isPrimary) {
-    const searches = parallelSearches.map(s => ({
-      toolCallId: s.toolCallId,
-      toolName: "web_search",
-      args: s.args,
-      result: s.result
-    }))
-    
-    return <ParallelWebSearchGroup searches={searches} />
-  }
-  
-  // If this is part of a parallel group but not primary, don't render
-  // The primary will render the grouped view
-  if (hasMultiple && !isPrimary) {
-    return null
-  }
-  
-  // Single search - render normally
   const renderOutput = (value: unknown): ReactNode => {
     let parsed: WebSearchResponse | null = null
     try {
@@ -300,7 +117,7 @@ export const WebSearchTool = ({ toolName, toolCallId, argsText, args, result }: 
   return (
     <ToolCallCard
       toolName="web_search"
-      label="Searching web"
+      label={`Searching web for "${parsedArgs.query}"`}
       argsText={argsText}
       result={result}
       icon={<SearchIcon className="h-4 w-4" />}
