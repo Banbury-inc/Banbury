@@ -58,9 +58,9 @@ export function RightPanel({
 }: RightPanelProps): JSX.Element {
   const shouldShowCollapseButton = selectedFile || selectedEmail || hasCalendarOpen
   
-  // AI tabs state
+  // AI tabs state - initialize both states together to ensure consistency
   const [aiTabs, setAiTabs] = useState<AiTab[]>(() => [createInitialAiTab()])
-  const [activeAiTabId, setActiveAiTabId] = useState<string>(() => aiTabs[0]?.id || '')
+  const [activeAiTabId, setActiveAiTabId] = useState<string>('')
 
   // Update activeAiTabId if the initial tab changes
   useEffect(() => {
