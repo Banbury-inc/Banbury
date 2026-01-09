@@ -18,7 +18,6 @@ import {
   Github,
   Image,
   Video,
-  Database,
   ClipboardList,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -56,6 +55,7 @@ export interface ComposerToolPreferences {
   generate_video: boolean;
   memory: boolean;
   plan_mode: boolean;
+  ask_mode: boolean;
   model_provider: "anthropic" | "openai" | "google";
   model_id?: string;
   image_generation_model?: string;
@@ -70,6 +70,13 @@ export const toolConfigs: ToolConfig[] = [
     label: "Plan Mode",
     icon: ClipboardList,
     iconColor: "text-emerald-500",
+    defaultEnabled: false,
+  },
+  {
+    key: "ask_mode",
+    label: "Ask Mode",
+    icon: Search,
+    iconColor: "text-blue-500",
     defaultEnabled: false,
   },
   // System tools

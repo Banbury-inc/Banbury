@@ -10,6 +10,7 @@ interface ToolPreferences {
   slack: boolean;
   use_skills: boolean;
   plan_mode: boolean;
+  ask_mode: boolean;
 }
 
 export function getToolPreferences(): ToolPreferences {
@@ -25,6 +26,7 @@ export function getToolPreferences(): ToolPreferences {
     slack: false, // Disable Slack by default for security
     use_skills: false, // Disabled by default until API access confirmed
     plan_mode: false, // Disabled by default - use Agent mode
+    ask_mode: false, // Disabled by default - use Agent mode
   };
 
   try {
@@ -43,6 +45,8 @@ export function getToolPreferences(): ToolPreferences {
         use_skills: (parsed?.model_provider === 'anthropic'),
         // Plan mode preference
         plan_mode: (parsed && typeof parsed.plan_mode === 'boolean') ? parsed.plan_mode : false,
+        // Ask mode preference
+        ask_mode: (parsed && typeof parsed.ask_mode === 'boolean') ? parsed.ask_mode : false,
       };
     }
   } catch {}
