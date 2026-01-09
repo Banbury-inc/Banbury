@@ -7,6 +7,7 @@ import { ApiService } from '../../backend/api/apiService';
 import { cn } from '../utils';
 import { FileSystemItem } from '../utils/fileTreeUtils';
 import { buildFileTree } from '../utils/fileTreeUtils';
+import { useUserFiles } from '../contexts/UserFilesContext';
 
 interface FileAttachmentPopupProps {
   onFileSelect: (file: FileSystemItem & { fileData?: string; mimeType?: string }) => void;
@@ -24,8 +25,8 @@ export const FileAttachmentPopup: React.FC<FileAttachmentPopupProps> = ({
   userInfo,
   position
 }) => {
+  const { files: userFiles, loading } = useUserFiles();
   const [fileSystem, setFileSystem] = useState<FileSystemItem[]>([]);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [selectedFile, setSelectedFile] = useState<FileSystemItem | null>(null);
@@ -33,22 +34,15 @@ export const FileAttachmentPopup: React.FC<FileAttachmentPopupProps> = ({
   const [compressingFiles, setCompressingFiles] = useState<Set<string>>(new Set());
   const popupRef = useRef<HTMLDivElement>(null);
 
-  const fetchUserFiles = async () => {
-    if (!userInfo?.username) return;
-    
-    setLoading(true);
-    try {
-      const result = await ApiService.Files.getUserFiles(userInfo.username);
-      if (result.success) {
-        const tree = buildFileTree(result.files);
-        setFileSystem(tree);
-      }
-    } catch (error) {
-      console.error('Failed to fetch files:', error);
-    } finally {
-      setLoading(false);
+  // Build file tree from context files
+  useEffect(() => {
+    if (userFiles.length > 0) {
+      const tree = buildFileTree(userFiles);
+      setFileSystem(tree);
+    } else {
+      setFileSystem([]);
     }
-  };
+  }, [userFiles]);
 
   const compressImage = async (blob: Blob, fileName: string, fileId: string, maxSizeBytes: number = 5 * 1024 * 1024): Promise<Blob> => {
     // If it's not an image or already under size limit, return as-is
@@ -251,10 +245,6 @@ export const FileAttachmentPopup: React.FC<FileAttachmentPopupProps> = ({
     
     return mimeTypes[extension || ''] || 'application/octet-stream';
   };
-
-  useEffect(() => {
-    fetchUserFiles();
-  }, [userInfo?.username]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

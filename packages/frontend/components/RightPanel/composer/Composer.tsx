@@ -998,15 +998,15 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
   };
 
   return (
-    <div ref={containerRef} className="bg-accent border-0 relative flex items-center justify-between rounded-b-md p-2">
-      <div ref={buttonsRef} className="flex pl-4 items-center gap-2">
+    <div ref={containerRef} className="bg-accent border-0 relative flex items-center justify-between rounded-b-md p-2 overflow-hidden gap-4">
+      <div ref={buttonsRef} className="flex pl-4 items-center gap-2 min-w-0 flex-shrink overflow-x-auto scrollbar-hide flex-nowrap max-w-[calc(100%-120px)]">
         {/* Mode Selector - Agent/Plan/Ask */}
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
               size="xs"
-              className="h-7 px-2 gap-1 hover:bg-accent hover:text-primary"
+              className="h-7 px-2 gap-1 hover:bg-accent hover:text-primary flex-shrink-0 whitespace-nowrap"
               title="Mode"
               aria-label="Mode"
             >
@@ -1091,7 +1091,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
               <Button
                 variant="primary"
                 size="xs"
-                className="h-7 px-2 gap-1"
+                className="h-7 px-2 gap-1 flex-shrink-0 whitespace-nowrap"
                 title="Model"
                 aria-label="Model"
               >
@@ -1204,7 +1204,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
               <Button
                 variant="primary"
                 size="xs"
-                className="h-7 w-7"
+                className="h-7 w-7 flex-shrink-0"
                 title="More actions"
                 aria-label="More actions"
               >
@@ -1358,7 +1358,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           <Button
             variant="primary"
             size="xs"
-            className={`h-7 w-7 ${
+            className={`h-7 w-7 flex-shrink-0 ${
               isRecording
                 ? "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:text-white dark:hover:bg-red-700"
                 : ""
@@ -1373,7 +1373,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-shrink-0">
         {/* Context wheel showing token usage */}
         <TooltipProvider>
           <ContextWheel
@@ -1391,7 +1391,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
             type="button"
             variant="primary"
             size="xs"
-            className={`h-7 w-7 ${
+            className={`h-7 w-7 flex-shrink-0 ${
               hasText
                 ? 'cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100'
                 : 'opacity-50 bg-zinc-300 dark:bg-zinc-600 text-zinc-500 dark:text-zinc-400 cursor-not-allowed'
@@ -1406,7 +1406,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         </ThreadPrimitive.If>
 
         <ThreadPrimitive.If running>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0 flex-nowrap">
             {/* Queue button - shown when agent is running and there's text to queue */}
             {hasText && (
               <TooltipProvider>
@@ -1418,7 +1418,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                       size="xs"
                       title="Add message to queue"
                       aria-label="Add message to queue"
-                      className="h-7 px-2 gap-1 cursor-pointer bg-amber-600 dark:bg-amber-500 text-white hover:bg-amber-700 dark:hover:bg-amber-600"
+                      className="h-7 px-2 gap-1 cursor-pointer bg-amber-600 dark:bg-amber-500 text-white hover:bg-amber-700 dark:hover:bg-amber-600 flex-shrink-0 whitespace-nowrap"
                       onClick={handleQueueFromButton}
                     >
                       <Plus height={14} width={14} strokeWidth={1.5} />
@@ -1442,7 +1442,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                       size="xs"
                       title="Send next queued message (interrupts current)"
                       aria-label="Send next queued message"
-                      className="h-7 px-2 gap-1 cursor-pointer bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600"
+                      className="h-7 px-2 gap-1 cursor-pointer bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 flex-shrink-0 whitespace-nowrap"
                       onClick={onSendNextQueued}
                     >
                       <CornerDownLeft height={14} width={14} strokeWidth={1.5} />
@@ -1462,7 +1462,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                 size="xs"
                 title="Stop generating"
                 aria-label="Stop generating"
-                className="h-7 w-7 cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100" 
+                className="h-7 w-7 cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 flex-shrink-0" 
               >
                 <Square height={14} width={14} strokeWidth={1} />
               </Button>

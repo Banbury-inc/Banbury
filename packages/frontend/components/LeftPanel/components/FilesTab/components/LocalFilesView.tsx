@@ -17,6 +17,7 @@ import { buildFileTree, FileSystemItem, flattenFileTree } from "../../../../../u
 import { Typography } from "../../../../ui/typography"
 import { ShareFileDialog } from "../../../../share-file/ShareFileDialog"
 import { useToast } from "../../../../ui/use-toast"
+import { useUserFiles } from "../../../../../contexts/UserFilesContext"
 import { handleCreateDocumentSubmit } from "../handlers/handleCreateDocumentSubmit"
 import { handleCreateSpreadsheetSubmit } from "../handlers/handleCreateSpreadsheetSubmit"
 import { handleCreateDrawioSubmit as handleCreateDrawioSubmitHandler } from "../handlers/handleCreateDrawioSubmit"
@@ -86,9 +87,9 @@ export function LocalFilesView({
   activeFilters = new Set(),
 }: LocalFilesViewProps) {
   const { toast } = useToast()
+  const { files: userFiles, loading: filesLoading, error: filesError, refetch, initialized } = useUserFiles()
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [fileSystem, setFileSystem] = useState<FileSystemItem[]>([])
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   
@@ -287,34 +288,33 @@ export function LocalFilesView({
 
   const clearSelection = () => setSelectedIds(new Set())
 
-  const fetchUserFiles = useCallback(async () => {
-    if (!userInfo?.username) {
-      onRefreshComplete?.()
-      return
-    }
-    
-    setLoading(true)
-    setError(null)
-    
-    try {
-      const result = await ApiService.Files.getUserFiles(userInfo.username)
-      
-      if (result.success) {
-        const tree = buildFileTree(result.files)
-        setFileSystem(tree)
-      }
-    } catch (err) {
-      setError('Failed to fetch files')
-    } finally {
-      setLoading(false)
-      onRefreshComplete?.()
-    }
-  }, [userInfo?.username, onRefreshComplete])
-
-  // Fetch files when component mounts or user changes
+  // Build file tree from context files
   useEffect(() => {
-    fetchUserFiles()
-  }, [fetchUserFiles])
+    if (initialized && userFiles.length > 0) {
+      const tree = buildFileTree(userFiles)
+      setFileSystem(tree)
+    } else if (initialized && userFiles.length === 0) {
+      setFileSystem([])
+    }
+  }, [userFiles, initialized])
+
+  // Handle errors from context
+  useEffect(() => {
+    if (filesError) {
+      setError(filesError)
+    }
+  }, [filesError])
+
+  // Refresh handler - Use a ref to avoid recreating the function
+  const onRefreshCompleteRef = useRef(onRefreshComplete)
+  useEffect(() => {
+    onRefreshCompleteRef.current = onRefreshComplete
+  }, [onRefreshComplete])
+
+  const fetchUserFiles = useCallback(async () => {
+    await refetch()
+    onRefreshCompleteRef.current?.()
+  }, [refetch])
 
   // Listen for assistant create_file completion to refresh and optionally open the file
   useEffect(() => {
@@ -327,7 +327,7 @@ export function LocalFilesView({
         const createdPath: string | undefined = info?.file_path || info?.path
         const createdName: string | undefined = info?.file_name || info?.name
         if (!createdPath || !createdName || !userInfo?.username) {
-          fetchUserFiles()
+          refetch().then(() => onRefreshCompleteRef.current?.())
           return
         }
 
@@ -339,24 +339,22 @@ export function LocalFilesView({
         const pollAndOpen = async () => {
           if (cancelled) return
           try {
-            await fetchUserFiles()
-            const result = await ApiService.Files.getUserFiles(userInfo.username)
-            if (result.success && Array.isArray(result.files)) {
-              const f = result.files.find(f => f.file_path === createdPath)
-              if (f && f.file_id) {
-                const item = {
-                  id: f.file_path,
-                  name: f.file_name,
-                  path: f.file_path,
-                  type: 'file',
-                  file_id: f.file_id,
-                  size: f.file_size,
-                  modified: new Date(f.date_modified),
-                  s3_url: f.s3_url,
-                } as any
-                onFileSelect?.(item)
-                return
-              }
+            await refetch()
+            // Use files from context after refetch
+            const f = userFiles.find(f => f.file_path === createdPath)
+            if (f && f.file_id) {
+              const item = {
+                id: f.file_path,
+                name: f.file_name,
+                path: f.file_path,
+                type: 'file',
+                file_id: f.file_id,
+                size: f.file_size,
+                modified: new Date(f.date_modified),
+                s3_url: f.s3_url,
+              } as any
+              onFileSelect?.(item)
+              return
             }
           } catch {}
 
@@ -374,14 +372,14 @@ export function LocalFilesView({
 
     window.addEventListener('assistant-file-created', handleCreated as EventListener)
     return () => window.removeEventListener('assistant-file-created', handleCreated as EventListener)
-  }, [fetchUserFiles, onFileSelect, userInfo?.username])
+  }, [refetch, onFileSelect, userInfo?.username, userFiles])
 
   // Fetch files when refreshTrigger changes
   useEffect(() => {
     if (refreshTrigger !== undefined) {
       fetchUserFiles()
     }
-  }, [refreshTrigger, fetchUserFiles])
+  }, [refreshTrigger]) // Intentionally omit fetchUserFiles to avoid infinite loop
 
   // Handle trigger for root folder creation
   useEffect(() => {
@@ -1082,7 +1080,7 @@ export function LocalFilesView({
           )}
           
           {/* Local Files View */}
-          {viewMode === 'local' && loading && !fileSystem.length && (
+          {viewMode === 'local' && filesLoading && !fileSystem.length && (
             <div className="flex items-center gap-2 px-3 py-2">
               <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
               <Typography variant="muted">Loading files...</Typography>
@@ -1102,7 +1100,7 @@ export function LocalFilesView({
             </div>
           )}
           
-          {viewMode === 'local' && !loading && !error && filteredFileSystem.length === 0 && !uploadingFolder && (
+          {viewMode === 'local' && !filesLoading && !error && filteredFileSystem.length === 0 && !uploadingFolder && (
             <div className="px-3 py-2">
               <Typography variant="muted">{activeFilters.size > 0 ? 'No matching files' : 'No files found'}</Typography>
             </div>

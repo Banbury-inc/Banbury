@@ -14,7 +14,7 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      "fixed top-4 right-4 z-[100] flex max-h-screen w-full max-w-[420px] flex-col gap-2",
+      "fixed top-4 right-4 z-[100] flex max-h-screen w-full max-w-[210px] flex-col gap-1",
       className
     )}
     {...props}
@@ -23,7 +23,7 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-lg border p-3 pr-8 shadow-2xl backdrop-blur-md transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+  "group pointer-events-auto relative flex w-full items-start gap-1.5 overflow-hidden rounded-lg border p-1.5 pr-4 shadow-2xl backdrop-blur-md transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
   {
     variants: {
       variant: {
@@ -44,11 +44,12 @@ const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
     VariantProps<typeof toastVariants>
->(({ className, variant, children, ...props }, ref) => {
+>(({ className, variant, duration = 2500, children, ...props }, ref) => {
   return (
     <ToastPrimitives.Root
       ref={ref}
       className={cn(toastVariants({ variant }), className)}
+      duration={duration}
       {...props}
     >
       {/* Leading accent bar */}
@@ -62,14 +63,14 @@ const Toast = React.forwardRef<
         )}
       />
       {/* Icon + content wrapper */}
-      <div className="pl-3 pr-5 py-0.5 flex items-center gap-2">
+      <div className="pl-1.5 pr-2.5 py-0.5 flex items-center gap-1">
         <div className="mt-0.5">
           {variant === "success" ? (
-            <CheckCircle2 className="h-4 w-4 text-success" />
+            <CheckCircle2 className="h-3 w-3 text-success" />
           ) : variant === "error" || variant === "destructive" ? (
-            <AlertTriangle className="h-4 w-4 text-error" />
+            <AlertTriangle className="h-3 w-3 text-error" />
           ) : (
-            <Info className="h-4 w-4 text-zinc-300" />
+            <Info className="h-3 w-3 text-zinc-300" />
           )}
         </div>
         <div className="flex-1 min-w-0">{children}</div>
@@ -101,13 +102,13 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-md p-1 text-zinc-300/80 opacity-0 transition-all hover:text-white hover:bg-white/10 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/30 group-hover:opacity-100",
+      "absolute right-1 top-1 rounded-md p-0.5 text-zinc-300/80 opacity-0 transition-all hover:text-white hover:bg-white/10 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/30 group-hover:opacity-100",
       className
     )}
     toast-close=""
     {...props}
   >
-    <X className="h-4 w-4" />
+    <X className="h-3 w-3" />
   </ToastPrimitives.Close>
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;
@@ -118,7 +119,7 @@ const ToastTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Title
     ref={ref}
-    className={cn("text-sm font-semibold leading-tight", className)}
+    className={cn("text-xs font-semibold leading-tight", className)}
     {...props}
   />
 ));
@@ -130,7 +131,7 @@ const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn("text-sm opacity-90", className)}
+    className={cn("text-xs opacity-90", className)}
     {...props}
   />
 ));

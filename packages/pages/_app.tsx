@@ -5,6 +5,7 @@ import { ThemeProvider } from 'frontend/components/ThemeProvider';
 import { useEffect } from 'react';
 import { ClaudeRuntimeProvider } from 'frontend/assistant/ClaudeRuntimeProvider/ClaudeRuntimeProvider';
 import { Toaster } from 'frontend/components/ui/toaster';
+import { UserFilesProvider } from 'frontend/contexts/UserFilesContext';
 import '@/index.css';
 import '@/styles/DiffPreview.css';
 import { useRouter } from 'next/router';
@@ -28,10 +29,12 @@ function AppInner({ Component, pageProps }: AppProps) {
         enableSystem={false}
         storageKey="themeMode"
       >
-        <ClaudeRuntimeProvider>
-          <Component {...pageProps} />
-        </ClaudeRuntimeProvider>
-        <Toaster />
+        <UserFilesProvider>
+          <ClaudeRuntimeProvider>
+            <Component {...pageProps} />
+          </ClaudeRuntimeProvider>
+          <Toaster />
+        </UserFilesProvider>
       </ThemeProvider>
     </HelmetProvider>
   );

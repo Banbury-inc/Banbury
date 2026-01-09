@@ -6,11 +6,11 @@ import React, { useState, useEffect } from 'react'
 
 import { Input } from '../../../ui/old-input'
 import { Typography } from '../../../ui/typography'
-import { ApiService } from '../../../../../backend/api/apiService'
 import { cn } from '../../../../utils'
 import { FileSystemItem } from '../../../../utils/fileTreeUtils'
 import { buildFileTree } from '../../../../utils/fileTreeUtils'
 import { getFileIcon } from './file-attachment-picker-utils'
+import { useUserFiles } from '../../../../contexts/UserFilesContext'
 
 interface FileAttachmentPickerProps {
   onFileAttach: (file: FileSystemItem) => void
@@ -26,34 +26,20 @@ export const FileAttachmentPicker: React.FC<FileAttachmentPickerProps> = ({
   userInfo,
   isOpen = false,
 }) => {
+  const { files: userFiles, loading } = useUserFiles()
   const [fileSystem, setFileSystem] = useState<FileSystemItem[]>([])
-  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
-  const fetchUserFiles = async () => {
-    if (!userInfo?.username) return
-    
-    setLoading(true)
-    try {
-      const result = await ApiService.Files.getUserFiles(userInfo.username)
-      if (result.success) {
-        const tree = buildFileTree(result.files)
-        setFileSystem(tree)
-      }
-    } catch (error) {
-      console.error('Failed to fetch files:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Fetch files when picker opens
+  // Build file tree from context files
   useEffect(() => {
-    if (isOpen) {
-      fetchUserFiles()
+    if (userFiles.length > 0) {
+      const tree = buildFileTree(userFiles)
+      setFileSystem(tree)
+    } else {
+      setFileSystem([])
     }
-  }, [isOpen, userInfo?.username])
+  }, [userFiles])
 
   const toggleExpanded = (id: string) => {
     setExpandedItems(prev => {

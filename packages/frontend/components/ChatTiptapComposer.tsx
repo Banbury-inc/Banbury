@@ -17,6 +17,7 @@ import { extractEmailContent } from '../utils/emailUtils';
 import { buildFileTree, flattenFileTree, FileSystemItem } from '../utils/fileTreeUtils';
 import { handleClipboardPaste } from './handlers/handle-clipboard-paste';
 import { useToast } from './ui/use-toast';
+import { useUserFiles } from '../contexts/UserFilesContext';
 
 import type { Editor } from '@tiptap/core';
 import type { SuggestionOptions } from '@tiptap/suggestion';
@@ -120,8 +121,8 @@ const getDocumentEditorContent = (currentEditorDom?: Element | null): string => 
 };
 
 export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenInputRef, userInfo, onFileAttach, onAttachmentPayload, placeholder = 'Send a message...', className, onSend, onEditorMount, isRunning = false, onQueueMessage, hasQueuedMessages = false, onSendNextQueued }) => {
+  const { files: userFiles, loading: filesLoading } = useUserFiles();
   const [files, setFiles] = React.useState<FileSystemItem[]>([]);
-  const [loading, setLoading] = React.useState<boolean>(false);
   const filesRef = React.useRef<FileSystemItem[]>([]);
   const loadingRef = React.useRef<boolean>(false);
   const [editor, setEditor] = React.useState<Editor | null>(null);
@@ -133,27 +134,20 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
     toastRef.current = toast;
   }, [toast]);
 
-  const fetchFiles = React.useCallback(async () => {
-    try {
-      setLoading(true);
-      if (!userInfo?.username) return;
-      const result = await ApiService.Files.getUserFiles(userInfo.username);
-      if (result.success) {
-        const tree = buildFileTree(result.files);
-        const flat = flattenFileTree(tree).filter(f => f.type === 'file');
-        setFiles(flat);
-      }
-    } catch {}
-    finally { setLoading(false); }
-  }, [userInfo?.username]);
-
+  // Build flat file list from context files
   useEffect(() => {
-    fetchFiles();
-  }, [fetchFiles]);
+    if (userFiles.length > 0) {
+      const tree = buildFileTree(userFiles);
+      const flat = flattenFileTree(tree).filter(f => f.type === 'file');
+      setFiles(flat);
+    } else {
+      setFiles([]);
+    }
+  }, [userFiles]);
 
   // Keep refs in sync so suggestion reads current data without recreating editor
   useEffect(() => { filesRef.current = files; }, [files]);
-  useEffect(() => { loadingRef.current = loading; }, [loading]);
+  useEffect(() => { loadingRef.current = filesLoading; }, [filesLoading]);
 
   // Lightweight visual highlighter for any @token (plain text), excluding email addresses.
   const MentionHighlighter = useMemo(() => {

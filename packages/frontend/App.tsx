@@ -19,6 +19,7 @@ import Workspaces from './pages/Workspaces';
 import { ApiService } from '../backend/api/apiService';
 import { getErrorTracker } from './utils/errorTracker';
 import { getUserEngagementTracker } from './utils/userEngagementTracker';
+import { UserFilesProvider } from './contexts/UserFilesContext';
 
 import './index.css';
 
@@ -79,26 +80,28 @@ const App = (): JSX.Element => {
         enableSystem={false}
         storageKey="themeMode"
       >
-        <BrowserRouter>
-          <PageTracker />
-          <AnalyticsInitializer />
-          <Routes>
-            <Route path='/workspaces' element={<Workspaces />} />
-            <Route path='/knowledge' element={<Knowledge />} />
-            <Route path='/meeting-agent' element={<MeetingAgent />} />
-            <Route path='/admin' element={<Admin />} />
-            <Route path='/' element={<Layout><Home /></Layout>} />
-            <Route path='/login' element={<Layout><Login /></Layout>} />
-            <Route path='/auth/callback' element={<Layout><AuthCallback /></Layout>} />
-            <Route path='/features' element={<Layout><Features /></Layout>} />
-            <Route path='/filedownload/:username/:file_id' element={<Layout><FileDownload /></Layout>} />
-            <Route path='/api' element={<Layout><API /></Layout>} />
-            <Route path='/news' element={<Layout><News /></Layout>} />
-            <Route path='/news/:postId' element={<Layout><News /></Layout>} />
-            <Route path='/terms_of_use' element={<Layout><Terms_of_use /></Layout>} />
-            <Route path='/privacy_policy' element={<Layout><Privacy_Policy /></Layout>} />
-          </Routes>
-        </BrowserRouter>
+        <UserFilesProvider>
+          <BrowserRouter>
+            <PageTracker />
+            <AnalyticsInitializer />
+            <Routes>
+              <Route path='/workspaces' element={<Workspaces />} />
+              <Route path='/knowledge' element={<Knowledge />} />
+              <Route path='/meeting-agent' element={<MeetingAgent />} />
+              <Route path='/admin' element={<Admin />} />
+              <Route path='/' element={<Layout><Home /></Layout>} />
+              <Route path='/login' element={<Layout><Login /></Layout>} />
+              <Route path='/auth/callback' element={<Layout><AuthCallback /></Layout>} />
+              <Route path='/features' element={<Layout><Features /></Layout>} />
+              <Route path='/filedownload/:username/:file_id' element={<Layout><FileDownload /></Layout>} />
+              <Route path='/api' element={<Layout><API /></Layout>} />
+              <Route path='/news' element={<Layout><News /></Layout>} />
+              <Route path='/news/:postId' element={<Layout><News /></Layout>} />
+              <Route path='/terms_of_use' element={<Layout><Terms_of_use /></Layout>} />
+              <Route path='/privacy_policy' element={<Layout><Privacy_Policy /></Layout>} />
+            </Routes>
+          </BrowserRouter>
+        </UserFilesProvider>
       </ThemeProvider>
     </HelmetProvider>
   );

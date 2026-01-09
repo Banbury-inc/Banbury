@@ -247,6 +247,18 @@
   }
 }
 
+@layer utilities {
+  /* Hide scrollbar but keep scrolling functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Custom styles for sidebar positioning with nav sidebar */
 .with-nav-sidebar [data-slot="sidebar-container"] {
   left: 4rem !important; /* 64px to account for nav sidebar */
