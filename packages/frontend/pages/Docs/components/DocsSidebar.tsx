@@ -1,4 +1,5 @@
-import { Box, Typography, List, ListItem, ListItemButton, ListItemText } from '@mui/material';
+import { Box, Typography, List, ListItem, ListItemButton, ListItemText, Drawer, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 
@@ -16,9 +17,11 @@ interface SidebarItem {
 
 interface DocsSidebarProps {
   activeSection?: string;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
-const DocsSidebar = ({ activeSection }: DocsSidebarProps): JSX.Element => {
+const DocsSidebar = ({ activeSection, mobileOpen = false, onMobileClose }: DocsSidebarProps): JSX.Element => {
   const router = useRouter();
 
   const sections: SidebarSection[] = [
@@ -104,138 +107,195 @@ const DocsSidebar = ({ activeSection }: DocsSidebarProps): JSX.Element => {
     setExpandedSections(newExpanded);
   };
 
-  const handleItemClick = (itemId: string, href: string) => {
+  const handleItemClick = (href: string) => {
     router.push(href);
+    if (onMobileClose) onMobileClose();
   };
 
-  return (
-    <Box
-      sx={{
-        width: { xs: '100%', md: '280px' },
-        minWidth: { md: '280px' },
-        background: 'rgba(255, 255, 255, 0.02)',
-        borderRight: '1px solid rgba(255, 255, 255, 0.08)',
-        height: 'calc(100vh - 70px)', // Subtract header height
-        minHeight: 'calc(100vh - 70px)',
-        overflowY: 'auto',
-        position: 'fixed',
-        left: 0,
-        top: '70px', // Start below header
-        zIndex: 1000,
-        '&::-webkit-scrollbar': {
-          width: '6px',
-        },
-        '&::-webkit-scrollbar-track': {
-          background: 'rgba(255, 255, 255, 0.05)',
-        },
-        '&::-webkit-scrollbar-thumb': {
-          background: 'rgba(255, 255, 255, 0.2)',
-          borderRadius: '3px',
-        },
-        '&::-webkit-scrollbar-thumb:hover': {
-          background: 'rgba(255, 255, 255, 0.3)',
-        },
-      }}
-    >
-      <Box sx={{ p: 2 }}>
+  const sidebarContent = (
+    <Box sx={{ p: 2 }}>
+      {/* Mobile header with close button */}
+      <Box sx={{ 
+        display: { xs: 'flex', md: 'none' }, 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        mb: 2
+      }}>
         <Typography
           sx={{
             fontSize: '1rem',
             fontWeight: 600,
             color: '#ffffff',
-            mb: 1.5,
             fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           }}
         >
           Documentation
         </Typography>
-        
-        <List sx={{ p: 0 }}>
-          {sections.map((section) => (
-            <Box key={section.id}>
-              <ListItem
-                disablePadding
+        <IconButton 
+          onClick={onMobileClose}
+          sx={{ color: '#ffffff' }}
+          aria-label="close menu"
+        >
+          <CloseIcon />
+        </IconButton>
+      </Box>
+      
+      {/* Desktop title */}
+      <Typography
+        sx={{
+          display: { xs: 'none', md: 'block' },
+          fontSize: '1rem',
+          fontWeight: 600,
+          color: '#ffffff',
+          mb: 1.5,
+          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        }}
+      >
+        Documentation
+      </Typography>
+      
+      <List sx={{ p: 0 }}>
+        {sections.map((section) => (
+          <Box key={section.id}>
+            <ListItem
+              disablePadding
+              sx={{
+                mb: 0.5,
+              }}
+            >
+              <ListItemButton
+                onClick={() => toggleSection(section.id)}
                 sx={{
-                  mb: 0.5,
+                  borderRadius: '6px',
+                  py: 0.75,
+                  '&:hover': {
+                    background: 'rgba(255, 255, 255, 0.05)',
+                  },
+                  '&.Mui-selected': {
+                    background: 'rgba(255, 255, 255, 0.08)',
+                  },
                 }}
               >
-                <ListItemButton
-                  onClick={() => toggleSection(section.id)}
-                  sx={{
-                    borderRadius: '6px',
-                    py: 0.75,
-                    '&:hover': {
-                      background: 'rgba(255, 255, 255, 0.05)',
-                    },
-                    '&.Mui-selected': {
-                      background: 'rgba(255, 255, 255, 0.08)',
+                <ListItemText
+                  primary={section.title}
+                  primaryTypographyProps={{
+                    sx: {
+                      fontSize: '0.8rem',
+                      fontWeight: 500,
+                      color: '#ffffff',
+                      fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     },
                   }}
+                />
+                <Typography
+                  sx={{
+                    color: '#a1a1aa',
+                    fontSize: '0.75rem',
+                    transform: expandedSections.has(section.id) ? 'rotate(90deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease',
+                  }}
                 >
-                  <ListItemText
-                    primary={section.title}
-                    primaryTypographyProps={{
-                      sx: {
-                        fontSize: '0.8rem',
-                        fontWeight: 500,
-                        color: '#ffffff',
-                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                      },
-                    }}
-                  />
-                  <Typography
-                    sx={{
-                      color: '#a1a1aa',
-                      fontSize: '0.75rem',
-                      transform: expandedSections.has(section.id) ? 'rotate(90deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s ease',
-                    }}
-                  >
-                    ›
-                  </Typography>
-                </ListItemButton>
-              </ListItem>
-              
-              {expandedSections.has(section.id) && (
-                <List sx={{ pl: 1.5, pb: 0.5 }}>
-                  {section.items.map((item) => (
-                    <ListItem key={item.id} disablePadding>
-                      <ListItemButton
-                        onClick={() => handleItemClick(item.id, item.href)}
-                        sx={{
-                          borderRadius: '4px',
-                          minHeight: '28px',
-                          py: 0.5,
-                          '&:hover': {
-                            background: 'rgba(255, 255, 255, 0.03)',
-                          },
-                          '&.Mui-selected': {
-                            background: 'rgba(255, 255, 255, 0.06)',
+                  ›
+                </Typography>
+              </ListItemButton>
+            </ListItem>
+            
+            {expandedSections.has(section.id) && (
+              <List sx={{ pl: 1.5, pb: 0.5 }}>
+                {section.items.map((item) => (
+                  <ListItem key={item.id} disablePadding>
+                    <ListItemButton
+                      onClick={() => handleItemClick(item.href)}
+                      sx={{
+                        borderRadius: '4px',
+                        minHeight: '36px',
+                        py: { xs: 1, md: 0.5 },
+                        '&:hover': {
+                          background: 'rgba(255, 255, 255, 0.03)',
+                        },
+                        '&.Mui-selected': {
+                          background: 'rgba(255, 255, 255, 0.06)',
+                        },
+                      }}
+                      selected={activeSection === item.id}
+                    >
+                      <ListItemText
+                        primary={item.title}
+                        primaryTypographyProps={{
+                          sx: {
+                            fontSize: { xs: '0.875rem', md: '0.75rem' },
+                            color: activeSection === item.id ? '#ffffff' : '#a1a1aa',
+                            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                            fontWeight: activeSection === item.id ? 500 : 400,
                           },
                         }}
-                        selected={activeSection === item.id}
-                      >
-                        <ListItemText
-                          primary={item.title}
-                          primaryTypographyProps={{
-                            sx: {
-                              fontSize: '0.75rem',
-                              color: activeSection === item.id ? '#ffffff' : '#a1a1aa',
-                              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                              fontWeight: activeSection === item.id ? 500 : 400,
-                            },
-                          }}
-                        />
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
-                </List>
-              )}
-            </Box>
-          ))}
-        </List>
-      </Box>
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </Box>
+        ))}
+      </List>
     </Box>
+  );
+
+  return (
+    <>
+      {/* Mobile Drawer */}
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={onMobileClose}
+        ModalProps={{
+          keepMounted: true, // Better mobile performance
+        }}
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': {
+            width: '280px',
+            background: '#0a0a0a',
+            borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+          },
+        }}
+      >
+        {sidebarContent}
+      </Drawer>
+
+      {/* Desktop Sidebar - Fixed */}
+      <Box
+        sx={{
+          display: { xs: 'none', md: 'block' },
+          width: '280px',
+          minWidth: '280px',
+          background: 'rgba(255, 255, 255, 0.02)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+          height: 'calc(100vh - 70px)',
+          minHeight: 'calc(100vh - 70px)',
+          overflowY: 'auto',
+          position: 'fixed',
+          left: 0,
+          top: '70px',
+          zIndex: 1000,
+          '&::-webkit-scrollbar': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'rgba(255, 255, 255, 0.05)',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'rgba(255, 255, 255, 0.2)',
+            borderRadius: '3px',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            background: 'rgba(255, 255, 255, 0.3)',
+          },
+        }}
+      >
+        {sidebarContent}
+      </Box>
+    </>
   );
 };
 

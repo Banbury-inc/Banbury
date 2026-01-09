@@ -87,7 +87,15 @@ export default function DocPageLayout({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <Box sx={{ width: '100%', maxWidth: '800px', overflow: 'visible' }} ref={contentRef}>
+      <Box 
+        sx={{ 
+          width: '100%', 
+          maxWidth: { xs: '100%', lg: '800px' }, 
+          overflow: 'visible',
+          pr: { lg: '260px' }, // Make room for TableOfContents on large screens
+        }} 
+        ref={contentRef}
+      >
         {children}
       </Box>
       <TableOfContents headings={headings} />
