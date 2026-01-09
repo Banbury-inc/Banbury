@@ -28,6 +28,10 @@ import PowerPointFeatureTab from './components/Tabs/PowerPointFeatureTab'
 import ContextWheelTab from './components/Tabs/ContextWheelTab'
 import FileSharingTab from './components/Tabs/FileSharingTab'
 import BillingTab from './components/Tabs/BillingTab'
+import AgentModesTab from './components/Tabs/AgentModesTab'
+import ParallelAgentsTab from './components/Tabs/ParallelAgentsTab'
+import QueuedMessagesTab from './components/Tabs/QueuedMessagesTab'
+import VideoGenerationTab from './components/Tabs/VideoGenerationTab'
 
 const Docs = () => {
   const router = useRouter();
@@ -190,8 +194,24 @@ const Docs = () => {
               <BillingTab />
             )}
 
+            {activeSection === 'agent-modes' && (
+              <AgentModesTab />
+            )}
+
+            {activeSection === 'parallel-agents' && (
+              <ParallelAgentsTab />
+            )}
+
+            {activeSection === 'queued-messages' && (
+              <QueuedMessagesTab />
+            )}
+
+            {activeSection === 'video-generation' && (
+              <VideoGenerationTab />
+            )}
+
             {/* Default Tab - Show when no specific tab is selected */}
-            {!['what-is-banbury', 'features', 'using-banbury', 'task-studio', 'knowledge-graph', 'memories', 'integrations', 'gmail', 'google-docs', 'google-sheets', 'outlook', 'microsoft-calendar', 'onedrive', 'x', 'docs-feature', 'spreadsheets-feature', 'folders-feature', 'browse-feature', 'calendar-feature', 'canvas-feature', 'gmail-feature', 'meeting-agent-feature', 'powerpoint-feature', 'context-wheel', 'file-sharing', 'billing'].includes(activeSection) && (
+            {!['what-is-banbury', 'features', 'using-banbury', 'task-studio', 'knowledge-graph', 'memories', 'integrations', 'gmail', 'google-docs', 'google-sheets', 'outlook', 'microsoft-calendar', 'onedrive', 'x', 'docs-feature', 'spreadsheets-feature', 'folders-feature', 'browse-feature', 'calendar-feature', 'canvas-feature', 'gmail-feature', 'meeting-agent-feature', 'powerpoint-feature', 'context-wheel', 'file-sharing', 'billing', 'agent-modes', 'parallel-agents', 'queued-messages', 'video-generation'].includes(activeSection) && (
               <WhatIsBanburyTab />
             )}
           </Box>
