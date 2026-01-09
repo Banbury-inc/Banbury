@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next"
 import { SystemMessage, HumanMessage, ChatMessage } from "@langchain/core/messages"
-import { createReactAgentForProvider, createDocumentAgentForProvider, createPlanningAgentForProvider } from "./agent/agent"
+import { createReactAgentForProvider, createDocumentAgentForProvider, createPlanningAgentForProvider, createAskAgentForProvider } from "./agent/agent"
 import { runWithServerContext } from "../../../../frontend/assistant/langraph/serverContext"
 import type { StreamRequestBody } from "./types"
-import { SYSTEM_PROMPT, DOCUMENT_SYSTEM_PROMPT, API_CONFIG } from "./constants"
+import { SYSTEM_PROMPT, DOCUMENT_SYSTEM_PROMPT, ASK_MODE_SYSTEM_PROMPT, API_CONFIG } from "./constants"
 import { PLANNER_SYSTEM_PROMPT } from "../planner-stream/constants"
 import { normalizeMessages } from "./handlers/normalizeMessages"
 import { enrichWithDocumentContext } from "./handlers/enrichWithDocumentContext"
@@ -72,6 +72,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // to ensure the general agent with full tools is used for execution.
     const isPlanMode = normalizedToolPreferences.plan_mode === true && !body.planContext
     
+    // Determine if ask mode is enabled (read-only exploration, only search tools)
+    // Ask mode cannot be combined with plan mode - plan mode takes precedence
+    const isAskMode = normalizedToolPreferences.ask_mode === true && !isPlanMode && !body.planContext
+    
     if (!hasSystemMessage) {
       // Append date/time context (if provided) directly to the system prompt so the model always sees it
       const dateTimeSuffix = body.dateTimeContext
@@ -102,11 +106,14 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
       }
       
       // Use appropriate system prompt based on mode:
-      // 1. Plan mode: Use planner prompt to generate comprehensive implementation plans
-      // 2. Document request: Use document-specialized prompt
-      // 3. Default: Use general assistant prompt
+      // 1. Ask mode: Use ask mode prompt for read-only exploration
+      // 2. Plan mode: Use planner prompt to generate comprehensive implementation plans
+      // 3. Document request: Use document-specialized prompt
+      // 4. Default: Use general assistant prompt
       let basePrompt: string
-      if (isPlanMode) {
+      if (isAskMode) {
+        basePrompt = ASK_MODE_SYSTEM_PROMPT
+      } else if (isPlanMode) {
         basePrompt = PLANNER_SYSTEM_PROMPT
       } else if (isDocumentRequest) {
         basePrompt = DOCUMENT_SYSTEM_PROMPT
@@ -164,12 +171,16 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
         planContext: body.planContext,
       }, async () => {
         // Select agent based on mode:
-        // 1. Plan mode: Read-only tools for researching and creating plans
-        // 2. Document request: Document-specialized tools
-        // 3. Default: Full tool access
+        // 1. Ask mode: Read-only search tools for exploration
+        // 2. Plan mode: Read-only tools for researching and creating plans
+        // 3. Document request: Document-specialized tools
+        // 4. Default: Full tool access
         let reactAgent
-        let agentType: "planning" | "document" | "general"
-        if (isPlanMode) {
+        let agentType: "asking" | "planning" | "document" | "general"
+        if (isAskMode) {
+          reactAgent = createAskAgentForProvider(modelProvider)
+          agentType = "asking"
+        } else if (isPlanMode) {
           reactAgent = createPlanningAgentForProvider(modelProvider)
           agentType = "planning"
         } else if (isDocumentRequest) {
@@ -184,10 +195,12 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
         send({ 
           type: "agent-type", 
           agentType,
-          agentLabel: agentType === "planning" ? "Planning Agent" : 
+          agentLabel: agentType === "asking" ? "Ask Agent" :
+                      agentType === "planning" ? "Planning Agent" : 
                       agentType === "document" ? "Document Agent" : 
                       "General Agent",
-          description: agentType === "planning" ? "Researching and creating plan (read-only mode)" :
+          description: agentType === "asking" ? "Read-only exploration and research (no modifications)" :
+                       agentType === "planning" ? "Researching and creating plan (read-only mode)" :
                        agentType === "document" ? "Specialized for document creation and editing" :
                        "Full capabilities enabled"
         })

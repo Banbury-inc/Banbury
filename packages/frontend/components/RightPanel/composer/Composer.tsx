@@ -14,6 +14,7 @@ import {
   Upload,
   ClipboardList,
   Infinity,
+  Search,
 } from "lucide-react";
 
 import { ChatTiptapComposer } from "../../ChatTiptapComposer";
@@ -101,6 +102,7 @@ export interface ComposerToolPreferences {
   memory: boolean;
   // Agent modes
   plan_mode: boolean;
+  ask_mode: boolean;
   model_provider: "anthropic" | "openai" | "google";
   model_id?: string;
   image_generation_model?: string;
@@ -834,7 +836,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
   return (
     <div ref={containerRef} className="bg-accent border-0 relative flex items-center justify-between rounded-b-md p-2">
       <div ref={buttonsRef} className="flex pl-4 items-center gap-2">
-        {/* Mode Selector - Agent/Plan */}
+        {/* Mode Selector - Agent/Plan/Ask */}
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -844,14 +846,16 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
               title="Mode"
               aria-label="Mode"
             >
-              {toolPreferences.plan_mode ? (
+              {toolPreferences.ask_mode ? (
+                <Search height={14} width={14} strokeWidth={1.5} className="mr-1" />
+              ) : toolPreferences.plan_mode ? (
                 <ClipboardList height={14} width={14} strokeWidth={1.5} className="mr-1" />
               ) : (
                 <Infinity height={14} width={14} strokeWidth={1.5} className="mr-1" />
               )}
               {visibleButtons.modeText && (
                 <Typography variant="small" className="text-xs font-medium">
-                  {toolPreferences.plan_mode ? "Plan" : "Agent"}
+                  {toolPreferences.ask_mode ? "Ask" : toolPreferences.plan_mode ? "Plan" : "Agent"}
                 </Typography>
               )}
               <ChevronDown height={16} width={16} strokeWidth={1} />
@@ -869,15 +873,33 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                 onClick={() => {
                   onUpdateToolPreferences({
                     ...toolPreferences,
-                    plan_mode: false
+                    plan_mode: false,
+                    ask_mode: false
                   })
                 }}
               >
                 <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                  {!toolPreferences.plan_mode && <Check className="size-4" />}
+                  {!toolPreferences.plan_mode && !toolPreferences.ask_mode && <Check className="size-4" />}
                 </span>
                 <Infinity height={16} width={16} strokeWidth={1.5} className="text-muted-foreground" />
                 <Typography variant="xs">Agent</Typography>
+              </div>
+              {/* Ask Mode Option */}
+              <div
+                className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+                onClick={() => {
+                  onUpdateToolPreferences({
+                    ...toolPreferences,
+                    plan_mode: false,
+                    ask_mode: true
+                  })
+                }}
+              >
+                <span className="absolute right-2 flex size-3.5 items-center justify-center">
+                  {toolPreferences.ask_mode && <Check className="size-4" />}
+                </span>
+                <Search height={16} width={16} strokeWidth={1.5} className="text-blue-500" />
+                <Typography variant="xs">Ask</Typography>
               </div>
               {/* Plan Mode Option */}
               <div
@@ -885,7 +907,8 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
                 onClick={() => {
                   onUpdateToolPreferences({
                     ...toolPreferences,
-                    plan_mode: true
+                    plan_mode: true,
+                    ask_mode: false
                   })
                 }}
               >

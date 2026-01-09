@@ -58,6 +58,8 @@ export interface ToolPreferences {
   use_skills?: boolean
   // Plan mode: when enabled, agent uses planner system prompt
   plan_mode?: boolean
+  // Ask mode: read-only exploration, only search tools available
+  ask_mode?: boolean
 }
 
 export interface DateTimeContext {

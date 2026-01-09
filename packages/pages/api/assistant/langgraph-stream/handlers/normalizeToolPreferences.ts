@@ -52,6 +52,8 @@ export function normalizeToolPreferences({
     use_skills: toolPreferences.use_skills === true && (toolPreferences.model_provider === "anthropic" || !toolPreferences.model_provider),
     // Plan mode: when enabled, agent uses the planner system prompt to generate implementation plans
     plan_mode: toolPreferences.plan_mode === true,
+    // Ask mode: read-only exploration, only search tools available
+    ask_mode: toolPreferences.ask_mode === true,
   }
 }
 

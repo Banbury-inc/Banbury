@@ -243,6 +243,28 @@ const planningTools = [
 ]
 
 /**
+ * Ask mode tools - Read-only search and research tools.
+ * 
+ * In ask mode, the agent can ONLY:
+ * 1. Search the web for information
+ * 2. Search files in cloud storage
+ * 3. Search memory for past context
+ * 
+ * NO write, edit, or modification tools are available. This ensures the ask agent
+ * can only research and explain, never modify files or execute actions.
+ */
+const askingTools = [
+  // Web search for current information
+  webSearchTool,
+  // File search to find and explore documents
+  searchFilesTool,
+  // Memory search for past context
+  searchMemoryTool,
+  // Date/time context for time-sensitive queries
+  getCurrentDateTimeTool,
+]
+
+/**
  * Creates a planning-only React agent with read-only tools.
  * Used when plan_mode is true - agent can only research and create plans.
  */
@@ -250,6 +272,16 @@ export function createPlanningAgentForProvider(provider: ModelProvider) {
   const modelId = resolveModelId()
   const llm = createChatModel(provider, modelId)
   return createReactAgent({ llm, tools: planningTools })
+}
+
+/**
+ * Creates an ask-only React agent with read-only search tools.
+ * Used when ask_mode is true - agent can only search and explain, never modify.
+ */
+export function createAskAgentForProvider(provider: ModelProvider) {
+  const modelId = resolveModelId()
+  const llm = createChatModel(provider, modelId)
+  return createReactAgent({ llm, tools: askingTools })
 }
 
 // Function to get current date/time context
