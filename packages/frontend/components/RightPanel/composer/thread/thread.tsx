@@ -130,6 +130,8 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     visibleModels?: string[];
     // Plan mode
     plan_mode: boolean;
+    // Ask mode
+    ask_mode: boolean;
   }
 
   const deriveToolPreferences = (raw?: any): ThreadToolPreferences => {
@@ -182,6 +184,8 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       visibleModels: Array.isArray(data.visibleModels) ? data.visibleModels : DEFAULT_VISIBLE_MODELS,
       // Plan mode
       plan_mode: Boolean(data.plan_mode),
+      // Ask mode
+      ask_mode: Boolean(data.ask_mode),
     };
   };
 
@@ -1021,7 +1025,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   // Listen for switch-to-agent-mode events (e.g., when running a plan)
   useEffect(() => {
     const handleSwitchToAgentMode = () => {
-      setToolPreferences(prev => ({ ...prev, plan_mode: false }));
+      setToolPreferences(prev => ({ ...prev, plan_mode: false, ask_mode: false }));
     };
 
     window.addEventListener('assistant-switch-to-agent-mode', handleSwitchToAgentMode);
