@@ -1,10 +1,8 @@
-import React from 'react';
 import CloudIcon from '@mui/icons-material/Cloud';
 import DevicesIcon from '@mui/icons-material/Devices';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import { Box, Container, Grid } from '@mui/material';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import DemoApp from './components/DemoApp';
 import EmailDemo from '../../assets/images/email_demo.png';
@@ -15,8 +13,6 @@ import TaskCreationDemo from '../../assets/images/task-creation-demo.mp4';
 import DiffViewDemo from '../../assets/images/diff-view.mp4';
 import { Button } from '../../components/ui/button';
 import { Typography } from '../../components/ui/typography';
-import { determineOS } from '../../handlers/determineOS';
-import { handleDownload } from '../handlers/home'
 import {
   GmailIcon,
   GoogleDocsIcon,
@@ -27,15 +23,11 @@ import {
   ZoomIcon,
   GoogleMeetIcon,
   SlackIcon,
-  NotionIcon,
   GitHubIcon
 } from '../../components/icons';
 // Tracking handled globally in pages/_app.tsx via routeTracking handler
 
 const Home = (): JSX.Element => {
-  const [downloadText, setDownloadText] = useState<string>('Download');
-  const [downloadUrl, setDownloadUrl] = useState<string>('');
-
   const stats = [
     { value: '10M+', label: 'Tasks Automated' },
     { value: '99.99%', label: 'Uptime' },
@@ -63,12 +55,6 @@ const Home = (): JSX.Element => {
       highlight: 'Feature requests delivered fast'
     }
   ];
-
-  useEffect(() => {
-    determineOS(setDownloadText, setDownloadUrl);
-  }, []);
-
-  // Page tracking is handled globally; no local tracking here
 
   const fadeInUp = {
     hidden: { opacity: 0, y: 16 },
