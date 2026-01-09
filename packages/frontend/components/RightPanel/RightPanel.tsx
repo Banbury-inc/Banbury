@@ -79,10 +79,10 @@ export function RightPanel({
   // This runs synchronously during render to ensure it's available immediately
   useEffect(() => {
     // Store reference to current active tab for the delegate
-    (window as any).__banburyActiveAiTabId = activeAiTabId
+    ;(window as any).__banburyActiveAiTabId = activeAiTabId;
     
     // Store aiTabs on window so PlanViewer can look up threadIds
-    (window as any).__banburyAiTabs = aiTabs
+    ;(window as any).__banburyAiTabs = aiTabs;
     
     // Register ALL tab threadIds for PlanViewer bridge
     aiTabs.forEach(tab => {
@@ -98,8 +98,8 @@ export function RightPanel({
   // Also register immediately on first render (before effects run)
   // This ensures the data is available for any synchronous access
   if (typeof window !== 'undefined') {
-    (window as any).__banburyActiveAiTabId = activeAiTabId
-    ;(window as any).__banburyAiTabs = aiTabs
+    ;(window as any).__banburyActiveAiTabId = activeAiTabId;
+    ;(window as any).__banburyAiTabs = aiTabs;
   }
 
   const handleTabAdd = useCallback((label?: string) => {
