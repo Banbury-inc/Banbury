@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react"
+import type { SVGProps } from "react"
 import {
-  Play,
   Users,
-  Loader2,
+  Loader2 as LucideLoader2,
   Save,
   StopCircle,
   CheckCircle2,
+  Check as LucideCheck,
   Circle,
   AlertCircle,
   RefreshCw,
@@ -55,6 +56,26 @@ import {
   initAgentTodoStore,
 } from "./handlers/planAgentContext"
 
+// Custom SVG components matching ToolCallCard
+const Loader2 = (props: SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="1em" height="1em" {...props}>
+    <path d="M12 2v4" />
+    <path d="M12 18v4" />
+    <path d="M4.93 4.93l2.83 2.83" />
+    <path d="M16.24 16.24l2.83 2.83" />
+    <path d="M2 12h4" />
+    <path d="M18 12h4" />
+    <path d="M4.93 19.07l2.83-2.83" />
+    <path d="M16.24 7.76l2.83-2.83" />
+  </svg>
+)
+
+const Check = (props: SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="1em" height="1em" {...props}>
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+)
+
 export interface PlanTodo {
   id: string
   description: string
@@ -81,6 +102,11 @@ interface PlanViewerProps {
     email?: string
   } | null
   onSaveComplete?: () => void
+}
+
+// Transform "Chat X" labels to "Agent X" for display
+function formatAgentLabel(label: string): string {
+  return label.replace(/^Chat\s+/i, "Agent ")
 }
 
 export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) {
@@ -717,45 +743,7 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
   return (
     <div className="flex h-full flex-col bg-card">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <div className="flex-1 min-w-0">
-          <Typography variant="h4" className="truncate">{plan.title}</Typography>
-          <div className="flex items-center gap-2 mt-1">
-            <Typography variant="xs" className="text-muted-foreground">
-              {completedCount}/{plan.todos.length} tasks completed
-            </Typography>
-            <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden">
-              <div 
-                className="h-full bg-green-500 transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <Typography variant="xs" className="text-muted-foreground">
-              {progressPercent}%
-            </Typography>
-            {/* Agent indicator */}
-            {(assignedAgentLabels.size > 0 || (executionProgress && executionProgress.activeAgents.size > 0)) && (
-              <>
-                <span className="text-muted-foreground">•</span>
-                <Typography variant="xs" className="text-muted-foreground flex items-center gap-1">
-                  <Bot className="h-3 w-3" />
-                  {executionProgress && executionProgress.activeAgents.size > 0 ? (
-                    <span className="text-blue-500 flex items-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      {executionProgress.activeAgents.size} agent{executionProgress.activeAgents.size > 1 ? "s" : ""} working
-                    </span>
-                  ) : workingAgentCount > 0 ? (
-                    <span className="text-blue-500">
-                      {workingAgentCount} agent{workingAgentCount > 1 ? "s" : ""} working
-                    </span>
-                  ) : (
-                    <span>{assignedAgentLabels.size} agent{assignedAgentLabels.size > 1 ? "s" : ""} assigned</span>
-                  )}
-                </Typography>
-              </>
-            )}
-          </div>
-        </div>
+      <div className="flex items-center justify-end px-4 py-3">
         <div className="flex items-center gap-2">
           <Button
             size="xs"
@@ -793,10 +781,7 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
                 Built
               </>
             ) : (
-              <>
-                <Play className="h-3 w-3 mr-2" />
-                Run Plan
-              </>
+              "Run Plan"
             )}
           </Button>
         </div>
@@ -833,10 +818,11 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
             <Button
               size="xs"
               onClick={handleAddAgent}
-              variant="ghost"
+              variant="default"
               title="Add a new agent (AI tab)"
             >
-              <UserPlus className="h-3 w-3" />
+              <UserPlus className="h-3 w-3 mr-2" />
+              Add Agent
             </Button>
           </div>
           {todosExpanded && (
@@ -849,30 +835,18 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
                   return (
                     <div
                       key={todo.id}
-                      onClick={() => !isExecuting && toggleTodoSelection(todo.id)}
-                      className={cn(
-                        "flex flex-nowrap items-center gap-3 rounded px-3 py-2 transition-colors",
-                        isCurrentlyExecuting && "bg-blue-500/10 border border-blue-500/30",
-                        isSelected && !isCurrentlyExecuting && "bg-primary/10 border border-primary/30",
-                        !isCurrentlyExecuting && !isSelected && "hover:bg-muted/50 border border-transparent",
-                        !isExecuting && "cursor-pointer"
-                      )}
+                      className="flex flex-nowrap items-center gap-3 rounded px-3 py-2 transition-colors"
                     >
-                      {/* Selection circle / Status icon */}
+                      {/* Status icon */}
                       <div className="shrink-0">
                         {isCurrentlyExecuting ? (
-                          <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+                          <Loader2 className="h-3 w-3 animate-spin" />
                         ) : todo.status === "completed" ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <Check className="h-3 w-3 text-green-600" />
                         ) : todo.status === "failed" ? (
                           <AlertCircle className="h-4 w-4 text-red-500" />
                         ) : todo.status === "in_progress" ? (
-                          <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
-                        ) : !isExecuting ? (
-                          <div className={cn(
-                            "h-4 w-4 rounded-full border shrink-0 transition-colors",
-                            isSelected ? "bg-primary border-primary" : "border-muted-foreground/50 bg-transparent"
-                          )} />
+                          <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
                           <Circle className="h-4 w-4 text-muted-foreground" />
                         )}
@@ -891,11 +865,15 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
                         </Typography>
                       </div>
                       
+                      {/* Dependencies badge */}
+                      {todo.depends && todo.depends.length > 0 && (
+                        <Typography variant="xs" className="text-muted-foreground shrink-0">
+                          depends: {todo.depends.join(", ")}
+                        </Typography>
+                      )}
+                      
                       {/* Agent Assignee Selector */}
-                      <div 
-                        className="shrink-0"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <div className="shrink-0">
                         {availableAgents.length > 0 && (() => {
                           const effectiveAssignee = todo.assigneeLabel || availableAgents[0].label
                           return (
@@ -910,19 +888,13 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
                                 className="h-6 min-w-[90px] max-w-[120px] text-xs"
                               >
                                 <SelectValue>
-                                  <span className="flex items-center gap-1">
-                                    <Bot className="h-3 w-3" />
-                                    <span className="truncate">{effectiveAssignee}</span>
-                                  </span>
+                                  <span className="truncate">{formatAgentLabel(effectiveAssignee)}</span>
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent align="end">
                                 {availableAgents.map((agent) => (
                                   <SelectItem key={agent.tabId} value={agent.label}>
-                                    <span className="flex items-center gap-1">
-                                      <Bot className="h-3 w-3" />
-                                      {agent.label}
-                                    </span>
+                                    {formatAgentLabel(agent.label)}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -930,13 +902,6 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
                           )
                         })()}
                       </div>
-                      
-                      {/* Dependencies badge */}
-                      {todo.depends && todo.depends.length > 0 && (
-                        <Typography variant="xs" className="text-muted-foreground shrink-0">
-                          depends: {todo.depends.join(", ")}
-                        </Typography>
-                      )}
                     </div>
                   )
                 })}
@@ -947,50 +912,31 @@ export function PlanViewer({ file, userInfo, onSaveComplete }: PlanViewerProps) 
       )}
 
       {/* Action Bar */}
-      {(selectedTodos.size > 0 || isExecuting) && (
+      {isExecuting && (
         <div className="border-t border-zinc-200 dark:border-white/[0.06] bg-card p-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              {isExecuting && (
-                <Typography variant="xs" className="text-muted-foreground flex items-center gap-1">
-                  <RefreshCw className="h-3 w-3 animate-spin" />
-                  {executionProgress ? (
-                    <span>
-                      {executionProgress.activeAgents.size > 1 
-                        ? `${executionProgress.activeAgents.size} agents working in parallel`
-                        : "Executing..."
-                      }
-                      {" "}({executionProgress.completedCount}/{executionProgress.totalTodos} done)
-                    </span>
-                  ) : (
-                    "Executing..."
-                  )}
-                </Typography>
+          <div className="flex items-center gap-2">
+            <Typography variant="xs" className="text-muted-foreground flex items-center gap-1">
+              <RefreshCw className="h-3 w-3 animate-spin" />
+              {executionProgress ? (
+                <span>
+                  {executionProgress.activeAgents.size > 1 
+                    ? `${executionProgress.activeAgents.size} agents working in parallel`
+                    : "Executing..."
+                  }
+                  {" "}({executionProgress.completedCount}/{executionProgress.totalTodos} done)
+                </span>
+              ) : (
+                "Executing..."
               )}
-              {isExecuting && (
-                <Button
-                  variant="destructive"
-                  size="xs"
-                  onClick={stopExecution}
-                >
-                  <StopCircle className="h-3 w-3 mr-1" />
-                  Stop All
-                </Button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {selectedTodos.size > 0 && !isExecuting && (
-                <Button
-                  variant="secondary"
-                  size="xs"
-                  onClick={delegateSelected}
-                >
-                  <Users className="h-3 w-3 mr-2" />
-                  Delegate {selectedTodos.size} Task{selectedTodos.size > 1 ? "s" : ""}
-                </Button>
-              )}
-            </div>
+            </Typography>
+            <Button
+              variant="destructive"
+              size="xs"
+              onClick={stopExecution}
+            >
+              <StopCircle className="h-3 w-3 mr-1" />
+              Stop All
+            </Button>
           </div>
         </div>
       )}
