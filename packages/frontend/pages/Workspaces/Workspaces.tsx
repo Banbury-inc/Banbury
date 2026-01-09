@@ -8,7 +8,7 @@ import { NavSidebar } from "../../components/nav-sidebar";
 import { WorkspacesTopBar } from "../../components/WorkspacesTopBar/WorkspacesTopBar";
 import { FileSystemItem } from '../../utils/fileTreeUtils';
 import 'allotment/dist/style.css';
-import { X, FolderOpen, Trash2, Menu, Files, MessageSquare, Brain, LogOut, UserStarIcon, PanelRight } from 'lucide-react';
+import { X, FolderOpen, Trash2, Menu, Files, MessageSquare, Brain, LogOut, UserStarIcon, PanelRight, Folder, Mail, Calendar, CheckSquare, Video, UserCog } from 'lucide-react';
 import BanburyLogo from '../../assets/images/Logo.png';
 import { SplitZones } from '../../components/common/SplitZones';
 import { useRouter } from 'next/router';
@@ -1527,17 +1527,40 @@ const Workspaces = (): React.ReactNode => {
                       </div>
                     </SheetContent>
                   </Sheet>
-                  
-                  {/* File Sidebar Toggle */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 min-h-[32px] min-w-[32px] border-zinc-300 dark:border-white/[0.06] touch-target p-0"
-                    onClick={() => setMobileFileSidebarOpen(true)}
-                    title="Files"
-                  >
-                    <Files className="h-3.5 w-3.5" />
-                  </Button>
+                </div>
+
+                {/* Mobile Workspace Tabs */}
+                <div className="flex items-center gap-0.5 flex-1 justify-center overflow-x-auto scrollbar-hide">
+                  {[
+                    { id: 'files', icon: Folder, label: 'Files' },
+                    { id: 'email', icon: Mail, label: 'Email' },
+                    { id: 'calendar', icon: Calendar, label: 'Calendar' },
+                    { id: 'tasks', icon: CheckSquare, label: 'Tasks' },
+                    { id: 'meetings', icon: Video, label: 'Meetings' },
+                    ...(userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com' 
+                      ? [{ id: 'admin', icon: UserCog, label: 'Admin' }]
+                      : []),
+                  ].map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeLeftPanelTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => {
+                          setActiveLeftPanelTab(tab.id);
+                          setMobileFileSidebarOpen(true);
+                        }}
+                        className={`flex items-center justify-center h-8 w-8 min-h-[32px] min-w-[32px] rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? 'bg-primary text-primary-foreground'
+                            : 'text-muted-foreground hover:bg-accent dark:hover:bg-accent hover:text-foreground'
+                        }`}
+                        title={tab.label}
+                      >
+                        <Icon className="h-4 w-4" strokeWidth={1.5} />
+                      </button>
+                    );
+                  })}
                 </div>
                 
                 <div className="flex items-center gap-1">
