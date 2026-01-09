@@ -379,7 +379,7 @@ function cleanupDemoMocks() {
 
 export default function DemoApp() {
   // Setup mocks immediately on first render using lazy initialization
-  const [mocksReady] = useState(() => {
+  useState(() => {
     setupDemoMocks()
     // Set a global flag to indicate demo mode is active
     if (typeof window !== 'undefined') {
