@@ -130,9 +130,10 @@ interface ComposerProps {
   onAttachmentPayload: (fileId: string, payload: { fileData: string; mimeType: string }) => void;
   onSend?: () => void;
   onFileView?: (file: FileSystemItem) => void;
-  pendingChanges: Array<{ id: string; type: string; description: string }>;
+  pendingChanges: Array<{ id: string; type: string; description: string; filePath?: string }>;
   onAcceptAll: () => void;
   onRejectAll: () => void;
+  onOpenFile?: (change: { id: string; type: string; description: string; filePath?: string }) => void;
   // Fallback message buffer for context calculation when runtime messages aren't available
   messageBuffer?: any[] | null;
   // Tab ID for updating tab title on first message
@@ -145,7 +146,7 @@ interface ComposerProps {
   onSendNextQueued: () => void;
 }
 
-export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll, messageBuffer, assistantTabId, queuedMessages, onQueueMessage, onRemoveQueuedMessage, onMoveQueuedMessageToFront, onSendNextQueued }) => {
+export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll, onOpenFile, messageBuffer, assistantTabId, queuedMessages, onQueueMessage, onRemoveQueuedMessage, onMoveQueuedMessageToFront, onSendNextQueued }) => {
   const composer = useComposerRuntime();
   const threadRuntime = useThreadRuntime();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -346,6 +347,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
           pendingChanges={pendingChanges}
           onAcceptAll={onAcceptAll}
           onRejectAll={onRejectAll}
+          onOpenFile={onOpenFile}
         />
 
         {/* Display editing queued message indicator */}

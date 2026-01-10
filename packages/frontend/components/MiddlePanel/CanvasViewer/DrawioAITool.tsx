@@ -81,11 +81,14 @@ export const DrawioAITool: React.FC<DrawioAIToolProps> = (props) => {
     };
     window.dispatchEvent(new CustomEvent('drawio-ai-response', { detail: payload }));
     setApplied(true);
-    
+
     // Immediately notify that this change has been resolved
     if (changeIdRef.current) {
       window.dispatchEvent(new CustomEvent('ai-change-resolved', { detail: { id: changeIdRef.current } }));
     }
+
+    // Trigger file sidebar refresh to update file list
+    window.dispatchEvent(new CustomEvent('file-sidebar-refresh'));
   };
 
   const handleReject = () => {
@@ -114,7 +117,8 @@ export const DrawioAITool: React.FC<DrawioAIToolProps> = (props) => {
         detail: {
           id: changeId,
           type: 'diagram',
-          description: diagramName || 'Diagram'
+          description: diagramName || 'Diagram',
+          filePath: fileUrl
         }
       }));
       

@@ -55,7 +55,7 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
   const changeIdRef = useRef<string>('');
   const Icon = config.icon;
 
-  // Resolve display name from localStorage if file extensions provided
+  // Resolve display name and file path from localStorage if file extensions provided
   const resolvedDisplayName = React.useMemo(() => {
     if (!config.fileExtensions || !config.fileExtensions.length) {
       return config.displayName;
@@ -63,8 +63,8 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
 
     try {
       const attachedFiles = JSON.parse(localStorage.getItem('pendingAttachments') || '[]');
-      const matchingFile = attachedFiles.find((file: any) => 
-        file.fileName && config.fileExtensions!.some(ext => 
+      const matchingFile = attachedFiles.find((file: any) =>
+        file.fileName && config.fileExtensions!.some(ext =>
           file.fileName.toLowerCase().endsWith(ext.toLowerCase())
         )
       );
@@ -77,6 +77,28 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
 
     return config.displayName;
   }, [config.displayName, config.fileExtensions]);
+
+  const resolvedFilePath = React.useMemo(() => {
+    if (!config.fileExtensions || !config.fileExtensions.length) {
+      return undefined;
+    }
+
+    try {
+      const attachedFiles = JSON.parse(localStorage.getItem('pendingAttachments') || '[]');
+      const matchingFile = attachedFiles.find((file: any) =>
+        file.fileName && config.fileExtensions!.some(ext =>
+          file.fileName.toLowerCase().endsWith(ext.toLowerCase())
+        )
+      );
+      if (matchingFile) {
+        return matchingFile.filePath || matchingFile.path;
+      }
+    } catch (error) {
+      console.warn('Could not get attached file path:', error);
+    }
+
+    return undefined;
+  }, [config.fileExtensions]);
 
   const handleAcceptAll = () => {
     if (applied || rejected) return;
@@ -94,12 +116,15 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
     }
     
     setApplied(true);
-    
+
     if (changeIdRef.current) {
-      window.dispatchEvent(new CustomEvent('ai-change-resolved', { 
-        detail: { id: changeIdRef.current } 
+      window.dispatchEvent(new CustomEvent('ai-change-resolved', {
+        detail: { id: changeIdRef.current }
       }));
     }
+
+    // Trigger file sidebar refresh to update file list
+    window.dispatchEvent(new CustomEvent('file-sidebar-refresh'));
   };
 
   const handleReject = () => {
@@ -150,7 +175,8 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
         detail: {
           id: changeId,
           type: config.changeType,
-          description: resolvedDisplayName
+          description: resolvedDisplayName,
+          filePath: resolvedFilePath
         }
       }));
       
