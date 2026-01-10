@@ -78,14 +78,24 @@ export function AdminContent({ activeTab }: AdminContentProps) {
   }, [])
 
   useEffect(() => {
-    if ((activeTab === 'admin-analytics-overview' || activeTab === 'admin-visitors' || activeTab === 'admin-conversations') && !visitorLoading && !loginLoading && !scopesLoading && !conversationsLoading && !usersLoading && !dashboardVisitLoading && !workspaceVisitLoading) {
+    // Overview tab - loads only aggregate stats needed for overview
+    if (activeTab === 'admin-analytics-overview' && !visitorLoading && !loginLoading && !conversationsLoading && !dashboardVisitLoading && !workspaceVisitLoading) {
       loadVisitorData(analyticsDays)
       loadLoginData(analyticsDays)
-      loadScopesAnalytics()
       loadConversationsAnalytics(analyticsDays, conversationUserFilter)
-      loadConversationUsers(analyticsDays)
       loadDashboardVisitStats()
       loadWorkspaceVisitStats()
+    }
+
+    // Visitors tab - only loads visitor-specific data
+    if (activeTab === 'admin-visitors' && !visitorLoading) {
+      loadVisitorData(analyticsDays)
+    }
+
+    // Conversations tab - only loads conversation-specific data
+    if (activeTab === 'admin-conversations' && !conversationsLoading && !usersLoading) {
+      loadConversationsAnalytics(analyticsDays, conversationUserFilter)
+      loadConversationUsers(analyticsDays)
     }
 
     if (activeTab === 'admin-filetypes' && !fileTypeLoading) {
