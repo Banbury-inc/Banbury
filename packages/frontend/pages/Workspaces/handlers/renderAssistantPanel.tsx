@@ -1,7 +1,6 @@
 import React from 'react'
 import { TimerReset, ChevronDown, Trash2 } from 'lucide-react'
 import OlympusTabs, { Tab as OlympusTab } from '../../../components/common/Tabs/Tabs'
-import { AiConversationTabPane } from '../../../components/RightPanel/AiConversationTabPane'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -177,19 +176,16 @@ export function renderAssistantPanel({
           const isTabActive = tab.id === activeTabId
 
           if (tab.type === 'ai') {
+            // Render a portal container - the actual AiConversationTabPane
+            // is rendered by AiTabRuntimeHost and portaled into this container
             return (
               <div
                 key={tab.id}
                 className={`absolute inset-0 ${isTabActive ? '' : 'hidden'}`}
               >
-                <AiConversationTabPane
-                  tabId={tab.id}
-                  threadId={tab.threadId}
-                  userInfo={userInfo}
-                  selectedFile={selectedFile}
-                  selectedEmail={selectedEmail}
-                  onEmailSelect={onEmailSelect}
-                  onClearConversation={() => onClearConversation(tab.id)}
+                <div
+                  data-ai-tab-container={tab.id}
+                  className="h-full w-full"
                 />
               </div>
             )

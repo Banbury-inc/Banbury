@@ -33,6 +33,8 @@ import { handleTldrawAIResponse } from "../../handlers/handle-tldraw-ai-response
 import { ToolUI } from "../../ToolUI";
 import { BrowserTool } from "../components/BrowserTool";
 import { SubagentTool } from "../components/SubagentTool";
+import { CreateFileTool } from "../components/CreateFileTool";
+import { DownloadFileTool } from "../components/DownloadFileTool";
 import { ApiService } from "../../../../../backend/api/apiService";
 import { useToast } from "../../../ui/use-toast";
 import styles from "../../../../styles/scrollbar.module.css";
@@ -1510,6 +1512,8 @@ const AssistantMessage: FC = () => {
                   document_ai: DocumentAITool,
                   browser: BrowserTool,
                   spawn_subagents: SubagentTool,
+                  create_file: CreateFileTool,
+                  download_from_url: DownloadFileTool,
                 },
                 Fallback: ToolFallback 
               },

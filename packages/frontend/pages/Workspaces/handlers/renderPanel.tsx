@@ -22,7 +22,6 @@ import { PowerPointViewer } from '../../../components/MiddlePanel/PowerPointView
 import { GoogleDriveViewer } from '../../../components/MiddlePanel/GoogleDriveViewer';
 import { CalendarEvent } from '../../../../backend/api/calendar/calendar';
 import { Panel, DragState, UserInfo } from '../types';
-import { AiConversationTabPane } from '../../../components/RightPanel/AiConversationTabPane';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { Typography } from '../../../components/ui/typography';
 import { Kbd, KbdGroup } from '../../../components/ui/kbd';
@@ -416,17 +415,14 @@ export const renderPanel = ({
                   );
                 }
                 
-                // Handle AI tabs - wrap with bg-card to match right panel styling
+                // Handle AI tabs - render a portal container
+                // The actual AiConversationTabPane is rendered by AiTabRuntimeHost and portaled here
                 if (tab.type === 'ai') {
                   return (
                     <div className="h-full bg-card">
-                      <AiConversationTabPane
-                        tabId={tab.id}
-                        userInfo={userInfo}
-                        selectedFile={selectedFile}
-                        selectedEmail={selectedEmail}
-                        onEmailSelect={onEmailSelect}
-                        onClearConversation={onClearConversation ? () => onClearConversation(tab.id) : undefined}
+                      <div
+                        data-ai-tab-container={tab.id}
+                        className="h-full w-full"
                       />
                     </div>
                   );

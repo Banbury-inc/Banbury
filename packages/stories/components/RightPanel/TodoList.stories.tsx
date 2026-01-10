@@ -65,28 +65,29 @@ const meta: Meta<typeof TodoListStoryWrapper> = {
         component: `
 # TodoList Component
 
-The TodoList component displays a collapsible list of tasks/todos in the right panel, typically shown at the top above the conversation thread. This is the actual component used in the RightPanel when running a plan.
+A persistent, collapsible todos bar displayed at the top of each AI assistant thread in the right panel. Styled to match the PlanViewer todos header for visual consistency.
 
 ## Key Features
 
-- **Collapsible Design**: Header can be clicked to expand/collapse the todo list
-- **Progress Tracking**: Shows completion progress with count and visual progress bar
-- **Status Icons**: Different icons for pending, in_progress, completed, and failed states
-- **Source Separation**: Groups todos by source (plan vs agent generated)
-- **Clear Completed**: Button to remove all completed todos
-- **Active Task Highlight**: Currently executing task is visually highlighted
+- **Persistent Header**: Shows at the top of the AI thread when todos exist, styled like PlanViewer
+- **Collapsible Design**: Click the header to expand/collapse the todo list
+- **Progress Display**: Header shows \`Todos (completed/total)\` format for quick progress tracking
+- **Status Icons**: Different icons for pending (circle), in_progress (spinner), completed (checkmark), and failed (alert) states
+- **Source Separation**: Groups todos by source when both plan and agent todos exist
+- **Active Task Highlight**: Currently executing task is highlighted with accent background
+- **Auto-Expand**: Automatically expands when todos are first added to the thread
 
 ## Todo Statuses
 
-- **pending**: Task not yet started (empty circle)
-- **in_progress**: Task currently being executed (spinning loader)
-- **completed**: Task finished successfully (green checkmark)
-- **failed**: Task encountered an error (red X)
+- **pending**: Task not yet started (empty circle icon)
+- **in_progress**: Task currently being executed (spinning loader icon)
+- **completed**: Task finished successfully (green checkmark icon)
+- **failed**: Task encountered an error (red alert icon)
 
 ## Todo Sources
 
-- **plan**: Tasks created from user's plan/instructions
-- **agent**: Tasks created by the AI agent during execution
+- **plan**: Tasks created from PlanViewer plan execution
+- **agent**: Tasks created by the AI agent via the write_todos tool
         `,
       },
     },
@@ -270,7 +271,7 @@ export const AgentOnlyTasks: Story = {
 }
 
 export const NoCompletedTasks: Story = {
-  name: "No Completed Tasks (No Clear Button)",
+  name: "No Completed Tasks",
   args: {
     threadId: "story-thread-11",
     todos: [

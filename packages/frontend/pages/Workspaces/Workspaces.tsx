@@ -48,6 +48,7 @@ import { isDrawioFile, isTldrawFile, isPowerPointFile } from './handlers/fileTyp
 import { createWorkspacesKeyboardHandler } from './handlers/createWorkspacesKeyboardHandler';
 import { Kbd, KbdGroup } from '../../components/ui/kbd';
 import { renderAssistantPanel } from './handlers/renderAssistantPanel';
+import { AiTabRuntimeHost } from './handlers/AiTabRuntimeHost';
 import { useLeftPanelResize } from './handlers/handleLeftPanelResize';
 import { 
   getStoredKeybinds, 
@@ -803,26 +804,28 @@ const Workspaces = (): React.ReactNode => {
 
     if (activeTabId) {
       (window as any).__banburyActiveAiTabId = activeTabId
-      
-      // Also populate __banburyAiTabs and register threadIds for PlanViewer bridge
-      if (activePanel?.tabs) {
-        (window as any).__banburyAiTabs = activePanel.tabs
-        
-        // Register all tab threadIds in the thread map
-        const threadMap = (window as any).__banburyTabThreadMap || {}
-        activePanel.tabs.forEach((tab: any) => {
-          if (tab.threadId) {
-            threadMap[tab.id] = tab.threadId
-          }
-        })
-        ;(window as any).__banburyTabThreadMap = threadMap
-      }
     }
+    
+    // Populate __banburyAiTabs with AI tabs from BOTH layouts for plan execution coordination
+    // This ensures agents are discoverable even when dragged between docks
+    const mainTabs = getAllTabs(panelLayout)
+    const assistantTabs = getAllTabs(assistantDockLayout)
+    const allAiTabs = [...mainTabs, ...assistantTabs].filter((t): t is AiTab => t.type === 'ai')
+    ;(window as any).__banburyAiTabs = allAiTabs
+    
+    // Register all tab threadIds in the thread map
+    const threadMap = (window as any).__banburyTabThreadMap || {}
+    allAiTabs.forEach((tab) => {
+      if (tab.threadId) {
+        threadMap[tab.id] = tab.threadId
+      }
+    })
+    ;(window as any).__banburyTabThreadMap = threadMap
 
     return () => {
       delete (window as any).__banburyActiveAiTabId
     }
-  }, [assistantDockLayout, activeAssistantPanelId]);
+  }, [panelLayout, assistantDockLayout, activeAssistantPanelId]);
 
   const handleCreateWordDocumentWrapper = async (documentName: string) => {
     await handleCreateWordDocument(userInfo, setUploading, toast, triggerSidebarRefresh, documentName);
@@ -1097,20 +1100,54 @@ const Workspaces = (): React.ReactNode => {
     return () => window.removeEventListener('file-sidebar-refresh', handler);
   }, [triggerSidebarRefresh]);
 
-  // Listen for workspace-find-and-open-file events to find and open files by name
-  // Note: This opens the file search command to let the user select the file
+  // Listen for workspace-find-and-open-file events to find and open files by name/path
+  // Searches S3 for the file and opens it in the middle panel
   useEffect(() => {
-    const handler = (event: Event) => {
+    const handler = async (event: Event) => {
       const detail = (event as CustomEvent).detail || {};
-      const { fileName } = detail;
-      if (!fileName) return;
+      const { fileName, filePath } = detail;
+      if (!fileName && !filePath) return;
 
-      // Open the file search command so the user can find and open the file
-      setFileSearchOpen(true);
+      try {
+        // Search for the file by name or path
+        const searchQuery = filePath || fileName;
+        const result = await ApiService.searchS3Files(searchQuery);
+        
+        if (result?.files && result.files.length > 0) {
+          // Find the best match - prefer exact path match, then name match
+          let matchedFile = result.files.find((f: any) => f.file_path === filePath);
+          if (!matchedFile) {
+            matchedFile = result.files.find((f: any) => f.file_name === fileName);
+          }
+          if (!matchedFile) {
+            matchedFile = result.files[0]; // Use first result as fallback
+          }
+
+          // Create FileSystemItem and open it
+          const file: FileSystemItem = {
+            id: matchedFile.file_id || matchedFile._id,
+            file_id: matchedFile.file_id || matchedFile._id,
+            name: matchedFile.file_name,
+            path: matchedFile.file_path,
+            type: 'file',
+            size: matchedFile.file_size,
+            modified: matchedFile.date_modified ? new Date(matchedFile.date_modified) : undefined,
+          };
+          
+          openFileInTabCallback(file, activePanelId);
+        } else {
+          // No results found - fallback to opening file search
+          setFileSearchOpen(true);
+        }
+      } catch (err) {
+        console.error('[Workspaces] Error searching for file:', err);
+        // Fallback to opening file search
+        setFileSearchOpen(true);
+      }
     };
     window.addEventListener('workspace-find-and-open-file', handler as EventListener);
     return () => window.removeEventListener('workspace-find-and-open-file', handler as EventListener);
-  }, []);
+  }, [activePanelId, openFileInTabCallback]);
 
   // Load conversations on mount
   useEffect(() => {
@@ -1451,6 +1488,15 @@ const Workspaces = (): React.ReactNode => {
               }
             }}
           >
+          {/* AI Tab Runtime Host - keeps AI tab runtimes alive across panel moves */}
+          <AiTabRuntimeHost
+            panelLayout={panelLayout}
+            assistantDockLayout={assistantDockLayout}
+            userInfo={userInfo}
+            selectedFile={selectedFile}
+            selectedEmail={selectedEmail}
+            onEmailSelect={handleEmailSelect}
+          />
 
           {/* Navigation Sidebar - Fixed (hidden on mobile) */}
           <div className="hidden md:block">

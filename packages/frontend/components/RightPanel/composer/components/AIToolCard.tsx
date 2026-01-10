@@ -1,8 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Check, X, AlertCircle } from 'lucide-react';
+import { Check, X, AlertCircle, ExternalLink } from 'lucide-react';
 import { Button } from '../../../ui/button';
 import { Card, CardContent } from '../../../ui/card';
 import { Typography } from '../../../ui/typography';
+
+// Change types that create or modify documents (mutating tools)
+const MUTATING_CHANGE_TYPES = [
+  'tiptap',
+  'spreadsheet', 
+  'document',
+  'pptx',
+  'presentation',
+  'tldraw',
+  'canvas',
+  'file-create',
+  'file-download'
+];
 
 // Deterministic hash function to generate stable changeIds
 function generateDeterministicChangeId(changeType: string, displayName: string, args: any): string {
@@ -57,6 +70,11 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
 
   // Resolve display name and file path from localStorage if file extensions provided
   const resolvedDisplayName = React.useMemo(() => {
+    // First check if fileName is provided directly in args
+    if (args?.fileName) {
+      return args.fileName;
+    }
+
     if (!config.fileExtensions || !config.fileExtensions.length) {
       return config.displayName;
     }
@@ -76,9 +94,14 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
     }
 
     return config.displayName;
-  }, [config.displayName, config.fileExtensions]);
+  }, [args?.fileName, config.displayName, config.fileExtensions]);
 
   const resolvedFilePath = React.useMemo(() => {
+    // First check if filePath is provided directly in args
+    if (args?.filePath) {
+      return args.filePath;
+    }
+
     if (!config.fileExtensions || !config.fileExtensions.length) {
       return undefined;
     }
@@ -98,7 +121,7 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
     }
 
     return undefined;
-  }, [config.fileExtensions]);
+  }, [args?.filePath, config.fileExtensions]);
 
   const handleAcceptAll = () => {
     if (applied || rejected) return;
@@ -160,6 +183,41 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
       // Default: dispatch preview event with changeId
       window.dispatchEvent(new CustomEvent(`${config.eventPrefix}-response`, { 
         detail: { ...args, preview: true, changeId: changeIdRef.current } 
+      }));
+    }
+  };
+
+  // Check if this is a mutating tool that should show the "Open" button
+  const isMutatingTool = MUTATING_CHANGE_TYPES.includes(config.changeType);
+
+  // Handle opening the file in the middle panel
+  const handleOpenDocument = () => {
+    // Get fileId from args if available (set by CreateFileTool/DownloadFileTool from result)
+    const fileId = args?.fileId;
+    
+    // First, trigger a sidebar refresh to ensure the file appears in the file list
+    window.dispatchEvent(new CustomEvent('file-sidebar-refresh'));
+    
+    if (fileId) {
+      // If we have a valid file_id from the result, use it to open the file directly
+      window.dispatchEvent(new CustomEvent('workspace-reopen-file', {
+        detail: {
+          newFile: {
+            id: fileId,
+            file_id: fileId,
+            name: resolvedDisplayName,
+            type: 'file',
+            path: resolvedFilePath || ''
+          }
+        }
+      }));
+    } else if (resolvedFilePath || resolvedDisplayName) {
+      // No file_id available - search for the file by name/path and open it
+      window.dispatchEvent(new CustomEvent('workspace-find-and-open-file', {
+        detail: {
+          fileName: resolvedDisplayName,
+          filePath: resolvedFilePath
+        }
       }));
     }
   };
@@ -291,6 +349,19 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
                   <X className="h-4 w-4 stroke-[2.5]" />
                 </Button>
               </div>
+            )}
+            
+            {/* Open button for mutating tools */}
+            {isMutatingTool && (resolvedFilePath || resolvedDisplayName) && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={handleOpenDocument}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-150"
+                title="Open document in viewer"
+              >
+                <ExternalLink className="h-4 w-4 stroke-[2]" />
+              </Button>
             )}
           </div>
         </div>

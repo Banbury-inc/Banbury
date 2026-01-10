@@ -3,12 +3,13 @@ import type { SVGProps } from 'react'
 import {
   Check,
   Circle,
-  XCircle,
+  AlertCircle,
   ChevronDown,
   ChevronRight,
   ListTodo,
 } from 'lucide-react'
 import { cn } from '../../../utils'
+import { Typography } from '../../ui/typography'
 import type { TodoItem, ThreadTodoState, TodoStatus } from '../../../types/todo-types'
 import {
   getThreadTodoState,
@@ -31,21 +32,26 @@ interface TodoListProps {
   threadId: string
 }
 
-// Status icon component
-function StatusIcon({ status }: { status: TodoStatus }) {
+// Status icon component - matches PlanViewer styling
+function StatusIcon({ status, isActive }: { status: TodoStatus; isActive?: boolean }) {
+  // Active todos show spinning loader regardless of pending status
+  if (isActive && status === 'in_progress') {
+    return <Loader2 className="h-3 w-3 animate-spin" />
+  }
+  
   switch (status) {
     case 'completed':
       return <Check className="h-3 w-3 text-green-600" />
     case 'in_progress':
-      return <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />
+      return <Loader2 className="h-3 w-3 animate-spin" />
     case 'failed':
-      return <XCircle className="h-3 w-3 text-red-500" />
+      return <AlertCircle className="h-4 w-4 text-red-500" />
     default:
-      return <Circle className="h-3 w-3 text-muted-foreground" />
+      return <Circle className="h-4 w-4 text-muted-foreground" />
   }
 }
 
-// Individual todo item component
+// Individual todo item component - styled like PlanViewer todo rows
 function TodoItemRow({
   todo,
   isActive,
@@ -56,24 +62,27 @@ function TodoItemRow({
   return (
     <div
       className={cn(
-        'flex items-center gap-1.5 px-1 py-1 rounded-md transition-colors',
-        todo.status === 'completed' && 'opacity-60',
-        todo.status === 'failed' && 'bg-red-500/5'
+        'flex flex-nowrap items-center gap-3 rounded px-3 py-2 transition-colors',
+        isActive && 'bg-accent/50',
+        todo.status === 'failed' && 'bg-destructive/5'
       )}
     >
-      <div className="flex-shrink-0">
-        <StatusIcon status={todo.status} />
+      {/* Status icon */}
+      <div className="shrink-0">
+        <StatusIcon status={todo.status} isActive={isActive} />
       </div>
+      
+      {/* Description */}
       <div className="flex-1 min-w-0">
-        <span className={cn(
-          'text-xs font-medium text-foreground/90',
-          todo.status === 'completed' && 'line-through text-muted-foreground'
-        )}>
+        <Typography 
+          variant="small" 
+          className={cn(
+            "truncate block",
+            todo.status === 'completed' && 'line-through text-muted-foreground'
+          )}
+        >
           {todo.description}
-        </span>
-        {todo.source === 'agent' && (
-          <span className="text-[10px] text-muted-foreground ml-1">(agent)</span>
-        )}
+        </Typography>
       </div>
     </div>
   )
@@ -134,68 +143,72 @@ export function TodoList({ threadId }: TodoListProps) {
   }
 
   const totalCount = todoState.todos.length
+  const completedCount = todoState.todos.filter(t => t.status === 'completed').length
 
   // Group todos by source
   const planTodos = todoState.todos.filter(t => t.source === 'plan')
   const agentTodos = todoState.todos.filter(t => t.source === 'agent')
 
   return (
-    <div className="border-b border-border bg-background/50">
-      {/* Header */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center px-1 py-1 hover:bg-accent/50 transition-colors"
-      >
-        <div className="flex items-center gap-1.5">
+    <div className="shrink-0 border-b border-border">
+      {/* Header - styled like PlanViewer todos header */}
+      <div className="flex w-full items-center gap-2 px-4 py-2">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex flex-1 items-center gap-2 hover:bg-muted/50 transition-colors rounded px-2 py-1 -mx-2"
+        >
           {isExpanded ? (
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           )}
-          <ListTodo className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
-          <span className="text-xs font-medium text-foreground/90">Todos</span>
-          <span className="text-xs text-muted-foreground">{totalCount}</span>
-        </div>
-      </button>
+          <ListTodo className="h-4 w-4 text-muted-foreground" />
+          <Typography variant="small" className="font-medium">
+            Todos ({completedCount}/{totalCount})
+          </Typography>
+        </button>
+      </div>
 
-      {/* Todo list */}
+      {/* Expanded todo list - styled like PlanViewer */}
       {isExpanded && (
-        <div className="px-1 pb-1">
-          {/* Plan todos */}
-          {planTodos.length > 0 && (
-            <div>
-              {agentTodos.length > 0 && (
-                <span className="text-xs text-muted-foreground px-1 pt-1 block">
-                  Plan Tasks
-                </span>
-              )}
-              {planTodos.map(todo => (
-                <TodoItemRow
-                  key={todo.id}
-                  todo={todo}
-                  isActive={todoState.activeTodoId === todo.id}
-                />
-              ))}
-            </div>
-          )}
+        <div className="max-h-[250px] overflow-y-auto px-4 pb-3">
+          <div className="space-y-1">
+            {/* Plan todos */}
+            {planTodos.length > 0 && (
+              <div>
+                {agentTodos.length > 0 && (
+                  <Typography variant="xs" className="text-muted-foreground px-3 pt-2 pb-1 block">
+                    Plan Tasks
+                  </Typography>
+                )}
+                {planTodos.map(todo => (
+                  <TodoItemRow
+                    key={todo.id}
+                    todo={todo}
+                    isActive={todoState.activeTodoId === todo.id}
+                  />
+                ))}
+              </div>
+            )}
 
-          {/* Agent todos */}
-          {agentTodos.length > 0 && (
-            <div>
-              {planTodos.length > 0 && (
-                <span className="text-xs text-muted-foreground px-1 pt-1 block">
-                  Agent Tasks
-                </span>
-              )}
-              {agentTodos.map(todo => (
-                <TodoItemRow
-                  key={todo.id}
-                  todo={todo}
-                  isActive={todoState.activeTodoId === todo.id}
-                />
-              ))}
-            </div>
-          )}
+            {/* Agent todos */}
+            {agentTodos.length > 0 && (
+              <div>
+                {planTodos.length > 0 && (
+                  <Typography variant="xs" className="text-muted-foreground px-3 pt-2 pb-1 block">
+                    Agent Tasks
+                  </Typography>
+                )}
+                {agentTodos.map(todo => (
+                  <TodoItemRow
+                    key={todo.id}
+                    todo={todo}
+                    isActive={todoState.activeTodoId === todo.id}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

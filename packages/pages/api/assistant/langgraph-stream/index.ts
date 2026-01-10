@@ -260,7 +260,8 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
             processedToolCalls,
             currentToolExecution,
             toolExecutionMap,
-            send
+            send,
+            threadId
           })
           
           currentToolExecution = result.currentToolExecution

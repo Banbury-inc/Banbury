@@ -15,16 +15,29 @@ import { BrowserTool } from './composer/components/BrowserTool';
 import { ToolFallback } from './composer/components/tool-fallback';
 import { TldrawAITool } from './composer/components/TldrawAITool';
 import { SubagentTool } from './composer/components/SubagentTool';
+import { CreateFileTool } from './composer/components/CreateFileTool';
+import { DownloadFileTool } from './composer/components/DownloadFileTool';
 
 interface ToolUIProps {
   toolName: string;
   toolCallId?: string;
-  args: any;
+  args?: any;
   argsText?: string;
   result?: any;
 }
 
-export const ToolUI: React.FC<ToolUIProps> = ({ toolName, toolCallId, args, argsText, result }) => {
+export const ToolUI: React.FC<ToolUIProps> = ({ toolName, toolCallId, args: argsProp, argsText, result }) => {
+  // Parse argsText to args if args is not provided (assistant-ui passes argsText)
+  const args = React.useMemo(() => {
+    if (argsProp) return argsProp;
+    if (!argsText) return {};
+    try {
+      return JSON.parse(argsText);
+    } catch {
+      return {};
+    }
+  }, [argsProp, argsText]);
+
   // Map tool names to their respective UI components
   switch (toolName) {
     case 'sheet_ai':
@@ -148,7 +161,11 @@ export const ToolUI: React.FC<ToolUIProps> = ({ toolName, toolCallId, args, args
     
     // File tools
     case 'create_file':
+      return <CreateFileTool args={args} result={result} />;
+    
     case 'download_from_url':
+      return <DownloadFileTool args={args} result={result} />;
+    
     case 'search_files':
       return (
         <ToolCallCard

@@ -6,6 +6,7 @@ interface ProcessStreamChunkParams {
   currentToolExecution: any
   toolExecutionMap: Map<string, any>
   send: (event: any) => void
+  threadId?: string
 }
 
 interface ProcessStreamChunkResult {
@@ -27,7 +28,8 @@ const TOOL_STATUS_MESSAGES: Record<string, string> = {
   store_memory: "Storing information in memory...",
   search_memory: "Searching memory...",
   create_file: "Creating file...",
-  spawn_subagents: "Spawning subagents..."
+  spawn_subagents: "Spawning subagents...",
+  write_todos: "Updating task list..."
 }
 
 const TOOL_COMPLETION_MESSAGES: Record<string, string> = {
@@ -43,7 +45,8 @@ const TOOL_COMPLETION_MESSAGES: Record<string, string> = {
   store_memory: "Memory stored successfully",
   search_memory: "Memory search completed",
   create_file: "File created successfully",
-  spawn_subagents: "Subagents completed"
+  spawn_subagents: "Subagents completed",
+  write_todos: "Task list updated"
 }
 
 function getToolStatusMessage(toolName: string): string {
@@ -83,7 +86,8 @@ async function processAiMessage(
   processedToolCalls: Set<string>,
   currentToolExecution: any,
   toolExecutionMap: Map<string, any>,
-  send: (event: any) => void
+  send: (event: any) => void,
+  threadId?: string
 ): Promise<any> {
   // Only process this AI message if we haven't seen it before
   if (processedAiMessages.has(messageId)) return currentToolExecution
@@ -117,6 +121,31 @@ async function processAiMessage(
     
     // Store tool execution in map by tool_call_id for later retrieval
     toolExecutionMap.set(toolCall.id, toolCall)
+    
+    // Handle write_todos tool call - emit todo SSE events for frontend
+    if (toolCall.name === "write_todos" && toolCall.args?.todos && threadId) {
+      const todos = toolCall.args.todos
+      // Convert middleware todo format to frontend TodoItem format
+      const todoItems = todos.map((t: { content: string; status: string }, index: number) => ({
+        id: `agent-todo-${Date.now()}-${index}`,
+        description: t.content,
+        status: t.status === "completed" ? "completed" : t.status === "in_progress" ? "in_progress" : "pending",
+        source: "agent" as const,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }))
+      
+      // Find the active todo (first in_progress one)
+      const activeTodo = todoItems.find((t: { status: string }) => t.status === "in_progress")
+      
+      // Send todo-list-init event to initialize/replace the todo list
+      send({
+        type: "todo-list-init",
+        threadId,
+        todos: todoItems,
+        activeTodoId: activeTodo?.id || null,
+      })
+    }
     
     // Send tool call start event
     send({
@@ -182,7 +211,8 @@ export async function processStreamChunk({
   processedToolCalls,
   currentToolExecution,
   toolExecutionMap,
-  send
+  send,
+  threadId
 }: ProcessStreamChunkParams): Promise<ProcessStreamChunkResult> {
   const messages = (chunk as any).messages || []
   
@@ -214,7 +244,8 @@ export async function processStreamChunk({
         processedToolCalls,
         updatedToolExecution,
         toolExecutionMap,
-        send
+        send,
+        threadId
       )
     } else if (type === "tool") {
       processToolMessage(m, updatedToolExecution, toolExecutionMap, send)

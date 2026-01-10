@@ -98,8 +98,9 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ZEP_API_KEY: ${{ secrets.ZEP_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
         run: |
-          docker build --build-arg BROWSERBASE_API_KEY=$BROWSERBASE_API_KEY --build-arg BROWSERBASE_PROJECT_ID=$BROWSERBASE_PROJECT_ID --build-arg OPENAI_API_KEY=$OPENAI_API_KEY --build-arg ZEP_API_KEY=$ZEP_API_KEY --build-arg ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY -f packages/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./packages
+          docker build --build-arg BROWSERBASE_API_KEY=$BROWSERBASE_API_KEY --build-arg BROWSERBASE_PROJECT_ID=$BROWSERBASE_PROJECT_ID --build-arg OPENAI_API_KEY=$OPENAI_API_KEY --build-arg ZEP_API_KEY=$ZEP_API_KEY --build-arg ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY --build-arg TAVILY_API_KEY=$TAVILY_API_KEY -f packages/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./packages
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
