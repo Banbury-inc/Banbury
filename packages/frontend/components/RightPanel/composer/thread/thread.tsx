@@ -90,7 +90,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   }, [assistantTabId]);
   const [drawioModalOpen, setDrawioModalOpen] = useState(false);
   const [selectedDrawioFile, setSelectedDrawioFile] = useState<FileSystemItem | null>(null);
-  const [pendingChanges, setPendingChanges] = useState<Array<{ id: string; type: string; description: string }>>([]);
+  const [pendingChanges, setPendingChanges] = useState<Array<{ id: string; type: string; description: string; filePath?: string }>>([]);
   
   // Message queue state
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
@@ -872,11 +872,11 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   // Track pending changes from AI tools
   useEffect(() => {
     const handleChangeRegistered = (event: CustomEvent) => {
-      const { id, type, description } = event.detail;
+      const { id, type, description, filePath } = event.detail;
       setPendingChanges(prev => {
         // Avoid duplicates
         if (prev.some(c => c.id === id)) return prev;
-        return [...prev, { id, type, description }];
+        return [...prev, { id, type, description, filePath }];
       });
     };
 
@@ -902,6 +902,28 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   const handleRejectAll = () => {
     window.dispatchEvent(new CustomEvent('ai-reject-all'));
     setPendingChanges([]);
+  };
+
+  const handleOpenFile = (change: { id: string; type: string; description: string; filePath?: string }) => {
+    // If we have a file path, dispatch workspace-reopen-file event
+    if (change.filePath) {
+      const file = {
+        id: change.filePath,
+        file_id: change.filePath,
+        name: change.description,
+        type: 'file' as const,
+        path: change.filePath,
+      };
+      window.dispatchEvent(new CustomEvent('workspace-reopen-file', {
+        detail: { newFile: file }
+      }));
+    } else {
+      // If no file path, try to find the file by name using a custom event
+      // The workspace can handle finding the file by name
+      window.dispatchEvent(new CustomEvent('workspace-find-and-open-file', {
+        detail: { fileName: change.description }
+      }));
+    }
   };
 
   // Listen for DOCX AI response events
@@ -1164,7 +1186,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         </ThreadPrimitive.If>
       </ThreadPrimitive.Viewport>
 
-      <Composer 
+      <Composer
         attachedFiles={attachedFiles}
         attachedEmails={attachedEmails}
         onFileAttach={handleFileAttach}
@@ -1180,6 +1202,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
         pendingChanges={pendingChanges}
         onAcceptAll={handleAcceptAll}
         onRejectAll={handleRejectAll}
+        onOpenFile={handleOpenFile}
         messageBuffer={loadedMessagesBuffer}
         assistantTabId={assistantTabId}
         queuedMessages={queuedMessages}

@@ -7,6 +7,7 @@ import {
   FileText,
   Table,
   PaintbrushIcon,
+  FolderOpen,
 } from "lucide-react";
 import { Button } from "../../../ui/button";
 
@@ -16,18 +17,21 @@ interface PendingChange {
   id: string;
   type: string;
   description: string;
+  filePath?: string;
 }
 
 interface PendingChangesBarProps {
   pendingChanges: PendingChange[];
   onAcceptAll: () => void;
   onRejectAll: () => void;
+  onOpenFile?: (change: PendingChange) => void;
 }
 
 export const PendingChangesBar: FC<PendingChangesBarProps> = ({
   pendingChanges,
   onAcceptAll,
   onRejectAll,
+  onOpenFile,
 }) => {
   const [isPendingChangesExpanded, setIsPendingChangesExpanded] = useState(false);
 
@@ -97,12 +101,26 @@ export const PendingChangesBar: FC<PendingChangesBarProps> = ({
               {pendingChanges.map((change) => (
                 <div
                   key={change.id}
-                  className="flex items-center gap-2 py-1 px-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded"
+                  className="flex items-center gap-2 py-1 px-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded group"
                 >
                   {getIcon(change.type)}
                   <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate flex-1" title={change.description}>
                     {change.description}
                   </span>
+                  {onOpenFile && (
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenFile(change);
+                      }}
+                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-zinc-200 dark:hover:bg-zinc-600"
+                      title="Open file"
+                    >
+                      <FolderOpen className="h-3.5 w-3.5 text-zinc-600 dark:text-zinc-400" strokeWidth={1.5} />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
