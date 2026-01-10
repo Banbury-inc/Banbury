@@ -1,0 +1,76 @@
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "io.banbury.desktop",
+  "productName": "Banbury",
+  "directories": {
+    "output": "dist-electron-build",
+    "buildResources": "electron-app/resources"
+  },
+  "files": [
+    "dist-electron/**/*",
+    "!node_modules",
+    "!frontend",
+    "!backend",
+    "!pages",
+    "!.next",
+    "!stories",
+    "!tests"
+  ],
+  "extraMetadata": {
+    "main": "dist-electron/electron-app/main.js"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "electron-app/resources/icon.ico"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["x64", "arm64"]
+      }
+    ],
+    "icon": "electron-app/resources/icon.icns",
+    "category": "public.app-category.productivity"
+  },
+  "dmg": {
+    "contents": [
+      {
+        "x": 130,
+        "y": 220
+      },
+      {
+        "x": 410,
+        "y": 220,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ]
+  },
+  "linux": {
+    "target": [
+      {
+        "target": "AppImage",
+        "arch": ["x64"]
+      },
+      {
+        "target": "deb",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "electron-app/resources/icons",
+    "category": "Office"
+  },
+  "publish": null
+}

@@ -1,0 +1,6 @@
+# Electron App Resources
+
+Place icon files here for platform-specific builds:
+- icon.ico (Windows, 256x256 ICO format)
+- icon.icns (macOS, Apple Icon Image format)
+- icons/ directory with PNGs (Linux, multiple sizes: 16x16, 32x32, 48x48, 64x64, 128x128, 256x256, 512x512)

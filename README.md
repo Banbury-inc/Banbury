@@ -119,6 +119,11 @@ npm run dev              # Start development server
 npm run build            # Build for production
 npm run start            # Start production server
 
+# Desktop App (Electron)
+npm run desktop:dev      # Start desktop app in development mode
+npm run desktop:build    # Build desktop app for production
+npm run desktop:dist     # Build distributable packages for all platforms
+
 # Code Quality
 npm run lint             # Run ESLint
 npm run lint:fix         # Fix linting issues
@@ -325,11 +330,65 @@ Banbury/
 ├── packages/
 │   ├── frontend/          # React frontend application
 │   ├── backend/           # Backend API services
+│   ├── electron-app/      # Electron desktop shell (optional)
 │   └── public/            # Static assets and images
 ├── Dockerfile             # Docker configuration
 ├── package.json          # Root package configuration
 └── README.md            # This file
 ```
+
+---
+
+## 🖥️ Desktop App (Electron)
+
+Banbury is also available as a cross-platform desktop application for Windows, macOS, and Linux. The desktop app is a thin Electron shell that loads the web application, providing a native desktop experience.
+
+### Prerequisites
+
+- Node.js 18+
+- npm
+- For building platform-specific distributables:
+  - **Windows**: No additional requirements
+  - **macOS**: Xcode Command Line Tools (`xcode-select --install`)
+  - **Linux**: `rpm`, `dpkg`, or `snapcraft` depending on target format
+
+### Desktop Development
+
+```bash
+# Navigate to packages directory
+cd packages
+
+# Install dependencies (includes Electron)
+npm install
+
+# Run the desktop app in development mode
+# This starts the Next.js dev server and launches Electron
+npm run desktop:dev
+```
+
+### Building Desktop Distributables
+
+```bash
+# Build the desktop app for your current platform
+npm run desktop:build
+
+# Build and create distributable packages (Windows, macOS, Linux)
+npm run desktop:dist
+```
+
+### Desktop Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DESKTOP_APP_DEV_URL` | URL for development mode | `http://localhost:3000` |
+| `DESKTOP_APP_PROD_URL` | URL for production mode | Deployed web app URL |
+
+### Desktop App Features
+
+- 🪟 **Native Window**: Runs in its own window with standard OS controls
+- 🔒 **Secure**: Context isolation enabled, no Node.js access from renderer
+- 🔄 **Auto Updates**: (Coming soon) Automatic updates for desktop users
+- 💻 **Cross-Platform**: Single codebase for Windows, macOS, and Linux
 
 ---
 

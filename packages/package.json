@@ -25,7 +25,15 @@
     "format:check": "npm run prettier -- --check",
     "format:fix": "npm run prettier -- --write",
     "types:check": "bash -c tsc --noEmit --pretty",
-    "clean": "rm -rf .next && rm -rf node_modules/.cache && rm -f tsconfig.tsbuildinfo"
+    "clean": "rm -rf .next && rm -rf node_modules/.cache && rm -f tsconfig.tsbuildinfo",
+    "electron:build": "tsc -p tsconfig.electron.json",
+    "desktop:dev": "concurrently --kill-others --names \"next,electron\" \"npm run dev\" \"npx wait-on http://localhost:3000 && npm run electron:build && cross-env NODE_ENV=development electron dist-electron/electron-app/main.js\"",
+    "desktop:build": "npm run electron:build",
+    "desktop:start": "cross-env NODE_ENV=production electron dist-electron/electron-app/main.js",
+    "desktop:dist": "npm run electron:build && electron-builder --config electron-builder.json",
+    "desktop:dist:win": "npm run electron:build && electron-builder --config electron-builder.json --win",
+    "desktop:dist:mac": "npm run electron:build && electron-builder --config electron-builder.json --mac",
+    "desktop:dist:linux": "npm run electron:build && electron-builder --config electron-builder.json --linux"
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [
@@ -189,6 +197,9 @@
     "@typescript-eslint/parser": "^7.18.0",
     "autoprefixer": "^10.4.20",
     "concurrently": "^9.2.1",
+    "cross-env": "^7.0.3",
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.2.7",
     "eslint-config-prettier": "^9.1.0",
