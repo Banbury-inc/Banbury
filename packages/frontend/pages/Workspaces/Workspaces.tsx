@@ -1098,34 +1098,19 @@ const Workspaces = (): React.ReactNode => {
   }, [triggerSidebarRefresh]);
 
   // Listen for workspace-find-and-open-file events to find and open files by name
+  // Note: This opens the file search command to let the user select the file
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent).detail || {};
       const { fileName } = detail;
       if (!fileName) return;
 
-      // Search for the file in the file tree
-      const findFileByName = (items: FileSystemItem[], name: string): FileSystemItem | null => {
-        for (const item of items) {
-          if (item.type === 'file' && item.name === name) {
-            return item;
-          }
-          if (item.type === 'directory' && item.children) {
-            const found = findFileByName(item.children, name);
-            if (found) return found;
-          }
-        }
-        return null;
-      };
-
-      const file = findFileByName(fileTree, fileName);
-      if (file) {
-        openFileInTabCallback(file, activePanelId);
-      }
+      // Open the file search command so the user can find and open the file
+      setFileSearchOpen(true);
     };
     window.addEventListener('workspace-find-and-open-file', handler as EventListener);
     return () => window.removeEventListener('workspace-find-and-open-file', handler as EventListener);
-  }, [fileTree, openFileInTabCallback, activePanelId]);
+  }, []);
 
   // Load conversations on mount
   useEffect(() => {
