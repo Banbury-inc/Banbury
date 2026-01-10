@@ -22,6 +22,7 @@ export interface ConversationResponse {
   conversation_id?: string;
   message?: string;
   error?: string;
+  deleted_count?: number;
 }
 
 export default class Conversations {
@@ -101,6 +102,19 @@ export default class Conversations {
       return {
         success: false,
         error: 'Failed to update conversation',
+      };
+    }
+  }
+
+  static async deleteAllConversations(): Promise<ConversationResponse> {
+    try {
+      const result = await ApiService.delete<ConversationResponse>('/conversations/delete-all/');
+      return result;
+    } catch (error) {
+      console.error('Error deleting all conversations:', error);
+      return {
+        success: false,
+        error: 'Failed to delete all conversations',
       };
     }
   }

@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react'
-import { Brain, Mail, Sparkles } from 'lucide-react'
+import { useState } from 'react'
+import { Brain, Mail, Sparkles, Trash2 } from 'lucide-react'
 import { Switch } from '../../ui/switch'
+import { Button } from '../../ui/button'
 import { Typography } from 'frontend/components/ui/typography'
 import { Label } from 'frontend/components/ui/label'
 import { Separator } from 'frontend/components/ui/separator'
-import { AVAILABLE_MODELS, DEFAULT_VISIBLE_MODELS, type ModelProvider } from '../../RightPanel/composer/handlers/getModelDisplayName'
+import { useToast } from '../../ui/use-toast'
+import { AVAILABLE_MODELS, DEFAULT_VISIBLE_MODELS } from '../../RightPanel/composer/handlers/getModelDisplayName'
+import { deleteAllConversations } from './handlers/aiSettingsHandlers'
 
 interface ToolPreferences {
   web_search: boolean
@@ -21,6 +24,8 @@ interface ToolPreferences {
 }
 
 export function AISettingsTab() {
+  const { toast } = useToast()
+  const [isDeleting, setIsDeleting] = useState(false)
   const [toolPreferences, setToolPreferences] = useState<ToolPreferences>(() => {
     try {
       const saved = localStorage.getItem('toolPreferences')
@@ -83,6 +88,34 @@ export function AISettingsTab() {
 
     // Dispatch storage event for other components to pick up
     window.dispatchEvent(new Event('storage'))
+  }
+
+  async function handleDeleteAllConversations() {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete all your AI conversations? This action cannot be undone.'
+    )
+    if (!confirmed) return
+
+    setIsDeleting(true)
+    const result = await deleteAllConversations()
+    setIsDeleting(false)
+
+    if (!result.success) {
+      toast({
+        title: 'Error',
+        description: result.error || 'Failed to delete conversations',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    toast({
+      title: 'Conversations Deleted',
+      description: `Successfully deleted ${result.deletedCount ?? 'all'} conversations.`,
+    })
+
+    // Dispatch event so other components can react
+    window.dispatchEvent(new CustomEvent('assistant-conversations-cleared'))
   }
 
   return (
@@ -219,6 +252,36 @@ export function AISettingsTab() {
         <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">
           <strong>Note:</strong> Disabling tools will prevent the AI from using them in conversations. Changes take effect immediately.
         </Typography>
+      </div>
+
+      <Separator className="my-6" />
+
+      {/* Danger Zone */}
+      <div className="space-y-4">
+        <Typography variant="h3" className="flex items-center text-destructive">
+          <Trash2 className="h-5 w-5 mr-2" />
+          Danger Zone
+        </Typography>
+        <div className="p-4 border border-destructive/50 rounded-lg bg-destructive/5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">
+                Delete All AI Conversations
+              </Typography>
+              <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 mt-1">
+                Permanently delete all saved AI conversations associated with your account. This action cannot be undone.
+              </Typography>
+            </div>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAllConversations}
+              disabled={isDeleting}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {isDeleting ? 'Deleting...' : 'Delete All'}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   )
