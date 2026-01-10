@@ -8,12 +8,12 @@ import { NavSidebar } from "../../components/nav-sidebar";
 import { WorkspacesTopBar } from "../../components/WorkspacesTopBar/WorkspacesTopBar";
 import { FileSystemItem } from '../../utils/fileTreeUtils';
 import 'allotment/dist/style.css';
-import { X, FolderOpen, Trash2, Menu, Files, MessageSquare, Brain, LogOut, UserStarIcon, PanelRight, Folder, Mail, Calendar, CheckSquare, Video, UserCog } from 'lucide-react';
+import { X, FolderOpen, Trash2, Menu, MessageSquare, PanelRight, Folder, Mail, Calendar, CheckSquare, Video, UserCog } from 'lucide-react';
 import BanburyLogo from '../../assets/images/Logo.png';
 import { SplitZones } from '../../components/common/SplitZones';
 import { useRouter } from 'next/router';
 import { useIsMobile } from '../../hooks/use-mobile';
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '../../components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '../../components/ui/sheet';
 import { Button } from '../../components/ui/button';
 import { dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { attachClosestEdge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
@@ -110,7 +110,6 @@ const Workspaces = (): React.ReactNode => {
     maxWidth: 600,
   });
   // Mobile state management
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileFileSidebarOpen, setMobileFileSidebarOpen] = useState(false);
   const [mobileAssistantOpen, setMobileAssistantOpen] = useState(false);
   const [keybinds, setKeybinds] = useState<KeybindsState>(getStoredKeybinds);
@@ -706,24 +705,6 @@ const Workspaces = (): React.ReactNode => {
   }, []);
 
   // Mobile drawer management: ensure only one drawer is open at a time
-  // Note: Assistant panel can stay open with other drawers, but nav and file sidebar close others
-  useEffect(() => {
-    if (!isMobile) return;
-    
-    if (mobileNavOpen) {
-      setMobileFileSidebarOpen(false);
-      // Don't close assistant panel when nav opens - user might want both
-    }
-  }, [isMobile, mobileNavOpen]);
-
-  useEffect(() => {
-    if (!isMobile) return;
-    
-    if (mobileFileSidebarOpen) {
-      setMobileNavOpen(false);
-      // Don't close assistant panel when file sidebar opens - user might want both
-    }
-  }, [isMobile, mobileFileSidebarOpen]);
 
   // On mobile, auto-collapse sidebars by default, but open assistant panel
   useEffect(() => {
@@ -1470,74 +1451,15 @@ const Workspaces = (): React.ReactNode => {
           {isMobile && (
             <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background">
               <div className="px-2 py-1.5 border-b border-zinc-200 dark:border-white/[0.06] flex items-center justify-between w-full touch-target bg-background">
-                <div className="flex items-center gap-1">
-                  {/* Mobile Navigation Drawer */}
-                  <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-                    <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[32px] min-w-[32px] border-zinc-300 dark:border-white/[0.06] touch-target p-0">
-                        <Menu className="h-3.5 w-3.5" />
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent side="left" className="w-[280px] sm:w-[300px] p-0 mobile-sheet-expand">
-                      <SheetHeader className="px-4 py-3 border-b border-zinc-300 dark:border-white/[0.06]">
-                        <SheetTitle className="text-foreground mobile-text text-base font-semibold">Navigation</SheetTitle>
-                      </SheetHeader>
-                      <div className="flex-1 overflow-auto py-4">
-                        <div className="flex flex-col gap-2 px-4">
-                          {[
-                            { id: 'workspaces', icon: FolderOpen, label: 'Workspaces', path: '/workspaces' },
-                            { id: 'knowledge', icon: Brain, label: 'Knowledge', path: '/knowledge' },
-                            ...(userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com' 
-                              ? [{ id: 'admin', icon: UserStarIcon, label: 'Admin', path: '/admin' }]
-                              : []),
-                          ].map((item) => {
-                            const Icon = item.icon;
-                            const isActive = router.pathname === item.path;
-                            return (
-                              <button
-                                key={item.id}
-                                onClick={() => {
-                                  router.push(item.path);
-                                  setMobileNavOpen(false);
-                                }}
-                                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors touch-target min-h-[44px] ${
-                                  isActive
-                                    ? 'bg-accent dark:bg-accent text-foreground'
-                                    : 'text-muted-foreground hover:text-foreground hover:bg-accent dark:hover:bg-accent'
-                                }`}
-                              >
-                                <Icon className="h-5 w-5 flex-shrink-0" strokeWidth={1} />
-                                <span className="mobile-text">{item.label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <div className="px-4 pt-4 border-t border-zinc-300 dark:border-white/[0.06]">
-                          <button
-                            onClick={() => {
-                              handleLogout();
-                              setMobileNavOpen(false);
-                            }}
-                            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors text-red-500 dark:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/10 touch-target min-h-[44px]"
-                          >
-                            <LogOut className="h-5 w-5 flex-shrink-0" strokeWidth={1} />
-                            <span className="mobile-text">Logout</span>
-                          </button>
-                        </div>
-                      </div>
-                    </SheetContent>
-                  </Sheet>
-                </div>
-
                 {/* Mobile Workspace Tabs */}
-                <div className="flex items-center gap-0.5 flex-1 justify-center overflow-x-auto scrollbar-hide">
+                <div className="flex items-center gap-0.5 flex-1 overflow-x-auto scrollbar-hide">
                   {[
                     { id: 'files', icon: Folder, label: 'Files' },
                     { id: 'email', icon: Mail, label: 'Email' },
                     { id: 'calendar', icon: Calendar, label: 'Calendar' },
                     { id: 'tasks', icon: CheckSquare, label: 'Tasks' },
                     { id: 'meetings', icon: Video, label: 'Meetings' },
-                    ...(userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com' 
+                    ...(userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com'
                       ? [{ id: 'admin', icon: UserCog, label: 'Admin' }]
                       : []),
                   ].map((tab) => {
@@ -1562,7 +1484,7 @@ const Workspaces = (): React.ReactNode => {
                     );
                   })}
                 </div>
-                
+
                 <div className="flex items-center gap-1">
                   {/* Assistant Panel Toggle */}
                   <Button
@@ -1672,79 +1594,41 @@ const Workspaces = (): React.ReactNode => {
                   <div className="h-full flex flex-col">
                     {/* Mobile Toolbar in Assistant Panel */}
                     <div className="px-2 py-1.5 border-b border-zinc-200 dark:border-white/[0.06] flex items-center justify-between w-full touch-target bg-background">
-                      <div className="flex items-center gap-1">
-                        {/* Mobile Navigation Drawer */}
-                        <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-                          <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[32px] min-w-[32px] border-zinc-300 dark:border-white/[0.06] touch-target p-0">
-                              <Menu className="h-3.5 w-3.5" />
-                            </Button>
-                          </SheetTrigger>
-                          <SheetContent side="left" className="w-[280px] sm:w-[300px] p-0 mobile-sheet-expand">
-                            <SheetHeader className="px-4 py-3 border-b border-zinc-300 dark:border-white/[0.06]">
-                              <SheetTitle className="text-foreground mobile-text text-base font-semibold">Navigation</SheetTitle>
-                            </SheetHeader>
-                            <div className="flex-1 overflow-auto py-4">
-                              <div className="flex flex-col gap-2 px-4">
-                                {[
-                                  { id: 'workspaces', icon: FolderOpen, label: 'Workspaces', path: '/workspaces' },
-                                  { id: 'knowledge', icon: Brain, label: 'Knowledge', path: '/knowledge' },
-                                  ...(userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com' 
-                                    ? [{ id: 'admin', icon: UserStarIcon, label: 'Admin', path: '/admin' }]
-                                    : []),
-                                ].map((item) => {
-                                  const Icon = item.icon;
-                                  const isActive = router.pathname === item.path;
-                                  return (
-                                    <button
-                                      key={item.id}
-                                      onClick={() => {
-                                        router.push(item.path);
-                                        setMobileNavOpen(false);
-                                      }}
-                                      className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors touch-target min-h-[44px] ${
-                                        isActive
-                                          ? 'bg-accent dark:bg-accent text-foreground'
-                                          : 'text-muted-foreground hover:text-foreground hover:bg-accent dark:hover:bg-accent'
-                                      }`}
-                                    >
-                                      <Icon className="h-5 w-5 flex-shrink-0" strokeWidth={1} />
-                                      <span className="mobile-text">{item.label}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                              <div className="px-4 pt-4 border-t border-zinc-300 dark:border-white/[0.06]">
-                                <button
-                                  onClick={() => {
-                                    handleLogout();
-                                    setMobileNavOpen(false);
-                                  }}
-                                  className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors text-red-500 dark:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/10 touch-target min-h-[44px]"
-                                >
-                                  <LogOut className="h-5 w-5 flex-shrink-0" strokeWidth={1} />
-                                  <span className="mobile-text">Logout</span>
-                                </button>
-                              </div>
-                            </div>
-                          </SheetContent>
-                        </Sheet>
-                        
-                        {/* File Sidebar Toggle */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 min-h-[32px] min-w-[32px] border-zinc-300 dark:border-white/[0.06] touch-target p-0"
-                          onClick={() => {
-                            setMobileFileSidebarOpen(true);
-                            setMobileAssistantOpen(false);
-                          }}
-                          title="Files"
-                        >
-                          <Files className="h-3.5 w-3.5" />
-                        </Button>
+                      {/* Mobile Workspace Tabs */}
+                      <div className="flex items-center gap-0.5 flex-1 overflow-x-auto scrollbar-hide">
+                        {[
+                          { id: 'files', icon: Folder, label: 'Files' },
+                          { id: 'email', icon: Mail, label: 'Email' },
+                          { id: 'calendar', icon: Calendar, label: 'Calendar' },
+                          { id: 'tasks', icon: CheckSquare, label: 'Tasks' },
+                          { id: 'meetings', icon: Video, label: 'Meetings' },
+                          ...(userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com'
+                            ? [{ id: 'admin', icon: UserCog, label: 'Admin' }]
+                            : []),
+                        ].map((tab) => {
+                          const Icon = tab.icon;
+                          const isActive = activeLeftPanelTab === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              onClick={() => {
+                                setActiveLeftPanelTab(tab.id);
+                                setMobileFileSidebarOpen(true);
+                                setMobileAssistantOpen(false);
+                              }}
+                              className={`flex items-center justify-center h-8 w-8 min-h-[32px] min-w-[32px] rounded-lg transition-all duration-200 ${
+                                isActive
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'text-muted-foreground hover:bg-accent dark:hover:bg-accent hover:text-foreground'
+                              }`}
+                              title={tab.label}
+                            >
+                              <Icon className="h-4 w-4" strokeWidth={1.5} />
+                            </button>
+                          );
+                        })}
                       </div>
-                      
+
                       <div className="flex items-center gap-1">
                         {/* Assistant Panel Toggle - Close button */}
                         <Button
