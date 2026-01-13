@@ -92,25 +92,38 @@ export function useDesktopRecording(): UseDesktopRecordingReturn {
         
         // Set up event listeners
         const cleanupMeetingDetected = desktopRecording.onMeetingDetected((meeting) => {
+          console.log('[useDesktopRecording] Meeting detected event received:', meeting)
           setDetectedMeetings(prev => {
             const exists = prev.some(m => m.id === meeting.id)
-            if (exists) return prev
-            return [...prev, meeting]
+            if (exists) {
+              console.log('[useDesktopRecording] Meeting already exists in list')
+              return prev
+            }
+            const updated = [...prev, meeting]
+            console.log('[useDesktopRecording] Updated meetings list:', updated)
+            return updated
           })
         })
         cleanupFnsRef.current.push(cleanupMeetingDetected)
         
         const cleanupMeetingEnded = desktopRecording.onMeetingEnded((meeting) => {
-          setDetectedMeetings(prev => prev.filter(m => m.id !== meeting.id))
+          console.log('[useDesktopRecording] Meeting ended event received:', meeting)
+          setDetectedMeetings(prev => {
+            const filtered = prev.filter(m => m.id !== meeting.id)
+            console.log('[useDesktopRecording] Updated meetings list:', filtered)
+            return filtered
+          })
         })
         cleanupFnsRef.current.push(cleanupMeetingEnded)
         
         const cleanupRecordingStarted = desktopRecording.onRecordingStarted((status) => {
+          console.log('[useDesktopRecording] Recording started event received:', status)
           setRecordingStatus(status)
         })
         cleanupFnsRef.current.push(cleanupRecordingStarted)
         
         const cleanupRecordingStopped = desktopRecording.onRecordingStopped(() => {
+          console.log('[useDesktopRecording] Recording stopped event received')
           setRecordingStatus(defaultRecordingStatus)
         })
         cleanupFnsRef.current.push(cleanupRecordingStopped)
@@ -154,6 +167,7 @@ export function useDesktopRecording(): UseDesktopRecordingReturn {
   }, [isDesktop])
   
   const startRecording = useCallback(async (windowId: string, uploadToken: string): Promise<{ success: boolean; error?: string }> => {
+    console.log('[useDesktopRecording] startRecording called with windowId:', windowId)
     if (!isDesktop) return { success: false, error: 'Not in desktop environment' }
     
     try {
@@ -161,6 +175,7 @@ export function useDesktopRecording(): UseDesktopRecordingReturn {
       if (!desktopRecording) return { success: false, error: 'Desktop recording API not available' }
       
       const result = await desktopRecording.startRecording(windowId, uploadToken)
+      console.log('[useDesktopRecording] startRecording result:', result)
       if (!result.success) {
         setError(result.error || 'Failed to start recording')
       } else {
@@ -169,12 +184,14 @@ export function useDesktopRecording(): UseDesktopRecordingReturn {
       return result
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to start recording'
+      console.error('[useDesktopRecording] startRecording error:', err)
       setError(errorMsg)
       return { success: false, error: errorMsg }
     }
   }, [isDesktop])
   
   const stopRecording = useCallback(async (windowId: string): Promise<{ success: boolean; error?: string }> => {
+    console.log('[useDesktopRecording] stopRecording called with windowId:', windowId)
     if (!isDesktop) return { success: false, error: 'Not in desktop environment' }
     
     try {
@@ -182,6 +199,7 @@ export function useDesktopRecording(): UseDesktopRecordingReturn {
       if (!desktopRecording) return { success: false, error: 'Desktop recording API not available' }
       
       const result = await desktopRecording.stopRecording(windowId)
+      console.log('[useDesktopRecording] stopRecording result:', result)
       if (!result.success) {
         setError(result.error || 'Failed to stop recording')
       } else {
@@ -190,6 +208,7 @@ export function useDesktopRecording(): UseDesktopRecordingReturn {
       return result
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to stop recording'
+      console.error('[useDesktopRecording] stopRecording error:', err)
       setError(errorMsg)
       return { success: false, error: errorMsg }
     }

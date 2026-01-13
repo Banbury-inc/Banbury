@@ -36,10 +36,14 @@ interface DesktopRecordingStatus {
 }
 
 // Event listener cleanup functions
-const eventListeners: Map<string, ((...args: any[]) => void)[]> = new Map()
+type IPCListener = (_event: Electron.IpcRendererEvent, ...args: unknown[]) => void
+const eventListeners: Map<string, IPCListener[]> = new Map()
 
-function addIPCListener(channel: string, callback: (...args: any[]) => void): () => void {
-  const handler = (_event: Electron.IpcRendererEvent, ...args: any[]) => callback(...args)
+function addIPCListener<T extends unknown[]>(channel: string, callback: (...args: T) => void): () => void {
+  const handler: IPCListener = (_event: Electron.IpcRendererEvent, ...args: unknown[]) => {
+    console.log(`[Preload] IPC event received on channel: ${channel}`, ...args)
+    callback(...(args as T))
+  }
   ipcRenderer.on(channel, handler)
   
   // Track listeners for cleanup
@@ -50,6 +54,7 @@ function addIPCListener(channel: string, callback: (...args: any[]) => void): ()
   
   // Return cleanup function
   return () => {
+    console.log(`[Preload] Removing IPC listener for channel: ${channel}`)
     ipcRenderer.removeListener(channel, handler)
     const listeners = eventListeners.get(channel)
     if (listeners) {
@@ -60,6 +65,7 @@ function addIPCListener(channel: string, callback: (...args: any[]) => void): ()
     }
   }
 }
+
 
 // Expose a minimal desktop API to the renderer process
 contextBridge.exposeInMainWorld('desktopApp', {

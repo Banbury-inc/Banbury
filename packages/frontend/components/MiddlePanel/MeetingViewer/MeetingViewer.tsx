@@ -1,4 +1,4 @@
-import { ArrowLeft, Trash2, Download, FileText, Users, Clock, Video, VideoOff, Mic, MicOff, Play, ExternalLink, Share2, Upload, Pause, Volume2, VolumeX, Loader2 } from "lucide-react"
+import { ArrowLeft, Trash2, Download, FileText, Users, Clock, Video, VideoOff, Mic, MicOff, Play, ExternalLink, Share2, Upload, Pause, Volume2, VolumeX, Loader2, Radio, Wifi, WifiOff } from "lucide-react"
 import { useState, useCallback, useEffect, useRef } from "react"
 import { Button } from "../../ui/button"
 import { useToast } from "../../ui/use-toast"
@@ -12,6 +12,7 @@ import { ApiService } from "../../../../backend/api/apiService"
 import { VideoPlayerDialog } from "../../../pages/MeetingAgent/components/VideoPlayerDialog"
 import { RecordingUploadDialog } from "../../../pages/MeetingAgent/components/RecordingUploadDialog"
 import { Card } from "../../ui/card"
+import { useLiveTranscription } from "../../../hooks/useLiveTranscription"
 
 interface MeetingViewerProps {
   meeting: MeetingSession
@@ -42,6 +43,36 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated, onMeetingDele
   const [transcriptionSegments, setTranscriptionSegments] = useState<TranscriptionSegment[]>([])
   const [transcriptionFullText, setTranscriptionFullText] = useState<string>('')
   const [isTranscriptionLoading, setIsTranscriptionLoading] = useState(false)
+  const transcriptScrollRef = useRef<HTMLDivElement>(null)
+  
+  // Live transcription - only enabled when meeting is recording
+  const isLiveRecording = currentMeeting.status === 'recording' || currentMeeting.status === 'active'
+  const {
+    segments: liveSegments,
+    isConnected: isLiveConnected,
+    isConnecting: isLiveConnecting,
+    error: liveError,
+    reconnect: reconnectLive
+  } = useLiveTranscription({
+    sessionId: currentMeeting.id,
+    enabled: isLiveRecording,
+    onSegment: (segment) => {
+      // Auto-scroll to latest segment
+      if (transcriptScrollRef.current) {
+        setTimeout(() => {
+          transcriptScrollRef.current?.scrollTo({
+            top: transcriptScrollRef.current.scrollHeight,
+            behavior: 'smooth'
+          })
+        }, 100)
+      }
+    }
+  })
+  
+  // Combine stored segments with live segments
+  const allSegments = isLiveRecording && liveSegments.length > 0 
+    ? liveSegments 
+    : transcriptionSegments
 
   const getDuration = () => {
     if (currentMeeting.duration) {
@@ -132,7 +163,7 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated, onMeetingDele
       
       const content = `Meeting: ${currentMeeting.title || 'Untitled Meeting'}
 Date: ${formatDate(currentMeeting.startTime)}
-Platform: ${currentMeeting.platform.name}
+Platform: ${currentMeeting.platform?.name || 'Desktop Recording'}
 Duration: ${getDuration()} minutes
 
 FULL TRANSCRIPTION:
@@ -170,7 +201,7 @@ ${transcriptionData.segments?.map((segment: any) =>
     } finally {
       setIsLoading(false)
     }
-  }, [currentMeeting.id, currentMeeting.title, currentMeeting.startTime, currentMeeting.platform.name, getDuration, toast])
+  }, [currentMeeting.id, currentMeeting.title, currentMeeting.startTime, currentMeeting.platform?.name, getDuration, toast])
 
   const handleDelete = useCallback(async () => {
     if (!confirm('Are you sure you want to delete this meeting session? This action cannot be undone.')) {
@@ -405,7 +436,7 @@ ${transcriptionData.segments?.map((segment: any) =>
               {currentMeeting.title || 'Untitled Meeting'}
             </Typography>
             <Typography variant="small" className="text-muted-foreground">
-              {currentMeeting.platform.name} • {formatDate(currentMeeting.startTime)}
+              {currentMeeting.platform?.name || 'Desktop Recording'} • {formatDate(currentMeeting.startTime)}
             </Typography>
           </div>
         </div>
@@ -623,22 +654,49 @@ ${transcriptionData.segments?.map((segment: any) =>
             </>
           )}
 
-          {/* Transcript */}
-          {(transcriptionSegments.length > 0 || transcriptionFullText || currentMeeting.transcriptionText) && (
+          {/* Transcript - Show for completed meetings or live recordings */}
+          {(allSegments.length > 0 || transcriptionFullText || currentMeeting.transcriptionText || isLiveRecording) && (
             <>
               <div>
-                <Typography variant="h4" className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Transcript
-                </Typography>
-                {isTranscriptionLoading ? (
+                <div className="flex items-center justify-between mb-3">
+                  <Typography variant="h4" className="text-sm font-semibold flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    {isLiveRecording ? 'Live Transcription' : 'Transcript'}
+                  </Typography>
+                  {/* Live connection status indicator */}
+                  {isLiveRecording && (
+                    <div className="flex items-center gap-2">
+                      {isLiveConnecting ? (
+                        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Connecting...
+                        </Badge>
+                      ) : isLiveConnected ? (
+                        <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                          <div className="h-2 w-2 mr-1.5 bg-green-500 rounded-full animate-pulse" />
+                          Live
+                        </Badge>
+                      ) : (
+                        <Badge 
+                          variant="outline" 
+                          className="bg-red-500/10 text-red-500 border-red-500/20 cursor-pointer"
+                          onClick={reconnectLive}
+                        >
+                          <WifiOff className="h-3 w-3 mr-1" />
+                          Disconnected
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {isTranscriptionLoading && !isLiveRecording ? (
                   <div className="flex items-center justify-center p-8">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
-                ) : transcriptionSegments.length > 0 ? (
+                ) : allSegments.length > 0 ? (
                   <Card className="bg-muted/50 border-border">
-                    <div className="p-4 max-h-[600px] overflow-y-auto space-y-3">
-                      {transcriptionSegments.map((segment, index) => (
+                    <div ref={transcriptScrollRef} className="p-4 max-h-[600px] overflow-y-auto space-y-3">
+                      {allSegments.map((segment, index) => (
                         <div
                           key={segment.id || index}
                           data-segment-start={Math.floor(segment.startTime)}
@@ -674,6 +732,34 @@ ${transcriptionData.segments?.map((segment: any) =>
                       <Typography variant="p" className="text-sm whitespace-pre-wrap">
                         {transcriptionFullText || currentMeeting.transcriptionText}
                       </Typography>
+                    </div>
+                  </Card>
+                ) : isLiveRecording ? (
+                  <Card className="bg-muted/50 border-border">
+                    <div className="p-8 text-center">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <Radio className="h-5 w-5 text-muted-foreground animate-pulse" />
+                        <Typography variant="p" className="text-muted-foreground">
+                          {isLiveConnecting ? 'Connecting to live transcription...' : 
+                           isLiveConnected ? 'Waiting for transcription...' :
+                           liveError ? 'Connection error - click to retry' :
+                           'Preparing transcription...'}
+                        </Typography>
+                      </div>
+                      <Typography variant="small" className="text-muted-foreground/70">
+                        Speech will appear here as it&apos;s transcribed in real-time
+                      </Typography>
+                      {liveError && !isLiveConnected && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-3"
+                          onClick={reconnectLive}
+                        >
+                          <Wifi className="h-4 w-4 mr-2" />
+                          Reconnect
+                        </Button>
+                      )}
                     </div>
                   </Card>
                 ) : null}

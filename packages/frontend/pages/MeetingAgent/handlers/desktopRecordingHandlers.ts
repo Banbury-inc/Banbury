@@ -1,15 +1,25 @@
 import { ApiService } from '../../../../backend/api/apiService'
 
-interface UploadTokenResponse {
+interface BotCreationResponse {
   success: boolean
-  upload_token?: string
-  token_id?: string
-  expires_at?: string
+  bot_id?: string
+  session_id?: string
+  bot_data?: Record<string, unknown>
   error?: string
   message?: string
 }
 
 interface StartRecordingParams {
+  meetingUrl: string
+  platform: string
+  meetingTitle?: string
+  transcriptionEnabled?: boolean
+  botName?: string
+  recordingMode?: string
+  profilePictureUrl?: string
+}
+
+interface DesktopSDKStartRecordingParams {
   windowId: string
   platform: string
   meetingTitle?: string
@@ -17,73 +27,159 @@ interface StartRecordingParams {
 }
 
 /**
- * Fetch an upload token from the backend for desktop recording
+ * Create a bot to join and record a meeting
+ * The bot will join the meeting via Recall AI's Bot API
  */
-export async function fetchUploadToken(params: {
+export async function createBotForMeeting(params: {
+  meetingUrl: string
   platform: string
   meetingTitle?: string
   transcriptionEnabled?: boolean
-}): Promise<UploadTokenResponse> {
+  botName?: string
+  recordingMode?: string
+  profilePictureUrl?: string
+}): Promise<BotCreationResponse> {
   try {
-    const response = await ApiService.post('/meeting-agent/desktop/upload-token/', {
+    const response = await ApiService.post<{
+      success: boolean
+      bot_id?: string
+      session_id?: string
+      bot_data?: Record<string, unknown>
+      error?: string
+      message?: string
+    }>('/meeting-agent/desktop/upload-token/', {
+      meeting_url: params.meetingUrl,
       platform: params.platform,
-      meeting_title: params.meetingTitle || 'Desktop Recording',
-      transcription_enabled: params.transcriptionEnabled ?? true
+      meeting_title: params.meetingTitle || 'Meeting Recording',
+      bot_name: params.botName || params.meetingTitle || 'Meeting Recorder',
+      transcription_enabled: params.transcriptionEnabled ?? true,
+      recording_mode: params.recordingMode || 'speaker_view',
+      profile_picture_url: params.profilePictureUrl || ''
     })
     
-    if (response.success) {
-      return {
-        success: true,
-        upload_token: response.upload_token,
-        token_id: response.token_id,
-        expires_at: response.expires_at
-      }
-    }
-    
     return {
-      success: false,
-      error: response.error || 'Failed to get upload token',
+      success: response.success,
+      bot_id: response.bot_id,
+      session_id: response.session_id,
+      bot_data: response.bot_data,
+      error: response.error,
       message: response.message
     }
   } catch (error) {
-    console.error('[Desktop Recording] Failed to fetch upload token:', error)
+    console.error('[Desktop Recording] Failed to create bot:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch upload token'
+      error: error instanceof Error ? error.message : 'Failed to create bot'
     }
   }
 }
 
 /**
- * Start a desktop recording session
+ * Start a desktop SDK recording session
  * 
  * This function:
- * 1. Fetches an upload token from the backend
- * 2. Calls the Electron IPC to start recording with the token
+ * 1. Gets an upload token from the backend for the desktop SDK
+ * 2. Calls the Electron Desktop SDK's startRecording function
+ * 3. Returns success/error status with session_id for live transcription
  */
-export async function handleStartRecording(
-  params: StartRecordingParams,
-  startRecordingFn: (windowId: string, uploadToken: string) => Promise<{ success: boolean; error?: string }>
-): Promise<{ success: boolean; error?: string }> {
+export async function handleStartDesktopSDKRecording(
+  params: DesktopSDKStartRecordingParams,
+  sdkStartRecording: (windowId: string, uploadToken: string) => Promise<{ success: boolean; error?: string }>
+): Promise<{ success: boolean; sessionId?: string; error?: string; message?: string }> {
   try {
-    // Step 1: Get upload token from backend
-    const tokenResponse = await fetchUploadToken({
+    console.log('[Desktop SDK] Getting upload token for window:', params.windowId)
+    
+    // Get upload token from backend
+    const tokenResponse = await ApiService.post<{
+      success: boolean
+      upload_token?: string
+      session_id?: string
+      error?: string
+      message?: string
+    }>('/meeting-agent/desktop/sdk-token/', {
+      window_id: params.windowId,
       platform: params.platform,
-      meetingTitle: params.meetingTitle,
-      transcriptionEnabled: params.transcriptionEnabled
+      meeting_title: params.meetingTitle || 'Desktop Recording',
+      transcription_enabled: params.transcriptionEnabled ?? true
     })
     
     if (!tokenResponse.success || !tokenResponse.upload_token) {
+      console.error('[Desktop SDK] Failed to get upload token:', tokenResponse.error)
       return {
         success: false,
-        error: tokenResponse.error || 'Failed to get upload token'
+        error: tokenResponse.error || 'Failed to get upload token',
+        message: tokenResponse.message
       }
     }
     
-    // Step 2: Start recording with the token
-    const result = await startRecordingFn(params.windowId, tokenResponse.upload_token)
+    const sessionId = tokenResponse.session_id
+    console.log('[Desktop SDK] Got session_id:', sessionId)
+    console.log('[Desktop SDK] Starting recording with upload token')
     
-    return result
+    // Start recording using the Desktop SDK
+    const recordingResult = await sdkStartRecording(params.windowId, tokenResponse.upload_token)
+    
+    if (!recordingResult.success) {
+      console.error('[Desktop SDK] Failed to start recording:', recordingResult.error)
+      return {
+        success: false,
+        error: recordingResult.error || 'Failed to start recording',
+        message: 'The Desktop SDK failed to start recording'
+      }
+    }
+    
+    console.log('[Desktop SDK] Recording started successfully with session:', sessionId)
+    
+    return {
+      success: true,
+      sessionId,
+      message: 'Desktop recording started successfully'
+    }
+  } catch (error) {
+    console.error('[Desktop SDK] Failed to start desktop recording:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to start desktop recording'
+    }
+  }
+}
+
+/**
+ * Start a meeting recording session using Recall AI Bot
+ * 
+ * This function:
+ * 1. Creates a bot via the backend to join the meeting
+ * 2. Returns the bot ID and session ID for tracking
+ */
+export async function handleStartRecording(
+  params: StartRecordingParams
+): Promise<{ success: boolean; bot_id?: string; session_id?: string; error?: string; message?: string }> {
+  try {
+    // Create bot to join the meeting
+    const botResponse = await createBotForMeeting({
+      meetingUrl: params.meetingUrl,
+      platform: params.platform,
+      meetingTitle: params.meetingTitle,
+      transcriptionEnabled: params.transcriptionEnabled,
+      botName: params.botName,
+      recordingMode: params.recordingMode,
+      profilePictureUrl: params.profilePictureUrl
+    })
+    
+    if (!botResponse.success || !botResponse.bot_id) {
+      return {
+        success: false,
+        error: botResponse.error || 'Failed to create bot',
+        message: botResponse.message
+      }
+    }
+    
+    return {
+      success: true,
+      bot_id: botResponse.bot_id,
+      session_id: botResponse.session_id,
+      message: botResponse.message || 'Bot created and joining meeting'
+    }
   } catch (error) {
     console.error('[Desktop Recording] Failed to start recording:', error)
     return {
@@ -94,20 +190,95 @@ export async function handleStartRecording(
 }
 
 /**
- * Stop a desktop recording session
+ * Stop a desktop SDK recording session
  */
-export async function handleStopRecording(
+export async function handleStopDesktopSDKRecording(
   windowId: string,
-  stopRecordingFn: (windowId: string) => Promise<{ success: boolean; error?: string }>
-): Promise<{ success: boolean; error?: string }> {
+  sdkStopRecording: (windowId: string) => Promise<{ success: boolean; error?: string }>
+): Promise<{ success: boolean; error?: string; message?: string }> {
   try {
-    const result = await stopRecordingFn(windowId)
-    return result
+    console.log('[Desktop SDK] Stopping recording for window:', windowId)
+    
+    // Stop recording using the Desktop SDK
+    const result = await sdkStopRecording(windowId)
+    
+    if (!result.success) {
+      console.error('[Desktop SDK] Failed to stop recording:', result.error)
+      return {
+        success: false,
+        error: result.error || 'Failed to stop recording',
+        message: 'The Desktop SDK failed to stop recording'
+      }
+    }
+    
+    console.log('[Desktop SDK] Recording stopped successfully')
+    
+    return {
+      success: true,
+      message: 'Desktop recording stopped successfully'
+    }
   } catch (error) {
-    console.error('[Desktop Recording] Failed to stop recording:', error)
+    console.error('[Desktop SDK] Failed to stop desktop recording:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to stop recording'
+      error: error instanceof Error ? error.message : 'Failed to stop desktop recording'
+    }
+  }
+}
+
+/**
+ * Stop a bot recording session
+ */
+export async function handleStopRecording(
+  botId: string
+): Promise<{ success: boolean; error?: string; message?: string }> {
+  try {
+    // Call backend to stop the bot
+    const response = await ApiService.post<{
+      success: boolean
+      error?: string
+      message?: string
+    }>(`/meeting-agent/recall-bot/${botId}/stop/`, {})
+    
+    return {
+      success: response.success,
+      error: response.error,
+      message: response.message || 'Bot stopped successfully'
+    }
+  } catch (error) {
+    console.error('[Desktop Recording] Failed to stop bot:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to stop bot'
+    }
+  }
+}
+
+/**
+ * Get bot status and information
+ */
+export async function getBotStatus(
+  botId: string
+): Promise<{ success: boolean; bot_data?: Record<string, unknown>; error?: string; message?: string }> {
+  try {
+    const response = await ApiService.get<{
+      success: boolean
+      bot_data?: Record<string, unknown>
+      error?: string
+      message?: string
+    }>(`/meeting-agent/recall-bot/${botId}/`)
+    
+    return {
+      success: response.success,
+      bot_data: response.bot_data,
+      error: response.error,
+      message: response.message
+    }
+  } catch (error) {
+    console.error('[Desktop Recording] Failed to get bot status:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get bot status'
     }
   }
 }

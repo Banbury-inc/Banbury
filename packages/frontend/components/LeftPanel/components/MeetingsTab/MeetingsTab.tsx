@@ -11,13 +11,21 @@ import { DesktopRecordingPanel } from '../../../../pages/MeetingAgent/components
 
 type MeetingStatusFilter = 'all' | MeetingSession['status']
 
+interface DesktopRecordingStartedData {
+  sessionId: string
+  windowId: string
+  platform: string
+  meetingTitle: string
+}
+
 interface MeetingsTabProps {
   onMeetingSelect?: (meeting: MeetingSession) => void
   selectedMeeting?: MeetingSession | null
   onJoinMeeting?: () => void
+  onDesktopRecordingStarted?: (data: DesktopRecordingStartedData) => void
 }
 
-export function MeetingsTab({ onMeetingSelect, selectedMeeting, onJoinMeeting }: MeetingsTabProps) {
+export function MeetingsTab({ onMeetingSelect, selectedMeeting, onJoinMeeting, onDesktopRecordingStarted }: MeetingsTabProps) {
   const [meetings, setMeetings] = useState<MeetingSession[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<MeetingStatusFilter>('all')
@@ -142,7 +150,10 @@ export function MeetingsTab({ onMeetingSelect, selectedMeeting, onJoinMeeting }:
           </button>
           {isDesktopRecordingExpanded && (
             <div className="px-2 pb-2">
-              <DesktopRecordingPanel onRecordingComplete={() => setRefreshCounter(c => c + 1)} />
+              <DesktopRecordingPanel 
+                onRecordingComplete={() => setRefreshCounter(c => c + 1)}
+                onRecordingStarted={onDesktopRecordingStarted}
+              />
             </div>
           )}
         </div>

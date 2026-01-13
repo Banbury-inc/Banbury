@@ -42,6 +42,7 @@ export interface DesktopRecordingAPI {
   onRecordingStopped: (callback: (event: { windowId: string; reason: string }) => void) => () => void
   onPermissionUpdate: (callback: (permissions: PermissionStatus) => void) => () => void
   onError: (callback: (error: { error: string; windowId?: string }) => void) => () => void
+  onUploadComplete?: (callback: (result: { success: boolean; error?: string }) => void) => () => void
 }
 
 export interface DesktopAppAPI {

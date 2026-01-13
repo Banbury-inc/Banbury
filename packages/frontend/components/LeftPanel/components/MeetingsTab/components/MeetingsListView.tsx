@@ -123,10 +123,12 @@ export function MeetingsListView({ meetings, loading, onMeetingSelect, selectedM
                     </Badge>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mb-1 min-w-0 flex-wrap">
-                    <div className="flex items-center gap-1 flex-shrink-0 min-w-0">
-                      <Video className="h-3 w-3 flex-shrink-0" />
-                      <Typography variant="xs" className="truncate min-w-0">{meeting.platform.name}</Typography>
-                    </div>
+                    {meeting.platform && (
+                      <div className="flex items-center gap-1 flex-shrink-0 min-w-0">
+                        <Video className="h-3 w-3 flex-shrink-0" />
+                        <Typography variant="xs" className="truncate min-w-0">{meeting.platform.name}</Typography>
+                      </div>
+                    )}
                     {meeting.participants && meeting.participants.length > 0 && (
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <Users className="h-3 w-3 flex-shrink-0" />

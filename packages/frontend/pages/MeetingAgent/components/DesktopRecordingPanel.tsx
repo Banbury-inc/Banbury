@@ -18,19 +18,27 @@ import {
 } from 'lucide-react'
 import { useDesktopRecording } from '../../../hooks/useDesktopRecording'
 import { 
-  handleStartRecording, 
-  handleStopRecording,
+  handleStartDesktopSDKRecording, 
+  handleStopDesktopSDKRecording,
   getPlatformDisplayName,
   getPlatformIcon,
   formatRecordingDuration
 } from '../handlers/desktopRecordingHandlers'
 import { useToast } from '../../../components/ui/use-toast'
 
-interface DesktopRecordingPanelProps {
-  onRecordingComplete?: () => void
+interface RecordingStartedData {
+  sessionId: string
+  windowId: string
+  platform: string
+  meetingTitle: string
 }
 
-export function DesktopRecordingPanel({ onRecordingComplete }: DesktopRecordingPanelProps) {
+interface DesktopRecordingPanelProps {
+  onRecordingComplete?: () => void
+  onRecordingStarted?: (data: RecordingStartedData) => void
+}
+
+export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted }: DesktopRecordingPanelProps) {
   const {
     isDesktop,
     isInitialized,
@@ -91,9 +99,10 @@ export function DesktopRecordingPanel({ onRecordingComplete }: DesktopRecordingP
   }
   
   async function handleStart(meetingId: string, platform: string, title: string) {
+    console.log('[DesktopRecordingPanel] handleStart called with:', { meetingId, platform, title })
     setIsLoading(true)
     try {
-      const result = await handleStartRecording(
+      const result = await handleStartDesktopSDKRecording(
         {
           windowId: meetingId,
           platform,
@@ -103,29 +112,57 @@ export function DesktopRecordingPanel({ onRecordingComplete }: DesktopRecordingP
         startRecording
       )
       
+      console.log('[DesktopRecordingPanel] Start recording result:', result)
+      
       if (result.success) {
         toast({
           title: 'Recording Started',
           description: `Recording ${getPlatformDisplayName(platform)} meeting.`
         })
+        
+        // Call the onRecordingStarted callback with session data
+        if (onRecordingStarted && result.sessionId) {
+          onRecordingStarted({
+            sessionId: result.sessionId,
+            windowId: meetingId,
+            platform,
+            meetingTitle: title
+          })
+        }
       } else {
+        console.error('[DesktopRecordingPanel] Failed to start recording:', result.error)
         toast({
           title: 'Failed to Start Recording',
           description: result.error || 'Unknown error occurred.',
           variant: 'destructive'
         })
       }
+    } catch (error) {
+      console.error('[DesktopRecordingPanel] Exception starting recording:', error)
+      toast({
+        title: 'Error Starting Recording',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        variant: 'destructive'
+      })
     } finally {
       setIsLoading(false)
     }
   }
   
   async function handleStop() {
-    if (!recordingStatus.windowId) return
+    console.log('[DesktopRecordingPanel] handleStop called with status:', recordingStatus)
+    
+    // Even if windowId is undefined, try to stop - the backend will use the stored status
+    if (!recordingStatus.isRecording) {
+      console.warn('[DesktopRecordingPanel] Not currently recording')
+      return
+    }
     
     setIsLoading(true)
     try {
-      const result = await handleStopRecording(recordingStatus.windowId, stopRecording)
+      // Pass the windowId even if it's undefined - the backend will fall back to stored status
+      console.log('[DesktopRecordingPanel] Stopping recording for window:', recordingStatus.windowId || 'undefined (backend will use stored windowId)')
+      const result = await handleStopDesktopSDKRecording(recordingStatus.windowId || '', stopRecording)
       
       if (result.success) {
         toast({
@@ -134,12 +171,20 @@ export function DesktopRecordingPanel({ onRecordingComplete }: DesktopRecordingP
         })
         onRecordingComplete?.()
       } else {
+        console.error('[DesktopRecordingPanel] Failed to stop recording:', result.error)
         toast({
           title: 'Failed to Stop Recording',
           description: result.error || 'Unknown error occurred.',
           variant: 'destructive'
         })
       }
+    } catch (error) {
+      console.error('[DesktopRecordingPanel] Exception stopping recording:', error)
+      toast({
+        title: 'Error Stopping Recording',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        variant: 'destructive'
+      })
     } finally {
       setIsLoading(false)
     }
@@ -173,6 +218,17 @@ export function DesktopRecordingPanel({ onRecordingComplete }: DesktopRecordingP
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {/* Debug Display - Remove after troubleshooting */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="p-3 bg-muted/50 border border-border rounded-lg text-xs font-mono">
+            <div className="font-bold mb-1">Debug Info:</div>
+            <div>isRecording: {String(recordingStatus.isRecording)}</div>
+            <div>windowId: {recordingStatus.windowId || 'null'}</div>
+            <div>platform: {recordingStatus.platform || 'null'}</div>
+            <div>startTime: {recordingStatus.startTime || 'null'}</div>
+          </div>
+        )}
+        
         {/* Error Display */}
         {error && (
           <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
