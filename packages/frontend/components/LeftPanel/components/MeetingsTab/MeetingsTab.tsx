@@ -27,6 +27,16 @@ export function MeetingsTab({ onMeetingSelect, selectedMeeting, onJoinMeeting }:
   
   // Check if running in Electron desktop environment
   const isDesktop = typeof window !== 'undefined' && window.desktopApp?.isDesktop === true
+  
+  // Debug logging for desktop detection
+  useEffect(() => {
+    console.log('[MeetingsTab] Desktop detection:', {
+      isDesktop,
+      hasDesktopApp: typeof window !== 'undefined' && !!window.desktopApp,
+      desktopAppIsDesktop: typeof window !== 'undefined' && window.desktopApp?.isDesktop,
+      platform: typeof window !== 'undefined' && window.desktopApp?.getPlatform?.()
+    })
+  }, [isDesktop])
 
   const loadMeetings = useCallback(async () => {
     setLoading(true)

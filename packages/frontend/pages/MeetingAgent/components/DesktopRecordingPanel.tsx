@@ -34,6 +34,7 @@ export function DesktopRecordingPanel({ onRecordingComplete }: DesktopRecordingP
   const {
     isDesktop,
     isInitialized,
+    isPlatformSupported,
     permissions,
     recordingStatus,
     detectedMeetings,
@@ -173,8 +174,27 @@ export function DesktopRecordingPanel({ onRecordingComplete }: DesktopRecordingP
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {/* Platform Not Supported Warning */}
+        {!isPlatformSupported && (
+          <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg space-y-3">
+            <div className="flex items-center gap-2 text-yellow-500 font-medium">
+              <AlertCircle className="h-4 w-4" />
+              <span>Platform Not Supported</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {error || 'Desktop meeting detection is not supported on this platform.'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              <strong>Supported platforms:</strong> macOS 13.0+ (Apple Silicon) and Windows 10+ (64-bit).
+            </p>
+            <p className="text-sm text-muted-foreground">
+              You can still use the <strong>&quot;Join Meeting&quot;</strong> button to send a bot to record your meetings via meeting URL.
+            </p>
+          </div>
+        )}
+        
         {/* Error Display */}
-        {error && (
+        {error && isPlatformSupported && (
           <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span>{error}</span>
@@ -267,7 +287,7 @@ export function DesktopRecordingPanel({ onRecordingComplete }: DesktopRecordingP
         )}
         
         {/* Detected Meetings List */}
-        {!recordingStatus.isRecording && allPermissionsGranted && (
+        {!recordingStatus.isRecording && allPermissionsGranted && isPlatformSupported && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Detected Meetings</span>

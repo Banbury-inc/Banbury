@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import { app, BrowserWindow, Menu } from 'electron'
+import { app, BrowserWindow, Menu, shell, ipcMain } from 'electron'
 import path from 'path'
 import { initDesktopRecording, setupDesktopRecordingIPC, cleanupDesktopRecording } from './desktop-recording'
 
@@ -14,6 +14,18 @@ const DEFAULT_PROD_URL = 'https://app.banbury.io'
 
 // Determine if we're in development mode
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
+
+// Custom protocol for OAuth callbacks
+const PROTOCOL_NAME = 'banbury'
+
+// Register as default handler for banbury:// URLs
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient(PROTOCOL_NAME, process.execPath, [path.resolve(process.argv[1])])
+  }
+} else {
+  app.setAsDefaultProtocolClient(PROTOCOL_NAME)
+}
 
 /**
  * Resolves the target URL based on environment configuration.
@@ -184,6 +196,25 @@ app.whenReady().then(() => {
   // Set up desktop recording IPC handlers before creating window
   setupDesktopRecordingIPC()
   
+  // Set up IPC handler for opening URLs in system browser (required for OAuth)
+  ipcMain.handle('shell:open-external', async (_event, url: string) => {
+    // Validate URL before opening to prevent security issues
+    if (!url || typeof url !== 'string') return { success: false, error: 'Invalid URL' }
+    
+    try {
+      const parsedUrl = new URL(url)
+      // Only allow http/https URLs for security
+      if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+        return { success: false, error: 'Only HTTP/HTTPS URLs are allowed' }
+      }
+      await shell.openExternal(url)
+      return { success: true }
+    } catch (error) {
+      console.error('[Electron] Failed to open external URL:', error)
+      return { success: false, error: String(error) }
+    }
+  })
+  
   configureMenu()
   createWindow()
 
@@ -213,3 +244,67 @@ app.on('web-contents-created', (_event, contents) => {
     return { action: 'deny' }
   })
 })
+
+/**
+ * Handle OAuth callback from custom protocol (banbury://)
+ * Extracts the OAuth code and navigates to the auth callback page
+ */
+function handleOAuthCallback(url: string): void {
+  if (!mainWindow) return
+  
+  try {
+    const parsedUrl = new URL(url)
+    
+    // Check if this is an auth callback
+    if (parsedUrl.host === 'auth' && parsedUrl.pathname === '/callback') {
+      const code = parsedUrl.searchParams.get('code')
+      const scope = parsedUrl.searchParams.get('scope')
+      const error = parsedUrl.searchParams.get('error')
+      
+      // Build the callback URL for the frontend
+      const targetUrl = resolveTargetUrl()
+      const callbackParams = new URLSearchParams()
+      if (code) callbackParams.set('code', code)
+      if (scope) callbackParams.set('scope', scope)
+      if (error) callbackParams.set('error', error)
+      
+      const callbackUrl = `${targetUrl}/authentication/auth/callback?${callbackParams.toString()}`
+      console.log('[Electron] Navigating to OAuth callback:', callbackUrl)
+      
+      // Focus the window and navigate to the callback
+      if (mainWindow.isMinimized()) mainWindow.restore()
+      mainWindow.focus()
+      mainWindow.loadURL(callbackUrl)
+    }
+  } catch (error) {
+    console.error('[Electron] Error handling OAuth callback:', error)
+  }
+}
+
+// macOS: Handle protocol URL when app is already running
+app.on('open-url', (event, url) => {
+  event.preventDefault()
+  console.log('[Electron] Received open-url:', url)
+  handleOAuthCallback(url)
+})
+
+// Windows/Linux: Handle protocol URL via second-instance
+const gotTheLock = app.requestSingleInstanceLock()
+if (!gotTheLock) {
+  app.quit()
+} else {
+  app.on('second-instance', (_event, commandLine) => {
+    // Windows/Linux: Protocol URL is in the command line arguments
+    const url = commandLine.find(arg => arg.startsWith(`${PROTOCOL_NAME}://`))
+    if (url) {
+      console.log('[Electron] Received protocol URL from second instance:', url)
+      handleOAuthCallback(url)
+    }
+    
+    // Focus the main window if it exists
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore()
+      mainWindow.focus()
+    }
+  })
+}
