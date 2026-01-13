@@ -22,10 +22,19 @@ export interface RecordingStatus {
 }
 
 export interface DesktopRecordingStatus {
+  platformSupported?: boolean
+  platformError?: string
+  lastError?: string
   initialized: boolean
   permissions: PermissionStatus
   recording: RecordingStatus
   detectedMeetings: MeetingWindow[]
+  debug?: {
+    platform: string
+    arch: string
+    sdkLoaded: boolean
+    nodeVersion: string
+  }
 }
 
 export interface DesktopRecordingAPI {

@@ -93,7 +93,7 @@ export function MeetingsListView({ meetings, loading, onMeetingSelect, selectedM
   }
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div className="h-full overflow-y-auto">
       <div className="p-2 space-y-1">
         {meetings.map((meeting) => {
           const StatusIcon = getStatusIcon(meeting.status)

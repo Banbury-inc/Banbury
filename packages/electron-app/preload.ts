@@ -83,6 +83,14 @@ contextBridge.exposeInMainWorld('desktopApp', {
    * Returns the Electron version
    */
   getElectronVersion: (): string => process.versions.electron ?? 'unknown',
+
+  /**
+   * Opens a URL in the system's default browser.
+   * Required for OAuth flows since Google blocks embedded browsers.
+   */
+  openExternal: (url: string): Promise<{ success: boolean; error?: string }> => {
+    return ipcRenderer.invoke('shell:open-external', url)
+  },
   
   /**
    * Desktop Recording API
@@ -188,6 +196,7 @@ declare global {
       getPlatform: () => string
       isDesktop: boolean
       getElectronVersion: () => string
+      openExternal: (url: string) => Promise<{ success: boolean; error?: string }>
       desktopRecording: {
         getStatus: () => Promise<DesktopRecordingStatus>
         requestPermissions: () => Promise<PermissionStatus>

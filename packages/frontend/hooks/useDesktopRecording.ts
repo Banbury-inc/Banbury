@@ -25,12 +25,22 @@ interface DesktopRecordingStatus {
   permissions: PermissionStatus
   recording: RecordingStatus
   detectedMeetings: MeetingWindow[]
+  platformSupported?: boolean
+  platformError?: string
+  lastError?: string
+  debug?: {
+    platform: string
+    arch: string
+    sdkLoaded: boolean
+    nodeVersion: string
+  }
 }
 
 interface UseDesktopRecordingReturn {
   // State
   isDesktop: boolean
   isInitialized: boolean
+  isPlatformSupported: boolean
   permissions: PermissionStatus
   recordingStatus: RecordingStatus
   detectedMeetings: MeetingWindow[]
@@ -59,6 +69,7 @@ const defaultRecordingStatus: RecordingStatus = {
 export function useDesktopRecording(): UseDesktopRecordingReturn {
   const [isDesktop, setIsDesktop] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [isPlatformSupported, setIsPlatformSupported] = useState(true)
   const [permissions, setPermissions] = useState<PermissionStatus>(defaultPermissions)
   const [recordingStatus, setRecordingStatus] = useState<RecordingStatus>(defaultRecordingStatus)
   const [detectedMeetings, setDetectedMeetings] = useState<MeetingWindow[]>([])
@@ -85,10 +96,30 @@ export function useDesktopRecording(): UseDesktopRecordingReturn {
         
         // Get initial status
         const status = await desktopRecording.getStatus()
+        console.log('[useDesktopRecording] Initial status:', status)
+        
         setIsInitialized(status.initialized)
         setPermissions(status.permissions)
         setRecordingStatus(status.recording)
         setDetectedMeetings(status.detectedMeetings)
+        
+        // Check platform support
+        if (status.platformSupported === false) {
+          setIsPlatformSupported(false)
+          setError(status.platformError || 'Desktop recording is not supported on this platform')
+          return // Don't set up event listeners if platform isn't supported
+        }
+        setIsPlatformSupported(true)
+        
+        // Check for SDK initialization errors
+        if (status.lastError) {
+          setError(`SDK initialization error: ${status.lastError}`)
+        }
+        
+        // Log debug info
+        if (status.debug) {
+          console.log('[useDesktopRecording] Debug info:', status.debug)
+        }
         
         // Set up event listeners
         const cleanupMeetingDetected = desktopRecording.onMeetingDetected((meeting) => {
@@ -235,6 +266,7 @@ export function useDesktopRecording(): UseDesktopRecordingReturn {
   return {
     isDesktop,
     isInitialized,
+    isPlatformSupported,
     permissions,
     recordingStatus,
     detectedMeetings,

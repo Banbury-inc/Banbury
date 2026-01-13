@@ -14,7 +14,7 @@ import { Input } from '../components/ui/old-input';
 import { Label } from '../components/ui/label';
 import { CONFIG } from '../config/config';
 import { ApiService } from '../../backend/api/apiService';
-import { AUTH_CONFIG } from '../../backend/authConfig';
+import { handleGoogleLogin as handleGoogleLoginAction, isElectronApp } from './handlers/login';
 
 const Login = (): JSX.Element => {
   const router = useRouter();
@@ -86,24 +86,23 @@ const Login = (): JSX.Element => {
 
   const handleGoogleLogin = async () => {
     try {
-      // Check if current domain is allowed for OAuth
-      if (!AUTH_CONFIG.isAllowedDomain()) {
-        setError(AUTH_CONFIG.getRedirectUriError());
-        return;
+      const result = await handleGoogleLoginAction()
+      
+      if (!result.success && result.error) {
+        setError(result.error)
+        return
       }
 
-      const redirectUri = AUTH_CONFIG.getRedirectUri();
-      
-      const result = await ApiService.initiateGoogleAuth(redirectUri);
-      
-      if (result.success && result.authUrl) {
-        window.location.href = result.authUrl;
+      // When running in Electron, the OAuth URL opens in system browser
+      // so we show a message to guide the user
+      if (isElectronApp()) {
+        setSuccess('Opening Google sign-in in your browser. Please complete the authentication there.')
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMessage);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      setError(errorMessage)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black p-4">

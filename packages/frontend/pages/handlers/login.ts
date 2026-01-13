@@ -1,0 +1,52 @@
+import { ApiService } from '../../../backend/api/apiService'
+import { AUTH_CONFIG } from '../../../backend/authConfig'
+
+interface GoogleLoginResult {
+  success: boolean
+  error?: string
+}
+
+/**
+ * Checks if the app is running in Electron desktop shell
+ */
+export function isElectronApp(): boolean {
+  return typeof window !== 'undefined' && !!window.desktopApp?.isDesktop
+}
+
+/**
+ * Opens a URL in the system's default browser when running in Electron.
+ * Falls back to window.location.href for web browser.
+ */
+async function openUrlForOAuth(url: string): Promise<void> {
+  if (isElectronApp() && window.desktopApp?.openExternal) {
+    const result = await window.desktopApp.openExternal(url)
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to open system browser')
+    }
+  } else {
+    window.location.href = url
+  }
+}
+
+/**
+ * Handles Google OAuth login flow.
+ * Opens OAuth URL in system browser when running in Electron to avoid
+ * "This browser doesn't support JavaScript" error from Google.
+ */
+export async function handleGoogleLogin(): Promise<GoogleLoginResult> {
+  // Check if current domain is allowed for OAuth
+  if (!AUTH_CONFIG.isAllowedDomain()) {
+    return { success: false, error: AUTH_CONFIG.getRedirectUriError() }
+  }
+
+  const redirectUri = AUTH_CONFIG.getRedirectUri()
+  
+  const result = await ApiService.initiateGoogleAuth(redirectUri)
+  
+  if (!result.success || !result.authUrl) {
+    return { success: false, error: 'Failed to get Google auth URL' }
+  }
+
+  await openUrlForOAuth(result.authUrl)
+  return { success: true }
+}

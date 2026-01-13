@@ -724,7 +724,7 @@ export default function MeetingAgent() {
                                       </div>
                                     </td>
                                     <td className="py-3 px-4 text-muted-foreground">
-                                      <Typography variant="xs" className="font-medium">{session.platform.name}</Typography>
+                                      <Typography variant="xs" className="font-medium">{session.platform?.name || 'Unknown'}</Typography>
                                     </td>
                                     <td className="py-3 px-4">
                                       <Badge variant={getStatusBadgeVariant(session.status)}>
