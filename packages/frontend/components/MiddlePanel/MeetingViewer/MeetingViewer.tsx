@@ -132,7 +132,7 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated, onMeetingDele
       
       const content = `Meeting: ${currentMeeting.title || 'Untitled Meeting'}
 Date: ${formatDate(currentMeeting.startTime)}
-Platform: ${currentMeeting.platform.name}
+Platform: ${currentMeeting.platform?.name || 'Unknown'}
 Duration: ${getDuration()} minutes
 
 FULL TRANSCRIPTION:
@@ -170,7 +170,7 @@ ${transcriptionData.segments?.map((segment: any) =>
     } finally {
       setIsLoading(false)
     }
-  }, [currentMeeting.id, currentMeeting.title, currentMeeting.startTime, currentMeeting.platform.name, getDuration, toast])
+  }, [currentMeeting.id, currentMeeting.title, currentMeeting.startTime, currentMeeting.platform?.name, getDuration, toast])
 
   const handleDelete = useCallback(async () => {
     if (!confirm('Are you sure you want to delete this meeting session? This action cannot be undone.')) {
@@ -405,7 +405,7 @@ ${transcriptionData.segments?.map((segment: any) =>
               {currentMeeting.title || 'Untitled Meeting'}
             </Typography>
             <Typography variant="small" className="text-muted-foreground">
-              {currentMeeting.platform.name} • {formatDate(currentMeeting.startTime)}
+              {currentMeeting.platform?.name || 'Unknown Platform'} • {formatDate(currentMeeting.startTime)}
             </Typography>
           </div>
         </div>

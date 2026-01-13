@@ -150,7 +150,7 @@ export function MeetingSessionCard({ session, onLeave, onRefresh }: MeetingSessi
       // Create downloadable text file
       const content = `Meeting: ${session.title || 'Untitled Meeting'}
 Date: ${new Date(session.startTime).toLocaleString()}
-Platform: ${session.platform.name}
+Platform: ${session.platform?.name || 'Unknown'}
 Duration: ${getDuration()} minutes
 
 FULL TRANSCRIPTION:
@@ -259,7 +259,7 @@ ${transcriptionData.segments.map(segment =>
                 {session.title || 'Untitled Meeting'}
               </CardTitle>
               <CardDescription>
-                {session.platform.name} • {new Date(session.startTime).toLocaleString()}
+                {session.platform?.name || 'Unknown Platform'} • {new Date(session.startTime).toLocaleString()}
               </CardDescription>
             </div>
           </div>
