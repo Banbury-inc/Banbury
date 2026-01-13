@@ -1,4 +1,4 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 
 /**
  * Preload script for Electron.
@@ -6,10 +6,60 @@ import { contextBridge } from 'electron'
  * This script runs in an isolated context with access to both
  * the DOM and a subset of Node.js APIs. It safely exposes
  * desktop-specific functionality to the web app via contextBridge.
- * 
- * For the thin-shell phase, this is minimal. Add APIs here as needed
- * for desktop-specific features.
  */
+
+// Types for desktop recording
+interface MeetingWindow {
+  id: string
+  platform: string
+  title: string
+}
+
+interface PermissionStatus {
+  accessibility: boolean
+  microphone: boolean
+  screenCapture: boolean
+}
+
+interface RecordingStatus {
+  isRecording: boolean
+  windowId: string | null
+  startTime: number | null
+  platform: string | null
+}
+
+interface DesktopRecordingStatus {
+  initialized: boolean
+  permissions: PermissionStatus
+  recording: RecordingStatus
+  detectedMeetings: MeetingWindow[]
+}
+
+// Event listener cleanup functions
+const eventListeners: Map<string, ((...args: any[]) => void)[]> = new Map()
+
+function addIPCListener(channel: string, callback: (...args: any[]) => void): () => void {
+  const handler = (_event: Electron.IpcRendererEvent, ...args: any[]) => callback(...args)
+  ipcRenderer.on(channel, handler)
+  
+  // Track listeners for cleanup
+  if (!eventListeners.has(channel)) {
+    eventListeners.set(channel, [])
+  }
+  eventListeners.get(channel)?.push(handler)
+  
+  // Return cleanup function
+  return () => {
+    ipcRenderer.removeListener(channel, handler)
+    const listeners = eventListeners.get(channel)
+    if (listeners) {
+      const index = listeners.indexOf(handler)
+      if (index > -1) {
+        listeners.splice(index, 1)
+      }
+    }
+  }
+}
 
 // Expose a minimal desktop API to the renderer process
 contextBridge.exposeInMainWorld('desktopApp', {
@@ -27,6 +77,102 @@ contextBridge.exposeInMainWorld('desktopApp', {
    * Returns the Electron version
    */
   getElectronVersion: (): string => process.versions.electron ?? 'unknown',
+  
+  /**
+   * Desktop Recording API
+   */
+  desktopRecording: {
+    /**
+     * Get the current status of the desktop recording SDK
+     */
+    getStatus: (): Promise<DesktopRecordingStatus> => {
+      return ipcRenderer.invoke('desktop-recording:get-status')
+    },
+    
+    /**
+     * Request permissions for desktop recording (macOS)
+     */
+    requestPermissions: (): Promise<PermissionStatus> => {
+      return ipcRenderer.invoke('desktop-recording:request-permissions')
+    },
+    
+    /**
+     * Start recording a meeting
+     */
+    startRecording: (windowId: string, uploadToken: string): Promise<{ success: boolean; error?: string }> => {
+      return ipcRenderer.invoke('desktop-recording:start', { windowId, uploadToken })
+    },
+    
+    /**
+     * Stop recording a meeting
+     */
+    stopRecording: (windowId: string): Promise<{ success: boolean; error?: string }> => {
+      return ipcRenderer.invoke('desktop-recording:stop', { windowId })
+    },
+    
+    /**
+     * Get list of detected meetings
+     */
+    getDetectedMeetings: (): Promise<MeetingWindow[]> => {
+      return ipcRenderer.invoke('desktop-recording:get-meetings')
+    },
+    
+    /**
+     * Get current permission status
+     */
+    getPermissions: (): Promise<PermissionStatus> => {
+      return ipcRenderer.invoke('desktop-recording:get-permissions')
+    },
+    
+    /**
+     * Get current recording status
+     */
+    getRecordingStatus: (): Promise<RecordingStatus> => {
+      return ipcRenderer.invoke('desktop-recording:get-recording-status')
+    },
+    
+    /**
+     * Subscribe to meeting detected events
+     */
+    onMeetingDetected: (callback: (meeting: MeetingWindow) => void): () => void => {
+      return addIPCListener('desktop-recording:meeting-detected', callback)
+    },
+    
+    /**
+     * Subscribe to meeting ended events
+     */
+    onMeetingEnded: (callback: (meeting: MeetingWindow) => void): () => void => {
+      return addIPCListener('desktop-recording:meeting-ended', callback)
+    },
+    
+    /**
+     * Subscribe to recording started events
+     */
+    onRecordingStarted: (callback: (status: RecordingStatus) => void): () => void => {
+      return addIPCListener('desktop-recording:recording-started', callback)
+    },
+    
+    /**
+     * Subscribe to recording stopped events
+     */
+    onRecordingStopped: (callback: (event: { windowId: string; reason: string }) => void): () => void => {
+      return addIPCListener('desktop-recording:recording-stopped', callback)
+    },
+    
+    /**
+     * Subscribe to permission update events
+     */
+    onPermissionUpdate: (callback: (permissions: PermissionStatus) => void): () => void => {
+      return addIPCListener('desktop-recording:permission-update', callback)
+    },
+    
+    /**
+     * Subscribe to recording error events
+     */
+    onError: (callback: (error: { error: string; windowId?: string }) => void): () => void => {
+      return addIPCListener('desktop-recording:error', callback)
+    }
+  }
 })
 
 // Type declaration for the exposed API
@@ -36,6 +182,21 @@ declare global {
       getPlatform: () => string
       isDesktop: boolean
       getElectronVersion: () => string
+      desktopRecording: {
+        getStatus: () => Promise<DesktopRecordingStatus>
+        requestPermissions: () => Promise<PermissionStatus>
+        startRecording: (windowId: string, uploadToken: string) => Promise<{ success: boolean; error?: string }>
+        stopRecording: (windowId: string) => Promise<{ success: boolean; error?: string }>
+        getDetectedMeetings: () => Promise<MeetingWindow[]>
+        getPermissions: () => Promise<PermissionStatus>
+        getRecordingStatus: () => Promise<RecordingStatus>
+        onMeetingDetected: (callback: (meeting: MeetingWindow) => void) => () => void
+        onMeetingEnded: (callback: (meeting: MeetingWindow) => void) => () => void
+        onRecordingStarted: (callback: (status: RecordingStatus) => void) => () => void
+        onRecordingStopped: (callback: (event: { windowId: string; reason: string }) => void) => () => void
+        onPermissionUpdate: (callback: (permissions: PermissionStatus) => void) => () => void
+        onError: (callback: (error: { error: string; windowId?: string }) => void) => () => void
+      }
     }
   }
 }

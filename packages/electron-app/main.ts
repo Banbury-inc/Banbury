@@ -2,6 +2,7 @@
 
 import { app, BrowserWindow, Menu } from 'electron'
 import path from 'path'
+import { initDesktopRecording, setupDesktopRecordingIPC, cleanupDesktopRecording } from './desktop-recording'
 
 // Environment variable names for URL configuration
 const DEV_URL_ENV_KEY = 'DESKTOP_APP_DEV_URL'
@@ -51,6 +52,9 @@ function isValidUrl(urlString: string): boolean {
   }
 }
 
+// Store reference to main window for desktop recording
+let mainWindow: BrowserWindow | null = null
+
 /**
  * Creates the main application window with secure defaults.
  */
@@ -60,7 +64,7 @@ function createWindow(): void {
   console.log(`[Electron] Starting in ${isDev ? 'development' : 'production'} mode`)
   console.log(`[Electron] Loading URL: ${targetUrl}`)
 
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 800,
@@ -68,7 +72,7 @@ function createWindow(): void {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      sandbox: false, // Required for desktop recording SDK
       preload: path.join(__dirname, 'preload.js'),
     },
     show: false,
@@ -78,11 +82,24 @@ function createWindow(): void {
 
   // Show window when content is ready to prevent visual flash
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show()
+    mainWindow?.show()
     
     // Open DevTools only in development mode
     if (isDev) {
-      mainWindow.webContents.openDevTools({ mode: 'detach' })
+      mainWindow?.webContents.openDevTools({ mode: 'detach' })
+    }
+    
+    // Initialize desktop recording after window is ready
+    if (mainWindow) {
+      initDesktopRecording(mainWindow).then((success) => {
+        if (success) {
+          console.log('[Electron] Desktop recording initialized')
+        } else {
+          console.log('[Electron] Desktop recording not available (SDK may not be installed)')
+        }
+      }).catch((error) => {
+        console.log('[Electron] Desktop recording initialization skipped:', error.message)
+      })
     }
   })
 
@@ -95,9 +112,14 @@ function createWindow(): void {
     if (isDev && errorCode === -102) {
       console.log('[Electron] Server may not be ready. Retrying in 3 seconds...')
       setTimeout(() => {
-        mainWindow.loadURL(targetUrl)
+        mainWindow?.loadURL(targetUrl)
       }, 3000)
     }
+  })
+  
+  // Clean up reference when window is closed
+  mainWindow.on('closed', () => {
+    mainWindow = null
   })
 
   // Load the target URL
@@ -159,6 +181,9 @@ function configureMenu(): void {
 
 // App lifecycle event handlers
 app.whenReady().then(() => {
+  // Set up desktop recording IPC handlers before creating window
+  setupDesktopRecordingIPC()
+  
   configureMenu()
   createWindow()
 
@@ -175,6 +200,11 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+// Clean up desktop recording when app is quitting
+app.on('before-quit', () => {
+  cleanupDesktopRecording()
 })
 
 // Security: Prevent new window creation from web content
