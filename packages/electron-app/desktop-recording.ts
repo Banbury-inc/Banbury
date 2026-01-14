@@ -71,6 +71,9 @@ interface RecallAiSDKInterface {
   stopRecording: (options: { windowId: string }) => void
 }
 
+// Type for the SDK module which might have a default export
+type RecallAiSDKModule = RecallAiSDKInterface | { default: RecallAiSDKInterface } | (RecallAiSDKInterface & { default?: RecallAiSDKInterface })
+
 // Dynamic import for the SDK (only available in Electron main process)
 let RecallAiSdk: RecallAiSDKInterface | null = null
 
@@ -167,28 +170,28 @@ export async function initDesktopRecording(window: BrowserWindow): Promise<boole
     }
     
     // Dynamically import the SDK
-    RecallAiSdk = require('@recallai/desktop-sdk')
+    const sdkModule = require('@recallai/desktop-sdk') as RecallAiSDKModule | null
     
-    if (!RecallAiSdk) {
+    if (!sdkModule) {
       console.error('[Desktop Recording] SDK module loaded but is null/undefined')
       lastInitError = 'SDK module loaded but is null/undefined'
       return false
     }
     
     console.log('[Desktop Recording] SDK module loaded successfully')
-    console.log('[Desktop Recording] SDK exports:', Object.keys(RecallAiSdk))
+    console.log('[Desktop Recording] SDK exports:', Object.keys(sdkModule))
     
-    // Check if init function exists
-    if (typeof RecallAiSdk.init !== 'function') {
-      console.error('[Desktop Recording] SDK does not have an init function. Available methods:', Object.keys(RecallAiSdk))
+    // Check if init function exists directly on the module
+    if (typeof sdkModule.init === 'function') {
+      RecallAiSdk = sdkModule as RecallAiSDKInterface
+    } else if ('default' in sdkModule && sdkModule.default && typeof sdkModule.default.init === 'function') {
       // Try checking if SDK is the default export
-      if (RecallAiSdk.default && typeof RecallAiSdk.default.init === 'function') {
-        console.log('[Desktop Recording] Using default export')
-        RecallAiSdk = RecallAiSdk.default
-      } else {
-        lastInitError = 'SDK does not have an init function'
-        return false
-      }
+      console.log('[Desktop Recording] Using default export')
+      RecallAiSdk = sdkModule.default
+    } else {
+      console.error('[Desktop Recording] SDK does not have an init function. Available methods:', Object.keys(sdkModule))
+      lastInitError = 'SDK does not have an init function'
+      return false
     }
     
     const apiUrl = process.env.RECALL_API_URL || 'https://us-west-2.recall.ai'
@@ -316,9 +319,11 @@ function setupEventListeners(): void {
   
   debugEvents.forEach(eventName => {
     try {
-      RecallAiSdk.addEventListener(eventName, (evt: unknown) => {
-        console.log(`[Desktop Recording] Event "${eventName}":`, JSON.stringify(evt, null, 2))
-      })
+      if (RecallAiSdk) {
+        RecallAiSdk.addEventListener(eventName, (evt: unknown) => {
+          console.log(`[Desktop Recording] Event "${eventName}":`, JSON.stringify(evt, null, 2))
+        })
+      }
     } catch (e) {
       // Some events may not exist in older SDK versions
     }
