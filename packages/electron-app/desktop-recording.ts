@@ -71,8 +71,15 @@ interface RecallAiSDKInterface {
   stopRecording: (options: { windowId: string }) => void
 }
 
-// Type for the SDK module which might have a default export
-type RecallAiSDKModule = RecallAiSDKInterface | { default: RecallAiSDKInterface } | (RecallAiSDKInterface & { default?: RecallAiSDKInterface })
+// Type guard to check if a value is the SDK interface
+function isRecallAiSDK(value: unknown): value is RecallAiSDKInterface {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'init' in value &&
+    typeof (value as any).init === 'function'
+  )
+}
 
 // Dynamic import for the SDK (only available in Electron main process)
 let RecallAiSdk: RecallAiSDKInterface | null = null
@@ -170,7 +177,7 @@ export async function initDesktopRecording(window: BrowserWindow): Promise<boole
     }
     
     // Dynamically import the SDK
-    const sdkModule = require('@recallai/desktop-sdk') as RecallAiSDKModule | null
+    const sdkModule = require('@recallai/desktop-sdk') as any
     
     if (!sdkModule) {
       console.error('[Desktop Recording] SDK module loaded but is null/undefined')
@@ -182,9 +189,9 @@ export async function initDesktopRecording(window: BrowserWindow): Promise<boole
     console.log('[Desktop Recording] SDK exports:', Object.keys(sdkModule))
     
     // Check if init function exists directly on the module
-    if (typeof sdkModule.init === 'function') {
-      RecallAiSdk = sdkModule as RecallAiSDKInterface
-    } else if ('default' in sdkModule && sdkModule.default && typeof sdkModule.default.init === 'function') {
+    if (isRecallAiSDK(sdkModule)) {
+      RecallAiSdk = sdkModule
+    } else if (sdkModule.default && isRecallAiSDK(sdkModule.default)) {
       // Try checking if SDK is the default export
       console.log('[Desktop Recording] Using default export')
       RecallAiSdk = sdkModule.default
