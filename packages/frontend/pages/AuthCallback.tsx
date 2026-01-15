@@ -38,22 +38,29 @@ const AuthCallback = (): JSX.Element => {
     if (handledRef.current) return;
     
     // Detect Electron callbacks: Google OAuth strips the electron=true parameter.
+    // Electron uses either localhost (development) or www.banbury.io (production) as redirect URI.
     // We detect Electron callbacks by checking:
     // 1. Explicit electron=true parameter in URL, OR
-    // 2. sessionStorage indicates this OAuth flow was initiated from Electron (oauth_is_desktop=true)
-    // 3. We're in a browser (not Electron) - window.desktopApp?.isDesktop is false/undefined
-    // 4. We have OAuth response parameters (code or error)
+    // 2. We're in a browser (not Electron) - window.desktopApp?.isDesktop is false/undefined
+    // 3. The callback URL is from a known Electron redirect origin (localhost or www.banbury.io), OR
+    //    sessionStorage indicates this OAuth flow was initiated from Electron (oauth_is_desktop=true)
+    // 4. We're at the callback path (for origin-based detection)
+    // 5. We have OAuth response parameters (code or error)
     const isInElectron = typeof window !== 'undefined' && !!window.desktopApp?.isDesktop
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+    const isLocalhost = currentOrigin.startsWith('http://localhost:') || currentOrigin.startsWith('http://127.0.0.1:')
+    const isElectronRedirectOrigin = currentOrigin === 'https://www.banbury.io' || isLocalhost
+    const isAtCallbackPath = typeof window !== 'undefined' && window.location.pathname === '/authentication/auth/callback'
     const oauthIsDesktop = typeof window !== 'undefined' && window.sessionStorage 
       ? window.sessionStorage.getItem('oauth_is_desktop') === 'true'
       : false
     const hasOAuthResponse = !!(code || urlError)
     
-    // Electron callback if: explicit electron parameter OR (OAuth was initiated from Electron AND not currently in Electron AND has OAuth response)
+    // Electron callback if: explicit electron parameter OR (not in Electron AND (origin-based detection OR sessionStorage-based detection) AND has OAuth response)
     const isElectronCallback = electron === 'true' || (
-      oauthIsDesktop && 
       !isInElectron && 
-      hasOAuthResponse
+      hasOAuthResponse && 
+      ((isElectronRedirectOrigin && isAtCallbackPath) || oauthIsDesktop)
     )
     
     // If this is an Electron callback, handle it specially
