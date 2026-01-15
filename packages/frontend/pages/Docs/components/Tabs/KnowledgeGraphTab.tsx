@@ -44,16 +44,16 @@ export default function KnowledgeGraphTab(): JSX.Element {
           Core capabilities
         </Typography>
         <Box sx={{ pl: 2 }}>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Entity and relationship extraction from docs, spreadsheets, emails, and the web
           </Typography>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Versioned facts with timestamps and sources for auditability
           </Typography>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Graph-aware retrieval for precise answers and grounded summaries
           </Typography>
-          <Typography variant="muted">
+          <Typography variant="p">
             • Reasoning over multi-hop relationships to surface non-obvious insights
           </Typography>
         </Box>
@@ -72,13 +72,13 @@ export default function KnowledgeGraphTab(): JSX.Element {
           Typical workflows
         </Typography>
         <Box sx={{ pl: 2 }}>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             1. Connect data sources → Banbury ingests and extracts entities/relations
           </Typography>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             2. Ask questions → Responses cite nodes, edges, and supporting documents
           </Typography>
-          <Typography variant="muted">
+          <Typography variant="p">
             3. Act on insights → Trigger tasks and automations grounded in graph facts
           </Typography>
         </Box>
@@ -96,13 +96,13 @@ export default function KnowledgeGraphTab(): JSX.Element {
           Example prompts
         </Typography>
         <Box sx={{ pl: 2 }}>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Show relationships between Acme Corp, its subsidiaries, and Q2 contracts
           </Typography>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • What customers are at risk given outages in Region A in the last 14 days?
           </Typography>
-          <Typography variant="muted">
+          <Typography variant="p">
             • Summarize the evidence linking vendor delays to revenue slippage this month
           </Typography>
         </Box>

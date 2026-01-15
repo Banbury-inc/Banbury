@@ -16,7 +16,7 @@ export default function DocsFeatureTab() {
         <Typography variant="h4" className="mb-2">
           • <strong>Visibility:</strong>
         </Typography>
-        <Typography variant="muted" className="mb-2 pl-2">
+        <Typography variant="p" className="mb-2 pl-2">
           • Banbury can read what's inside a document and look at every single page.
         </Typography>
       </Box>
@@ -27,13 +27,13 @@ export default function DocsFeatureTab() {
           • <strong>Actions - Banbury can:</strong>
         </Typography>
         <Box sx={{ pl: 2 }}>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Create a new document.
           </Typography>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Edit the contents of a document.
           </Typography>
-          <Typography variant="muted">
+          <Typography variant="p">
             • Rename a document.
           </Typography>
         </Box>

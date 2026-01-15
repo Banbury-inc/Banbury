@@ -26,7 +26,7 @@ export default function MemoriesTab() {
         <Typography variant="h3" className="mb-2">
           Why it matters
         </Typography>
-        <Typography variant="muted">
+        <Typography variant="p">
           This systematic approach to gathering and using conversation history allows the agent to continuously evolve, making real-time adjustments to better serve your needs while maintaining a historical record of improvements and trends.
         </Typography>
       </Paper>
@@ -43,7 +43,7 @@ export default function MemoriesTab() {
         <Typography variant="h3" className="mb-2">
           Defaults and control
         </Typography>
-        <Typography variant="muted">
+        <Typography variant="p">
           By default, Banbury agents do not store conversation history, giving you the choice to enable memory features for your agent.
         </Typography>
       </Paper>
@@ -59,10 +59,10 @@ export default function MemoriesTab() {
         <Typography variant="h3" className="mb-2">
           Architecture
         </Typography>
-        <Typography variant="muted" className="mb-2">
+        <Typography variant="p" className="mb-2">
           Banbury leverages an advanced knowledge graph structure to organize and interconnect memories, enabling more intelligent retrieval and contextual understanding.
         </Typography>
-        <Typography variant="muted">
+        <Typography variant="p">
           Learn more about Agents in Banbury!
         </Typography>
       </Paper>

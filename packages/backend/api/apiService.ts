@@ -262,14 +262,6 @@ export class ApiService {
         ? sessionStorage.getItem('oauth_is_desktop') === 'true'
         : false;
       
-      // Log for debugging
-      if (typeof window !== 'undefined' && window.console) {
-        console.log('[OAuth Callback] Using redirect_uri:', redirectUri);
-        console.log('[OAuth Callback] Is desktop:', isDesktop);
-        console.log('[OAuth Callback] Code present:', !!code);
-        console.log('[OAuth Callback] Scope:', scope);
-      }
-      
       const params = new URLSearchParams();
       params.set('code', code);
       if (redirectUri) params.set('redirect_uri', redirectUri);
@@ -284,17 +276,6 @@ export class ApiService {
         error?: string;
         details?: any;
       }>(qs);
-
-      // Log the full response for debugging
-      if (typeof window !== 'undefined' && window.console) {
-        console.log('[OAuth Callback] Backend response:', {
-          success: response.success,
-          hasToken: !!response.token,
-          hasUser: !!response.user,
-          error: response.error,
-          details: response.details
-        });
-      }
 
       if (response.success && response.token && response.user) {
         // Set auth token globally

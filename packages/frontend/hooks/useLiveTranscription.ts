@@ -50,13 +50,6 @@ function getTranscriptionWsUrl(sessionId: string, useSecure: boolean = true): st
   
   const wsUrl = `${baseUrl}/ws/transcription/${sessionId}/`
   
-  console.log('[useLiveTranscription] WebSocket URL:', wsUrl, { 
-    baseUrl, 
-    sessionId,
-    useSecure,
-    configMode: CONFIG.prod ? 'prod' : CONFIG.dev ? 'dev' : CONFIG.semi_local ? 'semi_local' : 'local'
-  })
-  
   return wsUrl
 }
 
@@ -107,8 +100,6 @@ export function useLiveTranscription({
       if (result.segments && result.segments.length > 0) {
         // Check if we have new segments
         if (result.segments.length > lastSegmentCountRef.current) {
-          console.log(`[useLiveTranscription] Polling found ${result.segments.length - lastSegmentCountRef.current} new segments`)
-          
           // Notify about new segments
           const newSegments = result.segments.slice(lastSegmentCountRef.current)
           newSegments.forEach((segment: TranscriptionSegment) => {
@@ -130,7 +121,6 @@ export function useLiveTranscription({
   const startPolling = useCallback(() => {
     if (pollingIntervalRef.current) return // Already polling
     
-    console.log('[useLiveTranscription] Starting HTTP polling fallback')
     usePollingRef.current = true
     setIsPolling(true)
     setIsConnected(true) // Consider polling as "connected"
@@ -147,7 +137,6 @@ export function useLiveTranscription({
   // Stop HTTP polling
   const stopPolling = useCallback(() => {
     if (pollingIntervalRef.current) {
-      console.log('[useLiveTranscription] Stopping HTTP polling')
       clearInterval(pollingIntervalRef.current)
       pollingIntervalRef.current = null
     }
@@ -158,13 +147,11 @@ export function useLiveTranscription({
   
   const connect = useCallback(() => {
     if (!sessionId || !enabled) {
-      console.log('[useLiveTranscription] Skipping connection - sessionId:', sessionId, 'enabled:', enabled)
       return
     }
     
     // Clean up existing connection
     if (wsRef.current) {
-      console.log('[useLiveTranscription] Closing existing connection')
       wsRef.current.close()
       wsRef.current = null
     }
@@ -174,13 +161,11 @@ export function useLiveTranscription({
     
     try {
       const wsUrl = getTranscriptionWsUrl(sessionId, useSecureProtocolRef.current)
-      console.log('[useLiveTranscription] Connecting to:', wsUrl, 'for session:', sessionId, 'secure:', useSecureProtocolRef.current)
       
       const ws = new WebSocket(wsUrl)
       wsRef.current = ws
       
       ws.onopen = () => {
-        console.log('[useLiveTranscription] WebSocket connected successfully')
         setIsConnected(true)
         setIsConnecting(false)
         setError(null)
@@ -198,7 +183,6 @@ export function useLiveTranscription({
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data)
-          console.log('[useLiveTranscription] Received message:', data)
           
           if (data.type === 'transcription_segment') {
             const segment = convertSegment(data.segment)
@@ -226,19 +210,20 @@ export function useLiveTranscription({
             const existingSegments = (data.segments || []).map(convertSegment)
             setSegments(existingSegments)
           } else if (data.type === 'recording_status') {
-            console.log('[useLiveTranscription] Recording status:', data.status)
             // Could emit this to parent if needed
           } else if (data.type === 'connection_established') {
-            console.log('[useLiveTranscription] Connection established for session:', data.session_id)
+            // Connection established
           } else if (data.type === 'pong') {
             // Heartbeat response, connection is alive
           }
         } catch (err) {
+          // eslint-disable-next-line no-console
           console.error('[useLiveTranscription] Error parsing message:', err)
         }
       }
       
       ws.onerror = (event) => {
+        // eslint-disable-next-line no-console
         console.error('[useLiveTranscription] WebSocket error:', event)
         const errorMsg = `WebSocket connection error (readyState: ${ws.readyState})`
         setError(errorMsg)
@@ -259,7 +244,6 @@ export function useLiveTranscription({
           1015: 'TLS handshake failure'
         }
         const closeReason = closeReasonMap[event.code] || `Unknown close code: ${event.code}`
-        console.log('[useLiveTranscription] WebSocket closed:', event.code, closeReason, event.reason || '')
         
         setIsConnected(false)
         setIsConnecting(false)
@@ -279,18 +263,12 @@ export function useLiveTranscription({
           // After 2 failed attempts with secure protocol, try non-secure
           // This handles cases where the server doesn't have WSS configured
           if (reconnectAttemptsRef.current === 2 && useSecureProtocolRef.current) {
-            console.log('[useLiveTranscription] Secure connection failed, trying non-secure protocol...')
             useSecureProtocolRef.current = false
             reconnectAttemptsRef.current = 0 // Reset attempts for the new protocol
           }
           
           if (reconnectAttemptsRef.current <= maxReconnectAttempts) {
             const delay = Math.min(2000 * (reconnectAttemptsRef.current + 1), 15000) // Faster retry, max 15s
-            console.log(`[useLiveTranscription] Scheduling reconnection attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts} in ${delay/1000}s...`, { 
-              sessionId, 
-              enabled,
-              useSecure: useSecureProtocolRef.current 
-            })
             
             reconnectTimeoutRef.current = setTimeout(() => {
               if (enabled && sessionId) {
@@ -298,6 +276,7 @@ export function useLiveTranscription({
               }
             }, delay)
           } else {
+            // eslint-disable-next-line no-console
             console.warn(`[useLiveTranscription] Max WebSocket reconnection attempts (${maxReconnectAttempts}) reached. Connection failed.`)
             const errorMsg = 'Failed to connect to live transcription after multiple attempts'
             setError(errorMsg)
@@ -306,6 +285,7 @@ export function useLiveTranscription({
         }
       }
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('[useLiveTranscription] Error creating WebSocket:', err)
       setIsConnecting(false)
       setError('Failed to create WebSocket connection')
@@ -340,7 +320,6 @@ export function useLiveTranscription({
   }, [stopPolling])
   
   const reconnect = useCallback(() => {
-    console.log('[useLiveTranscription] Manual reconnect requested')
     stopPolling()
     lastSegmentCountRef.current = 0
     reconnectAttemptsRef.current = 0

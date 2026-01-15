@@ -12,7 +12,7 @@ export default function CalendarFeatureTab() {
           Calendar
         </Typography>
         
-        <Typography variant="muted" className="mb-6">
+        <Typography variant="p" className="mb-6">
           Banbury's calendar integration allows you to seamlessly manage your schedule through natural conversation. 
           Connect your calendar to enable Banbury to view, create, and modify events on your behalf.
         </Typography>
@@ -22,13 +22,13 @@ export default function CalendarFeatureTab() {
           <Typography variant="h4" className="mb-2">
             • <strong>Visibility:</strong>
           </Typography>
-          <Typography variant="muted" className="mb-2 pl-2">
+          <Typography variant="p" className="mb-2 pl-2">
             • Banbury can read and understand your calendar contents, including event details, schedules, and availability.
           </Typography>
-          <Typography variant="muted" className="mb-2 pl-2">
+          <Typography variant="p" className="mb-2 pl-2">
             • Ask questions like "What's on my calendar today?" or "When is my next meeting?" to get instant insights.
           </Typography>
-          <Typography variant="muted" className="mb-2 pl-2">
+          <Typography variant="p" className="mb-2 pl-2">
             • Banbury can help identify conflicts, suggest optimal meeting times, and provide schedule summaries.
           </Typography>
         </Box>
@@ -39,16 +39,16 @@ export default function CalendarFeatureTab() {
             • <strong>Actions - Banbury can:</strong>
           </Typography>
           <Box sx={{ pl: 2 }}>
-            <Typography variant="muted" className="mb-2">
+            <Typography variant="p" className="mb-2">
               • <strong>Create new events:</strong> Simply tell Banbury when and what you'd like to schedule, and it will create the event with all necessary details including title, time, location, and attendees.
             </Typography>
-            <Typography variant="muted" className="mb-2">
+            <Typography variant="p" className="mb-2">
               • <strong>Search and find events:</strong> Quickly locate specific meetings or events by asking about dates, attendees, or topics.
             </Typography>
-            <Typography variant="muted" className="mb-2">
+            <Typography variant="p" className="mb-2">
               • <strong>Edit existing events:</strong> Modify event details like time, location, or description through simple requests.
             </Typography>
-            <Typography variant="muted" className="mb-2">
+            <Typography variant="p" className="mb-2">
               • <strong>Manage availability:</strong> Check free time slots and coordinate scheduling across multiple calendars.
             </Typography>
           </Box>
@@ -94,7 +94,7 @@ export default function CalendarFeatureTab() {
           <Typography variant="h4" className="mb-3">
             Creating Calendar Events with AI
           </Typography>
-          <Typography variant="muted" className="mb-3">
+          <Typography variant="p" className="mb-3">
             Traditionally, you can create a calendar event manually from the left panel. 
             With Banbury, you simply have a conversation - tell Banbury what you need, and it creates the event for you:
           </Typography>
@@ -116,7 +116,7 @@ export default function CalendarFeatureTab() {
               }} 
             />
           </Box>
-          <Typography variant="muted" className="mb-3">
+          <Typography variant="p" className="mb-3">
             <strong>Instead of manually filling out forms</strong>, just chat with Banbury and it will create the event for you automatically:
           </Typography>
           <Box sx={{
@@ -125,17 +125,17 @@ export default function CalendarFeatureTab() {
             borderRadius: '20px',
             border: '1px solid rgba(255,255,255,0.08)',
           }}>
-            <Typography variant="muted" className="mb-2 italic">
+            <Typography variant="p" className="mb-2 italic">
               💬 "Schedule a team meeting next Tuesday at 2 PM for 1 hour"
             </Typography>
-            <Typography variant="muted" className="mb-2 italic">
+            <Typography variant="p" className="mb-2 italic">
               💬 "Create a lunch appointment with Sarah tomorrow at noon"
             </Typography>
-            <Typography variant="muted" className="italic">
+            <Typography variant="p" className="italic">
               💬 "Block my calendar for focus time every morning from 9-11"
             </Typography>
           </Box>
-          <Typography variant="muted" className="mt-3">
+          <Typography variant="p" className="mt-3">
             Banbury understands your request, fills in all the necessary details, and creates the event instantly - no forms, no clicking through menus.
           </Typography>
         </Box>
@@ -145,7 +145,7 @@ export default function CalendarFeatureTab() {
           <Typography variant="h4" className="mb-3">
             Editing Calendar Events with AI
           </Typography>
-          <Typography variant="muted" className="mb-3">
+          <Typography variant="p" className="mb-3">
             Normally, you can edit an event manually by clickong on the event and then editing the event details. 
             With Banbury, you simply have a conversation - tell Banbury what you need, and it edits the event for you:
           </Typography>
@@ -167,7 +167,7 @@ export default function CalendarFeatureTab() {
               }} 
             />
           </Box>
-          <Typography variant="muted" className="mb-3">
+          <Typography variant="p" className="mb-3">
             <strong>Instead of manually filling out forms</strong>, just chat with Banbury and it will edit the event for you automatically:
           </Typography>
           <Box sx={{
@@ -176,17 +176,17 @@ export default function CalendarFeatureTab() {
             borderRadius: '20px',
             border: '1px solid rgba(255,255,255,0.08)',
           }}>
-            <Typography variant="muted" className="mb-2 italic">
+            <Typography variant="p" className="mb-2 italic">
               💬 "Move my 3 PM meeting to 4 PM tomorrow"
             </Typography>
-            <Typography variant="muted" className="mb-2 italic">
+            <Typography variant="p" className="mb-2 italic">
               💬 "Change the location of tomorrow's standup to the conference room"
             </Typography>
-            <Typography variant="muted" className="italic">
+            <Typography variant="p" className="italic">
               💬 "Update the client meeting description to include the project proposal and add Sarah as a co-host"
             </Typography>
           </Box>
-          <Typography variant="muted" className="mt-3">
+          <Typography variant="p" className="mt-3">
             Banbury understands your request, fills in all the necessary details, and edits the event instantly - no forms, no clicking through menus.
           </Typography>
         </Box>

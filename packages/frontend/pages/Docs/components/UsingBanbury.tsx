@@ -120,7 +120,7 @@ export default function UsingBanburyTab() {
         </Box>
         
         <Box sx={{ pl: { xs: 0, md: '44px' } }}>
-          <Typography variant="muted" className="mb-3">
+          <Typography variant="p" className="mb-3">
             In the Chat window, type the following prompt and press Enter.
           </Typography>
           
@@ -161,7 +161,7 @@ export default function UsingBanburyTab() {
         </Box>
         
         <Box sx={{ pl: { xs: 0, md: '44px' } }}>
-          <Typography variant="muted" className="mb-3">
+          <Typography variant="p" className="mb-3">
             Type the following prompt and press Enter.
           </Typography>
           
@@ -202,7 +202,7 @@ export default function UsingBanburyTab() {
         </Box>
         
         <Box sx={{ pl: { xs: 0, md: '44px' } }}>
-          <Typography variant="muted" className="mb-3">
+          <Typography variant="p" className="mb-3">
             You can attach files to your prompts by clicking the attachment icon in the composer or simply opening a file in the left panel.
           </Typography>
           
@@ -241,7 +241,7 @@ export default function UsingBanburyTab() {
         </Box>
         
         <Box sx={{ pl: { xs: 0, md: '44px' } }}>
-          <Typography variant="muted" className="mb-3">
+          <Typography variant="p" className="mb-3">
             Enable or disable specific tools in the composer to customize Banbury's capabilities for your task.
           </Typography>
           

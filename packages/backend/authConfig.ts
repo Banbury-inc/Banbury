@@ -80,14 +80,12 @@ export const AUTH_CONFIG = {
             if (normalized.endsWith('/') && normalized !== url.origin + '/') {
               normalized = normalized.slice(0, -1)
             }
-            console.log('[AUTH_CONFIG] Using redirect_uri from URL query params:', normalized)
             return normalized
           } catch (e) {
+            // eslint-disable-next-line no-console
             console.warn('[AUTH_CONFIG] Failed to parse redirect_uri from URL:', redirectUriFromUrl, e)
             // If URL parsing fails, fall through to other methods
           }
-        } else {
-          console.log('[AUTH_CONFIG] No redirect_uri in URL query params')
         }
       }
       
@@ -101,9 +99,9 @@ export const AUTH_CONFIG = {
             const url = new URL(storedRedirectUri)
             url.search = '' // Remove query parameters
             const normalized = url.toString()
-            console.log('[AUTH_CONFIG] Using redirect_uri from sessionStorage:', normalized)
             return normalized
           } catch (e) {
+            // eslint-disable-next-line no-console
             console.warn('[AUTH_CONFIG] Failed to parse redirect_uri from sessionStorage:', e)
             // If URL parsing fails, fall through to default
           }
@@ -118,7 +116,6 @@ export const AUTH_CONFIG = {
         // (unless explicitly configured otherwise)
         if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
           const inferred = `${origin}/authentication/auth/callback`
-          console.log('[AUTH_CONFIG] Using inferred redirect_uri from origin:', inferred)
           return inferred
         }
       }
@@ -126,7 +123,6 @@ export const AUTH_CONFIG = {
       // Priority 4: Default to production redirect URI (without query params)
       // This is what Google actually redirected to when electron=true was in the original URI
       const defaultUri = 'https://www.banbury.io/authentication/auth/callback'
-      console.log('[AUTH_CONFIG] Using default redirect_uri:', defaultUri)
       return defaultUri
     }
     
