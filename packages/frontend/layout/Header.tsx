@@ -141,6 +141,18 @@ const Header = (): JSX.Element => {
           >
             <Link href="/docs">Docs</Link>
           </Button>
+          <Button 
+            asChild 
+            variant="ghost" 
+            size="lg"
+            className="text-zinc-300 hover:text-white hover:bg-zinc-800/50 mr-4"
+            style={{
+              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              fontWeight: 400,
+            }}
+          >
+            <Link href="/download">Desktop App</Link>
+          </Button>
         </div>
 
         {/* Right side - Mobile Menu + Profile/Login */}
@@ -205,6 +217,18 @@ const Header = (): JSX.Element => {
                   }}
                 >
                   Docs
+                </Link>
+                <Link 
+                  href="/download" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center px-4 py-3 text-zinc-300 hover:text-white hover:bg-zinc-800/50 rounded-md transition-colors"
+                  style={{
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontWeight: 400,
+                    fontSize: '1rem',
+                  }}
+                >
+                  Desktop App
                 </Link>
               </nav>
             </SheetContent>

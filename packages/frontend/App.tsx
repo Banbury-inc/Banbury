@@ -16,6 +16,7 @@ import Knowledge from './pages/Knowledge/Knowledge';
 import Login from './pages/Login';
 import MeetingAgent from './pages/MeetingAgent/MeetingAgent';
 import Workspaces from './pages/Workspaces';
+import Download from './pages/download';
 import { ApiService } from '../backend/api/apiService';
 import { getErrorTracker } from './utils/errorTracker';
 import { getUserEngagementTracker } from './utils/userEngagementTracker';
@@ -115,6 +116,7 @@ const App = (): JSX.Element => {
               <Route path='/login' element={<Layout><Login /></Layout>} />
               <Route path='/auth/callback' element={<Layout><AuthCallback /></Layout>} />
               <Route path='/features' element={<Layout><Features /></Layout>} />
+              <Route path='/download' element={<Layout><Download /></Layout>} />
               <Route path='/filedownload/:username/:file_id' element={<Layout><FileDownload /></Layout>} />
               <Route path='/api' element={<Layout><API /></Layout>} />
               <Route path='/news' element={<Layout><News /></Layout>} />

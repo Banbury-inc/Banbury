@@ -58,20 +58,6 @@
       }
     ]
   },
-  "linux": {
-    "target": [
-      {
-        "target": "AppImage",
-        "arch": ["x64"]
-      },
-      {
-        "target": "deb",
-        "arch": ["x64"]
-      }
-    ],
-    "icon": "electron-app/resources/icons",
-    "category": "Office"
-  },
   "publish": {
     "provider": "github",
     "releaseType": "release"

@@ -1,4 +1,5 @@
 import { Box } from '@mui/material';
+import Link from 'next/link';
 import DocPageLayout from '../DocPageLayout';
 import { Typography } from '../../../../components/ui/typography';
 import meetingsImage from '../../../../assets/images/meetings.png';
@@ -59,6 +60,42 @@ export default function MeetingAgentFeatureTab() {
             • <strong>Cloud Storage:</strong> Automatic upload to S3 with secure cloud backup and retrieval
           </Typography>
         </Box>
+      </Box>
+
+      {/* Bot-Free Recording with Desktop App */}
+      <Box sx={{
+        p: 3,
+        mb: 4,
+        background: 'rgba(255,255,255,0.02)',
+        borderRadius: '20px',
+        border: '1px solid rgba(255,255,255,0.08)',
+      }}>
+        <Typography variant="h4" className="mb-2">
+          Bot-Free Recording with Desktop App
+        </Typography>
+        <Typography variant="muted" className="mb-2">
+          While Banbury's Meeting Agent can join meetings as a bot participant, you can also record meetings without any bot joining your calls by using the Banbury Desktop App.
+        </Typography>
+        <Typography variant="muted" className="mb-2">
+          The desktop app uses Recall AI's Desktop Recording SDK to record meetings directly from your desktop. This approach:
+        </Typography>
+        <Box sx={{ pl: 2 }}>
+          <Typography variant="muted" className="mb-1">
+            • <strong>Eliminates bot participants:</strong> No bot appears in your meeting participant list
+          </Typography>
+          <Typography variant="muted" className="mb-1">
+            • <strong>Automatic detection:</strong> Detects meeting windows automatically (Zoom, Teams, Google Meet, etc.)
+          </Typography>
+          <Typography variant="muted" className="mb-1">
+            • <strong>Better recording quality:</strong> Native desktop recording provides superior audio and video quality
+          </Typography>
+          <Typography variant="muted">
+            • <strong>Seamless experience:</strong> Record meetings without disrupting participants or meeting flow
+          </Typography>
+        </Box>
+        <Typography variant="muted" className="mt-2">
+          See the <Link href="/docs/desktop-app" className="underline underline-offset-4">Desktop App documentation</Link> for installation instructions and more details about bot-free meeting recordings.
+        </Typography>
       </Box>
 
       {/* Meeting Management */}

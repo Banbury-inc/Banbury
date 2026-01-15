@@ -1,4 +1,4 @@
-import { LogOut, Settings, Folder, Mail, Calendar, CheckSquare, Video, UserCog } from "lucide-react"
+import { LogOut, Settings, Folder, Mail, Calendar, CheckSquare, Video, UserCog, Download } from "lucide-react"
 import Image from 'next/image'
 import { useRouter } from "next/router"
 import { useState, useEffect } from "react"
@@ -18,6 +18,7 @@ import { SettingsModal } from "./modals/SettingsModal"
 import { ApiService } from "../../backend/api/apiService"
 import BanburyLogo from "../assets/images/New_Logo.png"
 import { Typography } from "./ui/typography"
+import { handleDownloadDesktopApp } from "./nav-sidebar/handlers/handleDownloadDesktopApp"
 import {
   Tooltip,
   TooltipContent,
@@ -195,6 +196,10 @@ export function NavSidebar({ onLogout, activeTab = 'files', onTabChange, showAdm
                 <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="cursor-pointer hover:bg-accent dark:hover:bg-accent py-2 transition-all">
                   <Settings className="mr-2 h-4 w-4" strokeWidth={1} />
                   <Typography variant="small">Settings</Typography>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDownloadDesktopApp} className="cursor-pointer hover:bg-accent dark:hover:bg-accent py-2 transition-all">
+                  <Download className="mr-2 h-4 w-4" strokeWidth={1} />
+                  <Typography variant="small">Download desktop app</Typography>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onLogout} className="cursor-pointer hover:bg-red-500/10 dark:hover:bg-red-500/10 text-red-500 dark:text-red-400 py-2 transition-all">
                   <LogOut className="mr-2 h-4 w-4" strokeWidth={1} />

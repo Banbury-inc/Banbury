@@ -38,23 +38,21 @@ const AuthCallback = (): JSX.Element => {
     if (handledRef.current) return;
     
     // Detect Electron callbacks: Google OAuth strips the electron=true parameter.
-    // Electron uses either localhost (development) or www.banbury.io (production) as redirect URI.
-    // We can detect Electron callbacks by checking:
-    // 1. We're in a browser (not Electron) - window.desktopApp?.isDesktop is false/undefined
-    // 2. The callback URL is from a known Electron redirect origin (localhost or www.banbury.io)
-    // 3. We have OAuth response parameters (code or error)
+    // We detect Electron callbacks by checking:
+    // 1. Explicit electron=true parameter in URL, OR
+    // 2. sessionStorage indicates this OAuth flow was initiated from Electron (oauth_is_desktop=true)
+    // 3. We're in a browser (not Electron) - window.desktopApp?.isDesktop is false/undefined
+    // 4. We have OAuth response parameters (code or error)
     const isInElectron = typeof window !== 'undefined' && !!window.desktopApp?.isDesktop
-    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : ''
-    const isLocalhost = currentOrigin.startsWith('http://localhost:') || currentOrigin.startsWith('http://127.0.0.1:')
-    const isElectronRedirectOrigin = currentOrigin === 'https://www.banbury.io' || isLocalhost
-    const isAtCallbackPath = typeof window !== 'undefined' && window.location.pathname === '/authentication/auth/callback'
+    const oauthIsDesktop = typeof window !== 'undefined' && window.sessionStorage 
+      ? window.sessionStorage.getItem('oauth_is_desktop') === 'true'
+      : false
     const hasOAuthResponse = !!(code || urlError)
     
-    // Electron callback if: not in Electron, at Electron redirect origin (localhost or production), at callback path, and has OAuth response
+    // Electron callback if: explicit electron parameter OR (OAuth was initiated from Electron AND not currently in Electron AND has OAuth response)
     const isElectronCallback = electron === 'true' || (
+      oauthIsDesktop && 
       !isInElectron && 
-      isElectronRedirectOrigin && 
-      isAtCallbackPath && 
       hasOAuthResponse
     )
     
@@ -73,6 +71,12 @@ const AuthCallback = (): JSX.Element => {
       if (!electronRedirectAttemptedRef.current) {
         handledRef.current = true;
         electronRedirectAttemptedRef.current = true;
+        
+        // Clean up sessionStorage after detecting Electron callback
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          sessionStorage.removeItem('oauth_is_desktop');
+          sessionStorage.removeItem('oauth_redirect_uri');
+        }
         
         // Handle error case for Electron
         if (urlError) {
@@ -145,6 +149,12 @@ const AuthCallback = (): JSX.Element => {
     handledRef.current = true;
 
     const handleCallback = async () => {
+      // Clean up sessionStorage if we're processing a regular web callback
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        sessionStorage.removeItem('oauth_is_desktop');
+        sessionStorage.removeItem('oauth_redirect_uri');
+      }
+
       if (urlError) {
         setStatus('error');
         setError(`Authentication failed: ${urlError}`);
@@ -194,6 +204,12 @@ const AuthCallback = (): JSX.Element => {
           router.replace('/login');
         }
       } catch (err) {
+        // Clean up sessionStorage on error
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          sessionStorage.removeItem('oauth_is_desktop');
+          sessionStorage.removeItem('oauth_redirect_uri');
+        }
+        
         setStatus('error');
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         console.error('[AuthCallback] OAuth callback error:', err);

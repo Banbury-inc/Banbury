@@ -31,6 +31,7 @@ const DocsSidebar = ({ activeSection, mobileOpen = false, onMobileClose }: DocsS
       items: [
         { id: 'what-is-banbury', title: 'What is Banbury?', href: '/docs/what-is-banbury' },
         { id: 'using-banbury', title: 'Using Banbury', href: '/docs/using-banbury' },
+        { id: 'desktop-app', title: 'Desktop App', href: '/docs/desktop-app' },
       ]
     },
     {

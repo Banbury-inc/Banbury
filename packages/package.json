@@ -5,6 +5,10 @@
   "author": "MG",
   "license": "MIT",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Banbury-inc/Banbury.git"
+  },
   "scripts": {
     "start": "next start",
     "dev": "next dev",
