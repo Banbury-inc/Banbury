@@ -5,10 +5,19 @@ FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
 RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable && pnpm i --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci --no-audit --no-fund; \
-  else npm i; fi
+  if [ -f yarn.lock ]; then \
+    yarn --frozen-lockfile; \
+  elif [ -f pnpm-lock.yaml ]; then \
+    corepack enable && pnpm i --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then \
+    echo "Attempting npm ci..."; \
+    npm ci --no-audit --no-fund || ( \
+      echo "npm ci failed, falling back to npm install..." && \
+      npm install --no-audit --no-fund \
+    ); \
+  else \
+    npm i; \
+  fi
 
 # Build the Next.js application
 FROM node:20-alpine AS builder

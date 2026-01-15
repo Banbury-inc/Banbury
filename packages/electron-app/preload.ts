@@ -91,6 +91,46 @@ contextBridge.exposeInMainWorld('desktopApp', {
   openExternal: (url: string): Promise<{ success: boolean; error?: string }> => {
     return ipcRenderer.invoke('shell:open-external', url)
   },
+
+  /**
+   * Window Controls API
+   */
+  windowControls: {
+    /**
+     * Minimize the window
+     */
+    minimizeWindow: (): Promise<void> => {
+      return ipcRenderer.invoke('window:minimize')
+    },
+
+    /**
+     * Maximize or restore the window
+     */
+    maximizeWindow: (): Promise<void> => {
+      return ipcRenderer.invoke('window:maximize')
+    },
+
+    /**
+     * Close the window
+     */
+    closeWindow: (): Promise<void> => {
+      return ipcRenderer.invoke('window:close')
+    },
+
+    /**
+     * Check if the window is currently maximized
+     */
+    isMaximized: (): Promise<boolean> => {
+      return ipcRenderer.invoke('window:is-maximized')
+    },
+
+    /**
+     * Subscribe to maximize state changes
+     */
+    onMaximizeChanged: (callback: (isMaximized: boolean) => void): () => void => {
+      return addIPCListener('window:maximize-changed', callback)
+    }
+  },
   
   /**
    * Desktop Recording API
@@ -197,6 +237,13 @@ declare global {
       isDesktop: boolean
       getElectronVersion: () => string
       openExternal: (url: string) => Promise<{ success: boolean; error?: string }>
+      windowControls: {
+        minimizeWindow: () => Promise<void>
+        maximizeWindow: () => Promise<void>
+        closeWindow: () => Promise<void>
+        isMaximized: () => Promise<boolean>
+        onMaximizeChanged: (callback: (isMaximized: boolean) => void) => () => void
+      }
       desktopRecording: {
         getStatus: () => Promise<DesktopRecordingStatus>
         requestPermissions: () => Promise<PermissionStatus>

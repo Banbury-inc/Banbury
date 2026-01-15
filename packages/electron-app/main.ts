@@ -89,7 +89,7 @@ function createWindow(): void {
     },
     show: false,
     backgroundColor: '#0a0a0a',
-    titleBarStyle: 'default',
+    frame: false,
   })
 
   // Show window when content is ready to prevent visual flash
@@ -129,13 +129,23 @@ function createWindow(): void {
     }
   })
   
+  // Track maximize state changes and notify renderer
+  mainWindow.on('maximize', () => {
+    mainWindow?.webContents.send('window:maximize-changed', true)
+  })
+
+  mainWindow.on('unmaximize', () => {
+    mainWindow?.webContents.send('window:maximize-changed', false)
+  })
+
   // Clean up reference when window is closed
   mainWindow.on('closed', () => {
     mainWindow = null
   })
 
-  // Load the target URL
-  mainWindow.loadURL(targetUrl)
+  // Load the target URL - append /workspaces for Electron app
+  const initialUrl = new URL('/workspaces', targetUrl).toString()
+  mainWindow.loadURL(initialUrl)
 }
 
 /**
@@ -213,6 +223,35 @@ app.whenReady().then(() => {
       console.error('[Electron] Failed to open external URL:', error)
       return { success: false, error: String(error) }
     }
+  })
+
+  // Set up IPC handlers for window controls
+  ipcMain.handle('window:minimize', () => {
+    if (mainWindow) {
+      mainWindow.minimize()
+    }
+  })
+
+  ipcMain.handle('window:maximize', () => {
+    if (mainWindow) {
+      if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize()
+      } else {
+        mainWindow.maximize()
+      }
+      // Emit event to notify renderer of state change
+      mainWindow.webContents.send('window:maximize-changed', mainWindow.isMaximized())
+    }
+  })
+
+  ipcMain.handle('window:close', () => {
+    if (mainWindow) {
+      mainWindow.close()
+    }
+  })
+
+  ipcMain.handle('window:is-maximized', () => {
+    return mainWindow ? mainWindow.isMaximized() : false
   })
   
   configureMenu()
