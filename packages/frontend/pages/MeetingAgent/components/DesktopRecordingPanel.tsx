@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
 import { Badge } from '../../../components/ui/badge'
 import { Button } from '../../../components/ui/button'
@@ -21,10 +22,11 @@ import {
   handleStartDesktopSDKRecording, 
   handleStopDesktopSDKRecording,
   getPlatformDisplayName,
-  getPlatformIcon,
   formatRecordingDuration
 } from '../handlers/desktopRecordingHandlers'
 import { useToast } from '../../../components/ui/use-toast'
+import zoomLogo from '../../../assets/images/zoom-fondo-blanco-vertical-seeklogo.png'
+import googleMeetLogo from '../../../assets/images/7089160_google_meet_icon.png'
 
 interface RecordingStartedData {
   sessionId: string
@@ -36,6 +38,46 @@ interface RecordingStartedData {
 interface DesktopRecordingPanelProps {
   onRecordingComplete?: () => void
   onRecordingStarted?: (data: RecordingStartedData) => void
+}
+
+function PlatformLogo({ platform }: { platform: string }) {
+  const platformLower = platform.toLowerCase()
+  
+  if (platformLower === 'zoom') {
+    return (
+      <Image
+        src={zoomLogo}
+        alt="Zoom"
+        width={24}
+        height={24}
+        className="object-contain"
+      />
+    )
+  }
+  
+  if (platformLower === 'meet') {
+    return (
+      <Image
+        src={googleMeetLogo}
+        alt="Google Meet"
+        width={24}
+        height={24}
+        className="object-contain"
+      />
+    )
+  }
+  
+  if (platformLower === 'teams') {
+    // Using a simple styled div for Teams since we don't have the logo file
+    return (
+      <div className="w-6 h-6 flex items-center justify-center bg-[#464EB8] rounded">
+        <span className="text-white text-xs font-bold">MS</span>
+      </div>
+    )
+  }
+  
+  // Fallback
+  return <Video className="h-6 w-6 text-muted-foreground" />
 }
 
 export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted }: DesktopRecordingPanelProps) {
@@ -56,6 +98,7 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [recordingDuration, setRecordingDuration] = useState('00:00')
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   
   // Update recording duration every second when recording
   useEffect(() => {
@@ -121,14 +164,34 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
           description: `Recording ${getPlatformDisplayName(platform)} meeting.`
         })
         
+        // Store the session ID for when we stop recording
+        if (result.sessionId) {
+          setCurrentSessionId(result.sessionId)
+          console.log('[DesktopRecordingPanel] Stored sessionId:', result.sessionId)
+        }
+        
         // Call the onRecordingStarted callback with session data
-        if (onRecordingStarted && result.sessionId) {
-          onRecordingStarted({
-            sessionId: result.sessionId,
-            windowId: meetingId,
-            platform,
-            meetingTitle: title
-          })
+        if (onRecordingStarted) {
+          if (result.sessionId) {
+            console.log('[DesktopRecordingPanel] Calling onRecordingStarted with sessionId:', result.sessionId)
+            onRecordingStarted({
+              sessionId: result.sessionId,
+              windowId: meetingId,
+              platform,
+              meetingTitle: title
+            })
+          } else {
+            console.warn('[DesktopRecordingPanel] Recording started but no sessionId returned from backend')
+            // Still call the callback with a temporary ID for UI purposes
+            const tempSessionId = `temp_${Date.now()}`
+            console.log('[DesktopRecordingPanel] Using temporary sessionId:', tempSessionId)
+            onRecordingStarted({
+              sessionId: tempSessionId,
+              windowId: meetingId,
+              platform,
+              meetingTitle: title
+            })
+          }
         }
       } else {
         console.error('[DesktopRecordingPanel] Failed to start recording:', result.error)
@@ -151,7 +214,7 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
   }
   
   async function handleStop() {
-    console.log('[DesktopRecordingPanel] handleStop called with status:', recordingStatus)
+    console.log('[DesktopRecordingPanel] handleStop called with status:', recordingStatus, 'sessionId:', currentSessionId)
     
     // Even if windowId is undefined, try to stop - the backend will use the stored status
     if (!recordingStatus.isRecording) {
@@ -163,13 +226,18 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
     try {
       // Pass the windowId even if it's undefined - the backend will fall back to stored status
       console.log('[DesktopRecordingPanel] Stopping recording for window:', recordingStatus.windowId || 'undefined (backend will use stored windowId)')
-      const result = await handleStopDesktopSDKRecording(recordingStatus.windowId || '', stopRecording)
+      const result = await handleStopDesktopSDKRecording(
+        recordingStatus.windowId || '', 
+        stopRecording,
+        currentSessionId || undefined  // Pass sessionId to end the session on backend
+      )
       
       if (result.success) {
         toast({
           title: 'Recording Stopped',
           description: 'Your recording is being processed and uploaded.'
         })
+        setCurrentSessionId(null)  // Clear session ID
         onRecordingComplete?.()
       } else {
         console.error('[DesktopRecordingPanel] Failed to stop recording:', result.error)
@@ -194,28 +262,6 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
   return (
     <Card className="bg-card border-border">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Monitor className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">Desktop Recording</CardTitle>
-          </div>
-          <div className="flex items-center gap-2">
-            {isInitialized ? (
-              <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Ready
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                Initializing
-              </Badge>
-            )}
-            <Button variant="ghost" size="icon" onClick={refreshStatus} disabled={isLoading}>
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
-        </div>
       </CardHeader>
       
       <CardContent className="space-y-4">
@@ -311,7 +357,7 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
             </div>
             {recordingStatus.platform && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>{getPlatformIcon(recordingStatus.platform)}</span>
+                <PlatformLogo platform={recordingStatus.platform} />
                 <span>{getPlatformDisplayName(recordingStatus.platform)}</span>
               </div>
             )}
@@ -334,10 +380,6 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
         {/* Detected Meetings List */}
         {!recordingStatus.isRecording && allPermissionsGranted && isPlatformSupported && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Detected Meetings</span>
-              <Badge variant="secondary">{detectedMeetings.length}</Badge>
-            </div>
             
             {detectedMeetings.length === 0 ? (
               <div className="p-6 text-center border border-dashed border-border rounded-lg">
@@ -351,38 +393,42 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
               </div>
             ) : (
               <div className="space-y-2">
-                {detectedMeetings.map((meeting) => (
-                  <div 
-                    key={meeting.id}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{getPlatformIcon(meeting.platform)}</span>
-                      <div>
-                        <p className="text-sm font-medium truncate max-w-[200px]">
-                          {meeting.title || 'Untitled Meeting'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {getPlatformDisplayName(meeting.platform)}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => handleStart(meeting.id, meeting.platform, meeting.title)}
-                      disabled={isLoading || recordingStatus.isRecording}
+                {(() => {
+                  // Only show the most recent meeting (last in array, as it's the most recently detected)
+                  const mostRecentMeeting = detectedMeetings[detectedMeetings.length - 1]
+                  return (
+                    <div 
+                      key={mostRecentMeeting.id}
+                      className="flex items-center justify-between bg-muted/50 rounded-lg hover:bg-muted transition-colors"
                     >
-                      {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          <Play className="h-4 w-4 mr-1" />
-                          Record
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-3">
+                        <PlatformLogo platform={mostRecentMeeting.platform} />
+                        <div>
+                          <p className="text-sm font-medium truncate max-w-[200px]">
+                            {mostRecentMeeting.title || 'Untitled Meeting'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {getPlatformDisplayName(mostRecentMeeting.platform)}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        size="xs"
+                        onClick={() => handleStart(mostRecentMeeting.id, mostRecentMeeting.platform, mostRecentMeeting.title)}
+                        disabled={isLoading || recordingStatus.isRecording}
+                      >
+                        {isLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Play className="h-4 w-4 mr-1" />
+                            Record
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )
+                })()}
               </div>
             )}
           </div>

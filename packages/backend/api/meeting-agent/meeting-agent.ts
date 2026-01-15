@@ -11,7 +11,8 @@ import {
   MeetingPlatform,
   RecallBot,
   RecallBotResponse,
-  RecallBotMetadata
+  RecallBotMetadata,
+  Recording
 } from '../../../frontend/types/meeting-types';
 
 export default class MeetingAgent {
@@ -175,6 +176,21 @@ export default class MeetingAgent {
   }
 
   /**
+   * Get meeting details for a meeting session
+   */
+  static async getMeetingDetails(sessionId: string): Promise<any> {
+    try {
+      const response = await ApiService.get<any>(
+        `${this.baseEndpoint}/sessions/${sessionId}/meeting-details/`
+      )
+      return response
+    } catch (error) {
+      console.error('Failed to fetch meeting details:', error)
+      throw error
+    }
+  }
+
+  /**
    * Stop recording and leave a meeting
    */
   static async leaveMeeting(sessionId: string): Promise<{
@@ -195,23 +211,71 @@ export default class MeetingAgent {
   }
 
   /**
+   * Proxy transcript URL to avoid CORS issues
+   */
+  static async proxyTranscript(transcriptUrl: string): Promise<any> {
+    try {
+      const response = await ApiService.get<any>(
+        `${this.baseEndpoint}/proxy-transcript/?url=${encodeURIComponent(transcriptUrl)}`
+      )
+      return response
+    } catch (error) {
+      console.error('Failed to proxy transcript:', error)
+      throw error
+    }
+  }
+
+  /**
    * Get transcription for a meeting session
+   * Returns transcription data along with video URL and recording info
    */
   static async getTranscription(sessionId: string): Promise<{
     segments: TranscriptionSegment[]
     fullText: string
     isComplete: boolean
     processingStatus: string
+    video_url?: string  // Direct video URL for playback
+    transcript_url?: string  // Transcript download URL
+    recording?: Recording  // Single recording data for this session
+    session_info?: {
+      title: string
+      start_time?: string
+      end_time?: string
+      duration?: number
+      participants?: any[]
+      platform?: string
+    }
   }> {
     try {
       const response = await ApiService.get<{
         segments: TranscriptionSegment[]
-        fullText: string
-        isComplete: boolean
-        processingStatus: string
+        full_text: string
+        is_complete: boolean
+        processing_status: string
+        video_url?: string
+        transcript_url?: string
+        recording?: Recording
+        session_info?: {
+          title: string
+          start_time?: string
+          end_time?: string
+          duration?: number
+          participants?: any[]
+          platform?: string
+        }
       }>(`${this.baseEndpoint}/sessions/${sessionId}/transcription/`)
       
-      return response
+      // Transform snake_case to camelCase for frontend consistency
+      return {
+        segments: response.segments || [],
+        fullText: response.full_text || '',
+        isComplete: response.is_complete || false,
+        processingStatus: response.processing_status || '',
+        video_url: response.video_url,
+        transcript_url: response.transcript_url,
+        recording: response.recording,
+        session_info: response.session_info
+      }
     } catch (error) {
       console.error('Failed to fetch transcription:', error)
       throw error

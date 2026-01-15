@@ -39,6 +39,7 @@ import { handleFileRenamed } from './handlers/handleFileRenamed';
 import { splitPanel } from './handlers/splitPanel';
 import { openCalendarInTab } from './handlers/openCalendarInTab';
 import { handleCalendarEventSelect } from './handlers/handleCalendarEventSelect';
+import { handleMeetingSelect as handleMeetingSelectHandler } from './handlers/handleMeetingSelect';
 import { handleReplyToEmail } from './handlers/handleReplyToEmail';
 import { handleComposeEmail } from './handlers/handleComposeEmail';
 import { loadConversations, saveCurrentConversation, loadConversation, deleteConversation } from './handlers/conversationManagement';
@@ -89,6 +90,7 @@ const Workspaces = (): React.ReactNode => {
   const [selectedMeeting, setSelectedMeeting] = useState<MeetingSession | null>(null);
   const [uploading, setUploading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
+  const [meetingsRefreshTrigger, setMeetingsRefreshTrigger] = useState<number>(0);
   const [folderCreationTrigger, setFolderCreationTrigger] = useState<boolean>(false);
   const [conversations, setConversations] = useState<any[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
@@ -397,6 +399,11 @@ const Workspaces = (): React.ReactNode => {
   // Function to trigger sidebar refresh
   const triggerSidebarRefresh = useCallback(() => {
     setRefreshTrigger(prev => prev + 1);
+  }, []);
+
+  // Function to trigger meetings refresh
+  const triggerMeetingsRefresh = useCallback(() => {
+    setMeetingsRefreshTrigger(prev => prev + 1);
   }, []);
 
   // Helper function to extract and format email body for replies
@@ -901,8 +908,8 @@ const Workspaces = (): React.ReactNode => {
     );
   }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
 
-  const openMeetingInTabCallback = useCallback((meeting: MeetingSession | null, targetPanelId: string = activePanelId) => {
-    openMeetingInTab(
+  const openMeetingInTabCallback = useCallback(async (meeting: MeetingSession | null, targetPanelId: string = activePanelId) => {
+    await openMeetingInTab(
       meeting,
       targetPanelId,
       activePanelId,
@@ -925,9 +932,13 @@ const Workspaces = (): React.ReactNode => {
   }, [openTaskInTabCallback, activePanelId]);
 
   const handleMeetingSelect = useCallback((meeting: MeetingSession) => {
-    setSelectedMeeting(meeting);
-    openMeetingInTabCallback(meeting, activePanelId);
-  }, [openMeetingInTabCallback, activePanelId]);
+    handleMeetingSelectHandler({
+      meeting,
+      setSelectedMeeting,
+      openMeetingInTabCallback,
+      activePanelId
+    });
+  }, [openMeetingInTabCallback, activePanelId, setSelectedMeeting]);
 
   const handleJoinMeeting = useCallback(() => {
     openMeetingInTabCallback(null, activePanelId); // null means join meeting composer
@@ -1679,6 +1690,7 @@ const Workspaces = (): React.ReactNode => {
                           handleDesktopRecordingStarted(data);
                           setMobileFileSidebarOpen(false);
                         }}
+                        meetingsRefreshTrigger={meetingsRefreshTrigger}
                       />
                     </div>
                   </div>
@@ -1835,6 +1847,7 @@ const Workspaces = (): React.ReactNode => {
                             selectedMeeting={selectedMeeting}
                             onJoinMeeting={handleJoinMeeting}
                             onDesktopRecordingStarted={handleDesktopRecordingStarted}
+                            meetingsRefreshTrigger={meetingsRefreshTrigger}
                           />
                         </div>
                       </div>

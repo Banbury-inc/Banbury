@@ -48,9 +48,10 @@ interface AppSidebarProps {
   selectedMeeting?: MeetingSession | null
   onJoinMeeting?: () => void
   onDesktopRecordingStarted?: (data: { sessionId: string; windowId: string; platform: string; meetingTitle: string }) => void
+  meetingsRefreshTrigger?: number
 }
 
-export function LeftPanel({ currentView, userInfo, activeTab, onTabChange, onAdminTabClick, onFileSelect, selectedFile, onRefreshComplete, refreshTrigger, onFileDeleted, onFileRenamed, onFileMoved, onFolderCreated, onFolderRenamed, onFolderDeleted, triggerRootFolderCreation, onEmailSelect, onComposeEmail, onCreateDocument, onCreateSpreadsheet, onCreateNotebook, onCreateDrawio, onCreateTldraw, onCreatePowerpoint, onCreateFolder, onGenerateImage, onEventSelect, onOpenCalendar, onTaskSelect, selectedTask, onCreateTask, onMeetingSelect, selectedMeeting, onJoinMeeting, onDesktopRecordingStarted }: AppSidebarProps) {
+export function LeftPanel({ currentView, userInfo, activeTab, onTabChange, onAdminTabClick, onFileSelect, selectedFile, onRefreshComplete, refreshTrigger, onFileDeleted, onFileRenamed, onFileMoved, onFolderCreated, onFolderRenamed, onFolderDeleted, triggerRootFolderCreation, onEmailSelect, onComposeEmail, onCreateDocument, onCreateSpreadsheet, onCreateNotebook, onCreateDrawio, onCreateTldraw, onCreatePowerpoint, onCreateFolder, onGenerateImage, onEventSelect, onOpenCalendar, onTaskSelect, selectedTask, onCreateTask, onMeetingSelect, selectedMeeting, onJoinMeeting, onDesktopRecordingStarted, meetingsRefreshTrigger }: AppSidebarProps) {
   const router = useRouter()
   const currentActiveTab = activeTab || 'files'
 
@@ -120,6 +121,7 @@ export function LeftPanel({ currentView, userInfo, activeTab, onTabChange, onAdm
               selectedMeeting={selectedMeeting}
               onJoinMeeting={onJoinMeeting}
               onDesktopRecordingStarted={onDesktopRecordingStarted}
+              refreshTrigger={meetingsRefreshTrigger}
             />
           </div>
         )}

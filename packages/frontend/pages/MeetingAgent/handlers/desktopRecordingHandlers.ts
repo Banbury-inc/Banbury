@@ -194,10 +194,11 @@ export async function handleStartRecording(
  */
 export async function handleStopDesktopSDKRecording(
   windowId: string,
-  sdkStopRecording: (windowId: string) => Promise<{ success: boolean; error?: string }>
+  sdkStopRecording: (windowId: string) => Promise<{ success: boolean; error?: string }>,
+  sessionId?: string
 ): Promise<{ success: boolean; error?: string; message?: string }> {
   try {
-    console.log('[Desktop SDK] Stopping recording for window:', windowId)
+    console.log('[Desktop SDK] Stopping recording for window:', windowId, 'session:', sessionId)
     
     // Stop recording using the Desktop SDK
     const result = await sdkStopRecording(windowId)
@@ -212,6 +213,28 @@ export async function handleStopDesktopSDKRecording(
     }
     
     console.log('[Desktop SDK] Recording stopped successfully')
+    
+    // If we have a session ID, notify the backend to end the session
+    if (sessionId) {
+      try {
+        console.log('[Desktop SDK] Ending session on backend:', sessionId)
+        const endResponse = await ApiService.post<{
+          success: boolean
+          error?: string
+          message?: string
+        }>(`/meeting-agent/desktop/session/${sessionId}/end/`, {})
+        
+        if (!endResponse.success) {
+          console.warn('[Desktop SDK] Failed to end session on backend:', endResponse.error)
+          // Don't fail the whole operation, just log the warning
+        } else {
+          console.log('[Desktop SDK] Session ended on backend successfully')
+        }
+      } catch (endError) {
+        console.warn('[Desktop SDK] Error ending session on backend:', endError)
+        // Don't fail the whole operation
+      }
+    }
     
     return {
       success: true,

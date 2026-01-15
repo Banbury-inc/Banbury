@@ -7,7 +7,9 @@ import { MeetingSession } from '../../../../types/meeting-types'
 import { ApiService } from '../../../../../backend/api/apiService'
 import { MeetingsListView } from './components/MeetingsListView'
 import { handleRefreshMeetings } from './handlers/handleRefreshMeetings'
+import { handleDeleteMeeting } from './handlers/handleDeleteMeeting'
 import { DesktopRecordingPanel } from '../../../../pages/MeetingAgent/components/DesktopRecordingPanel'
+import { useToast } from '../../../ui/use-toast'
 
 type MeetingStatusFilter = 'all' | MeetingSession['status']
 
@@ -23,15 +25,17 @@ interface MeetingsTabProps {
   selectedMeeting?: MeetingSession | null
   onJoinMeeting?: () => void
   onDesktopRecordingStarted?: (data: DesktopRecordingStartedData) => void
+  refreshTrigger?: number
 }
 
-export function MeetingsTab({ onMeetingSelect, selectedMeeting, onJoinMeeting, onDesktopRecordingStarted }: MeetingsTabProps) {
+export function MeetingsTab({ onMeetingSelect, selectedMeeting, onJoinMeeting, onDesktopRecordingStarted, refreshTrigger }: MeetingsTabProps) {
   const [meetings, setMeetings] = useState<MeetingSession[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<MeetingStatusFilter>('all')
   const [refreshCounter, setRefreshCounter] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isDesktopRecordingExpanded, setIsDesktopRecordingExpanded] = useState(true)
+  const { toast } = useToast()
   
   // Check if running in Electron desktop environment
   const isDesktop = typeof window !== 'undefined' && window.desktopApp?.isDesktop === true
@@ -61,7 +65,7 @@ export function MeetingsTab({ onMeetingSelect, selectedMeeting, onJoinMeeting, o
 
   useEffect(() => {
     loadMeetings()
-  }, [loadMeetings, refreshCounter])
+  }, [loadMeetings, refreshCounter, refreshTrigger])
 
   const filteredMeetings = filter === 'all'
     ? meetings
@@ -70,6 +74,26 @@ export function MeetingsTab({ onMeetingSelect, selectedMeeting, onJoinMeeting, o
   const handleRefresh = () => {
     handleRefreshMeetings({ setRefreshCounter, setIsRefreshing })
   }
+
+  const handleMeetingDeleted = useCallback(async (meetingId: string) => {
+    await handleDeleteMeeting({
+      meetingId,
+      onSuccess: () => {
+        toast({
+          title: 'Success',
+          description: 'Meeting session deleted'
+        })
+        setRefreshCounter(prev => prev + 1)
+      },
+      onError: (errorMessage) => {
+        toast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive'
+        })
+      }
+    })
+  }, [toast])
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -176,6 +200,7 @@ export function MeetingsTab({ onMeetingSelect, selectedMeeting, onJoinMeeting, o
           loading={loading}
           onMeetingSelect={onMeetingSelect}
           selectedMeeting={selectedMeeting}
+          onMeetingDeleted={handleMeetingDeleted}
         />
       </div>
     </div>

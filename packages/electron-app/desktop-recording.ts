@@ -69,6 +69,9 @@ interface RecallAiSDKInterface {
   requestPermission: (permission: string) => void
   startRecording: (options: { windowId: string; uploadToken: string }) => void
   stopRecording: (options: { windowId: string }) => void
+  uploadRecording: (options: { windowId: string }) => void
+  pauseRecording: (options: { windowId: string }) => void
+  resumeRecording: (options: { windowId: string }) => void
 }
 
 // Type guard to check if a value is the SDK interface
@@ -322,7 +325,10 @@ function setupEventListeners(): void {
   // Log all events for debugging
   const debugEvents = ['permissions-granted', 'meeting-detected', 'meeting-ended', 
                        'recording-started', 'recording-stopped', 'recording-error',
-                       'error', 'sdk-error', 'initialized']
+                       'error', 'sdk-error', 'initialized',
+                       'upload-started', 'upload-progress', 'upload-complete', 'upload-error',
+                       'uploading', 'upload-failed',
+                       'transcript.data', 'transcript.partial_data', 'transcript-data', 'transcript-partial-data']
   
   debugEvents.forEach(eventName => {
     try {
@@ -455,6 +461,61 @@ function setupEventListeners(): void {
     // Notify renderer process
     sendToRenderer('desktop-recording:error', event)
   })
+  
+  // Upload events - these fire after recording stops
+  RecallAiSdk.addEventListener('upload-started', (evt: unknown) => {
+    console.log('[Desktop Recording] *** UPLOAD STARTED ***:', JSON.stringify(evt, null, 2))
+    sendToRenderer('desktop-recording:upload-started', evt as any)
+  })
+  
+  RecallAiSdk.addEventListener('upload-progress', (evt: unknown) => {
+    const progress = evt as { progress?: number }
+    console.log('[Desktop Recording] Upload progress:', progress.progress || JSON.stringify(evt, null, 2))
+    sendToRenderer('desktop-recording:upload-progress', evt as any)
+  })
+  
+  RecallAiSdk.addEventListener('upload-complete', (evt: unknown) => {
+    console.log('[Desktop Recording] *** UPLOAD COMPLETE ***:', JSON.stringify(evt, null, 2))
+    sendToRenderer('desktop-recording:upload-complete', evt as any)
+  })
+  
+  RecallAiSdk.addEventListener('upload-error', (evt: unknown) => {
+    console.error('[Desktop Recording] *** UPLOAD ERROR ***:', JSON.stringify(evt, null, 2))
+    sendToRenderer('desktop-recording:error', { error: `Upload failed: ${JSON.stringify(evt)}` })
+  })
+  
+  // Also listen for uploading event (alternative name)
+  RecallAiSdk.addEventListener('uploading', (evt: unknown) => {
+    console.log('[Desktop Recording] *** UPLOADING ***:', JSON.stringify(evt, null, 2))
+  })
+  
+  // SDK error event
+  RecallAiSdk.addEventListener('error', (evt: unknown) => {
+    console.error('[Desktop Recording] *** SDK ERROR ***:', JSON.stringify(evt, null, 2))
+    sendToRenderer('desktop-recording:error', { error: `SDK error: ${JSON.stringify(evt)}` })
+  })
+  
+  // Real-time transcript events - these come from AssemblyAI during recording
+  RecallAiSdk.addEventListener('transcript.data', (evt: unknown) => {
+    console.log('[Desktop Recording] *** TRANSCRIPT DATA ***:', JSON.stringify(evt, null, 2))
+    sendToRenderer('desktop-recording:transcript-data', evt as any)
+  })
+  
+  RecallAiSdk.addEventListener('transcript.partial_data', (evt: unknown) => {
+    console.log('[Desktop Recording] Transcript partial data:', JSON.stringify(evt, null, 2))
+    sendToRenderer('desktop-recording:transcript-partial', evt as any)
+  })
+  
+  // Alternative event names (hyphenated versions)
+  RecallAiSdk.addEventListener('transcript-data', (evt: unknown) => {
+    console.log('[Desktop Recording] *** TRANSCRIPT-DATA ***:', JSON.stringify(evt, null, 2))
+    sendToRenderer('desktop-recording:transcript-data', evt as any)
+  })
+  
+  RecallAiSdk.addEventListener('transcript-partial-data', (evt: unknown) => {
+    console.log('[Desktop Recording] Transcript-partial-data:', JSON.stringify(evt, null, 2))
+    sendToRenderer('desktop-recording:transcript-partial', evt as any)
+  })
 }
 
 // Types for data sent to renderer
@@ -492,6 +553,13 @@ async function startRecording(windowId: string, uploadToken: string): Promise<{ 
   
   try {
     console.log('[Desktop Recording] Starting recording for window:', windowId)
+    console.log('[Desktop Recording] Upload token received:', uploadToken ? `${uploadToken.substring(0, 20)}...` : 'MISSING!')
+    console.log('[Desktop Recording] Upload token length:', uploadToken?.length || 0)
+    
+    if (!uploadToken) {
+      console.error('[Desktop Recording] ERROR: No upload token provided!')
+      return { success: false, error: 'No upload token provided' }
+    }
     
     // Find the platform for this window from detected meetings
     const meeting = detectedMeetings.find(m => m.id === windowId)
@@ -562,27 +630,62 @@ async function stopRecording(windowId: string): Promise<{ success: boolean; erro
   
   try {
     console.log('[Desktop Recording] Calling SDK stopRecording for window:', actualWindowId)
+    console.log('[Desktop Recording] About to call RecallAiSdk.stopRecording...')
+    console.log('[Desktop Recording] Recording duration:', recordingStatus.startTime ? `${Math.round((Date.now() - recordingStatus.startTime) / 1000)}s` : 'unknown')
     
-    RecallAiSdk.stopRecording({
+    // Step 1: Stop the recording
+    const stopResult = RecallAiSdk.stopRecording({
       windowId: actualWindowId
     })
     
-    console.log('[Desktop Recording] SDK stopRecording called successfully')
+    console.log('[Desktop Recording] SDK stopRecording returned:', stopResult)
+    console.log('[Desktop Recording] Recording stopped, now uploading...')
     
-    // Update status immediately to prevent double-stop attempts
-    recordingStatus = {
-      isRecording: false,
-      windowId: null,
-      startTime: null,
-      platform: null
+    // Step 2: Upload the recording - THIS IS THE KEY FIX!
+    // The SDK has a separate uploadRecording method that must be called after stopRecording
+    console.log('[Desktop Recording] Calling SDK uploadRecording for window:', actualWindowId)
+    
+    try {
+      RecallAiSdk.uploadRecording({
+        windowId: actualWindowId
+      })
+      console.log('[Desktop Recording] SDK uploadRecording called successfully - upload should start now')
+    } catch (uploadError) {
+      console.error('[Desktop Recording] Failed to call uploadRecording:', uploadError)
+      // Continue anyway, maybe it auto-uploads in some cases
     }
     
-    // Notify renderer
-    sendToRenderer('desktop-recording:recording-stopped', { windowId: actualWindowId, reason: 'manual' })
+    // Keep recording status for a moment to track upload state
+    const previousWindowId = recordingStatus.windowId
+    
+    // Update status to indicate we're now uploading, not recording
+    recordingStatus = {
+      isRecording: false,
+      windowId: previousWindowId, // Keep window ID for upload tracking
+      startTime: null,
+      platform: recordingStatus.platform
+    }
+    
+    // Notify renderer that recording stopped - upload starting
+    sendToRenderer('desktop-recording:recording-stopped', { 
+      windowId: actualWindowId, 
+      reason: 'manual',
+      message: 'Recording stopped, upload started'
+    })
+    
+    // Log a message after a short delay to help debug if upload events fire
+    setTimeout(() => {
+      console.log('[Desktop Recording] 3 seconds after uploadRecording - checking if upload started...')
+    }, 3000)
+    
+    setTimeout(() => {
+      console.log('[Desktop Recording] 10 seconds after uploadRecording - upload should be in progress')
+    }, 10000)
     
     return { success: true }
   } catch (error) {
     console.error('[Desktop Recording] Failed to stop recording:', error)
+    console.error('[Desktop Recording] Error details:', error instanceof Error ? error.stack : String(error))
     return { success: false, error: String(error) }
   }
 }

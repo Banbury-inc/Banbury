@@ -60,6 +60,8 @@ export default function MeetingAgent() {
     processingStatus: string
     isLoading: boolean
     error: string | null
+    video_url?: string  // Video URL from transcription endpoint
+    transcript_url?: string  // Transcript download URL
   }>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
   const { toast } = useToast()
@@ -143,7 +145,12 @@ export default function MeetingAgent() {
       setTranscriptData(prev => ({
         ...prev,
         [sessionId]: {
-          ...transcript,
+          segments: transcript.segments,
+          fullText: transcript.fullText,
+          isComplete: transcript.isComplete,
+          processingStatus: transcript.processingStatus,
+          video_url: transcript.video_url,
+          transcript_url: transcript.transcript_url,
           isLoading: false,
           error: null
         }
@@ -799,10 +806,10 @@ export default function MeetingAgent() {
 
 
                                           {/* Video and Transcriipt Side by Side */}
-                                          {((session.recallBot?.videoUrl || session.recordingUrl) || (session.recallBot?.transcriptUrl || session.transcriptionText)) && (
+                                          {((session.recallBot?.videoUrl || session.recordingUrl || transcriptData[session.id]?.video_url) || (session.recallBot?.transcriptUrl || session.transcriptionText)) && (
                                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                               {/* Video Section */}
-                                              {(session.recallBot?.videoUrl || session.recordingUrl) && (
+                                              {(session.recallBot?.videoUrl || session.recordingUrl || transcriptData[session.id]?.video_url) && (
                                                 <div>
                                                   <Typography variant="h4" className="text-foreground font-medium mb-3 flex items-center gap-2">
                                                     <Video className="h-4 w-4" />
@@ -810,7 +817,7 @@ export default function MeetingAgent() {
                                                   </Typography>
                                                   <div className="bg-black rounded-lg p-3 h-80 flex items-center justify-center border border-border">
                                                     {(() => {
-                                                      const videoUrl = session.recallBot?.videoUrl || session.recordingUrl;
+                                                      const videoUrl = session.recallBot?.videoUrl || session.recordingUrl || transcriptData[session.id]?.video_url;
                                                       return (
                                                         <video 
                                                           controls 
@@ -995,14 +1002,14 @@ export default function MeetingAgent() {
               />
 
               {/* Video Player Dialog */}
-              {videoPlayerSession && (videoPlayerSession.recallBot?.videoUrl || videoPlayerSession.recordingUrl) && (
+              {videoPlayerSession && (videoPlayerSession.recallBot?.videoUrl || videoPlayerSession.recordingUrl || transcriptData[videoPlayerSession.id]?.video_url) && (
                 <VideoPlayerDialog
                   open={!!videoPlayerSession}
                   onOpenChange={(open) => {
                     if (!open) setVideoPlayerSession(null)
                   }}
                   session={videoPlayerSession}
-                  videoUrl={videoPlayerSession.recallBot?.videoUrl || videoPlayerSession.recordingUrl || ''}
+                  videoUrl={videoPlayerSession.recallBot?.videoUrl || videoPlayerSession.recordingUrl || transcriptData[videoPlayerSession.id]?.video_url || ''}
                 />
               )}
 

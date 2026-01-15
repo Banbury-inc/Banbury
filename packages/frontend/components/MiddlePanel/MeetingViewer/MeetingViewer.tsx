@@ -1,4 +1,4 @@
-import { ArrowLeft, Trash2, Download, FileText, Users, Clock, Video, VideoOff, Mic, MicOff, Play, ExternalLink, Share2, Upload, Pause, Volume2, VolumeX, Loader2, Radio, Wifi, WifiOff } from "lucide-react"
+import { ArrowLeft, Download, FileText, Users, Clock, Video, VideoOff, Mic, MicOff, Play, Upload, Pause, Volume2, VolumeX, Loader2, Radio, Wifi, WifiOff } from "lucide-react"
 import { useState, useCallback, useEffect, useRef } from "react"
 import { Button } from "../../ui/button"
 import { useToast } from "../../ui/use-toast"
@@ -18,10 +18,9 @@ interface MeetingViewerProps {
   meeting: MeetingSession
   onBack?: () => void
   onMeetingUpdated?: (meeting: MeetingSession) => void
-  onMeetingDeleted?: (meetingId: string) => void
 }
 
-export function MeetingViewer({ meeting, onBack, onMeetingUpdated, onMeetingDeleted }: MeetingViewerProps) {
+export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingViewerProps) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [isVideoPlayerOpen, setIsVideoPlayerOpen] = useState(false)
@@ -47,16 +46,30 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated, onMeetingDele
   
   // Live transcription - only enabled when meeting is recording
   const isLiveRecording = currentMeeting.status === 'recording' || currentMeeting.status === 'active'
+  
+  // Log live transcription state for debugging
+  useEffect(() => {
+    if (isLiveRecording) {
+      console.log('[MeetingViewer] Live transcription enabled for session:', currentMeeting.id, {
+        status: currentMeeting.status,
+        meetingUrl: currentMeeting.meetingUrl,
+        isDesktopRecording: currentMeeting.meetingUrl?.startsWith('desktop://')
+      })
+    }
+  }, [isLiveRecording, currentMeeting.id, currentMeeting.status, currentMeeting.meetingUrl])
+  
   const {
     segments: liveSegments,
     isConnected: isLiveConnected,
     isConnecting: isLiveConnecting,
+    isPolling: isLivePolling,
     error: liveError,
     reconnect: reconnectLive
   } = useLiveTranscription({
     sessionId: currentMeeting.id,
     enabled: isLiveRecording,
     onSegment: (segment) => {
+      console.log('[MeetingViewer] Received live segment:', segment.id, segment.text?.substring(0, 50))
       // Auto-scroll to latest segment
       if (transcriptScrollRef.current) {
         setTimeout(() => {
@@ -66,6 +79,12 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated, onMeetingDele
           })
         }, 100)
       }
+    },
+    onConnectionChange: (connected) => {
+      console.log('[MeetingViewer] Live transcription connection changed:', connected)
+    },
+    onError: (error) => {
+      console.error('[MeetingViewer] Live transcription error:', error)
     }
   })
   
@@ -74,19 +93,37 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated, onMeetingDele
     ? liveSegments 
     : transcriptionSegments
 
-  const getDuration = () => {
+  const getDuration = (): number => {
+    // If duration is provided in seconds, return it
     if (currentMeeting.duration) {
-      return Math.round(currentMeeting.duration / 60)
+      return currentMeeting.duration
     }
     
-    if (currentMeeting.endTime) {
+    // Calculate duration from startTime and endTime
+    if (currentMeeting.endTime && currentMeeting.startTime) {
       const duration = new Date(currentMeeting.endTime).getTime() - new Date(currentMeeting.startTime).getTime()
-      return Math.round(duration / (1000 * 60))
+      return Math.round(duration / 1000) // Return in seconds
     }
     
+    // If startTime is null, use createdAt from the meeting object as start time
+    const meetingWithCreatedAt = currentMeeting as MeetingSession & { createdAt?: string | Date }
+    if (currentMeeting.endTime && meetingWithCreatedAt.createdAt) {
+      const startTime = new Date(meetingWithCreatedAt.createdAt)
+      const endTime = new Date(currentMeeting.endTime)
+      const duration = endTime.getTime() - startTime.getTime()
+      return Math.round(duration / 1000) // Return in seconds
+    }
+    
+    // For active/recording meetings, calculate from startTime or createdAt
     if (currentMeeting.status === 'active' || currentMeeting.status === 'recording') {
-      const duration = Date.now() - new Date(currentMeeting.startTime).getTime()
-      return Math.round(duration / (1000 * 60))
+      const startTime = currentMeeting.startTime 
+        ? new Date(currentMeeting.startTime)
+        : (meetingWithCreatedAt.createdAt ? new Date(meetingWithCreatedAt.createdAt) : null)
+      
+      if (startTime) {
+        const duration = Date.now() - startTime.getTime()
+        return Math.round(duration / 1000) // Return in seconds
+      }
     }
     
     return 0
@@ -109,17 +146,39 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated, onMeetingDele
     }
   }
 
+  const formatDuration = (seconds: number): string => {
+    if (seconds < 0) return '0s'
+    
+    const hours = Math.floor(seconds / 3600)
+    const mins = Math.floor((seconds % 3600) / 60)
+    const secs = Math.floor(seconds % 60)
+    
+    // Always show hours, minutes, and seconds when there are hours
+    if (hours > 0) {
+      return `${hours}h ${mins}m ${secs}s`
+    }
+    // Show minutes and seconds when there are minutes
+    if (mins > 0) {
+      return `${mins}m ${secs}s`
+    }
+    // Show only seconds when less than a minute
+    return `${secs}s`
+  }
+
   const formatDate = (date: Date | string) => {
     if (!date) return 'Not available'
     const d = date instanceof Date ? date : new Date(date)
     if (isNaN(d.getTime())) return 'Invalid date'
-    return d.toLocaleString([], { 
-      month: 'short', 
-      day: 'numeric', 
+    
+    // Use Intl.DateTimeFormat to explicitly use user's locale and timezone
+    return new Intl.DateTimeFormat(navigator.language || 'en-US', {
+      month: 'short',
+      day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
-    })
+      minute: '2-digit',
+      timeZoneName: 'short'
+    }).format(d)
   }
 
   const handleDownloadRecording = useCallback(async () => {
@@ -164,7 +223,7 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated, onMeetingDele
       const content = `Meeting: ${currentMeeting.title || 'Untitled Meeting'}
 Date: ${formatDate(currentMeeting.startTime)}
 Platform: ${currentMeeting.platform?.name || 'Desktop Recording'}
-Duration: ${getDuration()} minutes
+Duration: ${formatDuration(getDuration())}
 
 FULL TRANSCRIPTION:
 ${transcriptionData.fullText || ''}
@@ -203,44 +262,6 @@ ${transcriptionData.segments?.map((segment: any) =>
     }
   }, [currentMeeting.id, currentMeeting.title, currentMeeting.startTime, currentMeeting.platform?.name, getDuration, toast])
 
-  const handleDelete = useCallback(async () => {
-    if (!confirm('Are you sure you want to delete this meeting session? This action cannot be undone.')) {
-      return
-    }
-    
-    try {
-      setIsLoading(true)
-      const result = await ApiService.MeetingAgent.deleteMeetingSession(currentMeeting.id)
-      
-      if (result.success) {
-        toast({
-          title: 'Success',
-          description: 'Meeting session deleted'
-        })
-        onMeetingDeleted?.(currentMeeting.id)
-        onBack?.()
-      } else {
-        throw new Error(result.message)
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete session'
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive'
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }, [currentMeeting.id, onMeetingDeleted, onBack, toast])
-
-  const handleCopyUrl = useCallback(() => {
-    navigator.clipboard.writeText(currentMeeting.meetingUrl)
-    toast({
-      title: 'Success',
-      description: 'Meeting URL copied to clipboard'
-    })
-  }, [currentMeeting.meetingUrl, toast])
 
   // Format time helper
   const formatTime = (seconds: number): string => {
@@ -302,6 +323,12 @@ ${transcriptionData.segments?.map((segment: any) =>
       try {
         setIsVideoLoading(true)
         setVideoError(null)
+        
+        // If we have a recordingUrl (from meeting details), use it directly
+        if (currentMeeting.recordingUrl) {
+          setVideoStreamUrl(currentMeeting.recordingUrl)
+          return
+        }
         
         // If we have a Recall bot video URL, use it directly
         if (currentMeeting.recallBot?.videoUrl) {
@@ -367,44 +394,63 @@ ${transcriptionData.segments?.map((segment: any) =>
     }
   }, [videoStreamUrl])
 
-  // Load transcription
+  // Fetch transcript from URL if available
   useEffect(() => {
-    const loadTranscription = async () => {
-      // Only load if we have transcription text or if status suggests transcription is available
-      if (!currentMeeting.transcriptionText && 
-          currentMeeting.status !== 'completed' && 
-          currentMeeting.status !== 'processing') {
-        return
-      }
+    const transcriptUrl = currentMeeting.transcriptionUrl || currentMeeting.recallBot?.transcriptUrl
+    if (!transcriptUrl || isLiveRecording) return
 
+    const fetchTranscript = async () => {
       try {
         setIsTranscriptionLoading(true)
+        // Use proxy endpoint to avoid CORS issues
+        const transcriptData = await ApiService.MeetingAgent.proxyTranscript(transcriptUrl)
         
-        const result = await ApiService.MeetingAgent.getTranscription(currentMeeting.id)
-        
-        const segments = result.segments || []
-        const fullText = result.fullText || ''
-        
-        if (segments.length > 0 || fullText) {
+        // Handle different transcript formats from Recall API
+        if (transcriptData.utterances && Array.isArray(transcriptData.utterances)) {
+          // Format: { utterances: [{ speaker: string, text: string, start: number, end: number }] }
+          const segments: TranscriptionSegment[] = transcriptData.utterances.map((utterance: any, index: number) => ({
+            id: utterance.id || `segment-${index}`,
+            speakerId: utterance.speaker || 'unknown',
+            speakerName: utterance.speaker_name || `Speaker ${utterance.speaker || 'Unknown'}`,
+            text: utterance.text || '',
+            startTime: utterance.start || 0,
+            endTime: utterance.end || 0,
+            confidence: utterance.confidence || 1.0
+          }))
           setTranscriptionSegments(segments)
+          
+          // Also set full text
+          const fullText = segments.map(s => `${s.speakerName}: ${s.text}`).join('\n\n')
           setTranscriptionFullText(fullText)
-        } else if (currentMeeting.transcriptionText) {
-          // Fallback to stored transcription text
-          setTranscriptionFullText(currentMeeting.transcriptionText)
+        } else if (transcriptData.text) {
+          // Format: { text: string }
+          setTranscriptionFullText(transcriptData.text)
+        } else if (typeof transcriptData === 'string') {
+          // Format: plain text string
+          setTranscriptionFullText(transcriptData)
+        } else {
+          // Try to extract text from any structure
+          const text = JSON.stringify(transcriptData, null, 2)
+          setTranscriptionFullText(text)
         }
-      } catch (err) {
-        console.error('Failed to load transcription:', err)
-        // Don't show error if transcription just isn't available yet
-        if (currentMeeting.transcriptionText) {
-          setTranscriptionFullText(currentMeeting.transcriptionText)
-        }
+      } catch (error) {
+        console.error('Failed to fetch transcript from URL:', error)
+        // Don't set error state, just log it
       } finally {
         setIsTranscriptionLoading(false)
       }
     }
 
-    loadTranscription()
-  }, [currentMeeting.id, currentMeeting.transcriptionText, currentMeeting.status])
+    fetchTranscript()
+  }, [currentMeeting.transcriptionUrl, currentMeeting.recallBot?.transcriptUrl, isLiveRecording])
+
+  // Use transcription data from the meeting object (from sessions endpoint)
+  useEffect(() => {
+    // Use transcriptionText from the meeting object if available
+    if (currentMeeting.transcriptionText) {
+      setTranscriptionFullText(currentMeeting.transcriptionText)
+    }
+  }, [currentMeeting.transcriptionText])
 
   // Handle transcript segment click to seek video
   const handleTranscriptSegmentClick = useCallback((startTime: number) => {
@@ -449,44 +495,18 @@ ${transcriptionData.segments?.map((segment: any) =>
 
       {/* Actions */}
       <div className="px-6 py-3 bg-card border-b border-border flex items-center gap-2 flex-wrap">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => window.open(currentMeeting.meetingUrl, '_blank')}
-        >
-          <ExternalLink className="h-4 w-4 mr-2" />
-          View Meeting URL
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleCopyUrl}
-        >
-          <Share2 className="h-4 w-4 mr-2" />
-          Copy URL
-        </Button>
-        {currentMeeting.status === 'completed' && currentMeeting.recordingUrl && (
-          <>
-            <Button
-              size="sm"
-              variant="default"
-              onClick={() => setIsVideoPlayerOpen(true)}
-            >
-              <Play className="h-4 w-4 mr-2" />
-              Watch Recording
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleDownloadRecording}
-              disabled={isLoading}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Download Recording
-            </Button>
-          </>
+        {currentMeeting.status === 'completed' && (currentMeeting.recordingUrl || videoStreamUrl) && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleDownloadRecording}
+            disabled={isLoading}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download Recording
+          </Button>
         )}
-        {(currentMeeting.status === 'active' || currentMeeting.status === 'completed') && !currentMeeting.recordingUrl && (
+        {(currentMeeting.status === 'active' || currentMeeting.status === 'completed') && !currentMeeting.recordingUrl && !videoStreamUrl && (
           <Button
             size="sm"
             variant="outline"
@@ -496,7 +516,7 @@ ${transcriptionData.segments?.map((segment: any) =>
             Upload Recording
           </Button>
         )}
-        {currentMeeting.transcriptionText && (
+        {(currentMeeting.transcriptionText || transcriptionFullText) && (
           <Button
             size="sm"
             variant="outline"
@@ -507,22 +527,13 @@ ${transcriptionData.segments?.map((segment: any) =>
             Download Transcription
           </Button>
         )}
-        <Button
-          size="sm"
-          variant="destructive"
-          onClick={handleDelete}
-          disabled={isLoading}
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete
-        </Button>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="px-6 py-6 space-y-6">
           {/* Video Player */}
-          {(currentMeeting.recordingUrl || currentMeeting.recallBot?.videoUrl) && (
+          {(currentMeeting.recordingUrl || currentMeeting.recallBot?.videoUrl || videoStreamUrl) && (
             <>
               <div>
                 <Typography variant="h4" className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -655,7 +666,7 @@ ${transcriptionData.segments?.map((segment: any) =>
           )}
 
           {/* Transcript - Show for completed meetings or live recordings */}
-          {(allSegments.length > 0 || transcriptionFullText || currentMeeting.transcriptionText || isLiveRecording) && (
+          {(allSegments.length > 0 || transcriptionFullText || currentMeeting.transcriptionText || isLiveRecording || currentMeeting.transcriptionUrl || currentMeeting.recallBot?.transcriptUrl) && (
             <>
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -670,6 +681,11 @@ ${transcriptionData.segments?.map((segment: any) =>
                         <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
                           <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                           Connecting...
+                        </Badge>
+                      ) : isLiveConnected && isLivePolling ? (
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                          <div className="h-2 w-2 mr-1.5 bg-blue-500 rounded-full animate-pulse" />
+                          Polling
                         </Badge>
                       ) : isLiveConnected ? (
                         <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
@@ -777,7 +793,7 @@ ${transcriptionData.segments?.map((segment: any) =>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <Typography variant="p" className="text-sm">
-                  {duration} min
+                  {formatDuration(duration)}
                 </Typography>
               </div>
             </div>
@@ -845,7 +861,7 @@ ${transcriptionData.segments?.map((segment: any) =>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <Typography variant="small">Progress</Typography>
-                  <Typography variant="small">{duration} / {currentMeeting.metadata.maxDuration} min</Typography>
+                  <Typography variant="small">{formatDuration(duration)} / {currentMeeting.metadata.maxDuration} min</Typography>
                 </div>
                 <Progress 
                   value={(duration / currentMeeting.metadata.maxDuration) * 100} 
@@ -887,12 +903,12 @@ ${transcriptionData.segments?.map((segment: any) =>
       </div>
 
       {/* Video Player Dialog */}
-      {currentMeeting.recordingUrl && (
+      {(currentMeeting.recordingUrl || videoStreamUrl) && (
         <VideoPlayerDialog
           open={isVideoPlayerOpen}
           onOpenChange={setIsVideoPlayerOpen}
           session={currentMeeting}
-          videoUrl={currentMeeting.recordingUrl}
+          videoUrl={currentMeeting.recordingUrl || videoStreamUrl || ''}
         />
       )}
 

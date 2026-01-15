@@ -81,12 +81,9 @@ export async function uploadMeetingTranscriptToS3(
 
     // Check if we have transcript from Recall AI
     if (session.recallBot?.transcriptUrl) {
-      // Download transcript from Recall AI
-      const response = await fetch(session.recallBot.transcriptUrl)
-      if (!response.ok) {
-        throw new Error(`Failed to download transcript: ${response.statusText}`)
-      }
-      transcriptContent = await response.text()
+      // Download transcript from Recall AI using proxy to avoid CORS
+      const transcriptData = await ApiService.MeetingAgent.proxyTranscript(session.recallBot.transcriptUrl)
+      transcriptContent = typeof transcriptData === 'string' ? transcriptData : JSON.stringify(transcriptData, null, 2)
       fileName = `${session.id}_transcript.json`
     } else if (session.transcriptionText) {
       // Use existing transcription text
