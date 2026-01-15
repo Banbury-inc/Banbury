@@ -246,7 +246,7 @@ jobs:
   # Runs independently of web deployment to avoid impacting existing builds
   build-desktop:
     needs: [lint, unit-tests]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/main'
     name: Build Desktop App (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
