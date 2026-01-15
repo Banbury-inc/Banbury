@@ -127,15 +127,16 @@ function convertSummaryDataToHtml(data: SummaryData): string {
     html += '</ul>'
   }
 
-  // Add action items
+  // Add action items as task list
   if (data.actionItems && data.actionItems.length > 0) {
-    html += '<h2>Action Items</h2><ul>'
+    html += '<h2>Action Items</h2><ul data-type="taskList">'
     data.actionItems.forEach(item => {
+      const isChecked = item.status === 'completed'
       let itemText = escapeHtml(item.description)
       if (item.assignee) {
         itemText += ` <em>(${escapeHtml(item.assignee)})</em>`
       }
-      html += `<li>${itemText}</li>`
+      html += `<li data-type="taskItem" data-checked="${isChecked}" data-action-item-id="${escapeHtml(item.id)}">${itemText}</li>`
     })
     html += '</ul>'
   }

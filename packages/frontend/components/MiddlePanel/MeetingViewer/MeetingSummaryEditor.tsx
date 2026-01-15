@@ -2,6 +2,8 @@ import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import { StarterKit } from '@tiptap/starter-kit'
 import { Placeholder } from '@tiptap/extension-placeholder'
+import { TaskList } from '@tiptap/extension-list'
+import { TaskItem } from '@tiptap/extension-list'
 import styles from '../../../styles/scrollbar.module.css'
 import { cn } from '../../../utils'
 
@@ -37,7 +39,22 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
     const trimmed = String(content).trim()
     // Check if it's HTML (contains HTML tags)
     const isHtml = /<[a-z][\s\S]*>/i.test(trimmed)
-    return isHtml ? trimmed : `<p>${trimmed}</p>`
+    if (isHtml) {
+      // Remove empty paragraphs and whitespace-only content
+      const cleaned = trimmed.replace(/<p>\s*<\/p>/gi, '').replace(/<p>(\s|&nbsp;)+<\/p>/gi, '')
+      return cleaned || ''
+    }
+    return `<p>${trimmed}</p>`
+  }
+  
+  // Check if content is actually empty (after formatting)
+  const hasContent = (content: string | undefined | null): boolean => {
+    if (!content) return false
+    const formatted = formatContentForEditor(content)
+    if (!formatted) return false
+    // Remove HTML tags and check if there's actual text content
+    const textContent = formatted.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+    return textContent.length > 0
   }
   
   const editor = useEditor({
@@ -49,8 +66,16 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
           levels: [1, 2, 3, 4],
         },
       }),
+      TaskList,
+      TaskItem.configure({
+        nested: true,
+        HTMLAttributes: {
+          class: 'task-item',
+        },
+      }),
       Placeholder.configure({
         placeholder,
+        showOnlyWhenEditable: true,
       }),
     ],
     content: formatContentForEditor(initialContent),
@@ -73,20 +98,23 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
     
     const contentString = String(initialContent || '')
     const formattedContent = formatContentForEditor(initialContent)
+    const hasActualContent = hasContent(initialContent)
     
     // Get current editor content (normalized for comparison)
     const currentContent = editor.getHTML().trim()
     const formattedCurrent = formatContentForEditor(currentContent)
+    const currentHasContent = hasContent(currentContent)
     
     // Only update if content actually changed
-    if (lastContentRef.current !== contentString || formattedCurrent !== formattedContent) {
+    if (lastContentRef.current !== contentString || formattedCurrent !== formattedContent || hasActualContent !== currentHasContent) {
       lastContentRef.current = contentString
       
       isInternalUpdate.current = true
       
-      if (formattedContent === '') {
+      if (!hasActualContent || formattedContent === '') {
         editor.commands.clearContent(false)
       } else {
+        // Ensure content is set properly so placeholder hides
         editor.commands.setContent(formattedContent, false)
       }
       
@@ -98,14 +126,15 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
   useEffect(() => {
     if (editor && initialContent && lastContentRef.current === '') {
       const formattedContent = formatContentForEditor(initialContent)
-      if (formattedContent) {
+      const hasActualContent = hasContent(initialContent)
+      if (hasActualContent && formattedContent) {
         lastContentRef.current = String(initialContent)
         isInternalUpdate.current = true
         editor.commands.setContent(formattedContent, false)
         isInternalUpdate.current = false
       }
     }
-  }, [editor])
+  }, [editor, initialContent])
 
   // Expose editor and methods via ref
   useImperativeHandle(ref, () => ({
@@ -218,6 +247,45 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
         
         .meeting-summary-wrapper .ProseMirror ul {
           list-style-type: disc;
+        }
+        
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] {
+          list-style: none;
+          padding-left: 0;
+        }
+        
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.5rem;
+          margin: 0.5rem 0;
+        }
+        
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label {
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          margin-right: 0.5rem;
+          flex-shrink: 0;
+        }
+        
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label > input[type="checkbox"] {
+          cursor: pointer;
+          width: 1rem;
+          height: 1rem;
+        }
+        
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > div {
+          flex: 1;
+        }
+        
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"][data-checked="true"] {
+          opacity: 0.7;
+        }
+        
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"][data-checked="true"] > div {
+          text-decoration: line-through;
+          color: hsl(var(--muted-foreground));
         }
         
         .meeting-summary-wrapper .ProseMirror ol {

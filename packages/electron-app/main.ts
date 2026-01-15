@@ -64,6 +64,58 @@ function isValidUrl(urlString: string): boolean {
   }
 }
 
+/**
+ * Resolves the icon path for the application window.
+ * Works in both development and production environments.
+ */
+function resolveIconPath(): string | undefined {
+  const fs = require('fs')
+  
+  // Try multiple possible icon locations in order of preference
+  const possiblePaths: string[] = []
+  
+  // In production (packaged app), try resources folder first
+  if (!isDev) {
+    // Platform-specific icons in resources
+    if (process.platform === 'win32') {
+      possiblePaths.push(path.join(__dirname, '..', 'electron-app', 'resources', 'icon.ico'))
+    } else if (process.platform === 'darwin') {
+      possiblePaths.push(path.join(__dirname, '..', 'electron-app', 'resources', 'icon.icns'))
+    }
+    // Universal PNG fallback
+    possiblePaths.push(path.join(__dirname, '..', 'electron-app', 'resources', 'icon.png'))
+  }
+  
+  // Try relative to dist-electron (when running compiled code)
+  possiblePaths.push(path.join(__dirname, '..', '..', 'public', 'New_Logo.png'))
+  possiblePaths.push(path.join(__dirname, '..', '..', 'frontend', 'assets', 'images', 'New_Logo.png'))
+  possiblePaths.push(path.join(__dirname, '..', '..', 'frontend', 'assets', 'images', 'Logo.png'))
+  
+  // Try relative to project root (when running from source)
+  const projectRoot = path.resolve(__dirname, '..', '..')
+  possiblePaths.push(path.join(projectRoot, 'public', 'New_Logo.png'))
+  possiblePaths.push(path.join(projectRoot, 'frontend', 'assets', 'images', 'New_Logo.png'))
+  possiblePaths.push(path.join(projectRoot, 'frontend', 'assets', 'images', 'Logo.png'))
+  
+  // Try resources folder in various locations
+  possiblePaths.push(path.join(__dirname, 'resources', 'icon.png'))
+  possiblePaths.push(path.join(__dirname, '..', 'electron-app', 'resources', 'icon.png'))
+  
+  // Check each path and return the first one that exists
+  for (const iconPath of possiblePaths) {
+    try {
+      if (fs.existsSync(iconPath)) {
+        return iconPath
+      }
+    } catch {
+      // Continue to next path
+    }
+  }
+  
+  // Return undefined if no icon found (Electron will use default)
+  return undefined
+}
+
 // Store reference to main window for desktop recording
 let mainWindow: BrowserWindow | null = null
 
@@ -76,6 +128,8 @@ function createWindow(): void {
   console.log(`[Electron] Starting in ${isDev ? 'development' : 'production'} mode`)
   console.log(`[Electron] Loading URL: ${targetUrl}`)
 
+  const iconPath = resolveIconPath()
+  
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -90,6 +144,7 @@ function createWindow(): void {
     show: false,
     backgroundColor: '#0a0a0a',
     frame: false,
+    icon: iconPath, // Set the window icon to Banbury logo
   })
 
   // Show window when content is ready to prevent visual flash
@@ -143,8 +198,8 @@ function createWindow(): void {
     mainWindow = null
   })
 
-  // Load the target URL - append /workspaces for Electron app
-  const initialUrl = new URL('/workspaces', targetUrl).toString()
+  // Load the target URL - start with login page for Electron app
+  const initialUrl = new URL('/login-electron', targetUrl).toString()
   mainWindow.loadURL(initialUrl)
 }
 
@@ -203,6 +258,16 @@ function configureMenu(): void {
 
 // App lifecycle event handlers
 app.whenReady().then(() => {
+  // Set app icon (especially important for macOS dock)
+  const iconPath = resolveIconPath()
+  if (iconPath && process.platform === 'darwin') {
+    const { nativeImage } = require('electron')
+    const icon = nativeImage.createFromPath(iconPath)
+    if (!icon.isEmpty()) {
+      app.dock.setIcon(icon)
+    }
+  }
+  
   // Set up desktop recording IPC handlers before creating window
   setupDesktopRecordingIPC()
   
@@ -287,10 +352,9 @@ app.on('web-contents-created', (_event, contents) => {
 /**
  * Handle OAuth callback from custom protocol (banbury://)
  * Extracts the OAuth code and navigates to the auth callback page
+ * Creates a window if one doesn't exist to ensure the callback is processed
  */
 function handleOAuthCallback(url: string): void {
-  if (!mainWindow) return
-  
   try {
     const parsedUrl = new URL(url)
     
@@ -299,6 +363,7 @@ function handleOAuthCallback(url: string): void {
       const code = parsedUrl.searchParams.get('code')
       const scope = parsedUrl.searchParams.get('scope')
       const error = parsedUrl.searchParams.get('error')
+      const redirectUri = parsedUrl.searchParams.get('redirect_uri')
       
       // Build the callback URL for the frontend
       const targetUrl = resolveTargetUrl()
@@ -306,14 +371,54 @@ function handleOAuthCallback(url: string): void {
       if (code) callbackParams.set('code', code)
       if (scope) callbackParams.set('scope', scope)
       if (error) callbackParams.set('error', error)
+      if (redirectUri) callbackParams.set('redirect_uri', redirectUri)
       
       const callbackUrl = `${targetUrl}/authentication/auth/callback?${callbackParams.toString()}`
       console.log('[Electron] Navigating to OAuth callback:', callbackUrl)
       
+      // Store redirect URI and is_desktop flag in sessionStorage so it can be used when processing the callback
+      // This ensures we use the exact redirect URI and client type that was used for OAuth
+      // We do this after building the URL but before navigating
+      const storeOAuthInfo = (window: BrowserWindow) => {
+        if (redirectUri && window && !window.isDestroyed()) {
+          // Wait a bit for the page to load, then store the OAuth info
+          window.webContents.once('did-finish-load', () => {
+            window.webContents.executeJavaScript(`
+              if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.setItem('oauth_redirect_uri', '${redirectUri.replace(/'/g, "\\'")}');
+                sessionStorage.setItem('oauth_is_desktop', 'true');
+              }
+            `).catch(err => {
+              console.warn('[Electron] Failed to store OAuth info:', err)
+            })
+          })
+        }
+      }
+      
+      // Ensure window exists - create if it was closed
+      if (!mainWindow || mainWindow.isDestroyed()) {
+        console.log('[Electron] Window not available, creating new window for OAuth callback')
+        createWindow()
+        // Wait for window to be ready before navigating
+        if (mainWindow) {
+          mainWindow.once('ready-to-show', () => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              storeOAuthInfo(mainWindow)
+              mainWindow.loadURL(callbackUrl)
+              mainWindow.focus()
+            }
+          })
+        }
+        return
+      }
+      
       // Focus the window and navigate to the callback
       if (mainWindow.isMinimized()) mainWindow.restore()
       mainWindow.focus()
+      storeOAuthInfo(mainWindow)
       mainWindow.loadURL(callbackUrl)
+    } else {
+      console.warn('[Electron] Received protocol URL but not an auth callback:', url)
     }
   } catch (error) {
     console.error('[Electron] Error handling OAuth callback:', error)

@@ -220,12 +220,19 @@ export class ApiService {
   /**
    * Google OAuth flow
    */
-  static async initiateGoogleAuth(redirectUri: string) {
+  static async initiateGoogleAuth(redirectUri: string, isDesktop: boolean = false) {
     try {
+      // Include is_desktop parameter when running in Electron
+      const params = new URLSearchParams();
+      params.set('redirect_uri', redirectUri);
+      if (isDesktop) {
+        params.set('is_desktop', 'true');
+      }
+      
       const response = await this.get<{ 
         authUrl?: string; 
         error?: string;
-      }>(`/authentication/google/?redirect_uri=${encodeURIComponent(redirectUri)}`);
+      }>(`/authentication/google/?${params.toString()}`);
       
       if (response.error) {
         throw new Error(response.error);
@@ -246,11 +253,28 @@ export class ApiService {
    */
   static async handleOAuthCallback(code: string, scope?: string) {
     try {
-      const redirectUri = typeof window !== 'undefined' ? AUTH_CONFIG.getRedirectUri() : '';
+      // Use getRedirectUriForCallback to get the redirect URI without query parameters
+      // This matches what Google actually redirected to (Google strips query params)
+      const redirectUri = typeof window !== 'undefined' ? AUTH_CONFIG.getRedirectUriForCallback() : '';
+      
+      // Check if this is a desktop app callback
+      const isDesktop = typeof window !== 'undefined' && window.sessionStorage
+        ? sessionStorage.getItem('oauth_is_desktop') === 'true'
+        : false;
+      
+      // Log for debugging
+      if (typeof window !== 'undefined' && window.console) {
+        console.log('[OAuth Callback] Using redirect_uri:', redirectUri);
+        console.log('[OAuth Callback] Is desktop:', isDesktop);
+        console.log('[OAuth Callback] Code present:', !!code);
+        console.log('[OAuth Callback] Scope:', scope);
+      }
+      
       const params = new URLSearchParams();
       params.set('code', code);
       if (redirectUri) params.set('redirect_uri', redirectUri);
       if (scope) params.set('scope', scope);
+      if (isDesktop) params.set('is_desktop', 'true');
       const qs = `/authentication/auth/callback/?${params.toString()}`;
 
       const response = await this.get<{
@@ -260,6 +284,17 @@ export class ApiService {
         error?: string;
         details?: any;
       }>(qs);
+
+      // Log the full response for debugging
+      if (typeof window !== 'undefined' && window.console) {
+        console.log('[OAuth Callback] Backend response:', {
+          success: response.success,
+          hasToken: !!response.token,
+          hasUser: !!response.user,
+          error: response.error,
+          details: response.details
+        });
+      }
 
       if (response.success && response.token && response.user) {
         // Set auth token globally
@@ -291,13 +326,42 @@ export class ApiService {
         };
       } else {
         // Surface backend details to console to aid debugging
-        if ((response as any)?.details) {
+        const errorDetails = (response as any)?.details;
+        if (errorDetails) {
           // eslint-disable-next-line no-console
-          console.error('OAuth exchange details:', (response as any).details);
+          console.error('OAuth exchange details:', errorDetails);
+          // Include details in error message for better debugging
+          const detailsStr = typeof errorDetails === 'object' 
+            ? JSON.stringify(errorDetails, null, 2)
+            : String(errorDetails);
+          
+          // Check for specific Google OAuth errors
+          const errorMsg = response.error || 'Authentication failed';
+          if (errorMsg.includes('invalid_client')) {
+            const normalizedUri = errorDetails?.normalized_redirect_uri || redirectUri;
+            const incomingUri = errorDetails?.incoming_redirect_uri;
+            throw new Error(
+              `Google OAuth client configuration error (invalid_client).\n\n` +
+              `This usually means the redirect URI doesn't match what was used during authorization.\n\n` +
+              `Redirect URI used: ${normalizedUri}\n` +
+              (incomingUri ? `Incoming redirect URI: ${incomingUri}\n` : '') +
+              `\nPossible causes:\n` +
+              `1. The redirect URI "${normalizedUri}" is not registered in Google Cloud Console\n` +
+              `2. The redirect URI used for token exchange doesn't match what was used during authorization\n` +
+              `3. The client_id or client_secret is incorrect\n` +
+              `\nFull details:\n${detailsStr}`
+            );
+          }
+          
+          throw new Error(`${errorMsg}\n\nDetails:\n${detailsStr}`);
         }
         throw new Error(response.error || 'Authentication failed');
       }
     } catch (error) {
+      // If it's already an enhanced error with details, re-throw it
+      if (error instanceof Error && error.message.includes('Details:')) {
+        throw error;
+      }
       throw this.enhanceError(error, 'OAuth callback failed');
     }
   }

@@ -1,10 +1,8 @@
 import React from 'react'
 import { MeetingSession } from '../../../../../types/meeting-types'
-import { Badge } from '../../../../ui/badge'
 import { Typography } from '../../../../ui/typography'
 import { Button } from '../../../../ui/button'
 import { Video, Clock, Users, CheckCircle2, XCircle, PlayCircle, Calendar, Trash2 } from 'lucide-react'
-import { ZoomIcon, GoogleMeetIcon, TeamsIcon } from '../../../../icons'
 
 interface MeetingsListViewProps {
   meetings: MeetingSession[]
@@ -15,23 +13,6 @@ interface MeetingsListViewProps {
 }
 
 type MeetingStatus = MeetingSession['status']
-
-function getStatusBadgeVariant(status: MeetingStatus) {
-  switch (status) {
-    case 'scheduled':
-      return 'secondary'
-    case 'joining':
-    case 'active':
-    case 'recording':
-      return 'default'
-    case 'completed':
-      return 'outline'
-    case 'failed':
-      return 'destructive'
-    default:
-      return 'secondary'
-  }
-}
 
 function getStatusIcon(status: MeetingStatus) {
   switch (status) {
@@ -75,82 +56,27 @@ function formatDate(date: Date | string) {
   }
 }
 
-function formatDuration(duration?: number) {
-  if (!duration) return ''
-  // Duration is in seconds, convert to hours, minutes, and seconds
-  const hours = Math.floor(duration / 3600)
-  const minutes = Math.floor((duration % 3600) / 60)
-  const seconds = Math.floor(duration % 60)
+function formatDateTime(date: Date | string | null | undefined) {
+  if (!date) return 'No date available'
+  const meetingDate = date instanceof Date ? date : new Date(date)
+  if (isNaN(meetingDate.getTime())) return 'Invalid date'
   
-  // Always show hours, minutes, and seconds when there are hours
-  if (hours > 0) {
-    return `${hours}h ${minutes}m ${seconds}s`
-  }
-  // Show minutes and seconds when there are minutes
-  if (minutes > 0) {
-    return `${minutes}m ${seconds}s`
-  }
-  // Show only seconds when less than a minute
-  return `${seconds}s`
+  // Use Intl.DateTimeFormat to explicitly use user's locale and timezone
+  return new Intl.DateTimeFormat(navigator.language || 'en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  }).format(meetingDate)
 }
 
-function getMeetingDuration(meeting: MeetingSession & { createdAt?: string | Date }): number | null {
-  // If duration is provided in seconds, return it
-  if (meeting.duration) {
-    return meeting.duration
-  }
-  
-  // Calculate duration from startTime and endTime
-  if (meeting.endTime && meeting.startTime) {
-    const duration = new Date(meeting.endTime).getTime() - new Date(meeting.startTime).getTime()
-    return Math.round(duration / 1000) // Return in seconds
-  }
-  
-  // If startTime is null, use createdAt from the meeting object as start time
-  if (meeting.endTime && meeting.createdAt) {
-    const startTime = new Date(meeting.createdAt)
-    const endTime = new Date(meeting.endTime)
-    const duration = endTime.getTime() - startTime.getTime()
-    return Math.round(duration / 1000) // Return in seconds
-  }
-  
-  // For active/recording meetings, calculate from startTime or createdAt
-  if (meeting.status === 'active' || meeting.status === 'recording') {
-    const startTime = meeting.startTime 
-      ? new Date(meeting.startTime)
-      : (meeting.createdAt ? new Date(meeting.createdAt) : null)
-    
-    if (startTime) {
-      const duration = Date.now() - startTime.getTime()
-      return Math.round(duration / 1000) // Return in seconds
-    }
-  }
-  
-  return null
+function getMeetingDate(meeting: MeetingSession & { createdAt?: string | Date }): Date | string | null | undefined {
+  return meeting.startTime || meeting.createdAt || null
 }
 
-function getPlatformIcon(platform: MeetingSession['platform']): React.ReactNode {
-  if (!platform?.id) {
-    return null
-  }
-  
-  const platformId = platform.id.toLowerCase()
-  const iconSize = 16
-  const iconClassName = "flex-shrink-0"
-  
-  switch (platformId) {
-    case 'zoom':
-      return <ZoomIcon size={iconSize} className={iconClassName} />
-    case 'meet':
-    case 'google-meet':
-      return <GoogleMeetIcon size={iconSize} className={iconClassName} />
-    case 'teams':
-    case 'microsoft-teams':
-      return <TeamsIcon size={iconSize} className={iconClassName} />
-    default:
-      return null
-  }
-}
+
 
 export function MeetingsListView({ meetings, loading, onMeetingSelect, selectedMeeting, onMeetingDeleted }: MeetingsListViewProps) {
   if (loading) {
@@ -182,7 +108,7 @@ export function MeetingsListView({ meetings, loading, onMeetingSelect, selectedM
               className={`
                 group p-2 rounded-md transition-colors min-w-0
                 ${isSelected 
-                  ? 'bg-primary/10 border border-primary/20' 
+                  ? 'bg-primary/10' 
                   : 'hover:bg-muted'
                 }
               `}
@@ -195,16 +121,12 @@ export function MeetingsListView({ meetings, loading, onMeetingSelect, selectedM
                 >
                   <div className="flex items-center gap-2 mb-1 min-w-0">
                     <Typography variant="xs" className="font-medium truncate flex-1 min-w-0">
-                      {meeting.title || 'Untitled Meeting'}
+                      {meeting.title || formatDateTime(getMeetingDate(meeting as MeetingSession & { createdAt?: string | Date }))}
                     </Typography>
-                    <Badge variant={getStatusBadgeVariant(meeting.status)} className="text-xs flex-shrink-0">
-                      {meeting.status.charAt(0).toUpperCase() + meeting.status.slice(1)}
-                    </Badge>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mb-1 min-w-0 flex-wrap">
                     {meeting.platform && (
                       <div className="flex items-center gap-1 flex-shrink-0 min-w-0">
-                        {getPlatformIcon(meeting.platform)}
                         <Typography variant="xs" className="truncate min-w-0">{meeting.platform.name}</Typography>
                       </div>
                     )}
@@ -220,15 +142,6 @@ export function MeetingsListView({ meetings, loading, onMeetingSelect, selectedM
                         <Typography variant="xs">{meeting.participants.length}</Typography>
                       </div>
                     )}
-                    {(() => {
-                      const duration = getMeetingDuration(meeting)
-                      return duration !== null && (
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          <Clock className="h-3 w-3 flex-shrink-0" />
-                          <Typography variant="xs">{formatDuration(duration)}</Typography>
-                        </div>
-                      )
-                    })()}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
                     <Clock className="h-3 w-3 flex-shrink-0" />

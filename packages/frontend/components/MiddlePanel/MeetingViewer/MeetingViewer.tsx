@@ -1,23 +1,23 @@
-import { ArrowLeft, Download, FileText, Users, Clock, Video, VideoOff, Mic, MicOff, Play, Upload, Pause, Volume2, VolumeX, Loader2, Radio, Wifi, WifiOff, Sparkles, RefreshCw } from "lucide-react"
-import { useState, useCallback, useEffect, useRef } from "react"
+import { ArrowLeft, Download, FileText, Users, Clock, Video, VideoOff, Mic, MicOff, Play, Upload, Pause, Volume2, VolumeX, Loader2, Radio, Wifi, WifiOff, Sparkles, RefreshCw, Save } from "lucide-react"
+import { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import { Button } from "../../ui/button"
 import { useToast } from "../../ui/use-toast"
 import { Typography } from "../../ui/typography"
 import { Badge } from "../../ui/badge"
 import { Separator } from "../../ui/separator"
-import { Progress } from "../../ui/progress"
 import { Slider } from "../../ui/slider"
 import { MeetingSession, TranscriptionSegment, MeetingSummary } from "../../../types/meeting-types"
 import { ApiService } from "../../../../backend/api/apiService"
 import { handleGenerateSummary } from "./handlers/summaryHandlers"
 import { handleGenerateAnthropicSummaryWithSave } from "./handlers/anthropicSummaryHandlers"
 import { handleRegenerateSummary } from "./handlers/regenerateSummaryHandlers"
+import { handleSaveEditedSummary } from "./handlers/saveEditedSummaryHandlers"
 import { VideoPlayerDialog } from "../../../pages/MeetingAgent/components/VideoPlayerDialog"
 import { RecordingUploadDialog } from "../../../pages/MeetingAgent/components/RecordingUploadDialog"
 import { Card } from "../../ui/card"
 import { useLiveTranscription } from "../../../hooks/useLiveTranscription"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../ui/tabs"
 import { MeetingSummaryEditor } from "./MeetingSummaryEditor"
+import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover"
 
 interface MeetingViewerProps {
   meeting: MeetingSession
@@ -52,6 +52,9 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
   // Summary state
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
   const [summaryHtml, setSummaryHtml] = useState<string>('')
+  const [isSavingSummary, setIsSavingSummary] = useState(false)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [actionItemCheckedStates, setActionItemCheckedStates] = useState<Map<string, boolean>>(new Map())
   const summaryEditorRef = useRef<any>(null)
   
   // Update currentMeeting when meeting prop changes
@@ -65,11 +68,27 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
     if (meetingSummary && meetingSummary.trim() !== '') {
       // Always update to ensure editor gets the latest content
       setSummaryHtml(meetingSummary)
+      // Reset unsaved changes flag when summary is updated externally
+      if (!isGeneratingSummary && !isSavingSummary) {
+        setHasUnsavedChanges(false)
+      }
     } else if (!isGeneratingSummary) {
       // Clear summary if it was removed (but only if we're not currently generating)
       setSummaryHtml('')
+      setHasUnsavedChanges(false)
     }
-  }, [currentMeeting.summary?.summary, isGeneratingSummary])
+  }, [currentMeeting.summary?.summary, isGeneratingSummary, isSavingSummary])
+
+  // Initialize action item checked states from meeting summary
+  useEffect(() => {
+    if (currentMeeting.summary?.actionItems) {
+      const checkedStates = new Map<string, boolean>()
+      currentMeeting.summary.actionItems.forEach(item => {
+        checkedStates.set(item.id, item.status === 'completed')
+      })
+      setActionItemCheckedStates(checkedStates)
+    }
+  }, [currentMeeting.summary?.actionItems])
   
   // Live transcription - only enabled when meeting is recording
   const isLiveRecording = currentMeeting.status === 'recording' || currentMeeting.status === 'active'
@@ -119,6 +138,42 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
   const allSegments = isLiveRecording && liveSegments.length > 0 
     ? liveSegments 
     : transcriptionSegments
+
+  // Extract unique participants from transcript segments
+  const extractedParticipants = useMemo(() => {
+    const participantsMap = new Map<string, { id: string; name: string }>()
+    
+    allSegments.forEach((segment) => {
+      if (segment.speakerId && segment.speakerName) {
+        // Use speakerId as the key to ensure uniqueness
+        if (!participantsMap.has(segment.speakerId)) {
+          participantsMap.set(segment.speakerId, {
+            id: segment.speakerId,
+            name: segment.speakerName
+          })
+        }
+      }
+    })
+    
+    return Array.from(participantsMap.values())
+  }, [allSegments])
+
+  // Normalize participants to a consistent format for display
+  const displayParticipantNames = useMemo((): Array<{ id: string; name: string }> => {
+    if (currentMeeting.participants.length > 0) {
+      // Meeting participants are MeetingParticipant[]
+      return currentMeeting.participants.map((participant, index) => ({
+        id: participant.id || String(index),
+        name: participant.name || participant.email || 'Unknown'
+      }))
+    } else {
+      // Extracted participants are { id: string; name: string }[]
+      return extractedParticipants.map((participant, index) => ({
+        id: participant.id || String(index),
+        name: participant.name || 'Unknown'
+      }))
+    }
+  }, [currentMeeting.participants, extractedParticipants])
 
   const getDuration = (): number => {
     // If duration is provided in seconds, return it
@@ -192,7 +247,7 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
     return `${secs}s`
   }
 
-  const formatDate = (date: Date | string) => {
+  const formatDate = (date: Date | string | null | undefined) => {
     if (!date) return 'Not available'
     const d = date instanceof Date ? date : new Date(date)
     if (isNaN(d.getTime())) return 'Invalid date'
@@ -208,6 +263,24 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
     }).format(d)
   }
 
+  const getMeetingDate = (meeting: MeetingSession & { createdAt?: string | Date }): Date | string | null | undefined => {
+    return meeting.startTime || meeting.createdAt || null
+  }
+
+  const formatDateForFilename = (date: Date | string | null | undefined): string => {
+    if (!date) return 'meeting'
+    const d = date instanceof Date ? date : new Date(date)
+    if (isNaN(d.getTime())) return 'meeting'
+    
+    // Format as YYYY-MM-DD_HH-MM for filename compatibility
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const hours = String(d.getHours()).padStart(2, '0')
+    const minutes = String(d.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day}_${hours}-${minutes}`
+  }
+
   const handleDownloadRecording = useCallback(async () => {
     if (!currentMeeting.recordingUrl) return
     
@@ -218,7 +291,8 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
       if (result.success && result.downloadUrl) {
         const link = document.createElement('a')
         link.href = result.downloadUrl
-        link.download = `${currentMeeting.title || 'meeting'}_recording.mp4`
+        const meetingTitle = currentMeeting.title || formatDateForFilename(getMeetingDate(currentMeeting as MeetingSession & { createdAt?: string | Date }))
+        link.download = `${meetingTitle}_recording.mp4`
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -247,8 +321,9 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
       setIsLoading(true)
       const transcriptionData = await ApiService.MeetingAgent.getTranscription(currentMeeting.id)
       
-      const content = `Meeting: ${currentMeeting.title || 'Untitled Meeting'}
-Date: ${formatDate(currentMeeting.startTime)}
+      const meetingTitle = currentMeeting.title || formatDate(getMeetingDate(currentMeeting as MeetingSession & { createdAt?: string | Date }))
+      const content = `Meeting: ${meetingTitle}
+Date: ${formatDate(getMeetingDate(currentMeeting as MeetingSession & { createdAt?: string | Date }))}
 Platform: ${currentMeeting.platform?.name || 'Desktop Recording'}
 Duration: ${formatDuration(getDuration())}
 
@@ -266,7 +341,7 @@ ${transcriptionData.segments?.map((segment: any) =>
       
       const link = document.createElement('a')
       link.href = url
-      link.download = `${currentMeeting.title || 'meeting'}_transcription.txt`
+      link.download = `${meetingTitle || 'meeting'}_transcription.txt`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -506,19 +581,81 @@ ${transcriptionData.segments?.map((segment: any) =>
           )}
           <div className="flex-1 min-w-0">
             <Typography variant="h3" className="text-lg font-semibold truncate">
-              {currentMeeting.title || 'Untitled Meeting'}
+              {currentMeeting.title || formatDate(getMeetingDate(currentMeeting as MeetingSession & { createdAt?: string | Date }))}
             </Typography>
           </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Badge variant={getStatusVariant()}>
-            {currentMeeting.status}
-          </Badge>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="px-6 py-3 bg-card border-b border-border flex items-center gap-2 flex-wrap">
+      <div className="px-6 py-3 bg-card border-b border-border flex items-center gap-4 flex-wrap">
+        {/* Compact Meeting Details - Single line with icons */}
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5" title="Duration">
+            <Clock className="h-3.5 w-3.5" />
+            <span>{formatDuration(duration)}</span>
+          </div>
+          {displayParticipantNames.length > 0 ? (
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors" title="Participants">
+                  <Users className="h-3.5 w-3.5" />
+                  <span>{displayParticipantNames.length}</span>
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-3" align="start">
+                <div className="space-y-2">
+                  <Typography variant="small" className="font-semibold text-xs text-muted-foreground uppercase mb-2">
+                    Participants ({displayParticipantNames.length})
+                  </Typography>
+                  <div className="space-y-1.5">
+                    {displayParticipantNames.map((participant) => (
+                      <div key={participant.id} className="flex items-start gap-2">
+                        <Typography variant="p" className="text-sm leading-snug">
+                          {participant.name}
+                        </Typography>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          ) : (
+            <div className="flex items-center gap-1.5" title="Participants">
+              <Users className="h-3.5 w-3.5" />
+              <span>0</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5" title={`Recording: ${currentMeeting.metadata.recordingEnabled ? 'Enabled' : 'Disabled'}`}>
+            {currentMeeting.metadata.recordingEnabled ? (
+              <Video className="h-3.5 w-3.5 text-green-500" />
+            ) : (
+              <VideoOff className="h-3.5 w-3.5" />
+            )}
+          </div>
+          <div className="flex items-center gap-1.5" title={`Transcription: ${currentMeeting.metadata.transcriptionEnabled ? 'Enabled' : 'Disabled'}`}>
+            {currentMeeting.metadata.transcriptionEnabled ? (
+              <Mic className="h-3.5 w-3.5 text-green-500" />
+            ) : (
+              <MicOff className="h-3.5 w-3.5" />
+            )}
+          </div>
+          {/* Progress for active sessions */}
+          {(currentMeeting.status === 'active' || currentMeeting.status === 'recording') && currentMeeting.metadata.maxDuration && (
+            <div className="flex items-center gap-1.5" title="Progress">
+              <div className="w-16 h-1 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary" 
+                  style={{ width: `${Math.min((duration / (currentMeeting.metadata.maxDuration * 60)) * 100, 100)}%` }}
+                />
+              </div>
+              <span className="text-xs">{formatDuration(duration)}/{currentMeeting.metadata.maxDuration}m</span>
+            </div>
+          )}
+        </div>
+
+        <Separator orientation="vertical" className="h-5" />
+
         {currentMeeting.status === 'completed' && (currentMeeting.recordingUrl || videoStreamUrl) && (
           <Button
             size="xs"
@@ -555,141 +692,14 @@ ${transcriptionData.segments?.map((segment: any) =>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="px-6 py-6">
-          <Tabs defaultValue="details" className="w-full">
-            <TabsList className="mb-6">
-              <TabsTrigger value="details">Meeting Details</TabsTrigger>
-              <TabsTrigger value="recording">Recording & Transcript</TabsTrigger>
-              <TabsTrigger value="summary">Summary</TabsTrigger>
-            </TabsList>
-
-            {/* Meeting Details Tab */}
-            <TabsContent value="details" className="space-y-6">
-              {/* Details Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Typography variant="small" className="text-muted-foreground mb-1">
-                    Duration
-                  </Typography>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <Typography variant="p" className="text-sm">
-                      {formatDuration(duration)}
-                    </Typography>
-                  </div>
-                </div>
-
-                <div>
-                  <Typography variant="small" className="text-muted-foreground mb-1">
-                    Participants
-                  </Typography>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <Typography variant="p" className="text-sm">
-                      {currentMeeting.participants.length}
-                    </Typography>
-                  </div>
-                </div>
-
-                <div>
-                  <Typography variant="small" className="text-muted-foreground mb-1">
-                    Recording
-                  </Typography>
-                  <div className="flex items-center gap-2">
-                    {currentMeeting.metadata.recordingEnabled ? (
-                      <Video className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <VideoOff className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    <Typography variant="p" className="text-sm">
-                      {currentMeeting.metadata.recordingEnabled ? 'Enabled' : 'Disabled'}
-                    </Typography>
-                  </div>
-                </div>
-
-                <div>
-                  <Typography variant="small" className="text-muted-foreground mb-1">
-                    Transcription
-                  </Typography>
-                  <div className="flex items-center gap-2">
-                    {currentMeeting.metadata.transcriptionEnabled ? (
-                      <Mic className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <MicOff className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    <Typography variant="p" className="text-sm">
-                      {currentMeeting.metadata.transcriptionEnabled ? 'Enabled' : 'Disabled'}
-                    </Typography>
-                  </div>
-                </div>
-
-                {currentMeeting.endTime && (
-                  <div>
-                    <Typography variant="small" className="text-muted-foreground mb-1">
-                      End Time
-                    </Typography>
-                    <Typography variant="p" className="text-sm">
-                      {formatDate(currentMeeting.endTime)}
-                    </Typography>
-                  </div>
-                )}
-              </div>
-
-              {/* Progress bar for active sessions */}
-              {(currentMeeting.status === 'active' || currentMeeting.status === 'recording') && currentMeeting.metadata.maxDuration && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <Typography variant="small">Progress</Typography>
-                      <Typography variant="small">{formatDuration(duration)} / {currentMeeting.metadata.maxDuration} min</Typography>
-                    </div>
-                    <Progress 
-                      value={(duration / currentMeeting.metadata.maxDuration) * 100} 
-                      className="h-2"
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* Participants */}
-              {currentMeeting.participants.length > 0 && (
-                <>
-                  <Separator />
-                  <div>
-                    <Typography variant="h4" className="text-sm font-semibold mb-3 flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      Participants ({currentMeeting.participants.length})
-                    </Typography>
-                    <div className="space-y-2">
-                      {currentMeeting.participants.map((participant, index) => (
-                        <div key={participant.id || index} className="flex items-center justify-between p-2 rounded bg-muted">
-                          <Typography variant="p" className="text-sm">
-                            {typeof participant === 'string' 
-                              ? participant 
-                              : participant.name || participant.email || 'Unknown'
-                            }
-                          </Typography>
-                          <Badge variant="outline" className="text-xs">
-                            {typeof participant === 'object' && participant.role ? participant.role : 'participant'}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </TabsContent>
-
-            {/* Recording & Transcript Tab */}
-            <TabsContent value="recording" className="space-y-6">
+        <div className="px-6 py-6 space-y-6">
+          {/* Two-column layout: Video/Notes on left, Transcript on right */}
+          <div className="flex gap-6">
+            {/* Left Column: Video and Notes */}
+            <div className="flex-1 space-y-6 min-w-0">
               {/* Video Player */}
               {(currentMeeting.recordingUrl || currentMeeting.recallBot?.videoUrl || videoStreamUrl) && (
                 <div>
-                  <Typography variant="h4" className="text-sm font-semibold mb-3 flex items-center gap-2">
-                    <Video className="h-4 w-4" />
-                    Meeting Recording
-                  </Typography>
                   <Card className="bg-muted/50 border-border">
                     <div className="relative aspect-video bg-black rounded-t-lg overflow-hidden">
                       {isVideoLoading && (
@@ -813,300 +823,391 @@ ${transcriptionData.segments?.map((segment: any) =>
                 </div>
               )}
 
-              {/* Transcript - Show for completed meetings or live recordings */}
-              {(allSegments.length > 0 || transcriptionFullText || currentMeeting.transcriptionText || isLiveRecording || currentMeeting.transcriptionUrl || currentMeeting.recallBot?.transcriptUrl) && (
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <Typography variant="h4" className="text-sm font-semibold flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      {isLiveRecording ? 'Live Transcription' : 'Transcript'}
-                    </Typography>
-                    {/* Live connection status indicator */}
-                    {isLiveRecording && (
-                      <div className="flex items-center gap-2">
-                        {isLiveConnecting ? (
-                          <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                            Connecting...
-                          </Badge>
-                        ) : isLiveConnected && isLivePolling ? (
-                          <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-                            <div className="h-2 w-2 mr-1.5 bg-blue-500 rounded-full animate-pulse" />
-                            Polling
-                          </Badge>
-                        ) : isLiveConnected ? (
-                          <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
-                            <div className="h-2 w-2 mr-1.5 bg-green-500 rounded-full animate-pulse" />
-                            Live
-                          </Badge>
+              {/* Notes Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <Typography variant="h4" className="text-base font-semibold">
+                   Summary 
+                  </Typography>
+                  <div className="flex items-center gap-2">
+                    {hasUnsavedChanges && (
+                      <Button
+                        size="xs"
+                        variant="default"
+                        onClick={async () => {
+                          try {
+                            setIsSavingSummary(true)
+                            const editor = summaryEditorRef.current?.editor
+                            if (!editor) {
+                              toast({
+                                title: 'Error',
+                                description: 'Editor not ready. Please try again.',
+                                variant: 'destructive'
+                              })
+                              return
+                            }
+
+                            const htmlContent = editor.getHTML()
+                            
+                            await handleSaveEditedSummary(
+                              currentMeeting.id,
+                              htmlContent,
+                              currentMeeting.summary,
+                              undefined, // Action item states are extracted from HTML
+                              (updatedMeeting) => {
+                                setCurrentMeeting(updatedMeeting)
+                                onMeetingUpdated?.(updatedMeeting)
+                                setSummaryHtml(updatedMeeting.summary?.summary || htmlContent)
+                                setHasUnsavedChanges(false)
+                                // Update checked states from the saved meeting
+                                if (updatedMeeting.summary?.actionItems) {
+                                  const checkedStates = new Map<string, boolean>()
+                                  updatedMeeting.summary.actionItems.forEach(item => {
+                                    checkedStates.set(item.id, item.status === 'completed')
+                                  })
+                                  setActionItemCheckedStates(checkedStates)
+                                }
+                                toast({
+                                  title: 'Success',
+                                  description: 'Summary saved successfully'
+                                })
+                              },
+                              (error) => {
+                                toast({
+                                  title: 'Error',
+                                  description: error,
+                                  variant: 'destructive'
+                                })
+                              }
+                            )
+                          } catch (error) {
+                            const errorMessage = error instanceof Error ? error.message : 'Failed to save summary'
+                            toast({
+                              title: 'Error',
+                              description: errorMessage,
+                              variant: 'destructive'
+                            })
+                          } finally {
+                            setIsSavingSummary(false)
+                          }
+                        }}
+                        disabled={isSavingSummary || isGeneratingSummary}
+                      >
+                        {isSavingSummary ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Saving...
+                          </>
                         ) : (
-                          <Badge 
-                            variant="outline" 
-                            className="bg-red-500/10 text-red-500 border-red-500/20 cursor-pointer"
-                            onClick={reconnectLive}
-                          >
-                            <WifiOff className="h-3 w-3 mr-1" />
-                            Disconnected
-                          </Badge>
+                          <>
+                            <Save className="h-4 w-4 mr-2" />
+                            Save
+                          </>
                         )}
-                      </div>
+                      </Button>
+                    )}
+                    {(currentMeeting.summary || summaryHtml) && (
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            setIsGeneratingSummary(true)
+                            setSummaryHtml('')
+                            setHasUnsavedChanges(false)
+                            const availableTranscription = currentMeeting.transcriptionText || transcriptionFullText
+                            const editor = summaryEditorRef.current?.editor
+                            
+                            await handleRegenerateSummary({
+                              sessionId: currentMeeting.id,
+                              transcriptionText: availableTranscription,
+                              editor,
+                              onSuccess: (updatedMeeting) => {
+                                setCurrentMeeting(updatedMeeting)
+                                onMeetingUpdated?.(updatedMeeting)
+                                setSummaryHtml(updatedMeeting.summary?.summary || '')
+                                setHasUnsavedChanges(false)
+                                // Reset action item checked states from regenerated summary
+                                if (updatedMeeting.summary?.actionItems) {
+                                  const checkedStates = new Map<string, boolean>()
+                                  updatedMeeting.summary.actionItems.forEach(item => {
+                                    checkedStates.set(item.id, item.status === 'completed')
+                                  })
+                                  setActionItemCheckedStates(checkedStates)
+                                }
+                                toast({
+                                  title: 'Success',
+                                  description: 'Summary regenerated and saved successfully'
+                                })
+                              },
+                              onError: (error) => {
+                                toast({
+                                  title: 'Error',
+                                  description: error,
+                                  variant: 'destructive'
+                                })
+                              },
+                              onProgress: (html) => {
+                                setSummaryHtml(html)
+                              }
+                            })
+                          } catch (error) {
+                            const errorMessage = error instanceof Error ? error.message : 'Failed to regenerate summary'
+                            toast({
+                              title: 'Error',
+                              description: errorMessage,
+                              variant: 'destructive'
+                            })
+                          } finally {
+                            setIsGeneratingSummary(false)
+                          }
+                        }}
+                        disabled={isGeneratingSummary || isSavingSummary || (!currentMeeting.transcriptionText && !transcriptionFullText)}
+                      >
+                        {isGeneratingSummary ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Regenerating...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Regenerate
+                          </>
+                        )}
+                      </Button>
                     )}
                   </div>
-                  {isTranscriptionLoading && !isLiveRecording ? (
+                </div>
+                    {(currentMeeting.summary || summaryHtml) ? (
+                      <>
+                        <div className="min-h-[200px]">
+                          <MeetingSummaryEditor
+                            key={currentMeeting.id}
+                            initialContent={currentMeeting.summary?.summary || summaryHtml || ''}
+                            isReadOnly={isGeneratingSummary}
+                            isLoading={isGeneratingSummary}
+                            placeholder="Summary will appear here..."
+                            onContentChange={(content) => {
+                              if (!isGeneratingSummary) {
+                                setHasUnsavedChanges(true)
+                              }
+                            }}
+                            ref={summaryEditorRef}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12">
+                        <Typography variant="h4" className="text-lg font-semibold mb-2">
+                          No Summary Available
+                        </Typography>
+                        <Typography variant="p" className="text-sm text-muted-foreground mb-6 text-center max-w-md">
+                          Generate an AI-powered summary based on the meeting transcription
+                        </Typography>
+                        <Button
+                          onClick={async () => {
+                            if (!currentMeeting.transcriptionText && !transcriptionFullText) {
+                              toast({
+                                title: 'Error',
+                                description: 'No transcription available. Please wait for transcription to complete.',
+                                variant: 'destructive'
+                              })
+                              return
+                            }
+
+                            const editor = summaryEditorRef.current?.editor
+                            if (!editor) {
+                              toast({
+                                title: 'Error',
+                                description: 'Editor not ready. Please try again.',
+                                variant: 'destructive'
+                              })
+                              return
+                            }
+
+                            try {
+                              setIsGeneratingSummary(true)
+                              setSummaryHtml('')
+                              const availableTranscription = currentMeeting.transcriptionText || transcriptionFullText
+                              
+                              await handleGenerateAnthropicSummaryWithSave(
+                                currentMeeting.id,
+                                availableTranscription,
+                                editor,
+                                (updatedMeeting) => {
+                                  setCurrentMeeting(updatedMeeting)
+                                  onMeetingUpdated?.(updatedMeeting)
+                                  setSummaryHtml(updatedMeeting.summary?.summary || '')
+                                  setHasUnsavedChanges(false)
+                                  // Initialize action item checked states from generated summary
+                                  if (updatedMeeting.summary?.actionItems) {
+                                    const checkedStates = new Map<string, boolean>()
+                                    updatedMeeting.summary.actionItems.forEach(item => {
+                                      checkedStates.set(item.id, item.status === 'completed')
+                                    })
+                                    setActionItemCheckedStates(checkedStates)
+                                  }
+                                  toast({
+                                    title: 'Success',
+                                    description: 'Summary generated successfully'
+                                  })
+                                },
+                                (error) => {
+                                  toast({
+                                    title: 'Error',
+                                    description: error,
+                                    variant: 'destructive'
+                                  })
+                                },
+                                (html) => {
+                                  setSummaryHtml(html)
+                                }
+                              )
+                            } catch (error) {
+                              const errorMessage = error instanceof Error ? error.message : 'Failed to generate summary'
+                              toast({
+                                title: 'Error',
+                                description: errorMessage,
+                                variant: 'destructive'
+                              })
+                            } finally {
+                              setIsGeneratingSummary(false)
+                            }
+                          }}
+                          disabled={isGeneratingSummary || (!currentMeeting.transcriptionText && !transcriptionFullText)}
+                        >
+                          {isGeneratingSummary ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Generating Summary...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="h-4 w-4 mr-2" />
+                              Generate Summary
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+              </div>
+            </div>
+
+            {/* Right Column: Transcript */}
+            {(allSegments.length > 0 || transcriptionFullText || currentMeeting.transcriptionText || isLiveRecording || currentMeeting.transcriptionUrl || currentMeeting.recallBot?.transcriptUrl) && (
+              <div className="w-96 flex-shrink-0">
+                <div className="flex items-center justify-between mb-4">
+                  {/* Live connection status indicator */}
+                  {isLiveRecording && (
+                    <div className="flex items-center gap-2">
+                      {isLiveConnecting ? (
+                        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Connecting...
+                        </Badge>
+                      ) : isLiveConnected && isLivePolling ? (
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                          <div className="h-2 w-2 mr-1.5 bg-blue-500 rounded-full animate-pulse" />
+                          Polling
+                        </Badge>
+                      ) : isLiveConnected ? (
+                        <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                          <div className="h-2 w-2 mr-1.5 bg-green-500 rounded-full animate-pulse" />
+                          Live
+                        </Badge>
+                      ) : (
+                        <Badge 
+                          variant="outline" 
+                          className="bg-red-500/10 text-red-500 border-red-500/20 cursor-pointer"
+                          onClick={reconnectLive}
+                        >
+                          <WifiOff className="h-3 w-3 mr-1" />
+                          Disconnected
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {isTranscriptionLoading && !isLiveRecording ? (
+                  <Card className="border-border">
                     <div className="flex items-center justify-center p-8">
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
-                  ) : allSegments.length > 0 ? (
-                    <Card className="border-border">
-                      <div ref={transcriptScrollRef} className="p-4 max-h-[600px] overflow-y-auto space-y-3">
-                        {allSegments.map((segment, index) => (
-                          <div
-                            key={segment.id || index}
-                            data-segment-start={Math.floor(segment.startTime)}
-                            className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                              videoCurrentTime >= segment.startTime && videoCurrentTime < segment.endTime
-                                ? 'bg-primary/20 border border-primary/30'
-                                : 'bg-background hover:bg-muted border border-transparent'
-                            }`}
-                            onClick={() => handleTranscriptSegmentClick(segment.startTime)}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0">
-                                <Badge variant="outline" className="text-xs">
-                                  {formatTimestamp(segment.startTime)}
-                                </Badge>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <Typography variant="small" className="font-medium text-foreground mb-1">
-                                  {segment.speakerName || 'Speaker'}
-                                </Typography>
-                                <Typography variant="p" className="text-sm text-muted-foreground">
-                                  {segment.text}
-                                </Typography>
-                              </div>
+                  </Card>
+                ) : allSegments.length > 0 ? (
+                  <Card className="border-border">
+                    <div ref={transcriptScrollRef} className="p-1 max-h-[calc(100vh-300px)] overflow-y-auto space-y-1">
+                      {allSegments.map((segment, index) => (
+                        <div
+                          key={segment.id || index}
+                          data-segment-start={Math.floor(segment.startTime)}
+                          className={`px-1.5 py-1 rounded-md cursor-pointer transition-colors ${
+                            videoCurrentTime >= segment.startTime && videoCurrentTime < segment.endTime
+                              ? 'bg-primary/20 border border-primary/30'
+                              : 'hover:bg-muted border border-transparent'
+                          }`}
+                          onClick={() => handleTranscriptSegmentClick(segment.startTime)}
+                        >
+                          <div className="flex items-start gap-1.5">
+                            <div className="flex-shrink-0">
+                              <Badge variant="outline" className="text-xs py-0 px-1.5">
+                                {formatTimestamp(segment.startTime)}
+                              </Badge>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <Typography variant="small" className="font-medium text-foreground leading-tight">
+                                {segment.speakerName || 'Speaker'}
+                              </Typography>
+                              <Typography variant="p" className="text-sm text-muted-foreground leading-snug">
+                                {segment.text}
+                              </Typography>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </Card>
-                  ) : transcriptionFullText || currentMeeting.transcriptionText ? (
-                    <Card className="border-border">
-                      <div className="p-4 max-h-[600px] overflow-y-auto">
-                        <Typography variant="p" className="text-sm whitespace-pre-wrap">
-                          {transcriptionFullText || currentMeeting.transcriptionText}
-                        </Typography>
-                      </div>
-                    </Card>
-                  ) : isLiveRecording ? (
-                    <Card className="bg-muted/50 border-border">
-                      <div className="p-8 text-center">
-                        <div className="flex items-center justify-center gap-2 mb-2">
-                          <Radio className="h-5 w-5 text-muted-foreground animate-pulse" />
-                          <Typography variant="p" className="text-muted-foreground">
-                            {isLiveConnecting ? 'Connecting to live transcription...' : 
-                             isLiveConnected ? 'Waiting for transcription...' :
-                             liveError ? 'Connection error - click to retry' :
-                             'Preparing transcription...'}
-                          </Typography>
                         </div>
-                        <Typography variant="small" className="text-muted-foreground/70">
-                          Speech will appear here as it&apos;s transcribed in real-time
-                        </Typography>
-                        {liveError && !isLiveConnected && (
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="mt-3"
-                            onClick={reconnectLive}
-                          >
-                            <Wifi className="h-4 w-4 mr-2" />
-                            Reconnect
-                          </Button>
-                        )}
-                      </div>
-                    </Card>
-                  ) : null}
-                </div>
-              )}
-            </TabsContent>
-
-            {/* Summary Tab */}
-            <TabsContent value="summary" className="space-y-6">
-              <div className="flex flex-col h-full">
-                {/* Header with regenerate button when summary exists */}
-                {(currentMeeting.summary || summaryHtml) && (
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Typography variant="h4" className="text-sm font-semibold">
-                        Meeting Summary
+                      ))}
+                    </div>
+                  </Card>
+                ) : transcriptionFullText || currentMeeting.transcriptionText ? (
+                  <Card className="border-border">
+                    <div className="p-1 max-h-[calc(100vh-300px)] overflow-y-auto">
+                      <Typography variant="p" className="text-sm whitespace-pre-wrap leading-snug">
+                        {transcriptionFullText || currentMeeting.transcriptionText}
                       </Typography>
-                      {currentMeeting.summary?.generatedAt && (
-                        <Typography variant="small" className="text-muted-foreground">
-                          Generated: {new Date(currentMeeting.summary.generatedAt).toLocaleString()}
+                    </div>
+                  </Card>
+                ) : isLiveRecording ? (
+                  <Card className="bg-muted/50 border-border">
+                    <div className="p-8 text-center">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <Radio className="h-5 w-5 text-muted-foreground animate-pulse" />
+                        <Typography variant="p" className="text-muted-foreground">
+                          {isLiveConnecting ? 'Connecting to live transcription...' : 
+                           isLiveConnected ? 'Waiting for transcription...' :
+                           liveError ? 'Connection error - click to retry' :
+                           'Preparing transcription...'}
                         </Typography>
+                      </div>
+                      <Typography variant="small" className="text-muted-foreground/70">
+                        Speech will appear here as it&apos;s transcribed in real-time
+                      </Typography>
+                      {liveError && !isLiveConnected && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-3"
+                          onClick={reconnectLive}
+                        >
+                          <Wifi className="h-4 w-4 mr-2" />
+                          Reconnect
+                        </Button>
                       )}
                     </div>
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      onClick={async () => {
-                        try {
-                          setIsGeneratingSummary(true)
-                          setSummaryHtml('')
-                          // Use available transcription text from state or meeting object
-                          const availableTranscription = currentMeeting.transcriptionText || transcriptionFullText
-                          const editor = summaryEditorRef.current?.editor
-                          
-                          await handleRegenerateSummary({
-                            sessionId: currentMeeting.id,
-                            transcriptionText: availableTranscription,
-                            editor,
-                            onSuccess: (updatedMeeting) => {
-                              setCurrentMeeting(updatedMeeting)
-                              onMeetingUpdated?.(updatedMeeting)
-                              setSummaryHtml(updatedMeeting.summary?.summary || '')
-                              toast({
-                                title: 'Success',
-                                description: 'Summary regenerated and saved successfully'
-                              })
-                            },
-                            onError: (error) => {
-                              toast({
-                                title: 'Error',
-                                description: error,
-                                variant: 'destructive'
-                              })
-                            },
-                            onProgress: (html) => {
-                              setSummaryHtml(html)
-                            }
-                          })
-                        } catch (error) {
-                          const errorMessage = error instanceof Error ? error.message : 'Failed to regenerate summary'
-                          toast({
-                            title: 'Error',
-                            description: errorMessage,
-                            variant: 'destructive'
-                          })
-                        } finally {
-                          setIsGeneratingSummary(false)
-                        }
-                      }}
-                      disabled={isGeneratingSummary || (!currentMeeting.transcriptionText && !transcriptionFullText)}
-                    >
-                      {isGeneratingSummary ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Regenerating...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Regenerate Summary
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
-                <div className="flex-1 flex flex-col min-h-[600px]">
-                  <MeetingSummaryEditor
-                    key={currentMeeting.id}
-                    initialContent={currentMeeting.summary?.summary || summaryHtml || ''}
-                    isReadOnly={true}
-                    isLoading={isGeneratingSummary}
-                    placeholder="Summary will appear here..."
-                    ref={summaryEditorRef}
-                  />
-                </div>
-                {!currentMeeting.summary && !summaryHtml && (
-                  <div className="flex flex-col items-center justify-center py-6">
-                    <Typography variant="h4" className="text-lg font-semibold mb-2">
-                      No Summary Available
-                    </Typography>
-                    <Typography variant="p" className="text-sm text-muted-foreground mb-6 text-center max-w-md">
-                      Generate an AI-powered summary based on the meeting transcription
-                    </Typography>
-                    <Button
-                      onClick={async () => {
-                        if (!currentMeeting.transcriptionText && !transcriptionFullText) {
-                          toast({
-                            title: 'Error',
-                            description: 'No transcription available. Please wait for transcription to complete.',
-                            variant: 'destructive'
-                          })
-                          return
-                        }
-
-                        const editor = summaryEditorRef.current?.editor
-                        if (!editor) {
-                          toast({
-                            title: 'Error',
-                            description: 'Editor not ready. Please try again.',
-                            variant: 'destructive'
-                          })
-                          return
-                        }
-
-                        try {
-                          setIsGeneratingSummary(true)
-                          setSummaryHtml('')
-                          // Use available transcription text from state or meeting object
-                          const availableTranscription = currentMeeting.transcriptionText || transcriptionFullText
-                          
-                          await handleGenerateAnthropicSummaryWithSave(
-                            currentMeeting.id,
-                            availableTranscription,
-                            editor,
-                            (updatedMeeting) => {
-                              setCurrentMeeting(updatedMeeting)
-                              onMeetingUpdated?.(updatedMeeting)
-                              setSummaryHtml(updatedMeeting.summary?.summary || '')
-                              toast({
-                                title: 'Success',
-                                description: 'Summary generated successfully'
-                              })
-                            },
-                            (error) => {
-                              toast({
-                                title: 'Error',
-                                description: error,
-                                variant: 'destructive'
-                              })
-                            },
-                            (html) => {
-                              setSummaryHtml(html)
-                            }
-                          )
-                        } catch (error) {
-                          const errorMessage = error instanceof Error ? error.message : 'Failed to generate summary'
-                          toast({
-                            title: 'Error',
-                            description: errorMessage,
-                            variant: 'destructive'
-                          })
-                        } finally {
-                          setIsGeneratingSummary(false)
-                        }
-                      }}
-                      disabled={isGeneratingSummary || (!currentMeeting.transcriptionText && !transcriptionFullText)}
-                    >
-                      {isGeneratingSummary ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Generating Summary...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Generate Summary
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
+                  </Card>
+                ) : null}
               </div>
-            </TabsContent>
-          </Tabs>
+            )}
+          </div>
         </div>
       </div>
 

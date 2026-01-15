@@ -40,8 +40,16 @@ export async function handleGoogleLogin(): Promise<GoogleLoginResult> {
   }
 
   const redirectUri = AUTH_CONFIG.getRedirectUri()
+  const isDesktop = isElectronApp()
   
-  const result = await ApiService.initiateGoogleAuth(redirectUri)
+  // Store the redirect URI in sessionStorage so we can use it later when processing the callback
+  // This ensures we use the exact same redirect URI that was registered with Google
+  if (typeof window !== 'undefined' && window.sessionStorage) {
+    sessionStorage.setItem('oauth_redirect_uri', redirectUri)
+    sessionStorage.setItem('oauth_is_desktop', String(isDesktop))
+  }
+  
+  const result = await ApiService.initiateGoogleAuth(redirectUri, isDesktop)
   
   if (!result.success || !result.authUrl) {
     return { success: false, error: 'Failed to get Google auth URL' }
