@@ -1,4 +1,4 @@
-import { ArrowLeft, Download, FileText, Users, Clock, Video, VideoOff, Mic, MicOff, Play, Upload, Pause, Volume2, VolumeX, Loader2, Radio, Wifi, WifiOff } from "lucide-react"
+import { ArrowLeft, Download, FileText, Users, Clock, Video, VideoOff, Mic, MicOff, Play, Upload, Pause, Volume2, VolumeX, Loader2, Radio, Wifi, WifiOff, Sparkles } from "lucide-react"
 import { useState, useCallback, useEffect, useRef } from "react"
 import { Button } from "../../ui/button"
 import { useToast } from "../../ui/use-toast"
@@ -7,12 +7,14 @@ import { Badge } from "../../ui/badge"
 import { Separator } from "../../ui/separator"
 import { Progress } from "../../ui/progress"
 import { Slider } from "../../ui/slider"
-import { MeetingSession, TranscriptionSegment } from "../../../types/meeting-types"
+import { MeetingSession, TranscriptionSegment, MeetingSummary } from "../../../types/meeting-types"
 import { ApiService } from "../../../../backend/api/apiService"
+import { handleGenerateSummary } from "./handlers/summaryHandlers"
 import { VideoPlayerDialog } from "../../../pages/MeetingAgent/components/VideoPlayerDialog"
 import { RecordingUploadDialog } from "../../../pages/MeetingAgent/components/RecordingUploadDialog"
 import { Card } from "../../ui/card"
 import { useLiveTranscription } from "../../../hooks/useLiveTranscription"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../ui/tabs"
 
 interface MeetingViewerProps {
   meeting: MeetingSession
@@ -43,6 +45,9 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
   const [transcriptionFullText, setTranscriptionFullText] = useState<string>('')
   const [isTranscriptionLoading, setIsTranscriptionLoading] = useState(false)
   const transcriptScrollRef = useRef<HTMLDivElement>(null)
+  
+  // Summary state
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
   
   // Live transcription - only enabled when meeting is recording
   const isLiveRecording = currentMeeting.status === 'recording' || currentMeeting.status === 'active'
@@ -531,374 +536,586 @@ ${transcriptionData.segments?.map((segment: any) =>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="px-6 py-6 space-y-6">
-          {/* Video Player */}
-          {(currentMeeting.recordingUrl || currentMeeting.recallBot?.videoUrl || videoStreamUrl) && (
-            <>
-              <div>
-                <Typography variant="h4" className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <Video className="h-4 w-4" />
-                  Meeting Recording
-                </Typography>
-                <Card className="bg-muted/50 border-border">
-                  <div className="relative aspect-video bg-black rounded-t-lg overflow-hidden">
-                    {isVideoLoading && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center text-muted-foreground">
-                          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-                          <p>Loading video...</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {videoError && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center text-muted-foreground">
-                          <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                          <p className="text-destructive mb-2">{videoError}</p>
-                          <Button 
-                            onClick={() => {
-                              setVideoError(null)
-                              setIsVideoLoading(true)
-                              if (videoRef.current) {
-                                videoRef.current.load()
-                              }
-                            }}
-                            variant="outline"
-                            size="sm"
-                          >
-                            Retry
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+        <div className="px-6 py-6">
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList className="mb-6">
+              <TabsTrigger value="details">Meeting Details</TabsTrigger>
+              <TabsTrigger value="recording">Recording & Transcript</TabsTrigger>
+              <TabsTrigger value="summary">Summary</TabsTrigger>
+            </TabsList>
 
-                    {videoStreamUrl && (
-                      <video
-                        ref={videoRef}
-                        src={videoStreamUrl}
-                        className="w-full h-full object-contain"
-                        preload="metadata"
-                        onLoadStart={() => setIsVideoLoading(true)}
-                        crossOrigin="anonymous"
-                      />
-                    )}
-
-                    {/* Video Overlay Controls */}
-                    {!isVideoLoading && !videoError && videoStreamUrl && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Button
-                            variant="ghost"
-                            size="lg"
-                            onClick={toggleVideoPlayPause}
-                            className="bg-black/50 hover:bg-black/70 text-white rounded-full w-16 h-16"
-                          >
-                            {isVideoPlaying ? (
-                              <Pause className="h-8 w-8" />
-                            ) : (
-                              <Play className="h-8 w-8 ml-1" />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+            {/* Meeting Details Tab */}
+            <TabsContent value="details" className="space-y-6">
+              {/* Details Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Typography variant="small" className="text-muted-foreground mb-1">
+                    Duration
+                  </Typography>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <Typography variant="p" className="text-sm">
+                      {formatDuration(duration)}
+                    </Typography>
                   </div>
+                </div>
 
-                  {/* Video Controls */}
-                  {!isVideoLoading && !videoError && videoStreamUrl && (
-                    <div className="bg-card p-4 space-y-3 rounded-b-lg border-t border-border">
-                      {/* Progress Bar */}
-                      <div className="space-y-2">
-                        <Slider
-                          value={[videoCurrentTime]}
-                          max={videoDuration || 100}
-                          step={0.1}
-                          onValueChange={handleVideoSeek}
-                          className="w-full"
-                        />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>{formatTime(videoCurrentTime)}</span>
-                          <span>{formatTime(videoDuration)}</span>
+                <div>
+                  <Typography variant="small" className="text-muted-foreground mb-1">
+                    Participants
+                  </Typography>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <Typography variant="p" className="text-sm">
+                      {currentMeeting.participants.length}
+                    </Typography>
+                  </div>
+                </div>
+
+                <div>
+                  <Typography variant="small" className="text-muted-foreground mb-1">
+                    Recording
+                  </Typography>
+                  <div className="flex items-center gap-2">
+                    {currentMeeting.metadata.recordingEnabled ? (
+                      <Video className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <VideoOff className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <Typography variant="p" className="text-sm">
+                      {currentMeeting.metadata.recordingEnabled ? 'Enabled' : 'Disabled'}
+                    </Typography>
+                  </div>
+                </div>
+
+                <div>
+                  <Typography variant="small" className="text-muted-foreground mb-1">
+                    Transcription
+                  </Typography>
+                  <div className="flex items-center gap-2">
+                    {currentMeeting.metadata.transcriptionEnabled ? (
+                      <Mic className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <MicOff className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <Typography variant="p" className="text-sm">
+                      {currentMeeting.metadata.transcriptionEnabled ? 'Enabled' : 'Disabled'}
+                    </Typography>
+                  </div>
+                </div>
+
+                {currentMeeting.endTime && (
+                  <div>
+                    <Typography variant="small" className="text-muted-foreground mb-1">
+                      End Time
+                    </Typography>
+                    <Typography variant="p" className="text-sm">
+                      {formatDate(currentMeeting.endTime)}
+                    </Typography>
+                  </div>
+                )}
+              </div>
+
+              {/* Progress bar for active sessions */}
+              {(currentMeeting.status === 'active' || currentMeeting.status === 'recording') && currentMeeting.metadata.maxDuration && (
+                <>
+                  <Separator />
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <Typography variant="small">Progress</Typography>
+                      <Typography variant="small">{formatDuration(duration)} / {currentMeeting.metadata.maxDuration} min</Typography>
+                    </div>
+                    <Progress 
+                      value={(duration / currentMeeting.metadata.maxDuration) * 100} 
+                      className="h-2"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Participants */}
+              {currentMeeting.participants.length > 0 && (
+                <>
+                  <Separator />
+                  <div>
+                    <Typography variant="h4" className="text-sm font-semibold mb-3 flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Participants ({currentMeeting.participants.length})
+                    </Typography>
+                    <div className="space-y-2">
+                      {currentMeeting.participants.map((participant, index) => (
+                        <div key={participant.id || index} className="flex items-center justify-between p-2 rounded bg-muted">
+                          <Typography variant="p" className="text-sm">
+                            {typeof participant === 'string' 
+                              ? participant 
+                              : participant.name || participant.email || 'Unknown'
+                            }
+                          </Typography>
+                          <Badge variant="outline" className="text-xs">
+                            {typeof participant === 'object' && participant.role ? participant.role : 'participant'}
+                          </Badge>
                         </div>
-                      </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </TabsContent>
 
-                      {/* Control Buttons */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={toggleVideoPlayPause}
-                          >
-                            {isVideoPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                          </Button>
+            {/* Recording & Transcript Tab */}
+            <TabsContent value="recording" className="space-y-6">
+              {/* Video Player */}
+              {(currentMeeting.recordingUrl || currentMeeting.recallBot?.videoUrl || videoStreamUrl) && (
+                <div>
+                  <Typography variant="h4" className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Video className="h-4 w-4" />
+                    Meeting Recording
+                  </Typography>
+                  <Card className="bg-muted/50 border-border">
+                    <div className="relative aspect-video bg-black rounded-t-lg overflow-hidden">
+                      {isVideoLoading && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center text-muted-foreground">
+                            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+                            <p>Loading video...</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {videoError && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center text-muted-foreground">
+                            <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                            <p className="text-destructive mb-2">{videoError}</p>
+                            <Button 
+                              onClick={() => {
+                                setVideoError(null)
+                                setIsVideoLoading(true)
+                                if (videoRef.current) {
+                                  videoRef.current.load()
+                                }
+                              }}
+                              variant="outline"
+                              size="sm"
+                            >
+                              Retry
+                            </Button>
+                          </div>
+                        </div>
+                      )}
 
-                          {/* Volume Control */}
+                      {videoStreamUrl && (
+                        <video
+                          ref={videoRef}
+                          src={videoStreamUrl}
+                          className="w-full h-full object-contain"
+                          preload="metadata"
+                          onLoadStart={() => setIsVideoLoading(true)}
+                          crossOrigin="anonymous"
+                        />
+                      )}
+
+                      {/* Video Overlay Controls */}
+                      {!isVideoLoading && !videoError && videoStreamUrl && (
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200">
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Button
+                              variant="ghost"
+                              size="lg"
+                              onClick={toggleVideoPlayPause}
+                              className="bg-black/50 hover:bg-black/70 text-white rounded-full w-16 h-16"
+                            >
+                              {isVideoPlaying ? (
+                                <Pause className="h-8 w-8" />
+                              ) : (
+                                <Play className="h-8 w-8 ml-1" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Video Controls */}
+                    {!isVideoLoading && !videoError && videoStreamUrl && (
+                      <div className="bg-card p-4 space-y-3 rounded-b-lg border-t border-border">
+                        {/* Progress Bar */}
+                        <div className="space-y-2">
+                          <Slider
+                            value={[videoCurrentTime]}
+                            max={videoDuration || 100}
+                            step={0.1}
+                            onValueChange={handleVideoSeek}
+                            className="w-full"
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>{formatTime(videoCurrentTime)}</span>
+                            <span>{formatTime(videoDuration)}</span>
+                          </div>
+                        </div>
+
+                        {/* Control Buttons */}
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={toggleVideoMute}
+                              onClick={toggleVideoPlayPause}
                             >
-                              {isVideoMuted || videoVolume === 0 ? (
-                                <VolumeX className="h-4 w-4" />
-                              ) : (
-                                <Volume2 className="h-4 w-4" />
-                              )}
+                              {isVideoPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                             </Button>
-                            <Slider
-                              value={[isVideoMuted ? 0 : videoVolume]}
-                              max={1}
-                              step={0.1}
-                              onValueChange={handleVideoVolumeChange}
-                              className="w-20"
-                            />
+
+                            {/* Volume Control */}
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={toggleVideoMute}
+                              >
+                                {isVideoMuted || videoVolume === 0 ? (
+                                  <VolumeX className="h-4 w-4" />
+                                ) : (
+                                  <Volume2 className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Slider
+                                value={[isVideoMuted ? 0 : videoVolume]}
+                                max={1}
+                                step={0.1}
+                                onValueChange={handleVideoVolumeChange}
+                                className="w-20"
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </Card>
-              </div>
-              <Separator />
-            </>
-          )}
-
-          {/* Transcript - Show for completed meetings or live recordings */}
-          {(allSegments.length > 0 || transcriptionFullText || currentMeeting.transcriptionText || isLiveRecording || currentMeeting.transcriptionUrl || currentMeeting.recallBot?.transcriptUrl) && (
-            <>
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <Typography variant="h4" className="text-sm font-semibold flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    {isLiveRecording ? 'Live Transcription' : 'Transcript'}
-                  </Typography>
-                  {/* Live connection status indicator */}
-                  {isLiveRecording && (
-                    <div className="flex items-center gap-2">
-                      {isLiveConnecting ? (
-                        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
-                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                          Connecting...
-                        </Badge>
-                      ) : isLiveConnected && isLivePolling ? (
-                        <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-                          <div className="h-2 w-2 mr-1.5 bg-blue-500 rounded-full animate-pulse" />
-                          Polling
-                        </Badge>
-                      ) : isLiveConnected ? (
-                        <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
-                          <div className="h-2 w-2 mr-1.5 bg-green-500 rounded-full animate-pulse" />
-                          Live
-                        </Badge>
-                      ) : (
-                        <Badge 
-                          variant="outline" 
-                          className="bg-red-500/10 text-red-500 border-red-500/20 cursor-pointer"
-                          onClick={reconnectLive}
-                        >
-                          <WifiOff className="h-3 w-3 mr-1" />
-                          Disconnected
-                        </Badge>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </Card>
                 </div>
-                {isTranscriptionLoading && !isLiveRecording ? (
-                  <div className="flex items-center justify-center p-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              )}
+
+              {/* Transcript - Show for completed meetings or live recordings */}
+              {(allSegments.length > 0 || transcriptionFullText || currentMeeting.transcriptionText || isLiveRecording || currentMeeting.transcriptionUrl || currentMeeting.recallBot?.transcriptUrl) && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <Typography variant="h4" className="text-sm font-semibold flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      {isLiveRecording ? 'Live Transcription' : 'Transcript'}
+                    </Typography>
+                    {/* Live connection status indicator */}
+                    {isLiveRecording && (
+                      <div className="flex items-center gap-2">
+                        {isLiveConnecting ? (
+                          <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            Connecting...
+                          </Badge>
+                        ) : isLiveConnected && isLivePolling ? (
+                          <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                            <div className="h-2 w-2 mr-1.5 bg-blue-500 rounded-full animate-pulse" />
+                            Polling
+                          </Badge>
+                        ) : isLiveConnected ? (
+                          <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                            <div className="h-2 w-2 mr-1.5 bg-green-500 rounded-full animate-pulse" />
+                            Live
+                          </Badge>
+                        ) : (
+                          <Badge 
+                            variant="outline" 
+                            className="bg-red-500/10 text-red-500 border-red-500/20 cursor-pointer"
+                            onClick={reconnectLive}
+                          >
+                            <WifiOff className="h-3 w-3 mr-1" />
+                            Disconnected
+                          </Badge>
+                        )}
+                      </div>
+                    )}
                   </div>
-                ) : allSegments.length > 0 ? (
-                  <Card className="bg-muted/50 border-border">
-                    <div ref={transcriptScrollRef} className="p-4 max-h-[600px] overflow-y-auto space-y-3">
-                      {allSegments.map((segment, index) => (
-                        <div
-                          key={segment.id || index}
-                          data-segment-start={Math.floor(segment.startTime)}
-                          className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                            videoCurrentTime >= segment.startTime && videoCurrentTime < segment.endTime
-                              ? 'bg-primary/20 border border-primary/30'
-                              : 'bg-background hover:bg-muted border border-transparent'
-                          }`}
-                          onClick={() => handleTranscriptSegmentClick(segment.startTime)}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0">
-                              <Badge variant="outline" className="text-xs">
-                                {formatTimestamp(segment.startTime)}
-                              </Badge>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <Typography variant="small" className="font-medium text-foreground mb-1">
-                                {segment.speakerName || 'Speaker'}
-                              </Typography>
-                              <Typography variant="p" className="text-sm text-muted-foreground">
-                                {segment.text}
-                              </Typography>
+                  {isTranscriptionLoading && !isLiveRecording ? (
+                    <div className="flex items-center justify-center p-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : allSegments.length > 0 ? (
+                    <Card className="bg-muted/50 border-border">
+                      <div ref={transcriptScrollRef} className="p-4 max-h-[600px] overflow-y-auto space-y-3">
+                        {allSegments.map((segment, index) => (
+                          <div
+                            key={segment.id || index}
+                            data-segment-start={Math.floor(segment.startTime)}
+                            className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                              videoCurrentTime >= segment.startTime && videoCurrentTime < segment.endTime
+                                ? 'bg-primary/20 border border-primary/30'
+                                : 'bg-background hover:bg-muted border border-transparent'
+                            }`}
+                            onClick={() => handleTranscriptSegmentClick(segment.startTime)}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0">
+                                <Badge variant="outline" className="text-xs">
+                                  {formatTimestamp(segment.startTime)}
+                                </Badge>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <Typography variant="small" className="font-medium text-foreground mb-1">
+                                  {segment.speakerName || 'Speaker'}
+                                </Typography>
+                                <Typography variant="p" className="text-sm text-muted-foreground">
+                                  {segment.text}
+                                </Typography>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                ) : transcriptionFullText || currentMeeting.transcriptionText ? (
-                  <Card className="bg-muted/50 border-border">
-                    <div className="p-4 max-h-[600px] overflow-y-auto">
-                      <Typography variant="p" className="text-sm whitespace-pre-wrap">
-                        {transcriptionFullText || currentMeeting.transcriptionText}
-                      </Typography>
-                    </div>
-                  </Card>
-                ) : isLiveRecording ? (
-                  <Card className="bg-muted/50 border-border">
-                    <div className="p-8 text-center">
-                      <div className="flex items-center justify-center gap-2 mb-2">
-                        <Radio className="h-5 w-5 text-muted-foreground animate-pulse" />
-                        <Typography variant="p" className="text-muted-foreground">
-                          {isLiveConnecting ? 'Connecting to live transcription...' : 
-                           isLiveConnected ? 'Waiting for transcription...' :
-                           liveError ? 'Connection error - click to retry' :
-                           'Preparing transcription...'}
+                        ))}
+                      </div>
+                    </Card>
+                  ) : transcriptionFullText || currentMeeting.transcriptionText ? (
+                    <Card className="bg-muted/50 border-border">
+                      <div className="p-4 max-h-[600px] overflow-y-auto">
+                        <Typography variant="p" className="text-sm whitespace-pre-wrap">
+                          {transcriptionFullText || currentMeeting.transcriptionText}
                         </Typography>
                       </div>
-                      <Typography variant="small" className="text-muted-foreground/70">
-                        Speech will appear here as it&apos;s transcribed in real-time
-                      </Typography>
-                      {liveError && !isLiveConnected && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="mt-3"
-                          onClick={reconnectLive}
-                        >
-                          <Wifi className="h-4 w-4 mr-2" />
-                          Reconnect
-                        </Button>
-                      )}
-                    </div>
-                  </Card>
-                ) : null}
-              </div>
-              <Separator />
-            </>
-          )}
-
-          {/* Details Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Typography variant="small" className="text-muted-foreground mb-1">
-                Duration
-              </Typography>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <Typography variant="p" className="text-sm">
-                  {formatDuration(duration)}
-                </Typography>
-              </div>
-            </div>
-
-            <div>
-              <Typography variant="small" className="text-muted-foreground mb-1">
-                Participants
-              </Typography>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <Typography variant="p" className="text-sm">
-                  {currentMeeting.participants.length}
-                </Typography>
-              </div>
-            </div>
-
-            <div>
-              <Typography variant="small" className="text-muted-foreground mb-1">
-                Recording
-              </Typography>
-              <div className="flex items-center gap-2">
-                {currentMeeting.metadata.recordingEnabled ? (
-                  <Video className="h-4 w-4 text-green-500" />
-                ) : (
-                  <VideoOff className="h-4 w-4 text-muted-foreground" />
-                )}
-                <Typography variant="p" className="text-sm">
-                  {currentMeeting.metadata.recordingEnabled ? 'Enabled' : 'Disabled'}
-                </Typography>
-              </div>
-            </div>
-
-            <div>
-              <Typography variant="small" className="text-muted-foreground mb-1">
-                Transcription
-              </Typography>
-              <div className="flex items-center gap-2">
-                {currentMeeting.metadata.transcriptionEnabled ? (
-                  <Mic className="h-4 w-4 text-green-500" />
-                ) : (
-                  <MicOff className="h-4 w-4 text-muted-foreground" />
-                )}
-                <Typography variant="p" className="text-sm">
-                  {currentMeeting.metadata.transcriptionEnabled ? 'Enabled' : 'Disabled'}
-                </Typography>
-              </div>
-            </div>
-
-            {currentMeeting.endTime && (
-              <div>
-                <Typography variant="small" className="text-muted-foreground mb-1">
-                  End Time
-                </Typography>
-                <Typography variant="p" className="text-sm">
-                  {formatDate(currentMeeting.endTime)}
-                </Typography>
-              </div>
-            )}
-          </div>
-
-          {/* Progress bar for active sessions */}
-          {(currentMeeting.status === 'active' || currentMeeting.status === 'recording') && currentMeeting.metadata.maxDuration && (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <Typography variant="small">Progress</Typography>
-                  <Typography variant="small">{formatDuration(duration)} / {currentMeeting.metadata.maxDuration} min</Typography>
+                    </Card>
+                  ) : isLiveRecording ? (
+                    <Card className="bg-muted/50 border-border">
+                      <div className="p-8 text-center">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <Radio className="h-5 w-5 text-muted-foreground animate-pulse" />
+                          <Typography variant="p" className="text-muted-foreground">
+                            {isLiveConnecting ? 'Connecting to live transcription...' : 
+                             isLiveConnected ? 'Waiting for transcription...' :
+                             liveError ? 'Connection error - click to retry' :
+                             'Preparing transcription...'}
+                          </Typography>
+                        </div>
+                        <Typography variant="small" className="text-muted-foreground/70">
+                          Speech will appear here as it&apos;s transcribed in real-time
+                        </Typography>
+                        {liveError && !isLiveConnected && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-3"
+                            onClick={reconnectLive}
+                          >
+                            <Wifi className="h-4 w-4 mr-2" />
+                            Reconnect
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  ) : null}
                 </div>
-                <Progress 
-                  value={(duration / currentMeeting.metadata.maxDuration) * 100} 
-                  className="h-2"
-                />
-              </div>
-            </>
-          )}
+              )}
+            </TabsContent>
 
-          {/* Participants */}
-          {currentMeeting.participants.length > 0 && (
-            <>
-              <Separator />
-              <div>
-                <Typography variant="h4" className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Participants ({currentMeeting.participants.length})
-                </Typography>
-                <div className="space-y-2">
-                  {currentMeeting.participants.map((participant, index) => (
-                    <div key={participant.id || index} className="flex items-center justify-between p-2 rounded bg-muted">
-                      <Typography variant="p" className="text-sm">
-                        {typeof participant === 'string' 
-                          ? participant 
-                          : participant.name || participant.email || 'Unknown'
-                        }
+            {/* Summary Tab */}
+            <TabsContent value="summary" className="space-y-6">
+              {currentMeeting.summary ? (
+                <div className="space-y-6">
+                  {/* Summary Text */}
+                  {currentMeeting.summary.summary && (
+                    <div>
+                      <Typography variant="h4" className="text-sm font-semibold mb-3">
+                        Summary
                       </Typography>
-                      <Badge variant="outline" className="text-xs">
-                        {typeof participant === 'object' && participant.role ? participant.role : 'participant'}
-                      </Badge>
+                      <Card className="bg-muted/50 border-border">
+                        <div className="p-4">
+                          <Typography variant="p" className="text-sm whitespace-pre-wrap">
+                            {currentMeeting.summary.summary}
+                          </Typography>
+                        </div>
+                      </Card>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+                  )}
 
+                  {/* Key Points */}
+                  {currentMeeting.summary.keyPoints && currentMeeting.summary.keyPoints.length > 0 && (
+                    <div>
+                      <Typography variant="h4" className="text-sm font-semibold mb-3">
+                        Key Points
+                      </Typography>
+                      <Card className="bg-muted/50 border-border">
+                        <div className="p-4">
+                          <ul className="space-y-2">
+                            {currentMeeting.summary.keyPoints.map((point, index) => (
+                              <li key={index} className="flex items-start gap-2">
+                                <span className="text-primary mt-1">•</span>
+                                <Typography variant="p" className="text-sm flex-1">
+                                  {point}
+                                </Typography>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* Decisions */}
+                  {currentMeeting.summary.decisions && currentMeeting.summary.decisions.length > 0 && (
+                    <div>
+                      <Typography variant="h4" className="text-sm font-semibold mb-3">
+                        Decisions
+                      </Typography>
+                      <Card className="bg-muted/50 border-border">
+                        <div className="p-4">
+                          <ul className="space-y-2">
+                            {currentMeeting.summary.decisions.map((decision, index) => (
+                              <li key={index} className="flex items-start gap-2">
+                                <span className="text-primary mt-1">•</span>
+                                <Typography variant="p" className="text-sm flex-1">
+                                  {decision}
+                                </Typography>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* Next Steps */}
+                  {currentMeeting.summary.nextSteps && currentMeeting.summary.nextSteps.length > 0 && (
+                    <div>
+                      <Typography variant="h4" className="text-sm font-semibold mb-3">
+                        Next Steps
+                      </Typography>
+                      <Card className="bg-muted/50 border-border">
+                        <div className="p-4">
+                          <ul className="space-y-2">
+                            {currentMeeting.summary.nextSteps.map((step, index) => (
+                              <li key={index} className="flex items-start gap-2">
+                                <span className="text-primary mt-1">•</span>
+                                <Typography variant="p" className="text-sm flex-1">
+                                  {step}
+                                </Typography>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* Action Items */}
+                  {currentMeeting.summary.actionItems && currentMeeting.summary.actionItems.length > 0 && (
+                    <div>
+                      <Typography variant="h4" className="text-sm font-semibold mb-3">
+                        Action Items
+                      </Typography>
+                      <Card className="bg-muted/50 border-border">
+                        <div className="p-4 space-y-3">
+                          {currentMeeting.summary.actionItems.map((item) => (
+                            <div key={item.id} className="flex items-start gap-3 p-3 rounded bg-background border border-border">
+                              <div className="flex-1">
+                                <Typography variant="p" className="text-sm font-medium mb-1">
+                                  {item.description}
+                                </Typography>
+                                {item.assignee && (
+                                  <Typography variant="small" className="text-muted-foreground">
+                                    Assignee: {item.assignee}
+                                  </Typography>
+                                )}
+                                {item.dueDate && (
+                                  <Typography variant="small" className="text-muted-foreground">
+                                    Due: {new Date(item.dueDate).toLocaleDateString()}
+                                  </Typography>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {item.priority}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {item.status}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* Generated At */}
+                  {currentMeeting.summary.generatedAt && (
+                    <div className="text-xs text-muted-foreground">
+                      Generated: {new Date(currentMeeting.summary.generatedAt).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
+                  <Typography variant="h4" className="text-lg font-semibold mb-2">
+                    No Summary Available
+                  </Typography>
+                  <Typography variant="p" className="text-sm text-muted-foreground mb-6 text-center max-w-md">
+                    Generate an AI-powered summary based on the meeting transcription
+                  </Typography>
+                  <Button
+                    onClick={async () => {
+                      if (!currentMeeting.transcriptionText && !transcriptionFullText) {
+                        toast({
+                          title: 'Error',
+                          description: 'No transcription available. Please wait for transcription to complete.',
+                          variant: 'destructive'
+                        })
+                        return
+                      }
+
+                      try {
+                        setIsGeneratingSummary(true)
+                        await handleGenerateSummary(
+                          currentMeeting.id,
+                          (updatedMeeting) => {
+                            setCurrentMeeting(updatedMeeting)
+                            onMeetingUpdated?.(updatedMeeting)
+                            toast({
+                              title: 'Success',
+                              description: 'Summary generated successfully'
+                            })
+                          },
+                          (error) => {
+                            toast({
+                              title: 'Error',
+                              description: error,
+                              variant: 'destructive'
+                            })
+                          }
+                        )
+                      } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : 'Failed to generate summary'
+                        toast({
+                          title: 'Error',
+                          description: errorMessage,
+                          variant: 'destructive'
+                        })
+                      } finally {
+                        setIsGeneratingSummary(false)
+                      }
+                    }}
+                    disabled={isGeneratingSummary || !currentMeeting.transcriptionText && !transcriptionFullText}
+                  >
+                    {isGeneratingSummary ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating Summary...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Generate Summary
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 

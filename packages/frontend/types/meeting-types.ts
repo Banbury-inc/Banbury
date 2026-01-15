@@ -21,6 +21,7 @@ export interface MeetingSession {
   transcriptionText?: string
   participants: MeetingParticipant[]
   metadata: MeetingMetadata
+  summary?: MeetingSummary
   // Recall AI specific fields
   recallBot?: RecallBot
   recordings?: Recording[]  // Full recordings data from Recall AI
