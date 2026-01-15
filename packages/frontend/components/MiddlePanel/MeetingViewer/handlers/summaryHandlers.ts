@@ -3,7 +3,7 @@ import { MeetingSession, MeetingSummary, ActionItem } from "../../../../types/me
 import { v4 as uuidv4 } from 'uuid'
 
 /**
- * Generates a meeting summary using the AI assistant
+ * Generates a meeting summary using the AI assistant via langgraph-stream endpoint
  * @param transcriptionText The full meeting transcription text
  * @returns A structured MeetingSummary object
  */
@@ -41,32 +41,113 @@ ${transcriptionText}
 
 Respond with the JSON summary:`;
 
-  // Use the simpler /api/assistant endpoint which returns JSON directly
-  const response = await fetch('/api/assistant', {
+  // Use the langgraph-stream endpoint
+  const response = await fetch('/api/assistant/langgraph-stream', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'text/event-stream',
       ...(token && { 'Authorization': `Bearer ${token}` })
     },
     body: JSON.stringify({
       messages: [{
         role: 'user',
         content: [{ type: 'text', text: summaryPrompt }]
-      }]
+      }],
+      recursionLimit: 100
     })
   });
 
   if (!response.ok) {
-    throw new Error(`AI request failed: ${response.status} ${response.statusText}`);
+    const errorText = await response.text().catch(() => '');
+    throw new Error(`AI request failed: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`);
   }
 
-  const result = await response.json();
+  if (!response.body) {
+    throw new Error('No response body available');
+  }
 
-  // Extract text from response - the endpoint returns { content: [{ type: 'text', text: '...' }] }
-  const textPart = result.content?.find((p: any) => p.type === 'text');
-  const aiResponseText = textPart?.text || '';
+  // Read the streaming response
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = '';
+  let buffer = '';
 
-  if (!aiResponseText.trim()) {
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      // SSE events are separated by double newlines
+      const events = buffer.split('\n\n');
+      buffer = events.pop() || '';
+
+      for (const evt of events) {
+        const line = evt.trim();
+        if (!line.startsWith('data:')) continue;
+        
+        const jsonStr = line.slice(5).trim();
+        if (!jsonStr) continue;
+        
+        try {
+          const event = JSON.parse(jsonStr);
+          
+          // Handle text-delta events (incremental text updates)
+          if (event?.type === 'text-delta' && typeof event.text === 'string') {
+            fullText += event.text;
+          }
+          // Handle content events with text
+          else if (event?.type === 'content' && event.content) {
+            if (typeof event.content === 'string') {
+              fullText += event.content;
+            } else if (Array.isArray(event.content)) {
+              for (const part of event.content) {
+                if (part.type === 'text' && part.text) {
+                  fullText += part.text;
+                }
+              }
+            }
+          }
+          // Handle direct text field
+          else if (event?.text && typeof event.text === 'string') {
+            fullText += event.text;
+          }
+          // Handle message content
+          else if (event?.content && typeof event.content === 'string') {
+            fullText += event.content;
+          }
+        } catch (e) {
+          // Ignore malformed events
+          continue;
+        }
+      }
+    }
+
+    // Process any remaining buffer
+    if (buffer.trim()) {
+      const line = buffer.trim();
+      if (line.startsWith('data:')) {
+        const jsonStr = line.slice(5).trim();
+        if (jsonStr) {
+          try {
+            const event = JSON.parse(jsonStr);
+            if (event?.type === 'text-delta' && typeof event.text === 'string') {
+              fullText += event.text;
+            } else if (event?.text && typeof event.text === 'string') {
+              fullText += event.text;
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  if (!fullText.trim()) {
     throw new Error('No response received from AI');
   }
 
@@ -74,16 +155,16 @@ Respond with the JSON summary:`;
   let summaryData: any;
   try {
     // Try to extract JSON from markdown code blocks if present
-    const jsonMatch = aiResponseText.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/) ||
-                     aiResponseText.match(/(\{[\s\S]*\})/);
+    const jsonMatch = fullText.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/) ||
+                     fullText.match(/(\{[\s\S]*\})/);
 
     if (jsonMatch) {
       summaryData = JSON.parse(jsonMatch[1]);
     } else {
-      summaryData = JSON.parse(aiResponseText);
+      summaryData = JSON.parse(fullText);
     }
   } catch (error) {
-    console.error('Failed to parse AI response as JSON:', aiResponseText);
+    console.error('Failed to parse AI response as JSON:', fullText);
     throw new Error('AI did not return valid JSON. Please try again.');
   }
 

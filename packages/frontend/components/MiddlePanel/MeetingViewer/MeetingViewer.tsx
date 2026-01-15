@@ -1,4 +1,4 @@
-import { ArrowLeft, Download, FileText, Users, Clock, Video, VideoOff, Mic, MicOff, Play, Upload, Pause, Volume2, VolumeX, Loader2, Radio, Wifi, WifiOff, Sparkles } from "lucide-react"
+import { ArrowLeft, Download, FileText, Users, Clock, Video, VideoOff, Mic, MicOff, Play, Upload, Pause, Volume2, VolumeX, Loader2, Radio, Wifi, WifiOff, Sparkles, RefreshCw } from "lucide-react"
 import { useState, useCallback, useEffect, useRef } from "react"
 import { Button } from "../../ui/button"
 import { useToast } from "../../ui/use-toast"
@@ -10,11 +10,14 @@ import { Slider } from "../../ui/slider"
 import { MeetingSession, TranscriptionSegment, MeetingSummary } from "../../../types/meeting-types"
 import { ApiService } from "../../../../backend/api/apiService"
 import { handleGenerateSummary } from "./handlers/summaryHandlers"
+import { handleGenerateAnthropicSummaryWithSave } from "./handlers/anthropicSummaryHandlers"
+import { handleRegenerateSummary } from "./handlers/regenerateSummaryHandlers"
 import { VideoPlayerDialog } from "../../../pages/MeetingAgent/components/VideoPlayerDialog"
 import { RecordingUploadDialog } from "../../../pages/MeetingAgent/components/RecordingUploadDialog"
 import { Card } from "../../ui/card"
 import { useLiveTranscription } from "../../../hooks/useLiveTranscription"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../ui/tabs"
+import { MeetingSummaryEditor } from "./MeetingSummaryEditor"
 
 interface MeetingViewerProps {
   meeting: MeetingSession
@@ -48,6 +51,25 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
   
   // Summary state
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
+  const [summaryHtml, setSummaryHtml] = useState<string>('')
+  const summaryEditorRef = useRef<any>(null)
+  
+  // Update currentMeeting when meeting prop changes
+  useEffect(() => {
+    setCurrentMeeting(meeting)
+  }, [meeting])
+  
+  // Update summary HTML when meeting summary changes
+  useEffect(() => {
+    const meetingSummary = currentMeeting.summary?.summary
+    if (meetingSummary && meetingSummary.trim() !== '') {
+      // Always update to ensure editor gets the latest content
+      setSummaryHtml(meetingSummary)
+    } else if (!isGeneratingSummary) {
+      // Clear summary if it was removed (but only if we're not currently generating)
+      setSummaryHtml('')
+    }
+  }, [currentMeeting.summary?.summary, isGeneratingSummary])
   
   // Live transcription - only enabled when meeting is recording
   const isLiveRecording = currentMeeting.status === 'recording' || currentMeeting.status === 'active'
@@ -835,7 +857,7 @@ ${transcriptionData.segments?.map((segment: any) =>
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
                   ) : allSegments.length > 0 ? (
-                    <Card className="bg-muted/50 border-border">
+                    <Card className="border-border">
                       <div ref={transcriptScrollRef} className="p-4 max-h-[600px] overflow-y-auto space-y-3">
                         {allSegments.map((segment, index) => (
                           <div
@@ -868,7 +890,7 @@ ${transcriptionData.segments?.map((segment: any) =>
                       </div>
                     </Card>
                   ) : transcriptionFullText || currentMeeting.transcriptionText ? (
-                    <Card className="bg-muted/50 border-border">
+                    <Card className="border-border">
                       <div className="p-4 max-h-[600px] overflow-y-auto">
                         <Typography variant="p" className="text-sm whitespace-pre-wrap">
                           {transcriptionFullText || currentMeeting.transcriptionText}
@@ -910,210 +932,179 @@ ${transcriptionData.segments?.map((segment: any) =>
 
             {/* Summary Tab */}
             <TabsContent value="summary" className="space-y-6">
-              {currentMeeting.summary ? (
-                <div className="space-y-6">
-                  {/* Summary Text */}
-                  {currentMeeting.summary.summary && (
-                    <div>
-                      <Typography variant="h4" className="text-sm font-semibold mb-3">
-                        Summary
+              <div className="flex flex-col h-full">
+                {/* Header with regenerate button when summary exists */}
+                {(currentMeeting.summary || summaryHtml) && (
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Typography variant="h4" className="text-sm font-semibold">
+                        Meeting Summary
                       </Typography>
-                      <Card className="bg-muted/50 border-border">
-                        <div className="p-4">
-                          <Typography variant="p" className="text-sm whitespace-pre-wrap">
-                            {currentMeeting.summary.summary}
-                          </Typography>
-                        </div>
-                      </Card>
+                      {currentMeeting.summary?.generatedAt && (
+                        <Typography variant="small" className="text-muted-foreground">
+                          Generated: {new Date(currentMeeting.summary.generatedAt).toLocaleString()}
+                        </Typography>
+                      )}
                     </div>
-                  )}
-
-                  {/* Key Points */}
-                  {currentMeeting.summary.keyPoints && currentMeeting.summary.keyPoints.length > 0 && (
-                    <div>
-                      <Typography variant="h4" className="text-sm font-semibold mb-3">
-                        Key Points
-                      </Typography>
-                      <Card className="bg-muted/50 border-border">
-                        <div className="p-4">
-                          <ul className="space-y-2">
-                            {currentMeeting.summary.keyPoints.map((point, index) => (
-                              <li key={index} className="flex items-start gap-2">
-                                <span className="text-primary mt-1">•</span>
-                                <Typography variant="p" className="text-sm flex-1">
-                                  {point}
-                                </Typography>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </Card>
-                    </div>
-                  )}
-
-                  {/* Decisions */}
-                  {currentMeeting.summary.decisions && currentMeeting.summary.decisions.length > 0 && (
-                    <div>
-                      <Typography variant="h4" className="text-sm font-semibold mb-3">
-                        Decisions
-                      </Typography>
-                      <Card className="bg-muted/50 border-border">
-                        <div className="p-4">
-                          <ul className="space-y-2">
-                            {currentMeeting.summary.decisions.map((decision, index) => (
-                              <li key={index} className="flex items-start gap-2">
-                                <span className="text-primary mt-1">•</span>
-                                <Typography variant="p" className="text-sm flex-1">
-                                  {decision}
-                                </Typography>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </Card>
-                    </div>
-                  )}
-
-                  {/* Next Steps */}
-                  {currentMeeting.summary.nextSteps && currentMeeting.summary.nextSteps.length > 0 && (
-                    <div>
-                      <Typography variant="h4" className="text-sm font-semibold mb-3">
-                        Next Steps
-                      </Typography>
-                      <Card className="bg-muted/50 border-border">
-                        <div className="p-4">
-                          <ul className="space-y-2">
-                            {currentMeeting.summary.nextSteps.map((step, index) => (
-                              <li key={index} className="flex items-start gap-2">
-                                <span className="text-primary mt-1">•</span>
-                                <Typography variant="p" className="text-sm flex-1">
-                                  {step}
-                                </Typography>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </Card>
-                    </div>
-                  )}
-
-                  {/* Action Items */}
-                  {currentMeeting.summary.actionItems && currentMeeting.summary.actionItems.length > 0 && (
-                    <div>
-                      <Typography variant="h4" className="text-sm font-semibold mb-3">
-                        Action Items
-                      </Typography>
-                      <Card className="bg-muted/50 border-border">
-                        <div className="p-4 space-y-3">
-                          {currentMeeting.summary.actionItems.map((item) => (
-                            <div key={item.id} className="flex items-start gap-3 p-3 rounded bg-background border border-border">
-                              <div className="flex-1">
-                                <Typography variant="p" className="text-sm font-medium mb-1">
-                                  {item.description}
-                                </Typography>
-                                {item.assignee && (
-                                  <Typography variant="small" className="text-muted-foreground">
-                                    Assignee: {item.assignee}
-                                  </Typography>
-                                )}
-                                {item.dueDate && (
-                                  <Typography variant="small" className="text-muted-foreground">
-                                    Due: {new Date(item.dueDate).toLocaleDateString()}
-                                  </Typography>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="text-xs">
-                                  {item.priority}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  {item.status}
-                                </Badge>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </Card>
-                    </div>
-                  )}
-
-                  {/* Generated At */}
-                  {currentMeeting.summary.generatedAt && (
-                    <div className="text-xs text-muted-foreground">
-                      Generated: {new Date(currentMeeting.summary.generatedAt).toLocaleString()}
-                    </div>
-                  )}
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          setIsGeneratingSummary(true)
+                          setSummaryHtml('')
+                          // Use available transcription text from state or meeting object
+                          const availableTranscription = currentMeeting.transcriptionText || transcriptionFullText
+                          const editor = summaryEditorRef.current?.editor
+                          
+                          await handleRegenerateSummary({
+                            sessionId: currentMeeting.id,
+                            transcriptionText: availableTranscription,
+                            editor,
+                            onSuccess: (updatedMeeting) => {
+                              setCurrentMeeting(updatedMeeting)
+                              onMeetingUpdated?.(updatedMeeting)
+                              setSummaryHtml(updatedMeeting.summary?.summary || '')
+                              toast({
+                                title: 'Success',
+                                description: 'Summary regenerated and saved successfully'
+                              })
+                            },
+                            onError: (error) => {
+                              toast({
+                                title: 'Error',
+                                description: error,
+                                variant: 'destructive'
+                              })
+                            },
+                            onProgress: (html) => {
+                              setSummaryHtml(html)
+                            }
+                          })
+                        } catch (error) {
+                          const errorMessage = error instanceof Error ? error.message : 'Failed to regenerate summary'
+                          toast({
+                            title: 'Error',
+                            description: errorMessage,
+                            variant: 'destructive'
+                          })
+                        } finally {
+                          setIsGeneratingSummary(false)
+                        }
+                      }}
+                      disabled={isGeneratingSummary || (!currentMeeting.transcriptionText && !transcriptionFullText)}
+                    >
+                      {isGeneratingSummary ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Regenerating...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Regenerate Summary
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+                <div className="flex-1 flex flex-col min-h-[600px]">
+                  <MeetingSummaryEditor
+                    key={currentMeeting.id}
+                    initialContent={currentMeeting.summary?.summary || summaryHtml || ''}
+                    isReadOnly={true}
+                    isLoading={isGeneratingSummary}
+                    placeholder="Summary will appear here..."
+                    ref={summaryEditorRef}
+                  />
                 </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
-                  <Typography variant="h4" className="text-lg font-semibold mb-2">
-                    No Summary Available
-                  </Typography>
-                  <Typography variant="p" className="text-sm text-muted-foreground mb-6 text-center max-w-md">
-                    Generate an AI-powered summary based on the meeting transcription
-                  </Typography>
-                  <Button
-                    onClick={async () => {
-                      if (!currentMeeting.transcriptionText && !transcriptionFullText) {
-                        toast({
-                          title: 'Error',
-                          description: 'No transcription available. Please wait for transcription to complete.',
-                          variant: 'destructive'
-                        })
-                        return
-                      }
+                {!currentMeeting.summary && !summaryHtml && (
+                  <div className="flex flex-col items-center justify-center py-6">
+                    <Typography variant="h4" className="text-lg font-semibold mb-2">
+                      No Summary Available
+                    </Typography>
+                    <Typography variant="p" className="text-sm text-muted-foreground mb-6 text-center max-w-md">
+                      Generate an AI-powered summary based on the meeting transcription
+                    </Typography>
+                    <Button
+                      onClick={async () => {
+                        if (!currentMeeting.transcriptionText && !transcriptionFullText) {
+                          toast({
+                            title: 'Error',
+                            description: 'No transcription available. Please wait for transcription to complete.',
+                            variant: 'destructive'
+                          })
+                          return
+                        }
 
-                      try {
-                        setIsGeneratingSummary(true)
-                        // Use available transcription text from state or meeting object
-                        const availableTranscription = currentMeeting.transcriptionText || transcriptionFullText
-                        await handleGenerateSummary(
-                          currentMeeting.id,
-                          (updatedMeeting) => {
-                            setCurrentMeeting(updatedMeeting)
-                            onMeetingUpdated?.(updatedMeeting)
-                            toast({
-                              title: 'Success',
-                              description: 'Summary generated successfully'
-                            })
-                          },
-                          (error) => {
-                            toast({
-                              title: 'Error',
-                              description: error,
-                              variant: 'destructive'
-                            })
-                          },
-                          availableTranscription
-                        )
-                      } catch (error) {
-                        const errorMessage = error instanceof Error ? error.message : 'Failed to generate summary'
-                        toast({
-                          title: 'Error',
-                          description: errorMessage,
-                          variant: 'destructive'
-                        })
-                      } finally {
-                        setIsGeneratingSummary(false)
-                      }
-                    }}
-                    disabled={isGeneratingSummary || !currentMeeting.transcriptionText && !transcriptionFullText}
-                  >
-                    {isGeneratingSummary ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Generating Summary...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Generate Summary
-                      </>
-                    )}
-                  </Button>
-                </div>
-              )}
+                        const editor = summaryEditorRef.current?.editor
+                        if (!editor) {
+                          toast({
+                            title: 'Error',
+                            description: 'Editor not ready. Please try again.',
+                            variant: 'destructive'
+                          })
+                          return
+                        }
+
+                        try {
+                          setIsGeneratingSummary(true)
+                          setSummaryHtml('')
+                          // Use available transcription text from state or meeting object
+                          const availableTranscription = currentMeeting.transcriptionText || transcriptionFullText
+                          
+                          await handleGenerateAnthropicSummaryWithSave(
+                            currentMeeting.id,
+                            availableTranscription,
+                            editor,
+                            (updatedMeeting) => {
+                              setCurrentMeeting(updatedMeeting)
+                              onMeetingUpdated?.(updatedMeeting)
+                              setSummaryHtml(updatedMeeting.summary?.summary || '')
+                              toast({
+                                title: 'Success',
+                                description: 'Summary generated successfully'
+                              })
+                            },
+                            (error) => {
+                              toast({
+                                title: 'Error',
+                                description: error,
+                                variant: 'destructive'
+                              })
+                            },
+                            (html) => {
+                              setSummaryHtml(html)
+                            }
+                          )
+                        } catch (error) {
+                          const errorMessage = error instanceof Error ? error.message : 'Failed to generate summary'
+                          toast({
+                            title: 'Error',
+                            description: errorMessage,
+                            variant: 'destructive'
+                          })
+                        } finally {
+                          setIsGeneratingSummary(false)
+                        }
+                      }}
+                      disabled={isGeneratingSummary || (!currentMeeting.transcriptionText && !transcriptionFullText)}
+                    >
+                      {isGeneratingSummary ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generating Summary...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generate Summary
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
         </div>

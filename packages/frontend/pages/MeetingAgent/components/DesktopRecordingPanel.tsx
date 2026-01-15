@@ -443,14 +443,6 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
             </p>
           </div>
         )}
-        
-        {/* Info Footer */}
-        <div className="pt-2 border-t border-border">
-          <p className="text-xs text-muted-foreground">
-            Desktop recording captures your screen and audio without needing a bot to join the meeting.
-            Recordings are automatically transcribed and saved to your account.
-          </p>
-        </div>
       </CardContent>
     </Card>
   )
