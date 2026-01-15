@@ -93,16 +93,6 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
   // Live transcription - only enabled when meeting is recording
   const isLiveRecording = currentMeeting.status === 'recording' || currentMeeting.status === 'active'
   
-  // Log live transcription state for debugging
-  useEffect(() => {
-    if (isLiveRecording) {
-      console.log('[MeetingViewer] Live transcription enabled for session:', currentMeeting.id, {
-        status: currentMeeting.status,
-        meetingUrl: currentMeeting.meetingUrl,
-        isDesktopRecording: currentMeeting.meetingUrl?.startsWith('desktop://')
-      })
-    }
-  }, [isLiveRecording, currentMeeting.id, currentMeeting.status, currentMeeting.meetingUrl])
   
   const {
     segments: liveSegments,
@@ -115,7 +105,6 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
     sessionId: currentMeeting.id,
     enabled: isLiveRecording,
     onSegment: (segment) => {
-      console.log('[MeetingViewer] Received live segment:', segment.id, segment.text?.substring(0, 50))
       // Auto-scroll to latest segment
       if (transcriptScrollRef.current) {
         setTimeout(() => {
@@ -127,9 +116,10 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
       }
     },
     onConnectionChange: (connected) => {
-      console.log('[MeetingViewer] Live transcription connection changed:', connected)
+      // Connection state changed
     },
     onError: (error) => {
+      // eslint-disable-next-line no-console
       console.error('[MeetingViewer] Live transcription error:', error)
     }
   })
@@ -447,6 +437,7 @@ ${transcriptionData.segments?.map((segment: any) =>
           setVideoStreamUrl(videoUrl)
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Failed to get stream URL:', error)
         setVideoError('Failed to load video stream')
         setVideoStreamUrl(videoUrl) // Fallback to direct URL
@@ -536,6 +527,7 @@ ${transcriptionData.segments?.map((segment: any) =>
           setTranscriptionFullText(text)
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Failed to fetch transcript from URL:', error)
         // Don't set error state, just log it
       } finally {

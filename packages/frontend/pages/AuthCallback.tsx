@@ -182,13 +182,6 @@ const AuthCallback = (): JSX.Element => {
           sessionStorage.setItem('lastOAuthCode', code);
         }
 
-        // Log for debugging
-        if (typeof window !== 'undefined' && window.console) {
-          console.log('[AuthCallback] Processing OAuth callback');
-          console.log('[AuthCallback] Code present:', !!code);
-          console.log('[AuthCallback] Scope:', scope);
-        }
-
         const result = await ApiService.handleOAuthCallback(code, scope);
 
         if (result.success) {
@@ -219,6 +212,7 @@ const AuthCallback = (): JSX.Element => {
         
         setStatus('error');
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        // eslint-disable-next-line no-console
         console.error('[AuthCallback] OAuth callback error:', err);
         setError(`OAuth callback failed: ${errorMessage}`);
         router.replace('/login');

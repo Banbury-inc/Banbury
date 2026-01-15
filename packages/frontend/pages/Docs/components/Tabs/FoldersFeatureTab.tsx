@@ -16,7 +16,7 @@ export default function FoldersFeatureTab() {
         <Typography variant="h4" className="mb-2">
           • <strong>Visibility:</strong>
         </Typography>
-        <Typography variant="muted" className="mb-2 pl-2">
+        <Typography variant="p" className="mb-2 pl-2">
           • Banbury can read what's inside a folder and help to understand it better.
         </Typography>
       </Box>
@@ -27,16 +27,16 @@ export default function FoldersFeatureTab() {
           • <strong>Actions - Banbury can:</strong>
         </Typography>
         <Box sx={{ pl: 2 }}>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Create a new folder.
           </Typography>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Move things into and out of a folder.
           </Typography>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Perform an in depth analysis of a folder.
           </Typography>
-          <Typography variant="muted">
+          <Typography variant="p">
             • Rename a folder.
           </Typography>
         </Box>

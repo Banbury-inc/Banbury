@@ -143,7 +143,6 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
   }
   
   async function handleStart(meetingId: string, platform: string, title: string) {
-    console.log('[DesktopRecordingPanel] handleStart called with:', { meetingId, platform, title })
     setIsLoading(true)
     try {
       const result = await handleStartDesktopSDKRecording(
@@ -156,8 +155,6 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
         startRecording
       )
       
-      console.log('[DesktopRecordingPanel] Start recording result:', result)
-      
       if (result.success) {
         toast({
           title: 'Recording Started',
@@ -167,13 +164,11 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
         // Store the session ID for when we stop recording
         if (result.sessionId) {
           setCurrentSessionId(result.sessionId)
-          console.log('[DesktopRecordingPanel] Stored sessionId:', result.sessionId)
         }
         
         // Call the onRecordingStarted callback with session data
         if (onRecordingStarted) {
           if (result.sessionId) {
-            console.log('[DesktopRecordingPanel] Calling onRecordingStarted with sessionId:', result.sessionId)
             onRecordingStarted({
               sessionId: result.sessionId,
               windowId: meetingId,
@@ -181,10 +176,10 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
               meetingTitle: title
             })
           } else {
+            // eslint-disable-next-line no-console
             console.warn('[DesktopRecordingPanel] Recording started but no sessionId returned from backend')
             // Still call the callback with a temporary ID for UI purposes
             const tempSessionId = `temp_${Date.now()}`
-            console.log('[DesktopRecordingPanel] Using temporary sessionId:', tempSessionId)
             onRecordingStarted({
               sessionId: tempSessionId,
               windowId: meetingId,
@@ -202,6 +197,7 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
         })
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('[DesktopRecordingPanel] Exception starting recording:', error)
       toast({
         title: 'Error Starting Recording',
@@ -214,10 +210,9 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
   }
   
   async function handleStop() {
-    console.log('[DesktopRecordingPanel] handleStop called with status:', recordingStatus, 'sessionId:', currentSessionId)
-    
     // Even if windowId is undefined, try to stop - the backend will use the stored status
     if (!recordingStatus.isRecording) {
+      // eslint-disable-next-line no-console
       console.warn('[DesktopRecordingPanel] Not currently recording')
       return
     }
@@ -225,7 +220,6 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
     setIsLoading(true)
     try {
       // Pass the windowId even if it's undefined - the backend will fall back to stored status
-      console.log('[DesktopRecordingPanel] Stopping recording for window:', recordingStatus.windowId || 'undefined (backend will use stored windowId)')
       const result = await handleStopDesktopSDKRecording(
         recordingStatus.windowId || '', 
         stopRecording,
@@ -248,6 +242,7 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
         })
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('[DesktopRecordingPanel] Exception stopping recording:', error)
       toast({
         title: 'Error Stopping Recording',

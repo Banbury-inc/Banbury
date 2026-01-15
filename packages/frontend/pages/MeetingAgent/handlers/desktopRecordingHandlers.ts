@@ -66,6 +66,7 @@ export async function createBotForMeeting(params: {
       message: response.message
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('[Desktop Recording] Failed to create bot:', error)
     return {
       success: false,
@@ -87,8 +88,6 @@ export async function handleStartDesktopSDKRecording(
   sdkStartRecording: (windowId: string, uploadToken: string) => Promise<{ success: boolean; error?: string }>
 ): Promise<{ success: boolean; sessionId?: string; error?: string; message?: string }> {
   try {
-    console.log('[Desktop SDK] Getting upload token for window:', params.windowId)
-    
     // Get upload token from backend
     const tokenResponse = await ApiService.post<{
       success: boolean
@@ -104,6 +103,7 @@ export async function handleStartDesktopSDKRecording(
     })
     
     if (!tokenResponse.success || !tokenResponse.upload_token) {
+      // eslint-disable-next-line no-console
       console.error('[Desktop SDK] Failed to get upload token:', tokenResponse.error)
       return {
         success: false,
@@ -113,13 +113,12 @@ export async function handleStartDesktopSDKRecording(
     }
     
     const sessionId = tokenResponse.session_id
-    console.log('[Desktop SDK] Got session_id:', sessionId)
-    console.log('[Desktop SDK] Starting recording with upload token')
     
     // Start recording using the Desktop SDK
     const recordingResult = await sdkStartRecording(params.windowId, tokenResponse.upload_token)
     
     if (!recordingResult.success) {
+      // eslint-disable-next-line no-console
       console.error('[Desktop SDK] Failed to start recording:', recordingResult.error)
       return {
         success: false,
@@ -128,14 +127,13 @@ export async function handleStartDesktopSDKRecording(
       }
     }
     
-    console.log('[Desktop SDK] Recording started successfully with session:', sessionId)
-    
     return {
       success: true,
       sessionId,
       message: 'Desktop recording started successfully'
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('[Desktop SDK] Failed to start desktop recording:', error)
     return {
       success: false,
@@ -181,6 +179,7 @@ export async function handleStartRecording(
       message: botResponse.message || 'Bot created and joining meeting'
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('[Desktop Recording] Failed to start recording:', error)
     return {
       success: false,
@@ -198,12 +197,11 @@ export async function handleStopDesktopSDKRecording(
   sessionId?: string
 ): Promise<{ success: boolean; error?: string; message?: string }> {
   try {
-    console.log('[Desktop SDK] Stopping recording for window:', windowId, 'session:', sessionId)
-    
     // Stop recording using the Desktop SDK
     const result = await sdkStopRecording(windowId)
     
     if (!result.success) {
+      // eslint-disable-next-line no-console
       console.error('[Desktop SDK] Failed to stop recording:', result.error)
       return {
         success: false,
@@ -212,12 +210,9 @@ export async function handleStopDesktopSDKRecording(
       }
     }
     
-    console.log('[Desktop SDK] Recording stopped successfully')
-    
     // If we have a session ID, notify the backend to end the session
     if (sessionId) {
       try {
-        console.log('[Desktop SDK] Ending session on backend:', sessionId)
         const endResponse = await ApiService.post<{
           success: boolean
           error?: string
@@ -225,10 +220,9 @@ export async function handleStopDesktopSDKRecording(
         }>(`/meeting-agent/desktop/session/${sessionId}/end/`, {})
         
         if (!endResponse.success) {
+          // eslint-disable-next-line no-console
           console.warn('[Desktop SDK] Failed to end session on backend:', endResponse.error)
           // Don't fail the whole operation, just log the warning
-        } else {
-          console.log('[Desktop SDK] Session ended on backend successfully')
         }
       } catch (endError) {
         console.warn('[Desktop SDK] Error ending session on backend:', endError)
@@ -241,6 +235,7 @@ export async function handleStopDesktopSDKRecording(
       message: 'Desktop recording stopped successfully'
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('[Desktop SDK] Failed to stop desktop recording:', error)
     return {
       success: false,
@@ -298,6 +293,7 @@ export async function getBotStatus(
       message: response.message
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('[Desktop Recording] Failed to get bot status:', error)
     return {
       success: false,

@@ -17,7 +17,7 @@ export default function CanvasFeatureTab() {
         <Typography variant="h4" className="mb-2">
           • <strong>Visibility:</strong>
         </Typography>
-        <Typography variant="muted" className="mb-2 pl-2">
+        <Typography variant="p" className="mb-2 pl-2">
           • Banbury can view and understand the contents of a canvas, including all elements, shapes, text, and layouts.
         </Typography>
       </Box>
@@ -28,16 +28,16 @@ export default function CanvasFeatureTab() {
           • <strong>Actions - Banbury can:</strong>
         </Typography>
         <Box sx={{ pl: 2 }}>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Create a new canvas.
           </Typography>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Add and modify elements on the canvas.
           </Typography>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Arrange and organize canvas elements.
           </Typography>
-          <Typography variant="muted">
+          <Typography variant="p">
             • Rename and manage canvas files.
           </Typography>
         </Box>

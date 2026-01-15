@@ -16,7 +16,7 @@ export default function BrowseFeatureTab() {
         <Typography variant="h4" className="mb-2">
           • <strong>Visibility:</strong>
         </Typography>
-        <Typography variant="muted" className="mb-2 pl-2">
+        <Typography variant="p" className="mb-2 pl-2">
           • Banbury can browse the web to gather and read information.
         </Typography>
       </Box>
@@ -27,13 +27,13 @@ export default function BrowseFeatureTab() {
           • <strong>Actions - Banbury can:</strong>
         </Typography>
         <Box sx={{ pl: 2 }}>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Create a new browser session.
           </Typography>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Read the output of a website.
           </Typography>
-          <Typography variant="muted" className="mb-1">
+          <Typography variant="p" className="mb-1">
             • Fill out forms on a website.
           </Typography>
         </Box>
