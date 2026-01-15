@@ -486,9 +486,6 @@ ${transcriptionData.segments?.map((segment: any) =>
             <Typography variant="h3" className="text-lg font-semibold truncate">
               {currentMeeting.title || 'Untitled Meeting'}
             </Typography>
-            <Typography variant="small" className="text-muted-foreground">
-              {currentMeeting.platform?.name || 'Desktop Recording'} • {formatDate(currentMeeting.startTime)}
-            </Typography>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -502,7 +499,7 @@ ${transcriptionData.segments?.map((segment: any) =>
       <div className="px-6 py-3 bg-card border-b border-border flex items-center gap-2 flex-wrap">
         {currentMeeting.status === 'completed' && (currentMeeting.recordingUrl || videoStreamUrl) && (
           <Button
-            size="sm"
+            size="xs"
             variant="outline"
             onClick={handleDownloadRecording}
             disabled={isLoading}
@@ -513,7 +510,7 @@ ${transcriptionData.segments?.map((segment: any) =>
         )}
         {(currentMeeting.status === 'active' || currentMeeting.status === 'completed') && !currentMeeting.recordingUrl && !videoStreamUrl && (
           <Button
-            size="sm"
+            size="xs"
             variant="outline"
             onClick={() => setIsUploadDialogOpen(true)}
           >
@@ -523,7 +520,7 @@ ${transcriptionData.segments?.map((segment: any) =>
         )}
         {(currentMeeting.transcriptionText || transcriptionFullText) && (
           <Button
-            size="sm"
+            size="xs"
             variant="outline"
             onClick={handleDownloadTranscription}
             disabled={isLoading}
@@ -1069,6 +1066,8 @@ ${transcriptionData.segments?.map((segment: any) =>
 
                       try {
                         setIsGeneratingSummary(true)
+                        // Use available transcription text from state or meeting object
+                        const availableTranscription = currentMeeting.transcriptionText || transcriptionFullText
                         await handleGenerateSummary(
                           currentMeeting.id,
                           (updatedMeeting) => {
@@ -1085,7 +1084,8 @@ ${transcriptionData.segments?.map((segment: any) =>
                               description: error,
                               variant: 'destructive'
                             })
-                          }
+                          },
+                          availableTranscription
                         )
                       } catch (error) {
                         const errorMessage = error instanceof Error ? error.message : 'Failed to generate summary'
