@@ -226,6 +226,81 @@ contextBridge.exposeInMainWorld('desktopApp', {
     onError: (callback: (error: { error: string; windowId?: string }) => void): () => void => {
       return addIPCListener('desktop-recording:error', callback)
     }
+  },
+
+  /**
+   * Auto-updater API
+   */
+  updater: {
+    /**
+     * Check for available updates
+     */
+    checkForUpdates: (): Promise<{ available: boolean; error?: string; currentVersion?: string }> => {
+      return ipcRenderer.invoke('updater:check-for-updates')
+    },
+
+    /**
+     * Download the available update
+     */
+    downloadUpdate: (): Promise<{ success: boolean; error?: string }> => {
+      return ipcRenderer.invoke('updater:download-update')
+    },
+
+    /**
+     * Install the downloaded update (will restart the app)
+     */
+    installUpdate: (): Promise<{ success: boolean; error?: string }> => {
+      return ipcRenderer.invoke('updater:install-update')
+    },
+
+    /**
+     * Get the current app version
+     */
+    getCurrentVersion: (): Promise<string> => {
+      return ipcRenderer.invoke('updater:get-current-version')
+    },
+
+    /**
+     * Subscribe to update checking events
+     */
+    onCheckingForUpdate: (callback: () => void): () => void => {
+      return addIPCListener('updater:checking-for-update', callback)
+    },
+
+    /**
+     * Subscribe to update available events
+     */
+    onUpdateAvailable: (callback: (info: { version: string; releaseDate?: string; releaseNotes?: string }) => void): () => void => {
+      return addIPCListener('updater:update-available', callback)
+    },
+
+    /**
+     * Subscribe to update not available events
+     */
+    onUpdateNotAvailable: (callback: (info: { version: string }) => void): () => void => {
+      return addIPCListener('updater:update-not-available', callback)
+    },
+
+    /**
+     * Subscribe to update error events
+     */
+    onUpdateError: (callback: (error: { message: string }) => void): () => void => {
+      return addIPCListener('updater:error', callback)
+    },
+
+    /**
+     * Subscribe to download progress events
+     */
+    onDownloadProgress: (callback: (progress: { percent: number; transferred: number; total: number }) => void): () => void => {
+      return addIPCListener('updater:download-progress', callback)
+    },
+
+    /**
+     * Subscribe to update downloaded events
+     */
+    onUpdateDownloaded: (callback: (info: { version: string; releaseDate?: string; releaseNotes?: string }) => void): () => void => {
+      return addIPCListener('updater:update-downloaded', callback)
+    }
   }
 })
 
@@ -258,6 +333,18 @@ declare global {
         onRecordingStopped: (callback: (event: { windowId: string; reason: string }) => void) => () => void
         onPermissionUpdate: (callback: (permissions: PermissionStatus) => void) => () => void
         onError: (callback: (error: { error: string; windowId?: string }) => void) => () => void
+      }
+      updater: {
+        checkForUpdates: () => Promise<{ available: boolean; error?: string; currentVersion?: string }>
+        downloadUpdate: () => Promise<{ success: boolean; error?: string }>
+        installUpdate: () => Promise<{ success: boolean; error?: string }>
+        getCurrentVersion: () => Promise<string>
+        onCheckingForUpdate: (callback: () => void) => () => void
+        onUpdateAvailable: (callback: (info: { version: string; releaseDate?: string; releaseNotes?: string }) => void) => () => void
+        onUpdateNotAvailable: (callback: (info: { version: string }) => void) => () => void
+        onUpdateError: (callback: (error: { message: string }) => void) => () => void
+        onDownloadProgress: (callback: (progress: { percent: number; transferred: number; total: number }) => void) => () => void
+        onUpdateDownloaded: (callback: (info: { version: string; releaseDate?: string; releaseNotes?: string }) => void) => () => void
       }
     }
   }

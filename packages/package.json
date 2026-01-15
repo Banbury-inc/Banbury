@@ -201,6 +201,7 @@
     "cross-env": "^7.0.3",
     "electron": "^30.5.1",
     "electron-builder": "^24.13.3",
+    "electron-updater": "^6.1.7",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.2.7",
     "eslint-config-prettier": "^9.1.0",

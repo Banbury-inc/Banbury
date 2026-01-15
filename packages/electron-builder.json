@@ -72,5 +72,8 @@
     "icon": "electron-app/resources/icons",
     "category": "Office"
   },
-  "publish": null
+  "publish": {
+    "provider": "github",
+    "releaseType": "release"
+  }
 }

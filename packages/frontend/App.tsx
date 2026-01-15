@@ -20,6 +20,7 @@ import { ApiService } from '../backend/api/apiService';
 import { getErrorTracker } from './utils/errorTracker';
 import { getUserEngagementTracker } from './utils/userEngagementTracker';
 import { UserFilesProvider } from './contexts/UserFilesContext';
+import { UpdateNotification } from './components/UpdateNotification';
 
 import './index.css';
 
@@ -104,6 +105,7 @@ const App = (): JSX.Element => {
           <BrowserRouter>
             <PageTracker />
             <AnalyticsInitializer />
+            <UpdateNotification />
             <Routes>
               <Route path='/workspaces' element={<Workspaces />} />
               <Route path='/knowledge' element={<Knowledge />} />

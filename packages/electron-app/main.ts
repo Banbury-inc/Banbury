@@ -2,6 +2,7 @@
 
 import { app, BrowserWindow, Menu, shell, ipcMain } from 'electron'
 import path from 'path'
+import { autoUpdater } from 'electron-updater'
 import { initDesktopRecording, setupDesktopRecordingIPC, cleanupDesktopRecording } from './desktop-recording'
 
 // Environment variable names for URL configuration
@@ -118,6 +119,20 @@ function resolveIconPath(): string | undefined {
 
 // Store reference to main window for desktop recording
 let mainWindow: BrowserWindow | null = null
+
+// Configure auto-updater
+autoUpdater.autoDownload = false
+autoUpdater.autoInstallOnAppQuit = true
+
+// Only check for updates in production
+if (!isDev) {
+  // Configure update check interval (check every 4 hours)
+  setInterval(() => {
+    autoUpdater.checkForUpdates().catch((error) => {
+      console.error('[Electron] Error checking for updates:', error)
+    })
+  }, 4 * 60 * 60 * 1000) // 4 hours in milliseconds
+}
 
 /**
  * Creates the main application window with secure defaults.
@@ -318,9 +333,63 @@ app.whenReady().then(() => {
   ipcMain.handle('window:is-maximized', () => {
     return mainWindow ? mainWindow.isMaximized() : false
   })
+
+  // Set up IPC handlers for auto-updater
+  ipcMain.handle('updater:check-for-updates', async () => {
+    if (isDev) {
+      return { available: false, error: 'Updates are disabled in development mode' }
+    }
+    try {
+      const result = await autoUpdater.checkForUpdates()
+      return { available: false, currentVersion: app.getVersion() }
+    } catch (error) {
+      console.error('[Electron] Error checking for updates:', error)
+      return { available: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('updater:download-update', async () => {
+    if (isDev) {
+      return { success: false, error: 'Updates are disabled in development mode' }
+    }
+    try {
+      await autoUpdater.downloadUpdate()
+      return { success: true }
+    } catch (error) {
+      console.error('[Electron] Error downloading update:', error)
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('updater:install-update', async () => {
+    if (isDev) {
+      return { success: false, error: 'Updates are disabled in development mode' }
+    }
+    try {
+      autoUpdater.quitAndInstall(false, true)
+      return { success: true }
+    } catch (error) {
+      console.error('[Electron] Error installing update:', error)
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('updater:get-current-version', () => {
+    return app.getVersion()
+  })
   
   configureMenu()
   createWindow()
+
+  // Check for updates on app start (only in production)
+  if (!isDev) {
+    // Wait a bit after app start before checking for updates
+    setTimeout(() => {
+      autoUpdater.checkForUpdates().catch((error) => {
+        console.error('[Electron] Error checking for updates on startup:', error)
+      })
+    }, 5000) // Wait 5 seconds after app start
+  }
 
   // macOS: Re-create window when dock icon is clicked and no windows exist
   app.on('activate', () => {
@@ -328,6 +397,64 @@ app.whenReady().then(() => {
       createWindow()
     }
   })
+})
+
+// Auto-updater event handlers
+autoUpdater.on('checking-for-update', () => {
+  console.log('[Electron] Checking for updates...')
+  if (mainWindow) {
+    mainWindow.webContents.send('updater:checking-for-update')
+  }
+})
+
+autoUpdater.on('update-available', (info) => {
+  console.log('[Electron] Update available:', info.version)
+  if (mainWindow) {
+    mainWindow.webContents.send('updater:update-available', {
+      version: info.version,
+      releaseDate: info.releaseDate,
+      releaseNotes: info.releaseNotes
+    })
+  }
+})
+
+autoUpdater.on('update-not-available', (info) => {
+  console.log('[Electron] Update not available. Current version is latest.')
+  if (mainWindow) {
+    mainWindow.webContents.send('updater:update-not-available', {
+      version: info.version
+    })
+  }
+})
+
+autoUpdater.on('error', (error) => {
+  console.error('[Electron] Error in auto-updater:', error)
+  if (mainWindow) {
+    mainWindow.webContents.send('updater:error', {
+      message: error.message
+    })
+  }
+})
+
+autoUpdater.on('download-progress', (progressObj) => {
+  if (mainWindow) {
+    mainWindow.webContents.send('updater:download-progress', {
+      percent: progressObj.percent,
+      transferred: progressObj.transferred,
+      total: progressObj.total
+    })
+  }
+})
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('[Electron] Update downloaded:', info.version)
+  if (mainWindow) {
+    mainWindow.webContents.send('updater:update-downloaded', {
+      version: info.version,
+      releaseDate: info.releaseDate,
+      releaseNotes: info.releaseNotes
+    })
+  }
 })
 
 // Windows/Linux: Quit when all windows are closed

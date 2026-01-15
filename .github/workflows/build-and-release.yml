@@ -294,11 +294,99 @@ jobs:
         with:
           name: desktop-${{ matrix.platform }}
           path: |
-            packages/dist/*.exe
-            packages/dist/*.dmg
-            packages/dist/*.AppImage
-            packages/dist/*.deb
-            packages/dist/*.rpm
-            packages/dist/*.zip
+            packages/dist-electron-build/*.exe
+            packages/dist-electron-build/*.dmg
+            packages/dist-electron-build/*.AppImage
+            packages/dist-electron-build/*.deb
+            packages/dist-electron-build/*.rpm
+            packages/dist-electron-build/*.zip
           if-no-files-found: warn
           retention-days: 30
+
+  # Release Job
+  # Creates a GitHub release with Electron desktop app artifacts
+  # Only runs on main branch after successful desktop builds
+  release:
+    needs: [build-desktop]
+    if: github.ref == 'refs/heads/main'
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version from package.json
+        id: get-version
+        run: |
+          cd packages
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Download all desktop artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+          pattern: desktop-*
+
+      - name: List downloaded artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          find release-artifacts -type f -name "*" || echo "No artifacts found"
+          ls -la release-artifacts/ || true
+
+      - name: Check for artifacts
+        id: check-artifacts
+        run: |
+          if find release-artifacts -type f 2>/dev/null | grep -q .; then
+            echo "artifacts_exist=true" >> $GITHUB_OUTPUT
+            echo "Artifacts found, proceeding with release"
+          else
+            echo "artifacts_exist=false" >> $GITHUB_OUTPUT
+            echo "No artifacts found, skipping release"
+          fi
+
+      - name: Create Release
+        if: steps.check-artifacts.outputs.artifacts_exist == 'true'
+        id: create-release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.get-version.outputs.version }}
+          name: Release v${{ steps.get-version.outputs.version }}
+          body: |
+            ## Desktop App Release
+            
+            Download the Banbury desktop app for your platform:
+            
+            - **Windows**: `.exe` installer (NSIS)
+            - **macOS**: `.dmg` file (Intel x64 and Apple Silicon arm64)
+            - **Linux**: `.AppImage`, `.deb`, or `.rpm` packages
+            
+            ### Installation Instructions
+            
+            **Windows:**
+            - Download the `.exe` file and run it to install
+            - The installer will create desktop and start menu shortcuts
+            
+            **macOS:**
+            - Download the `.dmg` file
+            - Open the DMG and drag Banbury to your Applications folder
+            - For Apple Silicon Macs, download the arm64 version
+            - For Intel Macs, download the x64 version
+            
+            **Linux:**
+            - **AppImage**: Make executable (`chmod +x`) and run directly
+            - **Debian/Ubuntu**: Install with `sudo dpkg -i *.deb`
+            - **Red Hat/Fedora**: Install with `sudo rpm -i *.rpm`
+            
+            ### Changes
+            - Built from commit ${{ github.sha }}
+            - See commit history for detailed changes
+          files: |
+            release-artifacts/**/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
