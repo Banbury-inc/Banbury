@@ -26,16 +26,28 @@ export const CONFIG = {
   get url_ws() {
     //return this.prod ? 'https://banbury-cloud-backend-prod-389236221119.us-east1.run.app/' : 'http://localhost:8080/';
     if (this.prod) {
-      return 'ws://api.dev.banbury.io/ws/live_data/';
+      return 'wss://api.dev.banbury.io/ws/live_data/';
     } else if (this.dev) {
       // return 'http://54.197.4.251:8080';
       // return 'ws://3.84.158.138:8082/ws/live_data/';
-      return 'ws://www.api.dev.banbury.io/ws/live_data/';
+      return 'wss://www.api.dev.banbury.io/ws/live_data/';
     }
     else if (this.semi_local) {
       return 'ws://10.123.1.90:8082/ws/live_data/';
     } else {
       return 'ws://0.0.0.0:8082/ws/live_data/';
+    }
+  },
+  // WebSocket base URL for transcription (without path)
+  get wsBaseUrl() {
+    if (this.prod) {
+      return 'wss://api.dev.banbury.io';
+    } else if (this.dev) {
+      return 'wss://www.api.dev.banbury.io';
+    } else if (this.semi_local) {
+      return 'ws://10.123.1.90:8082';
+    } else {
+      return 'ws://localhost:8082';
     }
   }
   ,

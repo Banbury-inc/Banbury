@@ -21,8 +21,10 @@ export interface MeetingSession {
   transcriptionText?: string
   participants: MeetingParticipant[]
   metadata: MeetingMetadata
+  summary?: MeetingSummary
   // Recall AI specific fields
   recallBot?: RecallBot
+  recordings?: Recording[]  // Full recordings data from Recall AI
 }
 
 export interface MeetingParticipant {
@@ -133,6 +135,7 @@ export interface RecallBot {
   audioUrl?: string
   transcriptUrl?: string
   chatMessagesUrl?: string
+  recordings?: Recording[]  // Full recordings data from Recall AI
 }
 
 export interface RecallBotMetadata {
@@ -169,4 +172,58 @@ export interface RecallWebhookEvent {
     transcription_url?: string
     meeting_metadata?: any
   }
+}
+
+// Recording interfaces matching Recall AI API response structure
+export interface Recording {
+  id: string
+  created_at: string
+  started_at?: string
+  completed_at?: string
+  status: RecordingStatus
+  media_shortcuts: MediaShortcuts
+  realtime_endpoints: RealtimeEndpoint[]
+  bot?: string | null
+  desktop_sdk_upload?: DesktopSDKUpload
+  expires_at?: string | null
+  metadata: Record<string, any>
+}
+
+export interface RecordingStatus {
+  code: string
+  sub_code?: string | null
+  updated_at?: string | null
+}
+
+export interface MediaShortcuts {
+  video_mixed?: MediaItem | null
+  transcript?: MediaItem | null
+  participant_events?: MediaItem | null
+  meeting_metadata?: MediaItem | null
+  audio_mixed?: MediaItem | null
+}
+
+export interface MediaItem {
+  id: string
+  created_at: string
+  status: RecordingStatus
+  metadata: Record<string, any>
+  data?: {
+    download_url?: string
+    participant_events_download_url?: string
+    speaker_timeline_download_url?: string
+    participants_download_url?: string
+  }
+  format?: string
+}
+
+export interface RealtimeEndpoint {
+  type: string
+  events: string[]
+  [key: string]: any
+}
+
+export interface DesktopSDKUpload {
+  id: string
+  metadata: Record<string, any>
 }

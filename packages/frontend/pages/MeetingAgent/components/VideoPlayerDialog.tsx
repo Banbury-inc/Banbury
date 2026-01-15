@@ -275,7 +275,7 @@ export function VideoPlayerDialog({
               )}
             </DialogTitle>
             <DialogDescription className="text-zinc-400">
-              {session.platform.name} • {new Date(session.startTime).toLocaleString()}
+              {session.platform?.name || 'Unknown Platform'} • {new Date(session.startTime).toLocaleString()}
               {session.duration && ` • ${Math.round(session.duration / 60)} minutes`}
               {session.recallBot?.videoUrl && (
                 <span className="text-blue-400"> • Recorded by Recall AI</span>
@@ -502,7 +502,7 @@ export function VideoPlayerDialog({
                   <Video className="h-4 w-4 text-zinc-400" />
                   <div>
                     <p className="text-zinc-400">Platform</p>
-                    <p className="text-white font-medium">{session.platform.name}</p>
+                    <p className="text-white font-medium">{session.platform?.name || 'Unknown'}</p>
                   </div>
                 </div>
 

@@ -526,9 +526,6 @@ export const renderPanel = ({
                             return updateMeetingInLayout(prev);
                           });
                         }}
-                        onMeetingDeleted={(meetingId) => {
-                          handleCloseTab(tab.id, panel.id);
-                        }}
                       />
                     );
                   }

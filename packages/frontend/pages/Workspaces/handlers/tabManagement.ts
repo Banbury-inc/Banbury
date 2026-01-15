@@ -2,6 +2,7 @@ import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { Panel, PanelGroup, WorkspaceTab, FileTab, EmailTab, TaskTab, MeetingTab, AdminTab } from '../types';
 import { Task } from '../../../pages/TaskStudio/types';
 import { MeetingSession } from '../../../types/meeting-types';
+import { ApiService } from '../../../../backend/api/apiService';
 
 // Open file in a new tab within specified panel
 export const openFileInTab = (
@@ -194,7 +195,7 @@ export const openTaskInTab = (
 };
 
 // Open meeting in a new tab within specified panel
-export const openMeetingInTab = (
+export const openMeetingInTab = async (
   meeting: MeetingSession | null, // null for join meeting composer
   targetPanelId: string,
   activePanelId: string,
@@ -245,7 +246,8 @@ export const openMeetingInTab = (
     return;
   }
   
-  // Create new meeting tab
+  // Use the meeting data that's already available from the sessions endpoint
+  // No need to fetch additional details
   const tabId = `meeting_${meeting.id}_${Date.now()}`;
   const newTab: MeetingTab = {
     id: tabId,

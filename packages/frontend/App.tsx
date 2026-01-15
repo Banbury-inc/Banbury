@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { HelmetProvider, Helmet } from 'react-helmet-async';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import API from './components/API';
 import Features from './components/Features';
 import News from './components/News';
@@ -20,9 +20,30 @@ import { ApiService } from '../backend/api/apiService';
 import { getErrorTracker } from './utils/errorTracker';
 import { getUserEngagementTracker } from './utils/userEngagementTracker';
 import { UserFilesProvider } from './contexts/UserFilesContext';
+import { UpdateNotification } from './components/UpdateNotification';
 
 import './index.css';
 
+/**
+ * Root route handler - redirects to workspaces in Electron, shows Home otherwise
+ */
+const RootRoute = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Check if we're running in Electron
+    const isElectron = typeof window !== 'undefined' && window.desktopApp?.isDesktop === true;
+    
+    // If in Electron and on root path, redirect to workspaces immediately
+    if (isElectron && location.pathname === '/') {
+      navigate('/workspaces', { replace: true });
+    }
+  }, [navigate, location.pathname]);
+
+  // Show Home if not Electron (or while redirect is processing)
+  return <Layout><Home /></Layout>;
+};
 
 const PageTracker = () => {
   const location = useLocation();
@@ -84,12 +105,13 @@ const App = (): JSX.Element => {
           <BrowserRouter>
             <PageTracker />
             <AnalyticsInitializer />
+            <UpdateNotification />
             <Routes>
               <Route path='/workspaces' element={<Workspaces />} />
               <Route path='/knowledge' element={<Knowledge />} />
               <Route path='/meeting-agent' element={<MeetingAgent />} />
               <Route path='/admin' element={<Admin />} />
-              <Route path='/' element={<Layout><Home /></Layout>} />
+              <Route path='/' element={<RootRoute />} />
               <Route path='/login' element={<Layout><Login /></Layout>} />
               <Route path='/auth/callback' element={<Layout><AuthCallback /></Layout>} />
               <Route path='/features' element={<Layout><Features /></Layout>} />

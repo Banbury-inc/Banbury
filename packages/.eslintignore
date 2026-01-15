@@ -1,0 +1,8 @@
+# Electron app files (use different TypeScript config)
+electron-app/
+
+# Build outputs
+dist-electron/
+dist-electron-build/
+.next/
+node_modules/

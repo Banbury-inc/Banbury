@@ -2,3 +2,7 @@
 
 # Cursor debug logs
 .cursor/debug.log
+
+# Electron build outputs
+packages/dist-electron/
+packages/dist-electron-build/
