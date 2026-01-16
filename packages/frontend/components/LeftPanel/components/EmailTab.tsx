@@ -32,6 +32,7 @@ interface EmailTabProps {
   onOpenEmailApp?: () => void
   onMessageSelect?: (message: GmailMessage | OutlookMessage, provider: EmailProvider) => void
   onComposeEmail?: () => void
+  demoMode?: boolean
 }
 
 interface ParsedEmail {
@@ -87,10 +88,10 @@ function getLabelIcon(labelId: string) {
   }
 }
 
-export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
+export function EmailTab({ onMessageSelect, onComposeEmail, demoMode = false }: EmailTabProps) {
   // Provider state
   const [selectedProvider, setSelectedProvider] = useState<EmailProvider>('gmail')
-  
+
   // Gmail state
   const [messages, setMessages] = useState<GmailMessageListResponse>({})
   const [selectedMessage, setSelectedMessage] = useState<GmailMessage | OutlookMessage | null>(null)
@@ -103,7 +104,7 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
   const [labels, setLabels] = useState<GmailLabel[]>([])
   const [labelsLoading, setLabelsLoading] = useState(false)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [gmailAvailable, setGmailAvailable] = useState<boolean | null>(null)
+  const [gmailAvailable, setGmailAvailable] = useState<boolean | null>(demoMode ? true : null)
   const [checkingGmailAccess, setCheckingGmailAccess] = useState(false)
   
   // Outlook state
@@ -659,11 +660,12 @@ export function EmailTab({ onMessageSelect, onComposeEmail }: EmailTabProps) {
     return counts
   }, [parsedMessages])
 
-  // Check email access on component mount
+  // Check email access on component mount (skip in demo mode)
   useEffect(() => {
+    if (demoMode) return
     checkGmailAccess()
     checkOutlookAccess()
-  }, [checkGmailAccess, checkOutlookAccess])
+  }, [checkGmailAccess, checkOutlookAccess, demoMode])
 
   // Load labels/folders when provider is available
   useEffect(() => {

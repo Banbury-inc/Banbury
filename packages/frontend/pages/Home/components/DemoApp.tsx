@@ -282,6 +282,17 @@ const panelLayout: PanelGroup = {
   size: 50,
 }
 
+// Mock Gmail Labels
+const mockLabels = [
+  { id: 'INBOX', name: 'INBOX', type: 'system' as const },
+  { id: 'SENT', name: 'SENT', type: 'system' as const },
+  { id: 'DRAFT', name: 'DRAFT', type: 'system' as const },
+  { id: 'STARRED', name: 'STARRED', type: 'system' as const },
+  { id: 'IMPORTANT', name: 'IMPORTANT', type: 'system' as const },
+  { id: 'TRASH', name: 'TRASH', type: 'system' as const },
+  { id: 'SPAM', name: 'SPAM', type: 'system' as const },
+]
+
 // Store original service methods to restore later - only save once before any mocking
 let originalIsFeatureAvailable: typeof ApiService.Scopes.isFeatureAvailable | null = null
 let originalGetUserFiles: typeof ApiService.Files.getUserFiles | null = null
@@ -289,6 +300,11 @@ let originalListFiles: typeof ApiService.Drive.listFiles | null = null
 let originalListMessages: typeof ApiService.Emails.listMessages | null = null
 let originalGetMessagesBatch: typeof ApiService.Emails.getMessagesBatch | null = null
 let originalListEvents: typeof ApiService.Calendar.listEvents | null = null
+let originalListLabels: typeof ApiService.Emails.listLabels | null = null
+let originalGetMessage: typeof ApiService.Emails.getMessage | null = null
+let originalGetThread: typeof ApiService.Emails.getThread | null = null
+let originalModifyMessage: typeof ApiService.Emails.modifyMessage | null = null
+let originalGet: typeof ApiService.get | null = null
 
 // Setup mocks function - called before component renders
 function setupDemoMocks() {
