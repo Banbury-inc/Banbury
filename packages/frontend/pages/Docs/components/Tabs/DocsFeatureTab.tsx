@@ -14,29 +14,23 @@ export default function DocsFeatureTab() {
       {/* Visibility */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" className="mb-2">
-          • <strong>Visibility:</strong>
+          <strong>Visibility:</strong>
         </Typography>
-        <Typography variant="p" className="mb-2 pl-2">
-          • Banbury can read what's inside a document and look at every single page.
+        <Typography variant="list">
+          <li>Banbury can read what's inside a document and look at every single page.</li>
         </Typography>
       </Box>
 
       {/* Actions */}
       <Box>
         <Typography variant="h4" className="mb-2">
-          • <strong>Actions - Banbury can:</strong>
+          <strong>Actions - Banbury can:</strong>
         </Typography>
-        <Box sx={{ pl: 2 }}>
-          <Typography variant="p" className="mb-1">
-            • Create a new document.
-          </Typography>
-          <Typography variant="p" className="mb-1">
-            • Edit the contents of a document.
-          </Typography>
-          <Typography variant="p">
-            • Rename a document.
-          </Typography>
-        </Box>
+        <Typography variant="list">
+          <li>Create a new document.</li>
+          <li>Edit the contents of a document.</li>
+          <li>Rename a document.</li>
+        </Typography>
       </Box>
 
       <Box sx={{

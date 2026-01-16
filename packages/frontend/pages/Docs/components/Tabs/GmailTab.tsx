@@ -23,12 +23,12 @@ export default function GmailTab() {
 
       <Paper sx={{ p: 3, mb: 4, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' }}>
         <Typography variant="h3" className="mb-2">AI tools</Typography>
-        <Box sx={{ pl: 2 }}>
-          <Typography variant="p" className="mb-1">• gmail_get_recent: fetch recent messages from inbox</Typography>
-          <Typography variant="p" className="mb-1">• gmail_search: search emails using Gmail query syntax</Typography>
-          <Typography variant="p" className="mb-1">• gmail_get_message: retrieve a specific message with full content</Typography>
-          <Typography variant="p">• gmail_send_message: send an email (HTML supported)</Typography>
-        </Box>
+        <Typography variant="list">
+          <li>gmail_get_recent: fetch recent messages from inbox</li>
+          <li>gmail_search: search emails using Gmail query syntax</li>
+          <li>gmail_get_message: retrieve a specific message with full content</li>
+          <li>gmail_send_message: send an email (HTML supported)</li>
+        </Typography>
       </Paper>
 
       <Paper sx={{ p: 3, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' }}>

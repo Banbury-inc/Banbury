@@ -20,38 +20,26 @@ export default function CalendarFeatureTab() {
         {/* Visibility */}
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" className="mb-2">
-            • <strong>Visibility:</strong>
+            <strong>Visibility:</strong>
           </Typography>
-          <Typography variant="p" className="mb-2 pl-2">
-            • Banbury can read and understand your calendar contents, including event details, schedules, and availability.
-          </Typography>
-          <Typography variant="p" className="mb-2 pl-2">
-            • Ask questions like "What's on my calendar today?" or "When is my next meeting?" to get instant insights.
-          </Typography>
-          <Typography variant="p" className="mb-2 pl-2">
-            • Banbury can help identify conflicts, suggest optimal meeting times, and provide schedule summaries.
+          <Typography variant="list">
+            <li>Banbury can read and understand your calendar contents, including event details, schedules, and availability.</li>
+            <li>Ask questions like "What's on my calendar today?" or "When is my next meeting?" to get instant insights.</li>
+            <li>Banbury can help identify conflicts, suggest optimal meeting times, and provide schedule summaries.</li>
           </Typography>
         </Box>
 
         {/* Actions */}
         <Box sx={{ mb: 5 }}>
           <Typography variant="h4" className="mb-2">
-            • <strong>Actions - Banbury can:</strong>
+            <strong>Actions - Banbury can:</strong>
           </Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="p" className="mb-2">
-              • <strong>Create new events:</strong> Simply tell Banbury when and what you'd like to schedule, and it will create the event with all necessary details including title, time, location, and attendees.
-            </Typography>
-            <Typography variant="p" className="mb-2">
-              • <strong>Search and find events:</strong> Quickly locate specific meetings or events by asking about dates, attendees, or topics.
-            </Typography>
-            <Typography variant="p" className="mb-2">
-              • <strong>Edit existing events:</strong> Modify event details like time, location, or description through simple requests.
-            </Typography>
-            <Typography variant="p" className="mb-2">
-              • <strong>Manage availability:</strong> Check free time slots and coordinate scheduling across multiple calendars.
-            </Typography>
-          </Box>
+          <Typography variant="list">
+            <li><strong>Create new events:</strong> Simply tell Banbury when and what you'd like to schedule, and it will create the event with all necessary details including title, time, location, and attendees.</li>
+            <li><strong>Search and find events:</strong> Quickly locate specific meetings or events by asking about dates, attendees, or topics.</li>
+            <li><strong>Edit existing events:</strong> Modify event details like time, location, or description through simple requests.</li>
+            <li><strong>Manage availability:</strong> Check free time slots and coordinate scheduling across multiple calendars.</li>
+          </Typography>
         </Box>
 
         {/* Demo Video */}

@@ -55,17 +55,11 @@ export default function BillingTab() {
           <Typography variant="h3" className="mb-2">
             Billing cycles
           </Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="p" className="mb-1">
-              • Billing is <strong>monthly</strong>
-            </Typography>
-            <Typography variant="p" className="mb-1">
-              • Your subscription <strong>auto-renews monthly</strong> unless you cancel
-            </Typography>
-            <Typography variant="p">
-              • Your next renewal date is based on your last successful payment date
-            </Typography>
-          </Box>
+          <Typography variant="list">
+            <li>Billing is <strong>monthly</strong></li>
+            <li>Your subscription <strong>auto-renews monthly</strong> unless you cancel</li>
+            <li>Your next renewal date is based on your last successful payment date</li>
+          </Typography>
         </Box>
 
         <Box sx={{ mb: 6 }}>
@@ -81,17 +75,11 @@ export default function BillingTab() {
                 <Typography variant="p" className="mb-1">
                   <strong>{plan.title}</strong> — {plan.price}
                 </Typography>
-                <Box sx={{ pl: 2 }}>
-                  {plan.details.map((detail, index) => (
-                    <Typography
-                      key={detail}
-                      variant="p"
-                      className={index === plan.details.length - 1 ? undefined : 'mb-1'}
-                    >
-                      • {detail}
-                    </Typography>
+                <Typography variant="list">
+                  {plan.details.map((detail) => (
+                    <li key={detail}>{detail}</li>
                   ))}
-                </Box>
+                </Typography>
               </Box>
             ))}
           </Box>
@@ -111,14 +99,10 @@ export default function BillingTab() {
               </Typography>
             ))}
           </Box>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="p" className="mb-1">
-              • Cancellation is <strong>end-of-period</strong>: your subscription remains active until the end of your current billing period
-            </Typography>
-            <Typography variant="p">
-              • After your billing period ends, your account transitions to the Free plan (feature limits apply)
-            </Typography>
-          </Box>
+          <Typography variant="list">
+            <li>Cancellation is <strong>end-of-period</strong>: your subscription remains active until the end of your current billing period</li>
+            <li>After your billing period ends, your account transitions to the Free plan (feature limits apply)</li>
+          </Typography>
         </Box>
       </Box>
     </DocPageLayout>

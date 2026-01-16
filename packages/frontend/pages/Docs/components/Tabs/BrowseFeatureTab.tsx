@@ -14,29 +14,23 @@ export default function BrowseFeatureTab() {
       {/* Visibility */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" className="mb-2">
-          • <strong>Visibility:</strong>
+          <strong>Visibility:</strong>
         </Typography>
-        <Typography variant="p" className="mb-2 pl-2">
-          • Banbury can browse the web to gather and read information.
+        <Typography variant="list">
+          <li>Banbury can browse the web to gather and read information.</li>
         </Typography>
       </Box>
 
       {/* Actions */}
       <Box>
         <Typography variant="h4" className="mb-2">
-          • <strong>Actions - Banbury can:</strong>
+          <strong>Actions - Banbury can:</strong>
         </Typography>
-        <Box sx={{ pl: 2 }}>
-          <Typography variant="p" className="mb-1">
-            • Create a new browser session.
-          </Typography>
-          <Typography variant="p" className="mb-1">
-            • Read the output of a website.
-          </Typography>
-          <Typography variant="p" className="mb-1">
-            • Fill out forms on a website.
-          </Typography>
-        </Box>
+        <Typography variant="list">
+          <li>Create a new browser session.</li>
+          <li>Read the output of a website.</li>
+          <li>Fill out forms on a website.</li>
+        </Typography>
       </Box>
 
       <Box sx={{

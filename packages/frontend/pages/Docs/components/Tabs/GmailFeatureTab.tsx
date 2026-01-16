@@ -15,47 +15,29 @@ export default function GmailFeatureTab() {
       {/* Visibility */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" className="mb-2">
-          • <strong>Visibility:</strong>
+          <strong>Visibility:</strong>
         </Typography>
-        <Typography variant="p" className="mb-2 pl-2">
-          • Banbury can view and understand the contents of your Gmail messages, including email threads, attachments, and metadata.
-        </Typography>
-        <Typography variant="p" className="mb-2 pl-2">
-          • Access to email content, sender information, timestamps, and conversation threads.
-        </Typography>
-        <Typography variant="p" className="pl-2">
-          • Read and analyze email attachments and embedded content.
+        <Typography variant="list">
+          <li>Banbury can view and understand the contents of your Gmail messages, including email threads, attachments, and metadata.</li>
+          <li>Access to email content, sender information, timestamps, and conversation threads.</li>
+          <li>Read and analyze email attachments and embedded content.</li>
         </Typography>
       </Box>
 
       {/* Actions */}
       <Box>
         <Typography variant="h4" className="mb-2">
-          • <strong>Actions - Banbury can:</strong>
+          <strong>Actions - Banbury can:</strong>
         </Typography>
-        <Box sx={{ pl: 2 }}>
-          <Typography variant="p" className="mb-1">
-            • Compose and send new emails.
-          </Typography>
-          <Typography variant="p" className="mb-1">
-            • Reply to and forward existing emails.
-          </Typography>
-          <Typography variant="p" className="mb-1">
-            • Organize emails by creating and managing labels.
-          </Typography>
-          <Typography variant="p" className="mb-1">
-            • Search and filter emails based on content, sender, or date.
-          </Typography>
-          <Typography variant="p" className="mb-1">
-            • Schedule emails to be sent at specific times.
-          </Typography>
-          <Typography variant="p" className="mb-1">
-            • Manage email drafts and templates.
-          </Typography>
-          <Typography variant="p">
-            • Set up automated email responses and filters.
-          </Typography>
-        </Box>
+        <Typography variant="list">
+          <li>Compose and send new emails.</li>
+          <li>Reply to and forward existing emails.</li>
+          <li>Organize emails by creating and managing labels.</li>
+          <li>Search and filter emails based on content, sender, or date.</li>
+          <li>Schedule emails to be sent at specific times.</li>
+          <li>Manage email drafts and templates.</li>
+          <li>Set up automated email responses and filters.</li>
+        </Typography>
       </Box>
 
       <Box sx={{ mb: 4, mt: 4 }}>

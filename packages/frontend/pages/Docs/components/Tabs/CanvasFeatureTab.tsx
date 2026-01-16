@@ -15,32 +15,24 @@ export default function CanvasFeatureTab() {
       {/* Visibility */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" className="mb-2">
-          • <strong>Visibility:</strong>
+          <strong>Visibility:</strong>
         </Typography>
-        <Typography variant="p" className="mb-2 pl-2">
-          • Banbury can view and understand the contents of a canvas, including all elements, shapes, text, and layouts.
+        <Typography variant="list">
+          <li>Banbury can view and understand the contents of a canvas, including all elements, shapes, text, and layouts.</li>
         </Typography>
       </Box>
 
       {/* Actions */}
       <Box>
         <Typography variant="h4" className="mb-2">
-          • <strong>Actions - Banbury can:</strong>
+          <strong>Actions - Banbury can:</strong>
         </Typography>
-        <Box sx={{ pl: 2 }}>
-          <Typography variant="p" className="mb-1">
-            • Create a new canvas.
-          </Typography>
-          <Typography variant="p" className="mb-1">
-            • Add and modify elements on the canvas.
-          </Typography>
-          <Typography variant="p" className="mb-1">
-            • Arrange and organize canvas elements.
-          </Typography>
-          <Typography variant="p">
-            • Rename and manage canvas files.
-          </Typography>
-        </Box>
+        <Typography variant="list">
+          <li>Create a new canvas.</li>
+          <li>Add and modify elements on the canvas.</li>
+          <li>Arrange and organize canvas elements.</li>
+          <li>Rename and manage canvas files.</li>
+        </Typography>
       </Box>
 
       <Box sx={{

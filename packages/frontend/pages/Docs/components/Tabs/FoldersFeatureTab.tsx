@@ -14,32 +14,24 @@ export default function FoldersFeatureTab() {
       {/* Visibility */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" className="mb-2">
-          • <strong>Visibility:</strong>
+          <strong>Visibility:</strong>
         </Typography>
-        <Typography variant="p" className="mb-2 pl-2">
-          • Banbury can read what's inside a folder and help to understand it better.
+        <Typography variant="list">
+          <li>Banbury can read what's inside a folder and help to understand it better.</li>
         </Typography>
       </Box>
 
       {/* Actions */}
       <Box>
         <Typography variant="h4" className="mb-2">
-          • <strong>Actions - Banbury can:</strong>
+          <strong>Actions - Banbury can:</strong>
         </Typography>
-        <Box sx={{ pl: 2 }}>
-          <Typography variant="p" className="mb-1">
-            • Create a new folder.
-          </Typography>
-          <Typography variant="p" className="mb-1">
-            • Move things into and out of a folder.
-          </Typography>
-          <Typography variant="p" className="mb-1">
-            • Perform an in depth analysis of a folder.
-          </Typography>
-          <Typography variant="p">
-            • Rename a folder.
-          </Typography>
-        </Box>
+        <Typography variant="list">
+          <li>Create a new folder.</li>
+          <li>Move things into and out of a folder.</li>
+          <li>Perform an in depth analysis of a folder.</li>
+          <li>Rename a folder.</li>
+        </Typography>
       </Box>
 
       <Box sx={{

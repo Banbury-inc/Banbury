@@ -33,19 +33,19 @@ export default function FeaturesTab() {
           <Typography variant="p" className="mb-3">
             Explore the specific capabilities of each feature by selecting them from the sidebar:
           </Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="p" className="mb-1">• <strong>Agent Modes</strong> — Switch between Agent, Ask, and Planning modes</Typography>
-            <Typography variant="p" className="mb-1">• <strong>Parallel Agents</strong> — Run multiple agents simultaneously for faster execution</Typography>
-            <Typography variant="p" className="mb-1">• <strong>Queued Messages</strong> — Queue up follow-up messages while the agent works</Typography>
-            <Typography variant="p" className="mb-1">• <strong>Video Generation</strong> — Create videos from text descriptions</Typography>
-            <Typography variant="p" className="mb-1">• <strong>Docs</strong> — Create, edit, and manage documents</Typography>
-            <Typography variant="p" className="mb-1">• <strong>Spreadsheets</strong> — Work with spreadsheet data and formulas</Typography>
-            <Typography variant="p" className="mb-1">• <strong>Folders</strong> — Organize and analyze folder contents</Typography>
-            <Typography variant="p" className="mb-1">• <strong>Browse</strong> — Web browsing and automation capabilities</Typography>
-            <Typography variant="p" className="mb-1">• <strong>Calendar</strong> — Manage events and calendar data</Typography>
-            <Typography variant="p" className="mb-1">• <strong>Canvas</strong> — Create and manage visual canvas elements</Typography>
-            <Typography variant="p">• <strong>Gmail</strong> — Manage emails and automate communication</Typography>
-          </Box>
+          <Typography variant="list">
+            <li><strong>Agent Modes</strong> — Switch between Agent, Ask, and Planning modes</li>
+            <li><strong>Parallel Agents</strong> — Run multiple agents simultaneously for faster execution</li>
+            <li><strong>Queued Messages</strong> — Queue up follow-up messages while the agent works</li>
+            <li><strong>Video Generation</strong> — Create videos from text descriptions</li>
+            <li><strong>Docs</strong> — Create, edit, and manage documents</li>
+            <li><strong>Spreadsheets</strong> — Work with spreadsheet data and formulas</li>
+            <li><strong>Folders</strong> — Organize and analyze folder contents</li>
+            <li><strong>Browse</strong> — Web browsing and automation capabilities</li>
+            <li><strong>Calendar</strong> — Manage events and calendar data</li>
+            <li><strong>Canvas</strong> — Create and manage visual canvas elements</li>
+            <li><strong>Gmail</strong> — Manage emails and automate communication</li>
+          </Typography>
         </Box>
 
         <Box>
@@ -53,32 +53,32 @@ export default function FeaturesTab() {
           <Typography variant="p" className="mb-3">
             New and recently updated capabilities:
           </Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="p" className="mb-1">
-              • <Link href="/docs/agent-modes" className="underline underline-offset-4">Agent Modes</Link> — Switch between Agent, Ask (read-only), and Planning modes
-            </Typography>
-            <Typography variant="p" className="mb-1">
-              • <Link href="/docs/parallel-agents" className="underline underline-offset-4">Parallel Agents</Link> — Run multiple agents simultaneously on different tasks
-            </Typography>
-            <Typography variant="p" className="mb-1">
-              • <Link href="/docs/queued-messages" className="underline underline-offset-4">Queued Messages</Link> — Queue follow-up messages while the agent is working
-            </Typography>
-            <Typography variant="p" className="mb-1">
-              • <Link href="/docs/video-generation" className="underline underline-offset-4">Video Generation</Link> — Generate videos using Sora, Veo, Runway, and Luma
-            </Typography>
-            <Typography variant="p" className="mb-1">
-              • <Link href="/docs/powerpoint-feature" className="underline underline-offset-4">PowerPoint / Presentations</Link> — Work with .pptx presentations (open, edit slides, and download)
-            </Typography>
-            <Typography variant="p" className="mb-1">
-              • <Link href="/docs/context-wheel" className="underline underline-offset-4">Context Wheel</Link> — A context budget meter by the composer send button (used/remaining + reserved output)
-            </Typography>
-            <Typography variant="p" className="mb-1">
-              • <Link href="/docs/file-sharing" className="underline underline-offset-4">File Sharing</Link> — Share files with other users (edit access today)
-            </Typography>
-            <Typography variant="p">
-              • <Link href="/docs/outlook" className="underline underline-offset-4">Outlook</Link> — Microsoft Outlook integration for email and calendar
-            </Typography>
-          </Box>
+          <Typography variant="list">
+            <li>
+              <Link href="/docs/agent-modes" className="underline underline-offset-4">Agent Modes</Link> — Switch between Agent, Ask (read-only), and Planning modes
+            </li>
+            <li>
+              <Link href="/docs/parallel-agents" className="underline underline-offset-4">Parallel Agents</Link> — Run multiple agents simultaneously on different tasks
+            </li>
+            <li>
+              <Link href="/docs/queued-messages" className="underline underline-offset-4">Queued Messages</Link> — Queue follow-up messages while the agent is working
+            </li>
+            <li>
+              <Link href="/docs/video-generation" className="underline underline-offset-4">Video Generation</Link> — Generate videos using Sora, Veo, Runway, and Luma
+            </li>
+            <li>
+              <Link href="/docs/powerpoint-feature" className="underline underline-offset-4">PowerPoint / Presentations</Link> — Work with .pptx presentations (open, edit slides, and download)
+            </li>
+            <li>
+              <Link href="/docs/context-wheel" className="underline underline-offset-4">Context Wheel</Link> — A context budget meter by the composer send button (used/remaining + reserved output)
+            </li>
+            <li>
+              <Link href="/docs/file-sharing" className="underline underline-offset-4">File Sharing</Link> — Share files with other users (edit access today)
+            </li>
+            <li>
+              <Link href="/docs/outlook" className="underline underline-offset-4">Outlook</Link> — Microsoft Outlook integration for email and calendar
+            </li>
+          </Typography>
         </Box>
       </Box>
     </DocPageLayout>
