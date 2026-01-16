@@ -132,7 +132,7 @@ const Docs = () => {
           },
         }}>
           {/* Documentation Content */}
-          <Box sx={{ maxWidth: '900px', mx: 'auto' }}>
+          <Box sx={{ maxWidth: '1800px', mx: 'auto' }}>
             {/* Quick Start Guide Tab */}
             {activeSection === 'what-is-banbury' && (
               <WhatIsBanburyTab />

@@ -90,7 +90,7 @@ export default function DocPageLayout({ children }: { children: ReactNode }) {
       <Box 
         sx={{ 
           width: '100%', 
-          maxWidth: { xs: '100%', lg: '800px' }, 
+          maxWidth: { xs: '100%', lg: '1600px' }, 
           overflow: 'visible',
           pr: { lg: '260px' }, // Make room for TableOfContents on large screens
         }} 
