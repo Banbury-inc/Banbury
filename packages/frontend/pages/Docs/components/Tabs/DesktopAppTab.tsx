@@ -80,13 +80,13 @@ export default function DesktopAppTab() {
               Windows
             </Typography>
             <Box sx={{ pl: 2 }}>
-              <Typography variant="list">
+              <Typography variant="p" className="mb-1">
                 1. Download the <Typography variant="inlineCode" asChild>Banbury Setup x.x.x.exe</Typography> installer
               </Typography>
-              <Typography variant="list">
+              <Typography variant="p" className="mb-1">
                 2. Run the installer and follow the setup wizard
               </Typography>
-              <Typography variant="list">
+              <Typography variant="p">
                 3. Launch Banbury from your Start menu or desktop shortcut
               </Typography>
             </Box>
