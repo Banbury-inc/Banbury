@@ -14,29 +14,23 @@ export default function SpreadsheetsFeatureTab() {
       {/* Visibility */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" className="mb-2">
-          • <strong>Visibility:</strong>
+          <strong>Visibility:</strong>
         </Typography>
-        <Typography variant="p" className="mb-2 pl-2">
-          • Banbury can read what's inside a spreadsheet and look at every single cell.
+        <Typography variant="list">
+          <li>Banbury can read what's inside a spreadsheet and look at every single cell.</li>
         </Typography>
       </Box>
 
       {/* Actions */}
       <Box>
         <Typography variant="h4" className="mb-2">
-          • <strong>Actions - Banbury can:</strong>
+          <strong>Actions - Banbury can:</strong>
         </Typography>
-        <Box sx={{ pl: 2 }}>
-          <Typography variant="p" className="mb-1">
-            • Create a new spreadsheet.
-          </Typography>
-          <Typography variant="p" className="mb-1">
-            • Edit the contents of a spreadsheet.
-          </Typography>
-          <Typography variant="p">
-            • Rename a spreadsheet.
-          </Typography>
-        </Box>
+        <Typography variant="list">
+          <li>Create a new spreadsheet.</li>
+          <li>Edit the contents of a spreadsheet.</li>
+          <li>Rename a spreadsheet.</li>
+        </Typography>
       </Box>
 
       <Box sx={{

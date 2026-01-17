@@ -230,6 +230,13 @@ export async function* processStreamEvents({
           contentParts.push({ type: "text", text: `❌ Error: ${errorMessage}` });
           yield { content: contentParts, status: { type: "incomplete", reason: "error" } };
           return; // Stop processing further events
+        } else if (evt.type === "pptx-live-update") {
+          // Handle PowerPoint live update events from backend tools
+          console.log('[processStreamEvents] Dispatching pptx-live-update event:', evt);
+          window.dispatchEvent(new CustomEvent('pptx-live-update', { 
+            detail: evt 
+          }));
+          // Don't yield - this is a UI update event, not content
         } else if (evt.type === "file-generated") {
           // Handle Skills-generated files (PowerPoint, Word, Excel, PDF)
           const { fileType, fileId, fileName, downloadUrl } = evt;

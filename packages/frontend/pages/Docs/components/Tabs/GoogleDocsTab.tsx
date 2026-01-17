@@ -23,11 +23,11 @@ export default function GoogleDocsTab() {
 
       <Paper sx={{ p: 3, mb: 4, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' }}>
         <Typography variant="h3" className="mb-2">AI tools</Typography>
-        <Box sx={{ pl: 2 }}>
-          <Typography variant="p" className="mb-1">• create_file: create .docx files in cloud workspace</Typography>
-          <Typography variant="p" className="mb-1">• docx_ai: generate or edit Word documents with AI</Typography>
-          <Typography variant="p">• search_files: find documents by name in cloud storage</Typography>
-        </Box>
+        <Typography variant="list">
+          <li>create_file: create .docx files in cloud workspace</li>
+          <li>docx_ai: generate or edit Word documents with AI</li>
+          <li>search_files: find documents by name in cloud storage</li>
+        </Typography>
       </Paper>
 
       <Paper sx={{ p: 3, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' }}>

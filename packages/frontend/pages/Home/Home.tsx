@@ -5,8 +5,8 @@ import { Box, Container, Grid } from '@mui/material';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import DemoApp from './components/DemoApp';
-import EmailDemo from '../../assets/images/email_demo.png';
-import CalendarDemo from '../../assets/images/calendar_demo.mp4';
+import EmailDemoApp from './components/EmailDemoApp';
+import MeetingDemoApp from './components/MeetingDemoApp';
 import SpreadsheetDemo from '../../assets/images/spreadsheet_demo.mp4';
 import BrowserDemo from '../../assets/images/browser-automation-demo.mp4';
 import TaskCreationDemo from '../../assets/images/task-creation-demo.mp4';
@@ -1152,29 +1152,7 @@ const Home = (): JSX.Element => {
             <Box sx={{ mb: { xs: 8, md: 12 } }}>
               <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
                 <Grid item xs={12} md={6}>
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      borderRadius: '20px',
-                      overflow: 'hidden',
-                      border: '1px solid rgba(59, 130, 246, 0.2)',
-                      '&:hover': {
-                        transform: 'scale(1.02)',
-                      },
-                    }}
-                  >
-                    <Image
-                      src={EmailDemo}
-                      alt="Email automation demo"
-                      width={800}
-                      height={500}
-                      style={{
-                        width: '100%',
-                        height: 'auto',
-                        display: 'block',
-                      }}
-                    />
-                  </Box>
+                  <EmailDemoApp />
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Box sx={{ pl: { md: 4 } }}>
@@ -1261,34 +1239,7 @@ const Home = (): JSX.Element => {
             <Box sx={{ mb: { xs: 8, md: 12 } }}>
               <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center" direction={{ xs: 'column', md: 'row-reverse' }}>
                 <Grid item xs={12} md={6}>
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      borderRadius: '20px',
-                      overflow: 'hidden',
-                      border: '1px solid rgba(168, 85, 247, 0.2)',
-                      boxShadow: '0 20px 60px rgba(168, 85, 247, 0.15)',
-                      transition: 'all 0.4s ease',
-                      '&:hover': {
-                        transform: 'scale(1.02)',
-                        boxShadow: '0 30px 80px rgba(168, 85, 247, 0.25)',
-                      },
-                    }}
-                  >
-                    <video
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      style={{
-                        width: '100%',
-                        height: 'auto',
-                        display: 'block',
-                      }}
-                    >
-                      <source src={CalendarDemo} type="video/mp4" />
-                    </video>
-                  </Box>
+                  <MeetingDemoApp />
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Box sx={{ pr: { md: 4 } }}>

@@ -61,12 +61,15 @@ export function DesktopDownloadButton({
   }, [fallbackText])
 
   const handleClick = () => {
-    if (downloadUrl) {
-      window.open(downloadUrl, '_blank')
-    } else {
-      // Fallback to releases page
-      window.open(`https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/releases/latest`, '_blank')
-    }
+    const url = downloadUrl || `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/releases/latest`
+
+    // Create a temporary anchor element to trigger direct download
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', '') // Suggests download behavior
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   return (

@@ -18,7 +18,22 @@ import { tavilyUsageTool } from "./tools/tavilyUsageTool";
 import { sheetAiTool } from "./tools/sheetAiTool";
 import { docxAiTool } from "./tools/docxAiTool";
 import { tldrawAiTool } from "./tools/tldrawAiTool";
-import { pptxAiTool } from "./tools/pptxAiTool";
+import {
+  createPresentationTool,
+  createSlideTool,
+  addTextTool,
+  addShapeTool,
+  addImageTool,
+  addChartTool,
+  addTableTool,
+  downloadAndAddImageTool,
+  setSlideBackgroundTool,
+  useTemplateTool,
+  extractInventoryTool,
+  rearrangeSlidesTool,
+  replaceTextTool,
+  evaluatePresentationTool,
+} from "./tools/pptxTools";
 import { generateImageTool } from "./tools/generateImageTool";
 import { generateVideoTool } from "./tools/generateVideoTool";
 import { createMemoryTool } from "./tools/createMemoryTool";
@@ -177,14 +192,25 @@ export function createReactAgentForProvider(provider: ModelProvider) {
 const documentTools = [
   // Core document creation/editing tools
   createFileTool,
-  pptxAiTool,
+  // PPTX tools (separate tools for each operation)
+  createPresentationTool,
+  createSlideTool,
+  addTextTool,
+  addShapeTool,
+  addImageTool,
+  addChartTool, // Add charts to slides
+  addTableTool, // Add tables to slides
+  downloadAndAddImageTool, // Download image from web URL and add to presentation
+  setSlideBackgroundTool,
+  useTemplateTool,
+  extractInventoryTool,
+  rearrangeSlidesTool,
+  replaceTextTool,
+  evaluatePresentationTool, // Evaluate presentation to see how it looks
   pptxParseOutlineTool, // Parse attached PPTX files to understand structure before editing
   sheetAiTool,
   docxAiTool,
   tldrawAiTool,
-  // Code execution tools for advanced document generation
-  writeWorkspaceFileTool, // Write scripts and data files to workspace
-  executeScriptTool, // Run Node.js scripts to generate documents (e.g., complex data processing)
   // Supporting tools that may be needed for document tasks
   webSearchTool, // For research when creating documents
   tavilyExtractTool, // Extract content from URLs for document creation
@@ -308,7 +334,21 @@ const tools = [
   sheetAiTool,
   docxAiTool,
   tldrawAiTool,
-  pptxAiTool,
+  // PPTX tools (separate tools for each operation)
+  createPresentationTool,
+  createSlideTool,
+  addTextTool,
+  addShapeTool,
+  addImageTool,
+  addChartTool, // Add charts to slides
+  addTableTool, // Add tables to slides
+  downloadAndAddImageTool, // Download image from web URL and add to presentation
+  setSlideBackgroundTool,
+  useTemplateTool,
+  extractInventoryTool,
+  rearrangeSlidesTool,
+  replaceTextTool,
+  evaluatePresentationTool,
   generateImageTool,
   generateVideoTool,
   createMemoryTool,

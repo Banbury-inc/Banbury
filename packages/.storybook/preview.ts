@@ -1,6 +1,7 @@
 import React from "react"
 import type { Preview } from "@storybook/react"
 import { ThemeProvider } from "../frontend/components/ThemeProvider"
+import { UserFilesProvider } from "../frontend/contexts/UserFilesContext"
 import "../frontend/index.css"
 
 // Polyfill process.env for Next.js components
@@ -84,7 +85,11 @@ const preview: Preview = {
             storageKey: "storybook-theme-mode",
             forcedTheme: themeValue
           },
-          React.createElement("div", { className: "text-foreground" }, React.createElement(story))
+          React.createElement(
+            UserFilesProvider,
+            { username: "testuser" },
+            React.createElement("div", { className: "text-foreground" }, React.createElement(story))
+          )
         )
       }
 

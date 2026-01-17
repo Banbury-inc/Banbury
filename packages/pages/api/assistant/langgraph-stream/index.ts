@@ -174,11 +174,12 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
 
     // Run the agent with server context so tools can access the auth token, send function, and todo context
     try {
-      await runWithServerContext({ 
-        authToken: token, 
+      await runWithServerContext({
+        authToken: token,
         toolPreferences: normalizedToolPreferences,
         dateTimeContext: body.dateTimeContext,
         documentContext: body.documentContext,
+        presentationContext: body.presentationContext,
         webSearchDefaults: body.webSearchOptions || {},
         // Todo middleware context
         sendEvent: send,

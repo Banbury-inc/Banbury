@@ -1,7 +1,11 @@
 import { Box } from '@mui/material';
-import Image from 'next/image';
 import DocPageLayout from './DocPageLayout';
 import { Typography } from '../../../components/ui/typography';
+import {
+  MockComposerBasic,
+  MockComposerWithFile,
+  MockComposerWithToolsOpen,
+} from './MockComposerForDocs';
 
 interface StepIndicatorProps {
   stepNumber: number;
@@ -34,57 +38,45 @@ interface PromptBoxProps {
 
 function PromptBox({ text }: PromptBoxProps) {
   return (
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="small" className="mb-1 font-medium">
-        Prompt
-      </Typography>
+    <Box sx={{ mb: 3, maxWidth: '400px' }}>
       <Box sx={{
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: '8px',
-        p: 2,
-        display: 'flex',
-        flexDirection: { xs: 'column', sm: 'row' },
-        alignItems: { xs: 'flex-start', sm: 'center' },
-        justifyContent: 'space-between',
-        gap: { xs: 1, sm: 0 },
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.15)',
+        borderRadius: '10px',
+        overflow: 'hidden',
       }}>
-        <Typography variant="small" sx={{ wordBreak: 'break-word' }}>
-          {text}
-        </Typography>
-        <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1, flexShrink: 0 }}>
-          <Box sx={{
-            width: '16px',
-            height: '16px',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '2px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Box sx={{
-              width: '8px',
-              height: '8px',
-              backgroundColor: 'rgba(255, 255, 255, 0.6)',
-              borderRadius: '1px'
-            }} />
+        {/* Header bar */}
+        <Box sx={{
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          px: 2,
+          py: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <Typography variant="xs" className="text-zinc-400 font-medium uppercase tracking-wider">
+            Example Prompt
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 0.75 }}>
+            <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'rgba(255, 99, 99, 0.6)' }} />
+            <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'rgba(255, 199, 99, 0.6)' }} />
+            <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'rgba(99, 255, 99, 0.6)' }} />
           </Box>
-          <Box sx={{
-            width: '16px',
-            height: '16px',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '2px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Box sx={{
-              width: '8px',
-              height: '8px',
-              backgroundColor: 'rgba(255, 255, 255, 0.6)',
-              borderRadius: '50%'
-            }} />
-          </Box>
+        </Box>
+        {/* Content */}
+        <Box sx={{ p: 2 }}>
+          <Typography
+            variant="p"
+            className="font-mono"
+            sx={{
+              wordBreak: 'break-word',
+              color: 'rgba(255, 255, 255, 0.9)',
+              lineHeight: 1.6,
+            }}
+          >
+            {text}
+          </Typography>
         </Box>
       </Box>
     </Box>
@@ -127,22 +119,7 @@ export default function UsingBanburyTab() {
           <PromptBox text="Search the web for latest NFL news." />
           
           <Box sx={{ mb: 3 }}>
-            <Image 
-              src="/Chatbox.png" 
-              alt="Chat Input Field - Step 1" 
-              width={400}
-              height={200}
-              style={{ 
-                width: '100%', 
-                height: 'auto', 
-                borderRadius: '10px',
-                maxWidth: '400px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-              }} 
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+            <MockComposerBasic />
           </Box>
         </Box>
       </Box>
@@ -168,22 +145,7 @@ export default function UsingBanburyTab() {
           <PromptBox text="Create a new document with a summary of your results." />
           
           <Box sx={{ mb: 3 }}>
-            <Image 
-              src="/Chatbox2.png" 
-              alt="Chat Input Field - Step 2" 
-              width={400}
-              height={200}
-              style={{ 
-                width: '100%', 
-                height: 'auto', 
-                borderRadius: '10px',
-                maxWidth: '400px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-              }} 
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+            <MockComposerBasic />
           </Box>
         </Box>
       </Box>
@@ -207,22 +169,7 @@ export default function UsingBanburyTab() {
           </Typography>
           
           <Box sx={{ mb: 3 }}>
-            <Image 
-              src="/composer-with-attached-file.png" 
-              alt="Composer with attached file" 
-              width={400}
-              height={200}
-              style={{ 
-                width: '100%', 
-                height: 'auto', 
-                borderRadius: '10px',
-                maxWidth: '400px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-              }} 
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+            <MockComposerWithFile />
           </Box>
         </Box>
       </Box>
@@ -246,22 +193,7 @@ export default function UsingBanburyTab() {
           </Typography>
           
           <Box sx={{ mb: 3 }}>
-            <Image 
-              src="/composer-tool-toggling.png" 
-              alt="Composer tool toggling interface" 
-              width={400}
-              height={200}
-              style={{ 
-                width: '100%', 
-                height: 'auto', 
-                borderRadius: '10px',
-                maxWidth: '400px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-              }} 
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+            <MockComposerWithToolsOpen />
           </Box>
         </Box>
       </Box>

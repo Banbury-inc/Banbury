@@ -23,21 +23,21 @@ export default function ContextWheelTab() {
 
         <Box sx={{ mb: 6 }}>
           <Typography variant="h3" className="mb-2">How to use it</Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="p" className="mb-1">• If the wheel is close to full, the model may have less room to incorporate new information</Typography>
-            <Typography variant="p" className="mb-1">• Treat it as a warning sign to simplify your next message or reduce attachments</Typography>
-            <Typography variant="p">• If you need a large, high-quality response, leave room for reserved output tokens</Typography>
-          </Box>
+          <Typography variant="list">
+            <li>If the wheel is close to full, the model may have less room to incorporate new information</li>
+            <li>Treat it as a warning sign to simplify your next message or reduce attachments</li>
+            <li>If you need a large, high-quality response, leave room for reserved output tokens</li>
+          </Typography>
         </Box>
 
         <Box>
           <Typography variant="h3" className="mb-2">How to reduce context usage</Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="p" className="mb-1">• Send shorter messages and avoid repeating background that's already established</Typography>
-            <Typography variant="p" className="mb-1">• Attach fewer files at once (or only the most relevant excerpt)</Typography>
-            <Typography variant="p" className="mb-1">• Split large tasks into smaller steps across multiple messages</Typography>
-            <Typography variant="p">• Start a fresh thread when a topic changes significantly</Typography>
-          </Box>
+          <Typography variant="list">
+            <li>Send shorter messages and avoid repeating background that's already established</li>
+            <li>Attach fewer files at once (or only the most relevant excerpt)</li>
+            <li>Split large tasks into smaller steps across multiple messages</li>
+            <li>Start a fresh thread when a topic changes significantly</li>
+          </Typography>
         </Box>
       </Box>
     </DocPageLayout>

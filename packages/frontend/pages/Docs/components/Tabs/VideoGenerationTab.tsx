@@ -21,23 +21,33 @@ export default function VideoGenerationTab() {
           </Typography>
           <Box sx={{ pl: 2 }}>
             <Typography variant="p" className="mb-2"><strong>OpenAI Sora 2</strong></Typography>
-            <Typography variant="p" className="mb-1 pl-4">• Latest text-to-video model from OpenAI</Typography>
-            <Typography variant="p" className="mb-3 pl-4">• Duration and resolution are determined automatically based on the prompt</Typography>
+            <Typography variant="list" className="mb-3">
+              <li>Latest text-to-video model from OpenAI</li>
+              <li>Duration and resolution are determined automatically based on the prompt</li>
+            </Typography>
             
             <Typography variant="p" className="mb-2"><strong>Google Veo 3.1</strong></Typography>
-            <Typography variant="p" className="mb-1 pl-4">• Google's latest video generation model</Typography>
-            <Typography variant="p" className="mb-1 pl-4">• Supports 4-8 second durations</Typography>
-            <Typography variant="p" className="mb-3 pl-4">• Available in 720p and 1080p resolutions</Typography>
+            <Typography variant="list" className="mb-3">
+              <li>Google's latest video generation model</li>
+              <li>Supports 4-8 second durations</li>
+              <li>Available in 720p and 1080p resolutions</li>
+            </Typography>
             
             <Typography variant="p" className="mb-2"><strong>Google Veo 3.1 Fast</strong></Typography>
-            <Typography variant="p" className="mb-3 pl-4">• Faster generation with similar quality</Typography>
+            <Typography variant="list" className="mb-3">
+              <li>Faster generation with similar quality</li>
+            </Typography>
             
             <Typography variant="p" className="mb-2"><strong>Runway Gen-3</strong></Typography>
-            <Typography variant="p" className="mb-1 pl-4">• Available in Alpha and Turbo variants</Typography>
-            <Typography variant="p" className="mb-3 pl-4">• High-quality video generation</Typography>
+            <Typography variant="list" className="mb-3">
+              <li>Available in Alpha and Turbo variants</li>
+              <li>High-quality video generation</li>
+            </Typography>
             
             <Typography variant="p" className="mb-2"><strong>Luma Dream Machine</strong></Typography>
-            <Typography variant="p" className="pl-4">• Creative video generation with unique artistic styles</Typography>
+            <Typography variant="list">
+              <li>Creative video generation with unique artistic styles</li>
+            </Typography>
           </Box>
         </Box>
 
@@ -55,11 +65,11 @@ export default function VideoGenerationTab() {
           <Typography variant="p" className="mt-3">
             <strong>Example prompts:</strong>
           </Typography>
-          <Box sx={{ pl: 2, mt: 1 }}>
-            <Typography variant="p" className="mb-1">• "Create a 5-second video of a sunset over the ocean with gentle waves"</Typography>
-            <Typography variant="p" className="mb-1">• "Generate a video showing a cat playing with a ball of yarn"</Typography>
-            <Typography variant="p">• "Make a promotional video with abstract colorful particles flowing"</Typography>
-          </Box>
+          <Typography variant="list" className="mt-1">
+            <li>"Create a 5-second video of a sunset over the ocean with gentle waves"</li>
+            <li>"Generate a video showing a cat playing with a ball of yarn"</li>
+            <li>"Make a promotional video with abstract colorful particles flowing"</li>
+          </Typography>
         </Box>
 
         <Box sx={{ mb: 6 }}>
@@ -96,12 +106,12 @@ export default function VideoGenerationTab() {
           <Typography variant="p" className="mb-3">
             All generated videos are automatically:
           </Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="p" className="mb-1">• Saved to your cloud storage in MP4 format</Typography>
-            <Typography variant="p" className="mb-1">• Named with a timestamp (e.g., "Generated Video 2025-01-09T10-30-00.mp4")</Typography>
-            <Typography variant="p" className="mb-1">• Placed in the specified folder (default: 'videos')</Typography>
-            <Typography variant="p">• Viewable directly in the Banbury file viewer</Typography>
-          </Box>
+          <Typography variant="list">
+            <li>Saved to your cloud storage in MP4 format</li>
+            <li>Named with a timestamp (e.g., "Generated Video 2025-01-09T10-30-00.mp4")</li>
+            <li>Placed in the specified folder (default: 'videos')</li>
+            <li>Viewable directly in the Banbury file viewer</li>
+          </Typography>
         </Box>
 
         <Box sx={{ mb: 6 }}>
@@ -109,22 +119,22 @@ export default function VideoGenerationTab() {
           <Typography variant="p" className="mb-3">
             Video generation typically takes longer than image generation:
           </Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="p" className="mb-1">• Most videos complete within 1-5 minutes</Typography>
-            <Typography variant="p" className="mb-1">• Longer or more complex videos may take up to 10 minutes</Typography>
-            <Typography variant="p">• The agent will wait for completion and notify you when ready</Typography>
-          </Box>
+          <Typography variant="list">
+            <li>Most videos complete within 1-5 minutes</li>
+            <li>Longer or more complex videos may take up to 10 minutes</li>
+            <li>The agent will wait for completion and notify you when ready</li>
+          </Typography>
         </Box>
 
         <Box>
           <Typography variant="h3" className="mb-2">Tips for Better Results</Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="p" className="mb-1">• <strong>Be specific:</strong> Include details about motion, lighting, camera angles</Typography>
-            <Typography variant="p" className="mb-1">• <strong>Describe the style:</strong> Mention if you want realistic, animated, cinematic, etc.</Typography>
-            <Typography variant="p" className="mb-1">• <strong>Keep it focused:</strong> Simpler scenes often produce better results</Typography>
-            <Typography variant="p" className="mb-1">• <strong>Specify timing:</strong> Describe what happens at different points in the video</Typography>
-            <Typography variant="p">• <strong>Iterate:</strong> Generate variations and refine your prompts based on results</Typography>
-          </Box>
+          <Typography variant="list">
+            <li><strong>Be specific:</strong> Include details about motion, lighting, camera angles</li>
+            <li><strong>Describe the style:</strong> Mention if you want realistic, animated, cinematic, etc.</li>
+            <li><strong>Keep it focused:</strong> Simpler scenes often produce better results</li>
+            <li><strong>Specify timing:</strong> Describe what happens at different points in the video</li>
+            <li><strong>Iterate:</strong> Generate variations and refine your prompts based on results</li>
+          </Typography>
         </Box>
       </Box>
     </DocPageLayout>

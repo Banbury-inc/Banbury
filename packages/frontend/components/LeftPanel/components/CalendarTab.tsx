@@ -482,7 +482,13 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
                 <Typography variant="small" className="text-destructive">{error}</Typography>
               </div>
             )}
-            {(loading || calendarsLoading || (isAvailable && calendars.length > 0 && events.length === 0 && !error)) ? (
+            {!calendarsLoading && isAvailable && calendars.length > 0 && visibleCount === 0 ? (
+              <div className="flex flex-col items-center justify-center flex-1 p-4">
+                <Calendar className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" strokeWidth={1} />
+                <Typography variant="small" className="mb-2 text-muted-foreground">No calendars selected</Typography>
+                <Typography variant="xs" className="text-muted-foreground text-center">Select calendars from the dropdown above to view events</Typography>
+              </div>
+            ) : (loading || calendarsLoading || (isAvailable && calendars.length > 0 && events.length === 0 && !error && visibleCount > 0)) ? (
               <div className="flex items-center justify-center flex-1">
                 <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" strokeWidth={1} />
                 <Typography variant="muted">Loading events...</Typography>

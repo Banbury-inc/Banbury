@@ -1,6 +1,12 @@
 # Electron App Resources
 
-Place icon files here for platform-specific builds:
-- icon.ico (Windows, 256x256 ICO format)
-- icon.icns (macOS, Apple Icon Image format)
-- icons/ directory with PNGs (Linux, multiple sizes: 16x16, 32x32, 48x48, 64x64, 128x128, 256x256, 512x512)
+Icon files for platform-specific builds:
+- icon.ico (Windows, multiple sizes in ICO format) ✓ Created
+- icon.icns (macOS, Apple Icon Image format) - Generate with: ./generate-icns.sh
+- icons/ directory with PNGs (Linux, multiple sizes: 16x16, 32x32, 48x48, 64x64, 128x128, 256x256, 512x512) ✓ Created
+- icon.iconset/ (macOS iconset directory for generating .icns) ✓ Created
+
+To generate icon.icns:
+  - On Linux with icnsutils: ./generate-icns.sh
+  - On macOS: iconutil -c icns icon.iconset -o icon.icns
+  - Or electron-builder can auto-convert from PNG if .icns is not available

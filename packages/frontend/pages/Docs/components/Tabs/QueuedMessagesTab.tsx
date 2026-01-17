@@ -19,12 +19,12 @@ export default function QueuedMessagesTab() {
           <Typography variant="p" className="mb-3">
             When the AI agent is running a task, you can continue typing new messages. These messages are added to a queue and will be sent automatically when the current task completes.
           </Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="p" className="mb-1">• Type your message while the agent is working</Typography>
-            <Typography variant="p" className="mb-1">• Press Enter or click Send to add it to the queue</Typography>
-            <Typography variant="p" className="mb-1">• Messages are displayed in a collapsible list above the composer</Typography>
-            <Typography variant="p">• When the current task finishes, the next queued message is sent automatically</Typography>
-          </Box>
+          <Typography variant="list">
+            <li>Type your message while the agent is working</li>
+            <li>Press Enter or click Send to add it to the queue</li>
+            <li>Messages are displayed in a collapsible list above the composer</li>
+            <li>When the current task finishes, the next queued message is sent automatically</li>
+          </Typography>
         </Box>
 
         <Box sx={{ mb: 6 }}>
@@ -32,12 +32,12 @@ export default function QueuedMessagesTab() {
           <Typography variant="p" className="mb-3">
             Queued messages appear in a dedicated section above the composer:
           </Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="p" className="mb-1">• Shows the count of queued messages (e.g., "3 Queued Messages")</Typography>
-            <Typography variant="p" className="mb-1">• Click to expand or collapse the message list</Typography>
-            <Typography variant="p" className="mb-1">• Each message shows its position in the queue (#1, #2, etc.)</Typography>
-            <Typography variant="p">• Messages are truncated for display but full text is shown on hover</Typography>
-          </Box>
+          <Typography variant="list">
+            <li>Shows the count of queued messages (e.g., "3 Queued Messages")</li>
+            <li>Click to expand or collapse the message list</li>
+            <li>Each message shows its position in the queue (#1, #2, etc.)</li>
+            <li>Messages are truncated for display but full text is shown on hover</li>
+          </Typography>
         </Box>
 
         <Box sx={{ mb: 6 }}>
@@ -47,11 +47,17 @@ export default function QueuedMessagesTab() {
           </Typography>
           <Box sx={{ pl: 2 }}>
             <Typography variant="p" className="mb-1"><strong>Remove a Message:</strong></Typography>
-            <Typography variant="p" className="mb-2 pl-4">• Hover over any message and click the X button to remove it from the queue</Typography>
+            <Typography variant="list" className="mb-2">
+              <li>Hover over any message and click the X button to remove it from the queue</li>
+            </Typography>
             <Typography variant="p" className="mb-1"><strong>Move to Front:</strong></Typography>
-            <Typography variant="p" className="mb-2 pl-4">• Hover over any message (except #1) and click the up arrow to move it to the front of the queue</Typography>
+            <Typography variant="list" className="mb-2">
+              <li>Hover over any message (except #1) and click the up arrow to move it to the front of the queue</li>
+            </Typography>
             <Typography variant="p" className="mb-1"><strong>Send Next Immediately:</strong></Typography>
-            <Typography variant="p" className="pl-4">• Press Enter with an empty composer to interrupt the current task and send the next queued message</Typography>
+            <Typography variant="list">
+              <li>Press Enter with an empty composer to interrupt the current task and send the next queued message</li>
+            </Typography>
           </Box>
         </Box>
 
@@ -75,22 +81,22 @@ export default function QueuedMessagesTab() {
           <Typography variant="p" className="mb-3">
             Queued messages are particularly useful for:
           </Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="p" className="mb-1">• <strong>Multi-step workflows:</strong> Queue all the steps of a process upfront</Typography>
-            <Typography variant="p" className="mb-1">• <strong>Corrections:</strong> Queue a follow-up correction while waiting for the first task</Typography>
-            <Typography variant="p" className="mb-1">• <strong>Chained tasks:</strong> Line up related tasks to run sequentially</Typography>
-            <Typography variant="p">• <strong>Batch operations:</strong> Queue multiple similar requests to process one after another</Typography>
-          </Box>
+          <Typography variant="list">
+            <li><strong>Multi-step workflows:</strong> Queue all the steps of a process upfront</li>
+            <li><strong>Corrections:</strong> Queue a follow-up correction while waiting for the first task</li>
+            <li><strong>Chained tasks:</strong> Line up related tasks to run sequentially</li>
+            <li><strong>Batch operations:</strong> Queue multiple similar requests to process one after another</li>
+          </Typography>
         </Box>
 
         <Box>
           <Typography variant="h3" className="mb-2">Tips</Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="p" className="mb-1">• Messages are sent in order, so plan your queue accordingly</Typography>
-            <Typography variant="p" className="mb-1">• Each message creates a new conversation turn after the previous completes</Typography>
-            <Typography variant="p" className="mb-1">• The agent maintains context between queued messages</Typography>
-            <Typography variant="p">• You can continue adding messages to the queue at any time during execution</Typography>
-          </Box>
+          <Typography variant="list">
+            <li>Messages are sent in order, so plan your queue accordingly</li>
+            <li>Each message creates a new conversation turn after the previous completes</li>
+            <li>The agent maintains context between queued messages</li>
+            <li>You can continue adding messages to the queue at any time during execution</li>
+          </Typography>
         </Box>
       </Box>
     </DocPageLayout>

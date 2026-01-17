@@ -115,7 +115,8 @@ async function runScript(
     const stderr: string[] = []
     
     // Prepare the module paths - include workspace and the pptx tools directory
-    const pptxToolsDir = path.resolve(__dirname, 'pptx')
+    // Path to pptx skills utilities (from tools directory: ../skills/pptx/utils)
+    const pptxToolsDir = path.resolve(__dirname, '../skills/pptx/utils')
     
     // Find node_modules directories by walking up from current directory
     const findNodeModulesPaths = (): string[] => {
@@ -228,13 +229,32 @@ export const executeScriptTool = tool(
   {
     name: 'execute_script',
     description: `Execute a Node.js script in the workspace. The script runs with full Node.js capabilities and can:
-- Import installed packages (docx, exceljs, etc.)
+- Import installed packages (docx, exceljs, pptxgenjs, etc.)
 - Read/write files in the workspace (use process.env.WORKSPACE_DIR)
-- Generate output files (DOCX, XLSX, images, etc.)
+- Generate output files (DOCX, XLSX, PPTX, images, etc.)
+- Use html2pptx for PowerPoint presentations (sequential slide creation workflow)
 
-IMPORTANT: Do NOT use this tool for PowerPoint presentations. Use pptx_ai instead.
+For PowerPoint presentations, you can use execute_script to create presentations sequentially using html2pptx. Example:
+\`\`\`javascript
+const pptxgen = require('pptxgenjs');
+const { html2pptx } = require('./path/to/html2pptx');
 
-Any generated files (.docx, .xlsx, .pdf, .png, .jpg, etc.) are automatically uploaded to the user's cloud storage.`,
+async function createPresentation() {
+    const pptx = new pptxgen();
+    pptx.layout = 'LAYOUT_16x9';
+    
+    // Slide 1
+    const { slide: slide1 } = await html2pptx('slides/title.html', pptx);
+    
+    // Slide 2
+    const { slide: slide2, placeholders } = await html2pptx('slides/content.html', pptx);
+    slide2.addChart(pptx.charts.BAR, data, placeholders[0]);
+    
+    await pptx.writeFile({ fileName: 'presentation.pptx' });
+}
+\`\`\`
+
+Any generated files (.docx, .xlsx, .pptx, .pdf, .png, .jpg, etc.) are automatically uploaded to the user's cloud storage.`,
     schema: z.object({
       script: z.string().describe("The Node.js script code to execute"),
       scriptFileName: z.string().optional().describe("Optional filename for the script (default: auto-generated)"),

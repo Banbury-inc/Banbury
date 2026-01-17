@@ -42,7 +42,21 @@ import { generateImageTool } from "./generateImageTool"
 import { getCurrentDateTimeTool } from "./getCurrentDateTimeTool"
 import { docxAiTool } from "./docxAiTool"
 import { sheetAiTool } from "./sheetAiTool"
-import { pptxAiTool } from "./pptxAiTool"
+import {
+  createPresentationTool,
+  createSlideTool,
+  addTextTool,
+  addShapeTool,
+  addImageTool,
+  addChartTool,
+  addTableTool,
+  setSlideBackgroundTool,
+  useTemplateTool,
+  extractInventoryTool,
+  rearrangeSlidesTool,
+  replaceTextTool,
+  evaluatePresentationTool,
+} from "./pptxTools"
 import { tldrawAiTool } from "./tldrawAiTool"
 
 // ============================================================================
@@ -65,7 +79,20 @@ const TOOL_REGISTRY: Record<string, any> = {
   get_current_date_time: getCurrentDateTimeTool,
   docx_ai: docxAiTool,
   sheet_ai: sheetAiTool,
-  pptx_ai: pptxAiTool,
+  // PPTX tools
+  pptx_create_presentation: createPresentationTool,
+  pptx_create_slide: createSlideTool,
+  pptx_add_text: addTextTool,
+  pptx_add_shape: addShapeTool,
+  pptx_add_image: addImageTool,
+  pptx_add_chart: addChartTool,
+  pptx_add_table: addTableTool,
+  pptx_set_slide_background: setSlideBackgroundTool,
+  pptx_use_template: useTemplateTool,
+  pptx_extract_inventory: extractInventoryTool,
+  pptx_rearrange_slides: rearrangeSlidesTool,
+  pptx_replace_text: replaceTextTool,
+  pptx_evaluate_presentation: evaluatePresentationTool,
   tldraw_ai: tldrawAiTool,
 }
 

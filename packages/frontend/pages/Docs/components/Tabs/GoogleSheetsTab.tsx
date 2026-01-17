@@ -14,11 +14,11 @@ export default function GoogleSheetsTab() {
 
       <Paper sx={{ p: 3, mb: 4, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' }}>
         <Typography variant="h3" className="mb-2">Capabilities</Typography>
-        <Box sx={{ pl: 2 }}>
-          <Typography variant="p" className="mb-1">• Read and write sheets with granular control</Typography>
-          <Typography variant="p" className="mb-1">• Generate reports, pivot summaries, and charts</Typography>
-          <Typography variant="p">• Sync sheet insights into the knowledge graph</Typography>
-        </Box>
+        <Typography variant="list">
+          <li>Read and write sheets with granular control</li>
+          <li>Generate reports, pivot summaries, and charts</li>
+          <li>Sync sheet insights into the knowledge graph</li>
+        </Typography>
       </Paper>
 
       <Paper sx={{ p: 3, mb: 4, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' }}>

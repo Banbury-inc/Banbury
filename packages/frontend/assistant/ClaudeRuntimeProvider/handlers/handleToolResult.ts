@@ -37,6 +37,54 @@ export function handleToolResult({ evt, contentParts }: HandleToolResultParams):
       }
       const detail = { result: parsed }
       window.dispatchEvent(new CustomEvent('assistant-file-created', { detail }))
+    } else if (toolName === 'pptx_create_presentation') {
+      // Handle PowerPoint presentation creation - dispatch workspace-reopen-file event
+      const raw = (evt as any).part?.result
+      let parsed: any = null
+      if (typeof raw === 'string') {
+        try { parsed = JSON.parse(raw) } catch {}
+      } else if (raw && typeof raw === 'object') {
+        parsed = raw
+      }
+      
+      // Only dispatch if creation was successful and we have fileId
+      if (parsed?.success && parsed?.fileId && parsed?.presentationName) {
+        // Ensure the filename has .pptx extension for proper file type detection
+        const fileName = parsed.presentationName.endsWith('.pptx') 
+          ? parsed.presentationName 
+          : `${parsed.presentationName}.pptx`
+        
+        // Also check fileInfo for the actual uploaded filename
+        const actualFileName = parsed.fileInfo?.file_name || fileName
+        const filePath = `presentations/${actualFileName}`
+        
+        // Trigger sidebar refresh first
+        window.dispatchEvent(new CustomEvent('file-sidebar-refresh'))
+        
+        // Open the file directly using workspace-reopen-file with the fileId
+        // PowerPointViewer will download from S3 using the file_id, so the file
+        // doesn't need to be in the file system list yet
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('workspace-reopen-file', {
+            detail: {
+              newFile: {
+                id: parsed.fileId,
+                file_id: parsed.fileId,
+                name: actualFileName,
+                type: 'file',
+                path: filePath
+              }
+            }
+          }))
+          
+          // Also dispatch pptx-presentation-loaded event for PowerPointViewer
+          if (parsed.presentationId) {
+            window.dispatchEvent(new CustomEvent('pptx-presentation-loaded', {
+              detail: { fileId: parsed.fileId, presentationId: parsed.presentationId }
+            }))
+          }
+        }, 500) // Small delay to allow sidebar refresh
+      }
     } else if (toolName === 'browser' || toolName === 'browser_create_session' || toolName === 'stagehand_create_session') {
       const raw = (evt as any).part?.result
       let parsed: any = null

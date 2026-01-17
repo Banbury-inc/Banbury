@@ -102,6 +102,7 @@ export interface StreamRequestBody {
   threadId?: string
   toolPreferences?: ToolPreferences
   documentContext?: string
+  presentationContext?: string
   dateTimeContext?: DateTimeContext
   recursionLimit?: number
   webSearchOptions?: WebSearchOptions

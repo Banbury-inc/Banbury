@@ -796,7 +796,7 @@ function ElementRenderer({
             src={element.imageUrl}
             alt=""
             fill
-            className="object-contain"
+            className="object-cover"
             unoptimized
           />
         ) : (

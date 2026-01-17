@@ -194,6 +194,7 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
   const handleOpenDocument = () => {
     // Get fileId from args if available (set by CreateFileTool/DownloadFileTool from result)
     const fileId = args?.fileId;
+    console.log('fileId', fileId);
     
     // First, trigger a sidebar refresh to ensure the file appears in the file list
     window.dispatchEvent(new CustomEvent('file-sidebar-refresh'));
@@ -211,12 +212,17 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
           }
         }
       }));
-    } else if (resolvedFilePath || resolvedDisplayName) {
-      // No file_id available - search for the file by name/path and open it
-      window.dispatchEvent(new CustomEvent('workspace-find-and-open-file', {
+    } else if (resolvedFilePath) {
+      // If we have a file path but no fileId, use the path as the id (like tldraw handler)
+      window.dispatchEvent(new CustomEvent('workspace-reopen-file', {
         detail: {
-          fileName: resolvedDisplayName,
-          filePath: resolvedFilePath
+          newFile: {
+            id: resolvedFilePath,
+            file_id: resolvedFilePath,
+            name: resolvedDisplayName,
+            type: 'file',
+            path: resolvedFilePath
+          }
         }
       }));
     }
@@ -313,44 +319,6 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
           </div>
           
           <div className="flex items-center gap-2 flex-shrink-0">
-            {rejected && (
-              <div className="flex items-center gap-2 text-destructive dark:text-destructive">
-                <span className="text-xs font-medium">Rejected</span>
-                <div className="p-1 rounded-full bg-destructive/20 dark:bg-destructive/30">
-                  <X className="h-3.5 w-3.5" />
-                </div>
-              </div>
-            )}
-            {applied && (
-              <div className="flex items-center gap-2 text-success dark:text-success">
-                <span className="text-xs font-medium">Applied</span>
-                <div className="p-1 rounded-full bg-success/20 dark:bg-success/30">
-                  <Check className="h-3.5 w-3.5" />
-                </div>
-              </div>
-            )}
-            {!applied && !rejected && (
-              <div className="flex items-center gap-1.5">
-                <Button 
-                  variant="primary" 
-                  size="icon-sm" 
-                  onClick={handleAcceptAll}
-                  className="h-8 w-8 !bg-green-600 hover:!bg-green-700 active:!bg-green-800 text-white border-0 shadow-sm hover:shadow transition-all duration-150"
-                >
-                  <Check className="h-4 w-4 stroke-[2.5]" />
-                </Button>
-                
-                <Button 
-                  variant="primary" 
-                  size="icon-sm" 
-                  onClick={handleReject}
-                  className="h-8 w-8 !bg-destructive hover:!bg-destructive/90 active:!bg-destructive/80 text-white border-0 shadow-sm hover:shadow transition-all duration-150"
-                >
-                  <X className="h-4 w-4 stroke-[2.5]" />
-                </Button>
-              </div>
-            )}
-            
             {/* Open button for mutating tools */}
             {isMutatingTool && (resolvedFilePath || resolvedDisplayName) && (
               <Button
