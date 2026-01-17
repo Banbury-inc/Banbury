@@ -36,10 +36,11 @@ export interface Message {
 }
 
 export interface StreamEvent {
-  type: "message-start" | "text-delta" | "tool-call" | "tool-result" | "message-end" | "error" | "done" | 
+  type: "message-start" | "text-delta" | "tool-call" | "tool-result" | "message-end" | "error" | "done" |
         "thinking" | "step-progression" | "tool-call-start" | "tool-status" | "tool-completion" | "completion-summary" |
-        "subagent-spawn-start" | "subagent-start" | "subagent-content" | "subagent-tool-call-start" | "subagent-tool-result" | 
-        "subagent-end" | "subagent-spawn-complete" | "subagent-spawn-error";
+        "subagent-spawn-start" | "subagent-start" | "subagent-content" | "subagent-tool-call-start" | "subagent-tool-result" |
+        "subagent-end" | "subagent-spawn-complete" | "subagent-spawn-error" | "pptx-updated" | "open-presentation-in-viewer" |
+        "pptx-live-update" | string; // Allow any string for custom events
   role?: string;
   text?: string;
   part?: ToolCall;
@@ -66,6 +67,14 @@ export interface StreamEvent {
   args?: any;
   argsText?: string;
   result?: any;
+  // PPTX event properties
+  fileId?: string;
+  fileName?: string;
+  presentationId?: string;
+  operation?: string;
+  operationData?: any;
+  timestamp?: number;
+  fileUrl?: string;
 }
 
 export interface AssistantState {
@@ -185,12 +194,17 @@ export function useLangGraphAssistant(initialThreadId?: string) {
         throw new Error('No response body reader available');
       }
 
+      console.log('[useLangGraphAssistant] ===== STREAM STARTED =====');
+
       const decoder = new TextDecoder();
       let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log('[useLangGraphAssistant] ===== STREAM ENDED =====');
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -198,6 +212,7 @@ export function useLangGraphAssistant(initialThreadId?: string) {
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
+            console.log('[useLangGraphAssistant] Raw SSE data:', line.slice(6).substring(0, 100) + '...');
             try {
               const event: StreamEvent = JSON.parse(line.slice(6));
               await handleStreamEvent(event);
@@ -223,6 +238,9 @@ export function useLangGraphAssistant(initialThreadId?: string) {
   }, [state.messages, state.threadId, state.isLoading]);
 
   const handleStreamEvent = useCallback(async (event: StreamEvent) => {
+    // Debug: Log all events to see what's coming through
+    console.log('[useLangGraphAssistant] Received event:', event.type, event);
+
     switch (event.type) {
       case "message-start":
         // Assistant message started
@@ -345,9 +363,57 @@ export function useLangGraphAssistant(initialThreadId?: string) {
               }
               const detail = { result: parsed };
               window.dispatchEvent(new CustomEvent('assistant-file-created', { detail }));
+            } else if (toolName === 'pptx_create_presentation') {
+              // Handle PowerPoint presentation creation - open in viewer
+              const raw = event.part.result;
+              let parsed: any = null;
+              if (typeof raw === 'string') {
+                try { parsed = JSON.parse(raw); } catch {}
+              } else if (raw && typeof raw === 'object') {
+                parsed = raw;
+              }
+              
+              // Only open if creation was successful and we have fileId
+              if (parsed?.success && parsed?.fileId && parsed?.presentationName) {
+                // Ensure the filename has .pptx extension for proper file type detection
+                const fileName = parsed.presentationName.endsWith('.pptx') 
+                  ? parsed.presentationName 
+                  : `${parsed.presentationName}.pptx`
+                
+                // Also check fileInfo for the actual uploaded filename
+                const actualFileName = parsed.fileInfo?.file_name || fileName
+                const filePath = `presentations/${actualFileName}`
+                
+                // Trigger sidebar refresh first
+                window.dispatchEvent(new CustomEvent('file-sidebar-refresh'));
+                
+                // Open the file directly using workspace-reopen-file with the fileId
+                // PowerPointViewer will download from S3 using the file_id, so the file
+                // doesn't need to be in the file system list yet
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent('workspace-reopen-file', {
+                    detail: {
+                      newFile: {
+                        id: parsed.fileId,
+                        file_id: parsed.fileId,
+                        name: actualFileName,
+                        type: 'file',
+                        path: filePath
+                      }
+                    }
+                  }));
+                  
+                  // Also dispatch pptx-presentation-loaded event for PowerPointViewer
+                  if (parsed.presentationId) {
+                    window.dispatchEvent(new CustomEvent('pptx-presentation-loaded', {
+                      detail: { fileId: parsed.fileId, presentationId: parsed.presentationId }
+                    }));
+                  }
+                }, 500); // Small delay to allow sidebar refresh
+              }
             }
           } catch (err) {
-            console.error('[LangGraph] Error dispatching assistant-file-created:', err);
+            console.error('[LangGraph] Error dispatching file creation events:', err);
           }
 
           // Remove from tools in progress
@@ -426,6 +492,22 @@ export function useLangGraphAssistant(initialThreadId?: string) {
           totalSteps: undefined,
           toolStatuses: new Map()
         }));
+        break;
+
+      default:
+        // Handle custom events (like pptx-updated) by dispatching them as CustomEvents
+        if (event.type === 'pptx-updated') {
+          window.dispatchEvent(new CustomEvent('pptx-updated', { detail: event }));
+        } else if (event.type === 'assistant-file-created') {
+          // Dispatch assistant-file-created event to trigger file list refresh
+          window.dispatchEvent(new CustomEvent('assistant-file-created', { detail: event }));
+        } else if (event.type === 'open-presentation-in-viewer') {
+          console.log('[useLangGraphAssistant] Dispatching open-presentation-in-viewer event', event);
+          window.dispatchEvent(new CustomEvent('open-presentation-in-viewer', { detail: event }));
+        } else if (event.type === 'pptx-live-update') {
+          console.log('[useLangGraphAssistant] Dispatching pptx-live-update event', event);
+          window.dispatchEvent(new CustomEvent('pptx-live-update', { detail: event }));
+        }
         break;
     }
   }, []);

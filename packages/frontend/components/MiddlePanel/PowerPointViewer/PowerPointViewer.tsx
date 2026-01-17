@@ -174,6 +174,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
   const [undoAvailable, setUndoAvailable] = useState(false)
   const [redoAvailable, setRedoAvailable] = useState(false)
   const [isPresentingSlideshow, setIsPresentingSlideshow] = useState(false)
+  const [activePresentationId, setActivePresentationId] = useState<string | null>(null)
   const { toast } = useToast()
   const lastFetchKeyRef = useRef<string | null>(null)
 
@@ -188,6 +189,38 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     setUndoAvailable(false)
     setRedoAvailable(false)
   }, [file.file_id])
+
+  // Register PowerPoint viewer state in global registry for context passing
+  useEffect(() => {
+    if (!currentFile.file_id || slides.length === 0) return
+
+    // Initialize global registry if it doesn't exist
+    if (typeof window !== 'undefined') {
+      if (!(window as any)._activePowerPointViewers) {
+        (window as any)._activePowerPointViewers = []
+      }
+
+      const viewerState = {
+        fileId: currentFile.file_id,
+        slides: slides
+      }
+
+      // Remove any existing viewer with the same fileId
+      const viewers = (window as any)._activePowerPointViewers as Array<{ fileId: string; slides: Slide[] }>
+      const filteredViewers = viewers.filter(v => v.fileId !== currentFile.file_id)
+      filteredViewers.push(viewerState)
+      ;(window as any)._activePowerPointViewers = filteredViewers
+
+      // Cleanup: unregister when component unmounts or file changes
+      return () => {
+        if ((window as any)._activePowerPointViewers) {
+          ;(window as any)._activePowerPointViewers = (
+            (window as any)._activePowerPointViewers as Array<{ fileId: string; slides: Slide[] }>
+          ).filter(v => v.fileId !== currentFile.file_id)
+        }
+      }
+    }
+  }, [currentFile.file_id, slides])
 
   // Load presentation from file
   useEffect(() => {
@@ -792,6 +825,206 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
       window.removeEventListener('powerpoint-file-generated', handler as EventListener)
     }
   }, [])
+
+  // Listen for PPTX tool updates via SSE stream
+  useEffect(() => {
+    const handler = async (event: CustomEvent) => {
+      const data = event.detail
+
+      if (data.type === 'pptx-updated') {
+        const { fileId, fileName, operation } = data
+
+        // Only reload if this is the currently open file
+        if (currentFile.file_id === fileId || currentFile.name === fileName) {
+          try {
+            const result = await ApiService.downloadFromS3(fileId, fileName)
+            if (result.success && result.blob) {
+              const parsedSlides = await parsePptxFile(result.blob)
+              setSlides(parsedSlides)
+              setHasUnsavedChanges(false)
+
+              // Preserve current slide index if still valid
+              if (currentSlideIndex < parsedSlides.length) {
+                setCurrentSlideIndex(currentSlideIndex)
+              } else {
+                setCurrentSlideIndex(Math.max(0, parsedSlides.length - 1))
+              }
+
+              pushToHistory(parsedSlides, currentSlideIndex)
+              setUndoAvailable(canUndo())
+              setRedoAvailable(canRedo())
+
+              // Show toast notification
+              toast({
+                title: 'Presentation updated',
+                description: `AI has completed: ${operation.replace(/_/g, ' ')}`,
+                variant: 'default'
+              })
+            }
+          } catch (error) {
+            console.error('Failed to reload after AI update:', error)
+          }
+        }
+      }
+    }
+
+    // Listen for custom events from SSE stream
+    window.addEventListener('pptx-updated', handler as EventListener)
+    return () => window.removeEventListener('pptx-updated', handler as EventListener)
+  }, [currentFile.file_id, currentFile.name, currentSlideIndex])
+
+  // Listen for pptx-presentation-loaded event to track active presentation ID
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail || {}
+      const { fileId, presentationId } = detail
+
+      console.log('[PowerPointViewer] Received pptx-presentation-loaded event:', { 
+        fileId, 
+        presentationId, 
+        currentFileId: file?.file_id 
+      })
+
+      // Only set if this viewer is showing the matching file
+      if (file?.file_id === fileId) {
+        console.log('[PowerPointViewer] Setting activePresentationId:', presentationId)
+        setActivePresentationId(presentationId)
+      } else {
+        console.log('[PowerPointViewer] File ID mismatch, not setting activePresentationId')
+      }
+    }
+
+    window.addEventListener('pptx-presentation-loaded', handler as EventListener)
+    return () => window.removeEventListener('pptx-presentation-loaded', handler as EventListener)
+  }, [file?.file_id])
+
+  // Listen for pptx-live-update events to apply changes without re-downloading
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail || {}
+      const { presentationId, operation, operationData, fileId } = detail
+
+      console.log('[PowerPointViewer] Received pptx-live-update event:', { 
+        presentationId, 
+        activePresentationId, 
+        operation, 
+        fileId,
+        currentFileId: file?.file_id 
+      })
+
+      // Check if this event is for the current presentation
+      // Match by presentationId (if activePresentationId is set) or by fileId
+      const presentationMatches = activePresentationId && presentationId === activePresentationId
+      const fileMatches = fileId && file?.file_id === fileId
+      
+      if (!presentationMatches && !fileMatches) {
+        console.log('[PowerPointViewer] Ignoring event - presentation/file mismatch')
+        return
+      }
+
+      // If we matched by fileId but activePresentationId isn't set, set it now
+      if (!activePresentationId && fileMatches && presentationId) {
+        console.log('[PowerPointViewer] Setting activePresentationId from event:', presentationId)
+        setActivePresentationId(presentationId)
+      }
+
+      // Apply the operation to the slides
+      setSlides((prevSlides) => {
+        const updatedSlides = [...prevSlides]
+
+        switch (operation) {
+          case 'create_slide': {
+            const { slideIndex, layout, background } = operationData
+            const newSlide: Slide = {
+              id: `slide-${Date.now()}`,
+              index: slideIndex,
+              elements: [],
+              background: background,
+            }
+            updatedSlides.splice(slideIndex, 0, newSlide)
+            // Update indices of subsequent slides
+            updatedSlides.forEach((slide, idx) => {
+              slide.index = idx
+            })
+            break
+          }
+
+          case 'add_text': {
+            const { slideIndex, element } = operationData
+            if (updatedSlides[slideIndex]) {
+              updatedSlides[slideIndex] = {
+                ...updatedSlides[slideIndex],
+                elements: [...updatedSlides[slideIndex].elements, element],
+              }
+            }
+            break
+          }
+
+          case 'add_image': {
+            const { slideIndex, element } = operationData
+            if (updatedSlides[slideIndex]) {
+              updatedSlides[slideIndex] = {
+                ...updatedSlides[slideIndex],
+                elements: [...updatedSlides[slideIndex].elements, element],
+              }
+            }
+            break
+          }
+
+          case 'add_shape': {
+            const { slideIndex, element } = operationData
+            if (updatedSlides[slideIndex]) {
+              updatedSlides[slideIndex] = {
+                ...updatedSlides[slideIndex],
+                elements: [...updatedSlides[slideIndex].elements, element],
+              }
+            }
+            break
+          }
+
+          case 'add_table': {
+            const { slideIndex, element } = operationData
+            if (updatedSlides[slideIndex]) {
+              updatedSlides[slideIndex] = {
+                ...updatedSlides[slideIndex],
+                elements: [...updatedSlides[slideIndex].elements, element],
+              }
+            }
+            break
+          }
+
+          case 'set_slide_background': {
+            const { slideIndex, background } = operationData
+            if (updatedSlides[slideIndex]) {
+              updatedSlides[slideIndex] = {
+                ...updatedSlides[slideIndex],
+                background: background,
+              }
+            }
+            break
+          }
+
+          default:
+            console.warn('[PowerPointViewer] Unknown operation:', operation)
+        }
+
+        return updatedSlides
+      })
+
+      // Mark as unsaved changes
+      setHasUnsavedChanges(true)
+
+      // Show toast notification
+      toast({
+        title: 'Presentation updated',
+        description: `AI has completed: ${operation.replace(/_/g, ' ')}`,
+        variant: 'default'
+      })
+    }
+
+    window.addEventListener('pptx-live-update', handler as EventListener)
+    return () => window.removeEventListener('pptx-live-update', handler as EventListener)
+  }, [activePresentationId, toast])
 
   // Resolve image references (driveFileId, s3FileId, web URLs) to data URLs
   useEffect(() => {

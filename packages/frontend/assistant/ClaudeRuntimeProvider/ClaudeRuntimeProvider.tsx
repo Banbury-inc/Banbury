@@ -6,6 +6,7 @@ import { prepareMessagesWithAttachments } from "./handlers/prepareMessagesWithAt
 import { getToolPreferences } from "./handlers/getToolPreferences";
 import { checkRateLimit } from "./handlers/checkRateLimit";
 import { getDocumentContext } from "./handlers/getDocumentContext";
+import { getPresentationContext } from "./handlers/getPresentationContext";
 import { handleFetchError } from "./handlers/handleFetchError";
 import { processStreamEvents } from "./handlers/processStreamEvents";
 import type { FC, PropsWithChildren } from "react";
@@ -55,6 +56,9 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
       // Check for document context in localStorage
       const documentContext = getDocumentContext();
 
+      // Check for presentation context (current slides state)
+      const presentationContext = getPresentationContext();
+
       // Get current date/time context
       const dateTimeContext = getCurrentDateTimeContext();
 
@@ -64,6 +68,7 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
         messages: messagesWithAttachmentParts, 
         toolPreferences,
         documentContext: documentContext || undefined,
+        presentationContext: presentationContext || undefined,
         dateTimeContext,
         recursionLimit: langGraphConfig.recursionLimit, // Add recursion limit
       };

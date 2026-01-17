@@ -60,7 +60,7 @@ export const writeWorkspaceFileTool = tool(
   },
   {
     name: 'write_workspace_file',
-    description: 'Write a file to the code execution workspace. Use this to create JavaScript scripts or any other files needed for code execution. Files persist within the current session and can be referenced by execute_script. Note: For PowerPoint presentations, use pptx_ai tool instead.',
+    description: 'Write a file to the code execution workspace. Use this to create HTML slides, JavaScript scripts, and other files needed for code execution. Files persist within the current session and can be referenced by execute_script. For PowerPoint presentations, you can use this to create HTML slide files that will be processed by html2pptx in execute_script.',
     schema: z.object({
       fileName: z.string().describe("The file name (e.g., 'slide1.html', 'generate.js')"),
       content: z.string().describe("The file contents"),

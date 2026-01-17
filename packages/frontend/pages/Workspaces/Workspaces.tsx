@@ -1096,6 +1096,7 @@ const Workspaces = (): React.ReactNode => {
   // Listen for requests to reopen a file (e.g., after save generates a new file id)
   useEffect(() => {
     const handler = (e: Event) => {
+      console.log('[Workspaces] Received workspace-reopen-file event', e);
       const detail = (e as CustomEvent).detail || {};
       const { newFile } = detail as { oldPath?: string; newFile: FileSystemItem };
       if (!newFile) return;
@@ -1144,6 +1145,52 @@ const Workspaces = (): React.ReactNode => {
     window.addEventListener('file-sidebar-refresh', handler);
     return () => window.removeEventListener('file-sidebar-refresh', handler);
   }, [triggerSidebarRefresh]);
+
+  // Listen for open-presentation-in-viewer events to auto-switch to new presentations
+  useEffect(() => {
+    const handler = async (event: Event) => {
+      console.log('[Workspaces] Received open-presentation-in-viewer event', event);
+      const detail = (event as CustomEvent).detail || {};
+      const { fileId, fileName, presentationId, fileUrl } = detail;
+      console.log('[Workspaces] Event detail:', { fileId, fileName, presentationId });
+
+      if (!fileId || !fileName || !presentationId) {
+        console.warn('[Workspaces] Missing required fields in event detail');
+        return;
+      }
+
+      // Wait for file to appear in sidebar (it was just created and uploaded)
+      setTimeout(async () => {
+        console.log('[Workspaces] Triggering sidebar refresh and opening file');
+
+        // Trigger sidebar refresh to ensure file is loaded
+        triggerSidebarRefresh();
+
+        // Wait for refresh to complete
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Create FileSystemItem and open it in the middle panel
+        const file: FileSystemItem = {
+          id: fileId,
+          file_id: fileId,
+          name: fileName,
+          path: `presentations/${fileName}`,
+          type: 'file',
+        };
+
+        console.log('[Workspaces] Opening file in tab:', file);
+        openFileInTabCallback(file, 'main-panel');
+
+        // Dispatch pptx-presentation-loaded event for PowerPointViewer to catch
+        console.log('[Workspaces] Dispatching pptx-presentation-loaded event');
+        window.dispatchEvent(new CustomEvent('pptx-presentation-loaded', {
+          detail: { fileId, presentationId }
+        }));
+      }, 300);
+    };
+    window.addEventListener('open-presentation-in-viewer', handler as EventListener);
+    return () => window.removeEventListener('open-presentation-in-viewer', handler as EventListener);
+  }, [triggerSidebarRefresh, openFileInTabCallback]);
 
   // Listen for workspace-find-and-open-file events to find and open files by name/path
   // Searches S3 for the file and opens it in the middle panel

@@ -32,7 +32,10 @@
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
-    "createStartMenuShortcut": true
+    "createStartMenuShortcut": true,
+    "installerIcon": "electron-app/resources/icon.ico",
+    "uninstallerIcon": "electron-app/resources/icon.ico",
+    "installerHeaderIcon": "electron-app/resources/icon.ico"
   },
   "mac": {
     "target": [

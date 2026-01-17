@@ -161,6 +161,7 @@
     "react-visibility-sensor": "^5.1.1",
     "recharts": "^2.15.4",
     "remark-gfm": "^4.0.1",
+    "sharp": "^0.33.5",
     "stream-browserify": "^3.0.0",
     "tailwind-merge": "^3.3.1",
     "timers-browserify": "^2.0.12",
@@ -170,6 +171,9 @@
     "util": "^0.12.5",
     "web-vitals": "^3.4.0",
     "xlsx": "^0.18.5",
+    "xml-formatter": "^3.3.0",
+    "xml2js": "^0.6.2",
+    "@xmldom/xmldom": "^0.8.10",
     "zod": "^3.25.76"
   },
   "devDependencies": {
