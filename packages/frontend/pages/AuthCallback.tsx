@@ -57,11 +57,19 @@ const AuthCallback = (): JSX.Element => {
     const hasOAuthResponse = !!(code || urlError)
     
     // Electron callback if: explicit electron parameter OR (not in Electron AND (origin-based detection OR sessionStorage-based detection) AND has OAuth response)
-    const isElectronCallback = electron === 'true' || (
-      !isInElectron && 
-      hasOAuthResponse && 
-      ((isElectronRedirectOrigin && isAtCallbackPath) || oauthIsDesktop)
-    )
+    console.log(electron) // undefined
+    console.log(isInElectron) // false
+    console.log(hasOAuthResponse) // true
+    console.log(isElectronRedirectOrigin) // true
+    console.log(isAtCallbackPath) // true
+    console.log(oauthIsDesktop) // false
+    // const isElectronCallback = electron === 'true' || (
+    //   !isInElectron && 
+    //   hasOAuthResponse && 
+    //   ((isElectronRedirectOrigin && isAtCallbackPath) || oauthIsDesktop)
+    // )
+
+    const isElectronCallback = isInElectron
     
     // If this is an Electron callback, handle it specially
     // Note: electron=true means this callback is FOR Electron (in browser),
@@ -69,6 +77,7 @@ const AuthCallback = (): JSX.Element => {
     // Check for electron parameter first, even if code isn't present yet
     // This prevents falling through to normal OAuth callback handler
     if (isElectronCallback) {
+      console.log("This is an electron callback")
       // Wait for code/error to be present before proceeding
       if (!code && !urlError) {
         // Still mark as handled to prevent processing as normal callback
