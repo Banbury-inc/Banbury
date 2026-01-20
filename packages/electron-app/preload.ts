@@ -41,7 +41,6 @@ const eventListeners: Map<string, IPCListener[]> = new Map()
 
 function addIPCListener<T extends unknown[]>(channel: string, callback: (...args: T) => void): () => void {
   const handler: IPCListener = (_event: Electron.IpcRendererEvent, ...args: unknown[]) => {
-    console.log(`[Preload] IPC event received on channel: ${channel}`, ...args)
     callback(...(args as T))
   }
   ipcRenderer.on(channel, handler)
@@ -54,7 +53,6 @@ function addIPCListener<T extends unknown[]>(channel: string, callback: (...args
   
   // Return cleanup function
   return () => {
-    console.log(`[Preload] Removing IPC listener for channel: ${channel}`)
     ipcRenderer.removeListener(channel, handler)
     const listeners = eventListeners.get(channel)
     if (listeners) {

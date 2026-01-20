@@ -6,20 +6,15 @@ import { ChatOpenAI } from "@langchain/openai";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
 
-// Simple DOCX text extraction function
 function extractTextFromDocx(buffer: Buffer, fileName: string): string {
   try {
-    // DOCX files are ZIP archives containing XML files
-    // We'll try a simple approach to extract text from the main document
     const content = buffer.toString('binary');
     
-    // Look for XML content between tags
     const xmlMatches = content.match(/<w:t[^>]*>(.*?)<\/w:t>/g);
     
     if (xmlMatches) {
       const extractedText = xmlMatches
         .map(match => {
-          // Extract text content from w:t tags
           const textMatch = match.match(/<w:t[^>]*>(.*?)<\/w:t>/);
           return textMatch ? textMatch[1] : '';
         })
@@ -31,7 +26,6 @@ function extractTextFromDocx(buffer: Buffer, fileName: string): string {
       }
     }
     
-    // Fallback: simple text extraction
     const simpleText = content.replace(/[^\x20-\x7E]/g, ' ').replace(/\s+/g, ' ').trim();
     const meaningfulText = simpleText.length > 100 ? simpleText.substring(0, 2000) : '';
     
@@ -58,7 +52,6 @@ type AssistantUiMessage = {
 
 const tiptapAI: any = tool(
   async (input: { action: string; content: string; selection?: { from: number; to: number; text: string }; targetText?: string; actionType: string; language?: string }) => {
-    // This tool formats AI-generated content for Tiptap editor integration
     return {
       action: input.action,
       content: input.content,
@@ -136,7 +129,6 @@ const webSearch: any = tool(
       return null;
     };
 
-    // Prefer Tavily if available for high-quality, content-rich results
     const results: Result[] = [];
     const tavilyKey = process.env.TAVILY_API_KEY || "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";
     if (tavilyKey) {
@@ -166,7 +158,6 @@ const webSearch: any = tool(
       } catch {}
     }
 
-    // Fallback to DuckDuckGo + enrichment if Tavily is unavailable or returned nothing
     if (results.length === 0) {
       try {
         const mod: any = await import("duck-duck-scrape");
@@ -184,7 +175,6 @@ const webSearch: any = tool(
       } catch {}
     }
 
-    // Enrich results by fetching page content
     const enrichPromises = results.map(async (r) => {
       const html = await fetchWithTimeout(r.url, 4500);
       if (!html) return r;
@@ -213,12 +203,10 @@ const webSearch: any = tool(
 );
 
 
-// Helper function to detect Google image models
 function isGoogleImageModel(model: string): boolean {
   return model.startsWith('gemini') || model === 'gemini-2.5-flash-image';
 }
 
-// Helper function to generate image with Google API
 async function generateImageWithGoogle(prompt: string, model: string): Promise<string> {
   const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) {
@@ -246,12 +234,10 @@ async function generateImageWithGoogle(prompt: string, model: string): Promise<s
 
   const data = await response.json() as any;
   
-  // Extract image from Google's response format
   const candidate = data.candidates?.[0];
   const content = candidate?.content;
   const parts = content?.parts || [];
   
-  // Find the image part (Google returns base64 encoded images)
   const imagePart = parts.find((part: any) => part.inlineData);
   if (!imagePart?.inlineData?.data) {
     throw new Error('No image returned by Google API');
@@ -260,7 +246,6 @@ async function generateImageWithGoogle(prompt: string, model: string): Promise<s
   return imagePart.inlineData.data;
 }
 
-// Helper function to generate image with OpenAI API
 async function generateImageWithOpenAI(prompt: string, model: string, size: string): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -290,7 +275,6 @@ async function generateImageWithOpenAI(prompt: string, model: string, size: stri
   return b64;
 }
 
-// Image generation tool: lets the model generate images and upload them to S3
 const generateImage: any = tool(
   async (input: { prompt: string; size?: '256x256' | '512x512' | '1024x1024'; folder?: string; fileBaseName?: string }, runtime?: any) => {
     try {
@@ -300,11 +284,9 @@ const generateImage: any = tool(
       const folder = (input?.folder || 'images').replace(/^\/+|\/+$/g, '');
       const baseName = (input?.fileBaseName || 'Generated Image').toString().trim();
 
-      // Get image generation model from tool preferences
       const toolPreferences = (runtime as any)?.req?.body?.toolPreferences || {};
       const imageModel = toolPreferences.image_generation_model || 'dall-e-3';
 
-      // 1) Call image generation API (OpenAI or Google)
       let b64: string;
       if (isGoogleImageModel(imageModel)) {
         b64 = await generateImageWithGoogle(prompt, imageModel);
@@ -312,8 +294,6 @@ const generateImage: any = tool(
         b64 = await generateImageWithOpenAI(prompt, imageModel, size);
       }
 
-      // 2) Upload to S3 via backend API using the user's token
-      // Token from original request headers
       const token = (runtime as any)?.req?.headers?.authorization?.replace('Bearer ', '') || '';
       if (!token) return JSON.stringify({ ok: false, error: 'Missing auth token for upload' });
 
@@ -344,7 +324,6 @@ const generateImage: any = tool(
         return JSON.stringify({ ok: false, error: `Upload failed: ${text || uploadResp.statusText}` });
       }
 
-      // Normalize a compact file_info for the UI to act on
       const result = {
         ok: true,
         file_info: {
@@ -684,7 +663,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const body = req.body as { messages: any[]; toolPreferences?: { web_search?: boolean; tiptap_ai?: boolean; read_file?: boolean; gmail?: boolean; model_provider?: string } };
-    // Normalize: fold any message-level attachments into content as file-attachment parts
     const normalizedMessages: AssistantUiMessage[] = Array.isArray(body.messages)
       ? body.messages.map((msg: any) => {
           const attachments = Array.isArray(msg?.attachments) ? msg.attachments : [];
@@ -704,13 +682,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return { ...(rest as AssistantUiMessage), content };
         })
       : (body.messages as AssistantUiMessage[]);
-
-    // Debug: Log normalized messages to see what we're working with
-    // console.log('🔍 Normalized messages:', JSON.stringify(normalizedMessages, null, 2));
     
-    // Pre-download files from S3 and prepare them as base64 attachments for Anthropic
     const token = req.headers.authorization?.replace('Bearer ', '');
-    // console.log('🔑 Auth token present:', !!token);
     const messagesWithFileData: AssistantUiMessage[] = await (async () => {
       if (!Array.isArray(normalizedMessages)) return normalizedMessages;
       const out: AssistantUiMessage[] = [];
@@ -720,11 +693,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const p: any = parts[i];
           if (p?.type === 'file-attachment' && p?.fileId) {
             if (p?.fileData) {
-              // File already downloaded on frontend
             } else if (token) {
-              // console.log(`🔄 Attempting to download file: ${p.fileName} (ID: ${p.fileId})`);
               try {
-                // Use the same download endpoint as the frontend file viewers
                 const apiUrl = 'https://www.api.dev.banbury.io';
                 const downloadUrl = `${apiUrl}/files/download_s3_file/${encodeURIComponent(p.fileId)}/`;
                 
@@ -739,7 +709,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   const arrayBuffer = await resp.arrayBuffer();
                   const contentType = resp.headers.get('content-type') || 'application/octet-stream';
                   
-                  // Convert to base64 for Anthropic attachment
                   const base64Data = Buffer.from(arrayBuffer).toString('base64');
                   parts[i] = { 
                     ...p, 
@@ -753,7 +722,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 }
               } catch (error) {
                 console.error(`💥 Exception downloading file:`, error);
-                // If download fails, skip this attachment
                 parts.splice(i, 1);
                 i--; // Adjust index since we removed an item
               }
@@ -778,11 +746,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     };
     const messages: any[] = [new SystemMessage(SYSTEM_PROMPT), ...lcMessages];
 
-    // Create readFile tool with access to req
     const readFile: any = tool(
       async (input: { fileId: string; fileName: string; filePath: string }) => {
         try {
-          // Get the file content from S3
           const token = req.headers.authorization?.replace('Bearer ', '');
           if (!token) {
             throw new Error('No authentication token provided');
@@ -828,7 +794,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (prefs.read_file) enabledTools.push(readFile);
     if (prefs.tiptap_ai) enabledTools.push(tiptapAI);
     enabledTools.push(generateImage);
-    // Bind with access to req in tool runtime via custom wrapper
     const model = createChatModel(prefs.model_provider, prefs.model_id);
     const modelWithTools = model.bindTools(enabledTools.map((t: any) => ({
       ...t,
@@ -836,16 +801,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       call: (args: any) => (t as any).invoke(args, { req }),
     })) as any);
 
-    // start assistant message
     send({ type: "message-start", role: "assistant" });
 
-    // Agentic loop: request tools until done, then stream final answer
     const maxSteps = 100;
     for (let step = 0; step < maxSteps; step++) {
       const ai: any = await modelWithTools.invoke(messages);
       const toolCalls = (ai?.tool_calls || ai?.additional_kwargs?.tool_calls) || [];
       if (!Array.isArray(toolCalls) || toolCalls.length === 0) {
-        // No tools requested; emit the content from this assistant turn directly
         const textOut = typeof ai?.content === "string"
           ? ai.content
           : Array.isArray(ai?.content)
@@ -860,7 +822,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return;
       }
 
-      // Execute requested tools and emit tool-call parts as they occur
       const toolMsgs: any[] = [];
       for (const tc of toolCalls) {
         if (tc.name === "web_search") {
@@ -924,40 +885,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
-      // Add the AI planning turn and tool results to context for the next iteration
       messages.push(ai as AIMessage, ...toolMsgs);
     }
 
-    // Safety: if loop exits without finalization, end gracefully
     send({ type: "message-end", status: { type: "complete", reason: "stop" } });
     send({ type: "done" });
     res.end();
     res.end();
   } catch (e: any) {
-    // Parse the error to extract meaningful message for file size or other errors
     let errorMessage = e?.message || "unknown error";
     
-    // Check if it's an Anthropic API error with structured error information
     if (typeof e?.message === 'string' && e.message.includes('image exceeds 5 MB maximum')) {
-      // Extract the specific error message from the Anthropic response
       try {
         const match = e.message.match(/"message":"([^"]+)"/);
         if (match && match[1]) {
           errorMessage = match[1].replace(/\\"/g, '"');
         }
       } catch (parseError) {
-        // Fallback to generic message if parsing fails
         errorMessage = "File size exceeds 5 MB maximum limit";
       }
     } else if (typeof e?.message === 'string' && e.message.includes('400')) {
-      // Try to extract error from any 400 response
       try {
         const errorMatch = e.message.match(/"error":\s*{[^}]*"message":"([^"]+)"/);
         if (errorMatch && errorMatch[1]) {
           errorMessage = errorMatch[1].replace(/\\"/g, '"');
         }
       } catch (parseError) {
-        // Keep original message if parsing fails
       }
     }
 

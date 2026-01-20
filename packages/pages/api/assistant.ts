@@ -132,12 +132,9 @@ function toLangChainMessages(messages: AssistantUiMessage[]): any[] {
         // Add file attachments in Anthropic format
         for (const fa of fileAttachments) {
           if (fa.fileData && fa.mimeType) {
-            // console.log(`📎 Processing attachment: ${fa.fileName}, Original MIME: ${fa.mimeType}`);
-            
             // Normalize MIME type for Anthropic compatibility
             let anthropicMimeType = fa.mimeType;
             const fileExtension = fa.fileName?.split('.').pop()?.toLowerCase();
-            // console.log(`🔍 File extension: ${fileExtension}`);
             
             // Handle generic octet-stream based on file extension
             if (fa.mimeType === 'application/octet-stream' && fa.fileName) {

@@ -1044,7 +1044,6 @@ export async function html2pptx(
       const page = await browser.newPage()
       page.on('console', (msg) => {
         // Log the message text to your test runner's console
-        console.log(`Browser console: ${msg.text()}`)
       })
 
       await page.goto(`file://${filePath}`)

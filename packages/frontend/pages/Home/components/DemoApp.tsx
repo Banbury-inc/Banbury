@@ -547,13 +547,6 @@ export default function DemoApp() {
                 >
                   {getTabIcon(tab)}
                   <span className="truncate max-w-[100px] sm:max-w-[120px] md:max-w-[150px]">{getTabTitle(tab)}</span>
-                  <button
-                    onClick={(e) => handleCloseTab(tab.id, e)}
-                    className="ml-1 sm:ml-2 opacity-0 group-hover:opacity-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded p-0.5 transition-opacity"
-                    title="Close tab"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
                 </button>
               ))}
             </div>

@@ -201,10 +201,6 @@ export function useLangGraphAssistant(initialThreadId?: string) {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) {
-          console.log('[useLangGraphAssistant] ===== STREAM ENDED =====');
-          break;
-        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -502,10 +498,8 @@ export function useLangGraphAssistant(initialThreadId?: string) {
           // Dispatch assistant-file-created event to trigger file list refresh
           window.dispatchEvent(new CustomEvent('assistant-file-created', { detail: event }));
         } else if (event.type === 'open-presentation-in-viewer') {
-          console.log('[useLangGraphAssistant] Dispatching open-presentation-in-viewer event', event);
           window.dispatchEvent(new CustomEvent('open-presentation-in-viewer', { detail: event }));
         } else if (event.type === 'pptx-live-update') {
-          console.log('[useLangGraphAssistant] Dispatching pptx-live-update event', event);
           window.dispatchEvent(new CustomEvent('pptx-live-update', { detail: event }));
         }
         break;

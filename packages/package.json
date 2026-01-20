@@ -1,6 +1,6 @@
 {
   "name": "business-website",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Business Website",
   "author": "MG",
   "license": "MIT",
@@ -48,7 +48,6 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.4",
-    "@recallai/desktop-sdk": "^2.0.2",
     "@anthropic-ai/sdk": "^0.71.2",
     "@assistant-ui/react": "^0.10.36",
     "@assistant-ui/react-ai-sdk": "^0.11.1",
@@ -85,6 +84,8 @@
     "@radix-ui/react-toast": "^1.2.14",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@radix-ui/themes": "^3.2.1",
+    "@recallai/desktop-sdk": "^2.0.2",
+    "@sentry/nextjs": "^10.34.0",
     "@stripe/react-stripe-js": "^3.9.2",
     "@stripe/stripe-js": "^7.9.0",
     "@tiptap/extension-font-family": "^3.3.0",
@@ -113,6 +114,7 @@
     "@tiptap/suggestion": "^3.1.0",
     "@tldraw/sync": "3.6.0",
     "@tldraw/tlschema": "3.6.0",
+    "@xmldom/xmldom": "^0.8.10",
     "ai": "^5.0.5",
     "allotment": "^1.20.4",
     "axios": "^1.4.0",
@@ -173,7 +175,6 @@
     "xlsx": "^0.18.5",
     "xml-formatter": "^3.3.0",
     "xml2js": "^0.6.2",
-    "@xmldom/xmldom": "^0.8.10",
     "zod": "^3.25.76"
   },
   "devDependencies": {

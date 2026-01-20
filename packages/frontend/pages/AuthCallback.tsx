@@ -57,12 +57,6 @@ const AuthCallback = (): JSX.Element => {
     const hasOAuthResponse = !!(code || urlError)
     
     // Electron callback if: explicit electron parameter OR (not in Electron AND (origin-based detection OR sessionStorage-based detection) AND has OAuth response)
-    console.log(electron) // undefined
-    console.log(isInElectron) // false
-    console.log(hasOAuthResponse) // true
-    console.log(isElectronRedirectOrigin) // true
-    console.log(isAtCallbackPath) // true
-    console.log(oauthIsDesktop) // false
     // const isElectronCallback = electron === 'true' || (
     //   !isInElectron && 
     //   hasOAuthResponse && 

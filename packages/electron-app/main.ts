@@ -38,7 +38,6 @@ function resolveTargetUrl(): string {
     const devUrl = process.env[DEV_URL_ENV_KEY]
     if (devUrl && isValidUrl(devUrl)) return devUrl
     
-    console.log(`[Electron] No valid ${DEV_URL_ENV_KEY} found, using default: ${DEFAULT_DEV_URL}`)
     return DEFAULT_DEV_URL
   }
 
@@ -46,7 +45,6 @@ function resolveTargetUrl(): string {
   const prodUrl = process.env[PROD_URL_ENV_KEY]
   if (prodUrl && isValidUrl(prodUrl)) return prodUrl
 
-  console.log(`[Electron] No valid ${PROD_URL_ENV_KEY} found, using default: ${DEFAULT_PROD_URL}`)
   return DEFAULT_PROD_URL
 }
 
@@ -139,9 +137,6 @@ if (!isDev) {
  */
 function createWindow(): void {
   const targetUrl = resolveTargetUrl()
-  
-  console.log(`[Electron] Starting in ${isDev ? 'development' : 'production'} mode`)
-  console.log(`[Electron] Loading URL: ${targetUrl}`)
 
   const iconPath = resolveIconPath()
   
@@ -174,13 +169,8 @@ function createWindow(): void {
     // Initialize desktop recording after window is ready
     if (mainWindow) {
       initDesktopRecording(mainWindow).then((success) => {
-        if (success) {
-          console.log('[Electron] Desktop recording initialized')
-        } else {
-          console.log('[Electron] Desktop recording not available (SDK may not be installed)')
-        }
       }).catch((error) => {
-        console.log('[Electron] Desktop recording initialization skipped:', error.message)
+        console.error('[Electron] Desktop recording initialization skipped:', error.message)
       })
     }
   })
@@ -192,7 +182,6 @@ function createWindow(): void {
     
     // In dev mode, the server might not be ready yet - retry after a delay
     if (isDev && errorCode === -102) {
-      console.log('[Electron] Server may not be ready. Retrying in 3 seconds...')
       setTimeout(() => {
         mainWindow?.loadURL(targetUrl)
       }, 3000)
@@ -401,14 +390,12 @@ app.whenReady().then(() => {
 
 // Auto-updater event handlers
 autoUpdater.on('checking-for-update', () => {
-  console.log('[Electron] Checking for updates...')
   if (mainWindow) {
     mainWindow.webContents.send('updater:checking-for-update')
   }
 })
 
 autoUpdater.on('update-available', (info) => {
-  console.log('[Electron] Update available:', info.version)
   if (mainWindow) {
     mainWindow.webContents.send('updater:update-available', {
       version: info.version,
@@ -419,7 +406,6 @@ autoUpdater.on('update-available', (info) => {
 })
 
 autoUpdater.on('update-not-available', (info) => {
-  console.log('[Electron] Update not available. Current version is latest.')
   if (mainWindow) {
     mainWindow.webContents.send('updater:update-not-available', {
       version: info.version
@@ -447,7 +433,6 @@ autoUpdater.on('download-progress', (progressObj) => {
 })
 
 autoUpdater.on('update-downloaded', (info) => {
-  console.log('[Electron] Update downloaded:', info.version)
   if (mainWindow) {
     mainWindow.webContents.send('updater:update-downloaded', {
       version: info.version,
@@ -501,7 +486,6 @@ function handleOAuthCallback(url: string): void {
       if (redirectUri) callbackParams.set('redirect_uri', redirectUri)
       
       const callbackUrl = `${targetUrl}/authentication/auth/callback?${callbackParams.toString()}`
-      console.log('[Electron] Navigating to OAuth callback:', callbackUrl)
       
       // Store redirect URI and is_desktop flag in sessionStorage so it can be used when processing the callback
       // This ensures we use the exact redirect URI and client type that was used for OAuth
@@ -524,7 +508,6 @@ function handleOAuthCallback(url: string): void {
       
       // Ensure window exists - create if it was closed
       if (!mainWindow || mainWindow.isDestroyed()) {
-        console.log('[Electron] Window not available, creating new window for OAuth callback')
         createWindow()
         // Wait for window to be ready before navigating
         if (mainWindow) {
@@ -555,7 +538,6 @@ function handleOAuthCallback(url: string): void {
 // macOS: Handle protocol URL when app is already running
 app.on('open-url', (event, url) => {
   event.preventDefault()
-  console.log('[Electron] Received open-url:', url)
   handleOAuthCallback(url)
 })
 
@@ -568,7 +550,6 @@ if (!gotTheLock) {
     // Windows/Linux: Protocol URL is in the command line arguments
     const url = commandLine.find(arg => arg.startsWith(`${PROTOCOL_NAME}://`))
     if (url) {
-      console.log('[Electron] Received protocol URL from second instance:', url)
       handleOAuthCallback(url)
     }
     

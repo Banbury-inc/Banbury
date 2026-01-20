@@ -232,7 +232,6 @@ export async function* processStreamEvents({
           return; // Stop processing further events
         } else if (evt.type === "pptx-live-update") {
           // Handle PowerPoint live update events from backend tools
-          console.log('[processStreamEvents] Dispatching pptx-live-update event:', evt);
           window.dispatchEvent(new CustomEvent('pptx-live-update', { 
             detail: evt 
           }));
