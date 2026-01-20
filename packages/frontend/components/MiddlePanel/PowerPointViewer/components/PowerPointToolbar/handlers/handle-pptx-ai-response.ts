@@ -1,12 +1,7 @@
-/**
- * Handler for PowerPoint AI tool responses
- * Implements idempotent preview/accept/reject with stable element IDs
- */
-
-import type { Slide, SlideElement } from '../PowerPointViewer';
+import type { Slide, SlideElement } from '../../../PowerPointViewer';
 
 interface PptxOperation {
-  type: 'createSlide' | 'deleteSlide' | 'reorderSlides' | 'addText' | 'addShape' | 'addImage' | 'updateElement' | 'deleteElement' | 'setSlideBackground' | 'applyTheme';
+  type: 'createSlide' | 'deleteSlide' | 'reorderSlides' | 'addText' | 'addShape' | 'addImage' | 'updateElement' | 'deleteElement' | 'setSlideBackground' | 'applyTheme' | 'applyTemplate' | 'highlightText';
   slideIndex?: number;
   element?: Partial<SlideElement>;
   elementId?: string;
@@ -349,8 +344,8 @@ function applyOperations(
         
         if (scope === 'presentation') {
           // Apply to all slides
-          const { applyTemplateToSlide } = require('../handlers/handle-apply-template');
-          const { getTemplateById, loadTemplates } = require('../templates/loader');
+          const { applyTemplateToSlide } = require('./handle-apply-template');
+          const { getTemplateById, loadTemplates } = require('../../../templates/loader');
           
           // Load templates synchronously (they should be cached)
           try {
@@ -363,8 +358,8 @@ function applyOperations(
           }
         } else if (scope === 'slide') {
           // Apply to current slide only
-          const { applyTemplateToSlide } = require('../handlers/handle-apply-template');
-          const { getTemplateById } = require('../templates/loader');
+          const { applyTemplateToSlide } = require('./handle-apply-template');
+          const { getTemplateById } = require('../../../templates/loader');
           
           try {
             const template = getTemplateById(templateId);

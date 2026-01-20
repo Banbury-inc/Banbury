@@ -1,7 +1,7 @@
-import { Slide, SlideElement } from '../PowerPointViewer'
-import { ThemeType } from '../types/slide-layouts'
+import { Slide, SlideElement } from '../../../PowerPointViewer'
+import { ThemeType } from '../../../types/slide-layouts'
 import { applyThemeToSlide } from './handle-apply-theme'
-import { Template } from '../templates/loader'
+import { Template } from '../../../templates/loader'
 
 interface TemplateApplicationResult {
   success: boolean

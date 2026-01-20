@@ -1,5 +1,5 @@
-import { SlideElement, Slide } from '../PowerPointViewer'
-import { SlideLayoutType } from '../types/slide-layouts'
+import { SlideElement, Slide } from '../../../PowerPointViewer'
+import { SlideLayoutType } from '../../../types/slide-layouts'
 
 export function applyLayoutToSlide(
   slide: Slide,

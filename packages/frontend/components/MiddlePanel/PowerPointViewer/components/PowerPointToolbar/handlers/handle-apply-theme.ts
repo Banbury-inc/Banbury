@@ -1,8 +1,8 @@
-import { Slide, SlideElement, FillStyle } from '../PowerPointViewer'
-import { ThemeType, getThemeBackgroundColor, getThemeTextColor, getThemeAccentColor, getThemeSecondaryColor, Theme } from '../types/slide-layouts'
-import { getThemeService } from '../services/theme-service'
-import { normalizeFill } from '../utils/fill-utils'
-import { curatedThemes } from '../themes/curated-themes'
+import { Slide, SlideElement, FillStyle } from '../../../PowerPointViewer'
+import { ThemeType, getThemeBackgroundColor, getThemeTextColor, getThemeAccentColor, getThemeSecondaryColor, Theme } from '../../../types/slide-layouts'
+import { getThemeService } from '../../../services/theme-service'
+import { normalizeFill } from '../../../utils/fill-utils'
+import { curatedThemes } from '../../../themes/curated-themes'
 
 export interface ThemeApplicationResult {
   background: string | FillStyle
@@ -142,7 +142,7 @@ export function applyThemeToSlideSync(
   themeType: ThemeType
 ): ThemeApplicationResult {
   // Combine old themes and curated themes for sync access
-  const { themes: oldThemes } = require('../types/slide-layouts')
+  const { themes: oldThemes } = require('../../../types/slide-layouts')
   const allThemes: Theme[] = [...oldThemes, ...curatedThemes]
   
   // Find the theme by ID

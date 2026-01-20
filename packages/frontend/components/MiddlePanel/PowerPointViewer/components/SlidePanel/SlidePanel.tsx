@@ -1,11 +1,11 @@
 import { useCallback } from 'react'
 import Image from 'next/image'
-import { cn } from '../../../lib/utils'
-import { Slide } from './PowerPointViewer'
-import { renderShapeSvg } from './shape-catalog'
-import { useContextMenu } from '../../ui/context-menu'
-import { getSlideContextMenuItems } from './SlidePanel/handlers/handle-slide-context-menu'
-import { fillStyleToCSS, normalizeFill, fillStyleToColorString } from './utils/fill-utils'
+import { cn } from '../../../../../lib/utils'
+import { Slide } from '../../PowerPointViewer'
+import { renderShapeSvg } from '../../components/shape-catalog'
+import { useContextMenu } from '../../../../ui/context-menu'
+import { getSlideContextMenuItems } from './handlers/handle-slide-context-menu'
+import { fillStyleToCSS, normalizeFill, fillStyleToColorString } from '../../utils/fill-utils'
 
 interface SlidePanelProps {
   slides: Slide[]

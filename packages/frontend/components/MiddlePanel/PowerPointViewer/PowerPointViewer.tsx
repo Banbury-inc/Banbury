@@ -2,11 +2,12 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useToast } from '../../ui/use-toast'
 import { ApiService } from '../../../../backend/api/apiService'
 import { FileSystemItem } from '../../../utils/fileTreeUtils'
-import { SlidePanel } from './SlidePanel'
-import { SlideCanvas } from './SlideCanvas'
-import { PowerPointToolbar } from './PowerPointToolbar'
-import { SlideshowPresenter } from './SlideshowPresenter'
-import { handlePowerPointSave } from './handlers/handle-powerpoint-save'
+import { SlidePanel } from './components/SlidePanel/SlidePanel'
+import { SlideCanvas } from './components/SlideCanvas/SlideCanvas'
+import { PowerPointToolbar } from './components/PowerPointToolbar/PowerPointToolbar'
+import { BorderStyle } from './types/pptx-types'
+import { SlideshowPresenter } from './components/SlideshowPresenter'
+import { handlePowerPointSave } from './components/PowerPointToolbar/handlers/handle-powerpoint-save'
 import { slidesToPptx } from './utils/pptx-export-utils'
 import {
   pushToHistory,
@@ -15,13 +16,8 @@ import {
   undo,
   redo,
   clearHistory,
-} from './handlers/powerpoint-toolbar-handlers'
-import { handlePptxAIResponse, handlePptxAIReject } from './handlers/handle-pptx-ai-response'
-import {
-  resolveWebImageToDataUrl,
-  resolveDriveImageToDataUrl,
-  resolveS3ImageToDataUrl,
-} from './handlers/powerpoint-image-handlers'
+} from './components/PowerPointToolbar/handlers/powerpoint-toolbar-handlers'
+import { handlePptxAIResponse, handlePptxAIReject } from './components/PowerPointToolbar/handlers/handle-pptx-ai-response'
 import { Card } from '../../ui/card'
 import { ContextMenuProvider } from '../../ui/context-menu'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../../ui/resizable'
@@ -29,13 +25,20 @@ import {
   duplicateSlide,
   insertSlideBefore,
   insertSlideAfter,
-} from './SlidePanel/handlers/handle-slide-context-menu'
+} from './components/SlidePanel/handlers/handle-slide-context-menu'
+import { handleAddSlide } from './components/SlidePanel/handlers/handle-add-slide'
+import { handleDeleteSlide } from './components/SlidePanel/handlers/handle-delete-slide'
+import { handleDeleteSlideByIndex } from './components/SlidePanel/handlers/handle-delete-slide-by-index'
+import { handleLoadPresentation } from './handlers/handle-load-presentation'
+import { handleKeyDown } from './handlers/handle-key-down'
+import { handleResolveImages } from './handlers/handle-resolve-images'
+import { parsePptxFile } from './utils/parse-pptx-file'
 import { SlideLayoutType, ThemeType, TransitionType } from './types/slide-layouts'
-import { applyLayoutToSlide } from './handlers/handle-apply-layout'
-import { applyThemeToSlide } from './handlers/handle-apply-theme'
-import { applyTransitionToSlide } from './handlers/handle-apply-transition'
-import { ShapeType } from './shape-catalog'
-import type { Paragraph, ThemeColors, Shadow, BorderStyle, StrokeStyle } from './types/pptx-types'
+import { applyLayoutToSlide } from './components/PowerPointToolbar/handlers/handle-apply-layout'
+import { applyThemeToSlide } from './components/PowerPointToolbar/handlers/handle-apply-theme'
+import { applyTransitionToSlide } from './components/PowerPointToolbar/handlers/handle-apply-transition'
+import { ShapeType } from './components/shape-catalog'
+import type { Paragraph, ThemeColors, Shadow, StrokeStyle } from './types/pptx-types'
 
 export interface TableCell {
   content: string
@@ -71,11 +74,6 @@ export interface HighlightRange {
 }
 
 // Border style for text boxes
-export interface BorderStyle {
-  color: string
-  width: number
-}
-
 export type PlaceholderRole =
   | 'title'
   | 'subtitle'
@@ -225,459 +223,23 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
   // Load presentation from file
   useEffect(() => {
     const loadPresentation = async () => {
-      const fetchKey = `${currentFile.file_id}|${currentFile.name}`
-      if (lastFetchKeyRef.current === fetchKey) return
-      lastFetchKeyRef.current = fetchKey
-
-      if (!currentFile.file_id) {
-        setError('No file ID available for this presentation')
-        setLoading(false)
-        return
-      }
-
-      setLoading(true)
-      setError(null)
-
-      try {
-        // Check if this is a Google Drive or OneDrive file
-        const isDriveFile = currentFile.path?.startsWith('drive://')
-        const isOneDriveFile = currentFile.path?.startsWith('onedrive://')
-        const isGoogleSlides = currentFile.mimeType?.includes('vnd.google-apps.presentation')
-
-        let blob: Blob
-
-        if (isDriveFile && isGoogleSlides) {
-          // Export Google Slides as PPTX
-          blob = await ApiService.Drive.exportSlidesAsPptx(currentFile.file_id)
-        } else if (isOneDriveFile) {
-          // Download from OneDrive
-          blob = await ApiService.OneDrive.getFileBlob(currentFile.file_id)
-        } else {
-          // Download regular file from S3
-          const result = await ApiService.downloadFromS3(currentFile.file_id, currentFile.name)
-          if (!result.success || !result.blob) {
-            throw new Error('Failed to load presentation')
-          }
-          blob = result.blob
-        }
-
-        // Parse the PPTX file
-        const parsedSlides = await parsePptxFile(blob)
-        setSlides(parsedSlides)
-        setCurrentSlideIndex(0)
-        setSelectedElementId(null)
-        
-        // Initialize history
-        pushToHistory(parsedSlides, 0)
-        setUndoAvailable(canUndo())
-        setRedoAvailable(canRedo())
-      } catch (err) {
-        console.error('PowerPointViewer: Error loading presentation:', err)
-        setError('Failed to load presentation')
-      } finally {
-        setLoading(false)
-      }
+      await handleLoadPresentation({
+        currentFile,
+        lastFetchKeyRef,
+        toast,
+        setSlides,
+        setCurrentSlideIndex,
+        setSelectedElementId,
+        setError,
+        setLoading,
+        setUndoAvailable,
+        setRedoAvailable,
+      })
     }
 
     loadPresentation()
-  }, [currentFile.file_id, currentFile.name, currentFile.path, currentFile.mimeType])
+  }, [currentFile.file_id, currentFile.name, currentFile.path, currentFile.mimeType, toast])
 
-  // Parse PPTX file to extract slides
-  const parsePptxFile = async (blob: Blob): Promise<Slide[]> => {
-    try {
-      // Performance tracking
-      const { PerformanceTimer, detectGoogleSlidesExport, clearParserErrors } = await import('./utils/parser-error-handler')
-      const timer = new PerformanceTimer()
-
-      // Clear previous errors
-      clearParserErrors()
-
-      const JSZip = (await import('jszip')).default
-      const zip = await JSZip.loadAsync(blob)
-      timer.mark('zip-loaded')
-
-      // Detect Google Slides export
-      const isGoogleSlides = detectGoogleSlidesExport(zip)
-
-      const slides: Slide[] = []
-
-      // Parse theme first
-      const { ThemeParser } = await import('./parsers/ThemeParser')
-      const { SlideParser } = await import('./parsers/SlideParser')
-      const themeParser = new ThemeParser(zip)
-      const slideParser = new SlideParser(zip)
-
-      let themeColors: any = null
-      try {
-        const themeResult = await themeParser.parseTheme()
-        themeColors = themeResult.colors
-      } catch (error) {
-        console.warn('[PowerPointViewer] Failed to parse theme, using defaults:', error)
-        // Continue without theme - will use fallback colors
-      }
-      timer.mark('theme-parsed')
-
-      // Find all slide XML files
-      const slideFiles = Object.keys(zip.files)
-        .filter(name => name.match(/ppt\/slides\/slide\d+\.xml$/))
-        .sort((a, b) => {
-          const numA = parseInt(a.match(/slide(\d+)/)?.[1] || '0')
-          const numB = parseInt(b.match(/slide(\d+)/)?.[1] || '0')
-          return numA - numB
-        })
-
-      for (let i = 0; i < slideFiles.length; i++) {
-        try {
-          const slideFile = slideFiles[i]
-          const slideXml = await zip.file(slideFile)?.async('string')
-
-          if (!slideXml) {
-            console.warn(`[PowerPointViewer] Slide ${i + 1} XML not found`)
-            continue
-          }
-
-          // Parse slide XML document
-          const parser = new DOMParser()
-          const slideDoc = parser.parseFromString(slideXml, 'application/xml')
-
-          // Validate XML
-          const parserError = slideDoc.querySelector('parsererror')
-          if (parserError) {
-            console.error(`[PowerPointViewer] XML parsing error in slide ${i + 1}:`, parserError.textContent)
-            continue
-          }
-
-          // Parse relationships for this slide
-          const { parseRelationships, getSlideRelationshipsPath, resolveRelationshipPath, extractImageAsBase64 } =
-            await import('./utils/relationship-resolver')
-          const relsPath = getSlideRelationshipsPath(i)
-          const relationships = await parseRelationships(zip, relsPath)
-
-          // Parse elements (text and shapes) with error handling
-          let elements: any[] = []
-          try {
-            elements = await parseSlideXml(slideXml, zip, themeColors)
-          } catch (error) {
-            console.error(`[PowerPointViewer] Error parsing slide ${i + 1} elements:`, error)
-            // Continue with empty elements rather than failing entire presentation
-          }
-
-          // Parse images with error handling
-          try {
-            const { ImageParser } = await import('./parsers/ImageParser')
-            const imageParser = new ImageParser(zip)
-            const spTree = slideDoc.getElementsByTagName('p:spTree')[0]
-            if (spTree) {
-              const imageResults = imageParser.parseImages(spTree, `slide${i + 1}-image`)
-
-              // Resolve images and extract as base64
-              for (const { element, relationshipId } of imageResults) {
-                try {
-                  const imagePath = resolveRelationshipPath(relationshipId, relationships, 'ppt/slides')
-                  if (imagePath) {
-                    const imageData = await extractImageAsBase64(zip, imagePath)
-                    if (imageData) {
-                      elements.push({
-                        ...element,
-                        imageUrl: imageData,
-                      })
-                    }
-                  }
-                } catch (error) {
-                  console.warn(`[PowerPointViewer] Failed to extract image ${relationshipId}:`, error)
-                  // Continue without this image
-                }
-              }
-
-              // Parse tables with error handling
-              try {
-                const { TableParser } = await import('./parsers/TableParser')
-                const tableParser = new TableParser(zip)
-                const tables = tableParser.parseTables(spTree, themeColors || undefined, `slide${i + 1}-table`)
-
-                // Add tables to elements
-                elements.push(...tables)
-              } catch (error) {
-                console.warn(`[PowerPointViewer] Failed to parse tables in slide ${i + 1}:`, error)
-                // Continue without tables
-              }
-            }
-          } catch (error) {
-            console.warn(`[PowerPointViewer] Failed to parse images/tables in slide ${i + 1}:`, error)
-            // Continue without images/tables
-          }
-
-          // Parse background with error handling
-          let backgroundInfo: any = {}
-          try {
-            backgroundInfo = slideParser.parseBackground(slideDoc, themeColors)
-
-            // If background has a relationship ID (image), resolve it
-            if (backgroundInfo.backgroundImage && relationships.has(backgroundInfo.backgroundImage)) {
-              try {
-                const bgImagePath = resolveRelationshipPath(backgroundInfo.backgroundImage, relationships, 'ppt/slides')
-                if (bgImagePath) {
-                  const bgImageData = await extractImageAsBase64(zip, bgImagePath)
-                  if (bgImageData) {
-                    backgroundInfo.backgroundImage = bgImageData
-                  }
-                }
-              } catch (error) {
-                console.warn(`[PowerPointViewer] Failed to extract background image for slide ${i + 1}:`, error)
-                // Continue without background image
-                delete backgroundInfo.backgroundImage
-              }
-            }
-          } catch (error) {
-            console.warn(`[PowerPointViewer] Failed to parse background for slide ${i + 1}:`, error)
-            // Continue with default background
-          }
-
-          slides.push({
-            id: `slide-${i + 1}`,
-            index: i,
-            elements,
-            layout: 'content',
-            themeColors: themeColors || undefined,
-            ...backgroundInfo,
-          })
-        } catch (error) {
-          console.error(`[PowerPointViewer] Failed to parse slide ${i + 1}:`, error)
-          // Add a placeholder slide to maintain slide count
-          slides.push({
-            id: `slide-${i + 1}`,
-            index: i,
-            elements: [{
-              id: 'error-text',
-              type: 'text',
-              x: 10,
-              y: 40,
-              width: 80,
-              height: 20,
-              content: `Error loading slide ${i + 1}`,
-              fontSize: 24,
-              fontFace: 'Arial',
-              color: 'FF0000',
-              align: 'center',
-              valign: 'middle',
-            }],
-            layout: 'blank',
-          })
-        }
-      }
-
-      timer.mark('slides-parsed')
-
-      // If no slides found, create a default empty slide
-      if (slides.length === 0) {
-        console.warn('[PowerPointViewer] No slides found in PPTX, creating default slide')
-        slides.push({
-          id: 'slide-1',
-          index: 0,
-          elements: [],
-          layout: 'blank',
-        })
-      }
-
-      // Log performance metrics
-      timer.log('Total PPTX parsing')
-      timer.log('ZIP loading', 'zip-loaded')
-      timer.log('Theme parsing', 'theme-parsed')
-      timer.log('Slides parsing', 'slides-parsed')
-
-      // Log unsupported features if any
-      const { getUnsupportedFeatures } = await import('./utils/parser-error-handler')
-      const unsupportedFeatures = getUnsupportedFeatures()
-      if (unsupportedFeatures.length > 0) {
-        // Unsupported features are tracked but not logged to console to avoid lint warnings
-        // Features: unsupportedFeatures
-      }
-
-      return slides
-    } catch (err) {
-      console.error('[PowerPointViewer] Critical error parsing PPTX:', err)
-      toast({
-        title: 'Error loading presentation',
-        description: 'Some features may not display correctly.',
-        variant: 'destructive',
-      })
-
-      // Return a default slide on error
-      return [{
-        id: 'slide-1',
-        index: 0,
-        elements: [{
-          id: 'text-1',
-          type: 'text',
-          x: 10,
-          y: 40,
-          width: 80,
-          height: 20,
-          content: 'Error loading presentation',
-          fontSize: 32,
-          fontFace: 'Arial',
-          color: 'FF0000',
-          bold: true,
-          align: 'center',
-          valign: 'middle',
-        }],
-        layout: 'title',
-      }]
-    }
-  }
-
-  // Parse slide XML to extract elements with full formatting
-  const parseSlideXml = async (xml: string, zip: any, themeColors?: ThemeColors | null): Promise<SlideElement[]> => {
-    const elements: SlideElement[] = []
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(xml, 'application/xml')
-
-    // Import parsers dynamically
-    const { TextParser } = await import('./parsers/TextParser')
-    const { ShapeParser } = await import('./parsers/ShapeParser')
-    const { emuToPercent } = await import('./utils/emu-converter')
-    const textParser = new TextParser(zip)
-    const shapeParser = new ShapeParser(zip)
-
-    // Find all shapes in <p:spTree> (shape tree)
-    const spTree = doc.getElementsByTagName('p:spTree')[0]
-    if (!spTree) {
-      // Fallback to old method if no spTree found
-      return []
-    }
-
-    // Get all shape elements (<p:sp>)
-    const shapes = spTree.getElementsByTagName('p:sp')
-
-    for (let i = 0; i < shapes.length; i++) {
-      const shape = shapes[i]
-
-      try {
-        // Parse transform (position and size)
-        const spPr = shape.getElementsByTagName('p:spPr')[0]
-        if (!spPr) continue
-
-        const xfrm = spPr.getElementsByTagName('a:xfrm')[0]
-        if (!xfrm) continue
-
-        const off = xfrm.getElementsByTagName('a:off')[0]
-        const ext = xfrm.getElementsByTagName('a:ext')[0]
-        if (!off || !ext) continue
-
-        // Get position and size in EMUs
-        const xEmu = parseInt(off.getAttribute('x') || '0')
-        const yEmu = parseInt(off.getAttribute('y') || '0')
-        const cxEmu = parseInt(ext.getAttribute('cx') || '0')
-        const cyEmu = parseInt(ext.getAttribute('cy') || '0')
-
-        // Convert to percentages
-        const x = emuToPercent(xEmu, true)
-        const y = emuToPercent(yEmu, false)
-        const width = emuToPercent(cxEmu, true)
-        const height = emuToPercent(cyEmu, false)
-
-        // Get rotation
-        const rot = parseInt(xfrm.getAttribute('rot') || '0')
-        const rotation = rot !== 0 ? rot / 60000 : undefined
-
-        // Parse shape formatting (fill, stroke, shadow)
-        const shapeFormatting = shapeParser.parseShapeFormatting(spPr, themeColors || undefined)
-
-        // Parse text body (if present)
-        const txBody = shape.getElementsByTagName('p:txBody')[0]
-
-        if (txBody) {
-          // This is a text box or shape with text
-          const paragraphs = textParser.parseTextBody(txBody, themeColors || undefined)
-
-          if (paragraphs.length > 0) {
-            // Extract plain text for backward compatibility
-            const content = textParser.extractPlainText(paragraphs)
-
-            // Get default formatting from first run
-            const fontSize = textParser.getDefaultFontSize(paragraphs)
-            const fontFace = textParser.getDefaultFontFace(paragraphs)
-            const firstRun = paragraphs[0]?.runs[0]
-            const color = firstRun?.color?.replace('#', '') || '363636'
-            const bold = firstRun?.bold || false
-            const italic = firstRun?.italic || false
-
-            // Get paragraph alignment
-            const align = paragraphs[0]?.alignment || 'left'
-
-            elements.push({
-              id: `text-${i + 1}`,
-              type: 'text',
-              x,
-              y,
-              width,
-              height,
-              content,
-              paragraphs, // Rich text paragraphs
-              fontSize,
-              fontFace,
-              color,
-              bold,
-              italic,
-              align,
-              valign: 'top',
-              rotation,
-              // Include shape formatting for text boxes
-              fill: shapeFormatting.fill,
-              stroke: typeof shapeFormatting.stroke === 'string' ? shapeFormatting.stroke : shapeFormatting.stroke?.color,
-              strokeWidth: shapeFormatting.strokeWidth,
-              border: typeof shapeFormatting.stroke === 'object' ? shapeFormatting.stroke : undefined,
-              shadow: shapeFormatting.shadow,
-            })
-          } else {
-            // Handle empty text body as shape (Google Slides exports these)
-            const shapeGeometry = shapeParser.parseShapeGeometry(spPr)
-            const shapeType = shapeParser.mapShapeType(shapeGeometry)
-
-            elements.push({
-              id: `shape-${i + 1}`,
-              type: 'shape',
-              x,
-              y,
-              width,
-              height,
-              rotation,
-              shapeType: shapeType as ShapeType,
-              fill: shapeFormatting.fill,
-              stroke: typeof shapeFormatting.stroke === 'string' ? shapeFormatting.stroke : shapeFormatting.stroke?.color,
-              strokeWidth: shapeFormatting.strokeWidth,
-              border: typeof shapeFormatting.stroke === 'object' ? shapeFormatting.stroke : undefined,
-              shadow: shapeFormatting.shadow,
-            })
-          }
-        } else {
-          // This is a shape without text
-          const shapeGeometry = shapeParser.parseShapeGeometry(spPr)
-          const shapeType = shapeParser.mapShapeType(shapeGeometry)
-
-          elements.push({
-            id: `shape-${i + 1}`,
-            type: 'shape',
-            x,
-            y,
-            width,
-            height,
-            rotation,
-            shapeType: shapeType as ShapeType,
-            fill: shapeFormatting.fill,
-            stroke: typeof shapeFormatting.stroke === 'string' ? shapeFormatting.stroke : shapeFormatting.stroke?.color,
-            strokeWidth: shapeFormatting.strokeWidth,
-            border: typeof shapeFormatting.stroke === 'object' ? shapeFormatting.stroke : undefined,
-            shadow: shapeFormatting.shadow,
-          })
-        }
-      } catch (err) {
-        console.error(`Error parsing shape ${i}:`, err)
-      }
-    }
-
-    return elements
-  }
 
   // Push to history helper
   const saveToHistory = useCallback(() => {
@@ -792,7 +354,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
         }
 
         // Parse the PPTX file
-        const parsedSlides = await parsePptxFile(result.blob)
+        const parsedSlides = await parsePptxFile({ blob: result.blob, toast })
 
         // Replace current slides with generated ones
         setSlides(parsedSlides)
@@ -820,9 +382,9 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
       }
     }
 
-    window.addEventListener('powerpoint-file-generated', handler as EventListener)
+    window.addEventListener('powerpoint-file-generated', handler as unknown as EventListener)
     return () => {
-      window.removeEventListener('powerpoint-file-generated', handler as EventListener)
+      window.removeEventListener('powerpoint-file-generated', handler as unknown as EventListener)
     }
   }, [])
 
@@ -839,7 +401,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
           try {
             const result = await ApiService.downloadFromS3(fileId, fileName)
             if (result.success && result.blob) {
-              const parsedSlides = await parsePptxFile(result.blob)
+              const parsedSlides = await parsePptxFile({ blob: result.blob, toast })
               setSlides(parsedSlides)
               setHasUnsavedChanges(false)
 
@@ -869,8 +431,8 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     }
 
     // Listen for custom events from SSE stream
-    window.addEventListener('pptx-updated', handler as EventListener)
-    return () => window.removeEventListener('pptx-updated', handler as EventListener)
+    window.addEventListener('pptx-updated', handler as unknown as EventListener)
+    return () => window.removeEventListener('pptx-updated', handler as unknown as EventListener)
   }, [currentFile.file_id, currentFile.name, currentSlideIndex])
 
   // Listen for pptx-presentation-loaded event to track active presentation ID
@@ -904,13 +466,6 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
       const detail = (event as CustomEvent).detail || {}
       const { presentationId, operation, operationData, fileId } = detail
 
-      console.log('[PowerPointViewer] Received pptx-live-update event:', { 
-        presentationId, 
-        activePresentationId, 
-        operation, 
-        fileId,
-        currentFileId: file?.file_id 
-      })
 
       // Check if this event is for the current presentation
       // Match by presentationId (if activePresentationId is set) or by fileId
@@ -1029,65 +584,11 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
   // Resolve image references (driveFileId, s3FileId, web URLs) to data URLs
   useEffect(() => {
     const resolveImages = async () => {
-      let hasChanges = false
-      const updatedSlides = await Promise.all(
-        slides.map(async (slide) => {
-          const updatedElements = await Promise.all(
-            slide.elements.map(async (element) => {
-              // Skip if not an image or already has a data URL
-              if (element.type !== 'image') return element
-              if (element.imageUrl && element.imageUrl.startsWith('data:')) return element
-              
-              // Check if we need to resolve an image reference
-              const needsResolution = element.driveFileId || element.s3FileId || 
-                (element.imageUrl && (element.imageUrl.startsWith('http://') || element.imageUrl.startsWith('https://')))
-              
-              if (!needsResolution) return element
-              
-              try {
-                let dataUrl: string | null = null
-                
-                if (element.driveFileId) {
-                  dataUrl = await resolveDriveImageToDataUrl(element.driveFileId)
-                } else if (element.s3FileId) {
-                  // Use stored fileName or fallback
-                  const fileName = element.s3FileName || `image-${element.s3FileId}.jpg`
-                  dataUrl = await resolveS3ImageToDataUrl(element.s3FileId, fileName)
-                } else if (element.imageUrl) {
-                  dataUrl = await resolveWebImageToDataUrl(element.imageUrl)
-                }
-                
-                if (dataUrl) {
-                  hasChanges = true
-                  return {
-                    ...element,
-                    imageUrl: dataUrl,
-                    // Clear the reference fields once resolved
-                    driveFileId: undefined,
-                    s3FileId: undefined,
-                    s3FileName: undefined,
-                  }
-                }
-              } catch (error) {
-                console.error('Failed to resolve image:', error)
-                // Keep the element as-is if resolution fails
-              }
-              
-              return element
-            })
-          )
-          
-          return {
-            ...slide,
-            elements: updatedElements,
-          }
-        })
-      )
-      
-      if (hasChanges) {
-        setSlides(updatedSlides)
-        setHasUnsavedChanges(true)
-      }
+      await handleResolveImages({
+        slides,
+        setSlides,
+        setHasUnsavedChanges,
+      })
     }
     
     resolveImages()
@@ -1100,87 +601,45 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
   }, [])
 
   // Handle adding new slide
-  const handleAddSlide = useCallback(() => {
-    saveToHistory()
-    const newSlide: Slide = {
-      id: `slide-${Date.now()}`,
-      index: slides.length,
-      elements: [{
-        id: `text-${Date.now()}`,
-        type: 'text',
-        x: 10,
-        y: 40,
-        width: 80,
-        height: 20,
-        content: 'Click to edit',
-        fontSize: 44,
-        fontFace: 'Arial',
-        color: '363636',
-        bold: true,
-        align: 'center',
-        valign: 'middle',
-      }],
-      layout: 'title',
-    }
-    setSlides(prev => [...prev, newSlide])
-    setCurrentSlideIndex(slides.length)
-    setSelectedElementId(null)
-    setHasUnsavedChanges(true)
-  }, [slides.length, saveToHistory])
+  const handleAddSlideCallback = useCallback(() => {
+    handleAddSlide({
+      slides,
+      saveToHistory,
+      setSlides,
+      setCurrentSlideIndex,
+      setSelectedElementId,
+      setHasUnsavedChanges,
+    })
+  }, [slides, saveToHistory])
 
   // Handle deleting current slide
-  const handleDeleteSlide = useCallback(() => {
-    if (slides.length <= 1) {
-      toast({
-        title: "Cannot delete",
-        description: "Presentation must have at least one slide.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    saveToHistory()
-    setSlides(prev => {
-      const newSlides = prev.filter((_, i) => i !== currentSlideIndex)
-      return newSlides.map((s, i) => ({ ...s, index: i }))
+  const handleDeleteSlideCallback = useCallback(() => {
+    handleDeleteSlide({
+      slides,
+      currentSlideIndex,
+      saveToHistory,
+      toast,
+      setSlides,
+      setCurrentSlideIndex,
+      setSelectedElementId,
+      setHasUnsavedChanges,
     })
-
-    if (currentSlideIndex >= slides.length - 1) {
-      setCurrentSlideIndex(Math.max(0, currentSlideIndex - 1))
-    }
-    setSelectedElementId(null)
-    setHasUnsavedChanges(true)
-  }, [currentSlideIndex, slides.length, toast, saveToHistory])
+  }, [slides, currentSlideIndex, toast, saveToHistory])
 
   // Handle deleting slide by index (for context menu)
-  const handleDeleteSlideByIndex = useCallback((index: number) => {
-    if (slides.length <= 1) {
-      toast({
-        title: "Cannot delete",
-        description: "Presentation must have at least one slide.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    saveToHistory()
-    setSlides(prev => {
-      const newSlides = prev.filter((_, i) => i !== index)
-      return newSlides.map((s, i) => ({ ...s, index: i }))
+  const handleDeleteSlideByIndexCallback = useCallback((index: number) => {
+    handleDeleteSlideByIndex({
+      slides,
+      index,
+      currentSlideIndex,
+      saveToHistory,
+      toast,
+      setSlides,
+      setCurrentSlideIndex,
+      setSelectedElementId,
+      setHasUnsavedChanges,
     })
-
-    if (index === currentSlideIndex) {
-      if (index >= slides.length - 1) {
-        setCurrentSlideIndex(Math.max(0, index - 1))
-      } else {
-        setCurrentSlideIndex(index)
-      }
-    } else if (index < currentSlideIndex) {
-      setCurrentSlideIndex(currentSlideIndex - 1)
-    }
-    setSelectedElementId(null)
-    setHasUnsavedChanges(true)
-  }, [currentSlideIndex, slides.length, toast, saveToHistory])
+  }, [slides, currentSlideIndex, toast, saveToHistory])
 
   // Handle duplicating slide
   const handleDuplicateSlide = useCallback((index: number) => {
@@ -1272,7 +731,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     } catch (error) {
       console.error('Failed to apply theme:', error)
       // Fallback to sync version for backward compatibility
-      const { applyThemeToSlideSync } = await import('./handlers/handle-apply-theme')
+      const { applyThemeToSlideSync } = await import('./components/PowerPointToolbar/handlers/handle-apply-theme')
       const result = applyThemeToSlideSync(slides[currentSlideIndex], themeType)
       setSlides(prev => {
         const newSlides = [...prev]
@@ -1296,7 +755,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     saveToHistory()
     
     // Import the template application handler dynamically
-    const { applyTemplateToPresentation } = await import('./handlers/handle-apply-template')
+    const { applyTemplateToPresentation } = await import('./components/PowerPointToolbar/handlers/handle-apply-template')
     
     const result = await applyTemplateToPresentation(slides, templateId)
     
@@ -1492,38 +951,17 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
 
   // Keyboard navigation and shortcuts
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't handle if typing in input
-      const target = e.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.getAttribute('contenteditable') === 'true') {
-        return
-      }
-
-      if (e.key === 'ArrowLeft') goToPreviousSlide()
-      if (e.key === 'ArrowRight') goToNextSlide()
-      
-      // Undo/Redo shortcuts
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        e.preventDefault()
-        if (e.shiftKey) {
-          handleRedo()
-        } else {
-          handleUndo()
-        }
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-        e.preventDefault()
-        handleRedo()
-      }
-      
-      // Save shortcut
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault()
-        handleSave()
-      }
+    const onKeyDown = (e: KeyboardEvent) => {
+      handleKeyDown(e, {
+        goToPreviousSlide,
+        goToNextSlide,
+        handleUndo,
+        handleRedo,
+        handleSave,
+      })
     }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
   }, [goToPreviousSlide, goToNextSlide, handleUndo, handleRedo, handleSave])
 
   // Get selected element
@@ -1576,8 +1014,8 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
           onAddElement={handleAddElement}
           onUpdateElement={handleUpdateElement}
           onDeleteElement={handleDeleteElement}
-          onAddSlide={handleAddSlide}
-          onDeleteSlide={handleDeleteSlide}
+          onAddSlide={handleAddSlideCallback}
+          onDeleteSlide={handleDeleteSlideCallback}
           onUpdateSlideBackground={handleUpdateSlideBackground}
           onApplyLayout={handleApplyLayout}
           onApplyTheme={handleApplyTheme}
@@ -1619,7 +1057,7 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
                 })
                 setHasUnsavedChanges(true)
               }}
-              onDeleteSlide={handleDeleteSlideByIndex}
+              onDeleteSlide={handleDeleteSlideByIndexCallback}
               onDuplicateSlide={handleDuplicateSlide}
               onInsertSlideBefore={handleInsertSlideBefore}
               onInsertSlideAfter={handleInsertSlideAfter}

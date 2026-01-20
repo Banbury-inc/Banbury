@@ -1,11 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import Image from 'next/image'
-import { Slide, SlideElement, FillStyle } from './PowerPointViewer'
-import { getShapeDefinition, renderShapeSvg } from './shape-catalog'
+import { Slide, SlideElement, FillStyle } from '../../PowerPointViewer'
+import { getShapeDefinition, renderShapeSvg } from '../../components/shape-catalog'
 import { Move } from 'lucide-react'
-import { fillStyleToCSS, normalizeFill } from './utils/fill-utils'
-import { strokeStyleToCSS, hexToRgba } from './utils/stroke-utils'
-import type { Paragraph, TextRun, StrokeStyle, BorderStyle } from './types/pptx-types'
+import { fillStyleToCSS, normalizeFill } from '../../utils/fill-utils'
+import { strokeStyleToCSS, hexToRgba } from '../../utils/stroke-utils'
+import type { Paragraph, TextRun, StrokeStyle } from '../../types/pptx-types'
+import { handleMouseMove as createHandleMouseMove } from './handlers/handleMouseMove'
 
 /**
  * Extract border color from element's border/stroke property
@@ -302,29 +303,19 @@ export function SlideCanvas({
     }
   }, [isResizing, handleResizeMove, handleResizeEnd])
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isResizing) return
-    if (!isDragging || !selectedElementId || !canvasRef.current) return
-
-    // Save history only once at the start of drag
-    if (!hasHistorySavedRef.current) {
-      hasHistorySavedRef.current = true
-      onUpdateElements(slide.elements, true) // Save current state to history
-    }
-
-    const canvasRect = canvasRef.current.getBoundingClientRect()
-    const newX = ((e.clientX - canvasRect.left - dragOffset.x) / canvasRect.width) * 100
-    const newY = ((e.clientY - canvasRect.top - dragOffset.y) / canvasRect.height) * 100
-
-    // Clamp values to keep element within canvas
-    const clampedX = Math.max(0, Math.min(90, newX))
-    const clampedY = Math.max(0, Math.min(90, newY))
-
-    const newElements = slide.elements.map(el =>
-      el.id === selectedElementId ? { ...el, x: clampedX, y: clampedY } : el
-    )
-    onUpdateElements(newElements)
-  }, [isDragging, selectedElementId, dragOffset, slide.elements, onUpdateElements])
+  const handleMouseMove = useCallback(
+    createHandleMouseMove({
+      isResizing,
+      isDragging,
+      selectedElementId,
+      canvasRef,
+      hasHistorySavedRef,
+      elements: slide.elements,
+      onUpdateElements,
+      dragOffset,
+    }),
+    [isResizing, isDragging, selectedElementId, dragOffset, slide.elements, onUpdateElements]
+  )
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
@@ -611,11 +602,10 @@ function ElementRenderer({
       boxShadow = `${scaledOffsetX}px ${scaledOffsetY}px ${scaledBlur}px ${element.shadow.color}`
     }
 
-    // Get border color for bounding box (use outline so it doesn't conflict with the element's own border)
-    const boundingBoxColor = getBorderColor(element)
+    // Blue border for selected elements
     const selectionOutlineStyle = isSelected
       ? {
-          outline: `2px solid ${boundingBoxColor || 'hsl(var(--primary))'}`,
+          outline: '2px solid #3b82f6',
           outlineOffset: '-2px',
         }
       : {}
@@ -709,11 +699,10 @@ function ElementRenderer({
       boxShadow = `${scaledOffsetX}px ${scaledOffsetY}px ${scaledBlur}px ${element.shadow.color}`
     }
 
-    // Get border color for bounding box (use outline so it doesn't conflict with the shape's own styling)
-    const boundingBoxColor = getBorderColor(element)
+    // Blue border for selected elements
     const selectionOutlineStyle = isSelected
       ? {
-          outline: `2px solid ${boundingBoxColor || 'hsl(var(--primary))'}`,
+          outline: '2px solid #3b82f6',
           outlineOffset: '-2px',
         }
       : {}
@@ -765,11 +754,10 @@ function ElementRenderer({
   if (element.type === 'image') {
     const rotation = element.rotation ?? 0
 
-    // Get border color for bounding box
-    const boundingBoxColor = getBorderColor(element)
+    // Blue border for selected elements
     const selectionOutlineStyle = isSelected
       ? {
-          outline: `2px solid ${boundingBoxColor || 'hsl(var(--primary))'}`,
+          outline: '2px solid #3b82f6',
           outlineOffset: '-2px',
         }
       : {}
@@ -822,11 +810,10 @@ function ElementRenderer({
     const scaledPadding = 4 * scaleFactor
     const scaledPaddingHorizontal = 8 * scaleFactor
 
-    // Get border color for bounding box
-    const boundingBoxColor = borderColor // Use table's border color
+    // Blue border for selected elements
     const selectionOutlineStyle = isSelected
       ? {
-          outline: `2px solid ${boundingBoxColor || 'hsl(var(--primary))'}`,
+          outline: '2px solid #3b82f6',
           outlineOffset: '-2px',
         }
       : {}

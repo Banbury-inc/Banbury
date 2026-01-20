@@ -1,5 +1,5 @@
 import React from 'react'
-import { Slide } from '../../../PowerPointViewer'
+import { Slide } from '../../..'
 import { Copy, Trash2, ArrowUp, ArrowDown } from 'lucide-react'
 
 interface ContextMenuItem {

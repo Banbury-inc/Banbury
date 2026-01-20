@@ -1,4 +1,4 @@
-import { TransitionType } from '../types/slide-layouts'
+import { TransitionType } from '../../../types/slide-layouts'
 import { CSSProperties } from 'react'
 
 /**

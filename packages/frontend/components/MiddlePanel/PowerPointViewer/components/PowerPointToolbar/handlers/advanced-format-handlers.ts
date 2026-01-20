@@ -1,4 +1,4 @@
-import { SlideElement, FillStyle, BorderStyle, HighlightRange } from '../PowerPointViewer'
+import { SlideElement, FillStyle, BorderStyle, HighlightRange } from '../../../PowerPointViewer'
 
 /**
  * Set text box background fill (solid color)

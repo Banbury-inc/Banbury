@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
-import { Slide, SlideElement } from './PowerPointViewer'
-import { SlideshowControls } from './components/SlideshowControls'
-import { getTransitionStyle, getTransitionDuration } from './handlers/handle-slideshow-transitions'
-import { getShapeDefinition, renderShapeSvg } from './shape-catalog'
-import { fillStyleToCSS, normalizeFill } from './utils/fill-utils'
-import { strokeStyleToCSS, hexToRgba } from './utils/stroke-utils'
-import type { Paragraph } from './types/pptx-types'
+import { Slide, SlideElement } from '../../PowerPointViewer'
+import { SlideshowControls } from './SlideshowControls'
+import { getTransitionStyle, getTransitionDuration } from './PowerPointToolbar/handlers/handle-slideshow-transitions'
+import { getShapeDefinition, renderShapeSvg } from '../components/shape-catalog'
+import { fillStyleToCSS, normalizeFill } from '../utils/fill-utils'
+import { strokeStyleToCSS, hexToRgba } from '../utils/stroke-utils'
+import type { Paragraph } from '../types/pptx-types'
 
 interface SlideshowPresenterProps {
   slides: Slide[]

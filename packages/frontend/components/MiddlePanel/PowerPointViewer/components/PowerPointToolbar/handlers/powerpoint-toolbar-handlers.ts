@@ -1,5 +1,5 @@
-import { SlideElement, Slide, TableCell } from '../PowerPointViewer'
-import { ShapeType, getShapeDefinition } from '../shape-catalog'
+import { SlideElement, Slide, TableCell } from '../../../PowerPointViewer'
+import { ShapeType, getShapeDefinition } from '../../shape-catalog'
 
 // History management for undo/redo
 interface HistoryState {

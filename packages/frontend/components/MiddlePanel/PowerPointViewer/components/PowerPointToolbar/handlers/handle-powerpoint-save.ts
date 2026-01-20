@@ -1,7 +1,7 @@
-import { ApiService } from '../../../../../backend/api/apiService'
-import { FileSystemItem } from '../../../../utils/fileTreeUtils'
-import { Slide } from '../PowerPointViewer'
-import { slidesToPptx } from '../utils/pptx-export-utils'
+import { ApiService } from '../../../../../../../backend/api/apiService'
+import { FileSystemItem } from '../../../../../../utils/fileTreeUtils'
+import { Slide } from '../../../PowerPointViewer'
+import { slidesToPptx } from '../../../utils/pptx-export-utils'
 
 interface ToastFunction {
   (options: {

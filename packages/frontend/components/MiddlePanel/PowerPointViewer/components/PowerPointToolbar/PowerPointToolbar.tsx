@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import { SlideElement, Slide, FillStyle } from './PowerPointViewer'
+import { SlideElement, Slide, FillStyle } from '../../PowerPointViewer'
 import {
   createTextElement,
   createShapeElement,
@@ -26,29 +26,29 @@ import {
   addHighlight,
   clearAllHighlights,
 } from './handlers/advanced-format-handlers'
-import { fillStyleToColorString } from './utils/fill-utils'
+import { fillStyleToColorString } from '../../utils/fill-utils'
 import {
   handleLocalImageUpload,
   resolveWebImageToDataUrl,
   resolveDriveImageToDataUrl,
 } from './handlers/powerpoint-image-handlers'
-import { Button } from '../../ui/button'
+import { Button } from '../../../../ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from '../../ui/dropdown-menu'
-import { Popover, PopoverTrigger, PopoverContent } from '../../ui/popover'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../ui/dialog'
-import { Input } from '../../ui/input'
-import { Label } from '../../ui/label'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs'
-import { ApiService } from '../../../../backend/api/apiService'
-import type { DriveFile } from '../../../../backend/api/drive/drive'
-import { BackgroundPanel, LayoutPanel, ThemePanel, TransitionPanel, TemplatePanel } from './SlideLayoutSelector'
-import { SlideLayoutType, ThemeType, TransitionType } from './types/slide-layouts'
+} from '../../../../ui/dropdown-menu'
+import { Popover, PopoverTrigger, PopoverContent } from '../../../../ui/popover'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../../../ui/dialog'
+import { Input } from '../../../../ui/input'
+import { Label } from '../../../../ui/label'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../../../ui/tabs'
+import { ApiService } from '../../../../../../backend/api/apiService'
+import type { DriveFile } from '../../../../../../backend/api/drive/drive'
+import { BackgroundPanel, LayoutPanel, ThemePanel, TransitionPanel } from '../SlideLayoutSelector'
+import { SlideLayoutType, ThemeType, TransitionType } from '../../types/slide-layouts'
 import {
   Undo,
   Redo,
@@ -85,7 +85,7 @@ import {
   Upload,
   Cloud,
 } from 'lucide-react'
-import { shapeCatalog, renderShapeSvg, getShapeDefinition, ShapeType } from './shape-catalog'
+import { shapeCatalog, renderShapeSvg, getShapeDefinition, ShapeType } from '../shape-catalog'
 
 interface ToolbarButton {
   id: string

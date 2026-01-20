@@ -1,6 +1,6 @@
 import { ReactElement } from 'react'
-import type { StrokeStyle } from './types/pptx-types'
-import { getStrokeSVGAttributes } from './utils/stroke-utils'
+import type { StrokeStyle } from '../types/pptx-types'
+import { getStrokeSVGAttributes } from '../utils/stroke-utils'
 
 export type ShapeType =
   | 'rect'
