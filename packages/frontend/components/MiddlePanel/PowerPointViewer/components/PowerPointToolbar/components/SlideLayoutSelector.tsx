@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { SlideLayoutType, ThemeType, TransitionType, layoutTemplates, themes, Theme, getThemeBackgroundColor, getThemeTextColor, getThemeAccentColor } from '../types/slide-layouts'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../../ui/tabs'
-import { cn } from '../../../../lib/utils'
-import { getThemeService } from '../services/theme-service'
-import { fillStyleToCSS, normalizeFill } from '../utils/fill-utils'
-import { Input } from '../../../ui/input'
+import { SlideLayoutType, ThemeType, TransitionType, layoutTemplates, themes, Theme, getThemeBackgroundColor, getThemeTextColor, getThemeAccentColor } from '../../../types/slide-layouts'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../../../../ui/tabs'
+import { cn } from '../../../../../../lib/utils'
+import { getThemeService } from '../../../services/theme-service'
+import { fillStyleToCSS, normalizeFill } from '../../../utils/fill-utils'
+import { Input } from '../../../../../ui/input'
 import { Search, Loader2 } from 'lucide-react'
 
 const colorPalette = [

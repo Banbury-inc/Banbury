@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useToast } from '../../ui/use-toast'
-import { ApiService } from '../../../../backend/api/apiService'
 import { FileSystemItem } from '../../../utils/fileTreeUtils'
 import { SlidePanel } from './components/SlidePanel/SlidePanel'
 import { SlideCanvas } from './components/SlideCanvas/SlideCanvas'
 import { PowerPointToolbar } from './components/PowerPointToolbar/PowerPointToolbar'
-import { BorderStyle } from './types/pptx-types'
-import { SlideshowPresenter } from './components/SlideshowPresenter'
+import { SlideshowPresenter } from './components/SlideshowPresenter/SlideshowPresenter'
 import { handlePowerPointSave } from './components/PowerPointToolbar/handlers/handle-powerpoint-save'
 import { slidesToPptx } from './utils/pptx-export-utils'
 import {
@@ -17,7 +15,6 @@ import {
   redo,
   clearHistory,
 } from './components/PowerPointToolbar/handlers/powerpoint-toolbar-handlers'
-import { handlePptxAIResponse, handlePptxAIReject } from './components/PowerPointToolbar/handlers/handle-pptx-ai-response'
 import { Card } from '../../ui/card'
 import { ContextMenuProvider } from '../../ui/context-menu'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../../ui/resizable'
@@ -32,17 +29,21 @@ import { handleDeleteSlideByIndex } from './components/SlidePanel/handlers/handl
 import { handleLoadPresentation } from './handlers/handle-load-presentation'
 import { handleKeyDown } from './handlers/handle-key-down'
 import { handleResolveImages } from './handlers/handle-resolve-images'
-import { parsePptxFile } from './utils/parse-pptx-file'
+import { handlePptxLiveUpdate } from './handlers/handle-pptx-live-update'
+import { handleAIResponse, handleAIReject } from './handlers/handle-ai-response'
+import { handleFileGenerated } from './handlers/handle-file-generated'
+import { handlePptxUpdated } from './handlers/handle-pptx-updated'
+import { registerInGlobalRegistry } from './handlers/handle-global-registry'
 import { SlideLayoutType, ThemeType, TransitionType } from './types/slide-layouts'
 import { applyLayoutToSlide } from './components/PowerPointToolbar/handlers/handle-apply-layout'
 import { applyThemeToSlide } from './components/PowerPointToolbar/handlers/handle-apply-theme'
 import { applyTransitionToSlide } from './components/PowerPointToolbar/handlers/handle-apply-transition'
 import { ShapeType } from './components/shape-catalog'
-import type { Paragraph, ThemeColors, Shadow, StrokeStyle } from './types/pptx-types'
+import type { Paragraph, ThemeColors, Shadow, StrokeStyle, BorderStyle } from './types/pptx-types'
 
 export interface TableCell {
   content: string
-  paragraphs?: Paragraph[] // Rich text content from PPTX
+  paragraphs?: Paragraph[]
   fontSize?: number
   fontFace?: string
   color?: string
@@ -61,19 +62,16 @@ export interface TableCell {
   rowspan?: number
 }
 
-// Fill style types for text boxes and shapes
 export type FillStyle = 
   | { kind: 'solid'; color: string }
   | { kind: 'linearGradient'; startColor: string; endColor: string; angleDeg: number }
 
-// Text highlight range
 export interface HighlightRange {
   start: number
   end: number
   color: string
 }
 
-// Border style for text boxes
 export type PlaceholderRole =
   | 'title'
   | 'subtitle'
@@ -91,7 +89,7 @@ export interface SlideElement {
   width: number
   height: number
   content?: string
-  paragraphs?: Paragraph[]  // Rich text paragraphs from PPTX parsing
+  paragraphs?: Paragraph[]
   fontSize?: number
   fontFace?: string
   color?: string
@@ -100,27 +98,24 @@ export interface SlideElement {
   align?: 'left' | 'center' | 'right'
   valign?: 'top' | 'middle' | 'bottom'
   shapeType?: ShapeType
-  fill?: string | FillStyle  // Backward compatible: string or FillStyle
+  fill?: string | FillStyle
   stroke?: string
   strokeWidth?: number
   rotation?: number
-  shadow?: Shadow  // Shadow effect from PPTX
+  shadow?: Shadow
   imageUrl?: string
   driveFileId?: string
   s3FileId?: string
   s3FileName?: string
-  // Table-specific properties
   rows?: number
   columns?: number
   cells?: TableCell[][]
   borderColor?: string
   borderWidth?: number
   headerRow?: boolean
-  // New advanced formatting properties
-  textFill?: FillStyle  // Background fill for text boxes
-  border?: BorderStyle | StrokeStyle  // Border for text boxes (StrokeStyle for full PPTX support)
-  highlights?: HighlightRange[]  // Text highlight ranges
-  // Placeholder role for template application
+  textFill?: FillStyle
+  border?: BorderStyle | StrokeStyle
+  highlights?: HighlightRange[]
   placeholder?: PlaceholderRole
 }
 
@@ -129,9 +124,9 @@ export interface Slide {
   index: number
   elements: SlideElement[]
   background?: string
-  backgroundStyle?: FillStyle // Enhanced background support
-  backgroundImage?: string // Background image data (base64 or URL)
-  themeColors?: ThemeColors // Resolved theme colors from PPTX
+  backgroundStyle?: FillStyle
+  backgroundImage?: string
+  themeColors?: ThemeColors
   decorativeElements?: Array<{
     id: string
     shape: 'circle' | 'rect' | 'line' | 'triangle' | 'blob'
@@ -176,51 +171,23 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
   const { toast } = useToast()
   const lastFetchKeyRef = useRef<string | null>(null)
 
-  // Update currentFile when file prop changes
   useEffect(() => {
     setCurrentFile(file)
   }, [file])
 
-  // Clear history when file changes
   useEffect(() => {
     clearHistory()
     setUndoAvailable(false)
     setRedoAvailable(false)
   }, [file.file_id])
 
-  // Register PowerPoint viewer state in global registry for context passing
   useEffect(() => {
-    if (!currentFile.file_id || slides.length === 0) return
-
-    // Initialize global registry if it doesn't exist
-    if (typeof window !== 'undefined') {
-      if (!(window as any)._activePowerPointViewers) {
-        (window as any)._activePowerPointViewers = []
-      }
-
-      const viewerState = {
-        fileId: currentFile.file_id,
-        slides: slides
-      }
-
-      // Remove any existing viewer with the same fileId
-      const viewers = (window as any)._activePowerPointViewers as Array<{ fileId: string; slides: Slide[] }>
-      const filteredViewers = viewers.filter(v => v.fileId !== currentFile.file_id)
-      filteredViewers.push(viewerState)
-      ;(window as any)._activePowerPointViewers = filteredViewers
-
-      // Cleanup: unregister when component unmounts or file changes
-      return () => {
-        if ((window as any)._activePowerPointViewers) {
-          ;(window as any)._activePowerPointViewers = (
-            (window as any)._activePowerPointViewers as Array<{ fileId: string; slides: Slide[] }>
-          ).filter(v => v.fileId !== currentFile.file_id)
-        }
-      }
-    }
+    return registerInGlobalRegistry({
+      currentFile,
+      slides,
+    })
   }, [currentFile.file_id, slides])
 
-  // Load presentation from file
   useEffect(() => {
     const loadPresentation = async () => {
       await handleLoadPresentation({
@@ -241,86 +208,41 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
   }, [currentFile.file_id, currentFile.name, currentFile.path, currentFile.mimeType, toast])
 
 
-  // Push to history helper
   const saveToHistory = useCallback(() => {
     pushToHistory(slides, currentSlideIndex)
     setUndoAvailable(canUndo())
     setRedoAvailable(canRedo())
   }, [slides, currentSlideIndex])
 
-  // Listen for AI PowerPoint operations
   useEffect(() => {
     const handler = (event: CustomEvent) => {
-      const detail = event?.detail || {}
-      
-      // Use the new centralized handler
-      const result = handlePptxAIResponse(
-        detail,
+      handleAIResponse({
+        event,
         slides,
-        currentSlideIndex
-      )
-
-      // If result is null, it means no changes (idempotent case or accept after preview)
-      if (!result) {
-        return
-      }
-
-      // Apply the changes
-      setSlides(result.nextSlides)
-      setCurrentSlideIndex(result.nextCurrentSlideIndex)
-      
-      // Clear selection if selected element no longer exists
-      if (selectedElementId) {
-        const currentSlide = result.nextSlides[result.nextCurrentSlideIndex]
-        const elementExists = currentSlide?.elements.some(e => e.id === selectedElementId)
-        if (!elementExists) {
-          setSelectedElementId(null)
-        }
-      }
-      
-      setHasUnsavedChanges(true)
-      
-      // Save to history with the actual applied slides
-      pushToHistory(result.nextSlides, result.nextCurrentSlideIndex)
-      setUndoAvailable(canUndo())
-      setRedoAvailable(canRedo())
+        currentSlideIndex,
+        selectedElementId,
+        setSlides,
+        setCurrentSlideIndex,
+        setSelectedElementId,
+        setHasUnsavedChanges,
+        setUndoAvailable,
+        setRedoAvailable,
+      })
     }
 
-    // Handle reject event to restore original state
     const rejectHandler = (event: CustomEvent) => {
-      const detail = event?.detail || {}
-      const changeId = detail.changeId
-      
-      if (!changeId) {
-        console.warn('[PowerPointViewer] Reject event missing changeId')
-        return
-      }
-
-      const result = handlePptxAIReject(changeId, slides, currentSlideIndex)
-      
-      if (!result) {
-        return
-      }
-
-      // Restore original slides
-      setSlides(result.nextSlides)
-      setCurrentSlideIndex(result.nextCurrentSlideIndex)
-      
-      // Clear selection if it no longer exists
-      if (selectedElementId) {
-        const currentSlide = result.nextSlides[result.nextCurrentSlideIndex]
-        const elementExists = currentSlide?.elements.some(e => e.id === selectedElementId)
-        if (!elementExists) {
-          setSelectedElementId(null)
-        }
-      }
-      
-      setHasUnsavedChanges(true)
-      
-      // Save to history
-      pushToHistory(result.nextSlides, result.nextCurrentSlideIndex)
-      setUndoAvailable(canUndo())
-      setRedoAvailable(canRedo())
+      handleAIReject({
+        event,
+        slides,
+        currentSlideIndex,
+        selectedElementId,
+        setSlides,
+        setCurrentSlideIndex,
+        setSelectedElementId,
+        setHasUnsavedChanges,
+        setUndoAvailable,
+        setRedoAvailable,
+      })
     }
 
     window.addEventListener('powerpoint-ai-response', handler as EventListener)
@@ -331,111 +253,46 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     }
   }, [slides, currentSlideIndex, selectedElementId])
 
-  // Listen for Skills-generated files (new file-based workflow)
   useEffect(() => {
     const handler = async (event: CustomEvent) => {
-      const detail = event?.detail || {}
-      const { fileId, fileName, fileType } = detail
-
-      if (fileType !== 'pptx') {
-        return // Only handle PowerPoint files
-      }
-
-      if (!fileId || !fileName) {
-        console.warn('[PowerPointViewer] File-generated event missing fileId or fileName')
-        return
-      }
-
-      try {
-        // Download file from S3
-        const result = await ApiService.downloadFromS3(fileId, fileName)
-        if (!result.success || !result.blob) {
-          throw new Error('Failed to download generated presentation')
-        }
-
-        // Parse the PPTX file
-        const parsedSlides = await parsePptxFile({ blob: result.blob, toast })
-
-        // Replace current slides with generated ones
-        setSlides(parsedSlides)
-        setCurrentSlideIndex(0)
-        setSelectedElementId(null)
-        setHasUnsavedChanges(true) // Mark as unsaved so user can save to their location
-
-        // Save to history
-        pushToHistory(parsedSlides, 0)
-        setUndoAvailable(canUndo())
-        setRedoAvailable(canRedo())
-
-        toast({
-          title: 'Presentation generated',
-          description: 'Your presentation has been created using Claude Skills',
-          variant: 'default'
-        })
-      } catch (error) {
-        console.error('Error loading Skills-generated file:', error)
-        toast({
-          title: 'Error loading presentation',
-          description: error instanceof Error ? error.message : 'Failed to load generated presentation',
-          variant: 'destructive'
-        })
-      }
+      await handleFileGenerated({
+        event,
+        toast,
+        setSlides,
+        setCurrentSlideIndex,
+        setSelectedElementId,
+        setHasUnsavedChanges,
+        setUndoAvailable,
+        setRedoAvailable,
+      })
     }
 
     window.addEventListener('powerpoint-file-generated', handler as unknown as EventListener)
     return () => {
       window.removeEventListener('powerpoint-file-generated', handler as unknown as EventListener)
     }
-  }, [])
+  }, [toast])
 
-  // Listen for PPTX tool updates via SSE stream
   useEffect(() => {
     const handler = async (event: CustomEvent) => {
-      const data = event.detail
-
-      if (data.type === 'pptx-updated') {
-        const { fileId, fileName, operation } = data
-
-        // Only reload if this is the currently open file
-        if (currentFile.file_id === fileId || currentFile.name === fileName) {
-          try {
-            const result = await ApiService.downloadFromS3(fileId, fileName)
-            if (result.success && result.blob) {
-              const parsedSlides = await parsePptxFile({ blob: result.blob, toast })
-              setSlides(parsedSlides)
-              setHasUnsavedChanges(false)
-
-              // Preserve current slide index if still valid
-              if (currentSlideIndex < parsedSlides.length) {
-                setCurrentSlideIndex(currentSlideIndex)
-              } else {
-                setCurrentSlideIndex(Math.max(0, parsedSlides.length - 1))
-              }
-
-              pushToHistory(parsedSlides, currentSlideIndex)
-              setUndoAvailable(canUndo())
-              setRedoAvailable(canRedo())
-
-              // Show toast notification
-              toast({
-                title: 'Presentation updated',
-                description: `AI has completed: ${operation.replace(/_/g, ' ')}`,
-                variant: 'default'
-              })
-            }
-          } catch (error) {
-            console.error('Failed to reload after AI update:', error)
-          }
-        }
-      }
+      await handlePptxUpdated({
+        event,
+        currentFileId: currentFile.file_id,
+        currentFileName: currentFile.name,
+        currentSlideIndex,
+        toast,
+        setSlides,
+        setCurrentSlideIndex,
+        setHasUnsavedChanges,
+        setUndoAvailable,
+        setRedoAvailable,
+      })
     }
 
-    // Listen for custom events from SSE stream
     window.addEventListener('pptx-updated', handler as unknown as EventListener)
     return () => window.removeEventListener('pptx-updated', handler as unknown as EventListener)
-  }, [currentFile.file_id, currentFile.name, currentSlideIndex])
+  }, [currentFile.file_id, currentFile.name, currentSlideIndex, toast])
 
-  // Listen for pptx-presentation-loaded event to track active presentation ID
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent).detail || {}
@@ -460,128 +317,24 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     return () => window.removeEventListener('pptx-presentation-loaded', handler as EventListener)
   }, [file?.file_id])
 
-  // Listen for pptx-live-update events to apply changes without re-downloading
   useEffect(() => {
     const handler = (event: Event) => {
-      const detail = (event as CustomEvent).detail || {}
-      const { presentationId, operation, operationData, fileId } = detail
-
-
-      // Check if this event is for the current presentation
-      // Match by presentationId (if activePresentationId is set) or by fileId
-      const presentationMatches = activePresentationId && presentationId === activePresentationId
-      const fileMatches = fileId && file?.file_id === fileId
-      
-      if (!presentationMatches && !fileMatches) {
-        console.log('[PowerPointViewer] Ignoring event - presentation/file mismatch')
-        return
-      }
-
-      // If we matched by fileId but activePresentationId isn't set, set it now
-      if (!activePresentationId && fileMatches && presentationId) {
-        console.log('[PowerPointViewer] Setting activePresentationId from event:', presentationId)
-        setActivePresentationId(presentationId)
-      }
-
-      // Apply the operation to the slides
-      setSlides((prevSlides) => {
-        const updatedSlides = [...prevSlides]
-
-        switch (operation) {
-          case 'create_slide': {
-            const { slideIndex, layout, background } = operationData
-            const newSlide: Slide = {
-              id: `slide-${Date.now()}`,
-              index: slideIndex,
-              elements: [],
-              background: background,
-            }
-            updatedSlides.splice(slideIndex, 0, newSlide)
-            // Update indices of subsequent slides
-            updatedSlides.forEach((slide, idx) => {
-              slide.index = idx
-            })
-            break
-          }
-
-          case 'add_text': {
-            const { slideIndex, element } = operationData
-            if (updatedSlides[slideIndex]) {
-              updatedSlides[slideIndex] = {
-                ...updatedSlides[slideIndex],
-                elements: [...updatedSlides[slideIndex].elements, element],
-              }
-            }
-            break
-          }
-
-          case 'add_image': {
-            const { slideIndex, element } = operationData
-            if (updatedSlides[slideIndex]) {
-              updatedSlides[slideIndex] = {
-                ...updatedSlides[slideIndex],
-                elements: [...updatedSlides[slideIndex].elements, element],
-              }
-            }
-            break
-          }
-
-          case 'add_shape': {
-            const { slideIndex, element } = operationData
-            if (updatedSlides[slideIndex]) {
-              updatedSlides[slideIndex] = {
-                ...updatedSlides[slideIndex],
-                elements: [...updatedSlides[slideIndex].elements, element],
-              }
-            }
-            break
-          }
-
-          case 'add_table': {
-            const { slideIndex, element } = operationData
-            if (updatedSlides[slideIndex]) {
-              updatedSlides[slideIndex] = {
-                ...updatedSlides[slideIndex],
-                elements: [...updatedSlides[slideIndex].elements, element],
-              }
-            }
-            break
-          }
-
-          case 'set_slide_background': {
-            const { slideIndex, background } = operationData
-            if (updatedSlides[slideIndex]) {
-              updatedSlides[slideIndex] = {
-                ...updatedSlides[slideIndex],
-                background: background,
-              }
-            }
-            break
-          }
-
-          default:
-            console.warn('[PowerPointViewer] Unknown operation:', operation)
-        }
-
-        return updatedSlides
-      })
-
-      // Mark as unsaved changes
-      setHasUnsavedChanges(true)
-
-      // Show toast notification
-      toast({
-        title: 'Presentation updated',
-        description: `AI has completed: ${operation.replace(/_/g, ' ')}`,
-        variant: 'default'
+      handlePptxLiveUpdate({
+        event: event as CustomEvent,
+        activePresentationId,
+        fileId: file?.file_id,
+        slides,
+        setSlides,
+        setActivePresentationId,
+        setHasUnsavedChanges,
+        toast,
       })
     }
 
     window.addEventListener('pptx-live-update', handler as EventListener)
     return () => window.removeEventListener('pptx-live-update', handler as EventListener)
-  }, [activePresentationId, toast])
+  }, [activePresentationId, file?.file_id, slides, toast])
 
-  // Resolve image references (driveFileId, s3FileId, web URLs) to data URLs
   useEffect(() => {
     const resolveImages = async () => {
       await handleResolveImages({
@@ -594,13 +347,11 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     resolveImages()
   }, [slides])
 
-  // Handle slide selection
   const handleSlideSelect = useCallback((index: number) => {
     setCurrentSlideIndex(index)
     setSelectedElementId(null)
   }, [])
 
-  // Handle adding new slide
   const handleAddSlideCallback = useCallback(() => {
     handleAddSlide({
       slides,
@@ -612,7 +363,6 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     })
   }, [slides, saveToHistory])
 
-  // Handle deleting current slide
   const handleDeleteSlideCallback = useCallback(() => {
     handleDeleteSlide({
       slides,
@@ -626,7 +376,6 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     })
   }, [slides, currentSlideIndex, toast, saveToHistory])
 
-  // Handle deleting slide by index (for context menu)
   const handleDeleteSlideByIndexCallback = useCallback((index: number) => {
     handleDeleteSlideByIndex({
       slides,
@@ -641,7 +390,6 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     })
   }, [slides, currentSlideIndex, toast, saveToHistory])
 
-  // Handle duplicating slide
   const handleDuplicateSlide = useCallback((index: number) => {
     saveToHistory()
     setSlides(prev => {
@@ -792,7 +540,6 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     setHasUnsavedChanges(true)
   }, [currentSlideIndex, saveToHistory])
 
-  // Handle updating slide elements
   const handleUpdateSlide = useCallback((updatedElements: SlideElement[], saveHistory = false) => {
     if (saveHistory) {
       saveToHistory()
@@ -808,7 +555,6 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     setHasUnsavedChanges(true)
   }, [currentSlideIndex, saveToHistory])
 
-  // Handle adding element
   const handleAddElement = useCallback((element: SlideElement) => {
     saveToHistory()
     setSlides(prev => {
@@ -823,7 +569,6 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
     setHasUnsavedChanges(true)
   }, [currentSlideIndex, saveToHistory])
 
-  // Handle updating selected element
   const handleUpdateElement = useCallback((updates: Partial<SlideElement>) => {
     if (!selectedElementId) return
     
