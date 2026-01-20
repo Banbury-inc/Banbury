@@ -311,7 +311,6 @@ function setupEventListeners(): void {
     try {
       if (RecallAiSdk) {
         RecallAiSdk.addEventListener(eventName, (evt: unknown) => {
-          console.log(`[Desktop Recording] Event "${eventName}":`, JSON.stringify(evt, null, 2))
         })
       }
     } catch (e) {
@@ -507,8 +506,6 @@ async function startRecording(windowId: string, uploadToken: string): Promise<{ 
     // Find the platform for this window from detected meetings
     const meeting = detectedMeetings.find(m => m.id === windowId)
     const platform = meeting?.platform || 'unknown'
-    
-    console.log('[Desktop Recording] Found meeting for window:', meeting)
     
     // Set recording status immediately with the windowId and platform we know
     // This ensures we have these values even if the SDK event doesn't provide them

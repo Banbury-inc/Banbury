@@ -194,17 +194,11 @@ export function useLangGraphAssistant(initialThreadId?: string) {
         throw new Error('No response body reader available');
       }
 
-      console.log('[useLangGraphAssistant] ===== STREAM STARTED =====');
-
       const decoder = new TextDecoder();
       let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) {
-          console.log('[useLangGraphAssistant] ===== STREAM ENDED =====');
-          break;
-        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -212,7 +206,6 @@ export function useLangGraphAssistant(initialThreadId?: string) {
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            console.log('[useLangGraphAssistant] Raw SSE data:', line.slice(6).substring(0, 100) + '...');
             try {
               const event: StreamEvent = JSON.parse(line.slice(6));
               await handleStreamEvent(event);
@@ -238,9 +231,6 @@ export function useLangGraphAssistant(initialThreadId?: string) {
   }, [state.messages, state.threadId, state.isLoading]);
 
   const handleStreamEvent = useCallback(async (event: StreamEvent) => {
-    // Debug: Log all events to see what's coming through
-    console.log('[useLangGraphAssistant] Received event:', event.type, event);
-
     switch (event.type) {
       case "message-start":
         // Assistant message started
@@ -502,10 +492,8 @@ export function useLangGraphAssistant(initialThreadId?: string) {
           // Dispatch assistant-file-created event to trigger file list refresh
           window.dispatchEvent(new CustomEvent('assistant-file-created', { detail: event }));
         } else if (event.type === 'open-presentation-in-viewer') {
-          console.log('[useLangGraphAssistant] Dispatching open-presentation-in-viewer event', event);
           window.dispatchEvent(new CustomEvent('open-presentation-in-viewer', { detail: event }));
         } else if (event.type === 'pptx-live-update') {
-          console.log('[useLangGraphAssistant] Dispatching pptx-live-update event', event);
           window.dispatchEvent(new CustomEvent('pptx-live-update', { detail: event }));
         }
         break;

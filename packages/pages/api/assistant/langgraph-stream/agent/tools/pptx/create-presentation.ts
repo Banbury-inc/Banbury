@@ -49,7 +49,6 @@ export const createPresentationTool = tool(
       }
 
       const uploadData = await uploadResp.json()
-      console.log('[create-presentation] Upload response:', uploadData)
 
       if (uploadData.result !== 'success') {
         throw new Error(uploadData.error || 'Failed to upload presentation to S3')
@@ -61,12 +60,8 @@ export const createPresentationTool = tool(
                    uploadData.file_id ||
                    null
 
-      console.log('[create-presentation] Extracted fileId:', fileId)
-      console.log('[create-presentation] file_info:', uploadData.file_info)
-
       // If we couldn't get file ID from upload response, get list of user files and find it
       if (!fileId && token) {
-        console.log('[create-presentation] No fileId in response, fetching user files to find it...')
         try {
           const filesResp = await fetch(`${CONFIG.url}/files/get_s3_files/`, {
             method: 'GET',
@@ -75,7 +70,6 @@ export const createPresentationTool = tool(
 
           if (filesResp.ok) {
             const filesData = await filesResp.json()
-            console.log('[create-presentation] Got user files, searching for match...')
 
             if (filesData.files && filesData.files.length > 0) {
               // Find the most recently uploaded file with matching name or path
@@ -93,8 +87,6 @@ export const createPresentationTool = tool(
 
               if (matchingFile) {
                 fileId = matchingFile.file_id || matchingFile._id
-                console.log('[create-presentation] Found fileId from user files:', fileId)
-                console.log('[create-presentation] Matched file:', matchingFile)
               } else {
                 console.warn('[create-presentation] No matching file found in user files')
               }
@@ -114,7 +106,6 @@ export const createPresentationTool = tool(
       if (!fileId) {
         console.error('[create-presentation] WARNING: Could not determine fileId for presentation')
       } else {
-        console.log('[create-presentation] Successfully determined fileId:', fileId)
         // Store mapping from fileId to presentationId so subsequent tools can look it up
         mapFileIdToPresentationId(fileId, id)
       }

@@ -1096,7 +1096,6 @@ const Workspaces = (): React.ReactNode => {
   // Listen for requests to reopen a file (e.g., after save generates a new file id)
   useEffect(() => {
     const handler = (e: Event) => {
-      console.log('[Workspaces] Received workspace-reopen-file event', e);
       const detail = (e as CustomEvent).detail || {};
       const { newFile } = detail as { oldPath?: string; newFile: FileSystemItem };
       if (!newFile) return;
@@ -1149,11 +1148,8 @@ const Workspaces = (): React.ReactNode => {
   // Listen for open-presentation-in-viewer events to auto-switch to new presentations
   useEffect(() => {
     const handler = async (event: Event) => {
-      console.log('[Workspaces] Received open-presentation-in-viewer event', event);
       const detail = (event as CustomEvent).detail || {};
       const { fileId, fileName, presentationId, fileUrl } = detail;
-      console.log('[Workspaces] Event detail:', { fileId, fileName, presentationId });
-
       if (!fileId || !fileName || !presentationId) {
         console.warn('[Workspaces] Missing required fields in event detail');
         return;
@@ -1161,8 +1157,6 @@ const Workspaces = (): React.ReactNode => {
 
       // Wait for file to appear in sidebar (it was just created and uploaded)
       setTimeout(async () => {
-        console.log('[Workspaces] Triggering sidebar refresh and opening file');
-
         // Trigger sidebar refresh to ensure file is loaded
         triggerSidebarRefresh();
 
@@ -1178,11 +1172,9 @@ const Workspaces = (): React.ReactNode => {
           type: 'file',
         };
 
-        console.log('[Workspaces] Opening file in tab:', file);
         openFileInTabCallback(file, 'main-panel');
 
         // Dispatch pptx-presentation-loaded event for PowerPointViewer to catch
-        console.log('[Workspaces] Dispatching pptx-presentation-loaded event');
         window.dispatchEvent(new CustomEvent('pptx-presentation-loaded', {
           detail: { fileId, presentationId }
         }));
