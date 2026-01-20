@@ -166,12 +166,9 @@ export async function initDesktopRecording(window: BrowserWindow): Promise<boole
       process.platform === 'win32' ? 'agent-windows.exe' : 'agent-macos'
     )
     
-    console.log('[Desktop Recording] Looking for agent at:', agentPath)
     
     if (fs.existsSync(agentPath)) {
-      console.log('[Desktop Recording] Agent binary found!')
       const stats = fs.statSync(agentPath)
-      console.log('[Desktop Recording] Agent size:', stats.size, 'bytes')
     } else {
       console.error('[Desktop Recording] Agent binary NOT FOUND at:', agentPath)
       console.error('[Desktop Recording] This may require running: npm rebuild @recallai/desktop-sdk')
@@ -188,15 +185,11 @@ export async function initDesktopRecording(window: BrowserWindow): Promise<boole
       return false
     }
     
-    console.log('[Desktop Recording] SDK module loaded successfully')
-    console.log('[Desktop Recording] SDK exports:', Object.keys(sdkModule))
-    
     // Check if init function exists directly on the module
     if (isRecallAiSDK(sdkModule)) {
       RecallAiSdk = sdkModule
     } else if (sdkModule.default && isRecallAiSDK(sdkModule.default)) {
       // Try checking if SDK is the default export
-      console.log('[Desktop Recording] Using default export')
       RecallAiSdk = sdkModule.default
     } else {
       console.error('[Desktop Recording] SDK does not have an init function. Available methods:', Object.keys(sdkModule))
@@ -205,11 +198,6 @@ export async function initDesktopRecording(window: BrowserWindow): Promise<boole
     }
     
     const apiUrl = process.env.RECALL_API_URL || 'https://us-west-2.recall.ai'
-    
-    console.log('[Desktop Recording] Platform:', process.platform)
-    console.log('[Desktop Recording] Architecture:', process.arch)
-    console.log('[Desktop Recording] Current working directory:', process.cwd())
-    console.log('[Desktop Recording] Initializing SDK with API URL:', apiUrl)
     
     // The SDK init is async and can throw - wrap in try/catch
     try {

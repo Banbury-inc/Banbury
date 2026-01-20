@@ -38,7 +38,6 @@ function resolveTargetUrl(): string {
     const devUrl = process.env[DEV_URL_ENV_KEY]
     if (devUrl && isValidUrl(devUrl)) return devUrl
     
-    console.log(`[Electron] No valid ${DEV_URL_ENV_KEY} found, using default: ${DEFAULT_DEV_URL}`)
     return DEFAULT_DEV_URL
   }
 
@@ -46,7 +45,6 @@ function resolveTargetUrl(): string {
   const prodUrl = process.env[PROD_URL_ENV_KEY]
   if (prodUrl && isValidUrl(prodUrl)) return prodUrl
 
-  console.log(`[Electron] No valid ${PROD_URL_ENV_KEY} found, using default: ${DEFAULT_PROD_URL}`)
   return DEFAULT_PROD_URL
 }
 
@@ -139,9 +137,6 @@ if (!isDev) {
  */
 function createWindow(): void {
   const targetUrl = resolveTargetUrl()
-  
-  console.log(`[Electron] Starting in ${isDev ? 'development' : 'production'} mode`)
-  console.log(`[Electron] Loading URL: ${targetUrl}`)
 
   const iconPath = resolveIconPath()
   
@@ -192,7 +187,6 @@ function createWindow(): void {
     
     // In dev mode, the server might not be ready yet - retry after a delay
     if (isDev && errorCode === -102) {
-      console.log('[Electron] Server may not be ready. Retrying in 3 seconds...')
       setTimeout(() => {
         mainWindow?.loadURL(targetUrl)
       }, 3000)
