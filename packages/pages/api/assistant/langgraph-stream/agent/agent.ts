@@ -105,7 +105,6 @@ import { executeScriptTool } from "./tools/executeScriptTool";
 import { createPlanTool } from "./tools/createPlanTool";
 import { spawnSubagentsTool } from "./tools/spawnSubagentsTool";
 
-// Define our agent state
 interface AgentState {
   messages: BaseMessage[];
   step: number;
@@ -123,12 +122,11 @@ function getDefaultModelForProvider(provider: ModelProvider): string {
 function createChatModel(provider: ModelProvider, modelId?: string) {
   let actualModelId = modelId || getDefaultModelForProvider(provider)
   
-  // Map deprecated or unsupported Google model names to supported ones
   if (provider === "google") {
     const modelMappings: Record<string, string> = {
-      "gemini-pro": "gemini-2.0-flash-exp", // Map deprecated gemini-pro to gemini-2.0-flash-exp
-      "gemini-1.5-pro": "gemini-2.0-flash-exp", // Map gemini-1.5-pro to gemini-2.0-flash-exp (not available in v1beta)
-      "gemini-1.5-flash": "gemini-2.0-flash-exp", // Map gemini-1.5-flash to gemini-2.0-flash-exp (not available in v1beta)
+      "gemini-pro": "gemini-2.0-flash-exp",
+      "gemini-1.5-pro": "gemini-2.0-flash-exp",
+      "gemini-1.5-flash": "gemini-2.0-flash-exp",
     }
     actualModelId = modelMappings[actualModelId] || actualModelId
   }
@@ -153,7 +151,7 @@ function createChatModel(provider: ModelProvider, modelId?: string) {
     model: actualModelId,
     apiKey: process.env.ANTHROPIC_API_KEY,
     temperature: 0.2,
-    invocationKwargs: { top_p: undefined }, // Override to prevent -1 being sent to newer models
+    invocationKwargs: { top_p: undefined },
   })
 }
 
@@ -172,16 +170,8 @@ function resolveModelId(): string | undefined {
 export function createReactAgentForProvider(provider: ModelProvider) {
   const modelId = resolveModelId()
   
-  // Use createReactAgent instead of createAgent to avoid LangSmith dependency
-  // createAgent from 'langchain' requires LangSmith authentication even without middleware
-  // createReactAgent from '@langchain/langgraph/prebuilt' works locally without LangSmith
   const llm = createChatModel(provider, modelId)
   
-  // Note: System prompt will be provided dynamically via the prompt parameter
-  // when invoking the agent, not here in the agent creation.
-  // createReactAgent doesn't support middleware like todoListMiddleware.
-  // The todoListMiddleware from 'langchain' requires LangSmith authentication and
-  // is only available with createAgent, which also requires LangSmith.
   return createReactAgent({ llm, tools })
 }
 
@@ -190,118 +180,67 @@ export function createReactAgentForProvider(provider: ModelProvider) {
  * This is a constrained toolset focused on document operations.
  */
 const documentTools = [
-  // Core document creation/editing tools
   createFileTool,
-  // PPTX tools (separate tools for each operation)
   createPresentationTool,
   createSlideTool,
   addTextTool,
   addShapeTool,
   addImageTool,
-  addChartTool, // Add charts to slides
-  addTableTool, // Add tables to slides
-  downloadAndAddImageTool, // Download image from web URL and add to presentation
+  addChartTool,
+  addTableTool,
+  downloadAndAddImageTool,
   setSlideBackgroundTool,
   useTemplateTool,
   extractInventoryTool,
   rearrangeSlidesTool,
   replaceTextTool,
-  evaluatePresentationTool, // Evaluate presentation to see how it looks
-  pptxParseOutlineTool, // Parse attached PPTX files to understand structure before editing
+  evaluatePresentationTool,
+  pptxParseOutlineTool,
   sheetAiTool,
   docxAiTool,
   tldrawAiTool,
-  // Supporting tools that may be needed for document tasks
-  webSearchTool, // For research when creating documents
-  tavilyExtractTool, // Extract content from URLs for document creation
-  searchFilesTool, // To find existing files to reference
-  downloadFromUrlTool, // To download images/assets for documents
-  generateImageTool, // To generate images for documents
-  createFolderTool, // To organize created documents
-  getCurrentDateTimeTool, // For date-aware documents
-]
-
-/**
- * Creates a document-specialized React agent with a constrained toolset.
- * Used when detectDocumentRequest() returns true.
- */
-export function createDocumentAgentForProvider(provider: ModelProvider) {
-  const modelId = resolveModelId()
-  const llm = createChatModel(provider, modelId)
-  return createReactAgent({ llm, tools: documentTools })
-}
-
-/**
- * Planning mode tools - Minimal read-only research tools + plan file creation.
- * 
- * In planning mode, the agent can ONLY:
- * 1. Research using file search and memory
- * 2. Create plan files (.plan.md) using the dedicated create_plan tool
- * 
- * NO other write/edit tools are available. This ensures the planning agent
- * cannot modify files, execute code, or perform any actions beyond research
- * and plan creation.
- */
-const planningTools = [
-  // Plan file creation - ONLY tool that can create files (restricted to .plan.md)
-  createPlanTool,
-  // Read-only research tools (minimal set)
-  searchFilesTool, // Search existing files to understand codebase
-  searchMemoryTool, // Search memory for relevant past context
-]
-
-/**
- * Ask mode tools - Read-only search and research tools.
- * 
- * In ask mode, the agent can ONLY:
- * 1. Search the web for information
- * 2. Search files in cloud storage
- * 3. Search memory for past context
- * 
- * NO write, edit, or modification tools are available. This ensures the ask agent
- * can only research and explain, never modify files or execute actions.
- */
-const askingTools = [
-  // Web search for current information
   webSearchTool,
-  tavilyExtractTool, // Extract content from URLs for research
-  tavilyCrawlTool, // Deep site exploration for research
-  tavilyMapTool, // Site structure analysis for research
-  tavilyResearchTool, // Comprehensive research with multiple searches
-  tavilyGetResearchTool, // Retrieve research results
-  // File search to find and explore documents
+  tavilyExtractTool,
   searchFilesTool,
-  // Memory search for past context
-  searchMemoryTool,
-  // Date/time context for time-sensitive queries
+  downloadFromUrlTool,
+  generateImageTool,
+  createFolderTool,
   getCurrentDateTimeTool,
 ]
 
-/**
- * Creates a planning-only React agent with read-only tools.
- * Used when plan_mode is true - agent can only research and create plans.
- */
+const planningTools = [
+  createPlanTool,
+  searchFilesTool,
+  searchMemoryTool,
+]
+
+const askingTools = [
+  webSearchTool,
+  tavilyExtractTool,
+  tavilyCrawlTool,
+  tavilyMapTool,
+  tavilyResearchTool,
+  tavilyGetResearchTool,
+  searchFilesTool,
+  searchMemoryTool,
+  getCurrentDateTimeTool,
+]
+
 export function createPlanningAgentForProvider(provider: ModelProvider) {
   const modelId = resolveModelId()
   const llm = createChatModel(provider, modelId)
   return createReactAgent({ llm, tools: planningTools })
 }
 
-/**
- * Creates an ask-only React agent with read-only search tools.
- * Used when ask_mode is true - agent can only search and explain, never modify.
- */
 export function createAskAgentForProvider(provider: ModelProvider) {
   const modelId = resolveModelId()
   const llm = createChatModel(provider, modelId)
   return createReactAgent({ llm, tools: askingTools })
 }
 
-// Function to get current date/time context
 function getCurrentDateTimeContext(): string {
   const now = new Date()
   
-  // Format current date and time
   const dateOptions: Intl.DateTimeFormatOptions = { 
     weekday: 'long', 
     year: 'numeric', 
@@ -322,7 +261,6 @@ function getCurrentDateTimeContext(): string {
   return `Current date and time: ${currentDate} at ${currentTime} (${timezone}). ISO timestamp: ${isoString}`
 }
 
-// Bind tools to the model and also prepare tools array for React agent
 const tools = [
   webSearchTool,
   tavilyExtractTool,
@@ -334,15 +272,14 @@ const tools = [
   sheetAiTool,
   docxAiTool,
   tldrawAiTool,
-  // PPTX tools (separate tools for each operation)
   createPresentationTool,
   createSlideTool,
   addTextTool,
   addShapeTool,
   addImageTool,
-  addChartTool, // Add charts to slides
-  addTableTool, // Add tables to slides
-  downloadAndAddImageTool, // Download image from web URL and add to presentation
+  addChartTool,
+  addTableTool,
+  downloadAndAddImageTool,
   setSlideBackgroundTool,
   useTemplateTool,
   extractInventoryTool,
@@ -402,20 +339,15 @@ const tools = [
   stagehandActTool,
   stagehandExtractTool,
   stagehandCloseTool,
-  // Multi-agent orchestration
   spawnSubagentsTool,
 ]
-// Define agent nodes following athena-intelligence patterns
 async function agentNode(state: AgentState): Promise<AgentState> {
   try {
-    // Only add system message if it's not already there
     let messages = state.messages
     
-    // Check if first message is already a system message
     const hasSystemMessage = messages.length > 0 && messages[0]._getType() === "system"
     
     if (!hasSystemMessage) {
-      // Get date/time context from server context if available, otherwise generate it
       let dateTimeContext = getServerContextValue<any>("dateTimeContext")
       if (!dateTimeContext) {
         dateTimeContext = getCurrentDateTimeContext()
@@ -423,7 +355,6 @@ async function agentNode(state: AgentState): Promise<AgentState> {
         dateTimeContext = `Current date and time: ${dateTimeContext.formatted}. ISO timestamp: ${dateTimeContext.isoString}`
       }
       
-      // Get attached files information from the message context
       let attachedFilesContext = ""
       const lastMessage = messages[messages.length - 1]
       if (lastMessage && Array.isArray(lastMessage.content)) {
@@ -484,7 +415,6 @@ async function agentNode(state: AgentState): Promise<AgentState> {
   }
 }
 
-// Define the graph
 const workflow = new StateGraph<AgentState>(MessagesAnnotation)
   .addNode("agent", agentNode)
   .addEdge(START, "agent")
@@ -492,7 +422,6 @@ const workflow = new StateGraph<AgentState>(MessagesAnnotation)
 
 const app = workflow.compile()
 
-// Main exported function
 export async function invokeAgent(
   messages: BaseMessage[],
   config?: { authToken?: string; toolPreferences?: any; dateTimeContext?: any; webSearchDefaults?: any }
