@@ -18,33 +18,6 @@ export default class Debug {
       '/authentication/auth/callback/'
     ];
 
-    
-    const results: Record<string, { status: number; available: boolean; error?: string }> = {};
-
-    for (const endpoint of endpoints) {
-      try {
-        const response = await fetch(`${baseUrl}${endpoint}`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          }
-        });
-
-        results[endpoint] = {
-          status: response.status,
-          available: response.status !== 404,
-        };
-
-      } catch (error) {
-        results[endpoint] = {
-          status: 0,
-          available: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
-      }
-    }
-
-    return results;
   }
 
   /**
