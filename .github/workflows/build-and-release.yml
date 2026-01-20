@@ -137,8 +137,8 @@ jobs:
                {"name": "BROWSERBASE_PROJECT_ID", "value": $browserbase_proj},
                {"name": "ZEP_API_KEY", "value": $zep},
                {"name": "TAVILY_API_KEY", "value": $tavily},
-               {"name": "API_BASE_URL", "value": $api_base}
-               {"name": "SENTRY_AUTH_TOKEN", "value": $SENTRY_AUTH_TOKEN}
+               {"name": "API_BASE_URL", "value": $api_base},
+               {"name": "SENTRY_AUTH_TOKEN", "value": $sentry_auth_token}
              ]' ${{ env.ECS_TASK_DEFINITION }} > task-def-updated.json
 
       - name: Fill in the new image ID in the Amazon ECS task definition
@@ -222,8 +222,7 @@ jobs:
              --arg zep "$ZEP_API_KEY" \
              --arg tavily "$TAVILY_API_KEY" \
              --arg api_base "$API_BASE_URL" \
-             --arg SENTRY_AUTH_TOKEN "$SENTRY_AUTH_TOKEN" \
-
+             --arg sentry_auth_token "$SENTRY_AUTH_TOKEN" \
              '.containerDefinitions[0].environment = [
                {"name": "ANTHROPIC_API_KEY", "value": $anthropic},
                {"name": "OPENAI_API_KEY", "value": $openai},
@@ -232,8 +231,8 @@ jobs:
                {"name": "BROWSERBASE_PROJECT_ID", "value": $browserbase_proj},
                {"name": "ZEP_API_KEY", "value": $zep},
                {"name": "TAVILY_API_KEY", "value": $tavily},
-               {"name": "API_BASE_URL", "value": $api_base}
-               {"name": "SENTRY_AUTH_TOKEN", "value": $SENTRY_AUTH_TOKEN}
+               {"name": "API_BASE_URL", "value": $api_base},
+               {"name": "SENTRY_AUTH_TOKEN", "value": $sentry_auth_token}
              ]' ${{ env.ECS_TASK_DEFINITION }} > task-def-updated.json
 
       - name: Fill in the new image ID in the Amazon ECS task definition
