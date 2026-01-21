@@ -1155,7 +1155,7 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
+                            background: 'rgba(59, 130, 246, 0)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1242,7 +1242,7 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
+                            background: 'rgba(59, 130, 246, 0)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1262,7 +1262,7 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
+                            background: 'rgba(59, 130, 246, 0)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1282,7 +1282,7 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
+                            background: 'rgba(59, 130, 246, 0)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1615,7 +1615,7 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
+                            background: 'rgba(59, 130, 246, 0)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1689,7 +1689,7 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
+                            background: 'rgba(59, 130, 246, 0)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1709,7 +1709,7 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
+                            background: 'rgba(59, 130, 246, 0)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1729,7 +1729,7 @@ const Home = (): JSX.Element => {
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.2)',
+                            background: 'rgba(59, 130, 246, 0)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1799,20 +1799,6 @@ const Home = (): JSX.Element => {
                     onClick={() => window.location.href = '/register'}
                   >
                     Get Started for Free
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => window.location.href = '/features'}
-                    className="rounded-full px-5 md:px-6"
-                    style={{
-                      borderRadius: 9999,
-                      background: 'transparent',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      color: 'rgba(255,255,255,0.85)'
-                    }}
-                  >
-                    Watch Demo
                   </Button>
             </Box>
           </Box>
