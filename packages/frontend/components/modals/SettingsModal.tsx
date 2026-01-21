@@ -12,6 +12,7 @@ import {
   Brain,
   Keyboard,
   BarChart3,
+  Info,
 } from 'lucide-react'
 
 import { Button } from '../ui/button'
@@ -37,7 +38,8 @@ import {
   MeetingAgentTab,
   AISettingsTab,
   KeybindsTab,
-  UsageTab
+  UsageTab,
+  AboutTab
 } from './settings-tabs'
 import { handleUpdateProfile } from './handlers/settingsHandlers'
 
@@ -259,6 +261,11 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       id: 'subscription',
       label: 'Subscription',
       icon: CreditCard,
+    },
+    {
+      id: 'about',
+      label: 'About',
+      icon: Info,
     },
   ]
 
@@ -517,6 +524,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
               {activeTab === 'usage' && (
                 <UsageTab />
+              )}
+
+              {activeTab === 'about' && (
+                <AboutTab />
               )}
             </div>
           </div>

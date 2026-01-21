@@ -6,4 +6,5 @@ export { MeetingAgentTab } from './MeetingAgentTab'
 export { AISettingsTab } from './AISettingsTab'
 export { KeybindsTab } from './KeybindsTab'
 export { UsageTab } from './UsageTab'
+export { AboutTab } from './AboutTab'
 

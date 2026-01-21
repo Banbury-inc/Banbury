@@ -293,11 +293,55 @@ jobs:
       - name: Build Desktop Distributables
         run: |
           cd packages
-          npm run desktop:dist
+          # Only Windows platform publishes to avoid conflicts (creates release + metadata)
+          # Other platforms build without publishing (they'll be added to existing release)
+          if [ "${{ matrix.platform }}" = "win" ]; then
+            echo "Building and publishing Windows version (will create release and latest.yml)"
+            npm run desktop:dist
+          else
+            echo "Building ${{ matrix.platform }} version without publishing"
+            npm run electron:build
+            electron-builder --config electron-builder.json --${{ matrix.platform }} --publish never
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DESKTOP_APP_PROD_URL: ${{ secrets.DESKTOP_APP_PROD_URL }}
         continue-on-error: true
+
+      - name: Verify electron-updater metadata files exist
+        run: |
+          cd packages
+          echo "Checking for electron-updater metadata files..."
+          
+          # Check for Windows metadata
+          if [ -f "dist-electron-build/latest.yml" ]; then
+            echo "✓ latest.yml found (Windows)"
+            cat dist-electron-build/latest.yml
+          else
+            echo "✗ latest.yml NOT found (Windows) - auto-updates will NOT work"
+          fi
+          
+          # Check for macOS metadata
+          if [ -f "dist-electron-build/latest-mac.yml" ]; then
+            echo "✓ latest-mac.yml found (macOS)"
+          else
+            echo "⚠ latest-mac.yml not found (may be normal if macOS build failed)"
+          fi
+          
+          # Check for Linux metadata
+          if [ -f "dist-electron-build/latest-linux.yml" ]; then
+            echo "✓ latest-linux.yml found (Linux)"
+          else
+            echo "⚠ latest-linux.yml not found (may be normal if Linux build failed)"
+          fi
+
+      - name: List generated files (including metadata)
+        run: |
+          cd packages
+          echo "Generated files in dist-electron-build:"
+          ls -la dist-electron-build/ || echo "Directory not found"
+          echo "Looking for YML files:"
+          find dist-electron-build -name "*.yml" -o -name "*.yaml" || echo "No YML files found"
 
       - name: Upload Desktop Artifacts
         uses: actions/upload-artifact@v4
@@ -310,16 +354,18 @@ jobs:
             packages/dist-electron-build/*.deb
             packages/dist-electron-build/*.rpm
             packages/dist-electron-build/*.zip
+            packages/dist-electron-build/*.yml
+            packages/dist-electron-build/*.yaml
           if-no-files-found: warn
           retention-days: 30
 
-  # Release Job
-  # Creates a GitHub release with Electron desktop app artifacts
-  # Only runs on main branch after successful desktop builds
-  release:
+  # Upload additional platform files to the release created by Windows build
+  # Windows build publishes automatically (creates release + latest.yml)
+  # Other platforms need their files uploaded to that existing release
+  upload-to-release:
     needs: [build-desktop]
     if: github.ref == 'refs/heads/main'
-    name: Create Release
+    name: Upload Additional Platform Files
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -341,62 +387,13 @@ jobs:
           path: release-artifacts
           pattern: desktop-*
 
-      - name: List downloaded artifacts
-        run: |
-          echo "Downloaded artifacts:"
-          find release-artifacts -type f -name "*" || echo "No artifacts found"
-          ls -la release-artifacts/ || true
-
-      - name: Check for artifacts
-        id: check-artifacts
-        run: |
-          if find release-artifacts -type f 2>/dev/null | grep -q .; then
-            echo "artifacts_exist=true" >> $GITHUB_OUTPUT
-            echo "Artifacts found, proceeding with release"
-          else
-            echo "artifacts_exist=false" >> $GITHUB_OUTPUT
-            echo "No artifacts found, skipping release"
-          fi
-
-      - name: Create Release
-        if: steps.check-artifacts.outputs.artifacts_exist == 'true'
-        id: create-release
+      - name: Upload to existing GitHub release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.get-version.outputs.version }}
-          name: Release v${{ steps.get-version.outputs.version }}
-          body: |
-            ## Desktop App Release
-            
-            Download the Banbury desktop app for your platform:
-            
-            - **Windows**: `.exe` installer (NSIS)
-            - **macOS**: `.dmg` file (Intel x64 and Apple Silicon arm64)
-            - **Linux**: `.AppImage`, `.deb`, or `.rpm` packages
-            
-            ### Installation Instructions
-            
-            **Windows:**
-            - Download the `.exe` file and run it to install
-            - The installer will create desktop and start menu shortcuts
-            
-            **macOS:**
-            - Download the `.dmg` file
-            - Open the DMG and drag Banbury to your Applications folder
-            - For Apple Silicon Macs, download the arm64 version
-            - For Intel Macs, download the x64 version
-            
-            **Linux:**
-            - **AppImage**: Make executable (`chmod +x`) and run directly
-            - **Debian/Ubuntu**: Install with `sudo dpkg -i *.deb`
-            - **Red Hat/Fedora**: Install with `sudo rpm -i *.rpm`
-            
-            ### Changes
-            - Built from commit ${{ github.sha }}
-            - See commit history for detailed changes
           files: |
             release-artifacts/**/*
           draft: false
-          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
