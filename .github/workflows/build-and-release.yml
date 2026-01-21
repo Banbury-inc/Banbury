@@ -291,6 +291,7 @@ jobs:
         continue-on-error: true
 
       - name: Build Desktop Distributables
+        shell: bash
         run: |
           cd packages
           # Only Windows platform publishes to avoid conflicts (creates release + metadata)
@@ -309,6 +310,7 @@ jobs:
         continue-on-error: true
 
       - name: Verify electron-updater metadata files exist
+        shell: bash
         run: |
           cd packages
           echo "Checking for electron-updater metadata files..."
@@ -336,6 +338,7 @@ jobs:
           fi
 
       - name: List generated files (including metadata)
+        shell: bash
         run: |
           cd packages
           echo "Generated files in dist-electron-build:"

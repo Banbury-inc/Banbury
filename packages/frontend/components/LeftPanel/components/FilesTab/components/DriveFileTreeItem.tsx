@@ -27,6 +27,7 @@ import {
   handleDriveUnstar, 
   handleDriveDownload 
 } from "../handlers/handleDriveFileActions"
+import { getColoredFileIcons } from "../../../../modals/settings-tabs/handlers/appearanceHandlers"
 
 interface DriveFileTreeItemProps {
   file: DriveFile
@@ -79,6 +80,7 @@ export function DriveFileTreeItem({
   const [isRenaming, setIsRenaming] = useState(false)
   const [newName, setNewName] = useState(file.name)
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const [, forceUpdate] = useState({})
 
   useEffect(() => {
     if (isRenaming && inputRef.current) {
@@ -97,6 +99,15 @@ export function DriveFileTreeItem({
       })
     }
   }, [isRenaming, isFolder])
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      forceUpdate({})
+    }
+    
+    window.addEventListener('colored-file-icons-updated', handleStorageChange)
+    return () => window.removeEventListener('colored-file-icons-updated', handleStorageChange)
+  }, [])
 
   const handleCopyToLocal = async () => {
     await handleCopyDriveToLocal({
@@ -189,19 +200,22 @@ export function DriveFileTreeItem({
 
   // Get file icon component with matching colors from local files
   const getFileIcon = () => {
-    if (isFolder) return <Folder className="h-4 w-4 flex-shrink-0 text-yellow-400" />
+    const coloredIcons = getColoredFileIcons()
+    const uniformColor = 'text-muted-foreground'
+    
+    if (isFolder) return <Folder className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-yellow-400' : uniformColor}`} />
     // Check for plan files by filename
     const lowerName = file.name.toLowerCase()
     if (lowerName.endsWith('.plan.md') || lowerName.endsWith('.plan.json')) {
-      return <ListChecks className="h-4 w-4 flex-shrink-0 text-purple-500" />
+      return <ListChecks className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-purple-500' : uniformColor}`} />
     }
-    if (file.mimeType?.includes('document')) return <FileText className="h-4 w-4 flex-shrink-0 text-blue-500" />
-    if (file.mimeType?.includes('spreadsheet')) return <FileSpreadsheet className="h-4 w-4 flex-shrink-0 text-green-500" />
-    if (file.mimeType?.includes('presentation')) return <FileBarChart className="h-4 w-4 flex-shrink-0 text-orange-400" />
-    if (file.mimeType?.includes('image')) return <FileImage className="h-4 w-4 flex-shrink-0 text-green-400" />
-    if (file.mimeType?.includes('video')) return <FileVideo className="h-4 w-4 flex-shrink-0 text-red-400" />
-    if (file.mimeType?.includes('audio')) return <FileAudio className="h-4 w-4 flex-shrink-0 text-blue-400" />
-    if (file.mimeType?.includes('pdf')) return <FileText className="h-4 w-4 flex-shrink-0 text-red-400" />
+    if (file.mimeType?.includes('document')) return <FileText className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-blue-500' : uniformColor}`} />
+    if (file.mimeType?.includes('spreadsheet')) return <FileSpreadsheet className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-green-500' : uniformColor}`} />
+    if (file.mimeType?.includes('presentation')) return <FileBarChart className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-orange-400' : uniformColor}`} />
+    if (file.mimeType?.includes('image')) return <FileImage className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-green-400' : uniformColor}`} />
+    if (file.mimeType?.includes('video')) return <FileVideo className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-red-400' : uniformColor}`} />
+    if (file.mimeType?.includes('audio')) return <FileAudio className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-blue-400' : uniformColor}`} />
+    if (file.mimeType?.includes('pdf')) return <FileText className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-red-400' : uniformColor}`} />
     return <File className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
   }
 
