@@ -49,7 +49,9 @@ export async function handleGoogleLogin(): Promise<GoogleLoginResult> {
     sessionStorage.setItem('oauth_is_desktop', String(isDesktop))
   }
   
-  const result = await ApiService.initiateGoogleAuth(redirectUri, isDesktop)
+  // Use the same OAuth client as the web app by not passing isDesktop parameter
+  // The redirect URI already indicates it's for Electron (contains ?electron=true)
+  const result = await ApiService.initiateGoogleAuth(redirectUri)
   
   if (!result.success || !result.authUrl) {
     return { success: false, error: 'Failed to get Google auth URL' }

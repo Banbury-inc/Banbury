@@ -44,7 +44,7 @@ const PROD_URL_ENV_KEY = 'DESKTOP_APP_PROD_URL'
 
 // Default URLs
 const DEFAULT_DEV_URL = 'http://localhost:3000'
-const DEFAULT_PROD_URL = 'https://app.banbury.io'
+const DEFAULT_PROD_URL = 'https://www.banbury.io'
 
 // Determine if we're in development mode
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
@@ -69,16 +69,32 @@ function resolveTargetUrl(): string {
   // In development mode, prefer DESKTOP_APP_DEV_URL
   if (isDev) {
     const devUrl = process.env[DEV_URL_ENV_KEY]
-    if (devUrl && isValidUrl(devUrl)) return devUrl
+    if (devUrl && isValidUrl(devUrl)) {
+      console.log(`[Electron] Using dev URL from env: ${devUrl}`)
+      return devUrl
+    }
     
+    console.log(`[Electron] Using default dev URL: ${DEFAULT_DEV_URL}`)
     return DEFAULT_DEV_URL
   }
 
   // In production mode, prefer DESKTOP_APP_PROD_URL
   const prodUrl = process.env[PROD_URL_ENV_KEY]
-  if (prodUrl && isValidUrl(prodUrl)) return prodUrl
+  if (prodUrl && isValidUrl(prodUrl)) {
+    console.log(`[Electron] Using prod URL from env: ${prodUrl}`)
+    return prodUrl
+  }
 
-  return DEFAULT_PROD_URL
+  // For packaged apps, default to remote production URL
+  // For non-packaged production builds, try localhost first (allows local testing)
+  if (app.isPackaged) {
+    console.log(`[Electron] Packaged app detected, using remote prod URL: ${DEFAULT_PROD_URL}`)
+    return DEFAULT_PROD_URL
+  }
+
+  // Non-packaged production build - try localhost first for local testing
+  console.log(`[Electron] Non-packaged production build, trying localhost first: ${DEFAULT_DEV_URL}`)
+  return DEFAULT_DEV_URL
 }
 
 /**
@@ -151,6 +167,9 @@ function resolveIconPath(): string | undefined {
 // Store reference to main window for desktop recording
 let mainWindow: BrowserWindow | null = null
 
+// Track if we've tried the fallback URL to avoid infinite retry loops
+let hasTriedFallbackUrl = false
+
 // Configure auto-updater (only if available)
 if (autoUpdater) {
   autoUpdater.autoDownload = false
@@ -194,10 +213,11 @@ function createWindow(): void {
 
   // Show window when content is ready to prevent visual flash
   mainWindow.once('ready-to-show', () => {
+    console.log('[Electron] Window ready to show')
     mainWindow?.show()
-    
-    // Open DevTools only in development mode
-    if (isDev) {
+
+    // Open DevTools in development mode, or in production with DEBUG_ELECTRON env var
+    if (isDev || process.env.DEBUG_ELECTRON === '1') {
       mainWindow?.webContents.openDevTools({ mode: 'detach' })
     }
     
@@ -210,16 +230,155 @@ function createWindow(): void {
     }
   })
 
+  // Fallback: Show window after a timeout even if ready-to-show never fires
+  // This prevents the window from staying hidden if the page fails to load
+  setTimeout(() => {
+    if (mainWindow && !mainWindow.isVisible()) {
+      console.log('[Electron] Window not visible after timeout, showing anyway')
+      const currentUrl = mainWindow.webContents.getURL()
+      console.log(`[Electron] Current URL: ${currentUrl}`)
+      mainWindow.show()
+      // In production, open DevTools if page failed to load (for debugging)
+      if (!isDev && (!currentUrl || currentUrl === 'about:blank' || currentUrl === '')) {
+        console.log('[Electron] Page appears to have failed to load, opening DevTools for debugging')
+        console.log(`[Electron] Expected URL: ${targetUrl}/login-electron`)
+        mainWindow.webContents.openDevTools({ mode: 'detach' })
+      }
+    }
+  }, 5000) // 5 second timeout
+
+  // Log successful page loads for debugging
+  mainWindow.webContents.on('did-finish-load', () => {
+    const currentUrl = mainWindow?.webContents.getURL()
+    console.log(`[Electron] Page loaded successfully: ${currentUrl}`)
+  })
+
+  // Log console messages from the renderer process
+  mainWindow.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+    const levelStr = ['', 'INFO', 'WARNING', 'ERROR'][level] || 'UNKNOWN'
+    console.log(`[Renderer ${levelStr}] ${message} (${sourceId}:${line})`)
+  })
+
+  // Log JavaScript errors from the renderer process
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    console.error(`[Electron] Render process crashed:`, details)
+  })
+
+  mainWindow.webContents.on('unresponsive', () => {
+    console.error(`[Electron] Page became unresponsive`)
+  })
+
+  mainWindow.webContents.on('responsive', () => {
+    console.log(`[Electron] Page became responsive again`)
+  })
+
   // Handle load failures gracefully
-  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, failedUrl) => {
     console.error(`[Electron] Failed to load: ${errorCode} - ${errorDescription}`)
-    console.error(`[Electron] Target URL was: ${targetUrl}`)
+    console.error(`[Electron] Failed URL was: ${failedUrl}`)
+    console.error(`[Electron] Is packaged: ${app.isPackaged}, Is dev: ${isDev}`)
     
     // In dev mode, the server might not be ready yet - retry after a delay
     if (isDev && errorCode === -102) {
+      console.log(`[Electron] Connection refused in dev mode, retrying in 3 seconds...`)
       setTimeout(() => {
         mainWindow?.loadURL(targetUrl)
       }, 3000)
+      return
+    }
+    
+    // For packaged apps, if remote URL fails, try localhost fallback for DNS errors
+    if (app.isPackaged) {
+      // ERR_NAME_NOT_RESOLVED (-105) means DNS lookup failed - try localhost as fallback
+      if (errorCode === -105 && !hasTriedFallbackUrl) {
+        hasTriedFallbackUrl = true
+        console.error(`[Electron] Remote URL failed (DNS error: ${errorDescription}), trying localhost fallback...`)
+        console.error(`[Electron] Original URL: ${failedUrl}`)
+        console.error(`[Electron] Note: To use localhost, ensure Next.js server is running: npm run next:start`)
+        const fallbackUrl = DEFAULT_DEV_URL
+        const fallbackInitialUrl = new URL('/login-electron', fallbackUrl).toString()
+        setTimeout(() => {
+          mainWindow?.loadURL(fallbackInitialUrl)
+        }, 1000)
+        return
+      }
+      
+      // Other errors or already tried fallback - show error page
+      console.error(`[Electron] Packaged app failed to load from: ${failedUrl}`)
+      console.error(`[Electron] Error code: ${errorCode}, Description: ${errorDescription}`)
+      if (hasTriedFallbackUrl) {
+        console.error(`[Electron] Both remote URL and localhost failed to load.`)
+      }
+      console.error(`[Electron] Please check your internet connection and ensure the URL is accessible.`)
+      console.error(`[Electron] You can also set DESKTOP_APP_PROD_URL environment variable to use a different URL.`)
+      // Show an error page so user knows what happened
+      const errorHtml = `
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                background: #0a0a0a;
+                color: #fff;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+                text-align: center;
+                padding: 20px;
+              }
+              h1 { color: #ff6b6b; margin-bottom: 10px; }
+              p { color: #888; margin: 5px 0; }
+              .error-code { font-family: monospace; background: #1a1a1a; padding: 10px 20px; border-radius: 5px; margin: 20px 0; }
+              button {
+                background: #3b82f6;
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                margin-top: 20px;
+              }
+              button:hover { background: #2563eb; }
+            </style>
+          </head>
+          <body>
+            <h1>Unable to Connect</h1>
+            <p>Failed to load the application.</p>
+            <div class="error-code">
+              <p>URL: ${failedUrl}</p>
+              <p>Error: ${errorCode} - ${errorDescription}</p>
+            </div>
+            <p>Please check your internet connection and try again.</p>
+            ${errorCode === -105 ? '<p style="color: #fbbf24; margin-top: 15px;">DNS Error: The domain could not be resolved. If you have a local server, ensure it\'s running on port 3000.</p>' : ''}
+            <p style="font-size: 12px; color: #666; margin-top: 20px;">You can configure the URL by setting the DESKTOP_APP_PROD_URL environment variable.</p>
+            <button onclick="location.reload()">Retry</button>
+          </body>
+        </html>
+      `
+      mainWindow?.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(errorHtml)}`)
+      return
+    }
+    
+    // For non-packaged production builds, if localhost fails and we haven't tried the fallback yet, try the remote URL
+    if (!isDev && !app.isPackaged && !hasTriedFallbackUrl && targetUrl === DEFAULT_DEV_URL) {
+      hasTriedFallbackUrl = true
+      const fallbackUrl = DEFAULT_PROD_URL
+      console.log(`[Electron] Localhost failed (is Next.js server running on port 3000?), trying fallback URL: ${fallbackUrl}`)
+      console.log(`[Electron] To use localhost, ensure Next.js is running: npm run next:start`)
+      const fallbackInitialUrl = new URL('/login-electron', fallbackUrl).toString()
+      setTimeout(() => {
+        mainWindow?.loadURL(fallbackInitialUrl)
+      }, 1000)
+    } else if (!isDev && !app.isPackaged && hasTriedFallbackUrl) {
+      // Both localhost and remote failed - show error message
+      console.error(`[Electron] Both localhost and remote URL failed to load.`)
+      console.error(`[Electron] Please ensure either:`)
+      console.error(`[Electron]   1. Next.js server is running: npm run next:start`)
+      console.error(`[Electron]   2. Or the remote URL is accessible: ${DEFAULT_PROD_URL}`)
     }
   })
   
@@ -235,10 +394,15 @@ function createWindow(): void {
   // Clean up reference when window is closed
   mainWindow.on('closed', () => {
     mainWindow = null
+    hasTriedFallbackUrl = false // Reset for next window creation
   })
 
   // Load the target URL - start with login page for Electron app
   const initialUrl = new URL('/login-electron', targetUrl).toString()
+  console.log(`[Electron] Loading URL: ${initialUrl}`)
+  console.log(`[Electron] Target URL: ${targetUrl}`)
+  console.log(`[Electron] App is packaged: ${app.isPackaged}`)
+  console.log(`[Electron] NODE_ENV: ${process.env.NODE_ENV}`)
   mainWindow.loadURL(initialUrl)
 }
 
