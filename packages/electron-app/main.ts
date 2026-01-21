@@ -683,6 +683,7 @@ function handleOAuthCallback(url: string): void {
     // Check if this is an auth callback
     if (parsedUrl.host === 'auth' && parsedUrl.pathname === '/callback') {
       const code = parsedUrl.searchParams.get('code')
+      const token = parsedUrl.searchParams.get('token')
       const scope = parsedUrl.searchParams.get('scope')
       const error = parsedUrl.searchParams.get('error')
       const redirectUri = parsedUrl.searchParams.get('redirect_uri')
@@ -691,6 +692,7 @@ function handleOAuthCallback(url: string): void {
       const targetUrl = resolveTargetUrl()
       const callbackParams = new URLSearchParams()
       if (code) callbackParams.set('code', code)
+      if (token) callbackParams.set('token', token)
       if (scope) callbackParams.set('scope', scope)
       if (error) callbackParams.set('error', error)
       if (redirectUri) callbackParams.set('redirect_uri', redirectUri)

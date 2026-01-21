@@ -15,7 +15,7 @@ function isElectronApp(): boolean {
 
 /**
  * Gets the web-based redirect URI for Electron OAuth
- * Google OAuth only accepts http/https URLs, so we use a web callback
+ * Google OAuth only accepts http/https URLs, so we use a dedicated Electron callback
  * that then redirects to the custom protocol
  */
 function getElectronRedirectUri(): string {
@@ -25,13 +25,13 @@ function getElectronRedirectUri(): string {
     const origin = window.location.origin
     // Check if we're running on localhost (development)
     if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
-      return `${origin}/authentication/auth/callback?electron=true`
+      return `${origin}/authentication/auth/electron/callback`
     }
   }
   
   // For production or when origin is not available, use the production HTTPS URL
   // which is registered in Google OAuth
-  return 'https://www.banbury.io/authentication/auth/callback?electron=true'
+  return 'https://www.banbury.io/authentication/auth/electron/callback'
 }
 
 export const AUTH_CONFIG = {
@@ -40,6 +40,7 @@ export const AUTH_CONFIG = {
     // Use web-based redirect URI for Electron desktop app with electron=true parameter
     // This allows Google OAuth to accept it, then the web callback redirects to banbury://
     if (isElectronApp()) {
+      console.log('is electron app')
       return getElectronRedirectUri()
     }
     
@@ -115,14 +116,14 @@ export const AUTH_CONFIG = {
         // If we're on localhost in Electron, the OAuth redirect was likely also localhost
         // (unless explicitly configured otherwise)
         if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
-          const inferred = `${origin}/authentication/auth/callback`
+          const inferred = `${origin}/authentication/auth/electron/callback`
           return inferred
         }
       }
       
-      // Priority 4: Default to production redirect URI (without query params)
-      // This is what Google actually redirected to when electron=true was in the original URI
-      const defaultUri = 'https://www.banbury.io/authentication/auth/callback'
+      // Priority 4: Default to production Electron redirect URI (without query params)
+      // This is what Google actually redirected to for Electron apps
+      const defaultUri = 'https://www.banbury.io/authentication/auth/electron/callback'
       return defaultUri
     }
     
