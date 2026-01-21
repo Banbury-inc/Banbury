@@ -41,6 +41,10 @@ const workspaceTabs = [
   { id: 'meetings', icon: Video, label: 'Meetings' },
 ]
 
+function isElectronApp(): boolean {
+  return typeof window !== 'undefined' && !!window.desktopApp?.isDesktop
+}
+
 export function NavSidebar({ onLogout, activeTab = 'files', onTabChange, showAdminToggle = false }: NavSidebarProps) {
   const router = useRouter()
   const [username, setUsername] = useState<string>('')
@@ -197,10 +201,12 @@ export function NavSidebar({ onLogout, activeTab = 'files', onTabChange, showAdm
                   <Settings className="mr-2 h-4 w-4" strokeWidth={1} />
                   <Typography variant="small">Settings</Typography>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleDownloadDesktopApp} className="cursor-pointer hover:bg-accent dark:hover:bg-accent py-2 transition-all">
-                  <Download className="mr-2 h-4 w-4" strokeWidth={1} />
-                  <Typography variant="small">Download desktop app</Typography>
-                </DropdownMenuItem>
+                {!isElectronApp() && (
+                  <DropdownMenuItem onClick={handleDownloadDesktopApp} className="cursor-pointer hover:bg-accent dark:hover:bg-accent py-2 transition-all">
+                    <Download className="mr-2 h-4 w-4" strokeWidth={1} />
+                    <Typography variant="small">Download desktop app</Typography>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={onLogout} className="cursor-pointer hover:bg-red-500/10 dark:hover:bg-red-500/10 text-red-500 dark:text-red-400 py-2 transition-all">
                   <LogOut className="mr-2 h-4 w-4" strokeWidth={1} />
                   <Typography variant="small">Logout</Typography>
