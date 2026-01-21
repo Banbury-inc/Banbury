@@ -1039,12 +1039,15 @@ const Workspaces = (): React.ReactNode => {
 
         // Token is valid, create user info from stored data
         const username = localStorage.getItem('authUsername') || localStorage.getItem('username');
+        const firstName = localStorage.getItem('userFirstName') || '';
+        const lastName = localStorage.getItem('userLastName') || '';
+        const picture = localStorage.getItem('userPicture');
         const basicUserInfo: UserInfo = {
           username: username || 'User',
           email: localStorage.getItem('userEmail') || username || '',
-          first_name: '',
-          last_name: '',
-          picture: null
+          first_name: firstName,
+          last_name: lastName,
+          picture: picture || null
         };
         setUserInfo(basicUserInfo);
         
@@ -1056,12 +1059,15 @@ const Workspaces = (): React.ReactNode => {
         // Still try to show basic info if we have some stored data
         const username = localStorage.getItem('authUsername') || localStorage.getItem('username');
         if (username) {
+          const firstName = localStorage.getItem('userFirstName') || '';
+          const lastName = localStorage.getItem('userLastName') || '';
+          const picture = localStorage.getItem('userPicture');
           const basicUserInfo: UserInfo = {
             username: username,
             email: localStorage.getItem('userEmail') || username,
-            first_name: '',
-            last_name: '',
-            picture: null
+            first_name: firstName,
+            last_name: lastName,
+            picture: picture || null
           };
           setUserInfo(basicUserInfo);
           
