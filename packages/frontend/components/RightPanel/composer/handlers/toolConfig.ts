@@ -18,7 +18,6 @@ import {
   Github,
   Image,
   Video,
-  ClipboardList,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -64,21 +63,6 @@ export interface ComposerToolPreferences {
 }
 
 export const toolConfigs: ToolConfig[] = [
-  // Agent modes
-  {
-    key: "plan_mode",
-    label: "Plan Mode",
-    icon: ClipboardList,
-    iconColor: "text-emerald-500",
-    defaultEnabled: false,
-  },
-  {
-    key: "ask_mode",
-    label: "Ask Mode",
-    icon: Search,
-    iconColor: "text-blue-500",
-    defaultEnabled: false,
-  },
   // System tools
   {
     key: "web_search",

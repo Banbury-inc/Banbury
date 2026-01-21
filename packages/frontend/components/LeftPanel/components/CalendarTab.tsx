@@ -343,10 +343,10 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="xs"
                     title="Calendars"
-                    className="flex-shrink-0"
+                    className="flex-shrink-0 hover:bg-accent hover:text-accent-foreground"
                   >
                     <Calendar className="h-3.5 w-3.5 @[280px]:mr-1 text-muted-foreground" strokeWidth={1.5} />
                     {totalCount > 0 && (
@@ -398,7 +398,7 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
           </div>
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
+              variant="ghost"
               size="xs"
               onClick={() => {
                 if (onOpenCalendarApp) {
@@ -412,13 +412,13 @@ export function CalendarTab({ onOpenCalendarApp, onEventSelect }: CalendarTabPro
               <SquareArrowOutUpRight className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               size="xs"
               onClick={() => loadMergedEvents()}
               disabled={loading || !isAvailable}
               title="Refresh"
             >
-              <RefreshCw className={`h-4 w-4 text-muted-foreground ${loading ? 'animate-spin' : ''}`} strokeWidth={1.5} />
+              <RefreshCw className={`${loading ? 'animate-spin' : ''}`} strokeWidth={1} />
             </Button>
             {isAvailable && (
               <Button

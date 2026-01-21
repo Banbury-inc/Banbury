@@ -13,6 +13,7 @@ export interface SaveConversationRequest {
   title: string;
   messages: any[];
   metadata?: any;
+  token_usage?: number; // Total tokens used for this conversation
 }
 
 export interface ConversationResponse {

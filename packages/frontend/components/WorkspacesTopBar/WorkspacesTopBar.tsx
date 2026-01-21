@@ -31,7 +31,7 @@ export function WorkspacesTopBar({
         style={isDesktop ? { WebkitAppRegion: 'no-drag' } : undefined}
       >
         <PanelLeft
-          className={`h-5 w-5 ${isFileSidebarCollapsed ? 'text-muted-foreground' : 'text-foreground'}`}
+          className="h-5 w-5 text-muted-foreground"
           strokeWidth={1.5}
         />
       </Button>
@@ -48,7 +48,7 @@ export function WorkspacesTopBar({
           title={isAssistantPanelCollapsed ? "Show assistant panel" : "Hide assistant panel"}
         >
           <PanelRight
-            className={`h-5 w-5 ${isAssistantPanelCollapsed ? 'text-muted-foreground' : 'text-foreground'}`}
+            className="h-5 w-5 text-muted-foreground"
             strokeWidth={1.5}
           />
         </Button>
