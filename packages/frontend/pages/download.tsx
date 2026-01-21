@@ -136,21 +136,6 @@ const Download = (): JSX.Element => {
               <Box sx={{ pl: { xs: 2, md: 3 } }}>
                 <Box sx={{ mb: 4 }}>
                   <Box sx={{ display: 'flex', alignItems: 'start', gap: 2, mb: 3 }}>
-                    <Box
-                      sx={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        background: 'rgba(59, 130, 246, 0.2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        mt: 0.5,
-                      }}
-                    >
-                      <span style={{ color: '#3B82F6', fontSize: '14px' }}>✓</span>
-                    </Box>
                     <Box>
                       <Typography variant="h4" className="mb-1 text-lg md:text-xl">
                         No bot in participant lists
@@ -162,21 +147,6 @@ const Download = (): JSX.Element => {
                   </Box>
 
                   <Box sx={{ display: 'flex', alignItems: 'start', gap: 2, mb: 3 }}>
-                    <Box
-                      sx={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        background: 'rgba(59, 130, 246, 0.2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        mt: 0.5,
-                      }}
-                    >
-                      <span style={{ color: '#3B82F6', fontSize: '14px' }}>✓</span>
-                    </Box>
                     <Box>
                       <Typography variant="h4" className="mb-1 text-lg md:text-xl">
                         Automatic meeting detection
@@ -188,21 +158,6 @@ const Download = (): JSX.Element => {
                   </Box>
 
                   <Box sx={{ display: 'flex', alignItems: 'start', gap: 2 }}>
-                    <Box
-                      sx={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        background: 'rgba(59, 130, 246, 0.2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        mt: 0.5,
-                      }}
-                    >
-                      <span style={{ color: '#3B82F6', fontSize: '14px' }}>✓</span>
-                    </Box>
                     <Box>
                       <Typography variant="h4" className="mb-1 text-lg md:text-xl">
                         Superior recording quality

@@ -194,6 +194,8 @@ export function useLangGraphAssistant(initialThreadId?: string) {
         throw new Error('No response body reader available');
       }
 
+      console.log('[useLangGraphAssistant] ===== STREAM STARTED =====');
+
       const decoder = new TextDecoder();
       let buffer = '';
 
@@ -206,6 +208,7 @@ export function useLangGraphAssistant(initialThreadId?: string) {
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
+            console.log('[useLangGraphAssistant] Raw SSE data:', line.slice(6).substring(0, 100) + '...');
             try {
               const event: StreamEvent = JSON.parse(line.slice(6));
               await handleStreamEvent(event);
@@ -231,6 +234,9 @@ export function useLangGraphAssistant(initialThreadId?: string) {
   }, [state.messages, state.threadId, state.isLoading]);
 
   const handleStreamEvent = useCallback(async (event: StreamEvent) => {
+    // Debug: Log all events to see what's coming through
+    console.log('[useLangGraphAssistant] Received event:', event.type, event);
+
     switch (event.type) {
       case "message-start":
         // Assistant message started

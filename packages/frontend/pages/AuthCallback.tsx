@@ -16,22 +16,40 @@ const AuthCallback = (): JSX.Element => {
     // Read from router.query first, but also check URL directly as fallback
     // (Next.js router.query can be unreliable on initial render, especially for query params)
     let code: string | undefined;
+    let token: string | undefined;
     let scope: string | undefined;
     let urlError: string | undefined;
     let electron: string | undefined;
+    let email: string | undefined;
+    let username: string | undefined;
+    let firstName: string | undefined;
+    let lastName: string | undefined;
+    let picture: string | undefined;
     
     // Always check URL directly for more reliable parameter reading
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       code = urlParams.get('code') || router.query.code as string | undefined;
+      token = urlParams.get('token') || router.query.token as string | undefined;
       scope = urlParams.get('scope') || router.query.scope as string | undefined;
       urlError = urlParams.get('error') || router.query.error as string | undefined;
       electron = urlParams.get('electron') || router.query.electron as string | undefined;
+      email = urlParams.get('email') || router.query.email as string | undefined;
+      username = urlParams.get('username') || router.query.username as string | undefined;
+      firstName = urlParams.get('first_name') || router.query.first_name as string | undefined;
+      lastName = urlParams.get('last_name') || router.query.last_name as string | undefined;
+      picture = urlParams.get('picture') || router.query.picture as string | undefined;
     } else {
       code = router.query.code as string | undefined;
+      token = router.query.token as string | undefined;
       scope = router.query.scope as string | undefined;
       urlError = router.query.error as string | undefined;
       electron = router.query.electron as string | undefined;
+      email = router.query.email as string | undefined;
+      username = router.query.username as string | undefined;
+      firstName = router.query.first_name as string | undefined;
+      lastName = router.query.last_name as string | undefined;
+      picture = router.query.picture as string | undefined;
     }
 
     // Guard: prevent double-calls in React Strict Mode or route re-mounts
@@ -68,11 +86,53 @@ const AuthCallback = (): JSX.Element => {
     // If this is an Electron callback, handle it specially
     // Note: electron=true means this callback is FOR Electron (in browser),
     // not that we're currently IN Electron
-    // Check for electron parameter first, even if code isn't present yet
-    // This prevents falling through to normal OAuth callback handler
+    // Check for token first (from backend google_callback_electron), then code/error
     if (isElectronCallback) {
       console.log("This is an electron callback")
-      // Wait for code/error to be present before proceeding
+      
+      // If token is present (from backend electron callback), save it and user info, then redirect to workspaces
+      if (token) {
+        handledRef.current = true;
+        setStatus('success');
+        // Save token using ApiService
+        const tokenUsername = username || email || 'User';
+        ApiService.setAuthToken(token, tokenUsername);
+        
+        // Store user info in localStorage (matching the format used in handleOAuthCallback)
+        if (typeof window !== 'undefined' && window.localStorage) {
+          if (email) {
+            localStorage.setItem('userEmail', email);
+          }
+          if (username) {
+            localStorage.setItem('authUsername', username);
+          }
+          if (firstName) {
+            localStorage.setItem('userFirstName', firstName);
+          }
+          if (lastName) {
+            localStorage.setItem('userLastName', lastName);
+          }
+          if (picture) {
+            try {
+              // Try to parse as JSON (if it's a base64 object), otherwise treat as URL string
+              const pictureData = JSON.parse(picture);
+              if (pictureData && pictureData.data) {
+                const pictureUrl = `data:${pictureData.content_type || 'image/jpeg'};base64,${pictureData.data}`;
+                localStorage.setItem('userPicture', pictureUrl);
+              }
+            } catch {
+              // If parsing fails, treat as URL string
+              localStorage.setItem('userPicture', picture);
+            }
+          }
+        }
+        
+        // Redirect to workspaces
+        router.replace('/workspaces');
+        return;
+      }
+      
+      // Wait for code/error to be present before proceeding (fallback for old flow)
       if (!code && !urlError) {
         // Still mark as handled to prevent processing as normal callback
         handledRef.current = true;
@@ -223,7 +283,7 @@ const AuthCallback = (): JSX.Element => {
     };
 
     handleCallback();
-  }, [router.isReady, router.query.code, router.query.scope, router.query.error, router.query.electron, router]);
+  }, [router.isReady, router.query.code, router.query.token, router.query.scope, router.query.error, router.query.electron, router]);
 
   const handleOpenBanbury = () => {
     const code = router.query.code as string | undefined;

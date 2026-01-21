@@ -1,6 +1,6 @@
 {
   "name": "business-website",
-  "version": "0.1.2",
+  "version": "0.1.9",
   "description": "Business Website",
   "author": "MG",
   "license": "MIT",
@@ -34,6 +34,7 @@
     "desktop:dev": "concurrently --kill-others --names \"next,electron\" \"npm run dev\" \"npx wait-on http://localhost:3000 && npm run electron:build && cross-env NODE_ENV=development electron dist-electron/electron-app/main.js\"",
     "desktop:build": "npm run electron:build",
     "desktop:start": "cross-env NODE_ENV=production electron dist-electron/electron-app/main.js",
+    "desktop:start:local": "concurrently --kill-others --names \"next,electron\" \"npm run next:start\" \"npx wait-on http://localhost:3000 && npm run electron:build && cross-env NODE_ENV=production electron dist-electron/electron-app/main.js\"",
     "desktop:dist": "npm run electron:build && electron-builder --config electron-builder.json",
     "desktop:dist:win": "npm run electron:build && electron-builder --config electron-builder.json --win",
     "desktop:dist:mac": "npm run electron:build && electron-builder --config electron-builder.json --mac",

@@ -257,16 +257,11 @@ export class ApiService {
       // This matches what Google actually redirected to (Google strips query params)
       const redirectUri = typeof window !== 'undefined' ? AUTH_CONFIG.getRedirectUriForCallback() : '';
       
-      // Check if this is a desktop app callback
-      const isDesktop = typeof window !== 'undefined' && window.sessionStorage
-        ? sessionStorage.getItem('oauth_is_desktop') === 'true'
-        : false;
-      
       const params = new URLSearchParams();
       params.set('code', code);
       if (redirectUri) params.set('redirect_uri', redirectUri);
       if (scope) params.set('scope', scope);
-      if (isDesktop) params.set('is_desktop', 'true');
+      // Removed is_desktop parameter to ensure same OAuth client is used for both web and desktop
       const qs = `/authentication/auth/callback/?${params.toString()}`;
 
       const response = await this.get<{

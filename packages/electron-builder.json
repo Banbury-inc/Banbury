@@ -2,6 +2,12 @@
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "io.banbury.desktop",
   "productName": "Banbury",
+  "protocols": [
+    {
+      "name": "Banbury Protocol",
+      "schemes": ["banbury"]
+    }
+  ],
   "directories": {
     "output": "dist-electron-build",
     "buildResources": "electron-app/resources"
