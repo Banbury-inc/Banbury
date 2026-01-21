@@ -10,6 +10,7 @@ import { ThemeProvider } from './components/ThemeProvider';
 import Layout from './layout/Layout';
 import Admin from './pages/Admin/Admin';
 import AuthCallback from './pages/AuthCallback';
+import ElectronCallback from './pages/authentication/auth/electron/callback';
 import FileDownload from './pages/Filedownload';
 import Home from './pages/Home/Home';
 import Knowledge from './pages/Knowledge/Knowledge';
@@ -115,6 +116,7 @@ const App = (): JSX.Element => {
               <Route path='/' element={<RootRoute />} />
               <Route path='/login' element={<Layout><Login /></Layout>} />
               <Route path='/auth/callback' element={<Layout><AuthCallback /></Layout>} />
+              <Route path='/authentication/auth/electron/callback' element={<Layout><ElectronCallback /></Layout>} />
               <Route path='/features' element={<Layout><Features /></Layout>} />
               <Route path='/download' element={<Layout><Download /></Layout>} />
               <Route path='/filedownload/:username/:file_id' element={<Layout><FileDownload /></Layout>} />

@@ -1,8 +1,8 @@
 import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
-import { ApiService } from '../../../backend/api/apiService'
-import { AUTH_CONFIG } from '../../../backend/authConfig'
-import { CONFIG } from '../../../config/config'
+import { ApiService } from '../../../../../backend/api/apiService'
+import { AUTH_CONFIG } from '../../../../../backend/authConfig'
+import { CONFIG } from '../../../../config/config'
 
 const AuthCallbackElectron = (): JSX.Element => {
   const router = useRouter()
@@ -79,10 +79,14 @@ const AuthCallbackElectron = (): JSX.Element => {
         // Call backend endpoint to exchange code for token
         const exchangeCodeForToken = async () => {
           try {
-            // Get the redirect URI that was used (needed for backend verification)
-            const redirectUri = typeof window !== 'undefined' 
-              ? AUTH_CONFIG.getRedirectUriForCallback()
-              : ''
+            // Since we're on the electron callback route, always use the electron redirect URI
+            // Construct it from the current origin to match what was used during OAuth initiation
+            const currentOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+            const redirectUri = currentOrigin 
+              ? `${currentOrigin}/authentication/auth/electron/callback`
+              : 'https://www.banbury.io/authentication/auth/electron/callback'
+            
+            console.log('[AuthCallbackElectron] Using redirect URI:', redirectUri)
             
             // Call the backend electron callback endpoint directly
             const params = new URLSearchParams()
