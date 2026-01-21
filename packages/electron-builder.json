@@ -41,7 +41,8 @@
     "createStartMenuShortcut": true,
     "installerIcon": "electron-app/resources/icon.ico",
     "uninstallerIcon": "electron-app/resources/icon.ico",
-    "installerHeaderIcon": "electron-app/resources/icon.ico"
+    "installerHeaderIcon": "electron-app/resources/icon.ico",
+    "artifactName": "banbury.setup.${ext}"
   },
   "mac": {
     "target": [

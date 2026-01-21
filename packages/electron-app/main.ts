@@ -176,14 +176,12 @@ if (autoUpdater) {
   autoUpdater.autoInstallOnAppQuit = true
 
   // Only check for updates in production
-  if (!isDev) {
     // Configure update check interval (check every 4 hours)
     setInterval(() => {
       autoUpdater.checkForUpdates().catch((error) => {
         console.error('[Electron] Error checking for updates:', error)
       })
     }, 4 * 60 * 60 * 1000) // 4 hours in milliseconds
-  }
 }
 
 /**
