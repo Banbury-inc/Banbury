@@ -4,16 +4,21 @@ import { Typography } from 'frontend/components/ui/typography'
 import { Separator } from 'frontend/components/ui/separator'
 import { Button } from 'frontend/components/ui/button'
 import { Progress } from 'frontend/components/ui/progress'
+import { XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts'
+import { ChartContainer, ChartTooltip } from 'frontend/components/ui/chart'
 import {
   getUsageSummary,
+  getTokenUsageHistory,
   formatBytes,
   formatTokens,
   formatResetDate,
-  type UsageSummary
+  type UsageSummary,
+  type TokenUsageHistory
 } from './handlers/usageHandlers'
 
 export function UsageTab() {
   const [usage, setUsage] = useState<UsageSummary | null>(null)
+  const [tokenHistory, setTokenHistory] = useState<TokenUsageHistory | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -21,12 +26,19 @@ export function UsageTab() {
     setIsLoading(true)
     setError(null)
     
-    const result = await getUsageSummary()
+    const [usageResult, historyResult] = await Promise.all([
+      getUsageSummary(),
+      getTokenUsageHistory()
+    ])
     
-    if (result.success && result.data) {
-      setUsage(result.data)
+    if (usageResult.success && usageResult.data) {
+      setUsage(usageResult.data)
     } else {
-      setError(result.error || 'Failed to load usage data')
+      setError(usageResult.error || 'Failed to load usage data')
+    }
+
+    if (historyResult.success && historyResult.data) {
+      setTokenHistory(historyResult.data)
     }
     
     setIsLoading(false)
@@ -144,6 +156,63 @@ export function UsageTab() {
           </>
         )}
       </div>
+
+      {/* Token Usage Over Time Chart */}
+      {tokenHistory && tokenHistory.daily_usage.length > 0 && (
+        <div className="space-y-4 p-4 rounded-lg bg-muted/50 border border-border">
+          <Typography variant="h4" className="text-foreground">
+            Token Usage Over Time
+          </Typography>
+          <ChartContainer 
+            config={{ tokens: { label: "Tokens", color: "hsl(var(--primary))" } }} 
+            className="h-[300px]"
+          >
+            <AreaChart data={tokenHistory.daily_usage}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis 
+                dataKey="date" 
+                className="text-xs"
+                tickFormatter={(value) => {
+                  const date = new Date(value)
+                  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                }}
+              />
+              <YAxis 
+                className="text-xs"
+                tickFormatter={(value) => formatTokens(value)}
+              />
+              <ChartTooltip 
+                content={({ active, payload }) => {
+                  if (!active || !payload || !payload.length) return null
+                  const data = payload[0]
+                  const date = new Date(data.payload.date)
+                  return (
+                    <div className="border-border/50 bg-background rounded-lg border px-3 py-2 shadow-lg">
+                      <p className="text-xs text-muted-foreground mb-1">
+                        {date.toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </p>
+                      <p className="text-sm font-medium text-foreground">
+                        {formatTokens(data.value as number)} tokens
+                      </p>
+                    </div>
+                  )
+                }}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="tokens" 
+                stroke="hsl(var(--primary))" 
+                fill="hsl(var(--primary))" 
+                fillOpacity={0.2}
+              />
+            </AreaChart>
+          </ChartContainer>
+        </div>
+      )}
 
       {/* Storage Usage */}
       <div className="space-y-4 p-4 rounded-lg bg-muted/50 border border-border">

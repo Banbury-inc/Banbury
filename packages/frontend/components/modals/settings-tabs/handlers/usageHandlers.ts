@@ -21,6 +21,24 @@ export interface UsageSummaryResult {
   error?: string
 }
 
+export interface DailyTokenUsage {
+  date: string
+  tokens: number
+}
+
+export interface TokenUsageHistory {
+  result: string
+  daily_usage: DailyTokenUsage[]
+  total_tokens: number
+  month: string
+}
+
+export interface TokenUsageHistoryResult {
+  success: boolean
+  data?: TokenUsageHistory
+  error?: string
+}
+
 export async function getUsageSummary(): Promise<UsageSummaryResult> {
   try {
     const response = await ApiService.get<{
@@ -89,4 +107,27 @@ export function formatResetDate(isoString: string): string {
     day: 'numeric',
     year: 'numeric'
   })
+}
+
+export async function getTokenUsageHistory(): Promise<TokenUsageHistoryResult> {
+  try {
+    const response = await ApiService.get<TokenUsageHistory>('/users/token_usage_history/')
+
+    if (response.result === 'success') {
+      return {
+        success: true,
+        data: response
+      }
+    }
+    
+    return {
+      success: false,
+      error: 'Failed to fetch token usage history'
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch token usage history'
+    }
+  }
 }

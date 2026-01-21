@@ -27,6 +27,7 @@ import {
   handleOneDriveRemoveFavorite, 
   handleOneDriveDownload 
 } from "../handlers/handleOneDriveFileActions"
+import { getColoredFileIcons } from "../../../../modals/settings-tabs/handlers/appearanceHandlers"
 
 interface OneDriveFileTreeItemProps {
   file: OneDriveFile
@@ -84,6 +85,7 @@ export function OneDriveFileTreeItem({
   const [isRenaming, setIsRenaming] = useState(false)
   const [newName, setNewName] = useState(file.name)
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const [, forceUpdate] = useState({})
 
   useEffect(() => {
     if (isRenaming && inputRef.current) {
@@ -102,6 +104,15 @@ export function OneDriveFileTreeItem({
       })
     }
   }, [isRenaming, isFolder])
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      forceUpdate({})
+    }
+    
+    window.addEventListener('colored-file-icons-updated', handleStorageChange)
+    return () => window.removeEventListener('colored-file-icons-updated', handleStorageChange)
+  }, [])
 
   const handleCopyToLocal = async () => {
     await handleCopyOneDriveToLocal({
@@ -192,30 +203,33 @@ export function OneDriveFileTreeItem({
   }
 
   const getFileIcon = () => {
-    if (isFolder) return <Folder className="h-4 w-4 flex-shrink-0 text-yellow-400" />
+    const coloredIcons = getColoredFileIcons()
+    const uniformColor = 'text-muted-foreground'
+    
+    if (isFolder) return <Folder className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-yellow-400' : uniformColor}`} />
     
     // Check for plan files by filename
     const lowerName = file.name.toLowerCase()
     if (lowerName.endsWith('.plan.md') || lowerName.endsWith('.plan.json')) {
-      return <ListChecks className="h-4 w-4 flex-shrink-0 text-purple-500" />
+      return <ListChecks className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-purple-500' : uniformColor}`} />
     }
     
     const mimeType = file.file?.mimeType || ''
     
     if (mimeType.includes('document') || mimeType.includes('word')) 
-      return <FileText className="h-4 w-4 flex-shrink-0 text-blue-500" />
+      return <FileText className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-blue-500' : uniformColor}`} />
     if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) 
-      return <FileSpreadsheet className="h-4 w-4 flex-shrink-0 text-green-500" />
+      return <FileSpreadsheet className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-green-500' : uniformColor}`} />
     if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) 
-      return <FileBarChart className="h-4 w-4 flex-shrink-0 text-orange-400" />
+      return <FileBarChart className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-orange-400' : uniformColor}`} />
     if (mimeType.includes('image')) 
-      return <FileImage className="h-4 w-4 flex-shrink-0 text-green-400" />
+      return <FileImage className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-green-400' : uniformColor}`} />
     if (mimeType.includes('video')) 
-      return <FileVideo className="h-4 w-4 flex-shrink-0 text-red-400" />
+      return <FileVideo className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-red-400' : uniformColor}`} />
     if (mimeType.includes('audio')) 
-      return <FileAudio className="h-4 w-4 flex-shrink-0 text-blue-400" />
+      return <FileAudio className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-blue-400' : uniformColor}`} />
     if (mimeType.includes('pdf')) 
-      return <FileText className="h-4 w-4 flex-shrink-0 text-red-400" />
+      return <FileText className={`h-4 w-4 flex-shrink-0 ${coloredIcons ? 'text-red-400' : uniformColor}`} />
     
     return <File className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
   }

@@ -4,6 +4,8 @@ import { ApiService } from '../../../../backend/api/apiService';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { useToast } from '../../ui/use-toast';
 import { Input } from '../../ui/old-input';
+import { getColoredFileIcons } from '../../../modals/settings-tabs/handlers/appearanceHandlers';
+import { getUniformFileIconColors } from '../../modals/settings-tabs/handlers/appearanceHandlers';
 
 interface InlineFileSearchProps {
   onFileSelect: (file: FileSystemItem) => void;
@@ -219,24 +221,27 @@ const extractEmailSender = (email: EmailResult): string | null => {
 
 // Function to get the appropriate icon component and color for a file type
 const getFileIcon = (fileName: string): { icon: any, color: string } => {
-  if (isPlanFile(fileName)) return { icon: ListChecks, color: 'text-purple-500' }
-  if (isImageFile(fileName)) return { icon: FileImage, color: 'text-green-400' }
-  if (isVideoFile(fileName)) return { icon: FileVideo, color: 'text-red-400' }
-  if (isAudioFile(fileName)) return { icon: FileAudio, color: 'text-blue-400' }
-  if (isPdfFile(fileName)) return { icon: FileText, color: 'text-red-400' }
-  if (isDocumentFile(fileName)) return { icon: FileText, color: 'text-blue-500' }
-  if (isSpreadsheetFile(fileName)) return { icon: FileSpreadsheet, color: 'text-green-500' }
-  if (isPresentationFile(fileName)) return { icon: FileBarChart, color: 'text-orange-400' }
-  if (isCodeFile(fileName)) return { icon: FileCode, color: 'text-yellow-400' }
-  if (isArchiveFile(fileName)) return { icon: FileArchive, color: 'text-gray-400' }
-  if (isDataFile(fileName)) return { icon: FileJson, color: 'text-indigo-400' }
-  if (isExecutableFile(fileName)) return { icon: FileCog, color: 'text-red-500' }
-  if (isFontFile(fileName)) return { icon: FileType, color: 'text-pink-400' }
-  if (is3DFile(fileName)) return { icon: FileCog, color: 'text-cyan-400' }
-  if (isVectorFile(fileName)) return { icon: FileImage, color: 'text-emerald-400' }
+  const coloredIcons = getColoredFileIcons()
+  const uniformColor = 'text-muted-foreground'
+  
+  if (isPlanFile(fileName)) return { icon: ListChecks, color: coloredIcons ? 'text-purple-500' : uniformColor }
+  if (isImageFile(fileName)) return { icon: FileImage, color: coloredIcons ? 'text-green-400' : uniformColor }
+  if (isVideoFile(fileName)) return { icon: FileVideo, color: coloredIcons ? 'text-red-400' : uniformColor }
+  if (isAudioFile(fileName)) return { icon: FileAudio, color: coloredIcons ? 'text-blue-400' : uniformColor }
+  if (isPdfFile(fileName)) return { icon: FileText, color: coloredIcons ? 'text-red-400' : uniformColor }
+  if (isDocumentFile(fileName)) return { icon: FileText, color: coloredIcons ? 'text-blue-500' : uniformColor }
+  if (isSpreadsheetFile(fileName)) return { icon: FileSpreadsheet, color: coloredIcons ? 'text-green-500' : uniformColor }
+  if (isPresentationFile(fileName)) return { icon: FileBarChart, color: coloredIcons ? 'text-orange-400' : uniformColor }
+  if (isCodeFile(fileName)) return { icon: FileCode, color: coloredIcons ? 'text-yellow-400' : uniformColor }
+  if (isArchiveFile(fileName)) return { icon: FileArchive, color: coloredIcons ? 'text-gray-400' : uniformColor }
+  if (isDataFile(fileName)) return { icon: FileJson, color: coloredIcons ? 'text-indigo-400' : uniformColor }
+  if (isExecutableFile(fileName)) return { icon: FileCog, color: coloredIcons ? 'text-red-500' : uniformColor }
+  if (isFontFile(fileName)) return { icon: FileType, color: coloredIcons ? 'text-pink-400' : uniformColor }
+  if (is3DFile(fileName)) return { icon: FileCog, color: coloredIcons ? 'text-cyan-400' : uniformColor }
+  if (isVectorFile(fileName)) return { icon: FileImage, color: coloredIcons ? 'text-emerald-400' : uniformColor }
   
   // Default file icon
-  return { icon: File, color: 'text-gray-400' }
+  return { icon: File, color: coloredIcons ? 'text-gray-400' : uniformColor }
 }
 
 const InlineFileSearch: React.FC<InlineFileSearchProps> = ({ onFileSelect, onEmailSelect }) => {
@@ -246,7 +251,17 @@ const InlineFileSearch: React.FC<InlineFileSearchProps> = ({ onFileSelect, onEma
   const [loading, setLoading] = useState(false);
   const [loadingEmails, setLoadingEmails] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [, forceUpdate] = useState({});
   const { toast } = useToast();
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      forceUpdate({})
+    }
+    
+    window.addEventListener('colored-file-icons-updated', handleStorageChange)
+    return () => window.removeEventListener('colored-file-icons-updated', handleStorageChange)
+  }, [])
 
   // Handle search with debouncing
   const searchFilesAndEmails = useCallback(async (searchQuery: string) => {
