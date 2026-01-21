@@ -440,10 +440,10 @@ export function FilesTab({
             <Popover>
               <PopoverTrigger asChild>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="xs"
                   title="Filter by file type"
-                  className={`flex-shrink-0 relative ${activeFilters.size > 0 ? 'border-primary' : ''}`}
+                  className={`flex-shrink-0 relative ${activeFilters.size > 0 ? 'border-primary' : ''} hover:bg-accent hover:text-accent-foreground`}
                 >
                   <Filter className="h-4 w-4 text-muted-foreground" />
                   {activeFilters.size > 0 && (
@@ -483,7 +483,7 @@ export function FilesTab({
               </PopoverContent>
             </Popover>
             <Button
-              variant="outline"
+              variant="ghost"
               size="xs"
               onClick={() => handleRefreshFiles({ setRefreshCounter: setLocalRefreshCounter, setIsRefreshing })}
               disabled={isRefreshing}
@@ -523,7 +523,7 @@ export function FilesTab({
                 }}
               >
                 <SelectTrigger size="xs" className="bg-foreground hover:bg-foreground hover:text-primary-foreground flex-shrink-0">
-                  <Plus className="h-4 w-4 text-primary-foreground" strokeWidth={1} />
+                  <Plus className="h-4 w-4 text-muted-foreground" strokeWidth={1} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="upload-file" className="[&_svg]:!text-gray-400">
@@ -590,7 +590,7 @@ export function FilesTab({
                 }}
               >
                 <SelectTrigger size="xs" className="bg-foreground hover:bg-foreground hover:text-primary-foreground flex-shrink-0">
-                  <Plus className="h-4 w-4 text-primary-foreground" strokeWidth={1} />
+                  <Plus className="h-4 w-4 text-muted-foreground" strokeWidth={1} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="document" className="[&_svg]:!text-blue-500">
@@ -633,7 +633,7 @@ export function FilesTab({
                 }}
               >
                 <SelectTrigger size="xs" className="bg-foreground hover:bg-foreground hover:text-primary-foreground flex-shrink-0">
-                  <Plus className="h-4 w-4 text-primary-foreground" strokeWidth={1} />
+                  <Plus className="h-4 w-4 text-muted-foreground" strokeWidth={1} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="document" className="[&_svg]:!text-blue-500">

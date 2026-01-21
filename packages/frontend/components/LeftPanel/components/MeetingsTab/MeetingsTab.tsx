@@ -135,12 +135,12 @@ export function MeetingsTab({ onMeetingSelect, selectedMeeting, onJoinMeeting, o
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Button
-              variant="outline"
+              variant="ghost"
               size="xs"
               onClick={handleRefresh}
               disabled={isRefreshing}
               title="Refresh"
-              className="flex-shrink-0"
+              className="flex-shrink-0 hover:bg-accent hover:text-accent-foreground"
             >
               <RefreshCw className={isRefreshing ? 'h-4 w-4 animate-spin text-muted-foreground' : 'h-4 w-4 text-muted-foreground'} />
             </Button>

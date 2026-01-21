@@ -953,7 +953,7 @@ export function EmailTab({ onMessageSelect, onComposeEmail, demoMode = false }: 
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Button
-              variant="outline"
+              variant="ghost"
               size="xs"
               onClick={() => selectedProvider === 'outlook' ? loadOutlookMessages() : loadMessages()}
               disabled={loading}
