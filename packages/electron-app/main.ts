@@ -1,15 +1,14 @@
 // @ts-nocheck
-
 import { app, BrowserWindow, Menu, shell, ipcMain } from 'electron'
 import path from 'path'
 import { initDesktopRecording, setupDesktopRecordingIPC, cleanupDesktopRecording } from './desktop-recording'
+import * as updaterModule from 'electron-updater'
 
-// Safely import electron-updater - handle case where it might not be available
+
 let autoUpdater: any = null
 let isUpdaterAvailable = false
 try {
-  const updaterModule = require('electron-updater')
-  autoUpdater = updaterModule.autoUpdater
+  autoUpdater = updaterModule?.autoUpdater
   isUpdaterAvailable = true
 } catch (error) {
   console.warn('[Electron] electron-updater not available:', error)

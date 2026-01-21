@@ -181,20 +181,6 @@ const Home = (): JSX.Element => {
                   >
                     Get Started for Free
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => window.location.href = '/features'}
-                    className="rounded-full px-5 md:px-6"
-                    style={{
-                      borderRadius: 9999,
-                      background: 'transparent',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      color: 'rgba(255,255,255,0.85)'
-                    }}
-                  >
-                    Watch Demo
-                  </Button>
                 </Box>
               </Box>
             </Grid>
