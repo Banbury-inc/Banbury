@@ -2,16 +2,29 @@
 import { app, BrowserWindow, Menu, shell, ipcMain } from 'electron'
 import path from 'path'
 import { initDesktopRecording, setupDesktopRecordingIPC, cleanupDesktopRecording } from './desktop-recording'
-import * as updaterModule from 'electron-updater'
-
 
 let autoUpdater: any = null
 let isUpdaterAvailable = false
-try {
-  autoUpdater = updaterModule?.autoUpdater
+
+// Use a function to dynamically load electron-updater
+// This prevents TypeScript from hoisting the require to a static import
+function loadUpdater() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const moduleName = 'electron-updater'
+    const updaterModule = require(moduleName)
+    return updaterModule?.autoUpdater
+  } catch (error) {
+    console.warn('[Electron] electron-updater not available:', error)
+    return null
+  }
+}
+
+const loadedUpdater = loadUpdater()
+if (loadedUpdater) {
+  autoUpdater = loadedUpdater
   isUpdaterAvailable = true
-} catch (error) {
-  console.warn('[Electron] electron-updater not available:', error)
+} else {
   // Create a no-op autoUpdater object to prevent errors
   autoUpdater = {
     autoDownload: false,
