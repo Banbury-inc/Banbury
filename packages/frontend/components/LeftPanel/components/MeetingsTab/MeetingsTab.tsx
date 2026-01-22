@@ -42,16 +42,14 @@ export function MeetingsTab({
   setActivePanelId,
   setSelectedMeeting: setSelectedMeetingProp
 }: MeetingsTabProps) {
-  // Use workspace handlers if dependencies are provided
-  const workspaceHandlers = (panelLayout && setPanelLayout && setActivePanelId && setSelectedMeetingProp)
-    ? useMeetingWorkspaceHandlers({
-        activePanelId,
-        panelLayout,
-        setPanelLayout,
-        setActivePanelId,
-        setSelectedMeeting: setSelectedMeetingProp
-      })
-    : null
+  // Always call hook unconditionally - it handles optional dependencies internally
+  const workspaceHandlers = useMeetingWorkspaceHandlers({
+    activePanelId,
+    panelLayout: panelLayout ?? null,
+    setPanelLayout: setPanelLayout ?? (() => {}),
+    setActivePanelId: setActivePanelId ?? (() => {}),
+    setSelectedMeeting: setSelectedMeetingProp ?? (() => {})
+  })
 
   const onMeetingSelect = workspaceHandlers?.handleMeetingSelect
   const onJoinMeeting = workspaceHandlers?.handleJoinMeeting

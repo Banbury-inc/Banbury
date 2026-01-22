@@ -40,7 +40,6 @@ export const AUTH_CONFIG = {
     // Use web-based redirect URI for Electron desktop app with electron=true parameter
     // This allows Google OAuth to accept it, then the web callback redirects to banbury://
     if (isElectronApp()) {
-      console.log('is electron app')
       return getElectronRedirectUri()
     }
     

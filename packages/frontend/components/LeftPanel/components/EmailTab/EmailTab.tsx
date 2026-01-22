@@ -105,17 +105,15 @@ export function EmailTab({
   setSelectedEmail,
   setReplyToEmail
 }: EmailTabProps) {
-  // Use workspace handlers if dependencies are provided
-  const workspaceHandlers = (panelLayout && setPanelLayout && setActivePanelId && setSelectedEmail && setReplyToEmail)
-    ? useEmailWorkspaceHandlers({
-        activePanelId,
-        panelLayout,
-        setPanelLayout,
-        setActivePanelId,
-        setSelectedEmail,
-        setReplyToEmail
-      })
-    : null
+  // Always call hooks unconditionally
+  const workspaceHandlers = useEmailWorkspaceHandlers({
+    activePanelId,
+    panelLayout,
+    setPanelLayout,
+    setActivePanelId,
+    setSelectedEmail,
+    setReplyToEmail
+  })
 
   const onMessageSelect = workspaceHandlers?.handleEmailSelect
   const onComposeEmail = workspaceHandlers?.handleComposeEmail

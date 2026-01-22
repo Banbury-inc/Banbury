@@ -8,7 +8,7 @@ import { getAllTabs, updatePanelActiveTab, addTabToPanel } from '../../../../../
 
 interface WorkspaceDependencies {
   activePanelId: string
-  panelLayout: PanelGroup
+  panelLayout: PanelGroup | null
   setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
   setActivePanelId: React.Dispatch<React.SetStateAction<string>>
   setSelectedMeeting: React.Dispatch<React.SetStateAction<MeetingSession | null>>
@@ -23,45 +23,52 @@ export function useMeetingWorkspaceHandlers(deps: WorkspaceDependencies) {
     setSelectedMeeting
   } = deps
 
+  // Check if workspace dependencies are available (panelLayout is the key indicator)
+  const hasWorkspaceDeps = panelLayout !== null
+
   const openMeetingInTabCallback = useCallback(async (meeting: MeetingSession | null, targetPanelId: string = activePanelId) => {
+    if (!hasWorkspaceDeps) return
     await openMeetingInTab(
       meeting,
       targetPanelId,
       activePanelId,
-      panelLayout,
+      panelLayout!,
       getAllTabs,
       updatePanelActiveTab,
       addTabToPanel,
       setActivePanelId,
       setPanelLayout
     )
-  }, [activePanelId, panelLayout, setActivePanelId, setPanelLayout])
+  }, [activePanelId, panelLayout, setActivePanelId, setPanelLayout, hasWorkspaceDeps])
 
   const handleMeetingSelect = useCallback((meeting: MeetingSession) => {
+    if (!hasWorkspaceDeps) return
     handleMeetingSelectHandler({
       meeting,
       setSelectedMeeting,
       openMeetingInTabCallback,
       activePanelId
     })
-  }, [setSelectedMeeting, openMeetingInTabCallback, activePanelId])
+  }, [setSelectedMeeting, openMeetingInTabCallback, activePanelId, hasWorkspaceDeps])
 
   const handleJoinMeeting = useCallback(() => {
+    if (!hasWorkspaceDeps) return
     openMeetingInTabCallback(null, activePanelId)
-  }, [openMeetingInTabCallback, activePanelId])
+  }, [openMeetingInTabCallback, activePanelId, hasWorkspaceDeps])
 
   const handleDesktopRecordingStarted = useCallback((data: { sessionId: string; windowId: string; platform: string; meetingTitle: string }) => {
+    if (!hasWorkspaceDeps) return
     handleDesktopRecordingStartedHandler({
       data,
       setSelectedMeeting,
       openMeetingInTabCallback,
       activePanelId
     })
-  }, [setSelectedMeeting, openMeetingInTabCallback, activePanelId])
+  }, [setSelectedMeeting, openMeetingInTabCallback, activePanelId, hasWorkspaceDeps])
 
   return {
-    handleMeetingSelect,
-    handleJoinMeeting,
-    handleDesktopRecordingStarted
+    handleMeetingSelect: hasWorkspaceDeps ? handleMeetingSelect : undefined,
+    handleJoinMeeting: hasWorkspaceDeps ? handleJoinMeeting : undefined,
+    handleDesktopRecordingStarted: hasWorkspaceDeps ? handleDesktopRecordingStarted : undefined
   }
 }

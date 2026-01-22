@@ -6,15 +6,15 @@ import { handleReplyToEmail } from './handleReplyToEmail'
 import { getAllTabs, updatePanelActiveTab, addTabToPanel } from '../../../../../pages/Workspaces/handlers/panelUtils'
 
 interface WorkspaceDependencies {
-  activePanelId: string
-  panelLayout: PanelGroup
-  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
-  setActivePanelId: React.Dispatch<React.SetStateAction<string>>
-  setSelectedEmail: React.Dispatch<React.SetStateAction<any | null>>
-  setReplyToEmail: React.Dispatch<React.SetStateAction<any>>
+  activePanelId?: string
+  panelLayout?: PanelGroup
+  setPanelLayout?: React.Dispatch<React.SetStateAction<PanelGroup>>
+  setActivePanelId?: React.Dispatch<React.SetStateAction<string>>
+  setSelectedEmail?: React.Dispatch<React.SetStateAction<any | null>>
+  setReplyToEmail?: React.Dispatch<React.SetStateAction<any>>
 }
 
-export function useEmailWorkspaceHandlers(deps: WorkspaceDependencies) {
+export function useEmailWorkspaceHandlers(deps: WorkspaceDependencies = {}) {
   const {
     activePanelId,
     panelLayout,
@@ -24,7 +24,17 @@ export function useEmailWorkspaceHandlers(deps: WorkspaceDependencies) {
     setReplyToEmail
   } = deps
 
+  const hasDependencies = !!(
+    activePanelId &&
+    panelLayout &&
+    setPanelLayout &&
+    setActivePanelId &&
+    setSelectedEmail &&
+    setReplyToEmail
+  )
+
   const handleEmailSelect = useCallback((email: any) => {
+    if (!hasDependencies || !setSelectedEmail || !activePanelId || !panelLayout || !setActivePanelId || !setPanelLayout) return
     setSelectedEmail(email)
     openEmailInTab(
       email,
@@ -38,19 +48,21 @@ export function useEmailWorkspaceHandlers(deps: WorkspaceDependencies) {
       setPanelLayout,
       setSelectedEmail
     )
-  }, [activePanelId, panelLayout, setActivePanelId, setPanelLayout, setSelectedEmail])
+  }, [activePanelId, panelLayout, setActivePanelId, setPanelLayout, setSelectedEmail, hasDependencies])
 
   const handleComposeEmailCallback = useCallback(() => {
+    if (!hasDependencies || !activePanelId || !setPanelLayout || !setActivePanelId) return
     handleComposeEmail(activePanelId, addTabToPanel, setPanelLayout, setActivePanelId)
-  }, [activePanelId, addTabToPanel, setPanelLayout, setActivePanelId])
+  }, [activePanelId, addTabToPanel, setPanelLayout, setActivePanelId, hasDependencies])
 
   const handleReplyToEmailCallback = useCallback((email: any) => {
+    if (!hasDependencies || !activePanelId || !setPanelLayout || !setActivePanelId || !setReplyToEmail) return
     handleReplyToEmail(email, activePanelId, addTabToPanel, setPanelLayout, setActivePanelId, setReplyToEmail)
-  }, [activePanelId, addTabToPanel, setPanelLayout, setActivePanelId, setReplyToEmail])
+  }, [activePanelId, addTabToPanel, setPanelLayout, setActivePanelId, setReplyToEmail, hasDependencies])
 
   return {
-    handleEmailSelect,
-    handleComposeEmail: handleComposeEmailCallback,
-    handleReplyToEmail: handleReplyToEmailCallback
+    handleEmailSelect: hasDependencies ? handleEmailSelect : undefined,
+    handleComposeEmail: hasDependencies ? handleComposeEmailCallback : undefined,
+    handleReplyToEmail: hasDependencies ? handleReplyToEmailCallback : undefined
   }
 }

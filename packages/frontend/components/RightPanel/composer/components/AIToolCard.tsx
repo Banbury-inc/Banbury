@@ -194,7 +194,6 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
   const handleOpenDocument = () => {
     // Get fileId from args if available (set by CreateFileTool/DownloadFileTool from result)
     const fileId = args?.fileId;
-    console.log('fileId', fileId);
     
     // First, trigger a sidebar refresh to ensure the file appears in the file list
     window.dispatchEvent(new CustomEvent('file-sidebar-refresh'));

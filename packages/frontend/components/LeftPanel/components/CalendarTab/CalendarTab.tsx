@@ -67,17 +67,15 @@ export function CalendarTab({
   setCalendarJumpDate,
   setCalendarSelectedEvent
 }: CalendarTabProps) {
-  // Use workspace handlers if dependencies are provided
-  const workspaceHandlers = (panelLayout && setPanelLayout && setActivePanelId && setCalendarJumpDate && setCalendarSelectedEvent)
-    ? useCalendarWorkspaceHandlers({
-        activePanelId,
-        panelLayout,
-        setPanelLayout,
-        setActivePanelId,
-        setCalendarJumpDate,
-        setCalendarSelectedEvent
-      })
-    : null
+  // Always call hooks unconditionally
+  const workspaceHandlers = useCalendarWorkspaceHandlers({
+    activePanelId,
+    panelLayout,
+    setPanelLayout,
+    setActivePanelId,
+    setCalendarJumpDate,
+    setCalendarSelectedEvent
+  })
 
   const onEventSelect = workspaceHandlers?.handleCalendarEventSelect
   const [events, setEvents] = useState<CalendarEvent[]>([])

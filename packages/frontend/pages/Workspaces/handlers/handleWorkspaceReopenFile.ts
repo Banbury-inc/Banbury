@@ -17,7 +17,6 @@ export function createWorkspaceReopenFileHandler({
   handleCloseTabCallback
 }: HandleWorkspaceReopenFileParams): (e: Event) => void {
   return (e: Event) => {
-    console.log('[Workspaces] Received workspace-reopen-file event', e)
     const detail = (e as CustomEvent).detail || {}
     const { newFile } = detail as { oldPath?: string; newFile: FileSystemItem }
     if (!newFile) return

@@ -88,8 +88,6 @@ const AuthCallback = (): JSX.Element => {
     // not that we're currently IN Electron
     // Check for token first (from backend google_callback_electron), then code/error
     if (isElectronCallback) {
-      console.log("This is an electron callback")
-      
       // If token is present (from backend electron callback), save it and user info, then redirect to workspaces
       if (token) {
         handledRef.current = true;

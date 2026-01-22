@@ -6,15 +6,15 @@ import { openCalendarInTab } from './openCalendarInTab'
 import { getAllTabs, updatePanelActiveTab, addTabToPanel } from '../../../../../pages/Workspaces/handlers/panelUtils'
 
 interface WorkspaceDependencies {
-  activePanelId: string
-  panelLayout: PanelGroup
-  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
-  setActivePanelId: React.Dispatch<React.SetStateAction<string>>
-  setCalendarJumpDate: React.Dispatch<React.SetStateAction<Date | null>>
-  setCalendarSelectedEvent: React.Dispatch<React.SetStateAction<CalendarEvent | null>>
+  activePanelId?: string
+  panelLayout?: PanelGroup
+  setPanelLayout?: React.Dispatch<React.SetStateAction<PanelGroup>>
+  setActivePanelId?: React.Dispatch<React.SetStateAction<string>>
+  setCalendarJumpDate?: React.Dispatch<React.SetStateAction<Date | null>>
+  setCalendarSelectedEvent?: React.Dispatch<React.SetStateAction<CalendarEvent | null>>
 }
 
-export function useCalendarWorkspaceHandlers(deps: WorkspaceDependencies) {
+export function useCalendarWorkspaceHandlers(deps: WorkspaceDependencies = {}) {
   const {
     activePanelId,
     panelLayout,
@@ -24,11 +24,22 @@ export function useCalendarWorkspaceHandlers(deps: WorkspaceDependencies) {
     setCalendarSelectedEvent
   } = deps
 
-  const openCalendarInTabCallback = useCallback((targetPanelId: string = activePanelId) => {
+  const hasDependencies = !!(
+    activePanelId &&
+    panelLayout &&
+    setPanelLayout &&
+    setActivePanelId &&
+    setCalendarJumpDate &&
+    setCalendarSelectedEvent
+  )
+
+  const openCalendarInTabCallback = useCallback((targetPanelId: string = activePanelId || 'main-panel') => {
+    if (!hasDependencies || !activePanelId || !panelLayout || !setActivePanelId || !setPanelLayout) return
     openCalendarInTab(targetPanelId, activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout)
-  }, [activePanelId, panelLayout, setActivePanelId, setPanelLayout])
+  }, [activePanelId, panelLayout, setActivePanelId, setPanelLayout, hasDependencies])
 
   const handleCalendarEventSelect = useCallback((event: CalendarEvent) => {
+    if (!hasDependencies || !setCalendarJumpDate || !setCalendarSelectedEvent || !activePanelId) return
     handleCalendarEventSelectHandler({
       event,
       setCalendarJumpDate,
@@ -36,10 +47,10 @@ export function useCalendarWorkspaceHandlers(deps: WorkspaceDependencies) {
       openCalendarInTabCallback,
       activePanelId
     })
-  }, [setCalendarJumpDate, setCalendarSelectedEvent, openCalendarInTabCallback, activePanelId])
+  }, [setCalendarJumpDate, setCalendarSelectedEvent, openCalendarInTabCallback, activePanelId, hasDependencies])
 
   return {
-    handleCalendarEventSelect,
-    openCalendarInTab: openCalendarInTabCallback
+    handleCalendarEventSelect: hasDependencies ? handleCalendarEventSelect : undefined,
+    openCalendarInTab: hasDependencies ? openCalendarInTabCallback : undefined
   }
 }

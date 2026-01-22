@@ -102,7 +102,6 @@ function StoryWrapper({ children, mockSetup, currentVersion = '1.0.0', autoTrigg
         return Promise.resolve({ success: true })
       },
       installUpdate: () => {
-        console.log('In a real app, this would restart the app to install the update.')
         return Promise.resolve({ success: true })
       },
       onCheckingForUpdate: (callback) => {

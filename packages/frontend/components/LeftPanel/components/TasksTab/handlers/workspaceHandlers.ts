@@ -6,7 +6,7 @@ import { getAllTabs, updatePanelActiveTab, addTabToPanel } from '../../../../../
 
 interface WorkspaceDependencies {
   activePanelId: string
-  panelLayout: PanelGroup
+  panelLayout: PanelGroup | null
   setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
   setActivePanelId: React.Dispatch<React.SetStateAction<string>>
   setSelectedTask: React.Dispatch<React.SetStateAction<Task | null>>
@@ -21,27 +21,32 @@ export function useTaskWorkspaceHandlers(deps: WorkspaceDependencies) {
     setSelectedTask
   } = deps
 
+  // Check if workspace dependencies are available (panelLayout is the key indicator)
+  const hasWorkspaceDeps = panelLayout !== null
+
   const handleTaskSelect = useCallback((task: Task) => {
+    if (!hasWorkspaceDeps) return
     setSelectedTask(task)
     openTaskInTab(
       task,
       activePanelId,
       activePanelId,
-      panelLayout,
+      panelLayout!,
       getAllTabs,
       updatePanelActiveTab,
       addTabToPanel,
       setActivePanelId,
       setPanelLayout
     )
-  }, [activePanelId, panelLayout, setActivePanelId, setPanelLayout, setSelectedTask])
+  }, [activePanelId, panelLayout, setActivePanelId, setPanelLayout, setSelectedTask, hasWorkspaceDeps])
 
   const handleCreateTask = useCallback(() => {
-    openTaskInTab(null, activePanelId, activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout)
-  }, [activePanelId, panelLayout, setActivePanelId, setPanelLayout])
+    if (!hasWorkspaceDeps) return
+    openTaskInTab(null, activePanelId, activePanelId, panelLayout!, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout)
+  }, [activePanelId, panelLayout, setActivePanelId, setPanelLayout, hasWorkspaceDeps])
 
   return {
-    handleTaskSelect,
-    handleCreateTask
+    handleTaskSelect: hasWorkspaceDeps ? handleTaskSelect : undefined,
+    handleCreateTask: hasWorkspaceDeps ? handleCreateTask : undefined
   }
 }

@@ -36,13 +36,11 @@ export function handlePptxLiveUpdate(params: HandlePptxLiveUpdateParams) {
   const fileMatches = eventFileId && fileId === eventFileId
 
   if (!presentationMatches && !fileMatches) {
-    console.log('[PowerPointViewer] Ignoring event - presentation/file mismatch')
     return
   }
 
   // If we matched by fileId but activePresentationId isn't set, set it now
   if (!activePresentationId && fileMatches && presentationId) {
-    console.log('[PowerPointViewer] Setting activePresentationId from event:', presentationId)
     setActivePresentationId(presentationId)
   }
 

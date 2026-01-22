@@ -28,16 +28,14 @@ export function TasksTab({
   setActivePanelId,
   setSelectedTask: setSelectedTaskProp
 }: TasksTabProps) {
-  // Use workspace handlers if dependencies are provided
-  const workspaceHandlers = (panelLayout && setPanelLayout && setActivePanelId && setSelectedTaskProp)
-    ? useTaskWorkspaceHandlers({
-        activePanelId,
-        panelLayout,
-        setPanelLayout,
-        setActivePanelId,
-        setSelectedTask: setSelectedTaskProp
-      })
-    : null
+  // Always call hook unconditionally - it handles optional dependencies internally
+  const workspaceHandlers = useTaskWorkspaceHandlers({
+    activePanelId,
+    panelLayout: panelLayout ?? null,
+    setPanelLayout: setPanelLayout ?? (() => {}),
+    setActivePanelId: setActivePanelId ?? (() => {}),
+    setSelectedTask: setSelectedTaskProp ?? (() => {})
+  })
 
   const onTaskSelect = workspaceHandlers?.handleTaskSelect
   const onCreateTask = workspaceHandlers?.handleCreateTask
