@@ -1,7 +1,7 @@
 import { Box, Container } from '@mui/material'
 import { motion } from 'framer-motion'
-import { DesktopDownloadButton } from './Desktop/components/DesktopDownloadButton'
-import { Typography } from '../components/ui/typography'
+import { DesktopDownloadButton } from './components/DesktopDownloadButton'
+import { Typography } from '../../components/ui/typography'
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 16 },
