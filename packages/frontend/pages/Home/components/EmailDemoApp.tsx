@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { EmailTab } from '../../../components/LeftPanel/components/EmailTab'
+import { EmailTab } from '../../../components/LeftPanel/components/EmailTab/EmailTab'
 import { EmailViewer } from '../../../components/MiddlePanel/EmailViewer/EmailViewer'
 import { ApiService } from '../../../../backend/api/apiService'
 import { GmailMessage, GmailLabel } from '../../../../backend/api/emails/emails'

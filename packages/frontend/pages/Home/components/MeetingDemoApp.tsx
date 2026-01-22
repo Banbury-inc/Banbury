@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { CalendarTab } from '../../../components/LeftPanel/components/CalendarTab'
+import { CalendarTab } from '../../../components/LeftPanel/components/CalendarTab/CalendarTab'
 import { CalendarEventViewer } from '../../../components/MiddlePanel/CalendarViewer/CalendarEventViewer'
 import { ApiService } from '../../../../backend/api/apiService'
 import { CalendarEvent, CalendarListEntry } from '../../../../backend/api/calendar/calendar'
