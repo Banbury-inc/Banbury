@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { ApiService } from '../../../backend/api/apiService'
-import { UsersTab } from '../../pages/Admin/UsersTab'
-import { AnalyticsTab } from '../../pages/Admin/AnalyticsTab'
+import { UsersTab } from '../MiddlePanel/AdminViewer/UsersTab'
+import { AnalyticsTab } from '../MiddlePanel/AdminViewer/AnalyticsTab'
 import { convertToEasternTime, formatBytes } from './utils/adminUtils'
 import type {
   User,

@@ -1,12 +1,12 @@
 import { useState, Fragment, useMemo } from 'react'
 import { RefreshCw, Filter } from 'lucide-react'
-import { Button } from '../../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
-import { Label } from '../../components/ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
+import { Button } from '../../ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
+import { Label } from '../../ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover'
 import { ConversationMessageBubble } from './conversations/ConversationMessageBubble'
 import { createAIConversationsHandlers } from './handlers/ai-conversations-handlers'
-import { getModelDisplayName, getDefaultModelForProvider, type ModelProvider } from '../../components/RightPanel/composer/handlers/getModelDisplayName'
+import { getModelDisplayName, getDefaultModelForProvider, type ModelProvider } from '../../RightPanel/composer/handlers/getModelDisplayName'
 
 interface ConversationData {
   _id: string

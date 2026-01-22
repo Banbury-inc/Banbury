@@ -1,11 +1,11 @@
 import { RefreshCw, Filter, Clock } from 'lucide-react'
 import { useState } from 'react'
 import { XAxis, YAxis, CartesianGrid, AreaChart, Area, BarChart, Bar } from 'recharts'
-import { ChartContainer, ChartTooltip } from '../../components/ui/chart'
-import { Button } from '../../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
-import { Input } from '../../components/ui/old-input'
-import { Label } from '../../components/ui/label'
+import { ChartContainer, ChartTooltip } from '../../ui/chart'
+import { Button } from '../../ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
+import { Input } from '../../ui/old-input'
+import { Label } from '../../ui/label'
 
 interface PageTimeAnalytics {
   result: string

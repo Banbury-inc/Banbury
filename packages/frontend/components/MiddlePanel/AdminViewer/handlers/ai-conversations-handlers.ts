@@ -1,4 +1,4 @@
-import { ApiService } from '../../../../backend/api/apiService'
+import { ApiService } from '../../../../../backend/api/apiService'
 
 interface ConversationHandlersDeps {
   setExpandedConversation: (id: string | null) => void

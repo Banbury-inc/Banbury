@@ -1,43 +1,53 @@
 import { RefreshCw, Filter } from 'lucide-react'
 import { useState } from 'react'
 import { XAxis, YAxis, CartesianGrid, AreaChart, Area, BarChart, Bar } from 'recharts'
-import { ChartContainer, ChartTooltip } from '../../components/ui/chart'
-import { Button } from '../../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
-import { Input } from '../../components/ui/old-input'
-import { Label } from '../../components/ui/label'
+import { ChartContainer, ChartTooltip } from '../../ui/chart'
+import { Button } from '../../ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
+import { Input } from '../../ui/old-input'
+import { Label } from '../../ui/label'
 
-interface FeatureUsageAnalytics {
+interface ApiUsageAnalytics {
   result: string
   summary: {
-    total_feature_uses: number
-    unique_features: number
-    unique_users: number
+    total_requests: number
+    unique_endpoints: number
+    avg_response_time: number
+    error_rate: number
+    period_days: number
   }
-  feature_stats: Array<{feature: string, count: number, unique_users: number}>
-  daily_stats: Array<{date: string, feature: string, count: number}>
+  endpoint_stats: Array<{
+    endpoint: string
+    count: number
+    avg_response_time: number
+    error_count: number
+    p95_response_time: number
+  }>
+  daily_stats: Array<{date: string, count: number, avg_response_time: number}>
+  hourly_stats: Array<{hour: number, count: number}>
+  user_stats: Array<{username: string, count: number}>
 }
 
-interface FeatureUsageTabProps {
-  featureUsageAnalytics: FeatureUsageAnalytics | null
-  featureUsageLoading: boolean
-  loadFeatureUsageAnalytics: (days: number, excludedUsers?: string[]) => Promise<void>
+interface ApiUsageTabProps {
+  apiUsageAnalytics: ApiUsageAnalytics | null
+  apiUsageLoading: boolean
+  loadApiUsageAnalytics: (days: number, excludedUsers?: string[]) => Promise<void>
   days: number
   excludedUsers: string[]
   setExcludedUsers: (users: string[]) => void
 }
 
-export function FeatureUsageTab({
-  featureUsageAnalytics,
-  featureUsageLoading,
-  loadFeatureUsageAnalytics,
+export function ApiUsageTab({
+  apiUsageAnalytics,
+  apiUsageLoading,
+  loadApiUsageAnalytics,
   days,
   excludedUsers,
   setExcludedUsers
-}: FeatureUsageTabProps) {
+}: ApiUsageTabProps) {
   const [userExclusionInput, setUserExclusionInput] = useState<string>('')
 
-  if (featureUsageLoading) {
+  if (apiUsageLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
@@ -45,62 +55,41 @@ export function FeatureUsageTab({
     )
   }
 
-  if (!featureUsageAnalytics || featureUsageAnalytics.result !== 'success') {
+  if (!apiUsageAnalytics || apiUsageAnalytics.result !== 'success') {
     return (
       <div className="p-4 text-center text-muted-foreground">
-        No feature usage data available
+        No API usage data available
       </div>
     )
   }
 
-  const { summary, feature_stats, daily_stats } = featureUsageAnalytics
+  const { summary, endpoint_stats, daily_stats, hourly_stats, user_stats } = apiUsageAnalytics
 
   const addUserExclusion = async () => {
     if (userExclusionInput.trim() && !excludedUsers.includes(userExclusionInput.trim())) {
       const newExcludedUsers = [...excludedUsers, userExclusionInput.trim()]
       setExcludedUsers(newExcludedUsers)
       setUserExclusionInput('')
-      await loadFeatureUsageAnalytics(days, newExcludedUsers)
+      await loadApiUsageAnalytics(days, newExcludedUsers)
     }
   }
 
   const removeUserExclusion = async (userToRemove: string) => {
     const newExcludedUsers = excludedUsers.filter(user => user !== userToRemove)
     setExcludedUsers(newExcludedUsers)
-    await loadFeatureUsageAnalytics(days, newExcludedUsers)
+    await loadApiUsageAnalytics(days, newExcludedUsers)
   }
 
   const clearUserExclusions = async () => {
     setExcludedUsers([])
-    await loadFeatureUsageAnalytics(days, [])
+    await loadApiUsageAnalytics(days, [])
   }
-
-  // Group daily stats by date for chart
-  const dailyStatsByDate: Record<string, Record<string, number>> = {}
-  daily_stats.forEach(stat => {
-    if (!dailyStatsByDate[stat.date]) {
-      dailyStatsByDate[stat.date] = {}
-    }
-    dailyStatsByDate[stat.date][stat.feature] = stat.count
-  })
-
-  // Get top features for chart
-  const topFeatures = feature_stats.slice(0, 10).map(f => f.feature)
-  const chartData = Object.entries(dailyStatsByDate)
-    .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
-    .map(([date, features]) => {
-      const dataPoint: any = { date }
-      topFeatures.forEach(feature => {
-        dataPoint[feature] = features[feature] || 0
-      })
-      return dataPoint
-    })
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-foreground">Feature Usage Analytics</h2>
-        <Button onClick={() => loadFeatureUsageAnalytics(days, excludedUsers)} variant="outline" className="border-zinc-200 dark:border-white/[0.06]">
+        <h2 className="text-xl font-semibold text-foreground">API Usage Analytics</h2>
+        <Button onClick={() => loadApiUsageAnalytics(days, excludedUsers)} variant="outline" className="border-zinc-200 dark:border-white/[0.06]">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
@@ -114,7 +103,7 @@ export function FeatureUsageTab({
             Exclude Users
           </CardTitle>
           <CardDescription className="text-muted-foreground">
-            Exclude specific users from feature usage analytics
+            Exclude specific users from API usage analytics
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -177,44 +166,54 @@ export function FeatureUsageTab({
       </Card>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-foreground">Total Feature Uses</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">Total Requests</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{summary.total_feature_uses.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-foreground">{summary.total_requests.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">{summary.period_days} days</p>
           </CardContent>
         </Card>
 
         <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-foreground">Unique Features</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">Unique Endpoints</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{summary.unique_features}</div>
+            <div className="text-2xl font-bold text-foreground">{summary.unique_endpoints}</div>
           </CardContent>
         </Card>
 
         <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-foreground">Unique Users</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">Avg Response Time</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{summary.unique_users}</div>
+            <div className="text-2xl font-bold text-foreground">{summary.avg_response_time.toFixed(2)}ms</div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-foreground">Error Rate</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-foreground">{summary.error_rate.toFixed(2)}%</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Top Features Chart */}
+      {/* Daily Requests Chart */}
       <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
-          <CardTitle className="text-foreground">Top Features Usage Over Time</CardTitle>
-          <CardDescription>Daily usage of top features</CardDescription>
+          <CardTitle className="text-foreground">Daily API Requests</CardTitle>
+          <CardDescription>Total requests per day over the period</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={{}} className="h-[400px]">
-            <AreaChart data={chartData}>
+          <ChartContainer config={{ count: { label: "Requests" } }} className="h-[300px]">
+            <AreaChart data={daily_stats}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis 
                 dataKey="date" 
@@ -223,49 +222,29 @@ export function FeatureUsageTab({
               />
               <YAxis className="text-xs" />
               <ChartTooltip />
-              {topFeatures.map((feature, index) => {
-                const colors = [
-                  'hsl(var(--primary))',
-                  'hsl(var(--chart-2))',
-                  'hsl(var(--chart-3))',
-                  'hsl(var(--chart-4))',
-                  'hsl(var(--chart-5))',
-                ]
-                const color = colors[index % colors.length]
-                return (
-                  <Area
-                    key={feature}
-                    type="monotone"
-                    dataKey={feature}
-                    stackId="1"
-                    stroke={color}
-                    fill={color}
-                    fillOpacity={0.6}
-                  />
-                )
-              })}
+              <Area 
+                type="monotone" 
+                dataKey="count" 
+                stroke="hsl(var(--primary))" 
+                fill="hsl(var(--primary))" 
+                fillOpacity={0.2}
+              />
             </AreaChart>
           </ChartContainer>
         </CardContent>
       </Card>
 
-      {/* Top Features Bar Chart */}
+      {/* Hourly Distribution */}
       <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
-          <CardTitle className="text-foreground">Top Features</CardTitle>
-          <CardDescription>Most used features by usage count</CardDescription>
+          <CardTitle className="text-foreground">Hourly Distribution</CardTitle>
+          <CardDescription>Requests by hour of day</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={{ count: { label: "Usage Count" } }} className="h-[300px]">
-            <BarChart data={feature_stats.slice(0, 15)}>
+          <ChartContainer config={{ count: { label: "Requests" } }} className="h-[300px]">
+            <BarChart data={hourly_stats}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis 
-                dataKey="feature" 
-                className="text-xs"
-                angle={-45}
-                textAnchor="end"
-                height={100}
-              />
+              <XAxis dataKey="hour" className="text-xs" />
               <YAxis className="text-xs" />
               <ChartTooltip />
               <Bar dataKey="count" fill="hsl(var(--primary))" />
@@ -274,28 +253,32 @@ export function FeatureUsageTab({
         </CardContent>
       </Card>
 
-      {/* Feature Stats Table */}
+      {/* Top Endpoints */}
       <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
-          <CardTitle className="text-foreground">Feature Usage Statistics</CardTitle>
-          <CardDescription>Detailed breakdown by feature</CardDescription>
+          <CardTitle className="text-foreground">Top Endpoints</CardTitle>
+          <CardDescription>Most frequently called endpoints</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 dark:border-white/[0.06]">
-                  <th className="text-left py-2 px-4 font-medium text-foreground">Feature</th>
-                  <th className="text-right py-2 px-4 font-medium text-foreground">Usage Count</th>
-                  <th className="text-right py-2 px-4 font-medium text-foreground">Unique Users</th>
+                  <th className="text-left py-2 px-4 font-medium text-foreground">Endpoint</th>
+                  <th className="text-right py-2 px-4 font-medium text-foreground">Requests</th>
+                  <th className="text-right py-2 px-4 font-medium text-foreground">Avg Response (ms)</th>
+                  <th className="text-right py-2 px-4 font-medium text-foreground">P95 Response (ms)</th>
+                  <th className="text-right py-2 px-4 font-medium text-foreground">Errors</th>
                 </tr>
               </thead>
               <tbody>
-                {feature_stats.map((stat, index) => (
+                {endpoint_stats.slice(0, 20).map((stat, index) => (
                   <tr key={index} className="border-b border-zinc-200 dark:border-white/[0.06]">
-                    <td className="py-2 px-4 text-foreground capitalize">{stat.feature.replace(/_/g, ' ')}</td>
+                    <td className="py-2 px-4 text-foreground font-mono text-xs">{stat.endpoint}</td>
                     <td className="py-2 px-4 text-right text-foreground">{stat.count.toLocaleString()}</td>
-                    <td className="py-2 px-4 text-right text-foreground">{stat.unique_users}</td>
+                    <td className="py-2 px-4 text-right text-foreground">{stat.avg_response_time.toFixed(2)}</td>
+                    <td className="py-2 px-4 text-right text-foreground">{stat.p95_response_time.toFixed(2)}</td>
+                    <td className="py-2 px-4 text-right text-foreground">{stat.error_count}</td>
                   </tr>
                 ))}
               </tbody>
@@ -303,6 +286,36 @@ export function FeatureUsageTab({
           </div>
         </CardContent>
       </Card>
+
+      {/* Top Users */}
+      {user_stats.length > 0 && (
+        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
+          <CardHeader>
+            <CardTitle className="text-foreground">Top Users by API Usage</CardTitle>
+            <CardDescription>Users with most API requests</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-200 dark:border-white/[0.06]">
+                    <th className="text-left py-2 px-4 font-medium text-foreground">Username</th>
+                    <th className="text-right py-2 px-4 font-medium text-foreground">Requests</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {user_stats.map((stat, index) => (
+                    <tr key={index} className="border-b border-zinc-200 dark:border-white/[0.06]">
+                      <td className="py-2 px-4 text-foreground">{stat.username}</td>
+                      <td className="py-2 px-4 text-right text-foreground">{stat.count.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

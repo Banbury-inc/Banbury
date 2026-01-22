@@ -1,52 +1,43 @@
 import { RefreshCw, Filter } from 'lucide-react'
 import { useState } from 'react'
-import { XAxis, YAxis, CartesianGrid, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell } from 'recharts'
-import { ChartContainer, ChartTooltip } from '../../components/ui/chart'
-import { Button } from '../../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
-import { Input } from '../../components/ui/old-input'
-import { Label } from '../../components/ui/label'
+import { XAxis, YAxis, CartesianGrid, AreaChart, Area, BarChart, Bar } from 'recharts'
+import { ChartContainer, ChartTooltip } from '../../ui/chart'
+import { Button } from '../../ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
+import { Input } from '../../ui/old-input'
+import { Label } from '../../ui/label'
 
-interface ErrorAnalytics {
+interface FeatureUsageAnalytics {
   result: string
   summary: {
-    total_errors: number
-    error_rate: number
-    unique_error_types: number
+    total_feature_uses: number
+    unique_features: number
+    unique_users: number
   }
-  error_by_type: Array<{error_type: string, count: number}>
-  error_by_endpoint: Array<{endpoint: string, count: number}>
-  daily_error_stats: Array<{date: string, count: number}>
+  feature_stats: Array<{feature: string, count: number, unique_users: number}>
+  daily_stats: Array<{date: string, feature: string, count: number}>
 }
 
-interface ErrorTrackingTabProps {
-  errorAnalytics: ErrorAnalytics | null
-  errorLoading: boolean
-  loadErrorAnalytics: (days: number, excludedUsers?: string[]) => Promise<void>
+interface FeatureUsageTabProps {
+  featureUsageAnalytics: FeatureUsageAnalytics | null
+  featureUsageLoading: boolean
+  loadFeatureUsageAnalytics: (days: number, excludedUsers?: string[]) => Promise<void>
   days: number
   excludedUsers: string[]
   setExcludedUsers: (users: string[]) => void
 }
 
-const COLORS = [
-  'hsl(var(--destructive))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-]
-
-export function ErrorTrackingTab({
-  errorAnalytics,
-  errorLoading,
-  loadErrorAnalytics,
+export function FeatureUsageTab({
+  featureUsageAnalytics,
+  featureUsageLoading,
+  loadFeatureUsageAnalytics,
   days,
   excludedUsers,
   setExcludedUsers
-}: ErrorTrackingTabProps) {
+}: FeatureUsageTabProps) {
   const [userExclusionInput, setUserExclusionInput] = useState<string>('')
 
-  if (errorLoading) {
+  if (featureUsageLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
@@ -54,41 +45,62 @@ export function ErrorTrackingTab({
     )
   }
 
-  if (!errorAnalytics || errorAnalytics.result !== 'success') {
+  if (!featureUsageAnalytics || featureUsageAnalytics.result !== 'success') {
     return (
       <div className="p-4 text-center text-muted-foreground">
-        No error data available
+        No feature usage data available
       </div>
     )
   }
 
-  const { summary, error_by_type, error_by_endpoint, daily_error_stats } = errorAnalytics
+  const { summary, feature_stats, daily_stats } = featureUsageAnalytics
 
   const addUserExclusion = async () => {
     if (userExclusionInput.trim() && !excludedUsers.includes(userExclusionInput.trim())) {
       const newExcludedUsers = [...excludedUsers, userExclusionInput.trim()]
       setExcludedUsers(newExcludedUsers)
       setUserExclusionInput('')
-      await loadErrorAnalytics(days, newExcludedUsers)
+      await loadFeatureUsageAnalytics(days, newExcludedUsers)
     }
   }
 
   const removeUserExclusion = async (userToRemove: string) => {
     const newExcludedUsers = excludedUsers.filter(user => user !== userToRemove)
     setExcludedUsers(newExcludedUsers)
-    await loadErrorAnalytics(days, newExcludedUsers)
+    await loadFeatureUsageAnalytics(days, newExcludedUsers)
   }
 
   const clearUserExclusions = async () => {
     setExcludedUsers([])
-    await loadErrorAnalytics(days, [])
+    await loadFeatureUsageAnalytics(days, [])
   }
+
+  // Group daily stats by date for chart
+  const dailyStatsByDate: Record<string, Record<string, number>> = {}
+  daily_stats.forEach(stat => {
+    if (!dailyStatsByDate[stat.date]) {
+      dailyStatsByDate[stat.date] = {}
+    }
+    dailyStatsByDate[stat.date][stat.feature] = stat.count
+  })
+
+  // Get top features for chart
+  const topFeatures = feature_stats.slice(0, 10).map(f => f.feature)
+  const chartData = Object.entries(dailyStatsByDate)
+    .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
+    .map(([date, features]) => {
+      const dataPoint: any = { date }
+      topFeatures.forEach(feature => {
+        dataPoint[feature] = features[feature] || 0
+      })
+      return dataPoint
+    })
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-foreground">Error Tracking Analytics</h2>
-        <Button onClick={() => loadErrorAnalytics(days, excludedUsers)} variant="outline" className="border-zinc-200 dark:border-white/[0.06]">
+        <h2 className="text-xl font-semibold text-foreground">Feature Usage Analytics</h2>
+        <Button onClick={() => loadFeatureUsageAnalytics(days, excludedUsers)} variant="outline" className="border-zinc-200 dark:border-white/[0.06]">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
@@ -102,7 +114,7 @@ export function ErrorTrackingTab({
             Exclude Users
           </CardTitle>
           <CardDescription className="text-muted-foreground">
-            Exclude specific users from error analytics
+            Exclude specific users from feature usage analytics
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -168,41 +180,41 @@ export function ErrorTrackingTab({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-foreground">Total Errors</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">Total Feature Uses</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground text-destructive">{summary.total_errors.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-foreground">{summary.total_feature_uses.toLocaleString()}</div>
           </CardContent>
         </Card>
 
         <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-foreground">Error Rate</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">Unique Features</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground text-destructive">{summary.error_rate.toFixed(2)}%</div>
+            <div className="text-2xl font-bold text-foreground">{summary.unique_features}</div>
           </CardContent>
         </Card>
 
         <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-foreground">Unique Error Types</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">Unique Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{summary.unique_error_types}</div>
+            <div className="text-2xl font-bold text-foreground">{summary.unique_users}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Daily Error Trends */}
+      {/* Top Features Chart */}
       <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
-          <CardTitle className="text-foreground">Daily Error Trends</CardTitle>
-          <CardDescription>Errors per day over the period</CardDescription>
+          <CardTitle className="text-foreground">Top Features Usage Over Time</CardTitle>
+          <CardDescription>Daily usage of top features</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={{ count: { label: "Errors" } }} className="h-[300px]">
-            <AreaChart data={daily_error_stats}>
+          <ChartContainer config={{}} className="h-[400px]">
+            <AreaChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis 
                 dataKey="date" 
@@ -211,93 +223,79 @@ export function ErrorTrackingTab({
               />
               <YAxis className="text-xs" />
               <ChartTooltip />
-              <Area 
-                type="monotone" 
-                dataKey="count" 
-                stroke="hsl(var(--destructive))" 
-                fill="hsl(var(--destructive))" 
-                fillOpacity={0.2}
-              />
+              {topFeatures.map((feature, index) => {
+                const colors = [
+                  'hsl(var(--primary))',
+                  'hsl(var(--chart-2))',
+                  'hsl(var(--chart-3))',
+                  'hsl(var(--chart-4))',
+                  'hsl(var(--chart-5))',
+                ]
+                const color = colors[index % colors.length]
+                return (
+                  <Area
+                    key={feature}
+                    type="monotone"
+                    dataKey={feature}
+                    stackId="1"
+                    stroke={color}
+                    fill={color}
+                    fillOpacity={0.6}
+                  />
+                )
+              })}
             </AreaChart>
           </ChartContainer>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Errors by Type */}
-        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
-          <CardHeader>
-            <CardTitle className="text-foreground">Errors by Type</CardTitle>
-            <CardDescription>Distribution of error types</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={{}} className="h-[300px]">
-              <PieChart>
-                <Pie
-                  data={error_by_type}
-                  dataKey="count"
-                  nameKey="error_type"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  label={(entry) => `${entry.error_type}: ${entry.count}`}
-                >
-                  {error_by_type.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <ChartTooltip />
-              </PieChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Errors by Type Bar Chart */}
-        <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
-          <CardHeader>
-            <CardTitle className="text-foreground">Errors by Type (Bar)</CardTitle>
-            <CardDescription>Count of errors by type</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={{ count: { label: "Errors" } }} className="h-[300px]">
-              <BarChart data={error_by_type}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis 
-                  dataKey="error_type" 
-                  className="text-xs"
-                  angle={-45}
-                  textAnchor="end"
-                  height={100}
-                />
-                <YAxis className="text-xs" />
-                <ChartTooltip />
-                <Bar dataKey="count" fill="hsl(var(--destructive))" />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Errors by Endpoint */}
+      {/* Top Features Bar Chart */}
       <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
         <CardHeader>
-          <CardTitle className="text-foreground">Errors by Endpoint</CardTitle>
-          <CardDescription>Endpoints with most errors</CardDescription>
+          <CardTitle className="text-foreground">Top Features</CardTitle>
+          <CardDescription>Most used features by usage count</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={{ count: { label: "Usage Count" } }} className="h-[300px]">
+            <BarChart data={feature_stats.slice(0, 15)}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis 
+                dataKey="feature" 
+                className="text-xs"
+                angle={-45}
+                textAnchor="end"
+                height={100}
+              />
+              <YAxis className="text-xs" />
+              <ChartTooltip />
+              <Bar dataKey="count" fill="hsl(var(--primary))" />
+            </BarChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      {/* Feature Stats Table */}
+      <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
+        <CardHeader>
+          <CardTitle className="text-foreground">Feature Usage Statistics</CardTitle>
+          <CardDescription>Detailed breakdown by feature</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 dark:border-white/[0.06]">
-                  <th className="text-left py-2 px-4 font-medium text-foreground">Endpoint</th>
-                  <th className="text-right py-2 px-4 font-medium text-foreground">Error Count</th>
+                  <th className="text-left py-2 px-4 font-medium text-foreground">Feature</th>
+                  <th className="text-right py-2 px-4 font-medium text-foreground">Usage Count</th>
+                  <th className="text-right py-2 px-4 font-medium text-foreground">Unique Users</th>
                 </tr>
               </thead>
               <tbody>
-                {error_by_endpoint.map((stat, index) => (
+                {feature_stats.map((stat, index) => (
                   <tr key={index} className="border-b border-zinc-200 dark:border-white/[0.06]">
-                    <td className="py-2 px-4 text-foreground font-mono text-xs">{stat.endpoint}</td>
-                    <td className="py-2 px-4 text-right text-foreground text-destructive font-semibold">{stat.count}</td>
+                    <td className="py-2 px-4 text-foreground capitalize">{stat.feature.replace(/_/g, ' ')}</td>
+                    <td className="py-2 px-4 text-right text-foreground">{stat.count.toLocaleString()}</td>
+                    <td className="py-2 px-4 text-right text-foreground">{stat.unique_users}</td>
                   </tr>
                 ))}
               </tbody>

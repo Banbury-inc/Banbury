@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { RefreshCw, Filter } from 'lucide-react'
 import { XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts'
-import { ChartContainer, ChartTooltip } from '../../components/ui/chart'
-import { Button } from '../../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
-import { Input } from '../../components/ui/old-input'
-import { Label } from '../../components/ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
-import { ApiService } from '../../../backend/api/apiService'
+import { ChartContainer, ChartTooltip } from '../../ui/chart'
+import { Button } from '../../ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
+import { Input } from '../../ui/old-input'
+import { Label } from '../../ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover'
+import { ApiService } from '../../../../backend/api/apiService'
 import { 
   getTotalPages, 
   getPageSlice, 
@@ -16,7 +16,7 @@ import {
   canGoNext, 
   canGoPrev, 
   clampPage 
-} from '../handlers/adminVisitors'
+} from '../../../pages/handlers/adminVisitors'
 import { AIConversationsTab } from './AIConversationsTab'
 import { ApiUsageTab } from './ApiUsageTab'
 import { UserEngagementTab } from './UserEngagementTab'

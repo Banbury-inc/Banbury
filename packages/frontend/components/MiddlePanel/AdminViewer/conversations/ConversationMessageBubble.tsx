@@ -1,4 +1,4 @@
-import { Badge } from '../../../components/ui/badge'
+import { Badge } from '../../../ui/badge'
 import { formatMessageContent, type ConversationMessage } from './format-message-content'
 
 interface ConversationMessageBubbleProps {
