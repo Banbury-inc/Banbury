@@ -14,7 +14,6 @@ export interface WebSearchResponse {
 }
 
 export default class WebSearch {
-  constructor(_api: ApiService) {}
   /**
    * Searches the web using DuckDuckGo's instant answers API
    */
@@ -142,7 +141,7 @@ export default class WebSearch {
     
     for (const query of testQueries) {
       try {
-        const result = await this.searchWeb(query);
+        await this.searchWeb(query);
       } catch (error) {
         console.error('Error:', error);
       }

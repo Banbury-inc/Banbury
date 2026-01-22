@@ -2,12 +2,10 @@ import { ApiService } from "../apiService";
 import axios from 'axios';
 
 export default class Files {
-    constructor(_api: ApiService) {}
-
   /**
    * Get user's S3 cloud files
    */
-  static async getUserFiles(_username: string) {
+  static async getUserFiles() {
     try {
       // Ensure token is loaded
       ApiService.loadAuthToken();
@@ -66,7 +64,7 @@ export default class Files {
       // Ensure token is loaded
       ApiService.loadAuthToken();
 
-      const userFilesResult = await Files.getUserFiles(username);
+      const userFilesResult = await Files.getUserFiles();
       if (!userFilesResult.success) {
         throw new Error('Failed to fetch user files');
       }
@@ -525,7 +523,7 @@ export default class Files {
       ApiService.loadAuthToken();
       
       // Get all files for the user to find files in the old folder
-      const userFilesResult = await Files.getUserFiles(username);
+      const userFilesResult = await Files.getUserFiles();
       if (!userFilesResult.success) {
         throw new Error('Failed to fetch user files');
       }

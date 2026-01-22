@@ -44,7 +44,6 @@ export interface ListCalendarsResponse {
 }
 
 export default class Calendar{
-    constructor(_api: ApiService) {}
 
   private static withAuthHeaders() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null

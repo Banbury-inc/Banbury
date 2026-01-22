@@ -1,7 +1,6 @@
 import { ApiService } from '../apiService'
 
 export default class Themes {
-  constructor(private api: ApiService) {}
 
   /**
    * Fetch themes from external API

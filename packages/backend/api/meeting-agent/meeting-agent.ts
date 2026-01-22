@@ -16,7 +16,6 @@ import {
 } from '../../../frontend/types/meeting-types';
 
 export default class MeetingAgent {
-  constructor(_api: ApiService) {}
 
   private static baseEndpoint = '/meeting-agent'
 
@@ -1067,9 +1066,6 @@ export default class MeetingAgent {
     message: string
   }> {
     try {
-      // Get username for file path
-      const username = localStorage.getItem('username') || 'unknown'
-      
       // Generate unique filename
       const timestamp = Date.now()
       const extension = file.name.split('.').pop()

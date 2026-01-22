@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Search, X, FileText, FileImage, FileVideo, FileAudio, FileCode, FileSpreadsheet, FileArchive, FileJson, FileX, FileType, FileCheck, FileSearch, FileBarChart, FilePieChart, FileDigit, FileHeart, FileLock, FileMinus, FilePlus, FileQuestion, FileSignature, FileStack, FileSymlink, FileTerminal, FileWarning, FileCog, FileKey, FilePen, FileClock, FileDown, FileUp, FileVolume, FileVolume2, FileMusic, FilePlay, FileBarChart2, ListChecks } from 'lucide-react';
+import { Search, X, FileText, FileImage, FileVideo, FileAudio, FileCode, FileSpreadsheet, FileArchive, FileJson, FileType, ListChecks } from 'lucide-react';
 import { ApiService } from '../../backend/api/apiService';
 import { FileSystemItem } from '../utils/fileTreeUtils';
 import { useToast } from './ui/use-toast';
@@ -25,7 +25,6 @@ const FileSearchModal: React.FC<FileSearchProps> = ({ onFileSelect, onClose }) =
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();

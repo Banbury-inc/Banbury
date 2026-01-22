@@ -47,12 +47,6 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
       }
 
       // Debug + intent: Check the last user message and optionally trigger Browserbase session
-      const lastMessage = messagesWithAttachmentParts[messagesWithAttachmentParts.length - 1];
-      let lastTextContent: string = '';
-      if (lastMessage && lastMessage.role === 'user') {
-        lastTextContent = lastMessage.content?.find((c: any) => c.type === 'text')?.text || '';
-      }
-
       // Check for document context in localStorage
       const documentContext = getDocumentContext();
 

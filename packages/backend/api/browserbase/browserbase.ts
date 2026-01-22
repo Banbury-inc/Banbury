@@ -9,7 +9,6 @@ export interface BrowserbaseSessionResult {
 }
 
 export default class Browserbase {
-  constructor(_api: ApiService) {}
 
   static async createSession(startUrl?: string): Promise<{ success: boolean; session?: BrowserbaseSessionResult; error?: string }> {
     try {

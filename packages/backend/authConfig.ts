@@ -3,9 +3,6 @@
  * This helps manage the redirect URI issues seen in the backend
  */
 
-// Custom protocol redirect for Electron desktop app (used after web callback)
-const ELECTRON_PROTOCOL_URI = 'banbury://auth/callback'
-
 /**
  * Checks if the app is running in the Electron desktop shell
  */
