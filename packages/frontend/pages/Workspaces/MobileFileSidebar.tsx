@@ -4,7 +4,7 @@ import { FileSystemItem } from '../../utils/fileTreeUtils'
 import { CalendarEvent } from '../../../backend/api/calendar/calendar'
 import { Task } from '../../pages/TaskStudio/types'
 import { MeetingSession } from '../../types/meeting-types'
-import { UserInfo } from './types'
+import { UserInfo, PanelGroup } from './types'
 
 interface MobileFileSidebarProps {
   open: boolean
@@ -20,22 +20,9 @@ interface MobileFileSidebarProps {
   folderCreationTrigger: boolean
   meetingsRefreshTrigger: number
   onAdminTabClick: (tabId: string) => void
-  onFileSelect: (file: FileSystemItem) => void
-  onFileDeleted: (fileId: string) => void
-  onFileRenamed: (oldPath: string, newPath: string) => void
-  onFileMoved: (fileId: string, oldPath: string, newPath: string) => void
   onFolderCreated: (folderPath: string) => void
-  onFolderRenamed: (oldPath: string, newPath: string) => void
   onEmailSelect: (email: any) => void
   onComposeEmail: () => void
-  onCreateDocument: (documentName: string) => Promise<void>
-  onCreateSpreadsheet: (spreadsheetName: string) => Promise<void>
-  onCreateNotebook: (notebookName: string) => Promise<void>
-  onCreateDrawio: (diagramName: string) => Promise<void>
-  onCreateTldraw: (canvasName: string) => Promise<void>
-  onCreatePowerpoint: (presentationName: string) => Promise<void>
-  onGenerateImage: () => Promise<void>
-  onCreateFolder: () => void
   onEventSelect: (event: CalendarEvent) => void
   onOpenCalendar: () => void
   onTaskSelect: (task: Task) => void
@@ -44,6 +31,23 @@ interface MobileFileSidebarProps {
   onJoinMeeting: () => void
   onDesktopRecordingStarted: (data: { sessionId: string; windowId: string; platform: string; meetingTitle: string }) => void
   onClose: () => void
+  // Workspace dependencies for FilesTab
+  panelLayout: PanelGroup
+  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
+  setActivePanelId: React.Dispatch<React.SetStateAction<string>>
+  setSelectedFile: React.Dispatch<React.SetStateAction<FileSystemItem | null>>
+  triggerSidebarRefresh: () => void
+  toast: (props: { title: string; description: string; variant: 'default' | 'destructive' | 'success' | 'error' }) => void
+  // Workspace dependencies for EmailTab
+  setSelectedEmail: React.Dispatch<React.SetStateAction<any | null>>
+  setReplyToEmail: React.Dispatch<React.SetStateAction<any>>
+  // Workspace dependencies for CalendarTab
+  setCalendarJumpDate: React.Dispatch<React.SetStateAction<Date | null>>
+  setCalendarSelectedEvent: React.Dispatch<React.SetStateAction<any | null>>
+  // Workspace dependencies for TasksTab
+  setSelectedTask: React.Dispatch<React.SetStateAction<Task | null>>
+  // Workspace dependencies for MeetingsTab
+  setSelectedMeeting: React.Dispatch<React.SetStateAction<MeetingSession | null>>
 }
 
 export function MobileFileSidebar({
@@ -60,22 +64,9 @@ export function MobileFileSidebar({
   folderCreationTrigger,
   meetingsRefreshTrigger,
   onAdminTabClick,
-  onFileSelect,
-  onFileDeleted,
-  onFileRenamed,
-  onFileMoved,
   onFolderCreated,
-  onFolderRenamed,
   onEmailSelect,
   onComposeEmail,
-  onCreateDocument,
-  onCreateSpreadsheet,
-  onCreateNotebook,
-  onCreateDrawio,
-  onCreateTldraw,
-  onCreatePowerpoint,
-  onGenerateImage,
-  onCreateFolder,
   onEventSelect,
   onOpenCalendar,
   onTaskSelect,
@@ -84,6 +75,18 @@ export function MobileFileSidebar({
   onJoinMeeting,
   onDesktopRecordingStarted,
   onClose,
+  panelLayout,
+  setPanelLayout,
+  setActivePanelId,
+  setSelectedFile,
+  triggerSidebarRefresh,
+  toast,
+  setSelectedEmail,
+  setReplyToEmail,
+  setCalendarJumpDate,
+  setCalendarSelectedEvent,
+  setSelectedTask,
+  setSelectedMeeting,
 }: MobileFileSidebarProps) {
   return (
     <>
@@ -135,70 +138,36 @@ export function MobileFileSidebar({
           </div>
           <div className="flex-1 overflow-hidden">
             <LeftPanel
-              currentView="workspaces"
               userInfo={userInfo}
               activeTab={activeTab}
-              onTabChange={onTabChange}
               onAdminTabClick={(tabId) => {
                 onAdminTabClick(tabId)
                 onClose()
               }}
-              onFileSelect={(file) => {
-                onFileSelect(file)
-                onClose()
-              }}
               selectedFile={selectedFile}
               refreshTrigger={refreshTrigger}
-              onFileDeleted={onFileDeleted}
-              onFileRenamed={onFileRenamed}
-              onFileMoved={onFileMoved}
               onFolderCreated={onFolderCreated}
-              onFolderRenamed={onFolderRenamed}
               triggerRootFolderCreation={folderCreationTrigger}
-              onEmailSelect={(email) => {
-                onEmailSelect(email)
-                onClose()
-              }}
-              onComposeEmail={onComposeEmail}
-              onCreateDocument={onCreateDocument}
-              onCreateSpreadsheet={onCreateSpreadsheet}
-              onCreateNotebook={onCreateNotebook}
-              onCreateDrawio={onCreateDrawio}
-              onCreateTldraw={onCreateTldraw}
-              onCreatePowerpoint={onCreatePowerpoint}
-              onGenerateImage={onGenerateImage}
-              onCreateFolder={onCreateFolder}
-              onEventSelect={(event) => {
-                onEventSelect(event)
-                onClose()
-              }}
               onOpenCalendar={() => {
                 onOpenCalendar()
                 onClose()
               }}
-              onTaskSelect={(task) => {
-                onTaskSelect(task)
-                onClose()
-              }}
               selectedTask={selectedTask}
-              onCreateTask={() => {
-                onCreateTask()
-                onClose()
-              }}
-              onMeetingSelect={(meeting) => {
-                onMeetingSelect(meeting)
-                onClose()
-              }}
               selectedMeeting={selectedMeeting}
-              onJoinMeeting={() => {
-                onJoinMeeting()
-                onClose()
-              }}
-              onDesktopRecordingStarted={(data) => {
-                onDesktopRecordingStarted(data)
-                onClose()
-              }}
               meetingsRefreshTrigger={meetingsRefreshTrigger}
+              activePanelId={activePanelId}
+              panelLayout={panelLayout}
+              setPanelLayout={setPanelLayout}
+              setActivePanelId={setActivePanelId}
+              setSelectedFile={setSelectedFile}
+              triggerSidebarRefresh={triggerSidebarRefresh}
+              toast={toast}
+              setSelectedEmail={setSelectedEmail}
+              setReplyToEmail={setReplyToEmail}
+              setCalendarJumpDate={setCalendarJumpDate}
+              setCalendarSelectedEvent={setCalendarSelectedEvent}
+              setSelectedTask={setSelectedTask}
+              setSelectedMeeting={setSelectedMeeting}
             />
           </div>
         </div>

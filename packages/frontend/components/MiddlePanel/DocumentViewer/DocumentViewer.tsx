@@ -4,7 +4,7 @@ import { useToast } from '../../ui/use-toast';
 import WordViewer from './WordViewer';
 import { ApiService } from '../../../../backend/api/apiService'
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import { ShareFileDialog } from '../../share-file/ShareFileDialog';
+import { ShareFileDialog } from '../../LeftPanel/components/FilesTab/components/share-file/ShareFileDialog';
 
 interface DocumentViewerProps {
   file: FileSystemItem;

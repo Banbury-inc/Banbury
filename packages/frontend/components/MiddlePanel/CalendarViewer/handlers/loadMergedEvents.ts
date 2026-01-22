@@ -1,6 +1,6 @@
 import { ApiService } from '../../../../../backend/api/apiService'
 import { CalendarEvent } from '../../../../../backend/api/calendar/calendar'
-import { getSelectedProvider } from '../../../LeftPanel/components/handlers/calendarProvider'
+import { getSelectedProvider } from '../../../LeftPanel/components/CalendarTab/calendarProvider'
 
 interface LoadMergedEventsParams {
   calendarIds: string[]

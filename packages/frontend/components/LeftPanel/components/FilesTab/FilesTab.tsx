@@ -31,6 +31,8 @@ import { Checkbox } from "../../../ui/checkbox"
 import { handleRefreshFiles } from "./handlers/handleRefreshFiles"
 import { handleRefreshComplete } from "./handlers/handleRefreshComplete"
 import { FILE_TYPE_CATEGORIES } from "./handlers/handleFileTypeFilter"
+import { useWorkspaceHandlers } from "./handlers/workspaceHandlers"
+import { PanelGroup, UserInfo } from "../../../../pages/Workspaces/types"
 
 type FileProvider = 'local' | 'google-drive' | 'onedrive'
 type LocalViewMode = 'all' | 'recent' | 'starred' | 'shared'
@@ -38,50 +40,66 @@ type GoogleDriveViewMode = 'my-drive' | 'recent' | 'starred' | 'trash'
 type OneDriveViewMode = 'root' | 'recent' | 'favorites' | 'search' | 'trash'
 
 interface FilesTabProps {
-  userInfo?: {
-    username: string
-    email?: string
-  } | null
-  onFileSelect?: (file: FileSystemItem) => void
+  userInfo?: UserInfo | null
   selectedFile?: FileSystemItem | null
   onRefreshComplete?: () => void
   refreshTrigger?: number
-  onFileDeleted?: (fileId: string) => void
-  onFileRenamed?: (oldPath: string, newPath: string) => void
-  onFileMoved?: (fileId: string, oldPath: string, newPath: string) => void
   onFolderCreated?: (folderPath: string) => void
-  onFolderRenamed?: (oldPath: string, newPath: string) => void
   onFolderDeleted?: (folderPath: string) => void
   triggerRootFolderCreation?: boolean
-  onCreateDocument?: (documentName: string) => void
-  onCreateSpreadsheet?: (spreadsheetName: string) => void
-  onCreateNotebook?: (notebookName: string) => void
-  onCreateDrawio?: (diagramName: string) => void
-  onCreateTldraw?: (drawingName: string) => void
-  onCreatePowerpoint?: (presentationName: string) => void
   onCreateFolder?: () => void
+  // Workspace dependencies
+  activePanelId: string
+  panelLayout: PanelGroup
+  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
+  setActivePanelId: React.Dispatch<React.SetStateAction<string>>
+  setSelectedFile: React.Dispatch<React.SetStateAction<FileSystemItem | null>>
+  triggerSidebarRefresh: () => void
+  toast: (props: { title: string; description: string; variant: 'default' | 'destructive' | 'success' | 'error' }) => void
 }
 
 export function FilesTab({
   userInfo,
-  onFileSelect,
   selectedFile,
   onRefreshComplete: externalOnRefreshComplete,
   refreshTrigger,
-  onFileDeleted,
-  onFileRenamed,
-  onFileMoved,
   onFolderCreated,
-  onFolderRenamed,
   onFolderDeleted,
   triggerRootFolderCreation,
-  onCreateDocument,
-  onCreateSpreadsheet,
-  onCreateDrawio,
-  onCreateTldraw,
-  onCreatePowerpoint,
   onCreateFolder,
+  activePanelId,
+  panelLayout,
+  setPanelLayout,
+  setActivePanelId,
+  setSelectedFile,
+  triggerSidebarRefresh,
+  toast,
 }: FilesTabProps) {
+  // Use workspace handlers hook
+  const {
+    handleFileSelect,
+    handleFileDeleted,
+    handleFileRenamed,
+    handleFileMoved,
+    handleFolderRenamed,
+    handleCreateDocument,
+    handleCreateSpreadsheet,
+    handleCreateNotebook,
+    handleCreateDrawio,
+    handleCreateTldraw,
+    handleCreatePowerpoint,
+    handleGenerateImage
+  } = useWorkspaceHandlers({
+    activePanelId,
+    panelLayout,
+    setPanelLayout,
+    setActivePanelId,
+    setSelectedFile,
+    selectedFile: selectedFile || null,
+    triggerSidebarRefresh,
+    toast,
+    userInfo: userInfo || null
+  })
   const [fileProvider, setFileProvider] = useState<FileProvider>('local')
   const [localViewMode, setLocalViewMode] = useState<LocalViewMode>('all')
   const [googleDriveViewMode, setGoogleDriveViewMode] = useState<GoogleDriveViewMode>('my-drive')
@@ -239,36 +257,7 @@ export function FilesTab({
     }
   }
 
-  // Trigger create actions via window object (set by LocalFilesView)
-  const handleCreateDocument = () => {
-    if ((window as any).__handleCreateDocument) {
-      (window as any).__handleCreateDocument()
-    }
-  }
-
-  const handleCreateSpreadsheet = () => {
-    if ((window as any).__handleCreateSpreadsheet) {
-      (window as any).__handleCreateSpreadsheet()
-    }
-  }
-
-  const handleCreateDrawio = () => {
-    if ((window as any).__handleCreateDrawio) {
-      (window as any).__handleCreateDrawio()
-    }
-  }
-
-  const handleCreateTldraw = () => {
-    if ((window as any).__handleCreateTldraw) {
-      (window as any).__handleCreateTldraw()
-    }
-  }
-
-  const handleCreatePowerpoint = () => {
-    if ((window as any).__handleCreatePowerpoint) {
-      (window as any).__handleCreatePowerpoint()
-    }
-  }
+  // Note: Create handlers are now provided by useWorkspaceHandlers hook above
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -668,22 +657,22 @@ export function FilesTab({
           <LocalFilesView
             viewMode={localViewMode === 'all' ? 'local' : localViewMode}
             userInfo={userInfo}
-            onFileSelect={onFileSelect}
+            onFileSelect={handleFileSelect}
             selectedFile={selectedFile}
             onRefreshComplete={handleLocalRefreshComplete}
             refreshTrigger={effectiveRefreshTrigger}
-            onFileDeleted={onFileDeleted}
-            onFileRenamed={onFileRenamed}
-            onFileMoved={onFileMoved}
+            onFileDeleted={handleFileDeleted}
+            onFileRenamed={handleFileRenamed}
+            onFileMoved={handleFileMoved}
             onFolderCreated={onFolderCreated}
-            onFolderRenamed={onFolderRenamed}
+            onFolderRenamed={handleFolderRenamed}
             onFolderDeleted={onFolderDeleted}
             triggerRootFolderCreation={triggerRootFolderCreation}
-            onCreateDocument={onCreateDocument}
-            onCreateSpreadsheet={onCreateSpreadsheet}
-            onCreateDrawio={onCreateDrawio}
-            onCreateTldraw={onCreateTldraw}
-            onCreatePowerpoint={onCreatePowerpoint}
+            onCreateDocument={handleCreateDocument}
+            onCreateSpreadsheet={handleCreateSpreadsheet}
+            onCreateDrawio={handleCreateDrawio}
+            onCreateTldraw={handleCreateTldraw}
+            onCreatePowerpoint={handleCreatePowerpoint}
             fileInputRef={fileInputRef}
             folderInputRef={folderInputRef}
             activeFilters={activeFilters}
@@ -694,7 +683,7 @@ export function FilesTab({
         {fileProvider === 'google-drive' && (
           <GoogleDriveView
             viewMode={googleDriveViewMode}
-            onFileSelect={onFileSelect}
+            onFileSelect={handleFileSelect}
             selectedFile={selectedFile}
             activeFilters={activeFilters}
           />
@@ -704,7 +693,7 @@ export function FilesTab({
         {fileProvider === 'onedrive' && (
           <OneDriveView
             viewMode={oneDriveViewMode}
-            onFileSelect={onFileSelect}
+            onFileSelect={handleFileSelect}
             selectedFile={selectedFile}
             activeFilters={activeFilters}
           />

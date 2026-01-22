@@ -13,9 +13,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from '../../ui/dropdown-menu'
-import { loadCalendars } from '../../LeftPanel/components/handlers/loadCalendars'
-import { loadMicrosoftCalendars } from '../../LeftPanel/components/handlers/loadMicrosoftCalendars'
-import { getSelectedProvider } from '../../LeftPanel/components/handlers/calendarProvider'
+import { loadCalendars } from '../../LeftPanel/components/CalendarTab/handlers/loadCalendars'
+import { loadMicrosoftCalendars } from '../../LeftPanel/components/CalendarTab/handlers/loadMicrosoftCalendars'
+import { getSelectedProvider } from '../../LeftPanel/components/CalendarTab/calendarProvider'
 import { loadMergedEvents } from './handlers/loadMergedEvents'
 import { 
   getVisibleCalendarIds, 

@@ -1,5 +1,5 @@
 import { UserInfo } from '../types'
-import { handleCreateImage } from './handleCreateImage'
+import { handleCreateImage } from '../../../components/LeftPanel/components/FilesTab/handlers/handleCreateImage'
 
 interface ToastFunction {
   (options: {

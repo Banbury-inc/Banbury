@@ -11,44 +11,46 @@ import { X, Menu } from 'lucide-react';
 import { SplitZones } from '../../components/common/SplitZones';
 import { useRouter } from 'next/router';
 import { useIsMobile } from '../../hooks/use-mobile';
-import { dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-import { attachClosestEdge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
 import { TiptapAIProvider } from '../../contexts/TiptapAIContext';
 import { TooltipProvider } from "../../components/ui/tooltip";
 import { Toaster } from "../../components/ui/toaster";
 import { useToast } from "../../components/ui/use-toast";
 import { ApiService } from '../../../backend/api/apiService';
-import { extractEmailContent } from '../../utils/emailUtils';
-import { handleCreateSpreadsheet } from './handlers/handleCreateSpreadsheet';
-import { handleCreateWordDocument } from './handlers/handleCreateWordDocument';
-import { handleCreateNotebook } from './handlers/handleCreateNotebook';
-import { handleCreateDrawio } from './handlers/handleCreateDrawio';
-import { handleCreateTldraw } from './handlers/handleCreateTldraw';
-import { handleCreatePowerpoint } from './handlers/handleCreatePowerpoint';
 import { renderPanel } from './handlers/renderPanel';
-import { handleFileMoved } from './handlers/handleFileMoved';
-import { handleFolderRenamed } from './handlers/handleFolderRenamed';
-import { handleFileDeleted } from './handlers/handleFileDeleted';
-import { handleFileRenamed } from './handlers/handleFileRenamed';
 import { splitPanel } from './handlers/splitPanel';
-import { openCalendarInTab } from './handlers/openCalendarInTab';
-import { handleCalendarEventSelect } from './handlers/handleCalendarEventSelect';
+import { openCalendarInTab } from '../../components/LeftPanel/components/CalendarTab/handlers/openCalendarInTab';
+import { handleCalendarEventSelect } from '../../components/LeftPanel/components/CalendarTab/handlers/handleCalendarEventSelect';
 import { handleMeetingSelect as handleMeetingSelectHandler } from './handlers/handleMeetingSelect';
-import { handleReplyToEmail } from './handlers/handleReplyToEmail';
-import { handleComposeEmail } from './handlers/handleComposeEmail';
+import { handleReplyToEmail } from '../../components/LeftPanel/components/EmailTab/handlers/handleReplyToEmail';
+import { handleComposeEmail } from '../../components/LeftPanel/components/EmailTab/handlers/handleComposeEmail';
 import { loadConversations, loadConversation, deleteConversation } from './handlers/conversationManagement';
 import { findPanel, getAllTabs, updatePanelActiveTab, addTabToPanel, removeTabFromPanel } from './handlers/panelUtils';
-import { findTabInAllLayouts } from './handlers/findTabInAllLayouts';
 import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, openAdminInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
-import { isDrawioFile, isTldrawFile, isPowerPointFile } from './handlers/fileTypeUtils';
+import { 
+  isDrawioFile, 
+  isTldrawFile, 
+  isPowerPointFile, 
+  isImageFile,
+  isPdfFile,
+  isDocumentFile,
+  isSpreadsheetFile,
+  isVideoFile,
+  isCodeFile,
+  isBrowserFile,
+} from './handlers/fileTypeUtils';
 import { createWorkspacesKeyboardHandler } from './handlers/createWorkspacesKeyboardHandler';
 import { renderAssistantPanel } from './handlers/renderAssistantPanel';
 import { AiTabRuntimeHost } from './handlers/AiTabRuntimeHost';
 import { useLeftPanelResize } from './handlers/handleLeftPanelResize';
 import { checkAuthAndFetchUser } from './handlers/checkAuthAndFetchUser';
 import { handleDesktopRecordingStarted as handleDesktopRecordingStartedHandler } from './handlers/handleDesktopRecordingStarted';
-import { handleGenerateImage as handleGenerateImageHandler } from './handlers/handleGenerateImage';
 import { createRenderPanelGroup } from './handlers/renderPanelGroup';
+import { createDragMonitor } from './handlers/dragMonitor';
+import { registerDropTargets } from './handlers/dropTargetRegistration';
+import { extractReplyBody as extractReplyBodyHandler } from './handlers/extractReplyBody';
+import { renderAssistantPanelGroup as renderAssistantPanelGroupHandler } from './handlers/renderAssistantPanelGroup';
+import { setupActiveAiTabId } from './handlers/activeAiTabId';
+import { handleFileSelect as handleFileSelectHandler } from '../../components/LeftPanel/components/FilesTab/handlers/handleFileSelect';
 import { 
   getStoredKeybinds, 
   KeybindsState 
@@ -64,7 +66,6 @@ import {
   Panel,
   SplitDirection,
   PanelGroup,
-  AiTab,
   DragState,
 } from './types';
 import { createInitialAiTab, createAiTab } from '../../components/RightPanel/handlers/aiTabHandlers';
@@ -72,7 +73,7 @@ import { subscribeTodoEventListener } from '../../components/RightPanel/handlers
 import { createTitleCandidateHandler } from './handlers/handleTitleCandidate';
 import { createWorkspaceReopenFileHandler, WORKSPACE_REOPEN_FILE_EVENT } from './handlers/handleWorkspaceReopenFile';
 import { createAssistantOpenBrowserHandler, ASSISTANT_OPEN_BROWSER_EVENT } from './handlers/handleAssistantOpenBrowser';
-import { createFileSidebarRefreshHandler, FILE_SIDEBAR_REFRESH_EVENT } from './handlers/handleFileSidebarRefresh';
+import { createFileSidebarRefreshHandler, FILE_SIDEBAR_REFRESH_EVENT } from '../../components/LeftPanel/components/FilesTab/handlers/handleFileSidebarRefresh';
 import { createOpenPresentationInViewerHandler, OPEN_PRESENTATION_IN_VIEWER_EVENT } from './handlers/handleOpenPresentationInViewer';
 import { createWorkspaceFindAndOpenFileHandler, WORKSPACE_FIND_AND_OPEN_FILE_EVENT } from './handlers/handleWorkspaceFindAndOpenFile';
 import { createKeybindsUpdateHandler, KEYBINDS_UPDATED_EVENT } from './handlers/handleKeybindsUpdate';
@@ -97,7 +98,7 @@ const Workspaces = (): React.ReactNode => {
   const [selectedMeeting, setSelectedMeeting] = useState<MeetingSession | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [meetingsRefreshTrigger, _setMeetingsRefreshTrigger] = useState<number>(0);
-  const [folderCreationTrigger, setFolderCreationTrigger] = useState<boolean>(false);
+  const [folderCreationTrigger] = useState<boolean>(false);
   const [conversations, setConversations] = useState<any[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [replyToEmail, setReplyToEmail] = useState<any>(null);
@@ -182,55 +183,7 @@ const Workspaces = (): React.ReactNode => {
 
 
 
-  const isImageFile = (fileName: string): boolean => {
-    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg']
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    return imageExtensions.includes(extension)
-  };
-
-  const isPdfFile = (fileName: string): boolean => {
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    return extension === '.pdf'
-  };
-
-  const isDocumentFile = (fileName: string): boolean => {
-    const documentExtensions = ['.docx', '.doc', '.txt', '.rtf', '.odt']
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    return documentExtensions.includes(extension)
-  };
-
-  const isSpreadsheetFile = (fileName: string): boolean => {
-    const spreadsheetExtensions = ['.csv', '.xlsx', '.xls']
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    return spreadsheetExtensions.includes(extension)
-  };
-
-  const isVideoFile = (fileName: string): boolean => {
-    const videoExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v', '.3gp', '.ogv']
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    const isVideo = videoExtensions.includes(extension)
-    return isVideo
-  };
-
-  const isCodeFile = (fileName: string): boolean => {
-    const codeExtensions = [
-      '.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala',
-      '.html', '.htm', '.css', '.scss', '.sass', '.less', '.xml', '.json', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf', '.sh', '.bash', '.zsh', '.fish',
-      '.sql', '.r', '.m', '.mat', '.ipynb', '.jl', '.dart', '.lua', '.pl', '.pm', '.tcl', '.vbs', '.ps1', '.bat', '.cmd', '.coffee', '.litcoffee', '.iced',
-      '.md', '.markdown', '.tex', '.rtex', '.bib', '.vue', '.svelte'
-    ]
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    return codeExtensions.includes(extension)
-  };
-
-  const isBrowserFile = (fileName: string): boolean => {
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    return extension === '.browserbase'
-  };
-
-  const isViewableFile = (fileName: string): boolean => {
-    return isBrowserFile(fileName) || isImageFile(fileName) || isPdfFile(fileName) || isDocumentFile(fileName) || isSpreadsheetFile(fileName) || isVideoFile(fileName) || isCodeFile(fileName) || isDrawioFile(fileName) || isTldrawFile(fileName) || isPowerPointFile(fileName)
-  };
+  // File type checking functions are imported from fileTypeUtils
 
   const loadConversationsCallback = async () => {
     await loadConversations(setIsLoadingConversations, setConversations);
@@ -260,42 +213,18 @@ const Workspaces = (): React.ReactNode => {
   }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout, setSelectedFile]);
 
   const handleFileSelect = useCallback((file: FileSystemItem) => {
-    // Check if it's a Drive file
-    const isDriveFile = file.path?.startsWith('drive://')
-    
-    // For Drive files, check mimeType; for local files, check extension
-    let viewable = false
-    if (isDriveFile) {
-      // Google Workspace files are always viewable (Docs, Sheets, Slides)
-      if (file.mimeType?.includes('vnd.google-apps')) {
-        viewable = true
-      } else {
-        // Check other Drive file types (images, PDFs, videos, documents, spreadsheets, presentations, etc)
-        viewable = !!(file.mimeType && (
-          file.mimeType.includes('image/') ||
-          file.mimeType.includes('pdf') ||
-          file.mimeType.includes('video/') ||
-          file.mimeType.includes('text/') ||
-          file.mimeType.includes('msword') ||
-          file.mimeType.includes('wordprocessingml') ||
-          file.mimeType.includes('excel') ||
-          file.mimeType.includes('spreadsheetml') ||
-          file.mimeType.includes('csv') ||
-          file.mimeType.includes('presentationml') ||
-          file.mimeType.includes('ms-powerpoint')
-        ))
-      }
-    } else {
-      viewable = isViewableFile(file.name)
-    }
-    
-    if (!viewable) {
-      setSelectedFile(file);
-      return;
-    }
-    
-    openFileInTabCallback(file, activePanelId);
-  }, [activePanelId, openFileInTabCallback, isViewableFile, setSelectedFile]);
+    handleFileSelectHandler({
+      file,
+      activePanelId,
+      panelLayout,
+      getAllTabs,
+      updatePanelActiveTab,
+      addTabToPanel,
+      setActivePanelId,
+      setPanelLayout,
+      setSelectedFile,
+    });
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout, setSelectedFile]);
 
   const openEmailInTabCallback = useCallback((email: any, targetPanelId: string = activePanelId) => {
     openEmailInTab(
@@ -371,34 +300,7 @@ const Workspaces = (): React.ReactNode => {
 
   // Helper function to extract and format email body for replies
   const extractReplyBody = useCallback((email: any): string => {
-    if (!email?.payload) return '';
-    
-    // Extract full email content
-    const emailContent = extractEmailContent(email.payload);
-    
-    // Prefer HTML content if available, otherwise use text
-    let body = emailContent.html || emailContent.text || email.snippet || '';
-    
-    // If we have HTML content, clean it up for reply formatting
-    if (emailContent.html) {
-      // Remove excessive styling but keep structure
-      body = body
-        .replace(/style="[^"]*"/g, '') // Remove inline styles
-        .replace(/class="[^"]*"/g, '') // Remove classes
-        .replace(/<div[^>]*>/g, '<p>') // Convert divs to paragraphs
-        .replace(/<\/div>/g, '</p>') // Close paragraphs
-        .replace(/<br\s*\/?>/g, '<br>') // Normalize line breaks
-        .replace(/<p><\/p>/g, '') // Remove empty paragraphs
-        .replace(/<p><br><\/p>/g, '<br>') // Convert empty paragraphs to line breaks
-        .trim();
-    } else if (emailContent.text) {
-      // For plain text, preserve line breaks
-      body = emailContent.text
-        .replace(/\n/g, '<br>') // Convert newlines to HTML line breaks
-        .trim();
-    }
-    
-    return body;
+    return extractReplyBodyHandler(email);
   }, []);
 
   // Handle reply to email - opens a new compose tab
@@ -564,29 +466,7 @@ const Workspaces = (): React.ReactNode => {
 
   // Render assistant panel group (recursive for nested splits)
   const renderAssistantPanelGroup = useCallback((group: PanelGroup): React.ReactNode => {
-    if (group.type === 'panel' && group.panel) {
-      return renderAssistantPanelWrapper(group.panel);
-    }
-    
-    if (group.type === 'group' && group.children) {
-      return (
-        <Allotment
-          vertical={group.direction === 'vertical'}
-          proportionalLayout={true}
-          defaultSizes={group.children.map((child) => child.size || 50)}
-          key={group.id}
-          className="h-full"
-        >
-          {group.children.map((child) => (
-            <Allotment.Pane key={child.id}>
-              {renderAssistantPanelGroup(child)}
-            </Allotment.Pane>
-          ))}
-        </Allotment>
-      );
-    }
-    
-    return null;
+    return renderAssistantPanelGroupHandler({ group, renderAssistantPanelWrapper });
   }, [renderAssistantPanelWrapper]);
 
   // Detect Mac platform for keyboard shortcut display
@@ -658,65 +538,12 @@ const Workspaces = (): React.ReactNode => {
   // Set global active AI tab ID for plan execution coordination
   // This allows the PlanViewer to know which AI tab to send messages to
   useEffect(() => {
-    // Helper to find the active panel in the dock layout
-    const findActivePanel = (group: PanelGroup): Panel | null => {
-      if (group.type === 'panel' && group.panel) {
-        if (group.panel.id === activeAssistantPanelId) {
-          return group.panel
-        }
-      }
-      if (group.type === 'split' && group.children) {
-        for (const child of group.children) {
-          const found = findActivePanel(child)
-          if (found) return found
-        }
-      }
-      return null
-    }
-
-    const activePanel = findActivePanel(assistantDockLayout)
-    const activeTabId = activePanel?.activeTabId || activePanel?.tabs[0]?.id
-
-    if (activeTabId) {
-      (window as any).__banburyActiveAiTabId = activeTabId
-    }
-    
-    // Populate __banburyAiTabs with AI tabs from BOTH layouts for plan execution coordination
-    // This ensures agents are discoverable even when dragged between docks
-    const mainTabs = getAllTabs(panelLayout)
-    const assistantTabs = getAllTabs(assistantDockLayout)
-    const allAiTabs = [...mainTabs, ...assistantTabs].filter((t): t is AiTab => t.type === 'ai')
-    ;(window as any).__banburyAiTabs = allAiTabs
-    
-    // Register all tab threadIds in the thread map
-    const threadMap = (window as any).__banburyTabThreadMap || {}
-    allAiTabs.forEach((tab) => {
-      if (tab.threadId) {
-        threadMap[tab.id] = tab.threadId
-      }
-    })
-    ;(window as any).__banburyTabThreadMap = threadMap
-
-    return () => {
-      delete (window as any).__banburyActiveAiTabId
-    }
+    return setupActiveAiTabId({
+      panelLayout,
+      assistantDockLayout,
+      activeAssistantPanelId,
+    });
   }, [panelLayout, assistantDockLayout, activeAssistantPanelId]);
-
-  const handleGenerateImage = async () => {
-    await handleGenerateImageHandler({
-      userInfo,
-      toast,
-      triggerSidebarRefresh
-    })
-  }
-
-
-
-  const handleCreateFolder = () => {
-    if (!userInfo?.username) return;
-    setFolderCreationTrigger(true);
-    setTimeout(() => setFolderCreationTrigger(false), 100);
-  };
 
   // Handle compose email - now opens in a tab
   const handleComposeEmailCallback = useCallback(() => {
@@ -783,26 +610,6 @@ const Workspaces = (): React.ReactNode => {
     })
   }, [openMeetingInTabCallback, activePanelId, setSelectedMeeting])
 
-  const handleFileDeletedCallback = useCallback((fileId: string) => {
-    handleFileDeleted(fileId, selectedFile, setPanelLayout, setSelectedFile, triggerSidebarRefresh);
-  }, [selectedFile, setPanelLayout, setSelectedFile, triggerSidebarRefresh]);
-
-  const handleFileRenamedCallback = useCallback((oldPath: string, newPath: string) => {
-    handleFileRenamed(oldPath, newPath, selectedFile, setPanelLayout, setSelectedFile, triggerSidebarRefresh);
-  }, [selectedFile, setPanelLayout, setSelectedFile, triggerSidebarRefresh]);
-
-  // Handle file moved - using extracted function
-  const handleFileMovedWrapper = useCallback((fileId: string, oldPath: string, newPath: string) => {
-    handleFileMoved({
-      fileId,
-      oldPath,
-      newPath,
-      selectedFile,
-      setPanelLayout,
-      setSelectedFile,
-      triggerSidebarRefresh
-    });
-  }, [selectedFile, setPanelLayout, setSelectedFile, triggerSidebarRefresh]);
 
   const handleFolderCreated = useCallback((folderPath: string) => {
     // Show success toast
@@ -814,11 +621,6 @@ const Workspaces = (): React.ReactNode => {
     // Refresh sidebar to show the new folder
     triggerSidebarRefresh();
   }, [toast, triggerSidebarRefresh]);
-
-  const handleFolderRenamedCallback = useCallback((oldPath: string, newPath: string) => {
-    handleFolderRenamed(oldPath, newPath, selectedFile, setPanelLayout, setSelectedFile, triggerSidebarRefresh, toast);
-  }, [selectedFile, toast, triggerSidebarRefresh]);
-
 
   useEffect(() => {
     // Ensure dark mode is enabled
@@ -909,253 +711,27 @@ const Workspaces = (): React.ReactNode => {
 
   // Register panels as drop targets with closest-edge (panel body only) - covers both dock roots
   useEffect(() => {
-    const panelNodes = Array.from(document.querySelectorAll('[data-panel-id]')) as HTMLElement[];
-    const cleanups: Array<() => void> = [];
-    panelNodes.forEach((element) => {
-      const panelId = element.getAttribute('data-panel-id');
-      if (!panelId) return;
-      const cleanup = dropTargetForElements({
-        element,
-        getData: (args: any) =>
-          attachClosestEdge({ type: 'panel', panelId }, {
-            element,
-            input: args.input,
-            allowedEdges: ['left', 'right', 'top', 'bottom'],
-          }),
-        onDrag: (args: any) => {
-          if (!args?.source?.data || args.source.data.type !== 'tab') return;
-          const edge = extractClosestEdge(args.self.data);
-          setDragState((prev) => ({
-            ...prev,
-            dropTargetPanel: panelId,
-            dropZone: edge as any,
-          }));
-        },
-        onDragLeave: () => {
-          setDragState((prev) => ({ ...prev, dropZone: null, dropTargetPanel: null }));
-        },
-        onDrop: () => {
-          setDragState((prev) => ({ ...prev, dropZone: null, dropTargetPanel: null }));
-        },
-      });
-      cleanups.push(cleanup);
+    return registerDropTargets({
+      panelLayout,
+      assistantDockLayout,
+      setDragState,
     });
-
-    return () => cleanups.forEach((fn) => fn());
-  }, [panelLayout, assistantDockLayout]);
+  }, [panelLayout, assistantDockLayout, setDragState]);
 
   // Global monitor: create split on drop based on closest edge - handles cross-dock moves
   useEffect(() => {
-    // Determine which dock root a panel belongs to
-    const getTargetDockRoot = (panelId: string): 'main' | 'assistant' => {
-      return panelId.startsWith('assistant-') ? 'assistant' : 'main';
-    };
-
-    return monitorForElements({
-      onDragStart({ source, location }: any) {
-        if (source?.data?.type !== 'tab') return;
-        const { tab: dragged } = findTabInAllLayouts(source.data.id, panelLayout, assistantDockLayout);
-        const input = location?.current?.input;
-        const pos = input && typeof input.clientX === 'number' && typeof input.clientY === 'number'
-          ? { x: input.clientX, y: input.clientY }
-          : null;
-        setDragState((prev) => ({
-          ...prev,
-          isDragging: true,
-          draggedTab: dragged,
-          draggedFromPanel: source.data.panelId || null,
-          dragStartPosition: pos,
-          currentPosition: pos || prev.currentPosition,
-        }));
-      },
-      onDrag({ source, location }: any) {
-        if (source?.data?.type !== 'tab') return;
-        const input = location?.current?.input;
-        if (input && typeof input.clientX === 'number' && typeof input.clientY === 'number') {
-          const pos = { x: input.clientX, y: input.clientY };
-          setDragState((prev) => ({ ...prev, currentPosition: pos }));
-        }
-      },
-      onDrop({ location, source }: any) {
-        if (source.data.type !== 'tab') return;
-        const tabId = source.data.id as string;
-
-        // Determine target panel and edge
-        const target = location.current.dropTargets.find((t: any) => t.data && (t.data as any).type === 'panel');
-        let edge = target ? (extractClosestEdge(target.data) as 'left' | 'right' | 'top' | 'bottom' | null) : null;
-        let targetPanelId = target ? ((target.data as any).panelId as string) : '';
-
-        // Fallback: compute panel and edge from mouse position when not detected (e.g., dropping over tab header)
-        if (!target || !edge || !targetPanelId) {
-          const pos = dragStateRef.current.currentPosition;
-          if (!pos) {
-            setDragState({
-              isDragging: false,
-              draggedTab: null,
-              draggedFromPanel: null,
-              dragStartPosition: null,
-              currentPosition: null,
-              dragDirection: null,
-              dropZone: null,
-              dropTargetPanel: null,
-            });
-            return;
-          }
-          const el = document.elementFromPoint(pos.x, pos.y) as HTMLElement | null;
-          const panelEl = el ? (el.closest('[data-panel-id]') as HTMLElement | null) : null;
-          if (!panelEl) {
-            setDragState({
-              isDragging: false,
-              draggedTab: null,
-              draggedFromPanel: null,
-              dragStartPosition: null,
-              currentPosition: null,
-              dragDirection: null,
-              dropZone: null,
-              dropTargetPanel: null,
-            });
-            return;
-          }
-          const pid = panelEl.getAttribute('data-panel-id') || '';
-          if (!pid) {
-            setDragState({
-              isDragging: false,
-              draggedTab: null,
-              draggedFromPanel: null,
-              dragStartPosition: null,
-              currentPosition: null,
-              dragDirection: null,
-              dropZone: null,
-              dropTargetPanel: null,
-            });
-            return;
-          }
-          targetPanelId = pid;
-          const rect = panelEl.getBoundingClientRect();
-          const relX = Math.max(0, Math.min(pos.x - rect.left, rect.width));
-          const relY = Math.max(0, Math.min(pos.y - rect.top, rect.height));
-          const leftDist = relX;
-          const rightDist = rect.width - relX;
-          const topDist = relY;
-          const bottomDist = rect.height - relY;
-          const minDist = Math.min(leftDist, rightDist, topDist, bottomDist);
-          if (minDist === leftDist) edge = 'left';
-          else if (minDist === rightDist) edge = 'right';
-          else if (minDist === topDist) edge = 'top';
-          else edge = 'bottom';
-        }
-
-        if (!edge || !targetPanelId) {
-          setDragState({
-            isDragging: false,
-            draggedTab: null,
-            draggedFromPanel: null,
-            dragStartPosition: null,
-            currentPosition: null,
-            dragDirection: null,
-            dropZone: null,
-            dropTargetPanel: null,
-          });
-          return;
-        }
-
-        // Find the dragged tab and its real source (across both layouts)
-        const { tab: draggedTab, sourceLayout, sourcePanelId } = findTabInAllLayouts(tabId, panelLayout, assistantDockLayout);
-        if (!draggedTab || !sourcePanelId) {
-          setDragState({
-            isDragging: false,
-            draggedTab: null,
-            draggedFromPanel: null,
-            dragStartPosition: null,
-            currentPosition: null,
-            dragDirection: null,
-            dropZone: null,
-            dropTargetPanel: null,
-          });
-          return;
-        }
-
-        const targetLayout = getTargetDockRoot(targetPanelId);
-        const direction: SplitDirection = edge === 'left' || edge === 'right' ? 'horizontal' : 'vertical';
-        
-        // Remove tab from source layout
-        if (sourceLayout === 'main') {
-          setPanelLayout((prev) => removeTabFromPanel(prev, sourcePanelId, tabId));
-        } else {
-          setAssistantDockLayout((prev) => removeTabFromPanel(prev, sourcePanelId, tabId));
-        }
-        
-        // Add tab to target layout via split
-        if (targetLayout === 'main') {
-          splitPanelCallback(targetPanelId, direction, draggedTab as FileTab);
-        } else {
-          // Split in assistant layout
-          setAssistantDockLayout((prev) => {
-            const newPanelId = `assistant-panel-${Date.now()}`;
-            const newPanel: Panel = {
-              id: newPanelId,
-              tabs: [draggedTab],
-              activeTabId: draggedTab.id
-            };
-            
-            const splitInLayout = (layout: PanelGroup): PanelGroup => {
-              if (layout.type === 'panel' && layout.panel?.id === targetPanelId) {
-                return {
-                  id: `group-${Date.now()}`,
-                  type: 'group',
-                  direction,
-                  children: [
-                    { ...layout, size: 50 },
-                    {
-                      id: newPanelId,
-                      type: 'panel',
-                      panel: newPanel,
-                      size: 50
-                    }
-                  ]
-                };
-              }
-              if (layout.type === 'group' && layout.children) {
-                return {
-                  ...layout,
-                  children: layout.children.map((child) => splitInLayout(child))
-                };
-              }
-              return layout;
-            };
-            
-            return splitInLayout(prev);
-          });
-          setActiveAssistantPanelId(`assistant-panel-${Date.now()}`);
-        }
-
-        // Reset drag state after handling drop
-        setDragState({
-          isDragging: false,
-          draggedTab: null,
-          draggedFromPanel: null,
-          dragStartPosition: null,
-          currentPosition: null,
-          dragDirection: null,
-          dropZone: null,
-          dropTargetPanel: null,
-        });
-      },
+    return createDragMonitor({
+      panelLayout,
+      assistantDockLayout,
+      dragStateRef,
+      setDragState,
+      setPanelLayout,
+      setAssistantDockLayout,
+      setActiveAssistantPanelId,
+      splitPanelCallback,
     });
-  }, [panelLayout, assistantDockLayout, removeTabFromPanel, splitPanelCallback]);
+  }, [panelLayout, assistantDockLayout, dragStateRef, setDragState, setPanelLayout, setAssistantDockLayout, setActiveAssistantPanelId, splitPanelCallback]);
 
-  const handleLogout = () => {
-    // Clear all authentication data using ApiService
-    ApiService.clearAuthToken();
-    
-    // Clear any additional session data
-    localStorage.removeItem('deviceId');
-    localStorage.removeItem('googleOAuthSession');
-    localStorage.removeItem('userData');
-    
-    // Redirect to home page
-    router.push('/');
-  };
 
 
 
@@ -1203,7 +779,6 @@ const Workspaces = (): React.ReactNode => {
           {/* Navigation Sidebar - Fixed (hidden on mobile) */}
           <div className="hidden md:block">
             <NavSidebar
-              onLogout={handleLogout}
               activeTab={activeLeftPanelTab}
               onTabChange={setActiveLeftPanelTab}
               showAdminToggle={userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com'}
@@ -1247,22 +822,9 @@ const Workspaces = (): React.ReactNode => {
                 folderCreationTrigger={folderCreationTrigger}
                 meetingsRefreshTrigger={meetingsRefreshTrigger}
                 onAdminTabClick={(tabId) => openAdminInTabCallback(tabId, activePanelId)}
-                onFileSelect={handleFileSelect}
-                onFileDeleted={handleFileDeletedCallback}
-                onFileRenamed={handleFileRenamedCallback}
-                onFileMoved={handleFileMovedWrapper}
                 onFolderCreated={handleFolderCreated}
-                onFolderRenamed={handleFolderRenamedCallback}
                 onEmailSelect={handleEmailSelect}
                 onComposeEmail={handleComposeEmailCallback}
-                onCreateDocument={(name) => handleCreateWordDocument(userInfo, toast, triggerSidebarRefresh, name)}
-                onCreateSpreadsheet={(name) => handleCreateSpreadsheet(userInfo, toast, triggerSidebarRefresh, name)}
-                onCreateNotebook={(name) => handleCreateNotebook(userInfo, toast, triggerSidebarRefresh, name)}
-                onCreateDrawio={(name) => handleCreateDrawio(userInfo, toast, triggerSidebarRefresh, name)}
-                onCreateTldraw={(name) => handleCreateTldraw(userInfo, toast, triggerSidebarRefresh, name)}
-                onCreatePowerpoint={(name) => handleCreatePowerpoint(userInfo, toast, triggerSidebarRefresh, name)}
-                onGenerateImage={handleGenerateImage}
-                onCreateFolder={handleCreateFolder}
                 onEventSelect={handleCalendarEventSelectCallback}
                 onOpenCalendar={() => openCalendarInTabCallback(activePanelId)}
                 onTaskSelect={handleTaskSelect}
@@ -1271,6 +833,18 @@ const Workspaces = (): React.ReactNode => {
                 onJoinMeeting={handleJoinMeeting}
                 onDesktopRecordingStarted={handleDesktopRecordingStarted}
                 onClose={() => setMobileFileSidebarOpen(false)}
+                panelLayout={panelLayout}
+                setPanelLayout={setPanelLayout}
+                setActivePanelId={setActivePanelId}
+                setSelectedFile={setSelectedFile}
+                triggerSidebarRefresh={triggerSidebarRefresh}
+                toast={toast}
+                setSelectedEmail={setSelectedEmail}
+                setReplyToEmail={setReplyToEmail}
+                setCalendarJumpDate={setCalendarJumpDate}
+                setCalendarSelectedEvent={setCalendarSelectedEvent}
+                setSelectedTask={setSelectedTask}
+                setSelectedMeeting={setSelectedMeeting}
               />
             )}
 
@@ -1340,40 +914,30 @@ const Workspaces = (): React.ReactNode => {
                         {/* File Sidebar Content */}
                         <div className="flex-1 overflow-hidden">
                           <LeftPanel
-                            currentView="workspaces"
                             userInfo={userInfo}
                             activeTab={activeLeftPanelTab}
-                            onTabChange={setActiveLeftPanelTab}
                             onAdminTabClick={(tabId) => openAdminInTabCallback(tabId, activePanelId)}
-                            onFileSelect={handleFileSelect}
                             selectedFile={selectedFile}
                             refreshTrigger={refreshTrigger}
-                            onFileDeleted={handleFileDeletedCallback}
-                            onFileRenamed={handleFileRenamedCallback}
-                            onFileMoved={handleFileMovedWrapper}
                             onFolderCreated={handleFolderCreated}
-                            onFolderRenamed={handleFolderRenamedCallback}
                             triggerRootFolderCreation={folderCreationTrigger}
-                            onEmailSelect={handleEmailSelect}
-                            onComposeEmail={handleComposeEmailCallback}
-                            onCreateDocument={(name) => handleCreateWordDocument(userInfo, toast, triggerSidebarRefresh, name)}
-                            onCreateSpreadsheet={(name) => handleCreateSpreadsheet(userInfo, toast, triggerSidebarRefresh, name)}
-                            onCreateNotebook={(name) => handleCreateNotebook(userInfo, toast, triggerSidebarRefresh, name)}
-                            onCreateDrawio={(name) => handleCreateDrawio(userInfo, toast, triggerSidebarRefresh, name)}
-                            onCreateTldraw={(name) => handleCreateTldraw(userInfo, toast, triggerSidebarRefresh, name)}
-                            onCreatePowerpoint={(name) => handleCreatePowerpoint(userInfo, toast, triggerSidebarRefresh, name)}
-                            onGenerateImage={handleGenerateImage}
-                            onCreateFolder={handleCreateFolder}
-                            onEventSelect={handleCalendarEventSelectCallback}
-                            onOpenCalendar={() => openCalendarInTabCallback(activePanelId)}
-                            onTaskSelect={handleTaskSelect}
                             selectedTask={selectedTask}
-                            onCreateTask={handleCreateTask}
-                            onMeetingSelect={handleMeetingSelect}
                             selectedMeeting={selectedMeeting}
-                            onJoinMeeting={handleJoinMeeting}
-                            onDesktopRecordingStarted={handleDesktopRecordingStarted}
                             meetingsRefreshTrigger={meetingsRefreshTrigger}
+                            // Workspace dependencies for FilesTab
+                            activePanelId={activePanelId}
+                            panelLayout={panelLayout}
+                            setPanelLayout={setPanelLayout}
+                            setActivePanelId={setActivePanelId}
+                            setSelectedFile={setSelectedFile}
+                            triggerSidebarRefresh={triggerSidebarRefresh}
+                            toast={toast}
+                            setSelectedEmail={setSelectedEmail}
+                            setReplyToEmail={setReplyToEmail}
+                            setCalendarJumpDate={setCalendarJumpDate}
+                            setCalendarSelectedEvent={setCalendarSelectedEvent}
+                            setSelectedTask={setSelectedTask}
+                            setSelectedMeeting={setSelectedMeeting}
                           />
                         </div>
                       </div>

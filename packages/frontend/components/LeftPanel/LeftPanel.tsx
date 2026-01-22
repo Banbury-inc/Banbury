@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
-import { EmailTab } from "./components/EmailTab"
-import { CalendarTab } from "./components/CalendarTab"
+import { EmailTab } from "./components/EmailTab/EmailTab"
+import { CalendarTab } from "./components/CalendarTab/CalendarTab"
 import { FilesTab } from "./components/FilesTab/FilesTab"
 import { TasksTab } from "./components/TasksTab/TasksTab"
 import { MeetingsTab } from "./components/MeetingsTab/MeetingsTab"
@@ -9,49 +9,68 @@ import { Task } from "../../pages/TaskStudio/types"
 import { MeetingSession } from "../../types/meeting-types"
 import { adminTabs } from './components/AdminTabs/adminTabConfig'
 
+import { PanelGroup, UserInfo } from '../../pages/Workspaces/types'
+
 interface AppSidebarProps {
-  currentView: 'dashboard' | 'workspaces'
-  userInfo?: {
-    username: string
-    email?: string
-  } | null
+  userInfo?: UserInfo | null
   activeTab?: string
-  onTabChange?: (tab: string) => void
   onAdminTabClick?: (tabId: string) => void
-  onFileSelect?: (file: FileSystemItem) => void
   selectedFile?: FileSystemItem | null
   onRefreshComplete?: () => void
   refreshTrigger?: number
-  onFileDeleted?: (fileId: string) => void
-  onFileRenamed?: (oldPath: string, newPath: string) => void
-  onFileMoved?: (fileId: string, oldPath: string, newPath: string) => void
   onFolderCreated?: (folderPath: string) => void
-  onFolderRenamed?: (oldPath: string, newPath: string) => void
-  onFolderDeleted?: (folderPath: string) => void
   triggerRootFolderCreation?: boolean
-  onEmailSelect?: (email: any) => void
-  onComposeEmail?: () => void
-  onCreateDocument?: (documentName: string) => void
-  onCreateSpreadsheet?: (spreadsheetName: string) => void
-  onCreateNotebook?: (notebookName: string) => void
-  onCreateDrawio?: (diagramName: string) => void
-  onCreateTldraw?: (drawingName: string) => void
-  onCreatePowerpoint?: (presentationName: string) => void
-  onCreateFolder?: () => void
-  onGenerateImage?: () => void
-  onEventSelect?: (event: any) => void
   onOpenCalendar?: () => void
-  onTaskSelect?: (task: Task) => void
   selectedTask?: Task | null
-  onCreateTask?: () => void
-  onMeetingSelect?: (meeting: MeetingSession) => void
   selectedMeeting?: MeetingSession | null
-  onJoinMeeting?: () => void
-  onDesktopRecordingStarted?: (data: { sessionId: string; windowId: string; platform: string; meetingTitle: string }) => void
   meetingsRefreshTrigger?: number
+  // Workspace dependencies for FilesTab
+  activePanelId?: string
+  panelLayout?: PanelGroup
+  setPanelLayout?: React.Dispatch<React.SetStateAction<PanelGroup>>
+  setActivePanelId?: React.Dispatch<React.SetStateAction<string>>
+  setSelectedFile?: React.Dispatch<React.SetStateAction<FileSystemItem | null>>
+  triggerSidebarRefresh?: () => void
+  toast?: (props: { title: string; description: string; variant: 'default' | 'destructive' | 'success' | 'error' }) => void
+  // Workspace dependencies for EmailTab
+  setSelectedEmail?: React.Dispatch<React.SetStateAction<any | null>>
+  setReplyToEmail?: React.Dispatch<React.SetStateAction<any>>
+  // Workspace dependencies for CalendarTab
+  setCalendarJumpDate?: React.Dispatch<React.SetStateAction<Date | null>>
+  setCalendarSelectedEvent?: React.Dispatch<React.SetStateAction<any | null>>
+  // Workspace dependencies for TasksTab
+  setSelectedTask?: React.Dispatch<React.SetStateAction<Task | null>>
+  // Workspace dependencies for MeetingsTab
+  setSelectedMeeting?: React.Dispatch<React.SetStateAction<MeetingSession | null>>
 }
 
-export function LeftPanel({ currentView, userInfo, activeTab, onTabChange, onAdminTabClick, onFileSelect, selectedFile, onRefreshComplete, refreshTrigger, onFileDeleted, onFileRenamed, onFileMoved, onFolderCreated, onFolderRenamed, onFolderDeleted, triggerRootFolderCreation, onEmailSelect, onComposeEmail, onCreateDocument, onCreateSpreadsheet, onCreateNotebook, onCreateDrawio, onCreateTldraw, onCreatePowerpoint, onCreateFolder, onGenerateImage, onEventSelect, onOpenCalendar, onTaskSelect, selectedTask, onCreateTask, onMeetingSelect, selectedMeeting, onJoinMeeting, onDesktopRecordingStarted, meetingsRefreshTrigger }: AppSidebarProps) {
+export function LeftPanel({ 
+  userInfo, 
+  activeTab, 
+  onAdminTabClick, 
+  selectedFile, 
+  onRefreshComplete, 
+  refreshTrigger, 
+  onFolderCreated, 
+  triggerRootFolderCreation, 
+  onOpenCalendar, 
+  selectedTask, 
+  selectedMeeting, 
+  meetingsRefreshTrigger,
+  activePanelId,
+  panelLayout,
+  setPanelLayout,
+  setActivePanelId,
+  setSelectedFile,
+  triggerSidebarRefresh,
+  toast,
+  setSelectedEmail,
+  setReplyToEmail,
+  setCalendarJumpDate,
+  setCalendarSelectedEvent,
+  setSelectedTask,
+  setSelectedMeeting
+}: AppSidebarProps) {
   const router = useRouter()
   const currentActiveTab = activeTab || 'files'
 
@@ -63,24 +82,19 @@ export function LeftPanel({ currentView, userInfo, activeTab, onTabChange, onAdm
           <div className="flex-1 flex flex-col mt-0 overflow-hidden">
             <FilesTab
               userInfo={userInfo}
-              onFileSelect={onFileSelect}
               selectedFile={selectedFile}
               onRefreshComplete={onRefreshComplete}
               refreshTrigger={refreshTrigger}
-              onFileDeleted={onFileDeleted}
-              onFileRenamed={onFileRenamed}
-              onFileMoved={onFileMoved}
               onFolderCreated={onFolderCreated}
-              onFolderRenamed={onFolderRenamed}
-              onFolderDeleted={onFolderDeleted}
               triggerRootFolderCreation={triggerRootFolderCreation}
-              onCreateDocument={onCreateDocument}
-              onCreateSpreadsheet={onCreateSpreadsheet}
-              onCreateNotebook={onCreateNotebook}
-              onCreateDrawio={onCreateDrawio}
-              onCreateTldraw={onCreateTldraw}
-              onCreatePowerpoint={onCreatePowerpoint}
-              onCreateFolder={onCreateFolder}
+              onCreateFolder={undefined}
+              activePanelId={activePanelId || 'main-panel'}
+              panelLayout={panelLayout!}
+              setPanelLayout={setPanelLayout!}
+              setActivePanelId={setActivePanelId!}
+              setSelectedFile={setSelectedFile!}
+              triggerSidebarRefresh={triggerSidebarRefresh || (() => {})}
+              toast={toast || (() => {})}
             />
           </div>
         )}
@@ -88,9 +102,13 @@ export function LeftPanel({ currentView, userInfo, activeTab, onTabChange, onAdm
         {currentActiveTab === 'email' && (
           <div className="flex-1 flex flex-col mt-0 overflow-hidden">
             <EmailTab 
-              onOpenEmailApp={() => router.push('/email')} 
-              onMessageSelect={onEmailSelect}
-              onComposeEmail={onComposeEmail}
+              onOpenEmailApp={() => router.push('/email')}
+              activePanelId={activePanelId}
+              panelLayout={panelLayout}
+              setPanelLayout={setPanelLayout}
+              setActivePanelId={setActivePanelId}
+              setSelectedEmail={setSelectedEmail}
+              setReplyToEmail={setReplyToEmail}
             />
           </div>
         )}
@@ -99,7 +117,12 @@ export function LeftPanel({ currentView, userInfo, activeTab, onTabChange, onAdm
           <div className="flex-1 flex flex-col mt-0 overflow-hidden">
             <CalendarTab 
               onOpenCalendarApp={onOpenCalendar}
-              onEventSelect={onEventSelect}
+              activePanelId={activePanelId}
+              panelLayout={panelLayout}
+              setPanelLayout={setPanelLayout}
+              setActivePanelId={setActivePanelId}
+              setCalendarJumpDate={setCalendarJumpDate}
+              setCalendarSelectedEvent={setCalendarSelectedEvent}
             />
           </div>
         )}
@@ -107,9 +130,12 @@ export function LeftPanel({ currentView, userInfo, activeTab, onTabChange, onAdm
         {currentActiveTab === 'tasks' && (
           <div className="flex-1 flex flex-col mt-0 overflow-hidden">
             <TasksTab
-              onTaskSelect={onTaskSelect}
               selectedTask={selectedTask}
-              onCreateTask={onCreateTask}
+              activePanelId={activePanelId}
+              panelLayout={panelLayout}
+              setPanelLayout={setPanelLayout}
+              setActivePanelId={setActivePanelId}
+              setSelectedTask={setSelectedTask}
             />
           </div>
         )}
@@ -117,11 +143,13 @@ export function LeftPanel({ currentView, userInfo, activeTab, onTabChange, onAdm
         {currentActiveTab === 'meetings' && (
           <div className="flex-1 flex flex-col mt-0 overflow-hidden">
             <MeetingsTab
-              onMeetingSelect={onMeetingSelect}
               selectedMeeting={selectedMeeting}
-              onJoinMeeting={onJoinMeeting}
-              onDesktopRecordingStarted={onDesktopRecordingStarted}
               refreshTrigger={meetingsRefreshTrigger}
+              activePanelId={activePanelId}
+              panelLayout={panelLayout}
+              setPanelLayout={setPanelLayout}
+              setActivePanelId={setActivePanelId}
+              setSelectedMeeting={setSelectedMeeting}
             />
           </div>
         )}

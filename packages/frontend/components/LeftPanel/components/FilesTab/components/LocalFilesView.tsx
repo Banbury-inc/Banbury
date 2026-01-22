@@ -10,13 +10,13 @@ import {
   FolderPlus,
 } from "lucide-react"
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { toggleFileSelection, collectSelectedFileItems } from "../../../handlers/handle-multi-select"
+import { toggleFileSelection, collectSelectedFileItems } from "../handlers/handle-multi-select"
 import { FileTreeItem, DragState } from "./FileTreeItem"
 import { ApiService } from "../../../../../../backend/api/apiService"
 import OneDrive from "../../../../../../backend/api/onedrive/onedrive"
 import { buildFileTree, FileSystemItem, flattenFileTree } from "../../../../../utils/fileTreeUtils"
 import { Typography } from "../../../../ui/typography"
-import { ShareFileDialog } from "../../../../share-file/ShareFileDialog"
+import { ShareFileDialog } from "./share-file/ShareFileDialog"
 import { useToast } from "../../../../ui/use-toast"
 import { useUserFiles } from "../../../../../contexts/UserFilesContext"
 import { handleCreateDocumentSubmit } from "../handlers/handleCreateDocumentSubmit"
@@ -457,6 +457,7 @@ export function LocalFilesView({
               id: file.file_id || file._id,
               name: file.file_name,
               type: 'file' as const,
+              path: file.file_path || `shared/${file.file_name}`, // Required by FileSystemItem interface
               file_id: file.file_id || file._id,
               file_type: file.file_type,
               file_path: file.file_path || `shared/${file.file_name}`, // Fallback path if not provided
@@ -535,7 +536,7 @@ export function LocalFilesView({
   // Star/unstar handlers
   const handleStarFile = useCallback(async (fileId: string) => {
     // Optimistic update
-    setStarredFileIds((prev) => new Set([...prev, fileId]))
+    setStarredFileIds((prev) => new Set([...Array.from(prev), fileId]))
     const success = await starFile(fileId)
     if (!success) {
       // Rollback on failure
@@ -557,7 +558,7 @@ export function LocalFilesView({
     const success = await unstarFile(fileId)
     if (!success) {
       // Rollback on failure
-      setStarredFileIds((prev) => new Set([...prev, fileId]))
+      setStarredFileIds((prev) => new Set([...Array.from(prev), fileId]))
     }
   }, [])
 

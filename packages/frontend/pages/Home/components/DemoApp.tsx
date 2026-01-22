@@ -755,13 +755,9 @@ export default function DemoApp() {
         >
           <div className="h-full w-60 sm:w-64 md:w-72 lg:w-80">
             <LeftPanel 
-              currentView="workspaces"
               userInfo={mockUserInfo}
               onFileSelect={handleFileSelect}
               selectedFile={selectedFile}
-              onEmailSelect={handleEmailSelect}
-              onEventSelect={handleEventSelect}
-              onComposeEmail={() => {}}
               onCreateDocument={(name) => {}}
               onCreateSpreadsheet={(name) => {}}
               onCreateNotebook={(name) => {}}
