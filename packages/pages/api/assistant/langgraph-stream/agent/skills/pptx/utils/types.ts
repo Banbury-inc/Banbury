@@ -130,41 +130,13 @@ export interface OverlapData {
 }
 
 /**
- * Shape properties extracted from PowerPoint
+ * NOTE: ShapeData class and InventoryData interface are defined in inventory.ts
+ * to avoid conflicts, these types are not re-exported here.
+ * 
+ * For ShapeData class instance: import { ShapeData } from './inventory'
+ * For ShapeDataDict (serialized form): import { ShapeDataDict } from './inventory'
+ * For InventoryData: import { InventoryData } from './inventory'
  */
-export interface ShapeData {
-  /** Left position in inches */
-  left: number
-  /** Top position in inches */
-  top: number
-  /** Width in inches */
-  width: number
-  /** Height in inches */
-  height: number
-  /** Placeholder type (if applicable) */
-  placeholder_type?: string
-  /** Default font size from layout in points */
-  default_font_size?: number
-  /** Overflow information (only present if there is overflow) */
-  overflow?: OverflowData
-  /** Overlap information (only present if there are overlaps) */
-  overlap?: OverlapData
-  /** Warnings array (only present if there are warnings) */
-  warnings?: string[]
-  /** Array of paragraphs in this shape */
-  paragraphs: ParagraphData[]
-}
-
-/**
- * Inventory data structure: slide_id -> { shape_id -> ShapeData }
- */
-export type InventoryData = Record<string, Record<string, ShapeData>>
-
-/**
- * JSON-serializable inventory dictionary
- * This is the format used when saving inventory to JSON files
- */
-export type InventoryDict = Record<string, Record<string, ShapeData>>
 
 // ============================================================================
 // Replace Types (from replace.py)

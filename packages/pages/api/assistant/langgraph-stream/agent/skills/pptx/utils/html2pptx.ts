@@ -213,7 +213,6 @@ function validateTextBoxPosition(slideData: SlideData, bodyDimensions: BodyDimen
 async function addBackground(
   slideData: SlideData,
   targetSlide: PptxGenJSSlide,
-  tmpDir: string
 ): Promise<void> {
   if (slideData.background.type === 'image' && slideData.background.path) {
     let imagePath = slideData.background.path.startsWith('file://')
@@ -712,7 +711,7 @@ async function extractSlideData(page: Page): Promise<SlideData> {
         const hasBg = computed.backgroundColor && computed.backgroundColor !== 'rgba(0, 0, 0, 0)'
 
         // Validate: Check for unwrapped text content in DIV
-        for (const node of el.childNodes) {
+        for (const node of Array.from(el.childNodes)) {
           if (node.nodeType === Node.TEXT_NODE) {
             const text = (node.textContent || '').trim()
             if (text) {
@@ -1089,7 +1088,7 @@ export async function html2pptx(
 
     const targetSlide = slide || (pres as any).addSlide()
 
-    await addBackground(slideData, targetSlide, tmpDir)
+    await addBackground(slideData, targetSlide)
     addElements(slideData, targetSlide, pres)
 
     return { slide: targetSlide, placeholders: slideData.placeholders }

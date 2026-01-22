@@ -10,8 +10,8 @@
  * - Export to JSON with clean, structured data
  */
 
-import JSZip from 'jszip'
 import { DOMParser } from '@xmldom/xmldom'
+import * as JSZip from 'jszip'
 
 // Type definitions
 export interface ParagraphDict {
@@ -62,20 +62,12 @@ export interface ShapeWithPosition {
 // OOXML namespaces
 const NS_A = 'http://schemas.openxmlformats.org/drawingml/2006/main'
 const NS_P = 'http://schemas.openxmlformats.org/presentationml/2006/main'
-const NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
 
 /**
  * Convert EMUs (English Metric Units) to inches
  */
 function emuToInches(emu: number): number {
   return emu / 914400.0
-}
-
-/**
- * Convert inches to pixels at given DPI
- */
-function inchesToPixels(inches: number, dpi: number = 96): number {
-  return Math.floor(inches * dpi)
 }
 
 /**
@@ -87,16 +79,6 @@ function getAttributeNumber(element: Element | null, attributeName: string, defa
   if (!value) return defaultValue
   const parsed = parseInt(value, 10)
   return isNaN(parsed) ? defaultValue : parsed
-}
-
-/**
- * Get text content from element with namespace
- */
-function getTextContent(element: Element | null, localName: string, namespace: string): string {
-  if (!element) return ''
-  const children = element.getElementsByTagNameNS(namespace, localName)
-  if (children.length === 0) return ''
-  return children[0].textContent || ''
 }
 
 /**
@@ -394,16 +376,11 @@ export class ShapeData {
    * Estimate if text overflows the shape bounds
    */
   private calculateFrameOverflow(): void {
-    // Simplified overflow detection - can be enhanced with font measurement
-    // For now, we'll do a basic check based on text length vs shape size
     const paragraphs = this.paragraphs
     if (paragraphs.length === 0) return
 
-    // Basic heuristic: if there are many paragraphs or very long text, might overflow
-    // This is a simplified version - the Python version uses PIL for precise measurement
-    const totalText = paragraphs.map(p => p.text).join(' ')
-    const estimatedHeight = paragraphs.length * (this.defaultFontSize || 14) * 1.2 // Rough estimate
-    const availableHeight = this.height * 72 // Convert inches to points
+    const estimatedHeight = paragraphs.length * (this.defaultFontSize || 14) * 1.2
+    const availableHeight = this.height * 72
 
     if (estimatedHeight > availableHeight) {
       this.frameOverflowBottom = Math.round((estimatedHeight - availableHeight) / 72 * 100) / 100
@@ -681,7 +658,6 @@ export async function extractTextInventory(
   pptxPathOrBuffer: string | Buffer,
   issuesOnly: boolean = false
 ): Promise<InventoryData> {
-  const JSZip = (await import('jszip')).default
   const zip = await JSZip.loadAsync(pptxPathOrBuffer)
 
   const inventory: InventoryData = {}
