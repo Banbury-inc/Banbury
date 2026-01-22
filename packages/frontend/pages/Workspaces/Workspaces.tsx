@@ -20,7 +20,7 @@ import { renderPanel } from './handlers/renderPanel';
 import { splitPanel } from './handlers/splitPanel';
 import { openCalendarInTab } from '../../components/LeftPanel/components/CalendarTab/handlers/openCalendarInTab';
 import { handleCalendarEventSelect } from '../../components/LeftPanel/components/CalendarTab/handlers/handleCalendarEventSelect';
-import { handleMeetingSelect as handleMeetingSelectHandler } from './handlers/handleMeetingSelect';
+import { handleMeetingSelect as handleMeetingSelectHandler } from '../../components/LeftPanel/components/MeetingsTab/handlers/handleMeetingSelect';
 import { handleReplyToEmail } from '../../components/LeftPanel/components/EmailTab/handlers/handleReplyToEmail';
 import { handleComposeEmail } from '../../components/LeftPanel/components/EmailTab/handlers/handleComposeEmail';
 import { loadConversations, loadConversation, deleteConversation } from './handlers/conversationManagement';

@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { PanelGroup } from '../../../../../pages/Workspaces/types'
 import { MeetingSession } from '../../../../../types/meeting-types'
 import { openMeetingInTab } from '../../../../../pages/Workspaces/handlers/tabManagement'
-import { handleMeetingSelect as handleMeetingSelectHandler } from '../../../../../pages/Workspaces/handlers/handleMeetingSelect'
+import { handleMeetingSelect as handleMeetingSelectHandler } from './handleMeetingSelect'
 import { handleDesktopRecordingStarted as handleDesktopRecordingStartedHandler } from '../../../../../pages/Workspaces/handlers/handleDesktopRecordingStarted'
 import { getAllTabs, updatePanelActiveTab, addTabToPanel } from '../../../../../pages/Workspaces/handlers/panelUtils'
 

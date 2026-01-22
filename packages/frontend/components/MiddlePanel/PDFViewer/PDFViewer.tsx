@@ -2,9 +2,9 @@ import { AlertCircle, Download, FileText, ZoomIn, ZoomOut, ChevronLeft, ChevronR
 import { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 
-import { Button } from '../ui/button';
-import { ApiService } from '../../../backend/api/apiService'
-import { FileSystemItem } from '../../utils/fileTreeUtils';
+import { Button } from '../../ui/button';
+import { ApiService } from '../../../../backend/api/apiService'
+import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 

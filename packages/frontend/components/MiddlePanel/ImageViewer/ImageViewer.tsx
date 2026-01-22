@@ -1,10 +1,9 @@
-import { AlertCircle, Download } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
-import { Button } from '../ui/button';
-import { ApiService } from '../../../backend/api/apiService'
-import { FileSystemItem } from '../../utils/fileTreeUtils';
+import { ApiService } from '../../../../backend/api/apiService'
+import { FileSystemItem } from '../../../utils/fileTreeUtils';
 
 interface ImageViewerProps {
   file: FileSystemItem;
@@ -74,39 +73,6 @@ export function ImageViewer({ file, userInfo }: ImageViewerProps) {
       }
     };
   }, [file.file_id, file.name, file.path]);
-
-  const handleDownload = async () => {
-    if (!file.file_id) return;
-    
-    try {
-      const isDriveFile = file.path?.startsWith('drive://');
-      const isOneDriveFile = file.path?.startsWith('onedrive://');
-      let url: string;
-      
-      if (isDriveFile) {
-        const blob = await ApiService.Drive.getFileBlob(file.file_id);
-        url = window.URL.createObjectURL(blob);
-      } else if (isOneDriveFile) {
-        const blob = await ApiService.OneDrive.getFileBlob(file.file_id);
-        url = window.URL.createObjectURL(blob);
-      } else {
-        const result = await ApiService.downloadFromS3(file.file_id, file.name);
-        if (!result.success || !result.url) return;
-        url = result.url;
-      }
-      
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      // Clean up the blob URL after download
-      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-    } catch (_err) {
-      // swallow download error to avoid console output
-    }
-  };
 
   if (loading) {
     return (

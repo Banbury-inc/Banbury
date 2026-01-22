@@ -1,5 +1,5 @@
-import { MeetingSession, MeetingSummary } from '../../../../types/meeting-types'
-import { ApiService } from '../../../../backend/api/apiService'
+import { MeetingSession, MeetingSummary } from '../../../../../types/meeting-types'
+import { ApiService } from '../../../../../../backend/api/apiService'
 
 interface HandleMeetingSelectParams {
   meeting: MeetingSession
