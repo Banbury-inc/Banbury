@@ -61,7 +61,6 @@ export const uploadToS3 = async (
 
 export const handleFileUpload = (
   userInfo: UserInfo | null,
-  setUploading: React.Dispatch<React.SetStateAction<boolean>>,
   toast: Toast,
   triggerSidebarRefresh: () => void
 ) => {
@@ -71,8 +70,6 @@ export const handleFileUpload = (
   input.onchange = async (e) => {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file || !userInfo?.username) return;
-
-    setUploading(true);
 
     try {
       // Upload file using the uploadToS3 function
@@ -109,8 +106,6 @@ export const handleFileUpload = (
           variant: "destructive",
         });
       }
-    } finally {
-      setUploading(false);
     }
   };
   input.click();

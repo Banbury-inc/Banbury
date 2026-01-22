@@ -63,14 +63,11 @@ const uploadToS3 = async (
 // Handle spreadsheet creation
 export const handleCreateSpreadsheet = async (
   userInfo: UserInfo | null,
-  setUploading: (uploading: boolean) => void,
   toast: ToastFunction,
   triggerSidebarRefresh: () => void,
   spreadsheetName?: string
 ) => {
   if (!userInfo?.username) return;
-
-  setUploading(true);
 
   try {
     // Create simple spreadsheet data with headers and sample data
@@ -158,7 +155,5 @@ export const handleCreateSpreadsheet = async (
         variant: "destructive",
       });
     }
-  } finally {
-    setUploading(false);
   }
 };

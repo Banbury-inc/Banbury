@@ -193,6 +193,16 @@ export function RightPanel({
   
   return (
     <div className="h-full bg-card border-l border-zinc-200 dark:border-white/[0.06] flex flex-col relative shadow-soft">
+      <style>{`
+        /* Burger button styling */
+        .burger-button {
+          transition: all 0.2s ease-in-out;
+        }
+        .burger-button:hover {
+          transform: translateY(-50%) scale(1.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+      `}</style>
       {/* Collapse button for assistant panel - positioned on left border */}
       {shouldShowCollapseButton && (
         <button

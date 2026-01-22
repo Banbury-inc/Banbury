@@ -63,14 +63,11 @@ const uploadToS3 = async (
 // Handle PowerPoint presentation creation
 export const handleCreatePowerpoint = async (
   userInfo: UserInfo | null,
-  setUploading: (uploading: boolean) => void,
   toast: ToastFunction,
   triggerSidebarRefresh: () => void,
   presentationName?: string
 ) => {
   if (!userInfo?.username) return
-
-  setUploading(true)
 
   try {
     // Generate filename - use provided name or default
@@ -153,8 +150,6 @@ export const handleCreatePowerpoint = async (
         variant: "destructive",
       })
     }
-  } finally {
-    setUploading(false)
   }
 }
 

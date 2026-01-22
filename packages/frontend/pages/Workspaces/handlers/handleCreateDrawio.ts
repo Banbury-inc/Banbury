@@ -12,14 +12,12 @@ interface Toast {
 /**
  * Creates a new draw.io diagram file
  * @param userInfo User information
- * @param setUploading Function to set uploading state
  * @param toast Toast notification function
  * @param triggerSidebarRefresh Function to refresh the sidebar
  * @param diagramName Name of the diagram (without extension)
  */
 export async function handleCreateDrawio(
   userInfo: UserInfo | null,
-  setUploading: (uploading: boolean) => void,
   toast: Toast,
   triggerSidebarRefresh: () => void,
   diagramName: string
@@ -53,8 +51,6 @@ export async function handleCreateDrawio(
     </mxGraphModel>
   </diagram>
 </mxfile>`;
-
-  setUploading(true);
 
   try {
     // Convert the XML to a Blob
@@ -97,8 +93,6 @@ export async function handleCreateDrawio(
       description: 'Failed to create draw.io diagram. Please try again.',
       variant: 'destructive',
     });
-  } finally {
-    setUploading(false);
   }
 }
 

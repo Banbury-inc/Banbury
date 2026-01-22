@@ -3,7 +3,6 @@ import { UserInfo } from '../types';
 
 export const handleCreateTldraw = async (
   userInfo: UserInfo | null | undefined,
-  setUploading: (loading: boolean) => void,
   toast: any,
   triggerSidebarRefresh: () => void,
   canvasName: string
@@ -17,7 +16,6 @@ export const handleCreateTldraw = async (
     return;
   }
 
-  setUploading(true);
   try {
     const fileName = `${canvasName}.tldraw`;
     const filePath = fileName; // Assuming root for now, or can be extended for folders
@@ -46,7 +44,5 @@ export const handleCreateTldraw = async (
       description: 'Failed to create tldraw canvas. Please try again.',
       variant: 'destructive',
     });
-  } finally {
-    setUploading(false);
   }
 };

@@ -63,14 +63,11 @@ const uploadToS3 = async (
 // Handle Word document creation
 export const handleCreateWordDocument = async (
   userInfo: UserInfo | null,
-  setUploading: (uploading: boolean) => void,
   toast: ToastFunction,
   triggerSidebarRefresh: () => void,
   documentName?: string
 ) => {
   if (!userInfo?.username) return;
-
-  setUploading(true);
 
   try {
     // Create simple document content
@@ -147,7 +144,5 @@ Welcome to your new document!`;
         variant: "destructive",
       });
     }
-  } finally {
-    setUploading(false);
   }
 };

@@ -52,13 +52,11 @@ const uploadToS3 = async (
 
 export const handleCreateNotebook = async (
   userInfo: UserInfo | null,
-  setUploading: (uploading: boolean) => void,
   toast: ToastFunction,
   triggerSidebarRefresh: () => void,
   notebookName?: string
 ) => {
   if (!userInfo?.username) return
-  setUploading(true)
   try {
     const base: any = {
       nbformat: 4,
@@ -85,8 +83,6 @@ export const handleCreateNotebook = async (
     } else {
       toast({ title: 'Failed to create notebook', description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`, variant: 'destructive' })
     }
-  } finally {
-    setUploading(false)
   }
 }
 

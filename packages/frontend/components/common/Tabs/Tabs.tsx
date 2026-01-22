@@ -370,6 +370,15 @@ export const Tabs: React.FC<TabsProps> = ({
             cursor: grab;
             position: relative;
             transform-origin: left center;
+            border: none;
+            transition: background-color 150ms ease, color 150ms ease;
+          }
+          .tab:hover {
+            border: none;
+            box-shadow: none;
+          }
+          .tab--active {
+            border: none;
           }
           .tab.dragging { opacity: 0.5; }
           @keyframes tabEnter { 0% { opacity: 0; transform: scaleX(0); } 100% { opacity: 1; transform: scaleX(1); } }

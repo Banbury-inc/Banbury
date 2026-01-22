@@ -69,7 +69,6 @@ const uploadToS3 = async (
 
 export async function handleCreateImage(
   userInfo: UserInfo | null,
-  setUploading: (uploading: boolean) => void,
   toast: ToastFunction,
   triggerSidebarRefresh: () => void,
   options: GenerateImageOptions
@@ -98,8 +97,6 @@ export async function handleCreateImage(
       imageModel = 'dall-e-3';
     }
   }
-
-  setUploading(true)
 
   try {
     const resp = await fetch('/api/images/generate', {
@@ -149,8 +146,6 @@ export async function handleCreateImage(
         variant: 'destructive',
       })
     }
-  } finally {
-    setUploading(false)
   }
 }
 
