@@ -10,6 +10,7 @@ import { handleFetchError } from "../../assistant/ClaudeRuntimeProvider/handlers
 import { processStreamEvents } from "../../assistant/ClaudeRuntimeProvider/handlers/processStreamEvents"
 import { Thread } from "./composer/thread/thread"
 import { FileSystemItem } from "../../utils/fileTreeUtils"
+import { CONFIG } from "../../config/config"
 
 import type { FC } from "react"
 
@@ -46,7 +47,7 @@ export const AiConversationTabPane: FC<AiConversationTabPaneProps> = ({
         const langGraphConfig = getLangGraphConfig()
         const messagesWithAttachmentParts = prepareMessagesWithAttachments({ messages: options.messages })
         const toolPreferences = getToolPreferences()
-        const apiEndpoint = '/api/assistant/langgraph-stream'
+        const apiEndpoint = CONFIG.mock_agent_response ? '/api/assistant/langgraph-stream-mock' : '/api/assistant/langgraph-stream'
 
         const rateLimitResult = await checkRateLimit()
         if (rateLimitResult.exceeded) {

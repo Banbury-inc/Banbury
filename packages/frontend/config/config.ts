@@ -6,6 +6,7 @@ export const CONFIG = {
   scan_selected_folders: true,
   run_device_info_loop: false,
   run_device_predictions_loop: false,
+  mock_agent_response: false,
   prod: false,
   dev: true,
   semi_local: false,
