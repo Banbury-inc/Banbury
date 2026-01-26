@@ -921,6 +921,7 @@ const Workspaces = (): React.ReactNode => {
                             refreshTrigger={refreshTrigger}
                             onFolderCreated={handleFolderCreated}
                             triggerRootFolderCreation={folderCreationTrigger}
+                            onOpenCalendar={() => openCalendarInTabCallback(activePanelId)}
                             selectedTask={selectedTask}
                             selectedMeeting={selectedMeeting}
                             meetingsRefreshTrigger={meetingsRefreshTrigger}
