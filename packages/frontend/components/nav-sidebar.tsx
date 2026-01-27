@@ -41,19 +41,6 @@ function handleLogout(router: NextRouter) {
   router.push('/');
 }
 
-function handleLogout(router: NextRouter) {
-  // Clear all authentication data using ApiService
-  ApiService.clearAuthToken();
-  
-  // Clear any additional session data
-  localStorage.removeItem('deviceId');
-  localStorage.removeItem('googleOAuthSession');
-  localStorage.removeItem('userData');
-  
-  // Redirect to home page
-  router.push('/');
-}
-
 interface NavSidebarProps {
   activeTab?: string
   onTabChange?: (tab: string) => void
