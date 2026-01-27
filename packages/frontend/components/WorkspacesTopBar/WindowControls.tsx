@@ -39,33 +39,30 @@ export function WindowControls() {
   }
 
   return (
-    <div className="flex items-center gap-1 ml-2">
+    <div className="flex h-full items-center">
       <Button
         variant="ghost"
-        size="icon-sm"
         onClick={handleMinimize}
-        className="h-6 w-6 hover:bg-zinc-700/50"
+        className="w-[50px] p-0 rounded-none hover:bg-zinc-700/50 align-middle"
         title="Minimize"
       >
-        <Minus className="h-3.5 w-3.5" strokeWidth={2} />
+        <Minus />
       </Button>
       <Button
         variant="ghost"
-        size="icon-sm"
         onClick={handleMaximize}
-        className="h-6 w-6 hover:bg-zinc-700/50"
+        className="w-[50px] p-0 rounded-none hover:bg-zinc-700/50 align-middle"
         title={isMaximized ? "Restore" : "Maximize"}
       >
-        <Square className="h-3.5 w-3.5" strokeWidth={2} />
+        <Square />
       </Button>
       <Button
         variant="ghost"
-        size="icon-sm"
         onClick={handleClose}
-        className="h-6 w-6 hover:bg-red-500/20 hover:text-red-500"
+        className="w-[50px] p-0 rounded-none hover:bg-red-500/20 hover:text-red-500 align-middle"
         title="Close"
       >
-        <X className="h-3.5 w-3.5" strokeWidth={2} />
+        <X />
       </Button>
     </div>
   )
