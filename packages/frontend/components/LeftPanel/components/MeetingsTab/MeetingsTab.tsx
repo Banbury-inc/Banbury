@@ -8,19 +8,12 @@ import { ApiService } from '../../../../../backend/api/apiService'
 import { MeetingsListView } from './components/MeetingsListView'
 import { handleRefreshMeetings } from './handlers/handleRefreshMeetings'
 import { handleDeleteMeeting } from './handlers/handleDeleteMeeting'
-import { DesktopRecordingPanel } from '../../../../pages/MeetingAgent/components/DesktopRecordingPanel'
+import { DesktopRecordingPanel } from './components/DesktopRecordingPanel'
 import { useToast } from '../../../ui/use-toast'
 import { useMeetingWorkspaceHandlers } from './handlers/workspaceHandlers'
 import { PanelGroup } from '../../../../pages/Workspaces/types'
 
 type MeetingStatusFilter = 'all' | MeetingSession['status']
-
-interface DesktopRecordingStartedData {
-  sessionId: string
-  windowId: string
-  platform: string
-  meetingTitle: string
-}
 
 interface MeetingsTabProps {
   selectedMeeting?: MeetingSession | null

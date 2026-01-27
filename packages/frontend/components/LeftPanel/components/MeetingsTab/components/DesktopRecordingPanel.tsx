@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card'
-import { Badge } from '../../../components/ui/badge'
-import { Button } from '../../../components/ui/button'
+import { Badge } from '../../../../ui/badge'
+import { Button } from '../../../../ui/button'
 import { 
   Monitor,
   Video,
-  VideoOff,
   Square,
   Play,
   AlertCircle,
@@ -14,19 +12,18 @@ import {
   Shield,
   Mic,
   Eye,
-  RefreshCw,
   Loader2
 } from 'lucide-react'
-import { useDesktopRecording } from '../../../hooks/useDesktopRecording'
+import { useDesktopRecording } from '../../../../../hooks/useDesktopRecording'
 import { 
   handleStartDesktopSDKRecording, 
   handleStopDesktopSDKRecording,
   getPlatformDisplayName,
   formatRecordingDuration
-} from '../handlers/desktopRecordingHandlers'
-import { useToast } from '../../../components/ui/use-toast'
-import zoomLogo from '../../../assets/images/zoom-fondo-blanco-vertical-seeklogo.png'
-import googleMeetLogo from '../../../assets/images/7089160_google_meet_icon.png'
+} from '../../../../../pages/MeetingAgent/handlers/desktopRecordingHandlers'
+import { useToast } from '../../../../ui/use-toast'
+import zoomLogo from '../../../../../assets/images/zoom-fondo-blanco-vertical-seeklogo.png'
+import googleMeetLogo from '../../../../../assets/images/7089160_google_meet_icon.png'
 
 interface RecordingStartedData {
   sessionId: string
@@ -255,14 +252,10 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
   }
   
   return (
-    <Card className="bg-card border-border">
-      <CardHeader className="pb-3">
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
+    <div>
         {/* Platform Not Supported Warning */}
         {!isPlatformSupported && (
-          <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg space-y-3">
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
             <div className="flex items-center gap-2 text-yellow-500 font-medium">
               <AlertCircle className="h-4 w-4" />
               <span>Platform Not Supported</span>
@@ -281,7 +274,7 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
         
         {/* Error Display */}
         {error && isPlatformSupported && (
-          <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
+          <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -289,7 +282,7 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
         
         {/* Permissions Section (macOS only) */}
         {isMac && !allPermissionsGranted && (
-          <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+          <div className="bg-muted/50 rounded-lg">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Shield className="h-4 w-4" />
               <span>Permissions Required</span>
@@ -340,7 +333,7 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
         
         {/* Active Recording Display */}
         {recordingStatus.isRecording && (
-          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg space-y-3">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
@@ -374,10 +367,10 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
         
         {/* Detected Meetings List */}
         {!recordingStatus.isRecording && allPermissionsGranted && isPlatformSupported && (
-          <div className="space-y-3">
+          <div className="">
             
             {detectedMeetings.length === 0 ? (
-              <div className="p-6 text-center border border-dashed border-border rounded-lg">
+              <div className="text-center">
                 <Video className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
                   No active meetings detected
@@ -387,7 +380,7 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
                 </p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="">
                 {(() => {
                   // Only show the most recent meeting (last in array, as it's the most recently detected)
                   const mostRecentMeeting = detectedMeetings[detectedMeetings.length - 1]
@@ -431,14 +424,13 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
         
         {/* Not Initialized State */}
         {!isInitialized && !error && (
-          <div className="p-6 text-center">
+          <div className="text-center">
             <Loader2 className="h-8 w-8 mx-auto mb-2 animate-spin text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
               Initializing desktop recording...
             </p>
           </div>
         )}
-      </CardContent>
-    </Card>
+    </div>
   )
 }
