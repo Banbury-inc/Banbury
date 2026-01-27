@@ -3,7 +3,7 @@ import { Save, X } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { CalendarEvent } from '../../../../backend/api/calendar/calendar'
 import { ApiService } from 'backend/api/apiService'
-import type { CalendarProvider } from '../../LeftPanel/components/handlers/calendarProvider'
+import type { CalendarProvider } from '../../LeftPanel/components/CalendarTab/calendarProvider'
 
 interface CreateEventPopoverProps {
   isOpen: boolean

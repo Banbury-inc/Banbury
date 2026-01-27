@@ -24,6 +24,23 @@ export function MiddlePanel({
 
   return (
     <main className="h-full bg-background relative border-0">
+      <style>{`
+        /* Burger button styling */
+        .burger-button {
+          transition: all 0.2s ease-in-out;
+        }
+        .burger-button:hover {
+          transform: translateY(-50%) scale(1.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        /* Touch-friendly targets - minimum 44x44px on mobile */
+        @media (max-width: 767px) {
+          .touch-target {
+            min-height: 44px;
+            min-width: 44px;
+          }
+        }
+      `}</style>
       {/* Expand button for file sidebar when collapsed - positioned on left border */}
       {isFileSidebarCollapsed && !isMobile && (
         <button

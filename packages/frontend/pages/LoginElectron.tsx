@@ -107,11 +107,11 @@ const LoginElectron = (): JSX.Element => {
       {/* Electron Top Bar */}
       {isDesktop && (
         <div 
-          className="h-[35px] w-full bg-card border-b border-border flex items-center justify-end px-4"
+          className="h-[35px] w-full bg-card border-b border-border flex items-center justify-end"
           style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
         >
           <div 
-            className="flex items-center"
+            className="flex items-center h-full"
             style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
           >
             <WindowControls />
@@ -223,7 +223,7 @@ const LoginElectron = (): JSX.Element => {
               <Button
                 type="button"
                 onClick={handleGoogleLogin}
-                disabled={loading || apiStatus === 'offline'}
+                disabled={loading}
                 className="w-full bg-popover text-foreground border border-border flex items-center justify-center gap-3"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">

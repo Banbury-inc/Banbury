@@ -3,9 +3,6 @@
  * This helps manage the redirect URI issues seen in the backend
  */
 
-// Custom protocol redirect for Electron desktop app (used after web callback)
-const ELECTRON_PROTOCOL_URI = 'banbury://auth/callback'
-
 /**
  * Checks if the app is running in the Electron desktop shell
  */
@@ -40,7 +37,6 @@ export const AUTH_CONFIG = {
     // Use web-based redirect URI for Electron desktop app with electron=true parameter
     // This allows Google OAuth to accept it, then the web callback redirects to banbury://
     if (isElectronApp()) {
-      console.log('is electron app')
       return getElectronRedirectUri()
     }
     

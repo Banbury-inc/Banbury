@@ -212,6 +212,17 @@ const planningTools = [
   createPlanTool,
   searchFilesTool,
   searchMemoryTool,
+  getCurrentDateTimeTool,
+  // Email reading tools
+  gmailGetRecentTool,
+  gmailSearchTool,
+  gmailGetMessageTool,
+  // Calendar reading tools
+  calendarListEventsTool,
+  calendarGetEventTool,
+  msCalendarListCalendarsTool,
+  msCalendarListEventsTool,
+  msCalendarGetEventTool,
 ]
 
 const askingTools = [

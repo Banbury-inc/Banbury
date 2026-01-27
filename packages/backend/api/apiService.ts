@@ -975,7 +975,10 @@ axios.interceptors.response.use(
     const alreadyRetried = (originalRequest as any)._retry === true;
     const status = error.response?.status;
 
-    if (status === 401 && !alreadyRetried) {
+    // Skip refresh logic for the refresh-token endpoint itself to prevent infinite loops
+    const isRefreshTokenRequest = originalRequest.url?.includes('/authentication/refresh-token');
+
+    if (status === 401 && !alreadyRetried && !isRefreshTokenRequest) {
       (originalRequest as any)._retry = true;
       const refreshed = await ApiService.refreshToken();
       if (refreshed) {

@@ -8,27 +8,45 @@ import { ApiService } from '../../../../../backend/api/apiService'
 import { MeetingsListView } from './components/MeetingsListView'
 import { handleRefreshMeetings } from './handlers/handleRefreshMeetings'
 import { handleDeleteMeeting } from './handlers/handleDeleteMeeting'
-import { DesktopRecordingPanel } from '../../../../pages/MeetingAgent/components/DesktopRecordingPanel'
+import { DesktopRecordingPanel } from './components/DesktopRecordingPanel'
 import { useToast } from '../../../ui/use-toast'
+import { useMeetingWorkspaceHandlers } from './handlers/workspaceHandlers'
+import { PanelGroup } from '../../../../pages/Workspaces/types'
 
 type MeetingStatusFilter = 'all' | MeetingSession['status']
 
-interface DesktopRecordingStartedData {
-  sessionId: string
-  windowId: string
-  platform: string
-  meetingTitle: string
-}
-
 interface MeetingsTabProps {
-  onMeetingSelect?: (meeting: MeetingSession) => void
   selectedMeeting?: MeetingSession | null
-  onJoinMeeting?: () => void
-  onDesktopRecordingStarted?: (data: DesktopRecordingStartedData) => void
   refreshTrigger?: number
+  // Workspace dependencies
+  activePanelId?: string
+  panelLayout?: PanelGroup
+  setPanelLayout?: React.Dispatch<React.SetStateAction<PanelGroup>>
+  setActivePanelId?: React.Dispatch<React.SetStateAction<string>>
+  setSelectedMeeting?: React.Dispatch<React.SetStateAction<MeetingSession | null>>
 }
 
-export function MeetingsTab({ onMeetingSelect, selectedMeeting, onJoinMeeting, onDesktopRecordingStarted, refreshTrigger }: MeetingsTabProps) {
+export function MeetingsTab({ 
+  selectedMeeting, 
+  refreshTrigger,
+  activePanelId = 'main-panel',
+  panelLayout,
+  setPanelLayout,
+  setActivePanelId,
+  setSelectedMeeting: setSelectedMeetingProp
+}: MeetingsTabProps) {
+  // Always call hook unconditionally - it handles optional dependencies internally
+  const workspaceHandlers = useMeetingWorkspaceHandlers({
+    activePanelId,
+    panelLayout: panelLayout ?? null,
+    setPanelLayout: setPanelLayout ?? (() => {}),
+    setActivePanelId: setActivePanelId ?? (() => {}),
+    setSelectedMeeting: setSelectedMeetingProp ?? (() => {})
+  })
+
+  const onMeetingSelect = workspaceHandlers?.handleMeetingSelect
+  const onJoinMeeting = workspaceHandlers?.handleJoinMeeting
+  const onDesktopRecordingStarted = workspaceHandlers?.handleDesktopRecordingStarted
   const [meetings, setMeetings] = useState<MeetingSession[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<MeetingStatusFilter>('all')

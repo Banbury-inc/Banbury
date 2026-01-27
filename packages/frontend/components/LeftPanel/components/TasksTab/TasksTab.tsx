@@ -7,14 +7,38 @@ import { Task, TaskStatus } from '../../../../pages/TaskStudio/types'
 import { taskHandlers } from '../../../../pages/TaskStudio/handlers/taskHandlers'
 import { TasksListView } from './components/TasksListView'
 import { handleRefreshTasks } from './handlers/handleRefreshTasks'
+import { useTaskWorkspaceHandlers } from './handlers/workspaceHandlers'
+import { PanelGroup } from '../../../../pages/Workspaces/types'
 
 interface TasksTabProps {
-  onTaskSelect?: (task: Task) => void
   selectedTask?: Task | null
-  onCreateTask?: () => void
+  // Workspace dependencies
+  activePanelId?: string
+  panelLayout?: PanelGroup
+  setPanelLayout?: React.Dispatch<React.SetStateAction<PanelGroup>>
+  setActivePanelId?: React.Dispatch<React.SetStateAction<string>>
+  setSelectedTask?: React.Dispatch<React.SetStateAction<Task | null>>
 }
 
-export function TasksTab({ onTaskSelect, selectedTask, onCreateTask }: TasksTabProps) {
+export function TasksTab({ 
+  selectedTask,
+  activePanelId = 'main-panel',
+  panelLayout,
+  setPanelLayout,
+  setActivePanelId,
+  setSelectedTask: setSelectedTaskProp
+}: TasksTabProps) {
+  // Always call hook unconditionally - it handles optional dependencies internally
+  const workspaceHandlers = useTaskWorkspaceHandlers({
+    activePanelId,
+    panelLayout: panelLayout ?? null,
+    setPanelLayout: setPanelLayout ?? (() => {}),
+    setActivePanelId: setActivePanelId ?? (() => {}),
+    setSelectedTask: setSelectedTaskProp ?? (() => {})
+  })
+
+  const onTaskSelect = workspaceHandlers?.handleTaskSelect
+  const onCreateTask = workspaceHandlers?.handleCreateTask
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<TaskStatus | 'all'>('all')

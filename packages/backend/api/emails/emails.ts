@@ -70,7 +70,6 @@ export const FALLBACK_SYSTEM_LABELS: GmailLabel[] = [
 
 
 export default class Emails {
-    constructor(_api: ApiService) {}
   /**
    * Search emails by query
    */

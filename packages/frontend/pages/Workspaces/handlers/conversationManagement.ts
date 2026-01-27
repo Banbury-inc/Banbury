@@ -87,7 +87,6 @@ export const saveCurrentConversation = async (
 
 export const loadConversation = async (
   conversationId: string,
-  setShowConversationDialog: React.Dispatch<React.SetStateAction<boolean>>,
   toast: Toast,
   tabId?: string
 ) => {
@@ -110,7 +109,6 @@ export const loadConversation = async (
       window.dispatchEvent(new CustomEvent('assistant-load-conversation', { 
         detail: { messages: sanitized, tabId } 
       }));
-      setShowConversationDialog(false);
     }
   } catch (error) {
     console.error('Error loading conversation:', error);

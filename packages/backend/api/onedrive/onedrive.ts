@@ -24,7 +24,6 @@ export interface OneDriveFileListResponse {
 }
 
 export default class OneDrive {
-  constructor(_api: ApiService) {}
 
   private static withAuthHeaders() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null

@@ -4,7 +4,7 @@ import OlympusTabs, { Tab as OlympusTab } from '../../../components/common/Tabs/
 import { DocumentViewer } from '../../../components/MiddlePanel/DocumentViewer/DocumentViewer';
 import { EmailComposer } from '../../../components/MiddlePanel/EmailViewer/EmailComposer';
 import { EmailViewer } from '../../../components/MiddlePanel/EmailViewer/EmailViewer';
-import { ImageViewer } from '../../../components/MiddlePanel/ImageViewer';
+import { ImageViewer } from '../../../components/MiddlePanel/ImageViewer/ImageViewer';
 import { CalendarViewer } from '../../../components/MiddlePanel/CalendarViewer/CalendarViewer';
 import { SpreadsheetViewer } from '../../../components/MiddlePanel/SpreadsheetViewer/SpreadsheetViewer';
 import { VideoViewer } from '../../../components/MiddlePanel/VideoViewer/VideoViewer';
@@ -13,7 +13,7 @@ import BrowserViewer from '../../../components/MiddlePanel/BrowserViewer/Browser
 import NotebookViewer from '../../../components/MiddlePanel/NotebookViewer/NotebookViewer';
 import NotebookLabViewer from '../../../components/MiddlePanel/NotebookViewer/NotebookLabViewer';
 import { CONFIG } from '../../../config/config';
-import { PDFViewer } from '../../../components/MiddlePanel/PDFViewer';
+import { PDFViewer } from '../../../components/MiddlePanel/PDFViewer/PDFViewer';
 import { isNotebookFile, isDriveImageFile, isDrivePdfFile, isDriveDocumentFile, isDriveSpreadsheetFile, isDriveVideoFile, isDriveCodeFile, isDrivePresentationFile, isPlanFile } from './fileTypeUtils';
 import { PlanViewer } from '../../../components/MiddlePanel/PlanViewer/PlanViewer';
 import DrawioViewer from '../../../components/MiddlePanel/CanvasViewer/DrawioViewer';

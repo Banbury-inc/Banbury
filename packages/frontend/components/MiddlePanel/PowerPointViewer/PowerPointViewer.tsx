@@ -298,18 +298,9 @@ export function PowerPointViewer({ file, userInfo, onSaveComplete }: PowerPointV
       const detail = (event as CustomEvent).detail || {}
       const { fileId, presentationId } = detail
 
-      console.log('[PowerPointViewer] Received pptx-presentation-loaded event:', { 
-        fileId, 
-        presentationId, 
-        currentFileId: file?.file_id 
-      })
-
       // Only set if this viewer is showing the matching file
       if (file?.file_id === fileId) {
-        console.log('[PowerPointViewer] Setting activePresentationId:', presentationId)
         setActivePresentationId(presentationId)
-      } else {
-        console.log('[PowerPointViewer] File ID mismatch, not setting activePresentationId')
       }
     }
 

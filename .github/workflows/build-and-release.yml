@@ -252,7 +252,7 @@ jobs:
           wait-for-service-stability: true
 
   # Desktop App Build Job
-  # Builds Electron desktop distributables for Windows, macOS, and Linux
+  # Builds Electron desktop distributables for Windows and macOS
   # Runs independently of web deployment to avoid impacting existing builds
   build-desktop:
     needs: [lint, unit-tests]
@@ -263,8 +263,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            platform: linux
           - os: windows-latest
             platform: win
           - os: macos-latest
@@ -330,12 +328,6 @@ jobs:
             echo "⚠ latest-mac.yml not found (may be normal if macOS build failed)"
           fi
           
-          # Check for Linux metadata
-          if [ -f "dist-electron-build/latest-linux.yml" ]; then
-            echo "✓ latest-linux.yml found (Linux)"
-          else
-            echo "⚠ latest-linux.yml not found (may be normal if Linux build failed)"
-          fi
 
       - name: List generated files (including metadata)
         shell: bash
@@ -353,9 +345,6 @@ jobs:
           path: |
             packages/dist-electron-build/*.exe
             packages/dist-electron-build/*.dmg
-            packages/dist-electron-build/*.AppImage
-            packages/dist-electron-build/*.deb
-            packages/dist-electron-build/*.rpm
             packages/dist-electron-build/*.zip
             packages/dist-electron-build/*.yml
             packages/dist-electron-build/*.yaml

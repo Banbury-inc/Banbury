@@ -1,6 +1,5 @@
 import { Allotment } from 'allotment';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import Image from 'next/image';
 import { ClaudeRuntimeProvider } from '../../assistant/ClaudeRuntimeProvider/ClaudeRuntimeProvider';
 import { LeftPanel } from "../../components/LeftPanel/LeftPanel";
 import { MiddlePanel } from "../../components/MiddlePanel/MiddlePanel";
@@ -8,52 +7,52 @@ import { NavSidebar } from "../../components/nav-sidebar";
 import { WorkspacesTopBar } from "../../components/WorkspacesTopBar/WorkspacesTopBar";
 import { FileSystemItem } from '../../utils/fileTreeUtils';
 import 'allotment/dist/style.css';
-import { X, FolderOpen, Trash2, Menu, MessageSquare, PanelRight, Folder, Mail, Calendar, CheckSquare, Video, UserCog } from 'lucide-react';
-import BanburyLogo from '../../assets/images/Logo.png';
+import { X, Menu } from 'lucide-react';
 import { SplitZones } from '../../components/common/SplitZones';
 import { useRouter } from 'next/router';
 import { useIsMobile } from '../../hooks/use-mobile';
-import { Sheet, SheetContent, SheetTitle } from '../../components/ui/sheet';
-import { Button } from '../../components/ui/button';
-import { dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-import { attachClosestEdge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
 import { TiptapAIProvider } from '../../contexts/TiptapAIContext';
 import { TooltipProvider } from "../../components/ui/tooltip";
 import { Toaster } from "../../components/ui/toaster";
 import { useToast } from "../../components/ui/use-toast";
 import { ApiService } from '../../../backend/api/apiService';
-import { AdminContent } from "../../components/AdminContent/AdminContent";
-import { extractEmailContent } from '../../utils/emailUtils';
-import { handleCreateSpreadsheet } from './handlers/handleCreateSpreadsheet';
-import { handleCreateWordDocument } from './handlers/handleCreateWordDocument';
-import { handleCreateNotebook } from './handlers/handleCreateNotebook';
-import { handleCreateDrawio } from './handlers/handleCreateDrawio';
-import { handleCreateTldraw } from './handlers/handleCreateTldraw';
-import { handleCreatePowerpoint } from './handlers/handleCreatePowerpoint';
-import { handleCreateImage } from './handlers/handleCreateImage';
 import { renderPanel } from './handlers/renderPanel';
-import { handleFileMoved } from './handlers/handleFileMoved';
-import { handleFolderRenamed } from './handlers/handleFolderRenamed';
-import { handleFileDeleted } from './handlers/handleFileDeleted';
-import { handleFileRenamed } from './handlers/handleFileRenamed';
 import { splitPanel } from './handlers/splitPanel';
-import { openCalendarInTab } from './handlers/openCalendarInTab';
-import { handleCalendarEventSelect } from './handlers/handleCalendarEventSelect';
-import { handleMeetingSelect as handleMeetingSelectHandler } from './handlers/handleMeetingSelect';
-import { handleReplyToEmail } from './handlers/handleReplyToEmail';
-import { handleComposeEmail } from './handlers/handleComposeEmail';
-import { loadConversations, saveCurrentConversation, loadConversation, deleteConversation } from './handlers/conversationManagement';
+import { openCalendarInTab } from '../../components/LeftPanel/components/CalendarTab/handlers/openCalendarInTab';
+import { handleCalendarEventSelect } from '../../components/LeftPanel/components/CalendarTab/handlers/handleCalendarEventSelect';
+import { handleMeetingSelect as handleMeetingSelectHandler } from '../../components/LeftPanel/components/MeetingsTab/handlers/handleMeetingSelect';
+import { handleReplyToEmail } from '../../components/LeftPanel/components/EmailTab/handlers/handleReplyToEmail';
+import { handleComposeEmail } from '../../components/LeftPanel/components/EmailTab/handlers/handleComposeEmail';
+import { loadConversations, loadConversation, deleteConversation } from './handlers/conversationManagement';
 import { findPanel, getAllTabs, updatePanelActiveTab, addTabToPanel, removeTabFromPanel } from './handlers/panelUtils';
 import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, openAdminInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
-import { isDrawioFile, isTldrawFile, isPowerPointFile } from './handlers/fileTypeUtils';
+import { 
+  isDrawioFile, 
+  isTldrawFile, 
+  isPowerPointFile, 
+  isImageFile,
+  isPdfFile,
+  isDocumentFile,
+  isSpreadsheetFile,
+  isVideoFile,
+  isCodeFile,
+  isBrowserFile,
+} from './handlers/fileTypeUtils';
 import { createWorkspacesKeyboardHandler } from './handlers/createWorkspacesKeyboardHandler';
-import { Kbd, KbdGroup } from '../../components/ui/kbd';
 import { renderAssistantPanel } from './handlers/renderAssistantPanel';
 import { AiTabRuntimeHost } from './handlers/AiTabRuntimeHost';
 import { useLeftPanelResize } from './handlers/handleLeftPanelResize';
+import { checkAuthAndFetchUser } from './handlers/checkAuthAndFetchUser';
+import { handleDesktopRecordingStarted as handleDesktopRecordingStartedHandler } from './handlers/handleDesktopRecordingStarted';
+import { createRenderPanelGroup } from './handlers/renderPanelGroup';
+import { createDragMonitor } from './handlers/dragMonitor';
+import { registerDropTargets } from './handlers/dropTargetRegistration';
+import { extractReplyBody as extractReplyBodyHandler } from './handlers/extractReplyBody';
+import { renderAssistantPanelGroup as renderAssistantPanelGroupHandler } from './handlers/renderAssistantPanelGroup';
+import { setupActiveAiTabId } from './handlers/activeAiTabId';
+import { handleFileSelect as handleFileSelectHandler } from '../../components/LeftPanel/components/FilesTab/handlers/handleFileSelect';
 import { 
   getStoredKeybinds, 
-  getActiveKey,
   KeybindsState 
 } from '../../components/modals/settings-tabs/handlers/keybindHandlers';
 import { FileSearchCommand } from '../../components/FileSearchCommand';
@@ -64,16 +63,25 @@ import { MeetingSession } from '../../types/meeting-types';
 import {
   UserInfo,
   FileTab,
-  WorkspaceTab,
   Panel,
   SplitDirection,
   PanelGroup,
-  AiTab,
   DragState,
 } from './types';
 import { createInitialAiTab, createAiTab } from '../../components/RightPanel/handlers/aiTabHandlers';
-import { isDefaultAiTabLabel, deriveAiTabTitleFromText } from '../../components/RightPanel/handlers/aiTabTitle';
 import { subscribeTodoEventListener } from '../../components/RightPanel/handlers/todoStoreHandlers';
+import { createTitleCandidateHandler } from './handlers/handleTitleCandidate';
+import { createWorkspaceReopenFileHandler, WORKSPACE_REOPEN_FILE_EVENT } from './handlers/handleWorkspaceReopenFile';
+import { createAssistantOpenBrowserHandler, ASSISTANT_OPEN_BROWSER_EVENT } from './handlers/handleAssistantOpenBrowser';
+import { createFileSidebarRefreshHandler, FILE_SIDEBAR_REFRESH_EVENT } from '../../components/LeftPanel/components/FilesTab/handlers/handleFileSidebarRefresh';
+import { createOpenPresentationInViewerHandler, OPEN_PRESENTATION_IN_VIEWER_EVENT } from './handlers/handleOpenPresentationInViewer';
+import { createWorkspaceFindAndOpenFileHandler, WORKSPACE_FIND_AND_OPEN_FILE_EVENT } from './handlers/handleWorkspaceFindAndOpenFile';
+import { createKeybindsUpdateHandler, KEYBINDS_UPDATED_EVENT } from './handlers/handleKeybindsUpdate';
+import { createCreateNewAiTabHandler, CREATE_NEW_AI_TAB_EVENT } from './handlers/handleCreateNewAiTab';
+import { createOpenAiPanelHandler, OPEN_AI_PANEL_EVENT } from './handlers/handleOpenAiPanel';
+import { MobileFileSidebar } from './MobileFileSidebar';
+import { MobileWorkspaceHeader } from './MobileWorkspaceHeader';
+import { MobileAssistantPanel } from './MobileAssistantPanel';
 
 
 
@@ -88,15 +96,11 @@ const Workspaces = (): React.ReactNode => {
   const [selectedEmail, setSelectedEmail] = useState<any | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [selectedMeeting, setSelectedMeeting] = useState<MeetingSession | null>(null);
-  const [uploading, setUploading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
-  const [meetingsRefreshTrigger, setMeetingsRefreshTrigger] = useState<number>(0);
-  const [folderCreationTrigger, setFolderCreationTrigger] = useState<boolean>(false);
+  const [meetingsRefreshTrigger, _setMeetingsRefreshTrigger] = useState<number>(0);
+  const [folderCreationTrigger] = useState<boolean>(false);
   const [conversations, setConversations] = useState<any[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
-  const [showConversationDialog, setShowConversationDialog] = useState(false);
-  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
-  const [conversationTitle, setConversationTitle] = useState("");
   const [replyToEmail, setReplyToEmail] = useState<any>(null);
   const [activePanelId, setActivePanelId] = useState<string>('main-panel');
   const [isFileSidebarCollapsed, setIsFileSidebarCollapsed] = useState(false);
@@ -143,43 +147,12 @@ const Workspaces = (): React.ReactNode => {
 
   // Listen for title candidate events and update AI tab labels
   useEffect(() => {
-    const handleTitleCandidate = (event: Event) => {
-      const { tabId, text } = (event as CustomEvent).detail || {}
-      if (!tabId || !text) return
-
-      const derivedTitle = deriveAiTabTitleFromText(text)
-      if (!derivedTitle) return
-
-      setAssistantDockLayout((prev) => {
-        const updatePanel = (panel: Panel): Panel => ({
-          ...panel,
-          tabs: panel.tabs.map((tab) => {
-            if (tab.type === 'ai' && tab.id === tabId && isDefaultAiTabLabel(tab.label)) {
-              return { ...tab, label: derivedTitle }
-            }
-            return tab
-          })
-        })
-
-        const updateGroup = (group: PanelGroup): PanelGroup => {
-          if (group.type === 'panel' && group.panel) {
-            return { ...group, panel: updatePanel(group.panel) }
-          }
-          if (group.type === 'split' && group.children) {
-            return { ...group, children: group.children.map(updateGroup) }
-          }
-          return group
-        }
-
-        return updateGroup(prev)
-      })
-    }
-
+    const handleTitleCandidate = createTitleCandidateHandler(setAssistantDockLayout)
     window.addEventListener('assistant-ai-tab-title-candidate', handleTitleCandidate)
     return () => {
       window.removeEventListener('assistant-ai-tab-title-candidate', handleTitleCandidate)
     }
-  }, [])
+  }, [setAssistantDockLayout])
 
   // Subscribe to todo events for plan execution
   useEffect(() => {
@@ -210,66 +183,14 @@ const Workspaces = (): React.ReactNode => {
 
 
 
-  const isImageFile = (fileName: string): boolean => {
-    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg']
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    return imageExtensions.includes(extension)
-  };
-
-  const isPdfFile = (fileName: string): boolean => {
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    return extension === '.pdf'
-  };
-
-  const isDocumentFile = (fileName: string): boolean => {
-    const documentExtensions = ['.docx', '.doc', '.txt', '.rtf', '.odt']
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    return documentExtensions.includes(extension)
-  };
-
-  const isSpreadsheetFile = (fileName: string): boolean => {
-    const spreadsheetExtensions = ['.csv', '.xlsx', '.xls']
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    return spreadsheetExtensions.includes(extension)
-  };
-
-  const isVideoFile = (fileName: string): boolean => {
-    const videoExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v', '.3gp', '.ogv']
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    const isVideo = videoExtensions.includes(extension)
-    return isVideo
-  };
-
-  const isCodeFile = (fileName: string): boolean => {
-    const codeExtensions = [
-      '.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala',
-      '.html', '.htm', '.css', '.scss', '.sass', '.less', '.xml', '.json', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf', '.sh', '.bash', '.zsh', '.fish',
-      '.sql', '.r', '.m', '.mat', '.ipynb', '.jl', '.dart', '.lua', '.pl', '.pm', '.tcl', '.vbs', '.ps1', '.bat', '.cmd', '.coffee', '.litcoffee', '.iced',
-      '.md', '.markdown', '.tex', '.rtex', '.bib', '.vue', '.svelte'
-    ]
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    return codeExtensions.includes(extension)
-  };
-
-  const isBrowserFile = (fileName: string): boolean => {
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-    return extension === '.browserbase'
-  };
-
-  const isViewableFile = (fileName: string): boolean => {
-    return isBrowserFile(fileName) || isImageFile(fileName) || isPdfFile(fileName) || isDocumentFile(fileName) || isSpreadsheetFile(fileName) || isVideoFile(fileName) || isCodeFile(fileName) || isDrawioFile(fileName) || isTldrawFile(fileName) || isPowerPointFile(fileName)
-  };
+  // File type checking functions are imported from fileTypeUtils
 
   const loadConversationsCallback = async () => {
     await loadConversations(setIsLoadingConversations, setConversations);
   };
 
-  const saveCurrentConversationCallback = async () => {
-    await saveCurrentConversation(userInfo, conversationTitle, setSaveDialogOpen, setConversationTitle, loadConversationsCallback, toast);
-  };
-
   const loadConversationCallback = async (conversationId: string, tabId?: string) => {
-    await loadConversation(conversationId, setShowConversationDialog, toast, tabId);
+    await loadConversation(conversationId, toast, tabId);
   };
 
   const deleteConversationCallback = async (conversationId: string) => {
@@ -292,42 +213,18 @@ const Workspaces = (): React.ReactNode => {
   }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout, setSelectedFile]);
 
   const handleFileSelect = useCallback((file: FileSystemItem) => {
-    // Check if it's a Drive file
-    const isDriveFile = file.path?.startsWith('drive://')
-    
-    // For Drive files, check mimeType; for local files, check extension
-    let viewable = false
-    if (isDriveFile) {
-      // Google Workspace files are always viewable (Docs, Sheets, Slides)
-      if (file.mimeType?.includes('vnd.google-apps')) {
-        viewable = true
-      } else {
-        // Check other Drive file types (images, PDFs, videos, documents, spreadsheets, presentations, etc)
-        viewable = !!(file.mimeType && (
-          file.mimeType.includes('image/') ||
-          file.mimeType.includes('pdf') ||
-          file.mimeType.includes('video/') ||
-          file.mimeType.includes('text/') ||
-          file.mimeType.includes('msword') ||
-          file.mimeType.includes('wordprocessingml') ||
-          file.mimeType.includes('excel') ||
-          file.mimeType.includes('spreadsheetml') ||
-          file.mimeType.includes('csv') ||
-          file.mimeType.includes('presentationml') ||
-          file.mimeType.includes('ms-powerpoint')
-        ))
-      }
-    } else {
-      viewable = isViewableFile(file.name)
-    }
-    
-    if (!viewable) {
-      setSelectedFile(file);
-      return;
-    }
-    
-    openFileInTabCallback(file, activePanelId);
-  }, [activePanelId, openFileInTabCallback, isViewableFile, setSelectedFile]);
+    handleFileSelectHandler({
+      file,
+      activePanelId,
+      panelLayout,
+      getAllTabs,
+      updatePanelActiveTab,
+      addTabToPanel,
+      setActivePanelId,
+      setPanelLayout,
+      setSelectedFile,
+    });
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout, setSelectedFile]);
 
   const openEmailInTabCallback = useCallback((email: any, targetPanelId: string = activePanelId) => {
     openEmailInTab(
@@ -401,41 +298,9 @@ const Workspaces = (): React.ReactNode => {
     setRefreshTrigger(prev => prev + 1);
   }, []);
 
-  // Function to trigger meetings refresh
-  const triggerMeetingsRefresh = useCallback(() => {
-    setMeetingsRefreshTrigger(prev => prev + 1);
-  }, []);
-
   // Helper function to extract and format email body for replies
   const extractReplyBody = useCallback((email: any): string => {
-    if (!email?.payload) return '';
-    
-    // Extract full email content
-    const emailContent = extractEmailContent(email.payload);
-    
-    // Prefer HTML content if available, otherwise use text
-    let body = emailContent.html || emailContent.text || email.snippet || '';
-    
-    // If we have HTML content, clean it up for reply formatting
-    if (emailContent.html) {
-      // Remove excessive styling but keep structure
-      body = body
-        .replace(/style="[^"]*"/g, '') // Remove inline styles
-        .replace(/class="[^"]*"/g, '') // Remove classes
-        .replace(/<div[^>]*>/g, '<p>') // Convert divs to paragraphs
-        .replace(/<\/div>/g, '</p>') // Close paragraphs
-        .replace(/<br\s*\/?>/g, '<br>') // Normalize line breaks
-        .replace(/<p><\/p>/g, '') // Remove empty paragraphs
-        .replace(/<p><br><\/p>/g, '<br>') // Convert empty paragraphs to line breaks
-        .trim();
-    } else if (emailContent.text) {
-      // For plain text, preserve line breaks
-      body = emailContent.text
-        .replace(/\n/g, '<br>') // Convert newlines to HTML line breaks
-        .trim();
-    }
-    
-    return body;
+    return extractReplyBodyHandler(email);
   }, []);
 
   // Handle reply to email - opens a new compose tab
@@ -507,94 +372,15 @@ const Workspaces = (): React.ReactNode => {
   }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmailCallback, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, isDrawioFile, isTldrawFile, isPowerPointFile, setPanelLayout, setDragState, calendarJumpDate, handleCalendarJumpComplete, calendarSelectedEvent, handleCalendarSelectedEventConsumed, selectedFile, selectedEmail, handleEmailSelect]);
   
   // Render panel group (recursive for nested splits)
-  const renderPanelGroup = useCallback((group: PanelGroup): React.ReactNode => {
-    if (group.type === 'panel' && group.panel) {
-      return renderPanelWrapper(group.panel);
-    }
-    
-    if (group.type === 'group' && group.children) {
-      return (
-        <Allotment
-          vertical={group.direction === 'vertical'}
-          proportionalLayout={true}
-          defaultSizes={group.children.map((child) => child.size || 50)}
-          key={group.id}
-          className="h-full"
-        >
-          {group.children.map((child) => (
-            <Allotment.Pane key={child.id}>
-              {renderPanelGroup(child)}
-            </Allotment.Pane>
-          ))}
-        </Allotment>
-      );
-    }
-    
-    // Helper to render a keybind display
-    const renderKeybind = (keyString: string) => {
-      const hasShift = keyString.includes('shift+')
-      const key = keyString.replace('shift+', '').toUpperCase()
-      
-      return (
-        <KbdGroup>
-          <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-          {hasShift && (
-            <>
-              <span className="text-muted-foreground">+</span>
-              <Kbd>{isMac ? '⇧' : 'Shift'}</Kbd>
-            </>
-          )}
-          <span className="text-muted-foreground">+</span>
-          <Kbd>{key}</Kbd>
-        </KbdGroup>
-      )
-    }
-
-    const newAgentKey = getActiveKey(keybinds.newAgent)
-    const searchFilesKey = getActiveKey(keybinds.searchFiles)
-    const toggleSidebarKey = getActiveKey(keybinds.toggleFileSidebar)
-    const toggleSidebarAltKey = getActiveKey(keybinds.toggleFileSidebarAlt)
-
-    return (
-      <div className="h-full flex flex-col items-center justify-center gap-4 px-4">
-        <Image 
-          src={BanburyLogo} 
-          alt="Banbury" 
-          className="opacity-20 dark:opacity-15"
-          width={isMobile ? 60 : 80}
-          height={isMobile ? 60 : 80}
-          priority
-        />
-        <div className="flex flex-col items-center gap-4 max-w-md w-full">
-          {!isMobile ? (
-            <>
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-sm text-muted-foreground">Create a new agent</p>
-                {renderKeybind(newAgentKey)}
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-sm text-muted-foreground">Search files</p>
-                {renderKeybind(searchFilesKey)}
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-sm text-muted-foreground">Toggle file sidebar</p>
-                <div className="flex items-center gap-2">
-                  {renderKeybind(toggleSidebarKey)}
-                  <span className="text-xs text-muted-foreground">or</span>
-                  {renderKeybind(toggleSidebarAltKey)}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-col items-center gap-3 text-center">
-              <p className="text-sm text-muted-foreground mobile-text">Tap the menu buttons above to get started</p>
-              <p className="text-xs text-muted-foreground mobile-text">Use the Files button to browse your workspace</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }, [renderPanelWrapper, isMac, keybinds, isMobile]);
+  const renderPanelGroup = useCallback(
+    createRenderPanelGroup({
+      renderPanelWrapper,
+      isMac,
+      keybinds,
+      isMobile
+    }),
+    [renderPanelWrapper, isMac, keybinds, isMobile]
+  )
 
   // Assistant panel tab handlers
   const handleAssistantTabChange = useCallback((panelId: string, tabId: string) => {
@@ -680,29 +466,7 @@ const Workspaces = (): React.ReactNode => {
 
   // Render assistant panel group (recursive for nested splits)
   const renderAssistantPanelGroup = useCallback((group: PanelGroup): React.ReactNode => {
-    if (group.type === 'panel' && group.panel) {
-      return renderAssistantPanelWrapper(group.panel);
-    }
-    
-    if (group.type === 'group' && group.children) {
-      return (
-        <Allotment
-          vertical={group.direction === 'vertical'}
-          proportionalLayout={true}
-          defaultSizes={group.children.map((child) => child.size || 50)}
-          key={group.id}
-          className="h-full"
-        >
-          {group.children.map((child) => (
-            <Allotment.Pane key={child.id}>
-              {renderAssistantPanelGroup(child)}
-            </Allotment.Pane>
-          ))}
-        </Allotment>
-      );
-    }
-    
-    return null;
+    return renderAssistantPanelGroupHandler({ group, renderAssistantPanelWrapper });
   }, [renderAssistantPanelWrapper]);
 
   // Detect Mac platform for keyboard shortcut display
@@ -731,13 +495,10 @@ const Workspaces = (): React.ReactNode => {
 
   // Listen for keybind updates
   useEffect(() => {
-    function handleKeybindsUpdate() {
-      setKeybinds(getStoredKeybinds())
-    }
-    
-    window.addEventListener('keybinds-updated', handleKeybindsUpdate)
-    return () => window.removeEventListener('keybinds-updated', handleKeybindsUpdate)
-  }, []);
+    const handler = createKeybindsUpdateHandler({ setKeybinds })
+    window.addEventListener(KEYBINDS_UPDATED_EVENT, handler)
+    return () => window.removeEventListener(KEYBINDS_UPDATED_EVENT, handler)
+  }, [setKeybinds])
 
   // Register global keyboard shortcuts - use capture phase to ensure they work universally
   useEffect(() => {
@@ -753,141 +514,36 @@ const Workspaces = (): React.ReactNode => {
   }, []);
 
   // Listen for create-new-ai-tab events to create a new tab in the active assistant panel
-  // Supports optional detail.label to set a custom tab label (used by PlanViewer agents)
   useEffect(() => {
-    const handleCreateNewTab = (event: Event) => {
-      const customEvent = event as CustomEvent<{ label?: string }>
-      const label = customEvent.detail?.label
-      // Use the active assistant panel ID, or fallback to the default
-      const targetPanelId = activeAssistantPanelId || 'assistant-main-panel'
-      handleAssistantTabAdd(targetPanelId, label)
-      // Also activate the panel to ensure it's visible
-      setActiveAssistantPanelId(targetPanelId)
-    }
-
-    window.addEventListener('create-new-ai-tab', handleCreateNewTab)
-    return () => {
-      window.removeEventListener('create-new-ai-tab', handleCreateNewTab)
-    }
-  }, [activeAssistantPanelId, handleAssistantTabAdd]);
+    const handler = createCreateNewAiTabHandler({
+      activeAssistantPanelId,
+      handleAssistantTabAdd,
+      setActiveAssistantPanelId
+    }) as EventListener
+    window.addEventListener(CREATE_NEW_AI_TAB_EVENT, handler)
+    return () => window.removeEventListener(CREATE_NEW_AI_TAB_EVENT, handler)
+  }, [activeAssistantPanelId, handleAssistantTabAdd, setActiveAssistantPanelId])
 
   // Listen for open-ai-panel events to ensure the assistant panel is visible
-  // This is used by plan execution to ensure the user can see the agent running
   useEffect(() => {
-    const handleOpenAiPanel = () => {
-      setIsAssistantPanelCollapsed(false)
-      if (isMobile) {
-        setMobileAssistantOpen(true)
-      }
-    }
-
-    window.addEventListener('open-ai-panel', handleOpenAiPanel)
-    return () => {
-      window.removeEventListener('open-ai-panel', handleOpenAiPanel)
-    }
-  }, [isMobile]);
+    const handler = createOpenAiPanelHandler({
+      setIsAssistantPanelCollapsed,
+      isMobile,
+      setMobileAssistantOpen
+    })
+    window.addEventListener(OPEN_AI_PANEL_EVENT, handler)
+    return () => window.removeEventListener(OPEN_AI_PANEL_EVENT, handler)
+  }, [setIsAssistantPanelCollapsed, isMobile, setMobileAssistantOpen])
 
   // Set global active AI tab ID for plan execution coordination
   // This allows the PlanViewer to know which AI tab to send messages to
   useEffect(() => {
-    // Helper to find the active panel in the dock layout
-    const findActivePanel = (group: PanelGroup): Panel | null => {
-      if (group.type === 'panel' && group.panel) {
-        if (group.panel.id === activeAssistantPanelId) {
-          return group.panel
-        }
-      }
-      if (group.type === 'split' && group.children) {
-        for (const child of group.children) {
-          const found = findActivePanel(child)
-          if (found) return found
-        }
-      }
-      return null
-    }
-
-    const activePanel = findActivePanel(assistantDockLayout)
-    const activeTabId = activePanel?.activeTabId || activePanel?.tabs[0]?.id
-
-    if (activeTabId) {
-      (window as any).__banburyActiveAiTabId = activeTabId
-    }
-    
-    // Populate __banburyAiTabs with AI tabs from BOTH layouts for plan execution coordination
-    // This ensures agents are discoverable even when dragged between docks
-    const mainTabs = getAllTabs(panelLayout)
-    const assistantTabs = getAllTabs(assistantDockLayout)
-    const allAiTabs = [...mainTabs, ...assistantTabs].filter((t): t is AiTab => t.type === 'ai')
-    ;(window as any).__banburyAiTabs = allAiTabs
-    
-    // Register all tab threadIds in the thread map
-    const threadMap = (window as any).__banburyTabThreadMap || {}
-    allAiTabs.forEach((tab) => {
-      if (tab.threadId) {
-        threadMap[tab.id] = tab.threadId
-      }
-    })
-    ;(window as any).__banburyTabThreadMap = threadMap
-
-    return () => {
-      delete (window as any).__banburyActiveAiTabId
-    }
+    return setupActiveAiTabId({
+      panelLayout,
+      assistantDockLayout,
+      activeAssistantPanelId,
+    });
   }, [panelLayout, assistantDockLayout, activeAssistantPanelId]);
-
-  const handleCreateWordDocumentWrapper = async (documentName: string) => {
-    await handleCreateWordDocument(userInfo, setUploading, toast, triggerSidebarRefresh, documentName);
-  };
-
-  const handleCreateSpreadsheetWrapper = async (spreadsheetName: string) => {
-    await handleCreateSpreadsheet(userInfo, setUploading, toast, triggerSidebarRefresh, spreadsheetName);
-  };
-
-  const handleCreateNotebookWrapper = async (notebookName: string) => {
-    await handleCreateNotebook(userInfo, setUploading, toast, triggerSidebarRefresh, notebookName);
-  };
-
-  const handleCreateDrawioWrapper = async (diagramName: string) => {
-    await handleCreateDrawio(userInfo, setUploading, toast, triggerSidebarRefresh, diagramName);
-  };
-
-  const handleCreateTldrawWrapper = async (canvasName: string) => {
-    await handleCreateTldraw(userInfo, setUploading, toast, triggerSidebarRefresh, canvasName);
-  };
-
-  const handleCreatePowerpointWrapper = async (presentationName: string) => {
-    await handleCreatePowerpoint(userInfo, setUploading, toast, triggerSidebarRefresh, presentationName);
-  };
-
-  const handleGenerateImage = async () => {
-    const prompt = window.prompt('Describe the image to generate') || '';
-    if (!prompt.trim()) return;
-    
-    // Get image generation model from tool preferences
-    let imageModel = 'dall-e-3';
-    try {
-      const saved = localStorage.getItem('toolPreferences');
-      if (saved) {
-        const prefs = JSON.parse(saved);
-        imageModel = prefs.image_generation_model || 'dall-e-3';
-      }
-    } catch {}
-    
-    await handleCreateImage(
-      userInfo,
-      setUploading,
-      toast,
-      triggerSidebarRefresh,
-      { prompt, size: '1024x1024', folder: 'images', model: imageModel }
-    );
-  };
-
-
-
-  const handleCreateFolder = () => {
-    if (!userInfo?.username) return;
-    setFolderCreationTrigger(true);
-    setTimeout(() => setFolderCreationTrigger(false), 100);
-  };
 
   // Handle compose email - now opens in a tab
   const handleComposeEmailCallback = useCallback(() => {
@@ -946,58 +602,14 @@ const Workspaces = (): React.ReactNode => {
 
   // Handle desktop recording started - create a temporary meeting session and open in tab
   const handleDesktopRecordingStarted = useCallback((data: { sessionId: string; windowId: string; platform: string; meetingTitle: string }) => {
-    // Create a temporary MeetingSession object for the live recording
-    const tempMeeting: MeetingSession = {
-      id: data.sessionId,
-      title: data.meetingTitle || 'Desktop Recording',
-      platform: {
-        id: data.platform || 'desktop',
-        name: data.platform === 'zoom' ? 'Zoom' : data.platform === 'teams' ? 'Microsoft Teams' : data.platform === 'meet' ? 'Google Meet' : 'Desktop Recording',
-        icon: '🖥️',
-        supported: true,
-        authRequired: false
-      },
-      meetingUrl: `desktop://${data.windowId}`,
-      status: 'recording',
-      startTime: new Date(),
-      participants: [],
-      metadata: {
-        recordingEnabled: true,
-        transcriptionEnabled: true,
-        summaryEnabled: false,
-        actionItemsEnabled: false,
-        language: 'en',
-        quality: 'high',
-        autoJoin: false,
-        autoLeave: true,
-        maxDuration: 180
-      }
-    }
-    
-    setSelectedMeeting(tempMeeting)
-    openMeetingInTabCallback(tempMeeting, activePanelId)
-  }, [openMeetingInTabCallback, activePanelId])
+    handleDesktopRecordingStartedHandler({
+      data,
+      setSelectedMeeting,
+      openMeetingInTabCallback,
+      activePanelId
+    })
+  }, [openMeetingInTabCallback, activePanelId, setSelectedMeeting])
 
-  const handleFileDeletedCallback = useCallback((fileId: string) => {
-    handleFileDeleted(fileId, selectedFile, setPanelLayout, setSelectedFile, triggerSidebarRefresh);
-  }, [selectedFile, setPanelLayout, setSelectedFile, triggerSidebarRefresh]);
-
-  const handleFileRenamedCallback = useCallback((oldPath: string, newPath: string) => {
-    handleFileRenamed(oldPath, newPath, selectedFile, setPanelLayout, setSelectedFile, triggerSidebarRefresh);
-  }, [selectedFile, setPanelLayout, setSelectedFile, triggerSidebarRefresh]);
-
-  // Handle file moved - using extracted function
-  const handleFileMovedWrapper = useCallback((fileId: string, oldPath: string, newPath: string) => {
-    handleFileMoved({
-      fileId,
-      oldPath,
-      newPath,
-      selectedFile,
-      setPanelLayout,
-      setSelectedFile,
-      triggerSidebarRefresh
-    });
-  }, [selectedFile, setPanelLayout, setSelectedFile, triggerSidebarRefresh]);
 
   const handleFolderCreated = useCallback((folderPath: string) => {
     // Show success toast
@@ -1010,11 +622,6 @@ const Workspaces = (): React.ReactNode => {
     triggerSidebarRefresh();
   }, [toast, triggerSidebarRefresh]);
 
-  const handleFolderRenamedCallback = useCallback((oldPath: string, newPath: string) => {
-    handleFolderRenamed(oldPath, newPath, selectedFile, setPanelLayout, setSelectedFile, triggerSidebarRefresh, toast);
-  }, [selectedFile, toast, triggerSidebarRefresh]);
-
-
   useEffect(() => {
     // Ensure dark mode is enabled
     window.localStorage.setItem('themeMode', 'dark');
@@ -1024,65 +631,6 @@ const Workspaces = (): React.ReactNode => {
       (window as any).__DEMO_MODE_ACTIVE__ = false;
     }
     
-    const checkAuthAndFetchUser = async () => {
-      try {
-        setLoading(true);
-        
-        // Validate token first using ApiService
-        const isValidToken = await ApiService.validateToken();
-
-        if (!isValidToken) {
-          // Token is invalid, redirect to login
-          router.push('/login');
-          return;
-        }
-
-        // Token is valid, create user info from stored data
-        const username = localStorage.getItem('authUsername') || localStorage.getItem('username');
-        const firstName = localStorage.getItem('userFirstName') || '';
-        const lastName = localStorage.getItem('userLastName') || '';
-        const picture = localStorage.getItem('userPicture');
-        const basicUserInfo: UserInfo = {
-          username: username || 'User',
-          email: localStorage.getItem('userEmail') || username || '',
-          first_name: firstName,
-          last_name: lastName,
-          picture: picture || null
-        };
-        setUserInfo(basicUserInfo);
-        
-        // Trigger a file refresh after userInfo is set to ensure real files are loaded
-        setTimeout(() => {
-          triggerSidebarRefresh();
-        }, 500);
-      } catch (err) {
-        // Still try to show basic info if we have some stored data
-        const username = localStorage.getItem('authUsername') || localStorage.getItem('username');
-        if (username) {
-          const firstName = localStorage.getItem('userFirstName') || '';
-          const lastName = localStorage.getItem('userLastName') || '';
-          const picture = localStorage.getItem('userPicture');
-          const basicUserInfo: UserInfo = {
-            username: username,
-            email: localStorage.getItem('userEmail') || username,
-            first_name: firstName,
-            last_name: lastName,
-            picture: picture || null
-          };
-          setUserInfo(basicUserInfo);
-          
-          // Trigger a file refresh here too
-          setTimeout(() => {
-            triggerSidebarRefresh();
-          }, 500);
-        } else {
-          router.push('/login');
-          return;
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
 
     const trackWorkspaceVisit = async () => {
       try {
@@ -1092,7 +640,7 @@ const Workspaces = (): React.ReactNode => {
       }
     };
 
-    checkAuthAndFetchUser();
+    checkAuthAndFetchUser(setLoading, router, setUserInfo, triggerSidebarRefresh);
 
     setTimeout(() => {
       trackWorkspaceVisit();
@@ -1101,144 +649,50 @@ const Workspaces = (): React.ReactNode => {
 
   // Listen for requests to reopen a file (e.g., after save generates a new file id)
   useEffect(() => {
-    const handler = (e: Event) => {
-      console.log('[Workspaces] Received workspace-reopen-file event', e);
-      const detail = (e as CustomEvent).detail || {};
-      const { newFile } = detail as { oldPath?: string; newFile: FileSystemItem };
-      if (!newFile) return;
-      // Close any tab showing the old path, then open the new file in the active panel
-      try {
-        const allTabs = getAllTabs(panelLayout);
-        const fileTabs = allTabs.filter(t => (t as any).type === 'file');
-        const targets = fileTabs.filter(t => (t as any).file.path === (detail.oldPath || newFile.path));
-        targets.forEach(t => handleCloseTabCallback((t as any).id, activePanelId));
-      } catch {}
-      openFileInTabCallback(newFile, activePanelId);
-    };
-    window.addEventListener('workspace-reopen-file', handler as EventListener);
-    return () => window.removeEventListener('workspace-reopen-file', handler as EventListener);
-  }, [panelLayout, activePanelId, openFileInTabCallback, handleCloseTabCallback, getAllTabs]);
+    const handler = createWorkspaceReopenFileHandler({
+      panelLayout,
+      activePanelId,
+      openFileInTabCallback,
+      handleCloseTabCallback
+    }) as EventListener
+    window.addEventListener(WORKSPACE_REOPEN_FILE_EVENT, handler)
+    return () => window.removeEventListener(WORKSPACE_REOPEN_FILE_EVENT, handler)
+  }, [panelLayout, activePanelId, openFileInTabCallback, handleCloseTabCallback])
 
   // Listen for assistant-open-browser events to open a virtual browser tab
   useEffect(() => {
-    const handler = (event: Event) => {
-      const detail = (event as CustomEvent).detail || {};
-      const { viewerUrl, title } = detail;
-      if (!viewerUrl) return;
-
-      const virtualName = `${title || 'Browser Session'}.browserbase`;
-      const virtualPath = `browserbase/${virtualName}?viewerUrl=${encodeURIComponent(viewerUrl)}&title=${encodeURIComponent(title || 'Browser Session')}`;
-      const file: FileSystemItem = {
-        id: virtualPath,
-        file_id: virtualPath,
-        name: virtualName,
-        type: 'file',
-        path: virtualPath,
-      } as FileSystemItem;
-
-      // Always open browser sessions in the middle (main) panel
-      openFileInTabCallback(file, 'main-panel');
-    };
-    window.addEventListener('assistant-open-browser', handler as EventListener);
-    return () => window.removeEventListener('assistant-open-browser', handler as EventListener);
-  }, [openFileInTabCallback]);
+    const handler = createAssistantOpenBrowserHandler({ openFileInTabCallback }) as EventListener
+    window.addEventListener(ASSISTANT_OPEN_BROWSER_EVENT, handler)
+    return () => window.removeEventListener(ASSISTANT_OPEN_BROWSER_EVENT, handler)
+  }, [openFileInTabCallback])
 
   // Listen for file sidebar refresh events (from AI file modifications)
   useEffect(() => {
-    const handler = () => {
-      triggerSidebarRefresh();
-    };
-    window.addEventListener('file-sidebar-refresh', handler);
-    return () => window.removeEventListener('file-sidebar-refresh', handler);
-  }, [triggerSidebarRefresh]);
+    const handler = createFileSidebarRefreshHandler({ triggerSidebarRefresh })
+    window.addEventListener(FILE_SIDEBAR_REFRESH_EVENT, handler)
+    return () => window.removeEventListener(FILE_SIDEBAR_REFRESH_EVENT, handler)
+  }, [triggerSidebarRefresh])
 
   // Listen for open-presentation-in-viewer events to auto-switch to new presentations
   useEffect(() => {
-    const handler = async (event: Event) => {
-      const detail = (event as CustomEvent).detail || {};
-      const { fileId, fileName, presentationId, fileUrl } = detail;
-      if (!fileId || !fileName || !presentationId) {
-        console.warn('[Workspaces] Missing required fields in event detail');
-        return;
-      }
-
-      // Wait for file to appear in sidebar (it was just created and uploaded)
-      setTimeout(async () => {
-        // Trigger sidebar refresh to ensure file is loaded
-        triggerSidebarRefresh();
-
-        // Wait for refresh to complete
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // Create FileSystemItem and open it in the middle panel
-        const file: FileSystemItem = {
-          id: fileId,
-          file_id: fileId,
-          name: fileName,
-          path: `presentations/${fileName}`,
-          type: 'file',
-        };
-
-        openFileInTabCallback(file, 'main-panel');
-
-        // Dispatch pptx-presentation-loaded event for PowerPointViewer to catch
-        window.dispatchEvent(new CustomEvent('pptx-presentation-loaded', {
-          detail: { fileId, presentationId }
-        }));
-      }, 300);
-    };
-    window.addEventListener('open-presentation-in-viewer', handler as EventListener);
-    return () => window.removeEventListener('open-presentation-in-viewer', handler as EventListener);
-  }, [triggerSidebarRefresh, openFileInTabCallback]);
+    const handler = createOpenPresentationInViewerHandler({
+      triggerSidebarRefresh,
+      openFileInTabCallback
+    }) as EventListener
+    window.addEventListener(OPEN_PRESENTATION_IN_VIEWER_EVENT, handler)
+    return () => window.removeEventListener(OPEN_PRESENTATION_IN_VIEWER_EVENT, handler)
+  }, [triggerSidebarRefresh, openFileInTabCallback])
 
   // Listen for workspace-find-and-open-file events to find and open files by name/path
-  // Searches S3 for the file and opens it in the middle panel
   useEffect(() => {
-    const handler = async (event: Event) => {
-      const detail = (event as CustomEvent).detail || {};
-      const { fileName, filePath } = detail;
-      if (!fileName && !filePath) return;
-
-      try {
-        // Search for the file by name or path
-        const searchQuery = filePath || fileName;
-        const result = await ApiService.searchS3Files(searchQuery);
-        
-        if (result?.files && result.files.length > 0) {
-          // Find the best match - prefer exact path match, then name match
-          let matchedFile = result.files.find((f: any) => f.file_path === filePath);
-          if (!matchedFile) {
-            matchedFile = result.files.find((f: any) => f.file_name === fileName);
-          }
-          if (!matchedFile) {
-            matchedFile = result.files[0]; // Use first result as fallback
-          }
-
-          // Create FileSystemItem and open it
-          const file: FileSystemItem = {
-            id: matchedFile.file_id || matchedFile._id,
-            file_id: matchedFile.file_id || matchedFile._id,
-            name: matchedFile.file_name,
-            path: matchedFile.file_path,
-            type: 'file',
-            size: matchedFile.file_size,
-            modified: matchedFile.date_modified ? new Date(matchedFile.date_modified) : undefined,
-          };
-          
-          openFileInTabCallback(file, activePanelId);
-        } else {
-          // No results found - fallback to opening file search
-          setFileSearchOpen(true);
-        }
-      } catch (err) {
-        console.error('[Workspaces] Error searching for file:', err);
-        // Fallback to opening file search
-        setFileSearchOpen(true);
-      }
-    };
-    window.addEventListener('workspace-find-and-open-file', handler as EventListener);
-    return () => window.removeEventListener('workspace-find-and-open-file', handler as EventListener);
-  }, [activePanelId, openFileInTabCallback]);
+    const handler = createWorkspaceFindAndOpenFileHandler({
+      activePanelId,
+      openFileInTabCallback,
+      setFileSearchOpen
+    }) as EventListener
+    window.addEventListener(WORKSPACE_FIND_AND_OPEN_FILE_EVENT, handler)
+    return () => window.removeEventListener(WORKSPACE_FIND_AND_OPEN_FILE_EVENT, handler)
+  }, [activePanelId, openFileInTabCallback, setFileSearchOpen])
 
   // Load conversations on mount
   useEffect(() => {
@@ -1257,294 +711,27 @@ const Workspaces = (): React.ReactNode => {
 
   // Register panels as drop targets with closest-edge (panel body only) - covers both dock roots
   useEffect(() => {
-    const panelNodes = Array.from(document.querySelectorAll('[data-panel-id]')) as HTMLElement[];
-    const cleanups: Array<() => void> = [];
-    panelNodes.forEach((element) => {
-      const panelId = element.getAttribute('data-panel-id');
-      if (!panelId) return;
-      const cleanup = dropTargetForElements({
-        element,
-        getData: (args: any) =>
-          attachClosestEdge({ type: 'panel', panelId }, {
-            element,
-            input: args.input,
-            allowedEdges: ['left', 'right', 'top', 'bottom'],
-          }),
-        onDrag: (args: any) => {
-          if (!args?.source?.data || args.source.data.type !== 'tab') return;
-          const edge = extractClosestEdge(args.self.data);
-          setDragState((prev) => ({
-            ...prev,
-            dropTargetPanel: panelId,
-            dropZone: edge as any,
-          }));
-        },
-        onDragLeave: () => {
-          setDragState((prev) => ({ ...prev, dropZone: null, dropTargetPanel: null }));
-        },
-        onDrop: () => {
-          setDragState((prev) => ({ ...prev, dropZone: null, dropTargetPanel: null }));
-        },
-      });
-      cleanups.push(cleanup);
+    return registerDropTargets({
+      panelLayout,
+      assistantDockLayout,
+      setDragState,
     });
-
-    return () => cleanups.forEach((fn) => fn());
-  }, [panelLayout, assistantDockLayout]);
+  }, [panelLayout, assistantDockLayout, setDragState]);
 
   // Global monitor: create split on drop based on closest edge - handles cross-dock moves
   useEffect(() => {
-    // Helper to find tab in both layouts
-    const findTabInAllLayouts = (tabId: string): { tab: WorkspaceTab | null; sourceLayout: 'main' | 'assistant'; sourcePanelId: string | null } => {
-      // Check main layout first
-      const mainTabs = getAllTabs(panelLayout);
-      const mainTab = mainTabs.find((t) => t.id === tabId);
-      if (mainTab) {
-        let sourcePanelId: string | null = null;
-        const findSource = (layout: PanelGroup): void => {
-          if (layout.type === 'panel' && layout.panel) {
-            if (layout.panel.tabs.some((t) => t.id === tabId)) {
-              sourcePanelId = layout.panel.id;
-            }
-          } else if (layout.type === 'group' && layout.children) {
-            layout.children.forEach(findSource);
-          }
-        };
-        findSource(panelLayout);
-        return { tab: mainTab, sourceLayout: 'main', sourcePanelId };
-      }
-      
-      // Check assistant layout
-      const assistantTabs = getAllTabs(assistantDockLayout);
-      const assistantTab = assistantTabs.find((t) => t.id === tabId);
-      if (assistantTab) {
-        let sourcePanelId: string | null = null;
-        const findSource = (layout: PanelGroup): void => {
-          if (layout.type === 'panel' && layout.panel) {
-            if (layout.panel.tabs.some((t) => t.id === tabId)) {
-              sourcePanelId = layout.panel.id;
-            }
-          } else if (layout.type === 'group' && layout.children) {
-            layout.children.forEach(findSource);
-          }
-        };
-        findSource(assistantDockLayout);
-        return { tab: assistantTab, sourceLayout: 'assistant', sourcePanelId };
-      }
-      
-      return { tab: null, sourceLayout: 'main', sourcePanelId: null };
-    };
-    
-    // Determine which dock root a panel belongs to
-    const getTargetDockRoot = (panelId: string): 'main' | 'assistant' => {
-      return panelId.startsWith('assistant-') ? 'assistant' : 'main';
-    };
-
-    return monitorForElements({
-      onDragStart({ source, location }: any) {
-        if (source?.data?.type !== 'tab') return;
-        const { tab: dragged } = findTabInAllLayouts(source.data.id);
-        const input = location?.current?.input;
-        const pos = input && typeof input.clientX === 'number' && typeof input.clientY === 'number'
-          ? { x: input.clientX, y: input.clientY }
-          : null;
-        setDragState((prev) => ({
-          ...prev,
-          isDragging: true,
-          draggedTab: dragged,
-          draggedFromPanel: source.data.panelId || null,
-          dragStartPosition: pos,
-          currentPosition: pos || prev.currentPosition,
-        }));
-      },
-      onDrag({ source, location }: any) {
-        if (source?.data?.type !== 'tab') return;
-        const input = location?.current?.input;
-        if (input && typeof input.clientX === 'number' && typeof input.clientY === 'number') {
-          const pos = { x: input.clientX, y: input.clientY };
-          setDragState((prev) => ({ ...prev, currentPosition: pos }));
-        }
-      },
-      onDrop({ location, source }: any) {
-        if (source.data.type !== 'tab') return;
-        const tabId = source.data.id as string;
-
-        // Determine target panel and edge
-        const target = location.current.dropTargets.find((t: any) => t.data && (t.data as any).type === 'panel');
-        let edge = target ? (extractClosestEdge(target.data) as 'left' | 'right' | 'top' | 'bottom' | null) : null;
-        let targetPanelId = target ? ((target.data as any).panelId as string) : '';
-
-        // Fallback: compute panel and edge from mouse position when not detected (e.g., dropping over tab header)
-        if (!target || !edge || !targetPanelId) {
-          const pos = dragStateRef.current.currentPosition;
-          if (!pos) {
-            setDragState({
-              isDragging: false,
-              draggedTab: null,
-              draggedFromPanel: null,
-              dragStartPosition: null,
-              currentPosition: null,
-              dragDirection: null,
-              dropZone: null,
-              dropTargetPanel: null,
-            });
-            return;
-          }
-          const el = document.elementFromPoint(pos.x, pos.y) as HTMLElement | null;
-          const panelEl = el ? (el.closest('[data-panel-id]') as HTMLElement | null) : null;
-          if (!panelEl) {
-            setDragState({
-              isDragging: false,
-              draggedTab: null,
-              draggedFromPanel: null,
-              dragStartPosition: null,
-              currentPosition: null,
-              dragDirection: null,
-              dropZone: null,
-              dropTargetPanel: null,
-            });
-            return;
-          }
-          const pid = panelEl.getAttribute('data-panel-id') || '';
-          if (!pid) {
-            setDragState({
-              isDragging: false,
-              draggedTab: null,
-              draggedFromPanel: null,
-              dragStartPosition: null,
-              currentPosition: null,
-              dragDirection: null,
-              dropZone: null,
-              dropTargetPanel: null,
-            });
-            return;
-          }
-          targetPanelId = pid;
-          const rect = panelEl.getBoundingClientRect();
-          const relX = Math.max(0, Math.min(pos.x - rect.left, rect.width));
-          const relY = Math.max(0, Math.min(pos.y - rect.top, rect.height));
-          const leftDist = relX;
-          const rightDist = rect.width - relX;
-          const topDist = relY;
-          const bottomDist = rect.height - relY;
-          const minDist = Math.min(leftDist, rightDist, topDist, bottomDist);
-          if (minDist === leftDist) edge = 'left';
-          else if (minDist === rightDist) edge = 'right';
-          else if (minDist === topDist) edge = 'top';
-          else edge = 'bottom';
-        }
-
-        if (!edge || !targetPanelId) {
-          setDragState({
-            isDragging: false,
-            draggedTab: null,
-            draggedFromPanel: null,
-            dragStartPosition: null,
-            currentPosition: null,
-            dragDirection: null,
-            dropZone: null,
-            dropTargetPanel: null,
-          });
-          return;
-        }
-
-        // Find the dragged tab and its real source (across both layouts)
-        const { tab: draggedTab, sourceLayout, sourcePanelId } = findTabInAllLayouts(tabId);
-        if (!draggedTab || !sourcePanelId) {
-          setDragState({
-            isDragging: false,
-            draggedTab: null,
-            draggedFromPanel: null,
-            dragStartPosition: null,
-            currentPosition: null,
-            dragDirection: null,
-            dropZone: null,
-            dropTargetPanel: null,
-          });
-          return;
-        }
-
-        const targetLayout = getTargetDockRoot(targetPanelId);
-        const direction: SplitDirection = edge === 'left' || edge === 'right' ? 'horizontal' : 'vertical';
-        
-        // Remove tab from source layout
-        if (sourceLayout === 'main') {
-          setPanelLayout((prev) => removeTabFromPanel(prev, sourcePanelId, tabId));
-        } else {
-          setAssistantDockLayout((prev) => removeTabFromPanel(prev, sourcePanelId, tabId));
-        }
-        
-        // Add tab to target layout via split
-        if (targetLayout === 'main') {
-          splitPanelCallback(targetPanelId, direction, draggedTab as FileTab);
-        } else {
-          // Split in assistant layout
-          setAssistantDockLayout((prev) => {
-            const newPanelId = `assistant-panel-${Date.now()}`;
-            const newPanel: Panel = {
-              id: newPanelId,
-              tabs: [draggedTab],
-              activeTabId: draggedTab.id
-            };
-            
-            const splitInLayout = (layout: PanelGroup): PanelGroup => {
-              if (layout.type === 'panel' && layout.panel?.id === targetPanelId) {
-                return {
-                  id: `group-${Date.now()}`,
-                  type: 'group',
-                  direction,
-                  children: [
-                    { ...layout, size: 50 },
-                    {
-                      id: newPanelId,
-                      type: 'panel',
-                      panel: newPanel,
-                      size: 50
-                    }
-                  ]
-                };
-              }
-              if (layout.type === 'group' && layout.children) {
-                return {
-                  ...layout,
-                  children: layout.children.map((child) => splitInLayout(child))
-                };
-              }
-              return layout;
-            };
-            
-            return splitInLayout(prev);
-          });
-          setActiveAssistantPanelId(`assistant-panel-${Date.now()}`);
-        }
-
-        // Reset drag state after handling drop
-        setDragState({
-          isDragging: false,
-          draggedTab: null,
-          draggedFromPanel: null,
-          dragStartPosition: null,
-          currentPosition: null,
-          dragDirection: null,
-          dropZone: null,
-          dropTargetPanel: null,
-        });
-      },
+    return createDragMonitor({
+      panelLayout,
+      assistantDockLayout,
+      dragStateRef,
+      setDragState,
+      setPanelLayout,
+      setAssistantDockLayout,
+      setActiveAssistantPanelId,
+      splitPanelCallback,
     });
-  }, [panelLayout, assistantDockLayout, getAllTabs, removeTabFromPanel, splitPanelCallback]);
+  }, [panelLayout, assistantDockLayout, dragStateRef, setDragState, setPanelLayout, setAssistantDockLayout, setActiveAssistantPanelId, splitPanelCallback]);
 
-  const handleLogout = () => {
-    // Clear all authentication data using ApiService
-    ApiService.clearAuthToken();
-    
-    // Clear any additional session data
-    localStorage.removeItem('deviceId');
-    localStorage.removeItem('googleOAuthSession');
-    localStorage.removeItem('userData');
-    
-    // Redirect to home page
-    router.push('/');
-  };
 
 
 
@@ -1592,7 +779,6 @@ const Workspaces = (): React.ReactNode => {
           {/* Navigation Sidebar - Fixed (hidden on mobile) */}
           <div className="hidden md:block">
             <NavSidebar
-              onLogout={handleLogout}
               activeTab={activeLeftPanelTab}
               onTabChange={setActiveLeftPanelTab}
               showAdminToggle={userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com'}
@@ -1601,56 +787,13 @@ const Workspaces = (): React.ReactNode => {
           
           {/* Mobile Header - Always present on mobile */}
           {isMobile && (
-            <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background">
-              <div className="px-2 py-1.5 border-b border-zinc-200 dark:border-white/[0.06] flex items-center justify-between w-full touch-target bg-background">
-                {/* Mobile Workspace Tabs */}
-                <div className="flex items-center gap-0.5 flex-1 overflow-x-auto scrollbar-hide">
-                  {[
-                    { id: 'files', icon: Folder, label: 'Files' },
-                    { id: 'email', icon: Mail, label: 'Email' },
-                    { id: 'calendar', icon: Calendar, label: 'Calendar' },
-                    { id: 'tasks', icon: CheckSquare, label: 'Tasks' },
-                    { id: 'meetings', icon: Video, label: 'Meetings' },
-                    ...(userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com'
-                      ? [{ id: 'admin', icon: UserCog, label: 'Admin' }]
-                      : []),
-                  ].map((tab) => {
-                    const Icon = tab.icon;
-                    const isActive = activeLeftPanelTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => {
-                          setActiveLeftPanelTab(tab.id);
-                          setMobileFileSidebarOpen(true);
-                        }}
-                        className={`flex items-center justify-center h-8 w-8 min-h-[32px] min-w-[32px] rounded-lg transition-all duration-200 ${
-                          isActive
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:bg-accent dark:hover:bg-accent hover:text-foreground'
-                        }`}
-                        title={tab.label}
-                      >
-                        <Icon className="h-4 w-4" strokeWidth={1.5} />
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="flex items-center gap-1">
-                  {/* Assistant Panel Toggle */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 min-h-[32px] min-w-[32px] border-zinc-300 dark:border-white/[0.06] touch-target p-0"
-                    onClick={() => setMobileAssistantOpen(true)}
-                    title="Assistant"
-                  >
-                    <MessageSquare className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <MobileWorkspaceHeader
+              activeLeftPanelTab={activeLeftPanelTab}
+              onTabChange={setActiveLeftPanelTab}
+              onOpenFileSidebar={() => setMobileFileSidebarOpen(true)}
+              onOpenAssistant={() => setMobileAssistantOpen(true)}
+              userInfo={userInfo}
+            />
           )}
           
           {/* Main Content Area with Resizable Panels */}
@@ -1665,151 +808,62 @@ const Workspaces = (): React.ReactNode => {
 
             {/* Mobile File Sidebar Drawer */}
             {isMobile && (
-              <Sheet open={mobileFileSidebarOpen} onOpenChange={setMobileFileSidebarOpen}>
-                <SheetContent side="left" className="w-[320px] sm:w-[360px] p-0 mobile-sheet-expand">
-                  <div className="h-full flex flex-col">
-                    <div className="px-4 py-3 bg-card">
-                      <SheetTitle className="text-foreground mobile-text text-base font-semibold">Files</SheetTitle>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <LeftPanel
-                        currentView="workspaces"
-                        userInfo={userInfo}
-                        activeTab={activeLeftPanelTab}
-                        onTabChange={setActiveLeftPanelTab}
-                        onAdminTabClick={(tabId) => {
-                          openAdminInTabCallback(tabId, activePanelId);
-                          setMobileFileSidebarOpen(false);
-                        }}
-                        onFileSelect={(file) => {
-                          handleFileSelect(file);
-                          setMobileFileSidebarOpen(false);
-                        }}
-                        selectedFile={selectedFile}
-                        refreshTrigger={refreshTrigger}
-                        onFileDeleted={handleFileDeletedCallback}
-                        onFileRenamed={handleFileRenamedCallback}
-                        onFileMoved={handleFileMovedWrapper}
-                        onFolderCreated={handleFolderCreated}
-                        onFolderRenamed={handleFolderRenamedCallback}
-                        triggerRootFolderCreation={folderCreationTrigger}
-                        onEmailSelect={(email) => {
-                          handleEmailSelect(email);
-                          setMobileFileSidebarOpen(false);
-                        }}
-                        onComposeEmail={handleComposeEmailCallback}
-                        onCreateDocument={handleCreateWordDocumentWrapper}
-                        onCreateSpreadsheet={handleCreateSpreadsheetWrapper}
-                        onCreateNotebook={handleCreateNotebookWrapper}
-                        onCreateDrawio={handleCreateDrawioWrapper}
-                        onCreateTldraw={handleCreateTldrawWrapper}
-                        onCreatePowerpoint={handleCreatePowerpointWrapper}
-                        onGenerateImage={handleGenerateImage}
-                        onCreateFolder={handleCreateFolder}
-                        onEventSelect={(event) => {
-                          handleCalendarEventSelectCallback(event);
-                          setMobileFileSidebarOpen(false);
-                        }}
-                        onOpenCalendar={() => {
-                          openCalendarInTabCallback(activePanelId);
-                          setMobileFileSidebarOpen(false);
-                        }}
-                        onTaskSelect={(task) => {
-                          handleTaskSelect(task);
-                          setMobileFileSidebarOpen(false);
-                        }}
-                        selectedTask={selectedTask}
-                        onCreateTask={() => {
-                          handleCreateTask();
-                          setMobileFileSidebarOpen(false);
-                        }}
-                        onMeetingSelect={(meeting) => {
-                          handleMeetingSelect(meeting);
-                          setMobileFileSidebarOpen(false);
-                        }}
-                        selectedMeeting={selectedMeeting}
-                        onJoinMeeting={() => {
-                          handleJoinMeeting();
-                          setMobileFileSidebarOpen(false);
-                        }}
-                        onDesktopRecordingStarted={(data) => {
-                          handleDesktopRecordingStarted(data);
-                          setMobileFileSidebarOpen(false);
-                        }}
-                        meetingsRefreshTrigger={meetingsRefreshTrigger}
-                      />
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
+              <MobileFileSidebar
+                open={mobileFileSidebarOpen}
+                onOpenChange={setMobileFileSidebarOpen}
+                userInfo={userInfo}
+                activeTab={activeLeftPanelTab}
+                onTabChange={setActiveLeftPanelTab}
+                activePanelId={activePanelId}
+                selectedFile={selectedFile}
+                selectedTask={selectedTask}
+                selectedMeeting={selectedMeeting}
+                refreshTrigger={refreshTrigger}
+                folderCreationTrigger={folderCreationTrigger}
+                meetingsRefreshTrigger={meetingsRefreshTrigger}
+                onAdminTabClick={(tabId) => openAdminInTabCallback(tabId, activePanelId)}
+                onFolderCreated={handleFolderCreated}
+                onEmailSelect={handleEmailSelect}
+                onComposeEmail={handleComposeEmailCallback}
+                onEventSelect={handleCalendarEventSelectCallback}
+                onOpenCalendar={() => openCalendarInTabCallback(activePanelId)}
+                onTaskSelect={handleTaskSelect}
+                onCreateTask={handleCreateTask}
+                onMeetingSelect={handleMeetingSelect}
+                onJoinMeeting={handleJoinMeeting}
+                onDesktopRecordingStarted={handleDesktopRecordingStarted}
+                onClose={() => setMobileFileSidebarOpen(false)}
+                panelLayout={panelLayout}
+                setPanelLayout={setPanelLayout}
+                setActivePanelId={setActivePanelId}
+                setSelectedFile={setSelectedFile}
+                triggerSidebarRefresh={triggerSidebarRefresh}
+                toast={toast}
+                setSelectedEmail={setSelectedEmail}
+                setReplyToEmail={setReplyToEmail}
+                setCalendarJumpDate={setCalendarJumpDate}
+                setCalendarSelectedEvent={setCalendarSelectedEvent}
+                setSelectedTask={setSelectedTask}
+                setSelectedMeeting={setSelectedMeeting}
+              />
             )}
 
             {/* Mobile Assistant Panel Drawer */}
             {isMobile && (
-              <Sheet open={mobileAssistantOpen} onOpenChange={setMobileAssistantOpen}>
-                <SheetContent side="right" className="w-full sm:w-[400px] p-0 [&>button]:hidden mobile-sheet-expand-right">
-                  <div className="h-full flex flex-col">
-                    {/* Mobile Toolbar in Assistant Panel */}
-                    <div className="px-2 py-1.5 border-b border-zinc-200 dark:border-white/[0.06] flex items-center justify-between w-full touch-target bg-background">
-                      {/* Mobile Workspace Tabs */}
-                      <div className="flex items-center gap-0.5 flex-1 overflow-x-auto scrollbar-hide">
-                        {[
-                          { id: 'files', icon: Folder, label: 'Files' },
-                          { id: 'email', icon: Mail, label: 'Email' },
-                          { id: 'calendar', icon: Calendar, label: 'Calendar' },
-                          { id: 'tasks', icon: CheckSquare, label: 'Tasks' },
-                          { id: 'meetings', icon: Video, label: 'Meetings' },
-                          ...(userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com'
-                            ? [{ id: 'admin', icon: UserCog, label: 'Admin' }]
-                            : []),
-                        ].map((tab) => {
-                          const Icon = tab.icon;
-                          const isActive = activeLeftPanelTab === tab.id;
-                          return (
-                            <button
-                              key={tab.id}
-                              onClick={() => {
-                                setActiveLeftPanelTab(tab.id);
-                                setMobileFileSidebarOpen(true);
-                                setMobileAssistantOpen(false);
-                              }}
-                              className={`flex items-center justify-center h-8 w-8 min-h-[32px] min-w-[32px] rounded-lg transition-all duration-200 ${
-                                isActive
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'text-muted-foreground hover:bg-accent dark:hover:bg-accent hover:text-foreground'
-                              }`}
-                              title={tab.label}
-                            >
-                              <Icon className="h-4 w-4" strokeWidth={1.5} />
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        {/* Assistant Panel Toggle - Close button */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 min-h-[32px] min-w-[32px] border-zinc-300 dark:border-white/[0.06] touch-target p-0"
-                          onClick={() => setMobileAssistantOpen(false)}
-                          title="Close Assistant"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <div 
-                        data-assistant-dock 
-                        className="h-full relative"
-                      >
-                        {renderAssistantPanelGroup(assistantDockLayout)}
-                      </div>
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
+              <MobileAssistantPanel
+                open={mobileAssistantOpen}
+                onOpenChange={setMobileAssistantOpen}
+                activeLeftPanelTab={activeLeftPanelTab}
+                onTabSelect={(tabId) => {
+                  setActiveLeftPanelTab(tabId);
+                  setMobileFileSidebarOpen(true);
+                  setMobileAssistantOpen(false);
+                }}
+                onClose={() => setMobileAssistantOpen(false)}
+                userInfo={userInfo}
+                assistantDockLayout={assistantDockLayout}
+                renderAssistantPanelGroup={renderAssistantPanelGroup}
+              />
             )}
 
             {/* Resizable Panels */}
@@ -1860,40 +914,31 @@ const Workspaces = (): React.ReactNode => {
                         {/* File Sidebar Content */}
                         <div className="flex-1 overflow-hidden">
                           <LeftPanel
-                            currentView="workspaces"
                             userInfo={userInfo}
                             activeTab={activeLeftPanelTab}
-                            onTabChange={setActiveLeftPanelTab}
                             onAdminTabClick={(tabId) => openAdminInTabCallback(tabId, activePanelId)}
-                            onFileSelect={handleFileSelect}
                             selectedFile={selectedFile}
                             refreshTrigger={refreshTrigger}
-                            onFileDeleted={handleFileDeletedCallback}
-                            onFileRenamed={handleFileRenamedCallback}
-                            onFileMoved={handleFileMovedWrapper}
                             onFolderCreated={handleFolderCreated}
-                            onFolderRenamed={handleFolderRenamedCallback}
                             triggerRootFolderCreation={folderCreationTrigger}
-                            onEmailSelect={handleEmailSelect}
-                            onComposeEmail={handleComposeEmailCallback}
-                            onCreateDocument={handleCreateWordDocumentWrapper}
-                            onCreateSpreadsheet={handleCreateSpreadsheetWrapper}
-                            onCreateNotebook={handleCreateNotebookWrapper}
-                            onCreateDrawio={handleCreateDrawioWrapper}
-                            onCreateTldraw={handleCreateTldrawWrapper}
-                            onCreatePowerpoint={handleCreatePowerpointWrapper}
-                            onGenerateImage={handleGenerateImage}
-                            onCreateFolder={handleCreateFolder}
-                            onEventSelect={handleCalendarEventSelectCallback}
                             onOpenCalendar={() => openCalendarInTabCallback(activePanelId)}
-                            onTaskSelect={handleTaskSelect}
                             selectedTask={selectedTask}
-                            onCreateTask={handleCreateTask}
-                            onMeetingSelect={handleMeetingSelect}
                             selectedMeeting={selectedMeeting}
-                            onJoinMeeting={handleJoinMeeting}
-                            onDesktopRecordingStarted={handleDesktopRecordingStarted}
                             meetingsRefreshTrigger={meetingsRefreshTrigger}
+                            // Workspace dependencies for FilesTab
+                            activePanelId={activePanelId}
+                            panelLayout={panelLayout}
+                            setPanelLayout={setPanelLayout}
+                            setActivePanelId={setActivePanelId}
+                            setSelectedFile={setSelectedFile}
+                            triggerSidebarRefresh={triggerSidebarRefresh}
+                            toast={toast}
+                            setSelectedEmail={setSelectedEmail}
+                            setReplyToEmail={setReplyToEmail}
+                            setCalendarJumpDate={setCalendarJumpDate}
+                            setCalendarSelectedEvent={setCalendarSelectedEvent}
+                            setSelectedTask={setSelectedTask}
+                            setSelectedMeeting={setSelectedMeeting}
                           />
                         </div>
                       </div>
@@ -1991,93 +1036,6 @@ const Workspaces = (): React.ReactNode => {
           )}
 
         </div>
-        
-        {/* Conversation Dialogs */}
-        {saveDialogOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.06] rounded-lg p-6 w-96 shadow-soft-md">
-              <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Save Conversation</h3>
-              <input
-                type="text"
-                placeholder="Enter conversation title..."
-                value={conversationTitle}
-                onChange={(e) => setConversationTitle(e.target.value)}
-                className="w-full p-3 bg-zinc-800 border border-white/[0.06] rounded text-white mb-4"
-              />
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => {
-                    setSaveDialogOpen(false);
-                    setConversationTitle("");
-                  }}
-                  className="px-4 py-2 bg-zinc-700 text-white rounded hover:bg-zinc-600"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveCurrentConversationCallback}
-                  disabled={!conversationTitle.trim()}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {showConversationDialog && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.06] rounded-lg p-6 w-96 max-h-96 overflow-y-auto shadow-soft-md">
-              <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Load Conversation</h3>
-              {isLoadingConversations ? (
-                <div className="text-zinc-900 dark:text-white text-center py-4">Loading conversations...</div>
-              ) : conversations.length === 0 ? (
-                <div className="text-white text-center py-4">No saved conversations found.</div>
-              ) : (
-                <div className="space-y-2">
-                  {conversations.map((conversation) => (
-                    <div
-                      key={conversation._id}
-                      className="flex items-center justify-between p-3 bg-zinc-800 rounded border border-white/[0.06]"
-                    >
-                      <div className="flex-1">
-                        <div className="text-white font-medium">{conversation.title}</div>
-                        <div className="text-zinc-400 text-sm">
-                          {new Date(conversation.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => loadConversationCallback(conversation._id)}
-                          className="p-2 text-blue-400 hover:text-blue-300"
-                          title="Load conversation"
-                        >
-                          <FolderOpen className="h-4 w-4" strokeWidth={1} />
-                        </button>
-                        <button
-                          onClick={() => deleteConversationCallback(conversation._id)}
-                          className="p-2 text-red-400 hover:text-red-300"
-                          title="Delete conversation"
-                        >
-                          <Trash2 className="h-4 w-4" strokeWidth={1} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={() => setShowConversationDialog(false)}
-                  className="px-4 py-2 bg-zinc-700 text-white rounded hover:bg-zinc-600"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Split Zones for visual feedback */}
         <SplitZones
@@ -2103,22 +1061,6 @@ const Workspaces = (): React.ReactNode => {
           .select-none {
             user-select: none;
           }
-          /* VSCode-style tabs (Olympus Tabs use .tab class) */
-          .tab {
-            border: none;
-            transition: background-color 150ms ease, color 150ms ease;
-          }
-          .tab:hover {
-            border: none;
-            box-shadow: none;
-          }
-          .tab--active {
-            border: none;
-          }
-          /* Panel collapse/expand transitions */
-          .panel-transition {
-            transition: all 0.3s ease-in-out;
-          }
           /* Burger button styling */
           .burger-button {
             transition: all 0.2s ease-in-out;
@@ -2127,71 +1069,7 @@ const Workspaces = (): React.ReactNode => {
             transform: translateY(-50%) scale(1.1);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
           }
-          /* Touch-friendly targets - minimum 44x44px on mobile */
           @media (max-width: 767px) {
-            /* Mobile Sheet expanding animations - horizontal slide only */
-            .mobile-sheet-expand[data-slot="sheet-content"][data-state="open"] {
-              animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
-            }
-            .mobile-sheet-expand[data-slot="sheet-content"][data-state="closed"] {
-              animation: slideOutLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-            }
-            @keyframes slideInRight {
-              from {
-                transform: translateX(-100%);
-                opacity: 0;
-              }
-              to {
-                transform: translateX(0);
-                opacity: 1;
-              }
-            }
-            @keyframes slideOutLeft {
-              from {
-                transform: translateX(0);
-                opacity: 1;
-              }
-              to {
-                transform: translateX(-100%);
-                opacity: 0;
-              }
-            }
-            /* Right panel (assistant) expanding animation - horizontal slide only */
-            .mobile-sheet-expand-right[data-slot="sheet-content"][data-state="open"] {
-              animation: slideInLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
-            }
-            .mobile-sheet-expand-right[data-slot="sheet-content"][data-state="closed"] {
-              animation: slideOutRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-            }
-            @keyframes slideInLeft {
-              from {
-                transform: translateX(100%);
-                opacity: 0;
-              }
-              to {
-                transform: translateX(0);
-                opacity: 1;
-              }
-            }
-            @keyframes slideOutRight {
-              from {
-                transform: translateX(0);
-                opacity: 1;
-              }
-              to {
-                transform: translateX(100%);
-                opacity: 0;
-              }
-            }
-            .touch-target {
-              min-height: 44px;
-              min-width: 44px;
-            }
-            /* Ensure buttons in mobile header are touch-friendly */
-            button[class*="h-11"] {
-              min-height: 44px;
-              min-width: 44px;
-            }
             /* Improve spacing for mobile */
             .mobile-spacing {
               padding: 0.75rem;

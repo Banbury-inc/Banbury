@@ -208,7 +208,7 @@ const Login = (): JSX.Element => {
               <Button
                 type="button"
                 onClick={handleGoogleLogin}
-                disabled={loading || apiStatus === 'offline'}
+                disabled={loading}
                 className="w-full bg-white hover:bg-zinc-100 text-black border border-zinc-300 flex items-center justify-center gap-3"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">

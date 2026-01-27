@@ -19,7 +19,7 @@ export function WorkspacesTopBar({
 
   return (
     <div 
-      className="hidden md:flex h-[35px] w-full bg-card border-b border-zinc-200 dark:border-white/[0.06] items-center justify-between px-4 shadow-soft"
+      className="hidden md:flex h-[35px] w-full bg-card border-b border-zinc-200 dark:border-white/[0.06] items-center justify-between shadow-soft"
       style={isDesktop ? { WebkitAppRegion: 'drag' } : undefined}
     >
       {/* Left Panel Toggle */}

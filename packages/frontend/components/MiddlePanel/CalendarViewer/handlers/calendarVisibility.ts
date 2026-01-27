@@ -6,5 +6,5 @@ export {
   setVisibleCalendarIds,
   toggleCalendarVisibility,
   subscribeToVisibilityChanges
-} from '../../../LeftPanel/components/handlers/calendarVisibility'
+} from '../../../LeftPanel/components/CalendarTab/handlers/calendarVisibility'
 

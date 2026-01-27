@@ -86,8 +86,6 @@ const AuthCallbackElectron = (): JSX.Element => {
               ? `${currentOrigin}/authentication/auth/electron/callback`
               : 'https://www.banbury.io/authentication/auth/electron/callback'
             
-            console.log('[AuthCallbackElectron] Using redirect URI:', redirectUri)
-            
             // Call the backend electron callback endpoint directly
             const params = new URLSearchParams()
             params.set('code', code!)
@@ -103,19 +101,12 @@ const AuthCallbackElectron = (): JSX.Element => {
             const backendUrl = CONFIG.url.replace(/\/$/, '')
             const apiUrl = `${backendUrl}/authentication/auth/electron/callback/?${params.toString()}`
             
-            // Log for debugging
-            console.log('[AuthCallbackElectron] Calling backend API:', apiUrl)
-            console.log('[AuthCallbackElectron] Backend URL from CONFIG:', backendUrl)
-            
             // Call backend with Accept: application/json to get JSON response
             const response = await fetch(apiUrl, {
               headers: {
                 'Accept': 'application/json'
               }
             })
-            
-            console.log('[AuthCallbackElectron] Response status:', response.status, response.statusText)
-            console.log('[AuthCallbackElectron] Response URL:', response.url)
             
             if (!response.ok) {
               // Try to get error details

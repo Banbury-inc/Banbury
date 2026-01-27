@@ -23,7 +23,6 @@ export interface DriveFileListResponse {
 }
 
 export default class Drive {
-  constructor(_api: ApiService) {}
 
   private static withAuthHeaders() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null

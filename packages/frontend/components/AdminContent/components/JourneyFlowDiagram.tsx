@@ -94,7 +94,6 @@ export function JourneyFlowDiagram({ paths, startingEvent, onPathClick }: Journe
           {sortedPaths.map((path, pathIndex) => {
             const y = startY + pathIndex * verticalSpacing
             const pathEvents = path.path.slice(1) // Skip first event (starting event)
-            const totalWidth = pathEvents.length * (boxWidth + horizontalSpacing)
             
             return (
               <g key={pathIndex}>

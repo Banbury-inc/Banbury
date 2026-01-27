@@ -1,6 +1,7 @@
 import { LogOut, Settings, Folder, Mail, Calendar, CheckSquare, Video, UserCog, Download } from "lucide-react"
 import Image from 'next/image'
 import { useRouter } from "next/router"
+import type { NextRouter } from "next/router"
 import { useState, useEffect } from "react"
 
 import { Button } from "./ui/button"
@@ -26,8 +27,20 @@ import {
   TooltipTrigger,
 } from "./ui/tooltip"
 
+function handleLogout(router: NextRouter) {
+  // Clear all authentication data using ApiService
+  ApiService.clearAuthToken();
+  
+  // Clear any additional session data
+  localStorage.removeItem('deviceId');
+  localStorage.removeItem('googleOAuthSession');
+  localStorage.removeItem('userData');
+  
+  // Redirect to home page
+  router.push('/');
+}
+
 interface NavSidebarProps {
-  onLogout?: () => void
   activeTab?: string
   onTabChange?: (tab: string) => void
   showAdminToggle?: boolean
@@ -45,7 +58,7 @@ function isElectronApp(): boolean {
   return typeof window !== 'undefined' && !!window.desktopApp?.isDesktop
 }
 
-export function NavSidebar({ onLogout, activeTab = 'files', onTabChange, showAdminToggle = false }: NavSidebarProps) {
+export function NavSidebar({ activeTab = 'files', onTabChange, showAdminToggle = false }: NavSidebarProps) {
   const router = useRouter()
   const [username, setUsername] = useState<string>('')
   const [userPicture, setUserPicture] = useState<string | null>(null)
@@ -164,57 +177,55 @@ export function NavSidebar({ onLogout, activeTab = 'files', onTabChange, showAdm
         </div>
 
         {/* Footer with User Avatar */}
-        {onLogout && (
-          <div className="flex items-center justify-center pb-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center justify-center rounded-full hover:ring-2 hover:ring-accent dark:hover:ring-accent transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent dark:focus:ring-accent hover:scale-110 active:scale-95">
-                  <Avatar className="h-8 w-8 cursor-pointer">
-                    {userPicture && (
-                      <AvatarImage src={userPicture} alt={username || 'User'} />
+        <div className="flex items-center justify-center pb-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center justify-center rounded-full hover:ring-2 hover:ring-accent dark:hover:ring-accent transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent dark:focus:ring-accent hover:scale-110 active:scale-95">
+                <Avatar className="h-8 w-8 cursor-pointer">
+                  {userPicture && (
+                    <AvatarImage src={userPicture} alt={username || 'User'} />
+                  )}
+                  <AvatarFallback className="bg-accent dark:bg-accent text-accent-foreground dark:text-white">
+                    {userInitials}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" align="end" className="w-56 bg-accent border-border">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <Typography variant="p">{username}</Typography>
+                  <div className="flex items-center gap-2 mt-1">
+                    {subscription === 'pro' ? (
+                      <Badge variant="default" className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0">
+                        Pro
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">
+                        Free
+                      </Badge>
                     )}
-                    <AvatarFallback className="bg-accent dark:bg-accent text-accent-foreground dark:text-white">
-                      {userInitials}
-                    </AvatarFallback>
-                  </Avatar>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" align="end" className="w-56 bg-accent border-border">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <Typography variant="p">{username}</Typography>
-                    <div className="flex items-center gap-2 mt-1">
-                      {subscription === 'pro' ? (
-                        <Badge variant="default" className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0">
-                          Pro
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-xs">
-                          Free
-                        </Badge>
-                      )}
-                    </div>
                   </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-zinc-200 dark:bg-white/[0.06]" />
-                <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="cursor-pointer hover:bg-accent dark:hover:bg-accent py-2 transition-all">
-                  <Settings className="mr-2 h-4 w-4" strokeWidth={1} />
-                  <Typography variant="small">Settings</Typography>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-zinc-200 dark:bg-white/[0.06]" />
+              <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="cursor-pointer hover:bg-accent dark:hover:bg-accent py-2 transition-all">
+                <Settings className="mr-2 h-4 w-4" strokeWidth={1} />
+                <Typography variant="small">Settings</Typography>
+              </DropdownMenuItem>
+              {!isElectronApp() && (
+                <DropdownMenuItem onClick={handleDownloadDesktopApp} className="cursor-pointer hover:bg-accent dark:hover:bg-accent py-2 transition-all">
+                  <Download className="mr-2 h-4 w-4" strokeWidth={1} />
+                  <Typography variant="small">Download desktop app</Typography>
                 </DropdownMenuItem>
-                {!isElectronApp() && (
-                  <DropdownMenuItem onClick={handleDownloadDesktopApp} className="cursor-pointer hover:bg-accent dark:hover:bg-accent py-2 transition-all">
-                    <Download className="mr-2 h-4 w-4" strokeWidth={1} />
-                    <Typography variant="small">Download desktop app</Typography>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={onLogout} className="cursor-pointer hover:bg-red-500/10 dark:hover:bg-red-500/10 text-red-500 dark:text-red-400 py-2 transition-all">
-                  <LogOut className="mr-2 h-4 w-4" strokeWidth={1} />
-                  <Typography variant="small">Logout</Typography>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
+              )}
+              <DropdownMenuItem onClick={() => handleLogout(router)} className="cursor-pointer hover:bg-red-500/10 dark:hover:bg-red-500/10 text-red-500 dark:text-red-400 py-2 transition-all">
+                <LogOut className="mr-2 h-4 w-4" strokeWidth={1} />
+                <Typography variant="small">Logout</Typography>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         <SettingsModal open={settingsOpen} onOpenChange={handleSettingsOpenChange} />
       </div>

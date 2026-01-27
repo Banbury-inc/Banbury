@@ -27,7 +27,6 @@ export interface ConversationResponse {
 }
 
 export default class Conversations {
-  constructor(_api: ApiService) {}
 
   static async saveConversation(data: SaveConversationRequest): Promise<ConversationResponse> {
     try {

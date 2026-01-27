@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover'
-import { Search, X, FileText, FileImage, FileVideo, FileAudio, FileCode, FileSpreadsheet, FileArchive, FileJson, FileType, FileCheck, FileSearch, FileBarChart, FilePieChart, FileDigit, FileHeart, FileLock, FileMinus, FilePlus, FileQuestion, FileSignature, FileStack, FileSymlink, FileTerminal, FileWarning, FileCog, FileKey, FilePen, FileClock, FileDown, FileUp, FileVolume, FileVolume2, FileMusic, FilePlay, FileBarChart2, ListChecks } from 'lucide-react';
+import { Search, X, FileText, FileImage, FileVideo, FileAudio, FileCode, FileSpreadsheet, FileArchive, FileJson, FileType, ListChecks } from 'lucide-react';
 import { ApiService } from '../../backend/api/apiService';
 import { FileSystemItem } from '../utils/fileTreeUtils';
 import { useToast } from './ui/use-toast';

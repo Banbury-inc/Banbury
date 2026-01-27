@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode, useRef } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode, useRef, useMemo } from 'react'
 import { ApiService } from '../../backend/api/apiService'
 
 interface FileData {
@@ -37,12 +37,15 @@ export function UserFilesProvider({ children, username: usernameProp }: UserFile
   const lastFetchTimeRef = useRef<number>(0)
   const filesRef = useRef<FileData[]>([])
   const initializedRef = useRef(false)
+  const previousUsernameRef = useRef<string | null>(null)
   
   // Cache duration in milliseconds (3 seconds)
   const CACHE_DURATION = 3000
 
-  // Get username from prop or localStorage
-  const username = usernameProp || (typeof window !== 'undefined' ? localStorage.getItem('username') : null)
+  // Memoize username to avoid unnecessary re-renders and API calls
+  const username = useMemo(() => {
+    return usernameProp || (typeof window !== 'undefined' ? localStorage.getItem('username') : null)
+  }, [usernameProp])
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -90,13 +93,18 @@ export function UserFilesProvider({ children, username: usernameProp }: UserFile
     }
   }, [username])
 
+  // Fetch files only when username actually changes
+  useEffect(() => {
+    // Only fetch if username has changed
+    if (username !== previousUsernameRef.current) {
+      previousUsernameRef.current = username
+      fetchFiles()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]) // fetchFiles is stable and uses username from closure, so we can safely omit it
+
   const refetch = useCallback(async () => {
     await fetchFiles(true)
-  }, [fetchFiles])
-
-  // Fetch files when username changes or on mount
-  useEffect(() => {
-    fetchFiles()
   }, [fetchFiles])
 
   return (

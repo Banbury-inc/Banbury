@@ -5,29 +5,17 @@ import { ApiService } from "../apiService";
  * Debug service to test API endpoint availability
  */
 export default class Debug {
-  constructor(_api: ApiService) {}
   /**
    * Test if authentication endpoints are available
    */
   static async testAuthEndpoints() {
-    const baseUrl = CONFIG.url;
-    const endpoints = [
-      '/authentication/google/',
-      '/authentication/login_api/',
-      '/authentication/validate-token/',
-      '/authentication/auth/callback/'
-    ];
-
   }
 
   /**
    * Test basic API connectivity
    */
   static async testApiConnectivity() {
-    const baseUrl = CONFIG.url;
-    
     try {
-      
       // Try multiple endpoints to test connectivity
       const endpoints = [
         '', // Root

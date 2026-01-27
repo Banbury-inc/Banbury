@@ -5,7 +5,7 @@
  * without requiring an AI bot to join the meeting.
  */
 
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, BrowserWindow, app } from 'electron'
 
 // Types for the Desktop Recording SDK
 interface RecallSDKConfig {
@@ -156,19 +156,30 @@ export async function initDesktopRecording(window: BrowserWindow): Promise<boole
     // Check if the agent binary exists
     const path = require('path')
     const fs = require('fs')
+    
+    // Resolve the SDK module path - works in both dev and production
+    let sdkModulePath: string
+    try {
+      // Try to resolve the module using require.resolve
+      sdkModulePath = require.resolve('@recallai/desktop-sdk/package.json')
+      sdkModulePath = path.dirname(sdkModulePath)
+    } catch (resolveError) {
+      // Fallback: try app.getAppPath() for packaged apps, or process.cwd() for dev
+      const appPath = app.isPackaged ? app.getAppPath() : process.cwd()
+      sdkModulePath = path.join(appPath, 'node_modules', '@recallai', 'desktop-sdk')
+    }
+    
     const agentPath = path.join(
-      process.cwd(), 
-      'node_modules', 
-      '@recallai', 
-      'desktop-sdk', 
+      sdkModulePath,
       process.platform === 'win32' ? 'agent-windows.exe' : 'agent-macos'
     )
     
-    
     if (fs.existsSync(agentPath)) {
       const stats = fs.statSync(agentPath)
+      console.log('[Desktop Recording] Agent binary found at:', agentPath)
     } else {
       console.error('[Desktop Recording] Agent binary NOT FOUND at:', agentPath)
+      console.error('[Desktop Recording] SDK module path:', sdkModulePath)
       console.error('[Desktop Recording] This may require running: npm rebuild @recallai/desktop-sdk')
       lastInitError = `Agent binary not found at ${agentPath}. Try running: npm rebuild @recallai/desktop-sdk`
       return false

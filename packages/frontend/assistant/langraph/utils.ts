@@ -1,4 +1,4 @@
-import { BaseMessage, HumanMessage, AIMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
+import { BaseMessage, ToolMessage } from "@langchain/core/messages";
 
 // Thread ID generation following athena-intelligence patterns
 export function generateThreadId(channelId?: string, timestamp?: string): string {
@@ -18,7 +18,7 @@ export function generateThreadId(channelId?: string, timestamp?: string): string
 }
 
 // Message formatting utilities
-export function formatMessageForContext(message: BaseMessage, userNames?: Record<string, string>): string {
+export function formatMessageForContext(message: BaseMessage): string {
   const type = message._getType();
   const content = typeof message.content === 'string' ? message.content : JSON.stringify(message.content);
   

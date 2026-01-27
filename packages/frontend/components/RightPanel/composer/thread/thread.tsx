@@ -85,10 +85,12 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   const [attachedFiles, setAttachedFiles] = useState<FileSystemItem[]>([]);
   const [attachedEmails, setAttachedEmails] = useState<any[]>([]);
   const lastAutoAttachedFileIdRef = useRef<string | null>(null);
-  
-  // Reset the auto-attach ref when the tab changes
+  const lastAutoAttachedEmailIdRef = useRef<string | null>(null);
+
+  // Reset the auto-attach refs when the tab changes
   useEffect(() => {
     lastAutoAttachedFileIdRef.current = null;
+    lastAutoAttachedEmailIdRef.current = null;
   }, [assistantTabId]);
   const [drawioModalOpen, setDrawioModalOpen] = useState(false);
   const [selectedDrawioFile, setSelectedDrawioFile] = useState<FileSystemItem | null>(null);
@@ -662,14 +664,27 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   // Auto-attach the selected email from Email tab
   useEffect(() => {
     if (selectedEmail && selectedEmail.id) {
+      // Skip if we've already auto-attached this exact email for this tab
+      if (lastAutoAttachedEmailIdRef.current === selectedEmail.id) {
+        return;
+      }
+
       // Check if the email is already attached
       const isAlreadyAttached = attachedEmails.some(e => e.id === selectedEmail.id);
-      
+
       if (!isAlreadyAttached) {
         setAttachedEmails(prev => [selectedEmail, ...prev]);
       }
+      // Track that we've auto-attached this email for this tab
+      lastAutoAttachedEmailIdRef.current = selectedEmail.id;
+    } else {
+      // When email is deselected (tab closed), remove the auto-attached email
+      if (lastAutoAttachedEmailIdRef.current) {
+        setAttachedEmails(prev => prev.filter(e => e.id !== lastAutoAttachedEmailIdRef.current));
+        lastAutoAttachedEmailIdRef.current = null;
+      }
     }
-  }, [selectedEmail, attachedEmails]);
+  }, [selectedEmail]);
 
   // Auto-save conversation when langgraph stream completes
   useEffect(() => {

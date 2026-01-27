@@ -327,7 +327,6 @@ export async function* processStreamEvents({
         } else if (evt.type === "subagent-spawn-complete") {
           // All subagents completed
           dispatchSubagentEvent(evt);
-          streamIsIdle = true;
           yield {
             content: contentParts,
             status: {

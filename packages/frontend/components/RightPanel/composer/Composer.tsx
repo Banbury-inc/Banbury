@@ -19,7 +19,7 @@ import {
   X,
 } from "lucide-react";
 
-import { ChatTiptapComposer } from "../../ChatTiptapComposer";
+import { ChatTiptapComposer } from "./components/ChatTiptapComposer";
 import { FileAttachmentPicker } from "./components/file-attachment-picker";
 import { FileAttachmentDisplay } from "./components/file-attachment-display";
 import { QueuedMessagesDisplay, type QueuedMessage } from "./components/queued-messages-display";
