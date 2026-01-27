@@ -82,21 +82,19 @@ export function SummarySection({
           )}
         </div>
       </div>
-      {hasSummary ? (
-        <>
-          <div className="min-h-[200px]">
-            <MeetingSummaryEditor
-              key={meetingId}
-              initialContent={summaryHtml}
-              isReadOnly={isGeneratingSummary}
-              isLoading={isGeneratingSummary}
-              placeholder="Summary will appear here..."
-              onContentChange={onContentChange}
-              ref={summaryEditorRef}
-            />
-          </div>
-        </>
-      ) : (
+      {/* Always render the editor so the ref is available for summary generation */}
+      <div className={hasSummary || isGeneratingSummary ? "min-h-[200px]" : "hidden"}>
+        <MeetingSummaryEditor
+          key={meetingId}
+          initialContent={summaryHtml}
+          isReadOnly={isGeneratingSummary}
+          isLoading={isGeneratingSummary}
+          placeholder="Summary will appear here..."
+          onContentChange={onContentChange}
+          ref={summaryEditorRef}
+        />
+      </div>
+      {!hasSummary && !isGeneratingSummary && (
         <div className="flex flex-col items-center justify-center py-12">
           <Typography variant="h4" className="text-lg font-semibold mb-2">
             No Summary Available
@@ -108,17 +106,8 @@ export function SummarySection({
             onClick={onGenerate}
             disabled={isGeneratingSummary || !hasTranscription}
           >
-            {isGeneratingSummary ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Generating Summary...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Generate Summary
-              </>
-            )}
+            <Sparkles className="h-4 w-4 mr-2" />
+            Generate Summary
           </Button>
         </div>
       )}
