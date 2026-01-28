@@ -159,14 +159,45 @@ export async function initDesktopRecording(window: BrowserWindow): Promise<boole
     
     // Resolve the SDK module path - works in both dev and production
     let sdkModulePath: string
-    try {
-      // Try to resolve the module using require.resolve
-      sdkModulePath = require.resolve('@recallai/desktop-sdk/package.json')
-      sdkModulePath = path.dirname(sdkModulePath)
-    } catch (resolveError) {
-      // Fallback: try app.getAppPath() for packaged apps, or process.cwd() for dev
-      const appPath = app.isPackaged ? app.getAppPath() : process.cwd()
-      sdkModulePath = path.join(appPath, 'node_modules', '@recallai', 'desktop-sdk')
+    let sdkModule: any
+    
+    if (app.isPackaged) {
+      // In packaged app, SDK is in extraResources at process.resourcesPath/recall-sdk
+      sdkModulePath = path.join(process.resourcesPath, 'recall-sdk')
+      console.log('[Desktop Recording] Packaged app - looking for SDK at:', sdkModulePath)
+      
+      // For packaged apps, we need to require the SDK from extraResources
+      const sdkIndexPath = path.join(sdkModulePath, 'index.js')
+      if (!fs.existsSync(sdkIndexPath)) {
+        console.error('[Desktop Recording] SDK index.js NOT FOUND at:', sdkIndexPath)
+        lastInitError = `SDK not found in packaged app at ${sdkModulePath}. Ensure extraResources is configured correctly.`
+        return false
+      }
+      
+      // Add the SDK path to PATH so native DLLs can be found (Windows)
+      if (process.platform === 'win32') {
+        const currentPath = process.env.PATH || ''
+        if (!currentPath.includes(sdkModulePath)) {
+          process.env.PATH = `${sdkModulePath};${currentPath}`
+          console.log('[Desktop Recording] Added SDK path to PATH for DLL loading')
+        }
+      }
+      
+      // Use require with the full path for packaged apps
+      sdkModule = require(sdkIndexPath)
+    } else {
+      // In development, use normal require
+      try {
+        // Try to resolve the module using require.resolve
+        sdkModulePath = require.resolve('@recallai/desktop-sdk/package.json')
+        sdkModulePath = path.dirname(sdkModulePath)
+      } catch (resolveError) {
+        // Fallback: try process.cwd() for dev
+        sdkModulePath = path.join(process.cwd(), 'node_modules', '@recallai', 'desktop-sdk')
+      }
+      
+      // In development, require normally
+      sdkModule = require('@recallai/desktop-sdk') as any
     }
     
     const agentPath = path.join(
@@ -175,18 +206,16 @@ export async function initDesktopRecording(window: BrowserWindow): Promise<boole
     )
     
     if (fs.existsSync(agentPath)) {
-      const stats = fs.statSync(agentPath)
       console.log('[Desktop Recording] Agent binary found at:', agentPath)
     } else {
       console.error('[Desktop Recording] Agent binary NOT FOUND at:', agentPath)
       console.error('[Desktop Recording] SDK module path:', sdkModulePath)
+      console.error('[Desktop Recording] Is packaged:', app.isPackaged)
+      console.error('[Desktop Recording] Resources path:', process.resourcesPath)
       console.error('[Desktop Recording] This may require running: npm rebuild @recallai/desktop-sdk')
       lastInitError = `Agent binary not found at ${agentPath}. Try running: npm rebuild @recallai/desktop-sdk`
       return false
     }
-    
-    // Dynamically import the SDK
-    const sdkModule = require('@recallai/desktop-sdk') as any
     
     if (!sdkModule) {
       console.error('[Desktop Recording] SDK module loaded but is null/undefined')
