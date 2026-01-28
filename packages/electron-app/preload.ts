@@ -233,7 +233,7 @@ contextBridge.exposeInMainWorld('desktopApp', {
     /**
      * Check for available updates
      */
-    checkForUpdates: (): Promise<{ available: boolean; error?: string; currentVersion?: string }> => {
+    checkForUpdates: (): Promise<{ available: boolean; error?: string; currentVersion?: string; latestVersion?: string }> => {
       return ipcRenderer.invoke('updater:check-for-updates')
     },
 
@@ -333,7 +333,7 @@ declare global {
         onError: (callback: (error: { error: string; windowId?: string }) => void) => () => void
       }
       updater: {
-        checkForUpdates: () => Promise<{ available: boolean; error?: string; currentVersion?: string }>
+        checkForUpdates: () => Promise<{ available: boolean; error?: string; currentVersion?: string; latestVersion?: string }>
         downloadUpdate: () => Promise<{ success: boolean; error?: string }>
         installUpdate: () => Promise<{ success: boolean; error?: string }>
         getCurrentVersion: () => Promise<string>

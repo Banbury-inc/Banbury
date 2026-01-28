@@ -61,7 +61,7 @@ export function AboutTab() {
       if (result.available) {
         toast({
           title: "Update Available",
-          description: "A new version is available. The update will be downloaded automatically.",
+          description: `Version ${result.latestVersion} is available (current: ${result.currentVersion || version}). Check the notification to download.`,
         })
       } else {
         toast({
