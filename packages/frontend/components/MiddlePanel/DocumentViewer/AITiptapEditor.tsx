@@ -580,29 +580,128 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
 
           {/* Font family */}
           <div className="flex items-center">
-            <select
-              className="px-2 py-1 text-sm border rounded-md bg-background cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
-              aria-label="Font family"
-              value={selectedFont ?? ''}
-              onChange={(e) => {
-                const value = e.target.value || null;
-                setSelectedFont(value);
-                changeSelectionFontFamily({ editor, fontFamily: value });
-              }}
-            >
-              <option value="">Default</option>
-              <option value="Inter">Inter</option>
-              <option value="Arial">Arial</option>
-              <option value="Georgia">Georgia</option>
-              <option value="Times New Roman">Times New Roman</option>
-              <option value="Courier New">Courier New</option>
-              <option value="Roboto">Roboto</option>
-              <option value="Open Sans">Open Sans</option>
-              <option value="Merriweather">Merriweather</option>
-              <option value="sans-serif">Sans-serif</option>
-              <option value="serif">Serif</option>
-              <option value="monospace">Monospace</option>
-            </select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="xs" title="Font family" className="gap-1">
+                  <span className="flex items-center gap-1">
+                    {selectedFont || 'Default'}
+                    <ChevronDown size={12} />
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setSelectedFont(null);
+                    changeSelectionFontFamily({ editor, fontFamily: null });
+                  }}
+                  className={!selectedFont ? 'bg-accent' : ''}
+                >
+                  Default
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setSelectedFont('Inter');
+                    changeSelectionFontFamily({ editor, fontFamily: 'Inter' });
+                  }}
+                  className={selectedFont === 'Inter' ? 'bg-accent' : ''}
+                >
+                  Inter
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setSelectedFont('Arial');
+                    changeSelectionFontFamily({ editor, fontFamily: 'Arial' });
+                  }}
+                  className={selectedFont === 'Arial' ? 'bg-accent' : ''}
+                >
+                  Arial
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setSelectedFont('Georgia');
+                    changeSelectionFontFamily({ editor, fontFamily: 'Georgia' });
+                  }}
+                  className={selectedFont === 'Georgia' ? 'bg-accent' : ''}
+                >
+                  Georgia
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setSelectedFont('Times New Roman');
+                    changeSelectionFontFamily({ editor, fontFamily: 'Times New Roman' });
+                  }}
+                  className={selectedFont === 'Times New Roman' ? 'bg-accent' : ''}
+                >
+                  Times New Roman
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setSelectedFont('Courier New');
+                    changeSelectionFontFamily({ editor, fontFamily: 'Courier New' });
+                  }}
+                  className={selectedFont === 'Courier New' ? 'bg-accent' : ''}
+                >
+                  Courier New
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setSelectedFont('Roboto');
+                    changeSelectionFontFamily({ editor, fontFamily: 'Roboto' });
+                  }}
+                  className={selectedFont === 'Roboto' ? 'bg-accent' : ''}
+                >
+                  Roboto
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setSelectedFont('Open Sans');
+                    changeSelectionFontFamily({ editor, fontFamily: 'Open Sans' });
+                  }}
+                  className={selectedFont === 'Open Sans' ? 'bg-accent' : ''}
+                >
+                  Open Sans
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setSelectedFont('Merriweather');
+                    changeSelectionFontFamily({ editor, fontFamily: 'Merriweather' });
+                  }}
+                  className={selectedFont === 'Merriweather' ? 'bg-accent' : ''}
+                >
+                  Merriweather
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setSelectedFont('sans-serif');
+                    changeSelectionFontFamily({ editor, fontFamily: 'sans-serif' });
+                  }}
+                  className={selectedFont === 'sans-serif' ? 'bg-accent' : ''}
+                >
+                  Sans-serif
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setSelectedFont('serif');
+                    changeSelectionFontFamily({ editor, fontFamily: 'serif' });
+                  }}
+                  className={selectedFont === 'serif' ? 'bg-accent' : ''}
+                >
+                  Serif
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setSelectedFont('monospace');
+                    changeSelectionFontFamily({ editor, fontFamily: 'monospace' });
+                  }}
+                  className={selectedFont === 'monospace' ? 'bg-accent' : ''}
+                >
+                  Monospace
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="w-px h-6 bg-border mx-1" />
