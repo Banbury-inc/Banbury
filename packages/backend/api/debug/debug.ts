@@ -16,6 +16,8 @@ export default class Debug {
    */
   static async testApiConnectivity() {
     try {
+      const baseUrl = CONFIG.url;
+      
       // Try multiple endpoints to test connectivity
       const endpoints = [
         '', // Root
