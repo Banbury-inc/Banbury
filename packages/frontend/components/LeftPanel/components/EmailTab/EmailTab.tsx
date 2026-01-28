@@ -11,7 +11,8 @@ import {
   Inbox,
   FileText,
   AlertTriangle,
-  Tag
+  Tag,
+  SquareArrowOutUpRight
 } from 'lucide-react'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 
@@ -32,6 +33,7 @@ type EmailProvider = 'gmail' | 'outlook'
 
 interface EmailTabProps {
   onOpenEmailApp?: () => void
+  onOpenEmailInbox?: () => void
   demoMode?: boolean
   // Workspace dependencies
   activePanelId?: string
@@ -97,6 +99,7 @@ function getLabelIcon(labelId: string) {
 
 export function EmailTab({ 
   onOpenEmailApp,
+  onOpenEmailInbox,
   demoMode = false,
   activePanelId = 'main-panel',
   panelLayout,
@@ -980,6 +983,18 @@ export function EmailTab({
             </Select>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="xs"
+              onClick={() => {
+                if (onOpenEmailInbox) {
+                  onOpenEmailInbox()
+                }
+              }}
+              title="Open Inbox"
+            >
+              <SquareArrowOutUpRight className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+            </Button>
             <Button
               variant="ghost"
               size="xs"

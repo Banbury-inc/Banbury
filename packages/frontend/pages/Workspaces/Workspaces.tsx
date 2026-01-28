@@ -19,6 +19,8 @@ import { ApiService } from '../../../backend/api/apiService';
 import { renderPanel } from './handlers/renderPanel';
 import { splitPanel } from './handlers/splitPanel';
 import { openCalendarInTab } from '../../components/LeftPanel/components/CalendarTab/handlers/openCalendarInTab';
+import { openFileBrowserInTab } from '../../components/LeftPanel/components/FilesTab/handlers/openFileBrowserInTab';
+import { openEmailInboxInTab } from '../../components/LeftPanel/components/EmailTab/handlers/openEmailInboxInTab';
 import { handleCalendarEventSelect } from '../../components/LeftPanel/components/CalendarTab/handlers/handleCalendarEventSelect';
 import { handleMeetingSelect as handleMeetingSelectHandler } from '../../components/LeftPanel/components/MeetingsTab/handlers/handleMeetingSelect';
 import { handleReplyToEmail } from '../../components/LeftPanel/components/EmailTab/handlers/handleReplyToEmail';
@@ -270,6 +272,14 @@ const Workspaces = (): React.ReactNode => {
     openCalendarInTab(targetPanelId, activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout);
   }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
 
+  const openFileBrowserInTabCallback = useCallback((targetPanelId: string = activePanelId) => {
+    openFileBrowserInTab(targetPanelId, activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout);
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
+
+  const openEmailInboxInTabCallback = useCallback((targetPanelId: string = activePanelId) => {
+    openEmailInboxInTab(targetPanelId, activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout);
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
+
   // Handler for email selection from command palette
   const handleSearchEmailSelect = useCallback((email: EmailSearchResult) => {
     // The EmailSearchResult from the search has the same structure as the full email
@@ -349,6 +359,7 @@ const Workspaces = (): React.ReactNode => {
       isDrawioFile,
       isTldrawFile,
       isPowerPointFile,
+      panelLayout,
       setPanelLayout,
       onSplitPreview: (direction, position) => {
         // Update drag state with split preview information
@@ -368,8 +379,13 @@ const Workspaces = (): React.ReactNode => {
       onClearConversation: (tabId: string) => {
         window.dispatchEvent(new CustomEvent('clear-conversation', { detail: { tabId } }));
       },
+      openFileInTabCallback,
+      openEmailInTabCallback,
+      setSelectedFile,
+      setSelectedEmail,
+      toast,
     });
-  }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmailCallback, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, isDrawioFile, isTldrawFile, isPowerPointFile, setPanelLayout, setDragState, calendarJumpDate, handleCalendarJumpComplete, calendarSelectedEvent, handleCalendarSelectedEventConsumed, selectedFile, selectedEmail, handleEmailSelect]);
+  }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmailCallback, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, isDrawioFile, isTldrawFile, isPowerPointFile, panelLayout, setPanelLayout, setDragState, calendarJumpDate, handleCalendarJumpComplete, calendarSelectedEvent, handleCalendarSelectedEventConsumed, selectedFile, selectedEmail, handleEmailSelect, openFileInTabCallback, openEmailInTabCallback, setSelectedFile, setSelectedEmail, toast]);
   
   // Render panel group (recursive for nested splits)
   const renderPanelGroup = useCallback(
@@ -922,6 +938,8 @@ const Workspaces = (): React.ReactNode => {
                             onFolderCreated={handleFolderCreated}
                             triggerRootFolderCreation={folderCreationTrigger}
                             onOpenCalendar={() => openCalendarInTabCallback(activePanelId)}
+                            onOpenFiles={() => openFileBrowserInTabCallback(activePanelId)}
+                            onOpenEmailInbox={() => openEmailInboxInTabCallback(activePanelId)}
                             selectedTask={selectedTask}
                             selectedMeeting={selectedMeeting}
                             meetingsRefreshTrigger={meetingsRefreshTrigger}

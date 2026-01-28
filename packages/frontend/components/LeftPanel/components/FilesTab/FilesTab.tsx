@@ -16,6 +16,7 @@ import {
   Users,
   Search,
   HardDrive,
+  SquareArrowOutUpRight,
 } from "lucide-react"
 import { useState, useRef, useCallback } from 'react'
 import { LocalFilesView } from "./components/LocalFilesView"
@@ -48,6 +49,7 @@ interface FilesTabProps {
   onFolderDeleted?: (folderPath: string) => void
   triggerRootFolderCreation?: boolean
   onCreateFolder?: () => void
+  onOpenFilesApp?: () => void
   // Workspace dependencies
   activePanelId: string
   panelLayout: PanelGroup
@@ -67,6 +69,7 @@ export function FilesTab({
   onFolderDeleted,
   triggerRootFolderCreation,
   onCreateFolder,
+  onOpenFilesApp,
   activePanelId,
   panelLayout,
   setPanelLayout,
@@ -241,7 +244,7 @@ export function FilesTab({
   const effectiveRefreshTrigger = (refreshTrigger ?? 0) + localRefreshCounter
   const handleLocalRefreshComplete = useCallback(() => {
     handleRefreshComplete({ setIsRefreshing, onRefreshComplete: externalOnRefreshComplete })
-  }, [externalOnRefreshComplete])
+  }, [setIsRefreshing, externalOnRefreshComplete])
 
   // Handle file upload
   const handleFileUpload = () => {

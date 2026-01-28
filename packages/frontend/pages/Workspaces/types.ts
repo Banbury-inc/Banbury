@@ -65,7 +65,20 @@ export interface AdminTab {
   type: 'admin'
 }
 
-export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab
+export interface FileBrowserTab {
+  id: string
+  title: string
+  type: 'file-browser'
+}
+
+export interface EmailInboxTab {
+  id: string
+  title: string
+  type: 'email-inbox'
+  provider?: 'gmail' | 'outlook'
+}
+
+export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab | FileBrowserTab | EmailInboxTab
 
 export interface Panel {
   id: string
