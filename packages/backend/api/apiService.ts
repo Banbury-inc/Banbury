@@ -118,6 +118,9 @@ export class ApiService {
       localStorage.removeItem('authToken');
       localStorage.removeItem('username');
       localStorage.removeItem('userEmail');
+      localStorage.removeItem('userFirstName');
+      localStorage.removeItem('userLastName');
+      localStorage.removeItem('userPicture');
     }
   }
 

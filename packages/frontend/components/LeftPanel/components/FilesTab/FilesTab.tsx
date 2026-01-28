@@ -511,8 +511,8 @@ export function FilesTab({
                   }
                 }}
               >
-                <SelectTrigger size="xs" className="bg-foreground hover:bg-foreground hover:text-primary-foreground flex-shrink-0">
-                  <Plus className="h-4 w-4 text-muted-foreground" strokeWidth={1} />
+                <SelectTrigger size="xs" className="bg-accent hover:bg-accent hover:text-accent-foreground flex-shrink-0">
+                  <Plus className="h-4 w-4 text-accent-foreground" strokeWidth={1} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="upload-file" className="[&_svg]:!text-gray-400">
@@ -578,8 +578,8 @@ export function FilesTab({
                   }
                 }}
               >
-                <SelectTrigger size="xs" className="bg-foreground hover:bg-foreground hover:text-primary-foreground flex-shrink-0">
-                  <Plus className="h-4 w-4 text-muted-foreground" strokeWidth={1} />
+                <SelectTrigger size="xs" className="bg-accent hover:bg-accent hover:text-accent-foreground flex-shrink-0">
+                  <Plus className="h-4 w-4 text-accent-foreground" strokeWidth={1} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="document" className="[&_svg]:!text-blue-500">
@@ -621,8 +621,8 @@ export function FilesTab({
                   }
                 }}
               >
-                <SelectTrigger size="xs" className="bg-foreground hover:bg-foreground hover:text-primary-foreground flex-shrink-0">
-                  <Plus className="h-4 w-4 text-muted-foreground" strokeWidth={1} />
+                <SelectTrigger size="xs" className="bg-accent hover:bg-accent hover:text-accent-foreground flex-shrink-0">
+                  <Plus className="h-4 w-4 text-accent-foreground" strokeWidth={1} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="document" className="[&_svg]:!text-blue-500">

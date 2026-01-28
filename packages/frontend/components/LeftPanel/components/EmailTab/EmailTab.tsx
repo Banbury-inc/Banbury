@@ -990,7 +990,7 @@ export function EmailTab({
               <RefreshCw className={`${loading ? 'animate-spin' : ''}`} strokeWidth={1} />
             </Button>
             <Button
-              variant="default"
+              variant="secondary"
               size="xs"
               title="Compose"
               onClick={() => {
@@ -1001,7 +1001,7 @@ export function EmailTab({
                 }
               }}
             >
-              <Send />
+              <Send className="h-4 w-4 text-accent-foreground" strokeWidth={1} />
             </Button>
           </div>
         </div>

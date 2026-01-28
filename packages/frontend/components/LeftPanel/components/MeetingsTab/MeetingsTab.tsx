@@ -163,13 +163,13 @@ export function MeetingsTab({
               <RefreshCw className={isRefreshing ? 'h-4 w-4 animate-spin text-muted-foreground' : 'h-4 w-4 text-muted-foreground'} />
             </Button>
             <Button
-              variant="default"
+              variant="secondary"
               size="xs"
               onClick={onJoinMeeting}
               title="Join Meeting"
-              className="flex-shrink-0 bg-foreground hover:bg-foreground hover:text-primary-foreground"
+              className="flex-shrink-0 bg-accent hover:bg-accent hover:text-accent-foreground"
             >
-              <Plus className="h-4 w-4 text-primary-foreground" strokeWidth={1} />
+              <Plus className="h-4 w-4 text-accent-foreground" strokeWidth={1} />
             </Button>
           </div>
         </div>
