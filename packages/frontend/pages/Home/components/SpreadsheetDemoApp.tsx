@@ -205,7 +205,7 @@ function SpreadsheetDemoApp() {
       <TooltipProvider>
         <div className="w-full h-[400px] sm:h-[450px] md:h-[500px] flex overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900">
           {/* Spreadsheet Editor - Left Panel */}
-          <div className="w-[60%] h-full border-r border-zinc-200 dark:border-zinc-700 overflow-hidden">
+          <div className="w-[60%] h-full border-r border-zinc-200 dark:border-zinc-700 overflow-hidden hidden md:block">
             {documentUrl && documentBlob ? (
               <CSVEditor
                 src={documentUrl}

@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, FC, PropsWithChildren } from 'react'
 import { CalendarTab } from '../../../components/LeftPanel/components/CalendarTab/CalendarTab'
 import { CalendarEventViewer } from '../../../components/MiddlePanel/CalendarViewer/CalendarEventViewer'
 import { ApiService } from '../../../../backend/api/apiService'
 import { CalendarEvent, CalendarListEntry } from '../../../../backend/api/calendar/calendar'
 import { setVisibleCalendarIds, getVisibleCalendarIds } from '../../../components/LeftPanel/components/CalendarTab/handlers/calendarVisibility'
+import { Thread } from '../../../components/RightPanel/composer/thread/thread'
+import { TooltipProvider } from '../../../components/ui/tooltip'
+import { AssistantRuntimeProvider, useLocalRuntime } from "@assistant-ui/react"
 
 // Mock Calendar Events
 const mockCalendarEvents: CalendarEvent[] = [
@@ -244,8 +247,141 @@ function cleanupMeetingDemoMocks() {
 // Track if mocks are currently active (module level to survive remounts)
 let mocksActive = false
 
+// Mock user info for Thread component
+const mockUserInfo = {
+  username: 'demo_user',
+  email: 'demo@example.com',
+}
+
+// AI response for meeting preparation
+const assistantResponse = `I'll help you prepare for the Q4 Roadmap presentation with Acme Corp.
+
+## Meeting Preparation Summary
+
+**Meeting:** Client Presentation - Q4 Roadmap
+**Time:** October 23, 2025 at 2:00 PM - 3:30 PM (1.5 hours)
+**Attendees:** Michael Brown (Lead), Lisa Wang (Tech), David Miller (Sales)
+
+## Key Preparation Items
+
+### 1. Review Slide Deck
+The slides have been shared in #client-acme. I recommend:
+- Emphasizing integration timeline for their custom requirements
+- Preparing backup slides on technical architecture
+- Having pricing tiers ready for discussion
+
+### 2. Attendee Backgrounds
+- **Michael Brown**: Decision maker, focused on ROI and timeline
+- **Lisa Wang**: Technical lead, will ask about integration details
+- **David Miller**: Your sales rep, knows their pain points well
+
+### 3. Suggested Talking Points
+- Highlight Q4 features that solve their specific challenges
+- Address their integration requirements timeline
+- Emphasize support and training schedule
+- Be ready to discuss enterprise tier pricing
+
+### 4. Technical Setup
+- Join 5 minutes early (1:55 PM) to test screen sharing
+- Have backup device ready
+- Prepare demo environment if needed
+
+## Pre-Meeting Checklist
+- [ ] Review slides in #client-acme channel
+- [ ] Confirm Zoom link is working
+- [ ] Prepare pricing scenarios
+- [ ] Review their previous feedback notes
+- [ ] Test screen sharing setup
+
+Would you like me to:
+- Create a follow-up calendar reminder?
+- Draft meeting notes template?
+- Summarize previous conversations with Acme Corp?`
+
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+const MeetingDemoRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
+  const adapter = {
+    async *run(options: { messages: any[]; abortSignal?: AbortSignal }) {
+      const lastMessage = options.messages[options.messages.length - 1]
+      const messageText = lastMessage?.content?.[0]?.text
+      const isInitialQuery = messageText?.includes('prepare for') || messageText?.includes('Q4 Roadmap')
+      
+      if (!isInitialQuery) {
+        yield {
+          content: [{ type: 'text', text: 'This is a demo. To use Banbury Agent, sign up for free.' }],
+          status: { type: 'complete' as const, reason: 'stop' as const }
+        }
+        return
+      }
+
+      let currentText = ''
+      const words = assistantResponse.split(' ')
+      
+      for (let i = 0; i < words.length; i++) {
+        if (options.abortSignal?.aborted) break
+        
+        currentText += (i === 0 ? '' : ' ') + words[i]
+        
+        yield {
+          content: [{ type: 'text', text: currentText }],
+          status: { type: 'running' as const }
+        }
+        
+        const wordLength = words[i].length
+        const baseDelay = 40
+        const delayMs = baseDelay + (wordLength > 8 ? 15 : 0)
+        
+        await delay(delayMs)
+      }
+      
+      yield {
+        content: [{ type: 'text', text: currentText }],
+        status: { type: 'complete' as const, reason: 'stop' as const }
+      }
+    },
+  }
+
+  const runtime = useLocalRuntime(adapter as any)
+
+  useEffect(() => {
+    const sendInitialMessage = async () => {
+      if (runtime?.thread?.append) {
+        try {
+          await runtime.thread.append({
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Can you help me prepare for the Q4 Roadmap presentation with Acme Corp tomorrow? What should I focus on and what materials do I need?'
+              }
+            ]
+          })
+        } catch (error) {
+          console.error('[MeetingDemo] Error sending initial message:', error)
+        }
+      } else {
+        setTimeout(sendInitialMessage, 500)
+      }
+    }
+
+    const timer = setTimeout(() => {
+      sendInitialMessage()
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [runtime])
+
+  return (
+    <AssistantRuntimeProvider runtime={runtime}>
+      {children}
+    </AssistantRuntimeProvider>
+  )
+}
+
 export default function MeetingDemoApp() {
-  // Pre-select the first event (Client Presentation) to show the viewer by default
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(mockCalendarEvents[1])
   const [, forceUpdate] = useState({})
 
@@ -263,14 +399,6 @@ export default function MeetingDemoApp() {
     }
   }, [])
 
-  const handleEventSelect = (event: CalendarEvent) => {
-    setSelectedEvent(event)
-  }
-
-  const handleBack = () => {
-    setSelectedEvent(null)
-  }
-
   // Don't render CalendarTab until mocks are ready
   if (!mocksActive) {
     return (
@@ -283,30 +411,44 @@ export default function MeetingDemoApp() {
   }
 
   return (
-    <div className="w-full h-[400px] sm:h-[450px] md:h-[500px] flex overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-card">
-      {/* Calendar List Panel - using actual CalendarTab */}
-      <div className="w-[40%] h-full border-r border-zinc-200 dark:border-zinc-700 overflow-hidden">
-        <CalendarTab
-          onEventSelect={handleEventSelect}
-          onOpenCalendarApp={() => {}}
-        />
-      </div>
-
-      {/* Event Preview Panel - using actual CalendarEventViewer */}
-      <div className="flex-1 h-full overflow-hidden">
-        {selectedEvent ? (
-          <CalendarEventViewer
-            event={selectedEvent}
-            onBack={handleBack}
-          />
-        ) : (
-          <div className="h-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-800/30">
-            <div className="text-center text-zinc-500 dark:text-zinc-400">
-              <p className="text-sm">Select an event to view</p>
-            </div>
+    <MeetingDemoRuntimeProvider>
+      <TooltipProvider>
+        <div className="w-full h-[400px] sm:h-[450px] md:h-[500px] flex overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-card">
+          {/* Calendar List Panel - using actual CalendarTab */}
+          <div className="w-[25%] h-full border-r border-zinc-200 dark:border-zinc-700 overflow-hidden hidden md:block">
+            <CalendarTab
+              onOpenCalendarApp={() => {}}
+              setCalendarSelectedEvent={setSelectedEvent}
+            />
           </div>
-        )}
-      </div>
-    </div>
+
+          {/* Event Viewer Panel */}
+          <div className="w-[40%] h-full border-r border-zinc-200 dark:border-zinc-700 overflow-hidden hidden lg:block">
+            {selectedEvent ? (
+              <CalendarEventViewer
+                event={selectedEvent}
+                onBack={() => setSelectedEvent(null)}
+              />
+            ) : (
+              <div className="h-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-800/30">
+                <div className="text-center text-zinc-500 dark:text-zinc-400">
+                  <p className="text-sm">Select an event to view</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* AI Chat Panel - Thread Component */}
+          <div className="flex-1 h-full overflow-hidden bg-card">
+            <Thread 
+              userInfo={mockUserInfo}
+              selectedFile={null}
+              selectedEmail={null}
+              onEmailSelect={() => {}}
+            />
+          </div>
+        </div>
+      </TooltipProvider>
+    </MeetingDemoRuntimeProvider>
   )
 }
