@@ -4,6 +4,7 @@ import EmailDemoApp from './EmailDemoApp'
 import MeetingDemoApp from './MeetingDemoApp'
 import SpreadsheetDemoApp from './SpreadsheetDemoApp'
 import { Typography } from '../../../components/ui/typography'
+import Link from 'next/link'
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 16 },
@@ -78,13 +79,12 @@ function UseCasesSection() {
                     Automatically categorize, prioritize, and respond to emails based on content and context. Set up intelligent filters that route messages to the right team members and draft personalized responses instantly.
                   </Typography>
                   <Box sx={{ mt: 3 }}>
-                    <a
-                      href="/docs/email-management"
-                      className="text-primary hover:text-primary/80 transition-colors font-medium inline-flex items-center gap-1"
-                    >
-                      Learn more about email management
-                      <span aria-hidden="true">→</span>
-                    </a>
+                    <Link href="/docs/email-management">
+                      <Typography variant="xs" className="text-primary hover:text-primary/80 transition-colors font-medium inline-flex items-center gap-1">
+                        Learn more about email management
+                        <span aria-hidden="true">→</span>
+                      </Typography>
+                    </Link>
                   </Box>
                 </Box>
               </Grid>
@@ -149,13 +149,12 @@ function UseCasesSection() {
                     Schedule meetings across time zones, send automatic reminders, generate meeting agendas, and distribute notes to all attendees without lifting a finger.
                   </Typography>
                   <Box sx={{ mt: 3 }}>
-                    <a
-                      href="/docs/meeting-scheduling"
-                      className="text-primary hover:text-primary/80 transition-colors font-medium inline-flex items-center gap-1"
-                    >
-                      Learn more about meeting scheduling
-                      <span aria-hidden="true">→</span>
-                    </a>
+                      <Link href="/docs/meeting-scheduling">
+                      <Typography variant="xs" className="text-primary hover:text-primary/80 transition-colors font-medium inline-flex items-center gap-1">
+                        Learn more about meeting scheduling
+                        <span aria-hidden="true">→</span>
+                      </Typography>
+                    </Link>
                   </Box>
                 </Box>
               </Grid>
@@ -221,13 +220,12 @@ function UseCasesSection() {
                     Edit, analyze, and collaborate on spreadsheets with AI-powered features. Create formulas, charts, and apply conditional formatting - all within your workflow.
                   </Typography>
                   <Box sx={{ mt: 3 }}>
-                    <a
-                      href="/docs/spreadsheet-editor"
-                      className="text-primary hover:text-primary/80 transition-colors font-medium inline-flex items-center gap-1"
-                    >
-                      Learn more about the spreadsheet editor
-                      <span aria-hidden="true">→</span>
-                    </a>
+                    <Link href="/docs/spreadsheet-editor">
+                      <Typography variant="xs" className="text-primary hover:text-primary/80 transition-colors font-medium inline-flex items-center gap-1">
+                        Learn more about the spreadsheet editor
+                        <span aria-hidden="true">→</span>
+                      </Typography>
+                    </Link>
                   </Box>
                 </Box>
               </Grid>
