@@ -1,10 +1,10 @@
-import { AlertCircle, Download, FileText, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 
-import { Button } from '../../ui/button';
 import { ApiService } from '../../../../backend/api/apiService'
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
+import { Toolbar } from './toolbar/Toolbar';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -221,77 +221,21 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
 
   return (
     <div className="h-full flex flex-col bg-background">
-
-      {/* PDF Controls */}
       {pdfUrl && !loading && !error && (
-        <div className="flex items-center justify-between p-3 bg-card border-b border-border">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="default"
-              size="icon-xs"
-              onClick={goToPrevPage}
-              disabled={pageNumber <= 1}
-              className="h-8 bg-primary hover:bg-primary/80 disabled:bg-muted disabled:text-muted-foreground"
-              title="Previous page"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground text-sm font-medium">
-                Page
-              </span>
-              <span className="text-muted-foreground text-sm font-medium min-w-[60px] text-center">
-                {pageNumber} of {numPages}
-              </span>
-            </div>
-            <Button
-              variant="default"
-              size="icon-xs"
-              onClick={goToNextPage}
-              disabled={pageNumber >= numPages}
-              className="h-8 bg-primary hover:bg-primary/80 disabled:bg-muted disabled:text-muted-foreground"
-              title="Next page"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant="default"
-              size="icon-xs"
-              onClick={zoomOut}
-              disabled={scale <= 0.5}
-              className="h-8 w-8 bg-primary hover:bg-primary/80 disabled:bg-muted disabled:text-muted-foreground"
-              title="Zoom out"
-            >
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="xs"
-              onClick={resetZoom}
-              className="h-8 min-w-[60px] text-sm font-medium border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-              title="Reset zoom to 100%"
-            >
-              {Math.round(scale * 100)}%
-            </Button>
-            <Button
-              variant="default"
-              size="icon-xs"
-              onClick={zoomIn}
-              disabled={scale >= 3.0}
-              className="h-8 w-8 bg-primary hover:bg-primary/80 disabled:bg-muted disabled:text-muted-foreground"
-              title="Zoom in"
-            >
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <Toolbar
+          pageNumber={pageNumber}
+          numPages={numPages}
+          scale={scale}
+          onPrevPage={goToPrevPage}
+          onNextPage={goToNextPage}
+          onZoomIn={zoomIn}
+          onZoomOut={zoomOut}
+          onResetZoom={resetZoom}
+        />
       )}
 
       {/* PDF display area */}
-      <div className="flex-1 flex justify-center overflow-auto bg-background p-6">
+      <div className="flex-1 flex justify-center overflow-auto bg-card p-6">
         {pdfUrl ? (
           <div className="flex flex-col items-center">
             <Document
