@@ -11,12 +11,12 @@ interface MeetingHeaderProps {
 
 export function MeetingHeader({ meeting, onBack }: MeetingHeaderProps) {
   return (
-    <div className="flex items-center justify-between px-6 py-4 bg-card border-b border-border">
+    <div className="flex items-center justify-between px-3 py-3 bg-card border-b border-border">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         {onBack && (
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-sm"
             onClick={onBack}
             className="flex-shrink-0"
           >
@@ -24,7 +24,7 @@ export function MeetingHeader({ meeting, onBack }: MeetingHeaderProps) {
           </Button>
         )}
         <div className="flex-1 min-w-0">
-          <Typography variant="h3" className="text-lg font-semibold truncate">
+          <Typography variant="h4" className="truncate">
             {meeting.title || formatDate(getMeetingDate(meeting))}
           </Typography>
         </div>

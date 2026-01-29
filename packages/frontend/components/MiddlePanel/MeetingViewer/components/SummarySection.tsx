@@ -43,19 +43,19 @@ export function SummarySection({
           {hasUnsavedChanges && (
             <Button
               size="xs"
-              variant="default"
+              variant="primary"
               onClick={onSave}
               disabled={isSavingSummary || isGeneratingSummary}
             >
               {isSavingSummary ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
+                  <Typography variant="xs">Saving...</Typography>
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Save
+                  <Typography variant="xs">Save</Typography>
                 </>
               )}
             </Button>
@@ -63,19 +63,19 @@ export function SummarySection({
           {hasSummary && (
             <Button
               size="xs"
-              variant="outline"
+              variant="ghost"
               onClick={onRegenerate}
               disabled={isGeneratingSummary || isSavingSummary || !hasTranscription}
             >
               {isGeneratingSummary ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Regenerating...
+                  <Typography variant="xs">Regenerating...</Typography>
                 </>
               ) : (
                 <>
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Regenerate
+                  <Typography variant="xs">Regenerate</Typography>
                 </>
               )}
             </Button>

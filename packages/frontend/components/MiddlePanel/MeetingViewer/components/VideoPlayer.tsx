@@ -127,22 +127,24 @@ export function VideoPlayer({
           </div>
 
           {/* Control Buttons */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between overflow-hidden">
+            <div className="flex items-center gap-2 min-w-0 flex-shrink">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onTogglePlayPause}
+                className="flex-shrink-0"
               >
                 {isVideoPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
               </Button>
 
               {/* Volume Control */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={onToggleMute}
+                  className="flex-shrink-0"
                 >
                   {isVideoMuted || videoVolume === 0 ? (
                     <VolumeX className="h-4 w-4" />
@@ -155,7 +157,7 @@ export function VideoPlayer({
                   max={1}
                   step={0.1}
                   onValueChange={onVolumeChange}
-                  className="w-20"
+                  className="w-20 flex-shrink-0"
                 />
               </div>
             </div>

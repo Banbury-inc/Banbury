@@ -47,7 +47,7 @@ export function TranscriptPanel({
               >
                 <div className="flex items-start gap-1.5">
                   <div className="flex-shrink-0">
-                    <Badge variant="outline" className="text-xs py-0 px-1.5">
+                    <Badge variant="outline" className="text-xs py-0 px-1.5 text-muted-foreground">
                       {formatTimestamp(segment.startTime)}
                     </Badge>
                   </div>
@@ -66,8 +66,8 @@ export function TranscriptPanel({
         </Card>
       ) : transcriptionFullText ? (
         <Card className="border-border">
-          <div className="p-1 max-h-[calc(100vh-300px)] overflow-y-auto">
-            <Typography variant="p" className="text-sm whitespace-pre-wrap leading-snug">
+          <div className="max-h-[calc(100vh-300px)] overflow-y-auto">
+            <Typography variant="p" className="whitespace-pre-wrap leading-snug text-muted-foreground">
               {transcriptionFullText}
             </Typography>
           </div>
