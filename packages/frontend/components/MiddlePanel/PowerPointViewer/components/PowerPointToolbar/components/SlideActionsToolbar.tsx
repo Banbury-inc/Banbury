@@ -32,13 +32,13 @@ export function SlideActionsToolbar({
       {onStartPresentation && (
         <>
           <Button
-            variant="default"
+            variant="secondary"
             size="xs"
             onClick={onStartPresentation}
             className="gap-1"
             title="Start Presentation"
           >
-            <Play size={14} />
+            <Play />
             Present
           </Button>
           <div className="w-px h-6 bg-border mx-2" />

@@ -5,6 +5,7 @@ import { Typography } from "../../../ui/typography"
 import { Popover, PopoverContent, PopoverTrigger } from "../../../ui/popover"
 import { MeetingSession } from "../../../../types/meeting-types"
 import { formatDuration } from "../utils/duration-formatters"
+import { formatDate, getMeetingDate } from "../utils/date-formatters"
 
 interface MeetingActionsBarProps {
   meeting: MeetingSession
@@ -68,20 +69,6 @@ export function MeetingActionsBar({
             <span>0</span>
           </div>
         )}
-        <div className="flex items-center gap-1.5" title={`Recording: ${meeting.metadata.recordingEnabled ? 'Enabled' : 'Disabled'}`}>
-          {meeting.metadata.recordingEnabled ? (
-            <Video className="h-3.5 w-3.5 text-green-500" />
-          ) : (
-            <VideoOff className="h-3.5 w-3.5" />
-          )}
-        </div>
-        <div className="flex items-center gap-1.5" title={`Transcription: ${meeting.metadata.transcriptionEnabled ? 'Enabled' : 'Disabled'}`}>
-          {meeting.metadata.transcriptionEnabled ? (
-            <Mic className="h-3.5 w-3.5 text-green-500" />
-          ) : (
-            <MicOff className="h-3.5 w-3.5" />
-          )}
-        </div>
         {/* Progress for active sessions */}
         {(meeting.status === 'active' || meeting.status === 'recording') && meeting.metadata.maxDuration && (
           <div className="flex items-center gap-1.5" title="Progress">
@@ -96,6 +83,8 @@ export function MeetingActionsBar({
         )}
       </div>
 
+      <Separator orientation="vertical" className="h-5" />
+      <Typography variant="xs"> {meeting.title || formatDate(getMeetingDate(meeting))}</Typography>
       <Separator orientation="vertical" className="h-5" />
 
       {meeting.status === 'completed' && (meeting.recordingUrl || videoStreamUrl) && (
@@ -122,12 +111,12 @@ export function MeetingActionsBar({
       {(meeting.transcriptionText || transcriptionFullText) && (
         <Button
           size="xs"
-          variant="outline"
+          variant="ghost"
           onClick={onDownloadTranscription}
           disabled={isLoading}
         >
-          <FileText className="h-4 w-4 mr-2" />
-          Download Transcription
+          <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
+          <Typography variant="xs">Download Transcription</Typography>
         </Button>
       )}
     </div>

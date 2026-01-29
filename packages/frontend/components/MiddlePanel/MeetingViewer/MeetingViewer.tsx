@@ -437,12 +437,6 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
 
   return (
     <div className="h-full flex flex-col bg-card">
-      {/* Header */}
-      <MeetingHeader
-        meeting={currentMeeting as MeetingSession & { createdAt?: string | Date }}
-        onBack={onBack}
-      />
-
       {/* Actions */}
       <MeetingActionsBar
         meeting={currentMeeting}
@@ -458,11 +452,11 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="px-6 py-6 space-y-6">
+        <div className="px-3 py-3 space-y-3">
           {/* Two-column layout: Video/Notes on left, Transcript on right */}
-          <div className="flex gap-6">
+          <div className="flex gap-3">
             {/* Left Column: Video and Notes */}
-            <div className="flex-1 space-y-6 min-w-0">
+            <div className="flex-1 space-y-3 min-w-0">
               {/* Video Player */}
               {(currentMeeting.recordingUrl || currentMeeting.recallBot?.videoUrl || videoStreamUrl) && (
                 <div>

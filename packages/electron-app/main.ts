@@ -530,7 +530,16 @@ app.whenReady().then(() => {
     }
     try {
       const result = await autoUpdater.checkForUpdates()
-      return { available: false, currentVersion: app.getVersion() }
+      const currentVersion = app.getVersion()
+      const latestVersion = result?.updateInfo?.version
+      // An update is available if we got update info with a different version
+      const available = !!(latestVersion && latestVersion !== currentVersion)
+      console.log(`[Electron] Update check: current=${currentVersion}, latest=${latestVersion}, available=${available}`)
+      return { 
+        available, 
+        currentVersion,
+        latestVersion
+      }
     } catch (error) {
       console.error('[Electron] Error checking for updates:', error)
       return { available: false, error: String(error) }

@@ -87,7 +87,11 @@ const AuthCallback = (): JSX.Element => {
     // Note: electron=true means this callback is FOR Electron (in browser),
     // not that we're currently IN Electron
     // Check for token first (from backend google_callback_electron), then code/error
-    if (isElectronCallback) {
+
+function isElectronApp(): boolean {
+  return typeof window !== 'undefined' && !!window.desktopApp?.isDesktop
+}
+    if (isElectronApp()) {
       // If token is present (from backend electron callback), save it and user info, then redirect to workspaces
       if (token) {
         handledRef.current = true;
@@ -97,12 +101,12 @@ const AuthCallback = (): JSX.Element => {
         ApiService.setAuthToken(token, tokenUsername);
         
         // Store user info in localStorage (matching the format used in handleOAuthCallback)
-        if (typeof window !== 'undefined' && window.localStorage) {
           if (email) {
             localStorage.setItem('userEmail', email);
           }
+          // Note: username is already stored by setAuthToken above, but store again for consistency
           if (username) {
-            localStorage.setItem('authUsername', username);
+            localStorage.setItem('username', username);
           }
           if (firstName) {
             localStorage.setItem('userFirstName', firstName);
@@ -123,8 +127,6 @@ const AuthCallback = (): JSX.Element => {
               localStorage.setItem('userPicture', picture);
             }
           }
-        }
-        
         // Redirect to workspaces
         router.replace('/workspaces');
         return;

@@ -21,6 +21,7 @@ export async function checkForUpdates(): Promise<CheckForUpdatesResult> {
       success: true,
       available: result.available,
       currentVersion: result.currentVersion,
+      latestVersion: result.latestVersion,
     }
   } catch (error) {
     console.error('Error checking for updates:', error)

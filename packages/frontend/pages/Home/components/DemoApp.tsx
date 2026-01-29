@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { LeftPanel } from '../../../components/LeftPanel/LeftPanel'
-import { RightPanel } from '../../../components/RightPanel/RightPanel'
+import { Thread } from '../../../components/RightPanel/composer/thread/thread'
 import { MiddlePanel } from '../../../components/MiddlePanel/MiddlePanel'
 import { NavSidebar } from '../../../components/nav-sidebar'
 import { PanelGroup, WorkspaceTab } from '../../Workspaces/types'
@@ -719,9 +719,9 @@ export default function DemoApp() {
     <DemoRuntimeProvider>
       <TooltipProvider>
         <div 
-          className="w-full flex items-center justify-center py-10 sm:py-12 md:py-14 lg:py-16 px-4 sm:px-4 relative rounded-xl sm:rounded-2xl overflow-hidden"
+          className="flex items-center justify-center py-10 sm:py-12 md:py-14 lg:py-16 px-4 sm:px-4 relative rounded-md overflow-hidden"
           style={{
-            backgroundImage: 'url(/wheat-field-wallpaper-mural-plain.jpg)',
+            backgroundImage: 'url(/mountains.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
@@ -736,7 +736,7 @@ export default function DemoApp() {
             }}
           />
           
-          <div className="h-[500px] sm:h-[600px] lg:h-[600px] w-full max-w-7xl flex overflow-hidden rounded-lg sm:rounded-xl border border-white/10 sm:border-2 shadow-xl sm:shadow-2xl bg-zinc-900/50 backdrop-blur-sm relative z-10">
+          <div className="h-[500px] sm:h-[600px] lg:h-[600px] w-full max-w-7xl flex overflow-hidden rounded-md border border-white/10 sm:border-2 shadow-xl sm:shadow-2xl bg-zinc-900/50 backdrop-blur-sm relative z-10">
         {/* Nav Sidebar - Wrapper to contain fixed positioning within demo */}
         <div className="relative h-full w-[48px] flex-shrink-0 overflow-hidden [&_.fixed]:!absolute">
           <NavSidebar 
@@ -785,17 +785,11 @@ export default function DemoApp() {
 
         {/* Right Panel */}
         {!isAssistantPanelCollapsed && (
-          <div className="w-60 sm:w-64 md:w-72 lg:w-80 h-full flex-shrink-0 hidden lg:block">
-            <RightPanel 
+          <div className="w-60 sm:w-64 md:w-72 lg:w-80 h-full flex-shrink-0 hidden lg:block bg-card border-l border-zinc-200 dark:border-white/[0.06]">
+            <Thread 
               userInfo={mockUserInfo}
               selectedFile={selectedFile}
               selectedEmail={selectedEmail}
-              conversations={conversations}
-              isLoadingConversations={false}
-              onToggleCollapse={handleToggleAssistantPanel}
-              onLoadConversation={handleLoadConversation}
-              onDeleteConversation={handleDeleteConversation}
-              onClearConversation={handleClearConversation}
               onEmailSelect={handleEmailSelect}
             />
           </div>

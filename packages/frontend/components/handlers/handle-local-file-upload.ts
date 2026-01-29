@@ -1,4 +1,3 @@
-import { ApiService } from '../../../backend/api/apiService'
 import { FileSystemItem } from '../../utils/fileTreeUtils'
 
 interface HandleLocalFileUploadParams {
@@ -40,56 +39,46 @@ export async function handleLocalFileUpload({
       // Process all files in parallel
       const uploadPromises = Array.from(files).map(async (file) => {
         try {
-          // Generate upload path
           const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
           const fileName = file.name
           const filePath = `local-uploads/${timestamp}-${fileName}`
-          const fileParent = 'local-uploads'
+          const fileId = `local-${timestamp}-${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`
 
-          // For images, convert to base64 for AI vision
-          let base64Data: string | undefined
-          const isImage = file.type.startsWith('image/')
+          // Read file content as base64
+          const arrayBuffer = await file.arrayBuffer()
+          const bytes = new Uint8Array(arrayBuffer)
+          
+          // Convert to base64 in chunks to avoid stack overflow
+          let binary = ''
+          const chunkSize = 8192
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            const chunk = bytes.slice(i, i + chunkSize)
+            binary += String.fromCharCode.apply(null, Array.from(chunk) as any)
+          }
+          const base64Data = btoa(binary)
 
-          if (isImage) {
-            const arrayBuffer = await file.arrayBuffer()
-            base64Data = btoa(String.fromCharCode(...Array.from(new Uint8Array(arrayBuffer))))
+          // Store the file data payload so AI can read it
+          if (onAttachmentPayload) {
+            onAttachmentPayload(fileId, { 
+              fileData: base64Data, 
+              mimeType: file.type || 'application/octet-stream' 
+            })
           }
 
-          // Upload to S3
-          const result = await ApiService.uploadToS3(
-            file,
-            fileName,
-            'web-upload',
-            filePath,
-            fileParent
-          )
-
-          if (result.success && result.file_info) {
-            const fileId = result.file_info.file_id || `temp-${Date.now()}`
-
-            // Store base64 payload for images so AI can see them immediately
-            if (onAttachmentPayload && fileId && isImage && base64Data) {
-              onAttachmentPayload(fileId, { fileData: base64Data, mimeType: file.type })
-            }
-
-            // Convert to FileSystemItem format
-            const fileItem: FileSystemItem = {
-              id: fileId,
-              file_id: fileId,
-              name: fileName,
-              type: 'file',
-              path: filePath,
-              file_type: file.type,
-              file_size: file.size,
-              date_modified: new Date().toISOString(),
-              date_uploaded: new Date().toISOString()
-            }
-
-            return fileItem
+          // Convert to FileSystemItem format
+          const fileItem: FileSystemItem = {
+            id: fileId,
+            file_id: fileId,
+            name: fileName,
+            type: 'file',
+            path: filePath,
+            file_type: file.type || 'application/octet-stream',
+            file_size: file.size,
+            date_modified: new Date().toISOString(),
+            date_uploaded: new Date().toISOString()
           }
 
-          console.error('Upload failed or missing file_info:', result)
-          return null
+          return fileItem
         } catch (itemError) {
           console.error('Error processing individual file:', itemError)
           return null
@@ -103,13 +92,13 @@ export async function handleLocalFileUpload({
       successfulUploads.forEach(file => onFileAttach(file))
 
       if (successfulUploads.length === 0) {
-        onError?.('Failed to upload file(s)')
+        onError?.('Failed to process file(s)')
       } else {
         onSuccess?.(successfulUploads.length)
       }
     } catch (error) {
       console.error('Error uploading files:', error)
-      onError?.(error instanceof Error ? error.message : 'Failed to upload file(s)')
+      onError?.(error instanceof Error ? error.message : 'Failed to process file(s)')
     } finally {
       // Clean up the input element
       document.body.removeChild(input)

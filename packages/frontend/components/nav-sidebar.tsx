@@ -38,7 +38,11 @@ function handleLogout(router: NextRouter) {
   localStorage.removeItem('userData');
   
   // Redirect to home page
-  router.push('/');
+  if (isElectronApp()) {
+    router.push('/login-electron')
+  } else {
+    router.push('/')
+  }
 }
 
 interface NavSidebarProps {
@@ -159,9 +163,9 @@ export function NavSidebar({ activeTab = 'files', onTabChange, showAdminToggle =
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => onTabChange?.(tab.id)}
-                      className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-200 hover:scale-110 active:scale-95 ${
+                      className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-200 ${
                         isActive
-                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          ? 'bg-accent text-accent-foreground shadow-sm'
                           : 'text-muted-foreground hover:bg-accent dark:hover:bg-accent hover:text-foreground'
                       }`}
                     >

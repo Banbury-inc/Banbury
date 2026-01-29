@@ -29,6 +29,8 @@ import './index.css';
 /**
  * Root route handler - redirects to workspaces in Electron, shows Home otherwise
  */
+
+
 const RootRoute = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -115,8 +117,8 @@ const App = (): JSX.Element => {
               <Route path='/admin' element={<Admin />} />
               <Route path='/' element={<RootRoute />} />
               <Route path='/login' element={<Layout><Login /></Layout>} />
-              <Route path='/auth/callback' element={<Layout><AuthCallback /></Layout>} />
-              <Route path='/authentication/auth/electron/callback' element={<Layout><ElectronCallback /></Layout>} />
+              <Route path='/auth/callback' element={<AuthCallback />} />
+              <Route path='/authentication/auth/electron/callback' element={<ElectronCallback />} />
               <Route path='/features' element={<Layout><Features /></Layout>} />
               <Route path='/download' element={<Layout><Download /></Layout>} />
               <Route path='/filedownload/:username/:file_id' element={<Layout><FileDownload /></Layout>} />

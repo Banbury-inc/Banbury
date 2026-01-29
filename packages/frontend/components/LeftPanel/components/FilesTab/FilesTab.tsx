@@ -16,6 +16,7 @@ import {
   Users,
   Search,
   HardDrive,
+  SquareArrowOutUpRight,
 } from "lucide-react"
 import { useState, useRef, useCallback } from 'react'
 import { LocalFilesView } from "./components/LocalFilesView"
@@ -48,6 +49,7 @@ interface FilesTabProps {
   onFolderDeleted?: (folderPath: string) => void
   triggerRootFolderCreation?: boolean
   onCreateFolder?: () => void
+  onOpenFilesApp?: () => void
   // Workspace dependencies
   activePanelId: string
   panelLayout: PanelGroup
@@ -67,6 +69,7 @@ export function FilesTab({
   onFolderDeleted,
   triggerRootFolderCreation,
   onCreateFolder,
+  onOpenFilesApp,
   activePanelId,
   panelLayout,
   setPanelLayout,
@@ -241,7 +244,7 @@ export function FilesTab({
   const effectiveRefreshTrigger = (refreshTrigger ?? 0) + localRefreshCounter
   const handleLocalRefreshComplete = useCallback(() => {
     handleRefreshComplete({ setIsRefreshing, onRefreshComplete: externalOnRefreshComplete })
-  }, [externalOnRefreshComplete])
+  }, [setIsRefreshing, externalOnRefreshComplete])
 
   // Handle file upload
   const handleFileUpload = () => {
@@ -511,8 +514,8 @@ export function FilesTab({
                   }
                 }}
               >
-                <SelectTrigger size="xs" className="bg-foreground hover:bg-foreground hover:text-primary-foreground flex-shrink-0">
-                  <Plus className="h-4 w-4 text-muted-foreground" strokeWidth={1} />
+                <SelectTrigger size="xs" className="bg-accent hover:bg-accent hover:text-accent-foreground flex-shrink-0">
+                  <Plus className="h-4 w-4 text-accent-foreground" strokeWidth={1} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="upload-file" className="[&_svg]:!text-gray-400">
@@ -578,8 +581,8 @@ export function FilesTab({
                   }
                 }}
               >
-                <SelectTrigger size="xs" className="bg-foreground hover:bg-foreground hover:text-primary-foreground flex-shrink-0">
-                  <Plus className="h-4 w-4 text-muted-foreground" strokeWidth={1} />
+                <SelectTrigger size="xs" className="bg-accent hover:bg-accent hover:text-accent-foreground flex-shrink-0">
+                  <Plus className="h-4 w-4 text-accent-foreground" strokeWidth={1} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="document" className="[&_svg]:!text-blue-500">
@@ -621,8 +624,8 @@ export function FilesTab({
                   }
                 }}
               >
-                <SelectTrigger size="xs" className="bg-foreground hover:bg-foreground hover:text-primary-foreground flex-shrink-0">
-                  <Plus className="h-4 w-4 text-muted-foreground" strokeWidth={1} />
+                <SelectTrigger size="xs" className="bg-accent hover:bg-accent hover:text-accent-foreground flex-shrink-0">
+                  <Plus className="h-4 w-4 text-accent-foreground" strokeWidth={1} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="document" className="[&_svg]:!text-blue-500">

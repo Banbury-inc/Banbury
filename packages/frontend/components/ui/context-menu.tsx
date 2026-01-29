@@ -101,7 +101,7 @@ export function ContextMenuProvider({ children }: { children: React.ReactNode })
       {contextMenu.visible && (
         <div
           ref={menuRef}
-          className="fixed z-50 min-w-48 bg-zinc-900 border border-zinc-700 rounded-md shadow-lg py-1"
+          className="fixed z-50 min-w-48 bg-background border border-zinc-700 rounded-md shadow-lg py-1"
           style={{
             left: contextMenu.x,
             top: contextMenu.y

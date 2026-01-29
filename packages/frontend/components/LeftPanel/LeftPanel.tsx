@@ -21,6 +21,8 @@ interface AppSidebarProps {
   onFolderCreated?: (folderPath: string) => void
   triggerRootFolderCreation?: boolean
   onOpenCalendar?: () => void
+  onOpenFiles?: () => void
+  onOpenEmailInbox?: () => void
   selectedTask?: Task | null
   selectedMeeting?: MeetingSession | null
   meetingsRefreshTrigger?: number
@@ -53,7 +55,9 @@ export function LeftPanel({
   refreshTrigger, 
   onFolderCreated, 
   triggerRootFolderCreation, 
-  onOpenCalendar, 
+  onOpenCalendar,
+  onOpenFiles,
+  onOpenEmailInbox,
   selectedTask, 
   selectedMeeting, 
   meetingsRefreshTrigger,
@@ -88,6 +92,7 @@ export function LeftPanel({
               onFolderCreated={onFolderCreated}
               triggerRootFolderCreation={triggerRootFolderCreation}
               onCreateFolder={undefined}
+              onOpenFilesApp={onOpenFiles}
               activePanelId={activePanelId || 'main-panel'}
               panelLayout={panelLayout!}
               setPanelLayout={setPanelLayout!}
@@ -103,6 +108,7 @@ export function LeftPanel({
           <div className="flex-1 flex flex-col mt-0 overflow-hidden">
             <EmailTab 
               onOpenEmailApp={() => router.push('/email')}
+              onOpenEmailInbox={onOpenEmailInbox}
               activePanelId={activePanelId}
               panelLayout={panelLayout}
               setPanelLayout={setPanelLayout}

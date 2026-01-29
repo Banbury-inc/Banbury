@@ -193,18 +193,18 @@ export function CreateEventPopover({ isOpen, position, selectedDate, onClose, on
   return (
       <div
         ref={containerRef}
-        className="fixed z-50 w-[500px] max-w-[90vw] bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl"
+        className="fixed z-50 w-[500px] max-w-[90vw] bg-accent border border-border rounded-lg shadow-xl"
         style={{ left: clampedPosition.x, top: clampedPosition.y }}
       >
-      <div className="flex items-center justify-between p-2 border-b border-zinc-700">
-        <div className="text-sm font-medium text-white">New Event</div>
+      <div className="flex items-center justify-between p-2 border-b border-border">
+        <div className="text-sm font-medium text-accent-foreground">New Event</div>
         <Button
           variant="ghost"
           size="sm"
-          className="h-6 w-6 p-0 text-slate-400 hover:text-slate-200"
+          className="h-6 w-6 p-0 text-muted-foreground hover:text-accent-foreground"
           onClick={onClose}
         >
-          <X className="h-3 w-3" />
+          <X className="h-3 w-3 text-muted-foreground" />
         </Button>
       </div>
       <div className="p-2 space-y-2">
@@ -213,14 +213,14 @@ export function CreateEventPopover({ isOpen, position, selectedDate, onClose, on
             type="text"
             value={formData.summary || ''}
             onChange={(e) => handleInputChange('summary', e.target.value)}
-            className="w-full px-2 py-1.5 bg-zinc-700 border border-zinc-600 rounded text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 bg-border border border-border rounded text-sm text-accent-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="Event title"
           />
           <input
             type="text"
             value={formData.location || ''}
             onChange={(e) => handleInputChange('location', e.target.value)}
-            className="w-full px-2 py-1.5 bg-zinc-700 border border-zinc-600 rounded text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 bg-border border border-border rounded text-sm text-accent-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="Location"
           />
         </div>
@@ -234,26 +234,26 @@ export function CreateEventPopover({ isOpen, position, selectedDate, onClose, on
             handleInputChange('description', e.target.value)
           }}
           rows={2}
-          className="w-full px-2 py-1.5 bg-zinc-700 border border-zinc-600 rounded text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none overflow-hidden"
+          className="w-full px-2 py-1.5 bg-border border border-border rounded text-sm text-accent-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none overflow-hidden"
           placeholder="Description"
         />
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-medium text-slate-300">Guests</span>
+            <span className="text-xs font-medium text-muted-foreground">Guests</span>
             <div className="flex gap-1 flex-1">
               <input
                 type="email"
                 value={newAttendee}
                 onChange={(e) => setNewAttendee(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddAttendee()}
-                className="flex-1 px-2 py-1 bg-zinc-700 border border-zinc-600 rounded text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="flex-1 px-2 py-1 bg-border border border-border rounded text-xs text-accent-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
                 placeholder="Email"
               />
               <Button
                 type="button"
                 onClick={handleAddAttendee}
                 disabled={!newAttendee.trim()}
-                className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 text-xs"
+                className="px-2 py-1 bg-border hover:bg-border text-accent-foreground disabled:opacity-50 text-xs"
               >
                 +
               </Button>
@@ -262,16 +262,16 @@ export function CreateEventPopover({ isOpen, position, selectedDate, onClose, on
           {attendees.length > 0 && (
             <div className="space-y-0.5 max-h-20 overflow-y-auto">
               {attendees.map((attendee, index) => (
-                <div key={index} className="flex items-center justify-between p-1 bg-zinc-700 rounded border border-zinc-600">
-                  <span className="text-xs text-white truncate">{attendee}</span>
+                <div key={index} className="flex items-center justify-between p-1 bg-border border border-border rounded">
+                  <span className="text-xs text-accent-foreground truncate">{attendee}</span>
                   <Button
                     type="button"
                     onClick={() => handleRemoveAttendee(index)}
                     variant="ghost"
                     size="sm"
-                    className="h-4 w-4 p-0 text-red-400 hover:text-red-300 hover:bg-red-900/20 text-xs"
+                    className="h-4 w-4 p-0 text-muted-foreground hover:text-accent-foreground text-xs"
                   >
-                    ×
+                    <X className="h-3 w-3 text-muted-foreground" />
                   </Button>
                 </div>
               ))}
@@ -284,9 +284,9 @@ export function CreateEventPopover({ isOpen, position, selectedDate, onClose, on
             id="popover-allDay"
             checked={isAllDay}
             onChange={(e) => setIsAllDay(e.target.checked)}
-            className="w-3 h-3 text-blue-600 bg-zinc-700 border-zinc-600 rounded focus:ring-blue-500"
+            className="w-3 h-3 text-accent bg-border border-border rounded focus:ring-blue-500"
           />
-          <label htmlFor="popover-allDay" className="text-xs font-medium text-slate-300">All-day event</label>
+          <label htmlFor="popover-allDay" className="text-xs font-medium text-muted-foreground">All-day event</label>
         </div>
 
         {isAllDay ? (
@@ -295,13 +295,13 @@ export function CreateEventPopover({ isOpen, position, selectedDate, onClose, on
               type="date"
               value={formData.start?.date || formatDate(formData.start?.dateTime)}
               onChange={(e) => handleDateTimeChange('start', 'date', e.target.value)}
-              className="w-full px-2 py-1 bg-zinc-700 border border-zinc-600 rounded text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1 bg-border border border-border rounded text-xs text-accent-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <input
               type="date"
               value={formData.end?.date || formatDate(formData.end?.dateTime)}
               onChange={(e) => handleDateTimeChange('end', 'date', e.target.value)}
-              className="w-full px-2 py-1 bg-zinc-700 border border-zinc-600 rounded text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1 bg-border border border-border rounded text-xs text-accent-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
         ) : (
@@ -310,31 +310,31 @@ export function CreateEventPopover({ isOpen, position, selectedDate, onClose, on
               type="date"
               value={formData.start?.date || formatDate(formData.start?.dateTime)}
               onChange={(e) => handleDateTimeChange('start', 'date', e.target.value)}
-              className="w-full px-2 py-1 bg-zinc-700 border border-zinc-600 rounded text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1 bg-border border border-border rounded text-xs text-accent-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <input
               type="time"
               value={formData.start?.dateTime ? formatDateTime(formData.start.dateTime).slice(11) : ''}
               onChange={(e) => handleDateTimeChange('start', 'dateTime', e.target.value)}
-              className="w-full px-2 py-1 bg-zinc-700 border border-zinc-600 rounded text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1 bg-border border border-border rounded text-xs text-accent-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <input
               type="date"
               value={formData.end?.date || formatDate(formData.end?.dateTime)}
               onChange={(e) => handleDateTimeChange('end', 'date', e.target.value)}
-              className="w-full px-2 py-1 bg-zinc-700 border border-zinc-600 rounded text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1 bg-border border border-border rounded text-xs text-accent-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <input
               type="time"
               value={formData.end?.dateTime ? formatDateTime(formData.end.dateTime).slice(11) : ''}
               onChange={(e) => handleDateTimeChange('end', 'dateTime', e.target.value)}
-              className="w-full px-2 py-1 bg-zinc-700 border border-zinc-600 rounded text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1 bg-border border border-border rounded text-xs text-accent-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
         )}
 
         <div className="flex gap-2 pt-1">
-          <Button onClick={handleSave} disabled={loading} className="flex-1 bg-white hover:bg-zinc-200 text-black text-xs py-1">
+          <Button variant="secondary" onClick={handleSave} disabled={loading} className="flex-1 bg-accent hover:bg-accent text-accent-foreground text-xs py-1">
             <Save className="h-3 w-3 mr-1" />
             {loading ? 'Saving...' : 'Save'}
           </Button>

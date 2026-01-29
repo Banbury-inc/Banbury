@@ -6,6 +6,8 @@ import { EmailComposer } from '../../../components/MiddlePanel/EmailViewer/Email
 import { EmailViewer } from '../../../components/MiddlePanel/EmailViewer/EmailViewer';
 import { ImageViewer } from '../../../components/MiddlePanel/ImageViewer/ImageViewer';
 import { CalendarViewer } from '../../../components/MiddlePanel/CalendarViewer/CalendarViewer';
+import { FileBrowserViewer } from '../../../components/MiddlePanel/FileBrowserViewer/FileBrowserViewer';
+import { EmailInboxViewer } from '../../../components/MiddlePanel/EmailInboxViewer/EmailInboxViewer';
 import { SpreadsheetViewer } from '../../../components/MiddlePanel/SpreadsheetViewer/SpreadsheetViewer';
 import { VideoViewer } from '../../../components/MiddlePanel/VideoViewer/VideoViewer';
 import IDE from '../../../components/MiddlePanel/CodeViewer/IDE';
@@ -54,6 +56,7 @@ interface RenderPanelProps {
   isDrawioFile: (fileName: string) => boolean;
   isTldrawFile: (fileName: string) => boolean;
   isPowerPointFile: (fileName: string) => boolean;
+  panelLayout: any;
   setPanelLayout: React.Dispatch<React.SetStateAction<any>>;
   isMac?: boolean;
   onSplitPreview?: (direction: 'horizontal' | 'vertical' | null, position: { x: number; y: number }) => void;
@@ -66,6 +69,12 @@ interface RenderPanelProps {
   selectedEmail?: any;
   onEmailSelect?: (email: any) => void;
   onClearConversation?: (tabId: string) => void;
+  // Callbacks for opening content in tabs
+  openFileInTabCallback: (file: FileSystemItem, panelId: string) => void;
+  openEmailInTabCallback: (email: any, panelId: string) => void;
+  setSelectedFile: (file: FileSystemItem | null) => void;
+  setSelectedEmail: (email: any | null) => void;
+  toast: any;
 }
 
 export const renderPanel = ({
@@ -90,6 +99,7 @@ export const renderPanel = ({
   isDrawioFile,
   isTldrawFile,
   isPowerPointFile,
+  panelLayout,
   setPanelLayout,
   isMac = false,
   onSplitPreview,
@@ -101,6 +111,11 @@ export const renderPanel = ({
   selectedEmail,
   onEmailSelect,
   onClearConversation,
+  openFileInTabCallback,
+  openEmailInTabCallback,
+  setSelectedFile,
+  setSelectedEmail,
+  toast,
 }: RenderPanelProps) => {
   const isActive = panel.id === activePanelId;
   const isDropTarget = dragState.dropTargetPanel === panel.id;
@@ -411,6 +426,38 @@ export const renderPanel = ({
                       onDateChange={onCalendarJumpComplete}
                       initialEvent={calendarSelectedEvent || undefined}
                       onInitialEventConsumed={onCalendarSelectedEventConsumed}
+                    />
+                  );
+                }
+
+                // File Browser tab
+                if (tab.type === 'file-browser') {
+                  return (
+                    <FileBrowserViewer
+                      userInfo={userInfo}
+                      onFileSelect={(file) => openFileInTabCallback(file, panel.id)}
+                      activePanelId={activePanelId}
+                      panelLayout={panelLayout}
+                      setPanelLayout={setPanelLayout}
+                      setActivePanelId={setActivePanelId}
+                      setSelectedFile={setSelectedFile}
+                      triggerSidebarRefresh={triggerSidebarRefresh}
+                      toast={toast}
+                    />
+                  );
+                }
+
+                // Email Inbox tab
+                if (tab.type === 'email-inbox') {
+                  return (
+                    <EmailInboxViewer
+                      provider={(tab as any).provider}
+                      onEmailSelect={(email) => openEmailInTabCallback(email, panel.id)}
+                      activePanelId={activePanelId}
+                      panelLayout={panelLayout}
+                      setPanelLayout={setPanelLayout}
+                      setActivePanelId={setActivePanelId}
+                      setSelectedEmail={setSelectedEmail}
                     />
                   );
                 }

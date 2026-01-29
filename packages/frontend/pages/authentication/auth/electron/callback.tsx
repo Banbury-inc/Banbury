@@ -126,10 +126,27 @@ const AuthCallbackElectron = (): JSX.Element => {
             // Backend should return JSON when Accept: application/json is sent
             const data = await response.json()
             if (data.success && data.token) {
-              // Backend returned JSON with token - redirect to banbury:// with token
+              // Backend returned JSON with token and user info - redirect to banbury:// with all data
               setStatus('electron-redirect')
               const banburyParams = new URLSearchParams()
               banburyParams.set('token', data.token)
+              
+              // Include user info in the redirect if available
+              if (data.user) {
+                if (data.user.email) banburyParams.set('email', data.user.email)
+                if (data.user.username) banburyParams.set('username', data.user.username)
+                if (data.user.first_name) banburyParams.set('first_name', data.user.first_name)
+                if (data.user.last_name) banburyParams.set('last_name', data.user.last_name)
+                if (data.user.picture) {
+                  // Handle picture data (can be object or string)
+                  if (typeof data.user.picture === 'object') {
+                    banburyParams.set('picture', JSON.stringify(data.user.picture))
+                  } else {
+                    banburyParams.set('picture', data.user.picture)
+                  }
+                }
+              }
+              
               const banburyUrl = `banbury://auth/callback?${banburyParams.toString()}`
               
               setTimeout(() => {

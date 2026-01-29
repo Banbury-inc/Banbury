@@ -260,6 +260,47 @@ export default class Emails {
     )
   }
 
+  /**
+   * Check if Gmail is connected and accessible
+   */
+  static async checkGmailConnection(): Promise<{ connected: boolean }> {
+    try {
+      // Try to fetch labels as a simple connectivity check
+      await this.listLabels()
+      return { connected: true }
+    } catch (error) {
+      return { connected: false }
+    }
+  }
+
+  /**
+   * Alias for listMessages for backward compatibility
+   */
+  static async getMessages(params?: { labelIds?: string[]; maxResults?: number; pageToken?: string; q?: string }): Promise<GmailMessageListResponse> {
+    return this.listMessages(params)
+  }
+
+  /**
+   * Add labels to a message
+   */
+  static async addLabels(messageId: string, labelIds: string[]): Promise<any> {
+    return this.modifyMessage(messageId, { addLabelIds: labelIds })
+  }
+
+  /**
+   * Remove labels from a message
+   */
+  static async removeLabels(messageId: string, labelIds: string[]): Promise<any> {
+    return this.modifyMessage(messageId, { removeLabelIds: labelIds })
+  }
+
+  /**
+   * Delete a message (move to trash)
+   */
+  static async deleteMessage(messageId: string): Promise<any> {
+    return this.modifyMessage(messageId, { addLabelIds: ['TRASH'] })
+  }
+
   // =========================================================================
   // Outlook API Methods
   // =========================================================================
@@ -406,6 +447,36 @@ export default class Emails {
       console.error('Outlook search error:', error)
       throw error
     }
+  }
+
+  /**
+   * Alias for listOutlookMessages for backward compatibility
+   */
+  static async getOutlookMessages(params?: { folderId?: string; maxResults?: number; pageToken?: string; q?: string }): Promise<OutlookMessageListResponse> {
+    return this.listOutlookMessages(params)
+  }
+
+  /**
+   * Alias for listOutlookFolders for backward compatibility
+   */
+  static async getOutlookFolders(): Promise<OutlookFolderListResponse> {
+    return this.listOutlookFolders()
+  }
+
+  /**
+   * Flag or unflag an Outlook message
+   */
+  static async flagOutlookMessage(messageId: string, flagged: boolean): Promise<any> {
+    return this.modifyOutlookMessage(messageId, { 
+      flag: flagged ? 'flagged' : 'notFlagged' 
+    })
+  }
+
+  /**
+   * Delete an Outlook message (move to deleted items)
+   */
+  static async deleteOutlookMessage(messageId: string): Promise<any> {
+    return this.modifyOutlookMessage(messageId, { action: 'delete' })
   }
 }
 

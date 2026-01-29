@@ -450,12 +450,12 @@ export function CalendarTab({
             </Button>
             {isAvailable && (
               <Button
-                variant="default"
+                variant="secondary"
                 size="xs"
                 onClick={handleCreateEvent}
                 title="Create Event"
               >
-                <Plus />
+                <Plus className="h-4 w-4 text-accent-foreground" strokeWidth={1} />
               </Button>
             )}
           </div>
