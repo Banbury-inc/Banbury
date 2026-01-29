@@ -71,11 +71,11 @@ export function CloudFileContextMenu({
         {children}
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="min-w-[160px] bg-white dark:bg-zinc-800 rounded-md p-1 shadow-lg border border-zinc-300 dark:border-zinc-700 z-50">
+        <ContextMenu.Content className="min-w-[160px] bg-popover border border-zinc-200 dark:border-zinc-700 rounded-md p-1 shadow-lg z-50">
           {/* Upload actions (local folders only) */}
           {provider === 'local' && onUploadFile && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-3 py-2 hover:bg-sidebar-accent rounded cursor-pointer outline-none"
               onSelect={onUploadFile}
             >
               <FilePlus className="w-4 h-4" />
@@ -86,7 +86,7 @@ export function CloudFileContextMenu({
           )}
           {provider === 'local' && onUploadFolder && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-3 py-2 hover:bg-sidebar-accent rounded cursor-pointer outline-none"
               onSelect={onUploadFolder}
             >
               <FolderPlus className="w-4 h-4" strokeWidth={1} />
@@ -99,7 +99,7 @@ export function CloudFileContextMenu({
           {/* New folder (local folders only) */}
           {provider === 'local' && isFolder && onNewFolder && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-3 py-2 hover:bg-sidebar-accent rounded cursor-pointer outline-none"
               onSelect={onNewFolder}
             >
               <FolderPlus className="w-4 h-4" strokeWidth={1} />
@@ -112,7 +112,7 @@ export function CloudFileContextMenu({
           {/* Download (files only) */}
           {!isFolder && onDownload && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-2 py-1.5 hover:bg-sidebar-accent rounded cursor-pointer outline-none"
               onSelect={onDownload}
             >
               <Download className="w-4 h-4" strokeWidth={1} />
@@ -125,7 +125,7 @@ export function CloudFileContextMenu({
           {/* Star/Unstar (files and folders) */}
           {onToggleStar && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-2 py-1.5 hover:bg-sidebar-accent rounded cursor-pointer outline-none"
               onSelect={onToggleStar}
             >
               <Star className={`w-4 h-4 ${isStarred ? 'text-yellow-500 fill-yellow-500' : ''}`} strokeWidth={1} />
@@ -138,7 +138,7 @@ export function CloudFileContextMenu({
           {/* Share (local files only) */}
           {provider === 'local' && !isFolder && onShare && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-2 py-1.5 hover:bg-sidebar-accent rounded cursor-pointer outline-none"
               onSelect={onShare}
             >
               <Share2 className="w-4 h-4" strokeWidth={1} />
@@ -151,12 +151,12 @@ export function CloudFileContextMenu({
           {/* Cross-provider copy section */}
           {!isFolder && (onCopyToLocal || onCopyToDrive || onCopyToOneDrive) && (
             <>
-              <ContextMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-700 my-1" />
+              <ContextMenu.Separator className="h-px bg-sidebar-border my-1" />
               
               {/* Copy to Local (for cloud files) */}
               {onCopyToLocal && (
                 <ContextMenu.Item 
-                  className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+                  className="flex items-center gap-2 px-2 py-1.5 hover:bg-sidebar-accent rounded cursor-pointer outline-none"
                   onSelect={onCopyToLocal}
                 >
                   <HardDrive className="w-4 h-4" strokeWidth={1} />
@@ -171,7 +171,7 @@ export function CloudFileContextMenu({
                 <ContextMenu.Item 
                   className={`flex items-center gap-2 px-2 py-1.5 rounded outline-none ${
                     driveAvailable 
-                      ? 'hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer' 
+                      ? 'hover:bg-sidebar-accent cursor-pointer' 
                       : 'opacity-50 cursor-not-allowed'
                   }`}
                   onSelect={driveAvailable ? onCopyToDrive : undefined}
@@ -189,7 +189,7 @@ export function CloudFileContextMenu({
                 <ContextMenu.Item 
                   className={`flex items-center gap-2 px-2 py-1.5 rounded outline-none ${
                     oneDriveConnected 
-                      ? 'hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer' 
+                      ? 'hover:bg-sidebar-accent cursor-pointer' 
                       : 'opacity-50 cursor-not-allowed'
                   }`}
                   onSelect={oneDriveConnected ? onCopyToOneDrive : undefined}
@@ -208,10 +208,10 @@ export function CloudFileContextMenu({
           {onRename && (
             <>
               {(onCopyToLocal || onCopyToDrive || onCopyToOneDrive) && !isFolder && (
-                <ContextMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-700 my-1" />
+                <ContextMenu.Separator className="h-px bg-sidebar-border my-1" />
               )}
               <ContextMenu.Item 
-                className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+                className="flex items-center gap-2 px-2 py-1.5 hover:bg-sidebar-accent rounded cursor-pointer outline-none"
                 onSelect={onRename}
               >
                 <Edit2 className="w-4 h-4" strokeWidth={1} />
@@ -225,7 +225,7 @@ export function CloudFileContextMenu({
           {/* Delete */}
           {onDelete && (
             <ContextMenu.Item 
-              className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded cursor-pointer outline-none"
+              className="flex items-center gap-2 px-3 py-2 hover:bg-sidebar-accent rounded cursor-pointer outline-none"
               onSelect={onDelete}
             >
               <Trash2 className="w-4 h-4" strokeWidth={1} />
