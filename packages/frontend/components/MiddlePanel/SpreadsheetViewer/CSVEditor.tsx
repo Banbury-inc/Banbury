@@ -21,7 +21,7 @@ import { handleEditDropdownOptions } from './handlers/handle-edit-dropdown-optio
 import { parseCSV, convertToCSV, convertToCSVWithMeta } from './utils/csv-parser';
 import { createFormulaSuggestionHandlers } from './handlers/handle-formula-suggestions';
 import { createFormulaNavigationHandler } from './handlers/handle-formula-navigation';
-import CSVEditorToolbar from './components/CSVEditorToolbar';
+import CSVEditorToolbar from './components/CSVEditorToolbar/CSVEditorToolbar';
 import { SheetTabs } from './components/SheetTabs';
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/old-input'
