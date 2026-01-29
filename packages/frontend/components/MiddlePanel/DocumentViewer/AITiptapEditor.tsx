@@ -19,39 +19,6 @@ import { StarterKit } from '@tiptap/starter-kit';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { FontFamily } from '@tiptap/extension-font-family';
 import { Insertion, Deletion } from '../../../extensions/TrackChanges';
-import { Button } from '../../ui/button';
-import { useTheme } from '@mui/material/styles';
-import {
-  Bold,
-  Italic,
-  Underline as UnderlineIcon,
-  Strikethrough,
-  Code,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  List,
-  ListOrdered,
-  Quote,
-  Minus,
-  Undo,
-  Redo,
-  Type,
-  Highlighter,
-  Link as LinkIcon,
-  Image as ImageIcon,
-  Subscript as SubscriptIcon,
-  Superscript as SuperscriptIcon,
-  MoreHorizontal,
-  Save,
-  Download,
-  ChevronDown,
-  Table as TableIcon,
-  Search,
-  FileImage,
-  Share2
-} from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 
@@ -62,17 +29,33 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuLabel
+  DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from '../../ui/dropdown-menu';
 import { useTiptapAIContext } from '../../../contexts/TiptapAIContext';
 import { cn } from '../../../utils';
-import { changeSelectionFontFamily } from '../../handlers/editorFont';
-import { insertImageFromBackendFile } from '../../handlers/editorImage';
-import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import { ApiService } from '../../../../backend/api/apiService';
 import { registerTiptapEditor, unregisterTiptapEditor, isShowingPreview } from '../../RightPanel/handlers/handle-docx-ai-response';
 import { createToolbarHandlers } from './handlers/toolbarHandlers';
- 
+import { BoldButton } from './components/BoldButton';
+import { ItalicButton } from './components/ItalicButton';
+import { UnderlineButton } from './components/UnderlineButton';
+import { StrikethroughButton } from './components/StrikethroughButton';
+import { CodeButton } from './components/CodeButton';
+import { HighlightButton } from './components/HighlightButton';
+import { SubscriptButton } from './components/SubscriptButton';
+import { SuperscriptButton } from './components/SuperscriptButton';
+import { BulletListButton } from './components/BulletListButton';
+import { OrderedListButton } from './components/OrderedListButton';
+import { QuoteButton } from './components/QuoteButton';
+import { TableButton } from './components/TableButton';
+import { LinkButton } from './components/LinkButton';
+import { UndoButton } from './components/UndoButton';
+import { RedoButton } from './components/RedoButton';
+import { ImageButton } from './components/ImageButton';
+import { DocumentActionButtons } from './components/DocumentActionButtons';
+import { OverflowButton } from './components/OverflowButton';
 
 interface AITiptapEditorProps {
   initialContent?: string;
@@ -97,10 +80,8 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
   saving = false,
   canSave = false
 }) => {
-  const theme = useTheme();
-  const { setEditor, aiBridge, registerAICommands, aiCommands } = useTiptapAIContext();
+  const { setEditor, registerAICommands } = useTiptapAIContext();
   const [selection, setSelection] = useState<{ from: number; to: number; text: string } | null>(null);
-  const [selectedFont, setSelectedFont] = useState<string | null>(null);
 
   const [contextMenu, setContextMenu] = useState<{
     isOpen: boolean;
@@ -116,17 +97,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
 
   // Image dropdown local search state
   const [isImageMenuOpen, setIsImageMenuOpen] = useState(false)
-  const [imageQuery, setImageQuery] = useState('')
-  const [imageResults, setImageResults] = useState<Array<{
-    file_id: string
-    file_name: string
-    file_path: string
-    file_size: number
-    date_modified: string
-    device_name: string
-    s3_url: string
-  }>>([])
-  const [isImageSearching, setIsImageSearching] = useState(false)
+  const [selectedFont, setSelectedFont] = useState<string | null>(null)
 
   // Close context menu when clicking outside
   useEffect(() => {
@@ -214,6 +185,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
 
   // Responsive toolbar calculation (visible vs overflow)
   const toolbarRef = useRef<HTMLDivElement | null>(null)
+  const leftToolbarRef = useRef<HTMLDivElement | null>(null)
   const rightActionsRef = useRef<HTMLDivElement | null>(null)
   const [visibleButtons, setVisibleButtons] = useState<string[]>([])
   const [overflowOpen, setOverflowOpen] = useState(false)
@@ -222,60 +194,65 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
 
   const toolbarButtons = useMemo(() => (
     [
-      { id: 'undo', title: 'Undo', icon: <Undo width={16} height={16} />, onClick: handlers.undo },
-      { id: 'redo', title: 'Redo', icon: <Redo size={16} />, onClick: handlers.redo },
-      { id: 'bold', title: 'Bold', icon: <Bold size={16} />, onClick: handlers.toggleBold },
-      { id: 'italic', title: 'Italic', icon: <Italic size={16} />, onClick: handlers.toggleItalic },
-      { id: 'underline', title: 'Underline', icon: <UnderlineIcon size={16} />, onClick: handlers.toggleUnderline },
-      { id: 'strike', title: 'Strikethrough', icon: <Strikethrough size={16} />, onClick: handlers.toggleStrike },
-      { id: 'code', title: 'Code', icon: <Code size={16} />, onClick: handlers.toggleCode },
-      { id: 'highlight', title: 'Highlight', icon: <Highlighter size={16} />, onClick: handlers.toggleHighlight },
-      { id: 'subscript', title: 'Subscript', icon: <SubscriptIcon size={16} />, onClick: handlers.toggleSubscript },
-      { id: 'superscript', title: 'Superscript', icon: <SuperscriptIcon size={16} />, onClick: handlers.toggleSuperscript },
-      { id: 'alignLeft', title: 'Align Left', icon: <AlignLeft size={16} />, onClick: handlers.alignLeft },
-      { id: 'alignCenter', title: 'Align Center', icon: <AlignCenter size={16} />, onClick: handlers.alignCenter },
-      { id: 'alignRight', title: 'Align Right', icon: <AlignRight size={16} />, onClick: handlers.alignRight },
-      { id: 'alignJustify', title: 'Justify', icon: <AlignJustify size={16} />, onClick: handlers.alignJustify },
-      { id: 'bullet', title: 'Bullet List', icon: <List size={16} />, onClick: handlers.toggleBulletList },
-      { id: 'ordered', title: 'Numbered List', icon: <ListOrdered size={16} />, onClick: handlers.toggleOrderedList },
-      { id: 'quote', title: 'Quote', icon: <Quote size={16} />, onClick: handlers.toggleBlockquote },
-      { id: 'table', title: 'Insert Table', icon: <TableIcon size={16} />, onClick: handlers.insertTable },
-      { id: 'image', title: 'Add Image', icon: <ImageIcon size={16} />, onClick: handlers.openImageMenu },
-      { id: 'link', title: 'Add Link', icon: <LinkIcon size={16} />, onClick: () => setLink() },
+      { id: 'undo', title: 'Undo', onClick: handlers.undo },
+      { id: 'redo', title: 'Redo', onClick: handlers.redo },
+      { id: 'bold', title: 'Bold', onClick: handlers.toggleBold },
+      { id: 'italic', title: 'Italic', onClick: handlers.toggleItalic },
+      { id: 'underline', title: 'Underline', onClick: handlers.toggleUnderline },
+      { id: 'strike', title: 'Strikethrough', onClick: handlers.toggleStrike },
+      { id: 'code', title: 'Code', onClick: handlers.toggleCode },
+      { id: 'highlight', title: 'Highlight', onClick: handlers.toggleHighlight },
+      { id: 'subscript', title: 'Subscript', onClick: handlers.toggleSubscript },
+      { id: 'superscript', title: 'Superscript', onClick: handlers.toggleSuperscript },
+      { id: 'bullet', title: 'Bullet List', onClick: handlers.toggleBulletList },
+      { id: 'ordered', title: 'Numbered List', onClick: handlers.toggleOrderedList },
+      { id: 'quote', title: 'Quote', onClick: handlers.toggleBlockquote },
+      { id: 'table', title: 'Insert Table', onClick: handlers.insertTable },
+      { id: 'image', title: 'Add Image', onClick: handlers.openImageMenu },
+      { id: 'link', title: 'Add Link', onClick: handlers.setLink },
     ]
   ), [handlers])
 
   const calculateVisible = useMemo(() => {
     return () => {
-      const el = toolbarRef.current
-      if (!el) {
+      const leftContainer = leftToolbarRef.current
+      if (!leftContainer) {
         setVisibleButtons(toolbarButtons.map(b => b.id))
         return
       }
-      const containerWidth = el.offsetWidth || 0
+      
+      const containerWidth = leftContainer.offsetWidth || 0
       if (containerWidth === 0) {
         setVisibleButtons(toolbarButtons.map(b => b.id))
         return
       }
-      // Reserve space for non-responsive groups (headings dropdown, font select, image/link, AI menu)
-      const reserved = 360 // px, heuristic
-      const overflowButtonWidth = 32
-      const rightWidth = rightActionsRef.current?.offsetWidth || 120
-      const available = Math.max(0, containerWidth - reserved - rightWidth - overflowButtonWidth)
+      
+      // Measure overflow button width (always visible)
+      const overflowButton = leftContainer.querySelector('[title="More tools"]') as HTMLElement
+      const overflowButtonWidth = overflowButton?.offsetWidth || 32
+      
+      // Button width and gap
       const buttonWidth = 32
-
+      const gap = 4 // gap-1 = 4px
+      
+      // Calculate available space for toolbar buttons (reserve space for overflow button)
+      const available = Math.max(0, containerWidth - overflowButtonWidth - gap)
+      
       let used = 0
       const visible: string[] = []
       for (const btn of toolbarButtons) {
-        if (used + buttonWidth <= available) {
+        const needed = buttonWidth + (visible.length > 0 ? gap : 0)
+        if (used + needed <= available) {
           visible.push(btn.id)
-          used += buttonWidth
+          used += needed
         } else {
           break
         }
       }
-      if (visible.length === 0) {
-        setVisibleButtons(toolbarButtons.slice(0, 5).map(b => b.id))
+      
+      // Always show at least a few buttons if space is very limited
+      if (visible.length === 0 && available > 0) {
+        setVisibleButtons(toolbarButtons.slice(0, Math.min(3, toolbarButtons.length)).map(b => b.id))
       } else {
         setVisibleButtons(visible)
       }
@@ -373,47 +350,12 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
     };
   }, [editor]);
 
-  // Image search effect
-  useEffect(() => {
-    if (!isImageMenuOpen) {
-      setImageQuery('')
-      setImageResults([])
-      setIsImageSearching(false)
-      return
-    }
-
-    const t = setTimeout(async () => {
-      const q = imageQuery.trim()
-      if (!q) {
-        setImageResults([])
-        return
-      }
-      setIsImageSearching(true)
-      try {
-        const res = await ApiService.searchS3Files(q)
-        if (res.result === 'success') setImageResults(res.files || [])
-        else setImageResults([])
-      } catch {
-        setImageResults([])
-      } finally {
-        setIsImageSearching(false)
-      }
-    }, 300)
-
-    return () => clearTimeout(t)
-  }, [imageQuery, isImageMenuOpen])
-
   // no-op
 
   if (!editor) {
     return null;
   }
 
-  const handleS3FileSelect = (file: FileSystemItem) => {
-    const fileId = (file.file_id || (file as any).file_id) as string | undefined
-    const fileName = file.name
-    if (fileId && fileName) insertImageFromBackendFile({ editor, fileId, fileName })
-  }
 
   const handleContextMenu = (event: React.MouseEvent) => {
     event.preventDefault()
@@ -481,403 +423,90 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
       {/* Toolbar */}
       <div ref={toolbarRef} className="flex bg-card items-center px-3 py-2 gap-1 border-b">
         {/* Left side toolbar items */}
-        <div className="flex items-center gap-1 flex-1 min-w-0">
+        <div ref={leftToolbarRef} className="flex items-center gap-1 flex-1 min-w-0">
           {/* Responsive icon buttons */}
           <div className="flex items-center">
-            {toolbarButtons.map((btn) => (
-              visibleButtons.includes(btn.id) ? (
-                <Button
-                  variant="primary"
-                  size="icon-xs"
-                  key={btn.id}
-                  onClick={btn.onClick}
-                  title={btn.title}
-                >
-                  {btn.icon}
-                </Button>
-              ) : null
-            ))}
-            {/* Overflow trigger if any hidden buttons */}
-            {toolbarButtons.some(b => !visibleButtons.includes(b.id)) && (
-              <DropdownMenu open={overflowOpen} onOpenChange={setOverflowOpen}>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon-xs" title="More tools">
-                    <MoreHorizontal size={16} />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  {toolbarButtons.filter(b => !visibleButtons.includes(b.id)).map(b => (
-                    <DropdownMenuItem key={b.id} onClick={() => { setOverflowOpen(false); b.onClick(); }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                        {b.icon}
-                        {b.title}
-                      </span>
-                    </DropdownMenuItem>
-                  ))}
-                  <DropdownMenuItem onClick={() => { setOverflowOpen(false); handlers.insertHorizontalRule(); }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      <Minus size={16} />
-                      Horizontal Rule
-                    </span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setOverflowOpen(false); editor.chain().focus().insertContent('™').run(); }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      <Type size={16} />
-                      Typography
-                    </span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            {visibleButtons.includes('undo') && (
+              <UndoButton editor={editor} onClick={handlers.undo} />
+            )}
+            {visibleButtons.includes('redo') && (
+              <RedoButton editor={editor} onClick={handlers.redo} />
+            )}
+            {visibleButtons.includes('redo') && (
+              <div className="w-px h-6 bg-border mx-1" />
+            )}
+            {visibleButtons.includes('bold') && (
+              <BoldButton editor={editor} onClick={handlers.toggleBold} />
+            )}
+            {visibleButtons.includes('italic') && (
+              <ItalicButton editor={editor} onClick={handlers.toggleItalic} />
+            )}
+            {visibleButtons.includes('underline') && (
+              <UnderlineButton editor={editor} onClick={handlers.toggleUnderline} />
+            )}
+            {visibleButtons.includes('strike') && (
+              <StrikethroughButton editor={editor} onClick={handlers.toggleStrike} />
+            )}
+            {visibleButtons.includes('code') && (
+              <CodeButton editor={editor} onClick={handlers.toggleCode} />
+            )}
+            {visibleButtons.includes('code') && (
+              <div className="w-px h-6 bg-border mx-1" />
+            )}
+            {visibleButtons.includes('highlight') && (
+              <HighlightButton editor={editor} onClick={handlers.toggleHighlight} />
+            )}
+            {visibleButtons.includes('subscript') && (
+              <SubscriptButton editor={editor} onClick={handlers.toggleSubscript} />
+            )}
+            {visibleButtons.includes('superscript') && (
+              <SuperscriptButton editor={editor} onClick={handlers.toggleSuperscript} />
+            )}
+            {visibleButtons.includes('bullet') && (
+              <BulletListButton editor={editor} onClick={handlers.toggleBulletList} />
+            )}
+            {visibleButtons.includes('ordered') && (
+              <OrderedListButton editor={editor} onClick={handlers.toggleOrderedList} />
+            )}
+            {visibleButtons.includes('quote') && (
+              <QuoteButton editor={editor} onClick={handlers.toggleBlockquote} />
+            )}
+            {visibleButtons.includes('quote') && (
+              <div className="w-px h-6 bg-border mx-1" />
+            )}
+            {visibleButtons.includes('table') && (
+              <TableButton editor={editor} onClick={handlers.insertTable} />
+            )}
+            {visibleButtons.includes('image') && (
+              <ImageButton editor={editor} isOpen={isImageMenuOpen} onOpenChange={setIsImageMenuOpen} />
+            )}
+            {visibleButtons.includes('link') && (
+              <LinkButton editor={editor} onClick={handlers.setLink} />
             )}
           </div>
 
-          <div className="w-px h-6 bg-border mx-1" />
-
-          {/* Headings */}
-          <div className="flex items-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="xs" title="Headings" className="gap-1">
-                  <span className="flex items-center gap-1">
-                    {editor.isActive('heading', { level: 1 }) && 'H1'}
-                    {editor.isActive('heading', { level: 2 }) && 'H2'}
-                    {editor.isActive('heading', { level: 3 }) && 'H3'}
-                    {!editor.isActive('heading') && 'H'}
-                    <ChevronDown size={12} />
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem 
-                  onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                  className={editor.isActive('heading', { level: 1 }) ? 'bg-accent' : ''}
-                >
-                  H1
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                  className={editor.isActive('heading', { level: 2 }) ? 'bg-accent' : ''}
-                >
-                  H2
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                  className={editor.isActive('heading', { level: 3 }) ? 'bg-accent' : ''}
-                >
-                  H3
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={() => editor.chain().focus().setParagraph().run()}
-                >
-                  Paragraph
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div className="w-px h-6 bg-border mx-1" />
-
-          {/* Font family */}
-          <div className="flex items-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="xs" title="Font family" className="gap-1">
-                  <span className="flex items-center gap-1">
-                    {selectedFont || 'Default'}
-                    <ChevronDown size={12} />
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem 
-                  onClick={() => {
-                    setSelectedFont(null);
-                    changeSelectionFontFamily({ editor, fontFamily: null });
-                  }}
-                  className={!selectedFont ? 'bg-accent' : ''}
-                >
-                  Default
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={() => {
-                    setSelectedFont('Inter');
-                    changeSelectionFontFamily({ editor, fontFamily: 'Inter' });
-                  }}
-                  className={selectedFont === 'Inter' ? 'bg-accent' : ''}
-                >
-                  Inter
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => {
-                    setSelectedFont('Arial');
-                    changeSelectionFontFamily({ editor, fontFamily: 'Arial' });
-                  }}
-                  className={selectedFont === 'Arial' ? 'bg-accent' : ''}
-                >
-                  Arial
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => {
-                    setSelectedFont('Georgia');
-                    changeSelectionFontFamily({ editor, fontFamily: 'Georgia' });
-                  }}
-                  className={selectedFont === 'Georgia' ? 'bg-accent' : ''}
-                >
-                  Georgia
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => {
-                    setSelectedFont('Times New Roman');
-                    changeSelectionFontFamily({ editor, fontFamily: 'Times New Roman' });
-                  }}
-                  className={selectedFont === 'Times New Roman' ? 'bg-accent' : ''}
-                >
-                  Times New Roman
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => {
-                    setSelectedFont('Courier New');
-                    changeSelectionFontFamily({ editor, fontFamily: 'Courier New' });
-                  }}
-                  className={selectedFont === 'Courier New' ? 'bg-accent' : ''}
-                >
-                  Courier New
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => {
-                    setSelectedFont('Roboto');
-                    changeSelectionFontFamily({ editor, fontFamily: 'Roboto' });
-                  }}
-                  className={selectedFont === 'Roboto' ? 'bg-accent' : ''}
-                >
-                  Roboto
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => {
-                    setSelectedFont('Open Sans');
-                    changeSelectionFontFamily({ editor, fontFamily: 'Open Sans' });
-                  }}
-                  className={selectedFont === 'Open Sans' ? 'bg-accent' : ''}
-                >
-                  Open Sans
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => {
-                    setSelectedFont('Merriweather');
-                    changeSelectionFontFamily({ editor, fontFamily: 'Merriweather' });
-                  }}
-                  className={selectedFont === 'Merriweather' ? 'bg-accent' : ''}
-                >
-                  Merriweather
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={() => {
-                    setSelectedFont('sans-serif');
-                    changeSelectionFontFamily({ editor, fontFamily: 'sans-serif' });
-                  }}
-                  className={selectedFont === 'sans-serif' ? 'bg-accent' : ''}
-                >
-                  Sans-serif
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => {
-                    setSelectedFont('serif');
-                    changeSelectionFontFamily({ editor, fontFamily: 'serif' });
-                  }}
-                  className={selectedFont === 'serif' ? 'bg-accent' : ''}
-                >
-                  Serif
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => {
-                    setSelectedFont('monospace');
-                    changeSelectionFontFamily({ editor, fontFamily: 'monospace' });
-                  }}
-                  className={selectedFont === 'monospace' ? 'bg-accent' : ''}
-                >
-                  Monospace
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div className="w-px h-6 bg-border mx-1" />
-
-          {/* Image and Link */}
-          <div className="flex items-center gap-1">
-            <DropdownMenu open={isImageMenuOpen} onOpenChange={setIsImageMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  title="Add Image"
-                >
-                  <ImageIcon size={16} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-96 p-0 bg-zinc-900/95 backdrop-blur-sm border border-zinc-700/50 shadow-2xl rounded-xl overflow-hidden">
-                {/* Header */}
-                <div className="px-4 py-3 border-b border-zinc-700/50 bg-gradient-to-r from-zinc-800/50 to-zinc-700/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                      <ImageIcon className="h-4 w-4 text-blue-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-white">Insert Image</h3>
-                      <p className="text-xs text-zinc-400">Search your files or enter a URL</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Search Input */}
-                <div className="px-4 py-3">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                    <input
-                      value={imageQuery}
-                      onChange={(e) => setImageQuery(e.target.value)}
-                      placeholder="Search files..."
-                      className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-zinc-800/80 text-white placeholder-zinc-400 border border-zinc-600/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
-                    />
-                  </div>
-                </div>
-
-                {/* Results */}
-                <div className="max-h-72 overflow-y-auto">
-                  {isImageSearching && (
-                    <div className="px-4 py-6 text-center">
-                      <div className="inline-flex items-center gap-2 text-zinc-400">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
-                        <span className="text-sm">Searching files...</span>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {!isImageSearching && imageQuery.trim() && imageResults.length === 0 && (
-                    <div className="px-4 py-6 text-center">
-                      <div className="text-zinc-400">
-                        <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">No files found</p>
-                        <p className="text-xs text-zinc-500 mt-1">Try a different search term</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {!isImageSearching && imageResults.length > 0 && (
-                    <div className="px-2 pb-2">
-                      <div className="px-2 py-2 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                        Found {imageResults.length} result{imageResults.length !== 1 ? 's' : ''}
-                      </div>
-                      {imageResults.map((r) => (
-                        <button
-                          key={r.file_id}
-                          className="w-full text-left px-3 py-3 rounded-lg hover:bg-zinc-800/60 hover:border-zinc-600/50 border border-transparent transition-all duration-200 group"
-                          onClick={() => {
-                            handleS3FileSelect({
-                              id: r.file_id,
-                              file_id: r.file_id,
-                              name: r.file_name,
-                              type: 'file',
-                              path: r.file_path,
-                              size: r.file_size,
-                              modified: new Date(r.date_modified),
-                              s3_url: r.s3_url,
-                            })
-                            setIsImageMenuOpen(false)
-                          }}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="p-2 rounded-lg bg-zinc-700/50 group-hover:bg-zinc-600/50 transition-colors duration-200">
-                              <FileImage className="h-4 w-4 text-blue-400" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium text-white group-hover:text-blue-100 transition-colors duration-200 truncate">
-                                {r.file_name}
-                              </div>
-                              <div className="text-xs text-zinc-400 group-hover:text-zinc-300 transition-colors duration-200 truncate mt-0.5">
-                                {r.file_path}
-                              </div>
-                              <div className="flex items-center gap-2 mt-1.5">
-                                <span className="text-xs text-zinc-500 bg-zinc-800/50 px-2 py-1 rounded-md">
-                                  {Math.round(r.file_size / 1024)} KB
-                                </span>
-                                <span className="text-xs text-zinc-500">
-                                  {new Date(r.date_modified).toLocaleDateString()}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Footer */}
-                <div className="px-4 py-3 border-t border-zinc-700/50 bg-gradient-to-r from-zinc-800/30 to-zinc-700/30">
-                  <button
-                    onClick={() => {
-                      const url = window.prompt('Enter image URL:')
-                      if (url) editor.chain().focus().setImage({ src: url }).run()
-                      setIsImageMenuOpen(false)
-                    }}
-                    className="w-full px-3 py-2 text-sm text-zinc-300 hover:text-white bg-zinc-800/50 hover:bg-zinc-700/50 rounded-lg border border-zinc-600/50 hover:border-zinc-500/50 transition-all duration-200 flex items-center justify-center gap-2"
-                  >
-                    <LinkIcon className="h-4 w-4" />
-                    Insert from URL
-                  </button>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div className="w-px h-6 bg-border mx-1" />
-
-          {/* AI Features moved into main overflow; no separate trigger here */}
+          {/* Overflow menu - always visible */}
+          <OverflowButton
+            editor={editor}
+            visibleButtons={visibleButtons}
+            handlers={handlers}
+            overflowOpen={overflowOpen}
+            setOverflowOpen={setOverflowOpen}
+            selectedFont={selectedFont}
+            setSelectedFont={setSelectedFont}
+          />
         </div>
 
         {/* Right side - Document Actions */}
-        {(onShare || onSave || onDownload) && (
-          <div ref={rightActionsRef} className="flex items-center gap-1 flex-shrink-0 whitespace-nowrap ml-2">
-            <div className="w-px h-6 bg-border mx-2" />
-            <div className="flex items-center gap-1">
-              {onShare && (
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={onShare}
-                  title="Share document"
-                >
-                  <Share2 size={16} />
-                </Button>
-              )}
-              {onSave && (
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={onSave}
-                  disabled={saving || !canSave}
-                  title="Save document"
-                >
-                  <Save size={16} />
-                </Button>
-              )}
-              {onDownload && (
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={onDownload}
-                  title="Download document"
-                >
-                  <Download size={16} />
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
+        <div ref={rightActionsRef}>
+          <DocumentActionButtons
+            onShare={onShare}
+            onSave={onSave}
+            onDownload={onDownload}
+            saving={saving}
+            canSave={canSave}
+          />
+        </div>
       </div>
 
       <EditorContent 
