@@ -300,7 +300,7 @@ export default function EmailDemoApp() {
   // Don't render EmailTab until mocks are ready
   if (!mocksActive) {
     return (
-      <div className="w-full h-[400px] sm:h-[450px] md:h-[500px] flex overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900">
+      <div className="w-full h-[400px] sm:h-[450px] md:h-[500px] flex overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900">
         <div className="flex-1 flex items-center justify-center">
           <p className="text-sm text-zinc-500">Loading...</p>
         </div>
@@ -309,7 +309,7 @@ export default function EmailDemoApp() {
   }
 
   return (
-    <div className="w-full h-[400px] sm:h-[450px] md:h-[500px] flex overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900">
+    <div className="w-full h-[400px] sm:h-[450px] md:h-[500px] flex overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900">
       {/* Email List Panel - using actual EmailTab */}
       <div className="w-[40%] h-full border-r border-zinc-200 dark:border-zinc-700 overflow-hidden">
         <EmailTab
