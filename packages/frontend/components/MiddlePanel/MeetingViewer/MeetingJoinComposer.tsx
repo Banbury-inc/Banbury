@@ -84,8 +84,10 @@ export function MeetingJoinComposer({ onBack, onMeetingJoined }: MeetingJoinComp
     
     setIsJoining(true)
     try {
-      const result = await ApiService.MeetingAgent.joinMeeting(meetingUrl, {
-        ...settings,
+      const result = await ApiService.MeetingAgent.joinMeeting({
+        meetingUrl,
+        platform: urlValidation.platform || 'unknown',
+        settings,
         ...(title && { title })
       })
       
