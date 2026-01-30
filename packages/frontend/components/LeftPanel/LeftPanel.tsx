@@ -26,7 +26,6 @@ interface AppSidebarProps {
   selectedTask?: Task | null
   selectedMeeting?: MeetingSession | null
   meetingsRefreshTrigger?: number
-  // Workspace dependencies for FilesTab
   activePanelId?: string
   panelLayout?: PanelGroup
   setPanelLayout?: React.Dispatch<React.SetStateAction<PanelGroup>>
@@ -34,15 +33,11 @@ interface AppSidebarProps {
   setSelectedFile?: React.Dispatch<React.SetStateAction<FileSystemItem | null>>
   triggerSidebarRefresh?: () => void
   toast?: (props: { title: string; description: string; variant: 'default' | 'destructive' | 'success' | 'error' }) => void
-  // Workspace dependencies for EmailTab
   setSelectedEmail?: React.Dispatch<React.SetStateAction<any | null>>
   setReplyToEmail?: React.Dispatch<React.SetStateAction<any>>
-  // Workspace dependencies for CalendarTab
   setCalendarJumpDate?: React.Dispatch<React.SetStateAction<Date | null>>
   setCalendarSelectedEvent?: React.Dispatch<React.SetStateAction<any | null>>
-  // Workspace dependencies for TasksTab
   setSelectedTask?: React.Dispatch<React.SetStateAction<Task | null>>
-  // Workspace dependencies for MeetingsTab
   setSelectedMeeting?: React.Dispatch<React.SetStateAction<MeetingSession | null>>
 }
 
