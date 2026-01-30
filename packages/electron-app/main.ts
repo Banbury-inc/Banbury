@@ -1,10 +1,32 @@
 // @ts-nocheck
 import { app, BrowserWindow, Menu, shell, ipcMain } from 'electron'
 import path from 'path'
+import fs from 'fs'
 import { initDesktopRecording, setupDesktopRecordingIPC, cleanupDesktopRecording } from './desktop-recording'
 
 let autoUpdater: any = null
 let isUpdaterAvailable = false
+
+// Get the app version from package.json (works in both dev and prod)
+function getAppVersion(): string {
+  // In production, app.getVersion() returns the correct version from package.json
+  if (app.isPackaged) {
+    return app.getVersion()
+  }
+  
+  // In development, read from package.json directly
+  try {
+    const packageJsonPath = path.join(__dirname, '..', '..', 'package.json')
+    if (fs.existsSync(packageJsonPath)) {
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+      return packageJson.version || '0.0.0'
+    }
+  } catch (error) {
+    console.warn('[Electron] Could not read package.json version:', error)
+  }
+  
+  return app.getVersion()
+}
 
 // Use a function to dynamically load electron-updater
 // This prevents TypeScript from hoisting the require to a static import
@@ -21,9 +43,28 @@ function loadUpdater() {
 }
 
 const loadedUpdater = loadUpdater()
+console.log('loadedUpdater', loadedUpdater)
 if (loadedUpdater) {
   autoUpdater = loadedUpdater
   isUpdaterAvailable = true
+  
+  // In development mode, use the dev-app-update.yml config file
+  if (!app.isPackaged) {
+    try {
+      // __dirname is dist-electron/electron-app/, so go up 2 levels to packages/
+      const devConfigPath = path.join(__dirname, '..', '..', 'electron-app', 'dev-app-update.yml')
+      console.log('[Electron] Looking for dev update config at:', devConfigPath)
+      if (fs.existsSync(devConfigPath)) {
+        autoUpdater.updateConfigPath = devConfigPath
+        autoUpdater.forceDevUpdateConfig = true
+        console.log('[Electron] Using dev update config:', devConfigPath)
+      } else {
+        console.warn('[Electron] dev-app-update.yml not found at:', devConfigPath)
+      }
+    } catch (error) {
+      console.warn('[Electron] Could not set dev update config:', error)
+    }
+  }
 } else {
   // Create a no-op autoUpdater object to prevent errors
   autoUpdater = {
@@ -517,16 +558,25 @@ app.whenReady().then(() => {
   })
 
   // Set up IPC handlers for auto-updater
+  // Set ENABLE_DEV_UPDATER=1 to test the updater in development mode
   ipcMain.handle('updater:check-for-updates', async () => {
+    const currentVersion = getAppVersion()
+    const allowDevUpdater = true
+    
+    console.log(`[Electron] Checking for updates. Current version: ${currentVersion}, isDev: ${isDev}, allowDevUpdater: ${allowDevUpdater}`)
+    
     if (!isUpdaterAvailable) {
-      return { available: false, error: 'Auto-updater is not available' }
+      return { available: false, currentVersion, error: 'Auto-updater is not available' }
     }
-    if (isDev) {
-      return { available: false, error: 'Updates are disabled in development mode' }
+    if (isDev && !allowDevUpdater) {
+      return { available: false, currentVersion, error: 'Updates are disabled in development mode. Set ENABLE_DEV_UPDATER=1 to enable.' }
     }
     try {
       const result = await autoUpdater.checkForUpdates()
-      const currentVersion = app.getVersion()
+      console.log('[Electron] checkForUpdates result:', JSON.stringify(result, null, 2))
+      
+      // electron-updater returns { updateInfo, downloadPromise, cancellationToken }
+      // updateInfo contains the version info
       const latestVersion = result?.updateInfo?.version
       // An update is available if we got update info with a different version
       const available = !!(latestVersion && latestVersion !== currentVersion)
@@ -538,15 +588,16 @@ app.whenReady().then(() => {
       }
     } catch (error) {
       console.error('[Electron] Error checking for updates:', error)
-      return { available: false, error: String(error) }
+      return { available: false, currentVersion, error: String(error) }
     }
   })
 
   ipcMain.handle('updater:download-update', async () => {
+    const allowDevUpdater = process.env.ENABLE_DEV_UPDATER === '1'
     if (!isUpdaterAvailable) {
       return { success: false, error: 'Auto-updater is not available' }
     }
-    if (isDev) {
+    if (isDev && !allowDevUpdater) {
       return { success: false, error: 'Updates are disabled in development mode' }
     }
     try {
@@ -559,10 +610,11 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle('updater:install-update', async () => {
+    const allowDevUpdater = process.env.ENABLE_DEV_UPDATER === '1'
     if (!isUpdaterAvailable) {
       return { success: false, error: 'Auto-updater is not available' }
     }
-    if (isDev) {
+    if (isDev && !allowDevUpdater) {
       return { success: false, error: 'Updates are disabled in development mode' }
     }
     try {
@@ -575,7 +627,7 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle('updater:get-current-version', () => {
-    return app.getVersion()
+    return getAppVersion()
   })
   
   configureMenu()

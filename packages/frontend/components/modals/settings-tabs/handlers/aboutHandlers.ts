@@ -17,6 +17,17 @@ export async function checkForUpdates(): Promise<CheckForUpdatesResult> {
   try {
     const result = await window.desktopApp.updater.checkForUpdates()
     
+    // If there's an error from the IPC handler (e.g., dev mode), include it in the response
+    if (result.error) {
+      return {
+        success: true, // The IPC call succeeded, but update check may be disabled
+        available: result.available,
+        currentVersion: result.currentVersion,
+        latestVersion: result.latestVersion,
+        error: result.error,
+      }
+    }
+    
     return {
       success: true,
       available: result.available,
