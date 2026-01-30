@@ -62,6 +62,7 @@ interface LocalFilesViewProps {
   fileInputRef: React.RefObject<HTMLInputElement>
   folderInputRef: React.RefObject<HTMLInputElement>
   activeFilters?: Set<string>
+  triggerSidebarRefresh?: () => void
 }
 
 export function LocalFilesView({
@@ -86,6 +87,7 @@ export function LocalFilesView({
   fileInputRef,
   folderInputRef,
   activeFilters = new Set(),
+  triggerSidebarRefresh,
 }: LocalFilesViewProps) {
   const { toast } = useToast()
   const { files: userFiles, loading: filesLoading, error: filesError, refetch, initialized } = useUserFiles()
@@ -1357,6 +1359,7 @@ export function LocalFilesView({
                     onShareFile={handleShareFile}
                     driveAvailable={driveAvailable}
                     oneDriveConnected={oneDriveConnected}
+                    triggerSidebarRefresh={triggerSidebarRefresh}
                   />
                 ))
               )}
@@ -1421,6 +1424,7 @@ export function LocalFilesView({
                     onShareFile={handleShareFile}
                     driveAvailable={driveAvailable}
                     oneDriveConnected={oneDriveConnected}
+                    triggerSidebarRefresh={triggerSidebarRefresh}
                   />
                 ))
               )}
@@ -1490,6 +1494,7 @@ export function LocalFilesView({
                     onShareFile={handleShareFile}
                     driveAvailable={driveAvailable}
                     oneDriveConnected={oneDriveConnected}
+                    triggerSidebarRefresh={triggerSidebarRefresh}
                   />
                 ))
               )}
@@ -1532,6 +1537,7 @@ export function LocalFilesView({
               onShareFile={handleShareFile}
               driveAvailable={driveAvailable}
               oneDriveConnected={oneDriveConnected}
+              triggerSidebarRefresh={triggerSidebarRefresh}
             />
           ))}
         </div>

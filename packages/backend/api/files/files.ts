@@ -1060,4 +1060,39 @@ export default class Files {
       throw ApiService.enhanceError(error, 'Failed to copy file to OneDrive')
     }
   }
+
+  /**
+   * Save a file as PDF to Google Drive
+   */
+  static async saveAsPDF(s3FileId: string): Promise<{
+    success: boolean
+    drive_file_id?: string
+    drive_file_name?: string
+  }> {
+    try {
+      ApiService.loadAuthToken()
+      
+      const response = await ApiService.post<{
+        result?: string
+        drive_file_id?: string
+        drive_file_name?: string
+        error?: string
+      }>('/files/save_as_pdf/', { s3_file_id: s3FileId })
+
+      if (response.result === 'success') {
+        return {
+          success: true,
+          drive_file_id: response.drive_file_id,
+          drive_file_name: response.drive_file_name
+        }
+      } else if (response.error) {
+        throw new Error(response.error)
+      }
+      throw new Error('Failed to save file as PDF')
+    } catch (error) {
+      console.error('saveAsPDF error:', error)
+      throw ApiService.enhanceError(error, 'Failed to save file as PDF')
+    }
+  }
 }
+

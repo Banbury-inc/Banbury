@@ -8,6 +8,7 @@ import {
   FolderPlus,
   FilePlus,
   Share2,
+  FileOutput,
 } from "lucide-react"
 import { Typography } from "../../../../ui/typography"
 import { GoogleDriveIcon, OneDriveIcon } from "../../../../icons"
@@ -26,6 +27,7 @@ export interface CloudFileContextMenuProps {
   onDelete?: () => void
   onToggleStar?: () => void
   onShare?: () => void
+  onSaveAsPDF?: () => void
   
   // Cross-provider copy actions
   onCopyToLocal?: () => void
@@ -55,6 +57,7 @@ export function CloudFileContextMenu({
   onDelete,
   onToggleStar,
   onShare,
+  onSaveAsPDF,
   onCopyToLocal,
   onCopyToDrive,
   onCopyToOneDrive,
@@ -118,6 +121,18 @@ export function CloudFileContextMenu({
               <Download className="w-4 h-4" strokeWidth={1} />
               <Typography variant="xs" className="text-zinc-900 dark:text-white">
                 Download
+              </Typography>
+            </ContextMenu.Item>
+          )}
+          {/* Save as PDF (local files only) */}
+          {provider === 'local' && !isFolder && onSaveAsPDF && driveAvailable && (
+            <ContextMenu.Item 
+              className="flex items-center gap-2 px-2 py-1.5 hover:bg-sidebar-accent rounded cursor-pointer outline-none"
+              onSelect={onSaveAsPDF}
+            >
+              <FileOutput className="w-4 h-4" strokeWidth={1} />
+              <Typography variant="xs" className="text-zinc-900 dark:text-white">
+                Save as PDF
               </Typography>
             </ContextMenu.Item>
           )}

@@ -27,6 +27,7 @@ import { useToast } from "../../../../ui/use-toast"
 import { handleCopyLocalToDrive } from "../handlers/handleCopyLocalToDrive"
 import { handleCopyLocalToOneDrive } from "../handlers/handleCopyLocalToOneDrive"
 import { handleLocalFileDownload } from "../handlers/handleLocalFileDownload"
+import { handleSaveAsPDF } from "../handlers/handleSaveAsPDF"
 import { CloudFileContextMenu } from "./CloudFileContextMenu"
 import { getColoredFileIcons } from "../../../../modals/settings-tabs/handlers/appearanceHandlers"
 
@@ -74,6 +75,7 @@ export interface FileTreeItemProps {
   onShareFile?: (file: FileSystemItem) => void
   driveAvailable?: boolean
   oneDriveConnected?: boolean
+  triggerSidebarRefresh?: () => void
 }
 
 // Comprehensive file type detection functions
@@ -245,6 +247,7 @@ export function FileTreeItem({
   onShareFile,
   driveAvailable,
   oneDriveConnected,
+  triggerSidebarRefresh,
 }: FileTreeItemProps) {
   
   // Helper function to select filename without extension
@@ -618,6 +621,14 @@ export function FileTreeItem({
                 s3FileId: item.file_id!,
                 fileName: item.name,
                 showToast: toast
+              })
+            } : undefined}
+            onSaveAsPDF={item.type === 'file' && item.file_id ? () => {
+              handleSaveAsPDF({
+                s3FileId: item.file_id!,
+                fileName: item.name,
+                showToast: toast,
+                triggerSidebarRefresh: triggerSidebarRefresh || (() => {})
               })
             } : undefined}
           >
