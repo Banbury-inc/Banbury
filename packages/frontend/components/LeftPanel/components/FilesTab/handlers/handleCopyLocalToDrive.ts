@@ -6,6 +6,7 @@ interface CopyLocalToDriveParams {
   onSuccess?: (driveFileId: string, driveFileName: string) => void
   onError?: (error: string) => void
   showToast?: (options: { title: string; description?: string; variant?: 'default' | 'destructive' | 'success' }) => void
+  triggerSidebarRefresh?: () => void
 }
 
 export async function handleCopyLocalToDrive({
@@ -13,7 +14,8 @@ export async function handleCopyLocalToDrive({
   fileName,
   onSuccess,
   onError,
-  showToast
+  showToast,
+  triggerSidebarRefresh
 }: CopyLocalToDriveParams): Promise<boolean> {
   try {
     showToast?.({

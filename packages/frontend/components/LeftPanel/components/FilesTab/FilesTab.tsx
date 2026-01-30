@@ -679,6 +679,7 @@ export function FilesTab({
             fileInputRef={fileInputRef}
             folderInputRef={folderInputRef}
             activeFilters={activeFilters}
+            triggerSidebarRefresh={triggerSidebarRefresh}
           />
         )}
 
