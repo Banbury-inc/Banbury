@@ -22,6 +22,7 @@ export function AboutTab() {
       // Try to get version from electron if available
       if (window.desktopApp?.updater) {
         window.desktopApp.updater.getCurrentVersion().then((v) => {
+          console.log('v', v)
           setVersion(v)
         }).catch(() => {
           // Fallback to default if unavailable
@@ -48,7 +49,7 @@ export function AboutTab() {
     setIsChecking(true)
     try {
       const result = await checkForUpdates()
-      
+      console.log('result', result)
       if (!result.success) {
         toast({
           title: "Error",

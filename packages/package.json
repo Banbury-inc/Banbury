@@ -2,12 +2,19 @@
   "name": "Banbury",
   "version": "0.1.16",
   "description": "Banbury",
-  "author": "MG",
+  "author": "Banbury",
   "license": "MIT",
   "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/Banbury-inc/Banbury.git"
+  },
+  "build": {
+    "publish": {
+      "provider": "github",
+      "owner": "Banbury-inc",
+      "repo": "https://github.com/Banbury-inc/Banbury.git"
+    }
   },
   "scripts": {
     "start": "next start",

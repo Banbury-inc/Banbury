@@ -1,9 +1,9 @@
 import { Box, Container, Grid } from '@mui/material'
 import { motion } from 'framer-motion'
-import EmailDemoApp from './EmailDemoApp'
-import MeetingDemoApp from './MeetingDemoApp'
-import SpreadsheetDemoApp from './SpreadsheetDemoApp'
-import { Typography } from '../../../components/ui/typography'
+import EmailDemoApp from './components/EmailDemoApp'
+import MeetingDemoApp from './components/MeetingDemoApp'
+import SpreadsheetDemoApp from './components/SpreadsheetDemoApp'
+import { Typography } from '../../../../components/ui/typography'
 import Link from 'next/link'
 
 const fadeInUp = {
@@ -39,7 +39,7 @@ function UseCasesSection() {
             }}
           >
             <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
-              <Grid item xs={12} md={9}>
+              <Grid item xs={12} md={12} lg={9}>
                 <Box
                   sx={{
                     position: 'relative',
@@ -50,32 +50,22 @@ function UseCasesSection() {
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
                     minHeight: '665px',
+                    maxWidth: '1200px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    p: 4,
+                    pl: 2
                   }}
                 >
-                  <Box
-                    sx={{
-                      width: '100%',
-                      '& > div': {
-                        backgroundColor: 'rgba(255, 255, 255, 0.95) !important',
-                        backdropFilter: 'blur(8px)',
-                      },
-                    }}
-                    className="dark:[&>div]:!bg-zinc-900/95"
-                  >
                     <EmailDemoApp />
-                  </Box>
                 </Box>
               </Grid>
-              <Grid item xs={12} md={3} sx={{ pl: { md: 0 } }}>
+              <Grid item xs={12} md={12} lg={3} sx={{ pl: { md: 0 } }}>
                 <Box>
-                  <Typography variant="h3">
+                  <Typography variant="h3" className="text-base sm:text-lg md:text-xl lg:text-2xl">
                     Smart Email Management
                   </Typography>
-                  <Typography variant="p">
+                  <Typography variant="p" className="text-xs sm:text-sm md:text-base">
                     Automatically categorize, prioritize, and respond to emails based on content and context. Set up intelligent filters that route messages to the right team members and draft personalized responses instantly.
                   </Typography>
                   <Box sx={{ mt: 3 }}>
@@ -110,7 +100,7 @@ function UseCasesSection() {
             }}
           >
             <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center" direction="row-reverse">
-              <Grid item xs={12} md={9}>
+              <Grid item xs={12} md={12} lg={9}>
                 <Box
                   sx={{
                     position: 'relative',
@@ -140,12 +130,12 @@ function UseCasesSection() {
                   </Box>
                 </Box>
               </Grid>
-              <Grid item xs={12} md={3} sx={{ pl: { md: 0 } }}>
+              <Grid item xs={12} md={12} lg={3} sx={{ pl: { md: 0 } }}>
                 <Box>
-                  <Typography variant="h3">
+                  <Typography variant="h3" className="text-base sm:text-lg md:text-xl lg:text-2xl">
                     Automated Meeting Scheduling
                   </Typography>
-                  <Typography variant="p">
+                  <Typography variant="p" className="text-xs sm:text-sm md:text-base">
                     Schedule meetings across time zones, send automatic reminders, generate meeting agendas, and distribute notes to all attendees without lifting a finger.
                   </Typography>
                   <Box sx={{ mt: 3 }}>
@@ -180,7 +170,7 @@ function UseCasesSection() {
             }}
           >
             <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
-              <Grid item xs={12} md={8}>
+              <Grid item xs={12} md={12} lg={8}>
                 <Box
                   sx={{
                     position: 'relative',
@@ -191,10 +181,11 @@ function UseCasesSection() {
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
                     minHeight: '665px',
+                    maxWidth: '1200px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    p: 4,
+                    pl: 2
                   }}
                 >
                   <Box
@@ -211,12 +202,12 @@ function UseCasesSection() {
                   </Box>
                 </Box>
               </Grid>
-              <Grid item xs={12} md={4} sx={{ pl: { md: 0 } }}>
+              <Grid item xs={12} md={12} lg={4} sx={{ pl: { md: 0 } }}>
                 <Box>
-                  <Typography variant="h3">
+                  <Typography variant="h3" className="text-base sm:text-lg md:text-xl lg:text-2xl">
                     Smart Spreadsheet Editor
                   </Typography>
-                  <Typography variant="p">
+                  <Typography variant="p" className="text-xs sm:text-sm md:text-base">
                     Edit, analyze, and collaborate on spreadsheets with AI-powered features. Create formulas, charts, and apply conditional formatting - all within your workflow.
                   </Typography>
                   <Box sx={{ mt: 3 }}>

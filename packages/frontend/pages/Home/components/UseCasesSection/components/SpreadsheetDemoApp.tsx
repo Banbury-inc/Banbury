@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, FC, PropsWithChildren } from 'react'
-import CSVEditor from '../../../components/MiddlePanel/SpreadsheetViewer/CSVEditor'
-import { Thread } from '../../../components/RightPanel/composer/thread/thread'
-import { FileSystemItem } from '../../../utils/fileTreeUtils'
-import { TooltipProvider } from '../../../components/ui/tooltip'
+import CSVEditor from '../../../../../components/MiddlePanel/SpreadsheetViewer/CSVEditor'
+import { Thread } from '../../../../../components/RightPanel/composer/thread/thread'
+import { FileSystemItem } from '../../../../../utils/fileTreeUtils'
+import { TooltipProvider } from '../../../../../components/ui/tooltip'
 import { AssistantRuntimeProvider, useLocalRuntime } from "@assistant-ui/react"
 
 // Mock spreadsheet data - Quarterly Sales Report
@@ -192,7 +192,7 @@ function SpreadsheetDemoApp() {
 
   if (loading) {
     return (
-      <div className="w-full h-[400px] sm:h-[450px] md:h-[500px] flex overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900">
+      <div className="w-full h-[600px] flex justify-start overflow-x-clip overflow-y-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900">
         <div className="flex-1 flex items-center justify-center">
           <p className="text-sm text-zinc-500">Loading spreadsheet...</p>
         </div>
@@ -203,10 +203,9 @@ function SpreadsheetDemoApp() {
   return (
     <SpreadsheetDemoRuntimeProvider>
       <TooltipProvider>
-        <div className="w-full h-[400px] sm:h-[450px] md:h-[500px] flex overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900">
-          {/* Spreadsheet Editor - Left Panel */}
-          <div className="w-[60%] h-full border-r border-zinc-200 dark:border-zinc-700 overflow-hidden hidden md:block">
+        <div className="w-[1000px] h-[600px] flex flex-nowrap justify-start overflow-x-clip overflow-y-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900">
             {documentUrl && documentBlob ? (
+              <div className="w-[600px]">
               <CSVEditor
                 src={documentUrl}
                 fileName="quarterly-sales-report.csv"
@@ -217,22 +216,23 @@ function SpreadsheetDemoApp() {
                 saving={false}
                 canSave={false}
               />
+              </div>
             ) : (
               <div className="flex-1 flex items-center justify-center">
                 <p className="text-sm text-zinc-500">No spreadsheet to display</p>
               </div>
             )}
-          </div>
 
           {/* AI Chat Panel - Thread Component */}
-          <div className="flex-1 h-full overflow-hidden bg-card border-l border-zinc-200 dark:border-zinc-700">
             <Thread 
               userInfo={mockUserInfo}
               selectedFile={mockSpreadsheetFile}
               selectedEmail={null}
               onEmailSelect={() => {}}
             />
-          </div>
+        <div className="w-[200px] h-full flex-shrink-0 border-r border-zinc-200 dark:border-zinc-700 overflow-hidden">
+          
+        </div>
         </div>
       </TooltipProvider>
     </SpreadsheetDemoRuntimeProvider>

@@ -4,7 +4,6 @@ import { useRouter } from "next/router"
 import type { NextRouter } from "next/router"
 import { useState, useEffect } from "react"
 
-import { Button } from "./ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar"
 import { Badge } from "./ui/badge"
 import {
@@ -20,13 +19,14 @@ import { ApiService } from "../../backend/api/apiService"
 import BanburyLogo from "../assets/images/New_Logo.png"
 import { Typography } from "./ui/typography"
 import { handleDownloadDesktopApp } from "./nav-sidebar/handlers/handleDownloadDesktopApp"
+import { loadUserPicture } from "./nav-sidebar/handlers/loadUserPicture"
+import { loadUserInfo } from "./nav-sidebar/handlers/loadUserInfo"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip"
-import type { NextRouter } from "next/router"
 
 function handleLogout(router: NextRouter) {
   // Clear all authentication data using ApiService
@@ -86,7 +86,6 @@ export function NavSidebar({ activeTab = 'files', onTabChange, showAdminToggle =
       const storedEmail = localStorage.getItem('userEmail')
       
       setUsername(storedUsername || '')
-      setUserPicture(storedPicture)
       
       // Generate initials
       if (storedFirstName && storedLastName) {
@@ -97,6 +96,37 @@ export function NavSidebar({ activeTab = 'files', onTabChange, showAdminToggle =
         setUserInitials(storedEmail[0].toUpperCase())
       } else if (storedUsername) {
         setUserInitials(storedUsername[0].toUpperCase())
+      }
+      
+      // Load user picture - try localStorage first, then API if not found
+      if (storedPicture) {
+        setUserPicture(storedPicture)
+      } else {
+        // Try to load from API if not in localStorage
+        loadUserPicture().then((picture) => {
+          if (picture) {
+            setUserPicture(picture)
+          }
+        })
+      }
+      
+      // Load user info (first name, last name, email) - only if missing
+      if (!storedFirstName || !storedLastName || !storedEmail) {
+        loadUserInfo().then(() => {
+          // Update state with newly loaded info
+          const updatedFirstName = localStorage.getItem('userFirstName')
+          const updatedLastName = localStorage.getItem('userLastName')
+          const updatedEmail = localStorage.getItem('userEmail')
+          
+          // Regenerate initials if we got new info
+          if (updatedFirstName && updatedLastName) {
+            setUserInitials(`${updatedFirstName[0]}${updatedLastName[0]}`.toUpperCase())
+          } else if (updatedFirstName) {
+            setUserInitials(updatedFirstName[0].toUpperCase())
+          } else if (updatedEmail) {
+            setUserInitials(updatedEmail[0].toUpperCase())
+          }
+        })
       }
       
       // Load subscription status
