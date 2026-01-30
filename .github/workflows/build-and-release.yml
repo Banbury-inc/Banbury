@@ -297,15 +297,15 @@ jobs:
           if [ "${{ matrix.platform }}" = "win" ]; then
             echo "Building and publishing Windows NSIS installer (will create release and latest.yml)"
             npm run electron:build
-            electron-builder --config electron-builder.json --win --x64
+            npx electron-builder --config electron-builder.json --win --x64
           elif [ "${{ matrix.platform }}" = "mac" ]; then
             echo "Building macOS DMG installer (x64 and arm64)"
             npm run electron:build
-            electron-builder --config electron-builder.json --mac --publish never
+            npx electron-builder --config electron-builder.json --mac --publish never
           else
             echo "Building ${{ matrix.platform }} version without publishing"
             npm run electron:build
-            electron-builder --config electron-builder.json --${{ matrix.platform }} --publish never
+            npx electron-builder --config electron-builder.json --${{ matrix.platform }} --publish never
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
