@@ -397,10 +397,6 @@ function createWindow(): void {
 
   // Load the target URL - start with login page for Electron app
   const initialUrl = new URL('/login-electron', targetUrl).toString()
-  console.log(`[Electron] Loading URL: ${initialUrl}`)
-  console.log(`[Electron] Target URL: ${targetUrl}`)
-  console.log(`[Electron] App is packaged: ${app.isPackaged}`)
-  console.log(`[Electron] NODE_ENV: ${process.env.NODE_ENV}`)
   mainWindow.loadURL(initialUrl)
 }
 
