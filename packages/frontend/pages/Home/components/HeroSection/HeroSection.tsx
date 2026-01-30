@@ -1,8 +1,8 @@
 import { Box, Container, Grid } from '@mui/material'
 import { motion } from 'framer-motion'
-import { Button } from '../../../components/ui/button'
-import { Typography } from '../../../components/ui/typography'
-import DemoApp from './DemoApp'
+import { Button } from '../../../../components/ui/button'
+import { Typography } from '../../../../components/ui/typography'
+import DemoApp from './components/DemoApp'
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 16 },

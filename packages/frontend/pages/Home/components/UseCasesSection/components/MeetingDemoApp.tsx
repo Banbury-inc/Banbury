@@ -1,11 +1,11 @@
 import React, { useState, useEffect, FC, PropsWithChildren } from 'react'
-import { CalendarTab } from '../../../components/LeftPanel/components/CalendarTab/CalendarTab'
-import { CalendarEventViewer } from '../../../components/MiddlePanel/CalendarViewer/CalendarEventViewer'
-import { ApiService } from '../../../../backend/api/apiService'
-import { CalendarEvent, CalendarListEntry } from '../../../../backend/api/calendar/calendar'
-import { setVisibleCalendarIds, getVisibleCalendarIds } from '../../../components/LeftPanel/components/CalendarTab/handlers/calendarVisibility'
-import { Thread } from '../../../components/RightPanel/composer/thread/thread'
-import { TooltipProvider } from '../../../components/ui/tooltip'
+import { CalendarTab } from '../../../../../components/LeftPanel/components/CalendarTab/CalendarTab'
+import { CalendarEventViewer } from '../../../../../components/MiddlePanel/CalendarViewer/CalendarEventViewer'
+import { ApiService } from '../../../../../../backend/api/apiService'
+import { CalendarEvent, CalendarListEntry } from '../../../../../../backend/api/calendar/calendar'
+import { setVisibleCalendarIds, getVisibleCalendarIds } from '../../../../../components/LeftPanel/components/CalendarTab/handlers/calendarVisibility'
+import { Thread } from '../../../../../components/RightPanel/composer/thread/thread'
+import { TooltipProvider } from '../../../../../components/ui/tooltip'
 import { AssistantRuntimeProvider, useLocalRuntime } from "@assistant-ui/react"
 
 // Mock Calendar Events
@@ -413,7 +413,7 @@ export default function MeetingDemoApp() {
   return (
     <MeetingDemoRuntimeProvider>
       <TooltipProvider>
-        <div className="w-full h-[400px] sm:h-[450px] md:h-[500px] flex overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-card">
+        <div className="w-[1000px] h-[600px] flex flex-nowrap justify-start overflow-x-clip overflow-y-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900">
           {/* Calendar List Panel - using actual CalendarTab */}
           <div className="w-[25%] h-full border-r border-zinc-200 dark:border-zinc-700 overflow-hidden hidden md:block">
             <CalendarTab

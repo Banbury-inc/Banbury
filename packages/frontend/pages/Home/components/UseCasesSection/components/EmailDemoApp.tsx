@@ -1,10 +1,10 @@
 import React, { useState, useEffect, FC, PropsWithChildren } from 'react'
-import { EmailTab } from '../../../components/LeftPanel/components/EmailTab/EmailTab'
-import { EmailViewer } from '../../../components/MiddlePanel/EmailViewer/EmailViewer'
-import { ApiService } from '../../../../backend/api/apiService'
-import { GmailMessage, GmailLabel } from '../../../../backend/api/emails/emails'
-import { Thread } from '../../../components/RightPanel/composer/thread/thread'
-import { TooltipProvider } from '../../../components/ui/tooltip'
+import { EmailTab } from '../../../../../components/LeftPanel/components/EmailTab/EmailTab'
+import { EmailViewer } from '../../../../../components/MiddlePanel/EmailViewer/EmailViewer'
+import { ApiService } from '../../../../../../backend/api/apiService'
+import { GmailMessage, GmailLabel } from '../../../../../../backend/api/emails/emails'
+import { Thread } from '../../../../../components/RightPanel/composer/thread/thread'
+import { TooltipProvider } from '../../../../../components/ui/tooltip'
 import { AssistantRuntimeProvider, useLocalRuntime } from "@assistant-ui/react"
 
 // Mock Email Messages (matching GmailMessage structure)
@@ -417,7 +417,7 @@ export default function EmailDemoApp() {
   // Don't render EmailTab until mocks are ready
   if (!mocksActive) {
     return (
-      <div className="w-full h-[400px] sm:h-[450px] md:h-[500px] flex overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900">
+      <div className="w-full h-[400px] flex justify-start overflow-x-clip overflow-y-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900">
         <div className="flex-1 flex items-center justify-center">
           <p className="text-sm text-zinc-500">Loading...</p>
         </div>
@@ -428,17 +428,14 @@ export default function EmailDemoApp() {
   return (
     <EmailDemoRuntimeProvider>
       <TooltipProvider>
-        <div className="w-full h-[400px] sm:h-[450px] md:h-[500px] flex overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900">
+        <div className="w-[1000px] h-[600px] flex flex-nowrap justify-start overflow-x-clip overflow-y-hidden rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900">
           {/* Email List Panel - using actual EmailTab */}
-          <div className="w-[25%] h-full border-r border-zinc-200 dark:border-zinc-700 overflow-hidden hidden md:block">
             <EmailTab
               demoMode={true}
               setSelectedEmail={setSelectedEmail}
             />
-          </div>
 
           {/* Email Viewer Panel */}
-          <div className="w-[40%] h-full border-r border-zinc-200 dark:border-zinc-700 overflow-hidden hidden lg:block">
             {selectedEmail ? (
               <EmailViewer
                 email={selectedEmail}
@@ -456,17 +453,16 @@ export default function EmailDemoApp() {
                 </div>
               </div>
             )}
-          </div>
 
+        <div className="w-[300px] h-full flex-shrink-0 border-r border-zinc-200 dark:border-zinc-700 overflow-hidden">
           {/* AI Chat Panel - Thread Component */}
-          <div className="flex-1 h-full overflow-hidden bg-card">
             <Thread 
               userInfo={mockUserInfo}
               selectedFile={null}
               selectedEmail={selectedEmail}
               onEmailSelect={() => {}}
             />
-          </div>
+        </div>
         </div>
       </TooltipProvider>
     </EmailDemoRuntimeProvider>
