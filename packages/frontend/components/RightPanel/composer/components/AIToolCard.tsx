@@ -193,7 +193,6 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
 
   // Handle opening the file in the middle panel
   const handleOpenDocument = () => {
-    console.log('args', args);
     // Get fileId from args if available (set by CreateFileTool/DownloadFileTool from result)
     const fileId = args?.fileId;
     

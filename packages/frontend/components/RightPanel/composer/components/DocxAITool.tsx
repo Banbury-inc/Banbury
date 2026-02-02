@@ -61,7 +61,6 @@ interface DocxAIToolProps {
 
 export const DocxAITool: React.FC<DocxAIToolProps> = (props) => {
   const { action, documentName, operations, htmlContent, note } = props.args || props;
-  console.log('props', props);
 
   const hasContent = Boolean((htmlContent && htmlContent.trim().length > 0) || (operations && operations.length > 0));
 
