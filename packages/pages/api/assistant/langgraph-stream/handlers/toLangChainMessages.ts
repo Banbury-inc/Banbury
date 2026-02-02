@@ -93,8 +93,11 @@ function createAnthropicContent(fileData: string, mimeType: string): any {
 function processUserMessage(content: any[], provider: "anthropic" | "openai" | "google"): HumanMessage | ChatMessage | null {
   const textParts = content.filter((p) => p.type === "text").map((p: any) => p.text)
   const fileAttachments = content.filter((p) => p.type === "file-attachment") as any[]
-  
-  const userText = textParts.join("\n\n")
+
+  const fileIDs = fileAttachments.map((fa) => fa.fileId)
+  const fileIDsString = fileIDs.join(", ")
+
+  const userText = textParts.join("\n\n") + (fileIDsString ? `\n\n[fileIds: ${fileIDsString}]` : "")
   
   // For Google, use ChatMessage with role="human" because getMessageAuthor checks message.role for ChatMessage
   // For other providers, use HumanMessage as usual
@@ -124,17 +127,17 @@ function processUserMessage(content: any[], provider: "anthropic" | "openai" | "
       if (userText) anthropicContent.push({ type: "text", text: userText })
       
       for (const fa of fileAttachments) {
-        if (!fa.fileData || !fa.mimeType) continue
-        
+        console.log('fa', fa)
         let anthropicMimeType = normalizeMimeType(fa.mimeType, fa.fileName)
-        
         if (OFFICE_DOCUMENT_TYPES.includes(anthropicMimeType)) {
           anthropicMimeType = 'text/plain'
           fa.fileData = processOfficeDocument(fa.fileData, fa.mimeType, fa.fileName)
         }
-        
+
+        console.log('fa.fileData', fa.fileData)
         anthropicContent.push(createAnthropicContent(fa.fileData, anthropicMimeType))
       }
+      console.log('anthropicContent', anthropicContent)
       
       return new HumanMessage({ content: anthropicContent })
     }
@@ -142,10 +145,12 @@ function processUserMessage(content: any[], provider: "anthropic" | "openai" | "
     const attachmentSummary = fileAttachments
       .map((fa) => {
         const sizeEstimate = fa?.fileData ? ` (~${Math.round((fa.fileData.length * 3) / 4 / 1024)} KB)` : ''
-        return `Attachment: ${fa?.fileName || 'Unnamed file'}${sizeEstimate}`
+        const fileId = fa?.fileId || ''
+        return `Attachment: ${fa?.fileName || 'Unnamed file'}${sizeEstimate} [fileId: "${fileId}"]`
       })
       .join('\n')
     const combined = [userText, attachmentSummary].filter(Boolean).join('\n\n') || 'User attached files.'
+    console.log('combined', combined)
     return new HumanMessage({ content: combined })
   }
   

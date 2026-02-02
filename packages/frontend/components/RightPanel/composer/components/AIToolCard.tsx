@@ -70,6 +70,7 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
 
   // Resolve display name and file path from localStorage if file extensions provided
   const resolvedDisplayName = React.useMemo(() => {
+    console.log('args', args);
     // First check if fileName is provided directly in args
     if (args?.fileName) {
       return args.fileName;
@@ -192,6 +193,7 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
 
   // Handle opening the file in the middle panel
   const handleOpenDocument = () => {
+    console.log('args', args);
     // Get fileId from args if available (set by CreateFileTool/DownloadFileTool from result)
     const fileId = args?.fileId;
     

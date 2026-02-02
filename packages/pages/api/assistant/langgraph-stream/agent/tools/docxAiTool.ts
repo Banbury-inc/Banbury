@@ -6,6 +6,7 @@ export const docxAiTool = tool(
   async (input: {
     action: string
     documentName?: string
+    fileId: string
     operations?: Array<
       | { type: 'insertText'; position: number; text: string }
       | { type: 'replaceText'; startPosition: number; endPosition: number; text: string }
@@ -47,6 +48,7 @@ export const docxAiTool = tool(
       message: successMessage,
       action: input.action,
       documentName: input.documentName,
+      fileId: input.fileId,
       operations: input.operations || [],
       htmlContent: input.htmlContent,
       note: input.note,
@@ -59,6 +61,7 @@ export const docxAiTool = tool(
     schema: z.object({
       action: z.string().describe("Description of the action performed (e.g. 'Add heading', 'Format text', 'Insert table', 'Restructure document')"),
       documentName: z.string().optional().describe('Optional document name for context'),
+      fileId: z.string().describe('The ID of the document to edit'),
       operations: z
         .array(
           z.union([

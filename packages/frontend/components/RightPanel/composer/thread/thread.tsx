@@ -1,40 +1,11 @@
 import * as AssistantUI from "@assistant-ui/react";
 import { motion } from "framer-motion";
-import {
-  CopyIcon,
-  CheckIcon,
-  RefreshCwIcon,
-  Volume2,
-  VolumeX,
-  FolderOpen,
-  Trash2,
-} from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
-import Image from "next/image";
-import BanburyLogo from "../../../../assets/images/New_Logo.png";
-
-import { DocumentAITool } from "../components/DocumentAITool";
-import { DocxAITool } from "../components/DocxAITool";
-import { PptxAITool } from "../components/PptxAITool";
-import { TldrawAITool } from "../components/TldrawAITool";
-import { DrawioAITool } from "../../../MiddlePanel/CanvasViewer/DrawioAITool";
 import DrawioViewerModal from "../../../MiddlePanel/CanvasViewer/DrawioViewerModal";
-import { MarkdownText } from "../../markdown-text";
-import { ContentRenderer } from "../components/ContentRenderer";
-import { SheetAITool } from "../components/SheetAITool";
-import { TiptapAITool } from "../components/TiptapAITool";
-import { ToolFallback } from "../components/tool-fallback";
-import { TooltipIconButton } from "../../tooltip-icon-button";
 import { Button } from "../../../ui/button";
-import { Kbd, KbdGroup } from "../../../ui/kbd";
-import { WebSearchTool } from "../components/web-search-result";
 import { handleDocxAIResponse } from "../../handlers/handle-docx-ai-response";
 import { handleTldrawAIResponse } from "../../handlers/handle-tldraw-ai-response";
 import { ToolUI } from "../../ToolUI";
-import { BrowserTool } from "../components/BrowserTool";
-import { SubagentTool } from "../components/SubagentTool";
-import { CreateFileTool } from "../components/CreateFileTool";
-import { DownloadFileTool } from "../components/DownloadFileTool";
 import { ApiService } from "../../../../../backend/api/apiService";
 import { useToast } from "../../../ui/use-toast";
 import styles from "../../../../styles/scrollbar.module.css";
@@ -43,29 +14,32 @@ import { FileSystemItem } from "../../../../utils/fileTreeUtils";
 import { createHandleDrawioFileView } from "../../handlers/handle-drawio-file-view";
 import { Composer } from "../Composer";
 import { UserMessage } from "./components/UserMessage";
-import { BranchPicker } from "./components/BranchPicker";
+import { ThreadWelcome } from "./components/ThreadWelcome";
+import { StreamingStatus } from "./components/StreamingStatus";
+import { AssistantMessage } from "./components/AssistantMessage";
+import { LoadConversationDialog } from "./components/LoadConversationDialog";
+import { SaveConversationDialog } from "./components/SaveConversationDialog";
 import type { QueuedMessage } from "../components/queued-messages-display";
 import { getDefaultModelForProvider, getModelById, DEFAULT_VISIBLE_MODELS } from "../handlers/getModelDisplayName";
-import { Typography, typographyVariants } from "../../../ui/typography";
-import {
-  getStoredKeybinds,
-  getActiveKey,
-  parseKeyString,
-  type KeybindsState,
-} from "../../../modals/settings-tabs/handlers/keybindHandlers";
-import { isViewableFileExtended } from "../../../../pages/Workspaces/handlers/fileTypeUtils";
-
 import type { FC } from "react";
+import { Typography } from "../../../ui/typography";
+import { isViewableFileExtended } from "../../../../pages/Workspaces/handlers/fileTypeUtils";
+import { loadConversation as loadConversationHandler } from "./handlers/loadConversation";
+import { handleRunEnd as handleRunEndHandler } from "./handlers/handleRunEnd";
+import { fetchMissingPayloads as fetchMissingPayloadsHandler } from "./handlers/fetchMissingPayloads";
+import { tryApplyMessagesToRuntime } from "./handlers/tryApplyMessagesToRuntime";
+import { deriveToolPreferences, type ThreadToolPreferences } from "./handlers/deriveToolPreferences";
+import { saveCurrentConversation as saveCurrentConversationHandler } from "./handlers/saveCurrentConversation";
+import { loadConversations as loadConversationsHandler } from "./handlers/loadConversations";
+import { handleStorageChange } from "./handlers/handleStorageChange";
+import { syncAttachmentsToLocalStorage } from "./handlers/syncAttachmentsToLocalStorage";
 
 
 // Destructure Assistant UI primitives from namespace import to avoid named import type issues
 const {
   ThreadPrimitive,
   ComposerPrimitive,
-  MessagePrimitive,
-  ActionBarPrimitive,
   BranchPickerPrimitive,
-  ErrorPrimitive,
   useThreadRuntime,
 } = AssistantUI as any;
 
@@ -95,108 +69,8 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   const [drawioModalOpen, setDrawioModalOpen] = useState(false);
   const [selectedDrawioFile, setSelectedDrawioFile] = useState<FileSystemItem | null>(null);
   const [pendingChanges, setPendingChanges] = useState<Array<{ id: string; type: string; description: string; filePath?: string }>>([]);
-  
-  // Message queue state
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
-
-  // Get the thread runtime at the component level (moved up for use in message queue handlers)
   const runtime = useThreadRuntime();
-
-  interface ThreadToolPreferences {
-    web_search: boolean;
-    tiptap_ai: boolean;
-    read_file: boolean;
-    gmail: boolean;
-    langgraph_mode: boolean;
-    browser: boolean;
-    x_api: boolean;
-    slack: boolean;
-    // Document editing tools
-    sheet_ai: boolean;
-    docx_ai: boolean;
-    pptx_ai: boolean;
-    tldraw_ai: boolean;
-    document_ai: boolean;
-    // File management tools
-    create_file: boolean;
-    create_folder: boolean;
-    download_from_url: boolean;
-    search_files: boolean;
-    // Calendar tools
-    calendar: boolean;
-    msCalendar: boolean;
-    // Development tools
-    github: boolean;
-    // Media tools
-    generate_image: boolean;
-    generate_video: boolean;
-    // System tools
-    memory: boolean;
-    model_provider: "anthropic" | "openai" | "google";
-    model_id: string;
-    image_generation_model?: string;
-    video_generation_model?: string;
-    visibleModels?: string[];
-    // Plan mode
-    plan_mode: boolean;
-    // Ask mode
-    ask_mode: boolean;
-  }
-
-  const deriveToolPreferences = (raw?: any): ThreadToolPreferences => {
-    const data = raw || {};
-    const mappedBrowser = typeof data.browser === "boolean"
-      ? Boolean(data.browser)
-      : typeof data.browserbase === "boolean"
-        ? Boolean(data.browserbase)
-        : false;
-
-    const provider = data.model_provider === "openai" ? "openai" : data.model_provider === "google" ? "google" : "anthropic";
-    const fallbackModelId = getDefaultModelForProvider(provider);
-    const rawModelId = typeof data.model_id === "string" ? data.model_id : fallbackModelId;
-    const modelId = getModelById(rawModelId)?.id || fallbackModelId;
-
-    return {
-      web_search: data.web_search !== false,
-      tiptap_ai: data.tiptap_ai !== false,
-      read_file: data.read_file !== false,
-      gmail: data.gmail !== false,
-      langgraph_mode: true,
-      browser: mappedBrowser,
-      x_api: data.x_api !== false,
-      slack: data.slack !== false,
-      // Document editing tools
-      sheet_ai: data.sheet_ai !== false,
-      docx_ai: data.docx_ai !== false,
-      pptx_ai: data.pptx_ai !== false,
-      tldraw_ai: data.tldraw_ai !== false,
-      document_ai: data.document_ai !== false,
-      // File management tools
-      create_file: data.create_file !== false,
-      create_folder: data.create_folder !== false,
-      download_from_url: data.download_from_url !== false,
-      search_files: data.search_files !== false,
-      // Calendar tools
-      calendar: data.calendar !== false,
-      msCalendar: data.msCalendar !== false,
-      // Development tools
-      github: data.github !== false,
-      // Media tools
-      generate_image: data.generate_image !== false,
-      generate_video: data.generate_video !== false,
-      // System tools
-      memory: data.memory !== false,
-      model_provider: provider,
-      model_id: modelId,
-      image_generation_model: typeof data.image_generation_model === "string" ? data.image_generation_model : "dall-e-3",
-      video_generation_model: typeof data.video_generation_model === "string" ? data.video_generation_model : "sora-2",
-      visibleModels: Array.isArray(data.visibleModels) ? data.visibleModels : DEFAULT_VISIBLE_MODELS,
-      // Plan mode
-      plan_mode: Boolean(data.plan_mode),
-      // Ask mode
-      ask_mode: Boolean(data.ask_mode),
-    };
-  };
 
   const [toolPreferences, setToolPreferences] = useState<ThreadToolPreferences>(() => {
     try {
@@ -205,22 +79,14 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     } catch {}
     return deriveToolPreferences();
   });
-
-  // Cache of pre-downloaded attachment payloads keyed by fileId
   const [attachmentPayloads, setAttachmentPayloads] = useState<Record<string, { fileData: string; mimeType: string }>>({});
-  // Force rebind of thread UI when loading external conversations
   const [threadKey, setThreadKey] = useState<number>(0);
-  // Fallback render buffer shown with Assistant UI primitives if runtime won't hydrate
   const [loadedMessagesBuffer, setLoadedMessagesBuffer] = useState<any[] | null>(null);
-
-  // Conversation management state
   const [conversations, setConversations] = useState<any[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [showConversationDialog, setShowConversationDialog] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [conversationTitle, setConversationTitle] = useState("");
-  
-  // (removed custom loaded conversation state)
 
   const handleFileAttach = (file: FileSystemItem) => {
     setAttachedFiles(prev => {
@@ -333,298 +199,41 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   }, [queuedMessages, assistantTabId]);
 
   // Conversation management functions
-  const tryApplyMessagesToRuntime = async (rt: any, msgs: any[]): Promise<{ ok: boolean; path: string; count: number }> => {
-    const pause = (ms: number) => new Promise(r => setTimeout(r, ms));
-    const check = (): number => {
-      try {
-        const s1 = Array.isArray(rt?.messages) ? rt.messages.length : 0;
-        const s2 = Array.isArray(rt?._threadBinding?.getState?.()?.messages) ? rt._threadBinding.getState().messages.length : 0;
-        const s3 = Array.isArray(rt?.getState?.()?.messages) ? rt.getState().messages.length : 0;
-        return Math.max(s1, s2, s3);
-      } catch { return 0; }
-    };
-
-    // Disable runtime to prevent auto-runs while importing history
-    let didDisable = false;
-    let originalState: any = undefined;
-    try {
-      if (rt?._threadBinding?.getState && rt?._threadBinding?.setState) {
-        originalState = rt._threadBinding.getState();
-        rt._threadBinding.setState({ ...originalState, isDisabled: true, isLoading: false });
-        didDisable = true;
-      }
-    } catch {}
-
-    // Attempt 1: export snapshot → replace → import
-    try {
-      const snapshot = rt.export ? await rt.export() : {};
-      if (snapshot?.thread && Array.isArray(snapshot.thread.messages)) {
-        snapshot.thread.messages = msgs;
-      } else {
-        snapshot.messages = msgs;
-      }
-      if (rt.import) {
-        await rt.import(snapshot);
-        await pause(50);
-        const cnt = check();
-        if (cnt > 0) {
-          try { rt.cancelRun?.(); } catch {}
-          // restore disabled state before returning
-          try {
-            if (didDisable && rt?._threadBinding?.setState) {
-              const prevNow = rt?._threadBinding?.getState?.() || {};
-              const restoreDisabled = originalState?.isDisabled ?? false;
-              rt._threadBinding.setState({ ...prevNow, isDisabled: restoreDisabled, isLoading: false, isRunning: false });
-            }
-          } catch {}
-          return { ok: true, path: 'export/import', count: cnt };
-        }
-      }
-    } catch {}
-
-    // Attempt 2: simple import with messages
-    try {
-      if (rt.import) {
-        await rt.import({ messages: msgs });
-        await pause(50);
-        const cnt = check();
-        if (cnt > 0) {
-          try { rt.cancelRun?.(); } catch {}
-          try {
-            if (didDisable && rt?._threadBinding?.setState) {
-              const prevNow = rt?._threadBinding?.getState?.() || {};
-              const restoreDisabled = originalState?.isDisabled ?? false;
-              rt._threadBinding.setState({ ...prevNow, isDisabled: restoreDisabled, isLoading: false, isRunning: false });
-            }
-          } catch {}
-          return { ok: true, path: 'import(messages)', count: cnt };
-        }
-      }
-    } catch {}
-
-    // Attempt 3: threadBinding import
-    try {
-      if (rt._threadBinding?.import) {
-        await rt._threadBinding.import({ messages: msgs });
-        await pause(50);
-        const cnt = check();
-        if (cnt > 0) {
-          try { rt.cancelRun?.(); } catch {}
-          try {
-            if (didDisable && rt?._threadBinding?.setState) {
-              const prevNow = rt?._threadBinding?.getState?.() || {};
-              const restoreDisabled = originalState?.isDisabled ?? false;
-              rt._threadBinding.setState({ ...prevNow, isDisabled: restoreDisabled, isLoading: false, isRunning: false });
-            }
-          } catch {}
-          return { ok: true, path: '_threadBinding.import', count: cnt };
-        }
-      }
-    } catch {}
-
-    // Attempt 4: setState on threadBinding
-    try {
-      if (rt._threadBinding?.setState) {
-        const prev = rt._threadBinding.getState?.() || {};
-        rt._threadBinding.setState({ ...prev, messages: msgs });
-        await pause(50);
-        const cnt = check();
-        if (cnt > 0) {
-          try { rt.cancelRun?.(); } catch {}
-          try {
-            if (didDisable && rt?._threadBinding?.setState) {
-              const prevNow = rt?._threadBinding?.getState?.() || {};
-              const restoreDisabled = originalState?.isDisabled ?? false;
-              rt._threadBinding.setState({ ...prevNow, isDisabled: restoreDisabled, isLoading: false, isRunning: false });
-            }
-          } catch {}
-          return { ok: true, path: '_threadBinding.setState', count: cnt };
-        }
-      }
-    } catch {}
-
-    // Attempt 5: temporarily disable runtime, append one-by-one (best-effort)
-    try {
-      if (rt.append) {
-        try {
-          // Disable runtime actions to avoid triggering runs while reconstructing history
-          const prev = rt._threadBinding?.getState?.() || {};
-          rt._threadBinding?.setState?.({ ...prev, isDisabled: true, isLoading: false });
-        } catch {}
-        for (const m of msgs) {
-          try { await rt.append(m); } catch {}
-        }
-        try {
-          const prev2 = rt._threadBinding?.getState?.() || {};
-          rt._threadBinding?.setState?.({ ...prev2, isDisabled: false, isLoading: false });
-        } catch {}
-        await pause(50);
-        const cnt = check();
-        if (cnt > 0) {
-          try { rt.cancelRun?.(); } catch {}
-          try {
-            if (didDisable && rt?._threadBinding?.setState) {
-              const prevNow = rt?._threadBinding?.getState?.() || {};
-              const restoreDisabled = originalState?.isDisabled ?? false;
-              rt._threadBinding.setState({ ...prevNow, isDisabled: restoreDisabled, isLoading: false, isRunning: false });
-            }
-          } catch {}
-          return { ok: true, path: 'append(each)', count: cnt };
-        }
-      }
-    } catch {}
-
-    // Restore runtime disabled state
-    try {
-      if (didDisable && rt?._threadBinding?.setState) {
-        const prevNow = rt?._threadBinding?.getState?.() || {};
-        const restoreDisabled = originalState?.isDisabled ?? false;
-        rt._threadBinding.setState({ ...prevNow, isDisabled: restoreDisabled, isLoading: false, isRunning: false });
-      }
-    } catch {}
-
-    return { ok: false, path: 'failed', count: 0 };
-  };
   const loadConversations = async () => {
-    if (!userInfo?.username) return;
-    
-    setIsLoadingConversations(true);
-    try {
-      const result = await ApiService.Conversations.getConversations();
-      if (result.success && result.conversations) {
-        setConversations(result.conversations);
-      }
-    } catch (error) {
-      console.error('Error loading conversations:', error);
-    } finally {
-      setIsLoadingConversations(false);
-    }
+    await loadConversationsHandler({
+      userInfo,
+      setConversations,
+      setIsLoadingConversations,
+    });
   };
 
   const saveCurrentConversation = async () => {
-    if (!userInfo?.username || !conversationTitle.trim()) return;
-    
-    try {
-      // Get current messages from the thread runtime
-      const messages = runtime.messages || [];
-      
-      // Check if we have any messages to save
-      if (messages.length === 0) {
-        return;
-      }
-      
-              const result = await ApiService.Conversations.saveConversation({
-          title: conversationTitle,
-          messages: messages,
-          metadata: {
-            attachedFiles: attachedFiles.map(f => ({ id: f.file_id, name: f.name })),
-            attachedEmails: attachedEmails.map(e => ({ id: e.id, subject: e.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')?.value || 'No Subject' })),
-            toolPreferences,
-          }
-        });
-      
-      if (result.success) {
-        setSaveDialogOpen(false);
-        setConversationTitle("");
-        await loadConversations();
-      }
-    } catch (error) {
-      console.error('Error saving conversation:', error);
-    }
+    await saveCurrentConversationHandler({
+      userInfo,
+      conversationTitle,
+      runtime,
+      attachedFiles,
+      attachedEmails,
+      toolPreferences,
+      setSaveDialogOpen,
+      setConversationTitle,
+      loadConversations,
+    });
   };
 
   const loadConversation = async (conversationId: string) => {
-    try {
-      const result = await ApiService.Conversations.getConversation(conversationId);
-      if (!result.success || !result.conversation) return;
-
-      const conversation = result.conversation;
-
-      // Prepare attachments and tool preferences
-      if (conversation.metadata?.attachedFiles) {
-        const files = conversation.metadata.attachedFiles;
-        const fileItems: FileSystemItem[] = files.map((file: any) => ({
-          id: file.id,
-          file_id: file.id,
-          name: file.name,
-          path: '',
-          type: 'file',
-          size: 0,
-          modified: new Date(),
-          s3_url: ''
-        }));
-        setAttachedFiles(fileItems);
-      }
-      if (conversation.metadata?.attachedEmails) {
-        // Note: We can't fully restore emails from metadata alone
-        // The emails would need to be re-fetched from Gmail API
-        // For now, we'll just clear the attached emails
-        setAttachedEmails([]);
-      }
-      if (conversation.metadata?.toolPreferences) {
-        setToolPreferences(deriveToolPreferences(conversation.metadata.toolPreferences));
-      }
-
-      if (!runtime) return;
-
-      // Reset runtime before applying messages
-      runtime.reset();
-
-      const rawMessages = Array.isArray(conversation.messages) ? conversation.messages : [];
-
-      const sanitizedMessages = rawMessages.map((msg: any, index: number) => {
-        const baseId = msg.id || `msg-${index}-${Date.now()}`;
-        const parts = Array.isArray(msg.content)
-          ? msg.content
-          : (typeof msg.content === 'string' && msg.content.length > 0
-              ? [{ type: 'text', text: msg.content }]
-              : []);
-        return {
-          id: baseId,
-          role: msg.role === 'assistant' ? 'assistant' : 'user',
-          content: parts,
-          createdAt: msg.createdAt ? new Date(msg.createdAt) : new Date(),
-        };
-      });
-
-      // Pre-set buffer so user sees messages even if runtime import lags
-      setLoadedMessagesBuffer(sanitizedMessages);
-
-      // Dispatch an event to the runtime provider to ensure we import within its context
-      try {
-        window.dispatchEvent(new CustomEvent('assistant-load-conversation', { detail: { messages: sanitizedMessages } }));
-        // Give the runtime a moment and then verify
-        setTimeout(() => {
-          const count = Array.isArray((runtime as any)?.messages) ? (runtime as any).messages.length : 0;
-          if (count > 0) {
-            setThreadKey(Date.now());
-            setLoadedMessagesBuffer(null);
-            setShowConversationDialog(false);
-          } else {
-            // Fallback to direct application if provider path didn’t stick
-            tryApplyMessagesToRuntime(runtime as any, sanitizedMessages as any).then((applied) => {
-              if (applied.ok) {
-                setThreadKey(Date.now());
-                setLoadedMessagesBuffer(null);
-                setShowConversationDialog(false);
-              } else {
-              }
-            });
-          }
-        }, 150);
-      } catch (e) {
-        // If dispatch fails, fallback immediately
-        const applied = await tryApplyMessagesToRuntime(runtime as any, sanitizedMessages as any);
-        if (applied.ok) {
-          setThreadKey(Date.now());
-          setLoadedMessagesBuffer(null);
-          setShowConversationDialog(false);
-        } else {
-        }
-      }
-    } catch (error) {
-      console.error('Error loading conversation:', error);
-    }
+    await loadConversationHandler({
+      conversationId,
+      runtime,
+      setAttachedFiles,
+      setAttachedEmails,
+      setToolPreferences,
+      setLoadedMessagesBuffer,
+      setThreadKey,
+      setShowConversationDialog,
+      deriveToolPreferences,
+      tryApplyMessagesToRuntime,
+    });
   };
 
   const deleteConversation = async (conversationId: string) => {
@@ -693,141 +302,14 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     }
     
     const handleRunEnd = async () => {
-      // Wait a bit for messages to be processed and added to runtime
-      const waitForMessages = async (maxAttempts = 10) => {
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          // Try different ways to access messages
-          const messages1 = runtime.messages || [];
-          const messages2 = runtime?._threadBinding?.getState?.()?.messages || [];
-          const messages3 = runtime?.getState?.()?.messages || [];
-          
-          const messages = messages1.length > 0 ? messages1 : messages2.length > 0 ? messages2 : messages3;
-          
-          if (messages.length > 0) {
-            return messages;
-          }
-          
-          // Wait 500ms before next attempt
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-        return [];
-      };
-      
-      try {
-        const messages = await waitForMessages();
-        
-        // Only auto-save if we have messages
-        if (messages.length === 0) {
-          return;
-        }
-        
-        // Find the first user message to use as title
-        const firstUserMessage = messages.find((msg: any) => msg.role === 'user');
-        if (!firstUserMessage) {
-          return;
-        }
-        
-        // Extract text content from the first user message
-        let title = 'New Conversation';
-        if (firstUserMessage.content && Array.isArray(firstUserMessage.content)) {
-          const textContent = firstUserMessage.content
-            .filter((part: any) => part.type === 'text')
-            .map((part: any) => part.text)
-            .join(' ')
-            .trim();
-          
-          if (textContent) {
-            // Truncate title to reasonable length
-            title = textContent.length > 50 ? textContent.substring(0, 50) + '...' : textContent;
-          }
-        }
-        
-        // Check if this conversation already exists (by comparing first user message)
-        const existingConversation = conversations.find(conv => {
-          if (!conv.messages || conv.messages.length === 0) return false;
-          const convFirstUserMsg = conv.messages.find((msg: any) => msg.role === 'user');
-          if (!convFirstUserMsg) return false;
-          
-          // Compare the first user message content
-          const convTextContent = convFirstUserMsg.content
-            ?.filter((part: any) => part.type === 'text')
-            ?.map((part: any) => part.text)
-            ?.join(' ')
-            ?.trim();
-          
-          const currentTextContent = firstUserMessage.content
-            ?.filter((part: any) => part.type === 'text')
-            ?.map((part: any) => part.text)
-            ?.join(' ')
-            ?.trim();
-          
-          return convTextContent === currentTextContent;
-        });
-        
-        if (existingConversation) {
-          // Calculate token usage from messages
-          // Try to get usage from runtime first, otherwise estimate from messages
-          let tokenUsage = 0;
-          try {
-            // Check if runtime has usage information
-            const runtimeState = runtime?.getState?.() || runtime?._threadBinding?.getState?.() || {};
-            const usage = runtimeState?.usage || runtimeState?.latestRun?.usage;
-            
-            if (usage && (usage.input_tokens || usage.output_tokens || usage.total_tokens)) {
-              tokenUsage = usage.total_tokens || (usage.input_tokens + usage.output_tokens) || 0;
-            } else {
-              // Estimate tokens: roughly 1 token per 4 characters for text content
-              tokenUsage = messages.reduce((total: number, msg: any) => {
-                if (msg.content && Array.isArray(msg.content)) {
-                  const textLength = msg.content
-                    .filter((part: any) => part.type === 'text')
-                    .map((part: any) => part.text || '')
-                    .join('')
-                    .length;
-                  return total + Math.ceil(textLength / 4);
-                } else if (typeof msg.content === 'string') {
-                  return total + Math.ceil(msg.content.length / 4);
-                }
-                return total;
-              }, 0);
-            }
-          } catch (e) {
-            // If calculation fails, default to 0
-            console.warn('Failed to calculate token usage:', e);
-          }
-          
-          // Update existing conversation
-        const result = await ApiService.Conversations.updateConversation(existingConversation._id, {
-          title,
-          messages,
-          metadata: {
-            attachedFiles: attachedFiles.map(f => ({ id: f.file_id, name: f.name })),
-            attachedEmails: attachedEmails.map(e => ({ id: e.id, subject: e.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')?.value || 'No Subject' })),
-            toolPreferences,
-            lastUpdated: new Date().toISOString()
-          },
-          token_usage: tokenUsage > 0 ? tokenUsage : undefined
-        });
-        } else {
-          // Create new conversation
-          const result = await ApiService.Conversations.saveConversation({
-            title,
-            messages,
-            metadata: {
-              attachedFiles: attachedFiles.map(f => ({ id: f.file_id, name: f.name })),
-              attachedEmails: attachedEmails.map(e => ({ id: e.id, subject: e.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')?.value || 'No Subject' })),
-              toolPreferences,
-              createdAt: new Date().toISOString()
-            }
-          });
-          
-          if (result.success) {
-            await loadConversations();
-          }
-        }
-      } catch (error) {
-        console.error('Error auto-saving conversation:', error);
-      }
+      await handleRunEndHandler({
+        runtime,
+        conversations,
+        attachedFiles,
+        attachedEmails,
+        toolPreferences,
+        loadConversations,
+      });
     };
     
     // Try multiple event names that might indicate completion
@@ -998,31 +480,11 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
 
   // Keep a copy of attachments in localStorage so the runtime can inject them
   useEffect(() => {
-    try {
-      const simplifiedFiles = attachedFiles.map((f) => ({
-        fileId: f.file_id,
-        fileName: f.name,
-        filePath: f.path,
-        ...(f.file_id && attachmentPayloads[f.file_id]
-          ? { fileData: attachmentPayloads[f.file_id].fileData, mimeType: attachmentPayloads[f.file_id].mimeType }
-          : {}),
-      }));
-      
-      const simplifiedEmails = attachedEmails.map((e) => ({
-        emailId: e.id,
-        subject: e.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')?.value || 'No Subject',
-        from: e.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'from')?.value || 'Unknown',
-        snippet: e.snippet || '',
-        threadId: e.threadId,
-        internalDate: e.internalDate,
-        payload: e.payload
-      }));
-      
-      localStorage.setItem('pendingAttachments', JSON.stringify(simplifiedFiles));
-      localStorage.setItem('pendingEmailAttachments', JSON.stringify(simplifiedEmails));
-    } catch {
-      // ignore storage errors
-    }
+    syncAttachmentsToLocalStorage({
+      attachedFiles,
+      attachedEmails,
+      attachmentPayloads,
+    });
   }, [attachedFiles, attachedEmails, attachmentPayloads]);
 
   // Remove attachment when a corresponding workspace tab is closed
@@ -1061,37 +523,15 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
 
   // Listen for storage events to sync tool preferences from other components (e.g., settings modal)
   useEffect(() => {
-    const handleStorageChange = () => {
-      try {
-        const saved = localStorage.getItem("toolPreferences");
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          const updatedPrefs = deriveToolPreferences(parsed);
-          setToolPreferences(prevPrefs => {
-            // Compare visibleModels specifically since that's what changes in settings
-            const prevVisibleModels = prevPrefs.visibleModels || DEFAULT_VISIBLE_MODELS;
-            const newVisibleModels = updatedPrefs.visibleModels || DEFAULT_VISIBLE_MODELS;
-            const visibleModelsChanged = JSON.stringify([...prevVisibleModels].sort()) !== JSON.stringify([...newVisibleModels].sort());
-            
-            // Also check other key properties that might change
-            const otherPropsChanged = 
-              prevPrefs.model_provider !== updatedPrefs.model_provider ||
-              prevPrefs.model_id !== updatedPrefs.model_id;
-            
-            if (visibleModelsChanged || otherPropsChanged) {
-              return updatedPrefs;
-            }
-            return prevPrefs;
-          });
-        }
-      } catch {}
+    const handleStorageChangeEvent = () => {
+      handleStorageChange({ setToolPreferences });
     };
 
     // Listen for storage events (both native cross-tab and custom same-tab events)
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('storage', handleStorageChangeEvent);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChangeEvent);
     };
   }, []);
 
@@ -1110,69 +550,11 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
 
   // Pre-download spreadsheet, canvas, and presentation blobs and cache as base64 + mimeType (size-capped)
   useEffect(() => {
-    const isSpreadsheet = (fileName: string) => {
-      const ext = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
-      return ['.csv', '.xlsx', '.xls'].includes(ext);
-    };
-
-    const isTldrawCanvas = (fileName: string) => {
-      const ext = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
-      return ext === '.tldraw';
-    };
-
-    const isPresentation = (fileName: string) => {
-      const ext = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
-      return ['.pptx', '.ppt'].includes(ext);
-    };
-
-    const blobToBase64 = (blob: Blob): Promise<string> =>
-      new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const result = typeof reader.result === 'string' ? reader.result : '';
-          // Strip data URL prefix if present
-          const base64 = result.includes(',') ? result.split(',')[1] : result;
-          resolve(base64);
-        };
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(blob);
-      });
-
-    const fetchMissingPayloads = async () => {
-      const tasks = attachedFiles
-        .filter((f) => f.file_id && (isSpreadsheet(f.name) || isTldrawCanvas(f.name) || isPresentation(f.name)) && !attachmentPayloads[f.file_id])
-        .map(async (f) => {
-          try {
-            const res = await ApiService.downloadFromS3(f.file_id!, f.name);
-            if (res?.success && res.blob) {
-              // Skip embedding if blob exceeds ~600KB to keep request under server limit after base64 overhead
-              const approxSize = res.blob.size;
-              if (approxSize > 600 * 1024) return;
-              const base64 = await blobToBase64(res.blob);
-              let mimeType = res.blob.type;
-              if (!mimeType) {
-                if (f.name.toLowerCase().endsWith('.csv')) {
-                  mimeType = 'text/csv';
-                } else if (f.name.toLowerCase().endsWith('.tldraw')) {
-                  mimeType = 'application/json';
-                } else if (f.name.toLowerCase().endsWith('.pptx')) {
-                  mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-                } else if (f.name.toLowerCase().endsWith('.ppt')) {
-                  mimeType = 'application/vnd.ms-powerpoint';
-                } else {
-                  mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-                }
-              }
-              setAttachmentPayloads((prev) => ({ ...prev, [f.file_id!]: { fileData: base64, mimeType } }));
-            }
-          } catch {}
-        });
-      if (tasks.length > 0) {
-        await Promise.allSettled(tasks);
-      }
-    };
-
-    fetchMissingPayloads();
+    fetchMissingPayloadsHandler({
+      attachedFiles,
+      attachmentPayloads,
+      setAttachmentPayloads,
+    });
   }, [attachedFiles, attachmentPayloads]);
 
   return (
@@ -1288,374 +670,6 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   );
 };
 
-const ThreadWelcome: FC = () => {
-  const [isMac, setIsMac] = useState(false);
-  const [keybinds, setKeybinds] = useState<KeybindsState>(getStoredKeybinds);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0)
-    }
-  }, []);
-
-  // Listen for keybind updates
-  useEffect(() => {
-    function handleKeybindsUpdate() {
-      setKeybinds(getStoredKeybinds())
-    }
-    
-    window.addEventListener('keybinds-updated', handleKeybindsUpdate)
-    return () => window.removeEventListener('keybinds-updated', handleKeybindsUpdate)
-  }, []);
-
-  // Get active keys for each keybind
-  const newAgentKey = parseKeyString(getActiveKey(keybinds.newAgent))
-  const searchKey = parseKeyString(getActiveKey(keybinds.searchFiles))
-  const togglePanelKey = parseKeyString(getActiveKey(keybinds.toggleFileSidebar))
-
-  return (
-    <ThreadPrimitive.Empty>
-      <div className="mx-auto flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col px-[var(--thread-padding-x)]">
-        <div className="flex w-full flex-grow flex-col items-center justify-center gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ delay: 0.5 }}
-            className="flex flex-col items-center gap-6"
-          >
-            <Image 
-              src={BanburyLogo} 
-              alt="Banbury" 
-              className="opacity-20 dark:opacity-15"
-              width={160}
-              height={160}
-              priority
-            />
-            <div className="flex flex-col items-center gap-4">
-              <div className="flex items-center gap-3">
-                <Typography variant="muted">New Agent:</Typography>
-                <KbdGroup>
-                  <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-                  {newAgentKey.shift && (
-                    <>
-                      <Typography variant="muted" asChild><span>+</span></Typography>
-                      <Kbd>{isMac ? '⇧' : 'Shift'}</Kbd>
-                    </>
-                  )}
-                  <Typography variant="muted" asChild><span>+</span></Typography>
-                  <Kbd>{newAgentKey.key.toUpperCase()}</Kbd>
-                </KbdGroup>
-              </div>
-              <div className="flex items-center gap-3">
-                <Typography variant="muted">Search:</Typography>
-                <KbdGroup>
-                  <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-                  {searchKey.shift && (
-                    <>
-                      <Typography variant="muted" asChild><span>+</span></Typography>
-                      <Kbd>{isMac ? '⇧' : 'Shift'}</Kbd>
-                    </>
-                  )}
-                  <Typography variant="muted" asChild><span>+</span></Typography>
-                  <Kbd>{searchKey.key.toUpperCase()}</Kbd>
-                </KbdGroup>
-              </div>
-              <div className="flex items-center gap-3">
-                <Typography variant="muted">Toggle Left Panel:</Typography>
-                <KbdGroup>
-                  <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-                  {togglePanelKey.shift && (
-                    <>
-                      <Typography variant="muted" asChild><span>+</span></Typography>
-                      <Kbd>{isMac ? '⇧' : 'Shift'}</Kbd>
-                    </>
-                  )}
-                  <Typography variant="muted" asChild><span>+</span></Typography>
-                  <Kbd>{togglePanelKey.key.toUpperCase()}</Kbd>
-                </KbdGroup>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    </ThreadPrimitive.Empty>
-  );
-};
-
-const MessageError: FC = () => {
-  return (
-    <MessagePrimitive.Error>
-      <ErrorPrimitive.Root className="border-destructive bg-destructive/10 dark:bg-destructive/5 text-destructive mt-2 rounded-md border p-3 dark:text-red-200">
-        <ErrorPrimitive.Message className={cn(typographyVariants({ variant: "small" }), "line-clamp-2")} />
-      </ErrorPrimitive.Root>
-    </MessagePrimitive.Error>
-  );
-};
-
-const StreamingStatus: FC = () => {
-  const runtime = useThreadRuntime();
-  const [statusDetails, setStatusDetails] = useState<any>(null);
-
-  useEffect(() => {
-    // Listen for status changes from the runtime
-    const updateStatus = () => {
-      try {
-        const lastMessage = runtime.messages[runtime.messages.length - 1];
-        if (lastMessage?.status?.details) {
-          setStatusDetails(lastMessage.status.details);
-        } else {
-          setStatusDetails(null);
-        }
-      } catch (e) {
-        // Ignore errors accessing runtime
-      }
-    };
-
-    // Subscribe to runtime changes if possible
-    updateStatus();
-    
-    // Set up a polling interval to check for status updates
-    const interval = setInterval(updateStatus, 100);
-    
-    return () => clearInterval(interval);
-  }, [runtime]);
-
-  if (!statusDetails) return null;
-
-  // Determine agent badge colors based on agent type
-  const getAgentBadgeStyles = (agentType: string) => {
-    switch (agentType) {
-      case "planning":
-        return {
-          bg: "bg-emerald-50 dark:bg-emerald-950/30",
-          border: "border-emerald-200 dark:border-emerald-800/40",
-          text: "text-emerald-700 dark:text-emerald-300",
-          dot: "bg-emerald-500"
-        }
-      case "document":
-        return {
-          bg: "bg-purple-50 dark:bg-purple-950/30",
-          border: "border-purple-200 dark:border-purple-800/40",
-          text: "text-purple-700 dark:text-purple-300",
-          dot: "bg-purple-500"
-        }
-      default:
-        return {
-          bg: "bg-blue-50 dark:bg-blue-950/20",
-          border: "border-blue-200 dark:border-blue-800/30",
-          text: "text-blue-700 dark:text-blue-300",
-          dot: "bg-blue-500"
-        }
-    }
-  }
-
-  return (
-    <ThreadPrimitive.If running>
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 10 }}
-        className="mx-auto max-w-[var(--thread-max-width)] px-[var(--thread-padding-x)] mb-4"
-      >
-        <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/30 rounded-lg p-3">
-          {/* Agent Type Badge */}
-          {statusDetails.agentType && (
-            <div className={cn(
-              "flex items-center gap-2 mb-2 pb-2 border-b",
-              getAgentBadgeStyles(statusDetails.agentType).border
-            )}>
-              <div className={cn(
-                "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium",
-                getAgentBadgeStyles(statusDetails.agentType).bg,
-                getAgentBadgeStyles(statusDetails.agentType).text
-              )}>
-                <span className={cn(
-                  "w-1.5 h-1.5 rounded-full animate-pulse",
-                  getAgentBadgeStyles(statusDetails.agentType).dot
-                )}></span>
-                {statusDetails.agentLabel || statusDetails.agentType}
-              </div>
-              {statusDetails.agentDescription && (
-                <Typography variant="xs" className="text-muted-foreground">
-                  {statusDetails.agentDescription}
-                </Typography>
-              )}
-            </div>
-          )}
-
-          {statusDetails.thinking && (
-            <div className="flex items-center text-blue-700 dark:text-blue-300 mb-2">
-              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-2"></div>
-              <Typography variant="small">{statusDetails.thinking}</Typography>
-            </div>
-          )}
-          
-          {statusDetails.step && statusDetails.totalSteps && (
-            <div className="mb-2">
-              <div className="flex items-center justify-between text-blue-600 dark:text-blue-400 mb-1">
-                <Typography variant="xs">Step {statusDetails.step} of {statusDetails.totalSteps}</Typography>
-                <Typography variant="xs">{Math.round(statusDetails.progress || 0)}%</Typography>
-              </div>
-              <div className="w-full bg-blue-200 dark:bg-blue-800/30 rounded-full h-1.5">
-                <div 
-                  className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                  style={{ width: `${statusDetails.progress || 0}%` }}
-                ></div>
-              </div>
-            </div>
-          )}
-          
-          {statusDetails.toolStatus && (
-            <div className="flex items-center text-green-600 dark:text-green-400">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2"></span>
-              <Typography variant="xs" className="font-medium">{statusDetails.toolStatus.tool}:</Typography>
-              <Typography variant="xs" className="ml-1">{statusDetails.toolStatus.message}</Typography>
-            </div>
-          )}
-          
-          {statusDetails.toolCompleted && (
-            <div className="flex items-center text-green-600 dark:text-green-400">
-              <CheckIcon className="w-4 h-4 mr-2" strokeWidth={1} />
-              <Typography variant="xs" className="font-medium">{statusDetails.toolCompleted.tool}:</Typography>
-              <Typography variant="xs" className="ml-1">{statusDetails.toolCompleted.message}</Typography>
-            </div>
-          )}
-
-          {statusDetails.waitingForContent && (
-            <div className="flex items-center text-blue-600 dark:text-blue-400 mt-2 pt-2 border-t border-blue-200 dark:border-blue-800/30">
-              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500 mr-2"></div>
-              <Typography variant="xs">Processing...</Typography>
-            </div>
-          )}
-        </div>
-      </motion.div>
-    </ThreadPrimitive.If>
-  );
-};
-
-const AssistantMessage: FC = () => {
-  return (
-    <MessagePrimitive.Root asChild>
-      <motion.div
-        className="relative mx-auto grid w-full max-w-[var(--thread-max-width)] grid-cols-[1fr] grid-rows-[auto_1fr] px-[var(--thread-padding-x)] py-1"
-        initial={{ y: 5, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        data-role="assistant"
-      >
-        <div className={cn(typographyVariants({ variant: "small" }), "col-start-1 row-start-1 leading-none break-words overflow-x-auto max-w-full pb-10")}>
-          <MessagePrimitive.Content
-            components={{
-              Text: ContentRenderer,
-                tools: { 
-                by_name: {
-                  web_search: WebSearchTool,
-                  tiptap_ai: TiptapAITool,
-                  sheet_ai: SheetAITool,
-                  docx_ai: DocxAITool,
-                  pptx_ai: PptxAITool,
-                  tldraw_ai: TldrawAITool,
-                  drawio_ai: DrawioAITool,
-                  document_ai: DocumentAITool,
-                  browser: BrowserTool,
-                  spawn_subagents: SubagentTool,
-                  create_file: CreateFileTool,
-                  download_from_url: DownloadFileTool,
-                },
-                Fallback: ToolFallback 
-              },
-            }}
-          />
-          <MessageError />
-        </div>
-
-        <AssistantActionBar />
-
-        <BranchPicker className="col-start-1 row-start-2" />
-      </motion.div>
-    </MessagePrimitive.Root>
-  );
-};
-
-const AssistantActionBar: FC = () => {
-  return (
-    <ActionBarPrimitive.Root
-      hideWhenRunning
-      autohide="never"
-      autohideFloat="never"
-      className="text-muted-foreground absolute right-0 bottom-0 mt-2 flex gap-1"
-    >
-      <ActionBarPrimitive.Copy asChild>
-        <TooltipIconButton tooltip="Copy">
-          <MessagePrimitive.If copied>
-            <CheckIcon />
-          </MessagePrimitive.If>
-          <MessagePrimitive.If copied={false}>
-            <CopyIcon />
-          </MessagePrimitive.If>
-        </TooltipIconButton>
-      </ActionBarPrimitive.Copy>
-      <VoiceControls />
-      <ActionBarPrimitive.Reload asChild>
-        <TooltipIconButton tooltip="Refresh">
-          <RefreshCwIcon />
-        </TooltipIconButton>
-      </ActionBarPrimitive.Reload>
-    </ActionBarPrimitive.Root>
-  );
-};
-
-const VoiceControls: FC = () => {
-  const [isSpeaking, setIsSpeaking] = useState(false);
-
-  const extractMessageText = (el: HTMLElement | null) => {
-    if (!el) return '';
-    // Fallback: innerText of message root
-    return (el.innerText || '').trim();
-  };
-
-  const handleSpeak = (e: React.MouseEvent) => {
-    const synth = (typeof window !== 'undefined') ? window.speechSynthesis : null;
-    if (!synth) return;
-    if (synth.speaking) {
-      synth.cancel();
-    }
-    const root = (e.currentTarget as HTMLElement).closest('[data-role="assistant"]') as HTMLElement | null;
-    const text = extractMessageText(root);
-    if (!text) return;
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.onend = () => setIsSpeaking(false);
-    utter.onerror = () => setIsSpeaking(false);
-    setIsSpeaking(true);
-    synth.speak(utter);
-  };
-
-  const handleStop = () => {
-    const synth = (typeof window !== 'undefined') ? window.speechSynthesis : null;
-    if (!synth) return;
-    synth.cancel();
-    setIsSpeaking(false);
-  };
-
-  const hasTts = typeof window !== 'undefined' && 'speechSynthesis' in window;
-  if (!hasTts) return null;
-
-  return (
-    <div className="flex items-center gap-1">
-      {!isSpeaking ? (
-        <TooltipIconButton tooltip="Play audio" onClick={handleSpeak}>
-          <Volume2 />
-        </TooltipIconButton>
-      ) : (
-        <TooltipIconButton tooltip="Stop audio" onClick={handleStop}>
-          <VolumeX />
-        </TooltipIconButton>
-      )}
-    </div>
-  );
-};
-
-
 const EditComposer: FC = () => {
   return (
     <div className="mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 px-[var(--thread-padding-x)]">
@@ -1682,129 +696,4 @@ const EditComposer: FC = () => {
   );
 };
 
-interface SaveConversationDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onSave: () => void;
-  title: string;
-  onTitleChange: (title: string) => void;
-}
 
-const SaveConversationDialog: FC<SaveConversationDialogProps> = ({ 
-  open, 
-  onClose, 
-  onSave, 
-  title, 
-  onTitleChange 
-}) => {
-  if (!open) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 w-full max-w-md mx-4 shadow-xl border border-zinc-200 dark:border-zinc-700">
-        <Typography variant="h4" className="mb-4">Save Conversation</Typography>
-        <input
-          type="text"
-          placeholder="Enter conversation title..."
-          value={title}
-          onChange={(e) => onTitleChange(e.target.value)}
-          className="w-full p-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          autoFocus
-        />
-        <div className="flex justify-end gap-2">
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={onSave} disabled={!title.trim()}>
-            Save
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-interface LoadConversationDialogProps {
-  open: boolean;
-  onClose: () => void;
-  conversations: any[];
-  onLoadConversation: (id: string) => void;
-  onDeleteConversation: (id: string) => void;
-}
-
-const LoadConversationDialog: FC<LoadConversationDialogProps> = ({ 
-  open, 
-  onClose, 
-  conversations, 
-  onLoadConversation, 
-  onDeleteConversation 
-}) => {
-  if (!open) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden flex flex-col shadow-xl border border-zinc-200 dark:border-zinc-700">
-        <Typography variant="h4" className="mb-4">Load Conversation</Typography>
-        
-        <div className="flex-1 overflow-y-auto">
-          {conversations.length === 0 ? (
-            <Typography variant="muted" className="text-center py-8">No saved conversations found.</Typography>
-          ) : (
-            <div className="space-y-2">
-              {conversations.map((conversation) => (
-                <div
-                  key={conversation._id}
-                  className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-700 rounded hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors"
-                >
-                  <div className="flex-1 min-w-0">
-                    <Typography variant="h4" className="truncate">{conversation.title}</Typography>
-                    <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">
-                      {new Date(conversation.updated_at).toLocaleDateString()}
-                    </Typography>
-                  </div>
-                  <div className="flex gap-2 ml-4">
-                    <TooltipIconButton
-                      tooltip="Load conversation"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onLoadConversation(conversation._id)}
-                    >
-                      <FolderOpen className="h-4 w-4" strokeWidth={1} />
-                    </TooltipIconButton>
-                    <TooltipIconButton
-                      tooltip="Refresh conversation display"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        // Force a refresh by reloading the conversation
-                        onLoadConversation(conversation._id);
-                      }}
-                      className="text-blue-400 hover:text-blue-300"
-                    >
-                      <RefreshCwIcon className="h-4 w-4" strokeWidth={1} />
-                    </TooltipIconButton>
-                    <TooltipIconButton
-                      tooltip="Delete conversation"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onDeleteConversation(conversation._id)}
-                      className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                    >
-                      <Trash2 className="h-4 w-4" strokeWidth={1} />
-                    </TooltipIconButton>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        
-        <div className="flex justify-end mt-4">
-          <Button variant="ghost" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-};

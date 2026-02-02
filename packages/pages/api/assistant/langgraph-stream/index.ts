@@ -10,7 +10,7 @@ import { enrichWithDocumentContext } from "./handlers/enrichWithDocumentContext"
 import { downloadFiles } from "./handlers/downloadFiles"
 import { toLangChainMessages } from "./handlers/toLangChainMessages"
 import { normalizeToolPreferences } from "./handlers/normalizeToolPreferences"
-import { processStreamChunk } from "./handlers/processStreamChunk"
+import { processStreamChunk } from "./handlers/processStreamChunk/processStreamChunk"
 import { parseErrorMessage } from "./handlers/parseErrorMessage"
 import { detectDocumentRequest } from "../claude-skills-stream/handlers/detectDocumentRequest"
 // NOTE: Claude Skills routing removed - document requests now use local pptxgenjs-based generation
@@ -53,31 +53,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     // Normalize messages
     let processedMessages = normalizeMessages({ messages: body.messages })
+    console.log('processedMessages', processedMessages)
     
     // Add document context
     processedMessages = enrichWithDocumentContext({ 
       messages: processedMessages, 
       documentContext: body.documentContext 
     })
-    
+    console.log('processedMessages after enrichWithDocumentContext', processedMessages)
     // Pre-download files from S3
     const messagesWithFileData = await downloadFiles({ 
       messages: processedMessages, 
       authToken: token 
     })
-
+    console.log('messagesWithFileData', messagesWithFileData)
     // Normalize tool preferences before message conversion
     const normalizedToolPreferences = normalizeToolPreferences({ toolPreferences: body.toolPreferences })
     const modelProvider = normalizedToolPreferences.model_provider === "openai" ? "openai" : normalizedToolPreferences.model_provider === "google" ? "google" : "anthropic"
-
     // Detect if this is a document-related request (will be used to select appropriate system prompt)
     const isDocumentRequest = detectDocumentRequest(body.messages)
-
-    // All requests now use local tools (pptxgenjs for PPTX, etc.) instead of Claude Skills
-
+    console.log('isDocumentRequest', isDocumentRequest)
     // Convert to LangChain messages
     const lcMessages = toLangChainMessages(messagesWithFileData, modelProvider)
-    
+    console.log('lcMessages', lcMessages)
     // Only add system message if not already present
     let allMessages = lcMessages
     const hasSystemMessage = lcMessages.length > 0 && lcMessages[0]._getType() === "system"
@@ -223,6 +221,7 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
         
         // For the general agent with middleware, extract and pass system prompt separately
         let messagesToStream = allMessages
+        console.log('allMessages', allMessages)
         let systemPrompt: string | undefined = undefined
         
         if (agentType === "general") {
@@ -234,6 +233,7 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
             messagesToStream = allMessages.slice(1)
           }
         }
+        console.log('messagesToStream', messagesToStream)
         
         // Use a custom streaming approach for character-by-character updates
         const stream = await reactAgent.stream(

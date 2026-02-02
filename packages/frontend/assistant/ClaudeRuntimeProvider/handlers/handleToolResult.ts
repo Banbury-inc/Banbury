@@ -7,6 +7,7 @@ export function handleToolResult({ evt, contentParts }: HandleToolResultParams):
   // Handle tool result - update the corresponding tool call with the result
   const toolCalls = contentParts.filter(p => (p as any).type === "tool-call")
   const matchingToolCall = toolCalls.find(tc => (tc as any).toolCallId === evt.part.toolCallId)
+  console.log('matchingToolCall', matchingToolCall);
   if (matchingToolCall) {
     try {
       (matchingToolCall as any).result = evt.part.result;

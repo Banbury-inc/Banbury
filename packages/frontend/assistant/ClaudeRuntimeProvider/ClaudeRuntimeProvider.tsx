@@ -46,7 +46,6 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
         return;
       }
 
-      // Debug + intent: Check the last user message and optionally trigger Browserbase session
       // Check for document context in localStorage
       const documentContext = getDocumentContext();
 

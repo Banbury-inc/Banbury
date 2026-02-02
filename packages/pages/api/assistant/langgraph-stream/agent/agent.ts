@@ -169,9 +169,7 @@ function resolveModelId(): string | undefined {
 
 export function createReactAgentForProvider(provider: ModelProvider) {
   const modelId = resolveModelId()
-  
   const llm = createChatModel(provider, modelId)
-  
   return createReactAgent({ llm, tools })
 }
 
@@ -357,7 +355,8 @@ async function agentNode(state: AgentState): Promise<AgentState> {
     let messages = state.messages
     
     const hasSystemMessage = messages.length > 0 && messages[0]._getType() === "system"
-    
+
+
     if (!hasSystemMessage) {
       let dateTimeContext = getServerContextValue<any>("dateTimeContext")
       if (!dateTimeContext) {
@@ -405,6 +404,8 @@ async function agentNode(state: AgentState): Promise<AgentState> {
         new SystemMessage(systemContent),
         ...messages
       ]
+
+      console.log('messages after system message', messages)
     }
 
     const provider = resolveModelProvider()

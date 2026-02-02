@@ -1,20 +1,3 @@
-interface ProcessStreamChunkParams {
-  chunk: any
-  allMessages: any[]
-  processedAiMessages: Set<string>
-  processedToolCalls: Set<string>
-  currentToolExecution: any
-  toolExecutionMap: Map<string, any>
-  send: (event: any) => void
-  threadId?: string
-}
-
-interface ProcessStreamChunkResult {
-  currentToolExecution: any
-  toolExecutionMap: Map<string, any>
-  finalResult: any
-}
-
 const TOOL_STATUS_MESSAGES: Record<string, string> = {
   web_search: "Searching the web...",
   web_extract: "Extracting content from URLs...",
@@ -32,33 +15,10 @@ const TOOL_STATUS_MESSAGES: Record<string, string> = {
   write_todos: "Updating task list..."
 }
 
-const TOOL_COMPLETION_MESSAGES: Record<string, string> = {
-  web_search: "Web search completed",
-  web_extract: "Content extraction completed",
-  web_crawl: "Website crawl completed",
-  web_map: "Site map generated",
-  web_research: "Research task initiated",
-  web_get_research: "Research results retrieved",
-  web_usage: "Usage statistics retrieved",
-  tiptap_ai: "Document processing completed",
-  sheet_ai: "Spreadsheet edits ready",
-  store_memory: "Memory stored successfully",
-  search_memory: "Memory search completed",
-  create_file: "File created successfully",
-  spawn_subagents: "Subagents completed",
-  write_todos: "Task list updated"
-}
-
 function getToolStatusMessage(toolName: string): string {
   if (TOOL_STATUS_MESSAGES[toolName]) return TOOL_STATUS_MESSAGES[toolName]
   if (toolName.startsWith('gmail_')) return 'Accessing Gmail…'
   return `Executing ${toolName}...`
-}
-
-function getToolCompletionMessage(toolName: string): string {
-  if (TOOL_COMPLETION_MESSAGES[toolName]) return TOOL_COMPLETION_MESSAGES[toolName]
-  if (toolName.startsWith('gmail_')) return 'Gmail operation completed'
-  return `${toolName} completed`
 }
 
 async function streamTextContent(text: string, send: (event: any) => void): Promise<void> {
@@ -79,7 +39,7 @@ async function streamTextContent(text: string, send: (event: any) => void): Prom
   }
 }
 
-async function processAiMessage(
+export async function processAiMessage(
   message: any,
   messageId: string,
   processedAiMessages: Set<string>,
@@ -169,94 +129,3 @@ async function processAiMessage(
   
   return updatedToolExecution
 }
-
-function processToolMessage(
-  message: any,
-  currentToolExecution: any,
-  toolExecutionMap: Map<string, any>,
-  send: (event: any) => void
-): void {
-  // Look up the tool execution by tool_call_id
-  const toolCallId = message.tool_call_id || ""
-  const toolExecution = toolExecutionMap.get(toolCallId) || currentToolExecution
-  const toolName = toolExecution?.name || "unknown"
-  
-  // Send tool execution completion event
-  send({
-    type: "tool-result",
-    part: {
-      type: "tool-result",
-      toolCallId: toolCallId,
-      toolName: toolName,
-      result: message.content,
-    },
-  })
-  
-  // Stream tool completion status
-  if (toolName && toolName !== "unknown") {
-    const completionMessage = getToolCompletionMessage(toolName)
-    send({ type: "tool-completion", tool: toolName, message: completionMessage })
-  }
-  
-  // Clean up from map after processing
-  if (toolCallId) {
-    toolExecutionMap.delete(toolCallId)
-  }
-}
-
-export async function processStreamChunk({
-  chunk,
-  allMessages,
-  processedAiMessages,
-  processedToolCalls,
-  currentToolExecution,
-  toolExecutionMap,
-  send,
-  threadId
-}: ProcessStreamChunkParams): Promise<ProcessStreamChunkResult> {
-  const messages = (chunk as any).messages || []
-  
-  // Stream thinking/processing indicator and step progression
-  if (chunk && typeof chunk === 'object' && 'messages' in chunk) {
-    const newMessageCount = messages.length - allMessages.length
-    
-    // Only send thinking/progression if we have new messages beyond the input
-    if (newMessageCount > 0) {
-      send({ type: "thinking", message: `Processing step ${newMessageCount}...` })
-      send({ type: "step-progression", step: newMessageCount, totalSteps: newMessageCount + 1 })
-    }
-  }
-
-  // Only process messages that are NEW (beyond the input messages)
-  const newMessages = messages.slice(allMessages.length)
-  
-  let updatedToolExecution = currentToolExecution
-
-  for (const m of newMessages) {
-    const type = m?._getType?.()
-    
-    if (type === "ai") {
-      const messageId = m.id || JSON.stringify(m)
-      updatedToolExecution = await processAiMessage(
-        m,
-        messageId,
-        processedAiMessages,
-        processedToolCalls,
-        updatedToolExecution,
-        toolExecutionMap,
-        send,
-        threadId
-      )
-    } else if (type === "tool") {
-      processToolMessage(m, updatedToolExecution, toolExecutionMap, send)
-      updatedToolExecution = null
-    }
-  }
-  
-  return {
-    currentToolExecution: updatedToolExecution,
-    toolExecutionMap,
-    finalResult: chunk
-  }
-}
-
