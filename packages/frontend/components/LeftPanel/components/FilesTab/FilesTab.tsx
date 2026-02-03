@@ -19,7 +19,7 @@ import {
   SquareArrowOutUpRight,
 } from "lucide-react"
 import { useState, useRef, useCallback } from 'react'
-import { LocalFilesView } from "./components/LocalFilesView"
+import { LocalFilesView, LocalFilesViewRef } from "./components/LocalFilesView"
 import { GoogleDriveView } from "./components/GoogleDriveView"
 import { OneDriveView } from "./components/OneDriveView"
 import { GoogleDriveIcon, OneDriveIcon } from "../../../icons"
@@ -241,6 +241,7 @@ export function FilesTab({
   const [isRefreshing, setIsRefreshing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const folderInputRef = useRef<HTMLInputElement | null>(null)
+  const localFilesViewRef = useRef<LocalFilesViewRef | null>(null)
   const effectiveRefreshTrigger = (refreshTrigger ?? 0) + localRefreshCounter
   const handleLocalRefreshComplete = useCallback(() => {
     handleRefreshComplete({ setIsRefreshing, onRefreshComplete: externalOnRefreshComplete })
@@ -489,6 +490,7 @@ export function FilesTab({
               <Select
                 value=""
                 onValueChange={(value) => {
+                  if (fileProvider !== 'local') return
                   switch (value) {
                     case 'upload-file':
                       handleFileUpload()
@@ -497,16 +499,16 @@ export function FilesTab({
                       handleFolderUpload()
                       break
                     case 'document':
-                      handleCreateDocument()
+                      localFilesViewRef.current?.triggerCreateDocument()
                       break
                     case 'spreadsheet':
-                      handleCreateSpreadsheet()
+                      localFilesViewRef.current?.triggerCreateSpreadsheet()
                       break
                     case 'canvas':
-                      handleCreateTldraw()
+                      localFilesViewRef.current?.triggerCreateTldraw()
                       break
                     case 'presentation':
-                      handleCreatePowerpoint()
+                      localFilesViewRef.current?.triggerCreatePowerpoint()
                       break
                     case 'folder':
                       onCreateFolder?.()
@@ -658,6 +660,7 @@ export function FilesTab({
         {/* Local Files */}
         {fileProvider === 'local' && (
           <LocalFilesView
+            ref={localFilesViewRef}
             viewMode={localViewMode === 'all' ? 'local' : localViewMode}
             userInfo={userInfo}
             onFileSelect={handleFileSelect}

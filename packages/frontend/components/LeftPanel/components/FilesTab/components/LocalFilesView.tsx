@@ -9,7 +9,7 @@ import {
   Star,
   FolderPlus,
 } from "lucide-react"
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo, useImperativeHandle, forwardRef } from 'react'
 import { toggleFileSelection, collectSelectedFileItems } from "../handlers/handle-multi-select"
 import { FileTreeItem, DragState } from "./FileTreeItem"
 import { ApiService } from "../../../../../../backend/api/apiService"
@@ -65,7 +65,14 @@ interface LocalFilesViewProps {
   triggerSidebarRefresh?: () => void
 }
 
-export function LocalFilesView({
+export interface LocalFilesViewRef {
+  triggerCreateDocument: () => void
+  triggerCreateSpreadsheet: () => void
+  triggerCreateTldraw: () => void
+  triggerCreatePowerpoint: () => void
+}
+
+export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>(function LocalFilesView({
   viewMode,
   userInfo,
   onFileSelect,
@@ -88,7 +95,7 @@ export function LocalFilesView({
   folderInputRef,
   activeFilters = new Set(),
   triggerSidebarRefresh,
-}: LocalFilesViewProps) {
+}, ref) {
   const { toast } = useToast()
   const { files: userFiles, loading: filesLoading, error: filesError, refetch, initialized } = useUserFiles()
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
@@ -585,10 +592,10 @@ export function LocalFilesView({
   }
 
   // Document creation handlers
-  const handleCreateDocument = () => {
+  const handleCreateDocument = useCallback(() => {
     setIsCreatingDocument(true)
     setNewDocumentName('New Document.docx')
-  }
+  }, [])
 
   // Focus document input when creating
   useEffect(() => {
@@ -696,10 +703,10 @@ export function LocalFilesView({
   }
 
   // Tldraw canvas creation handlers
-  const handleCreateTldraw = () => {
+  const handleCreateTldraw = useCallback(() => {
     setIsCreatingTldraw(true)
     setNewTldrawName('New Canvas.tldraw')
-  }
+  }, [])
 
   useEffect(() => {
     if (isCreatingTldraw && tldrawInputRef.current) {
@@ -749,10 +756,10 @@ export function LocalFilesView({
   }
 
   // PowerPoint presentation creation handlers
-  const handleCreatePowerpoint = () => {
+  const handleCreatePowerpoint = useCallback(() => {
     setIsCreatingPowerpoint(true)
     setNewPowerpointName('New Presentation.pptx')
-  }
+  }, [])
 
   useEffect(() => {
     if (isCreatingPowerpoint && powerpointInputRef.current) {
@@ -935,7 +942,15 @@ export function LocalFilesView({
     }
   }
 
-  // Expose handlers for parent components
+  // Expose handlers via ref for parent components
+  useImperativeHandle(ref, () => ({
+    triggerCreateDocument: handleCreateDocument,
+    triggerCreateSpreadsheet: handleCreateSpreadsheet,
+    triggerCreateTldraw: handleCreateTldraw,
+    triggerCreatePowerpoint: handleCreatePowerpoint,
+  }), [handleCreateDocument, handleCreateSpreadsheet, handleCreateTldraw, handleCreatePowerpoint])
+
+  // Expose handlers for parent components (legacy window-based approach)
   useEffect(() => {
     if (onCreateDocument) {
       (window as any).__handleCreateDocument = handleCreateDocument
@@ -961,7 +976,7 @@ export function LocalFilesView({
       delete (window as any).__handleCreateTldraw
       delete (window as any).__handleCreatePowerpoint
     }
-  }, [onCreateDocument, onCreateSpreadsheet, onCreateDrawio, onCreateTldraw, onCreatePowerpoint])
+  }, [onCreateDocument, onCreateSpreadsheet, onCreateDrawio, onCreateTldraw, onCreatePowerpoint, handleCreateDocument, handleCreateSpreadsheet, handleCreateTldraw, handleCreatePowerpoint])
 
   return (
     <div className="h-full overflow-hidden flex flex-col">
@@ -1568,5 +1583,5 @@ export function LocalFilesView({
       />
     </div>
   )
-}
+})
 
