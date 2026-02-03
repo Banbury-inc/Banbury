@@ -229,6 +229,7 @@ function SpreadsheetDemoApp() {
               selectedFile={mockSpreadsheetFile}
               selectedEmail={null}
               onEmailSelect={() => {}}
+              composerAutofocus={false}
             />
         <div className="w-[200px] h-full flex-shrink-0 border-r border-zinc-200 dark:border-zinc-700 overflow-hidden">
           

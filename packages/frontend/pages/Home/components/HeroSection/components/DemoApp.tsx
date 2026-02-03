@@ -791,6 +791,7 @@ export default function DemoApp() {
               selectedFile={selectedFile}
               selectedEmail={selectedEmail}
               onEmailSelect={handleEmailSelect}
+              composerAutofocus={false}
             />
           </div>
         )}

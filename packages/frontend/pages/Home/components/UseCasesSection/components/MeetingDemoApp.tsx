@@ -445,6 +445,7 @@ export default function MeetingDemoApp() {
               selectedFile={null}
               selectedEmail={null}
               onEmailSelect={() => {}}
+              composerAutofocus={false}
             />
           </div>
         </div>

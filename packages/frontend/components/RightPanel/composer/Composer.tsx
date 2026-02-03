@@ -144,9 +144,11 @@ interface ComposerProps {
   onRemoveQueuedMessage: (id: string) => void;
   onMoveQueuedMessageToFront: (id: string) => void;
   onSendNextQueued: () => void;
+  /** Disable composer autofocus to prevent scroll-to-input on mount (e.g. in embedded demos) */
+  composerAutofocus?: boolean;
 }
 
-export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll, onOpenFile, messageBuffer, assistantTabId, queuedMessages, onQueueMessage, onRemoveQueuedMessage, onMoveQueuedMessageToFront, onSendNextQueued }) => {
+export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll, onOpenFile, messageBuffer, assistantTabId, queuedMessages, onQueueMessage, onRemoveQueuedMessage, onMoveQueuedMessageToFront, onSendNextQueued, composerAutofocus = true }) => {
   const composer = useComposerRuntime();
   const threadRuntime = useThreadRuntime();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -385,6 +387,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
             <ChatTiptapComposer
               hiddenInputRef={inputRef}
               userInfo={userInfo}
+              autofocus={composerAutofocus}
               onFileAttach={onFileAttach}
               onAttachmentPayload={onAttachmentPayload}
               placeholder="Ask anything or type @ to mention a file..."

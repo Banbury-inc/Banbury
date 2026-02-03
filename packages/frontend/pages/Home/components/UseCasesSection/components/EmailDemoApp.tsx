@@ -461,6 +461,7 @@ export default function EmailDemoApp() {
               selectedFile={null}
               selectedEmail={selectedEmail}
               onEmailSelect={() => {}}
+              composerAutofocus={false}
             />
         </div>
         </div>

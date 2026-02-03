@@ -52,9 +52,11 @@ interface ThreadProps {
   selectedEmail?: any | null;
   onEmailSelect?: (email: any) => void;
   assistantTabId?: string;
+  /** Disable composer autofocus to prevent scroll-to-input on mount (e.g. in embedded demos) */
+  composerAutofocus?: boolean;
 }
 
-export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail, onEmailSelect, assistantTabId }) => {
+export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail, onEmailSelect, assistantTabId, composerAutofocus = true }) => {
   const { toast } = useToast();
   const [attachedFiles, setAttachedFiles] = useState<FileSystemItem[]>([]);
   const [attachedEmails, setAttachedEmails] = useState<any[]>([]);
@@ -620,6 +622,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       <Composer
         attachedFiles={attachedFiles}
         attachedEmails={attachedEmails}
+        composerAutofocus={composerAutofocus}
         onFileAttach={handleFileAttach}
         onFileRemove={handleFileRemove}
         onEmailAttach={handleEmailAttach}
