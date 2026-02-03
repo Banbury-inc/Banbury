@@ -1,10 +1,10 @@
 import { RefreshCw } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { Button } from '../ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { ApiService } from '../../../backend/api/apiService'
-import { UsersTab } from '../MiddlePanel/AdminViewer/UsersTab'
-import { AnalyticsTab } from '../MiddlePanel/AdminViewer/AnalyticsTab'
+import { Button } from '../../ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card'
+import { ApiService } from '../../../../backend/api/apiService'
+import { UsersTab } from './components/UsersTab'
+import { AnalyticsTab } from './components/AnalyticsTab'
 import { convertToEasternTime, formatBytes } from './utils/adminUtils'
 import type {
   User,
@@ -23,11 +23,11 @@ import type {
   ErrorAnalytics
 } from './types/adminTypes'
 
-interface AdminContentProps {
+interface AdminViewerProps {
   activeTab: string
 }
 
-export function AdminContent({ activeTab }: AdminContentProps) {
+export function AdminViewer({ activeTab }: AdminViewerProps) {
   const [loading, setLoading] = useState(true)
   const [users, setUsers] = useState<User[]>([])
   const [systemStats, setSystemStats] = useState<SystemStats>({

@@ -32,7 +32,7 @@ import { TaskViewer } from '../../../components/MiddlePanel/TaskViewer/TaskViewe
 import { TaskComposer } from '../../../components/MiddlePanel/TaskViewer/TaskComposer';
 import { MeetingViewer } from '../../../components/MiddlePanel/MeetingViewer/MeetingViewer';
 import { MeetingJoinComposer } from '../../../components/MiddlePanel/MeetingViewer/MeetingJoinComposer';
-import { AdminContent } from '../../../components/AdminContent/AdminContent';
+import { AdminViewer } from '../../../components/MiddlePanel/AdminViewer/AdminViewer';
 
 interface RenderPanelProps {
   panel: Panel;
@@ -582,7 +582,7 @@ export const renderPanel = ({
                 if (tab.type === 'admin') {
                   return (
                     <div className="h-full overflow-y-auto bg-card">
-                      <AdminContent activeTab={`admin-${tab.adminTabType}`} />
+                      <AdminViewer activeTab={`admin-${tab.adminTabType}`} />
                     </div>
                   );
                 }

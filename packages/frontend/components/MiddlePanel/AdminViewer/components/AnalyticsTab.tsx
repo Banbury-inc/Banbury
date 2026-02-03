@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { RefreshCw, Filter } from 'lucide-react'
 import { XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts'
-import { ChartContainer, ChartTooltip } from '../../ui/chart'
-import { Button } from '../../ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
-import { Input } from '../../ui/old-input'
-import { Label } from '../../ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover'
-import { ApiService } from '../../../../backend/api/apiService'
+import { ChartContainer, ChartTooltip } from '../../../ui/chart'
+import { Button } from '../../../ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../ui/card'
+import { Input } from '../../../ui/old-input'
+import { Label } from '../../../ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '../../../ui/popover'
+import { ApiService } from '../../../../../backend/api/apiService'
 import { 
   getTotalPages, 
   getPageSlice, 
@@ -16,13 +16,14 @@ import {
   canGoNext, 
   canGoPrev, 
   clampPage 
-} from '../../../pages/handlers/adminVisitors'
+} from '../../../../pages/handlers/adminVisitors'
 import { AIConversationsTab } from './AIConversationsTab'
 import { ApiUsageTab } from './ApiUsageTab'
 import { UserEngagementTab } from './UserEngagementTab'
 import { RetentionTab } from './RetentionTab'
 import { FeatureUsageTab } from './FeatureUsageTab'
 import { ErrorTrackingTab } from './ErrorTrackingTab'
+import { VisitorsTab } from './VisitorsTab'
 
 interface VisitorData {
   _id: string
@@ -268,7 +269,6 @@ interface AnalyticsTabProps {
   loadConversationUsers: (days: number) => Promise<void>
   loadDashboardVisitStats: () => Promise<void>
   loadWorkspaceVisitStats: () => Promise<void>
-  loadVisitorData: (days: number) => Promise<void>
   loadFileTypeAnalytics: (days: number, usersToExclude?: string[]) => Promise<void>
   loadApiUsageAnalytics: (days: number, excludedUsers?: string[]) => Promise<void>
   loadUserEngagementAnalytics: (days: number, excludedUsers?: string[]) => Promise<void>
@@ -612,6 +612,149 @@ export function AnalyticsTab({
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
         <h1 className="text-2xl font-bold text-foreground">{getPageTitle()}</h1>
         <div className="flex gap-2">
+          {analyticsSubTab === 'visitors' && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filter Visitors
+                  {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
+                    <span className="ml-2 bg-blue-500 text-white px-2 py-0.5 rounded text-xs">
+                      {visitorIpExclusions.length + visitorLocationExclusions.length + (visitorLocationFilter ? 1 : 0)}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-card border-zinc-200 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-foreground font-semibold mb-1">Filter Visitors</h3>
+                    <p className="text-muted-foreground text-sm">Filter visitors by IP address or location</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="ip-exclusion" className="text-foreground text-sm mb-2 block">
+                      Exclude IP Addresses
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="ip-exclusion"
+                        type="text"
+                        placeholder="Enter IP address to exclude..."
+                        value={visitorIpInput}
+                        onChange={(e) => setVisitorIpInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addIpExclusion()}
+                        className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
+                      />
+                      <Button 
+                        onClick={addIpExclusion}
+                        variant="outline"
+                        size="sm"
+                        className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    {visitorIpExclusions.length > 0 && (
+                      <div className="mt-2">
+                        <div className="text-muted-foreground text-xs mb-1">Excluded IPs:</div>
+                        <div className="flex flex-wrap gap-2">
+                          {visitorIpExclusions.map((ip) => (
+                            <span
+                              key={ip}
+                              className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
+                            >
+                              {ip}
+                              <button
+                                onClick={() => removeIpExclusion(ip)}
+                                className="text-red-400 hover:text-red-200 ml-1"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="location-exclusion" className="text-foreground text-sm mb-2 block">
+                      Exclude Locations (City, Region, or Country)
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="location-exclusion"
+                        type="text"
+                        placeholder="Enter location to exclude..."
+                        value={visitorLocationInput}
+                        onChange={(e) => setVisitorLocationInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addLocationExclusion()}
+                        className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
+                      />
+                      <Button 
+                        onClick={addLocationExclusion}
+                        variant="outline"
+                        size="sm"
+                        className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    {visitorLocationExclusions.length > 0 && (
+                      <div className="mt-2">
+                        <div className="text-muted-foreground text-xs mb-1">Excluded Locations:</div>
+                        <div className="flex flex-wrap gap-2">
+                          {visitorLocationExclusions.map((location) => (
+                            <span
+                              key={location}
+                              className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
+                            >
+                              {location}
+                              <button
+                                onClick={() => removeLocationExclusion(location)}
+                                className="text-red-400 hover:text-red-200 ml-1"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="location-filter" className="text-foreground text-sm mb-2 block">
+                      Location Filter (City, Region, Country)
+                    </Label>
+                    <Input
+                      id="location-filter"
+                      type="text"
+                      placeholder="Enter location to filter..."
+                      value={visitorLocationFilter}
+                      onChange={(e) => setVisitorLocationFilter(e.target.value)}
+                      className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2 pt-2">
+                    <Button 
+                      onClick={clearAllFilters}
+                      variant="outline"
+                      className="w-full border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
+                    >
+                      Clear All Filters
+                    </Button>
+                    {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
+                      <div className="text-muted-foreground text-xs text-center">
+                        Showing {getFilteredVisitors().length} of {visitorData.length} visitors
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
           <select 
             onChange={(e) => {
               const days = parseInt(e.target.value)
@@ -2259,422 +2402,28 @@ export function AnalyticsTab({
 
       {/* Visitors Tab */}
       {analyticsSubTab === 'visitors' && (
-        <div className="space-y-6">
-          {/* Visitor Filters */}
-          <div className="flex gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter Visitors
-                  {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
-                    <span className="ml-2 bg-blue-500 text-white px-2 py-0.5 rounded text-xs">
-                      {visitorIpExclusions.length + visitorLocationExclusions.length + (visitorLocationFilter ? 1 : 0)}
-                    </span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-card border-zinc-200 dark:border-white/[0.06] max-h-[80vh] overflow-y-auto">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-foreground font-semibold mb-1">Filter Visitors</h3>
-                    <p className="text-muted-foreground text-sm">Filter visitors by IP address or location</p>
-                  </div>
-                  <div>
-                    <Label htmlFor="ip-exclusion" className="text-foreground text-sm mb-2 block">
-                      Exclude IP Addresses
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="ip-exclusion"
-                        type="text"
-                        placeholder="Enter IP address to exclude..."
-                        value={visitorIpInput}
-                        onChange={(e) => setVisitorIpInput(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && addIpExclusion()}
-                        className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
-                      />
-                      <Button 
-                        onClick={addIpExclusion}
-                        variant="outline"
-                        size="sm"
-                        className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
-                      >
-                        Add
-                      </Button>
-                    </div>
-                    {visitorIpExclusions.length > 0 && (
-                      <div className="mt-2">
-                        <div className="text-muted-foreground text-xs mb-1">Excluded IPs:</div>
-                        <div className="flex flex-wrap gap-2">
-                          {visitorIpExclusions.map((ip) => (
-                            <span
-                              key={ip}
-                              className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
-                            >
-                              {ip}
-                              <button
-                                onClick={() => removeIpExclusion(ip)}
-                                className="text-red-400 hover:text-red-200 ml-1"
-                              >
-                                ×
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="location-exclusion" className="text-foreground text-sm mb-2 block">
-                      Exclude Locations (City, Region, or Country)
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="location-exclusion"
-                        type="text"
-                        placeholder="Enter location to exclude..."
-                        value={visitorLocationInput}
-                        onChange={(e) => setVisitorLocationInput(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && addLocationExclusion()}
-                        className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
-                      />
-                      <Button 
-                        onClick={addLocationExclusion}
-                        variant="outline"
-                        size="sm"
-                        className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
-                      >
-                        Add
-                      </Button>
-                    </div>
-                    {visitorLocationExclusions.length > 0 && (
-                      <div className="mt-2">
-                        <div className="text-muted-foreground text-xs mb-1">Excluded Locations:</div>
-                        <div className="flex flex-wrap gap-2">
-                          {visitorLocationExclusions.map((location) => (
-                            <span
-                              key={location}
-                              className="bg-red-900/50 text-red-300 px-2 py-1 rounded text-xs flex items-center gap-1"
-                            >
-                              {location}
-                              <button
-                                onClick={() => removeLocationExclusion(location)}
-                                className="text-red-400 hover:text-red-200 ml-1"
-                              >
-                                ×
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="location-filter" className="text-foreground text-sm mb-2 block">
-                      Location Filter (City, Region, Country)
-                    </Label>
-                    <Input
-                      id="location-filter"
-                      type="text"
-                      placeholder="Enter location to filter..."
-                      value={visitorLocationFilter}
-                      onChange={(e) => setVisitorLocationFilter(e.target.value)}
-                      className="bg-card text-foreground border-zinc-200 dark:border-white/[0.06] focus:border-blue-500"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2 pt-2">
-                    <Button 
-                      onClick={clearAllFilters}
-                      variant="outline"
-                      className="w-full border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent"
-                    >
-                      Clear All Filters
-                    </Button>
-                    {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
-                      <div className="text-muted-foreground text-xs text-center">
-                        Showing {getFilteredVisitors().length} of {visitorData.length} visitors
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <Card className="bg-card border-zinc-200 dark:border-white/[0.06]">
-            <CardHeader>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <CardTitle className="text-foreground">Recent Visitors</CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    Latest site visitors with location data
-                    {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ' (filtered)'}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-              {(() => {
-                const filteredVisitors = getFilteredVisitors()
-                const totalPages = getTotalPages({ totalItems: filteredVisitors.length, pageSize: visitorPageSize })
-                const currentPage = clampPage({ page: visitorPage, totalPages })
-                return (
-                  <>
-                    <span className="text-muted-foreground text-xs hidden md:inline">
-                      Page {currentPage} of {totalPages} • {filteredVisitors.length} total
-                      {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ` (filtered from ${visitorData.length})`}
-                    </span>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setVisitorPage(prevVisitorPage({ page: currentPage }))}
-                      disabled={!canGoPrev({ page: currentPage })}
-                      className="border-zinc-200 dark:border-white/[0.06]"
-                    >
-                      Prev
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setVisitorPage(nextVisitorPage({ page: currentPage, totalPages }))}
-                      disabled={!canGoNext({ page: currentPage, totalPages })}
-                      className="border-zinc-200 dark:border-white/[0.06]"
-                    >
-                      Next
-                    </Button>
-                  </>
-                )
-              })()}
-                </div>
-              </div>
-            </CardHeader>
-        <CardContent>
-          {visitorLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-            </div>
-          ) : visitorData.length > 0 ? (
-            <>
-              {/* Mobile Card View */}
-              <div className="md:hidden space-y-3">
-                {(() => {
-                  const filteredVisitors = getFilteredVisitors()
-                  const totalPages = getTotalPages({ totalItems: filteredVisitors.length, pageSize: visitorPageSize })
-                  const currentPage = clampPage({ page: visitorPage, totalPages })
-                  const paged = getPageSlice({ items: filteredVisitors, page: currentPage, pageSize: visitorPageSize })
-                  return paged
-                })().map((visitor) => (
-                  <Card key={visitor._id} className="bg-card border-zinc-200 dark:border-white/[0.06]">
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <div className="text-foreground font-medium text-sm truncate" title={visitor.page_title || visitor.path || 'Unknown'}>
-                            {visitor.page_title || (visitor.path ? visitor.path.split('?')[0] : 'Unknown')}
-                          </div>
-                          {visitor.path && visitor.path !== visitor.page_title && (
-                            <div className="text-muted-foreground text-xs font-mono truncate mt-0.5" title={visitor.path}>
-                              {visitor.path}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                          {visitor.referrer_source && (
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              visitor.referrer_source === 'twitter' ? 'bg-blue-900/50 text-blue-300' :
-                              visitor.referrer_source === 'facebook' ? 'bg-blue-800/50 text-blue-200' :
-                              visitor.referrer_source === 'google' ? 'bg-green-900/50 text-green-300' :
-                              visitor.referrer_source === 'linkedin' ? 'bg-purple-900/50 text-purple-300' :
-                              'bg-muted/50 text-muted-foreground'
-                            }`}>
-                              {visitor.referrer_source}
-                            </span>
-                          )}
-                          {visitor.content_type && (
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              visitor.content_type === 'landing_page' ? 'bg-green-900/50 text-green-300' :
-                              visitor.content_type === 'dashboard' ? 'bg-blue-900/50 text-blue-300' :
-                              visitor.content_type === 'auth_page' ? 'bg-yellow-900/50 text-yellow-300' :
-                              visitor.content_type === 'features_page' ? 'bg-purple-900/50 text-purple-300' :
-                              visitor.content_type.startsWith('documentation -') ? 'bg-cyan-900/50 text-cyan-300' :
-                              'bg-muted/50 text-muted-foreground'
-                            }`}>
-                              {visitor.content_type.replace('_', ' ')}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-200 dark:border-white/[0.04]">
-                        <div>
-                          <div className="text-muted-foreground text-xs">IP Address</div>
-                          <div className="text-foreground font-mono text-xs truncate">{visitor.ip_address}</div>
-                        </div>
-                        <div>
-                          <div className="text-muted-foreground text-xs">Location</div>
-                          <div className="text-foreground text-xs">{visitor.city}</div>
-                          <div className="text-muted-foreground text-xs">{visitor.region}, {visitor.country}</div>
-                        </div>
-                        {visitor.device_type && (
-                          <div>
-                            <div className="text-muted-foreground text-xs">Device</div>
-                            <div className="text-foreground text-xs capitalize">{visitor.device_type}</div>
-                          </div>
-                        )}
-                        <div>
-                          <div className="text-muted-foreground text-xs">Browser</div>
-                          <div className="text-foreground text-xs">{parseBrowser(visitor.user_agent)}</div>
-                        </div>
-                        <div>
-                          <div className="text-muted-foreground text-xs">OS</div>
-                          <div className="text-foreground text-xs">{parseOS(visitor.user_agent)}</div>
-                        </div>
-                        {visitor.campaign_id && (
-                          <div className="col-span-2">
-                            <div className="text-muted-foreground text-xs">Campaign</div>
-                            <div className="text-foreground font-mono text-xs truncate" title={visitor.campaign_id}>
-                              {visitor.campaign_id.length > 30 ? `${visitor.campaign_id.substring(0, 30)}...` : visitor.campaign_id}
-                            </div>
-                          </div>
-                        )}
-                        <div className="col-span-2">
-                          <div className="text-muted-foreground text-xs">Time</div>
-                          <div className="text-foreground text-xs">{convertToEasternTime(visitor.time)}</div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto border border-zinc-700 rounded-lg">
-                <table className="w-full min-w-full">
-                <thead>
-                  <tr className="border-b border-zinc-700">
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">IP Address</th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Page</th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Source</th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Campaign</th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Content Type</th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Device</th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Browser</th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">OS</th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Location</th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(() => {
-                    const filteredVisitors = getFilteredVisitors()
-                    const totalPages = getTotalPages({ totalItems: filteredVisitors.length, pageSize: visitorPageSize })
-                    const currentPage = clampPage({ page: visitorPage, totalPages })
-                    const paged = getPageSlice({ items: filteredVisitors, page: currentPage, pageSize: visitorPageSize })
-                    return paged
-                  })().map((visitor) => (
-                    <tr key={visitor._id} className="border-b border-zinc-200 dark:border-white/[0.04] hover:bg-accent/50 dark:hover:bg-accent/50 transition-colors">
-                      <td className="py-3 px-4">
-                        <span className="text-foreground font-mono text-sm">{visitor.ip_address}</span>
-                      </td>
-                      <td className="py-3 px-4 max-w-[200px]">
-                        <div>
-                          <div className="text-foreground text-sm font-medium truncate" title={visitor.page_title || visitor.path || 'Unknown'}>
-                            {visitor.page_title || (visitor.path ? visitor.path.split('?')[0] : 'Unknown')}
-                          </div>
-                          {visitor.path && visitor.path !== visitor.page_title && (
-                            <div className="text-muted-foreground text-xs font-mono truncate" title={visitor.path}>
-                              {visitor.path}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        {visitor.referrer_source ? (
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            visitor.referrer_source === 'twitter' ? 'bg-blue-900/50 text-blue-300' :
-                            visitor.referrer_source === 'facebook' ? 'bg-blue-800/50 text-blue-200' :
-                            visitor.referrer_source === 'google' ? 'bg-green-900/50 text-green-300' :
-                            visitor.referrer_source === 'linkedin' ? 'bg-purple-900/50 text-purple-300' :
-                            'bg-muted/50 text-muted-foreground'
-                          }`}>
-                            {visitor.referrer_source}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">Direct</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 max-w-[120px]">
-                        {visitor.campaign_id ? (
-                          <span className="text-muted-foreground text-xs font-mono truncate inline-block max-w-full" title={visitor.campaign_id}>
-                            {visitor.campaign_id.length > 12 ? `${visitor.campaign_id.substring(0, 12)}...` : visitor.campaign_id}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">-</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        {visitor.content_type ? (
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            visitor.content_type === 'landing_page' ? 'bg-green-900/50 text-green-300' :
-                            visitor.content_type === 'dashboard' ? 'bg-blue-900/50 text-blue-300' :
-                            visitor.content_type === 'auth_page' ? 'bg-yellow-900/50 text-yellow-300' :
-                            visitor.content_type === 'features_page' ? 'bg-purple-900/50 text-purple-300' :
-                            visitor.content_type.startsWith('documentation -') ? 'bg-cyan-900/50 text-cyan-300' :
-                            'bg-muted/50 text-muted-foreground'
-                          }`}>
-                            {visitor.content_type.replace('_', ' ')}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">Unknown</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        {visitor.device_type ? (
-                          <span className={`px-2 py-1 rounded text-xs font-medium capitalize ${
-                            visitor.device_type === 'mobile' ? 'bg-blue-900/50 text-blue-300' :
-                            visitor.device_type === 'tablet' ? 'bg-purple-900/50 text-purple-300' :
-                            visitor.device_type === 'desktop' ? 'bg-green-900/50 text-green-300' :
-                            'bg-muted/50 text-muted-foreground'
-                          }`}>
-                            {visitor.device_type}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">Unknown</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="text-foreground text-sm">
-                          {parseBrowser(visitor.user_agent)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="text-foreground text-sm">
-                          {parseOS(visitor.user_agent)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div>
-                          <div className="text-foreground text-sm">{visitor.city}</div>
-                          <div className="text-muted-foreground text-xs">{visitor.region}, {visitor.country}</div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-muted-foreground text-sm">
-                        {convertToEasternTime(visitor.time)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            </>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No visitor data available
-            </div>
-          )}
-        </CardContent>
-          </Card>
-        </div>
+        <VisitorsTab
+          visitorData={visitorData}
+          visitorLoading={visitorLoading}
+          visitorPage={visitorPage}
+          setVisitorPage={setVisitorPage}
+          visitorPageSize={visitorPageSize}
+          convertToEasternTime={convertToEasternTime}
+          visitorIpExclusions={visitorIpExclusions}
+          visitorIpInput={visitorIpInput}
+          setVisitorIpInput={setVisitorIpInput}
+          visitorLocationExclusions={visitorLocationExclusions}
+          visitorLocationInput={visitorLocationInput}
+          setVisitorLocationInput={setVisitorLocationInput}
+          visitorLocationFilter={visitorLocationFilter}
+          setVisitorLocationFilter={setVisitorLocationFilter}
+          getFilteredVisitors={getFilteredVisitors}
+          addIpExclusion={addIpExclusion}
+          removeIpExclusion={removeIpExclusion}
+          addLocationExclusion={addLocationExclusion}
+          removeLocationExclusion={removeLocationExclusion}
+          clearAllFilters={clearAllFilters}
+        />
       )}
 
       {/* Conversations Tab */}
