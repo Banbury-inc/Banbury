@@ -1,27 +1,27 @@
-import { ApiService } from "../../../../../../backend/api/apiService"
+import { ApiService } from "../../../../../../../../backend/api/apiService"
 
-interface CopyDriveToLocalParams {
-  driveFileId: string
+interface CopyOneDriveToLocalParams {
+  oneDriveItemId: string
   fileName: string
   onSuccess?: (localFileId: string, localPath: string) => void
   onError?: (error: string) => void
   showToast?: (options: { title: string; description?: string; variant?: 'default' | 'destructive' | 'success' }) => void
 }
 
-export async function handleCopyDriveToLocal({
-  driveFileId,
+export async function handleCopyOneDriveToLocal({
+  oneDriveItemId,
   fileName,
   onSuccess,
   onError,
   showToast
-}: CopyDriveToLocalParams): Promise<boolean> {
+}: CopyOneDriveToLocalParams): Promise<boolean> {
   try {
     showToast?.({
       title: 'Copying file...',
       description: `Copying "${fileName}" to Local storage`,
     })
 
-    const result = await ApiService.Files.copyDriveFileToLocal(driveFileId)
+    const result = await ApiService.Files.copyOneDriveFileToLocal(oneDriveItemId)
 
     if (result.success) {
       showToast?.({

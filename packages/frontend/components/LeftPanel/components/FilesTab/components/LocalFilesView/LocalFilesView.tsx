@@ -5,28 +5,29 @@ import {
   FileSpreadsheet,
   Upload,
   Network,
-  Clock,
   Star,
   FolderPlus,
 } from "lucide-react"
 import { useState, useEffect, useCallback, useRef, useMemo, useImperativeHandle, forwardRef } from 'react'
-import { toggleFileSelection, collectSelectedFileItems } from "../handlers/handle-multi-select"
-import { FileTreeItem, DragState } from "./FileTreeItem"
-import { ApiService } from "../../../../../../backend/api/apiService"
-import OneDrive from "../../../../../../backend/api/onedrive/onedrive"
-import { buildFileTree, FileSystemItem, flattenFileTree } from "../../../../../utils/fileTreeUtils"
-import { Typography } from "../../../../common/ui/typography"
-import { ShareFileDialog } from "./share-file/ShareFileDialog"
-import { useToast } from "../../../../common/ui/use-toast"
-import { useUserFiles } from "../../../../../contexts/UserFilesContext"
-import { handleCreateDocumentSubmit } from "../handlers/handleCreateDocumentSubmit"
-import { handleCreateSpreadsheetSubmit } from "../handlers/handleCreateSpreadsheetSubmit"
-import { handleCreateDrawioSubmit as handleCreateDrawioSubmitHandler } from "../handlers/handleCreateDrawioSubmit"
-import { handleCreatePowerpointSubmit } from "../handlers/handleCreatePowerpointSubmit"
-import { handleCreateRootFolderSubmit } from "../handlers/handleCreateRootFolderSubmit"
-import { getRecentFileIds, addRecentFileId } from "../handlers/handleRecentFiles"
-import { fetchStarredFileIds, starFile, unstarFile } from "../handlers/handleStarredFiles"
-import { filterFileTree, filterFlatFileList } from "../handlers/handleFileTypeFilter"
+import { toggleFileSelection, collectSelectedFileItems } from "../../handlers/handle-multi-select"
+import { FileTreeItem, DragState } from "../FileTreeItem"
+import { RecentFilesView } from "./components/RecentFilesView"
+import { StarredFilesView } from "./components/StarredFilesView"
+import { ApiService } from "../../../../../../../backend/api/apiService"
+import OneDrive from "../../../../../../../backend/api/onedrive/onedrive"
+import { buildFileTree, FileSystemItem, flattenFileTree } from "../../../../../../utils/fileTreeUtils"
+import { Typography } from "../../../../../common/ui/typography"
+import { ShareFileDialog } from "../share-file/ShareFileDialog"
+import { useToast } from "../../../../../common/ui/use-toast"
+import { useUserFiles } from "../../../../../../contexts/UserFilesContext"
+import { handleCreateDocumentSubmit } from "../../handlers/handleCreateDocumentSubmit"
+import { handleCreateSpreadsheetSubmit } from "../../handlers/handleCreateSpreadsheetSubmit"
+import { handleCreateDrawioSubmit as handleCreateDrawioSubmitHandler } from "../../handlers/handleCreateDrawioSubmit"
+import { handleCreatePowerpointSubmit } from "../../handlers/handleCreatePowerpointSubmit"
+import { handleCreateRootFolderSubmit } from "../../handlers/handleCreateRootFolderSubmit"
+import { getRecentFileIds, addRecentFileId } from "../../handlers/handleRecentFiles"
+import { fetchStarredFileIds, starFile, unstarFile } from "../../handlers/handleStarredFiles"
+import { filterFileTree, filterFlatFileList } from "../../handlers/handleFileTypeFilter"
 import { 
   removeFileFromTree, 
   removeFolderFromTree, 
@@ -34,7 +35,7 @@ import {
   removeMultipleFoldersFromTree,
   insertFileIntoTree, 
   insertFolderIntoTree 
-} from "../handlers/optimisticDeleteHelpers"
+} from "../../handlers/optimisticDeleteHelpers"
 
 interface LocalFilesViewProps {
   viewMode: 'local' | 'recent' | 'starred' | 'shared'
@@ -1318,132 +1319,76 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
           
           {/* Recent Files View */}
           {viewMode === 'recent' && (
-            <>
-              {filteredRecentFiles.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 px-4">
-                  {activeFilters.size > 0 ? (
-                    <>
-                      <Folder className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" strokeWidth={1} />
-                      <Typography variant="muted">No matching files</Typography>
-                    </>
-                  ) : (
-                    <>
-                      <Clock className="h-14 w-14 mb-4 opacity-40 text-muted-foreground" strokeWidth={1.5} />
-                      <Typography variant="small" className="mb-2 font-medium text-foreground">
-                        No recent files
-                      </Typography>
-                      <Typography variant="muted" className="text-xs text-center max-w-[200px] leading-relaxed">
-                        Files you've recently accessed will appear here
-                      </Typography>
-                    </>
-                  )}
-                </div>
-              ) : (
-                filteredRecentFiles.map((file) => (
-                  <FileTreeItem
-                    key={file.file_id}
-                    item={file}
-                    level={0}
-                    expandedItems={new Set()}
-                    toggleExpanded={() => {}}
-                    onFileSelect={handleFileSelectWithRecent}
-                    selectedFile={selectedFile}
-                    onFileDeleted={handleFileDeleted}
-                    onFileDeleteFailed={handleFileDeleteFailed}
-                    onFileRenamed={onFileRenamed}
-                    onFolderCreated={handleFolderCreated}
-                    onFolderRenamed={handleFolderRenamed}
-                    onFolderDeleted={handleFolderDeleted}
-                    onFolderDeleteFailed={handleFolderDeleteFailed}
-                    onUploadFile={handleFileUpload}
-                    onUploadFolder={handleFolderUpload}
-                    userInfo={userInfo}
-                    dragState={dragState}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    selectedIds={selectedIds}
-                    onShiftToggleSelection={onShiftToggleSelection}
-                    selectionCount={selectionCount}
-                    onDeleteSelectedFiles={onDeleteSelectedFiles}
-                    starredFileIds={starredFileIds}
-                    onStarFile={handleStarFile}
-                    onUnstarFile={handleUnstarFile}
-                    onShareFile={handleShareFile}
-                    driveAvailable={driveAvailable}
-                    oneDriveConnected={oneDriveConnected}
-                    triggerSidebarRefresh={triggerSidebarRefresh}
-                  />
-                ))
-              )}
-            </>
+            <RecentFilesView
+              filteredRecentFiles={filteredRecentFiles}
+              activeFilters={activeFilters}
+              onFileSelect={handleFileSelectWithRecent}
+              selectedFile={selectedFile}
+              onFileDeleted={handleFileDeleted}
+              onFileDeleteFailed={handleFileDeleteFailed}
+              onFileRenamed={onFileRenamed}
+              onFolderCreated={handleFolderCreated}
+              onFolderRenamed={handleFolderRenamed}
+              onFolderDeleted={handleFolderDeleted}
+              onFolderDeleteFailed={handleFolderDeleteFailed}
+              onUploadFile={handleFileUpload}
+              onUploadFolder={handleFolderUpload}
+              userInfo={userInfo}
+              dragState={dragState}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              selectedIds={selectedIds}
+              onShiftToggleSelection={onShiftToggleSelection}
+              selectionCount={selectionCount}
+              onDeleteSelectedFiles={onDeleteSelectedFiles}
+              starredFileIds={starredFileIds}
+              onStarFile={handleStarFile}
+              onUnstarFile={handleUnstarFile}
+              onShareFile={handleShareFile}
+              driveAvailable={driveAvailable}
+              oneDriveConnected={oneDriveConnected}
+              triggerSidebarRefresh={triggerSidebarRefresh}
+            />
           )}
           
           {/* Starred Files View */}
           {viewMode === 'starred' && (
-            <>
-              {filteredStarredFiles.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 px-4">
-                  {activeFilters.size > 0 ? (
-                    <>
-                      <Folder className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" strokeWidth={1} />
-                      <Typography variant="muted">No matching files</Typography>
-                    </>
-                  ) : (
-                    <>
-                      <Star className="h-14 w-14 mb-4 opacity-40 text-muted-foreground" strokeWidth={1.5} />
-                      <Typography variant="small" className="mb-2 font-medium text-foreground">
-                        No starred files
-                      </Typography>
-                      <Typography variant="muted" className="text-xs text-center max-w-[200px] leading-relaxed">
-                        Star files to quickly access them here
-                      </Typography>
-                    </>
-                  )}
-                </div>
-              ) : (
-                filteredStarredFiles.map((file) => (
-                  <FileTreeItem
-                    key={file.file_id}
-                    item={file}
-                    level={0}
-                    expandedItems={new Set()}
-                    toggleExpanded={() => {}}
-                    onFileSelect={handleFileSelectWithRecent}
-                    selectedFile={selectedFile}
-                    onFileDeleted={handleFileDeleted}
-                    onFileDeleteFailed={handleFileDeleteFailed}
-                    onFileRenamed={onFileRenamed}
-                    onFolderCreated={handleFolderCreated}
-                    onFolderRenamed={handleFolderRenamed}
-                    onFolderDeleted={handleFolderDeleted}
-                    onFolderDeleteFailed={handleFolderDeleteFailed}
-                    onUploadFile={handleFileUpload}
-                    onUploadFolder={handleFolderUpload}
-                    userInfo={userInfo}
-                    dragState={dragState}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    selectedIds={selectedIds}
-                    onShiftToggleSelection={onShiftToggleSelection}
-                    selectionCount={selectionCount}
-                    onDeleteSelectedFiles={onDeleteSelectedFiles}
-                    starredFileIds={starredFileIds}
-                    onStarFile={handleStarFile}
-                    onUnstarFile={handleUnstarFile}
-                    onShareFile={handleShareFile}
-                    driveAvailable={driveAvailable}
-                    oneDriveConnected={oneDriveConnected}
-                    triggerSidebarRefresh={triggerSidebarRefresh}
-                  />
-                ))
-              )}
-            </>
+            <StarredFilesView
+              filteredStarredFiles={filteredStarredFiles}
+              activeFilters={activeFilters}
+              onFileSelect={handleFileSelectWithRecent}
+              selectedFile={selectedFile}
+              onFileDeleted={handleFileDeleted}
+              onFileDeleteFailed={handleFileDeleteFailed}
+              onFileRenamed={onFileRenamed}
+              onFolderCreated={handleFolderCreated}
+              onFolderRenamed={handleFolderRenamed}
+              onFolderDeleted={handleFolderDeleted}
+              onFolderDeleteFailed={handleFolderDeleteFailed}
+              onUploadFile={handleFileUpload}
+              onUploadFolder={handleFolderUpload}
+              userInfo={userInfo}
+              dragState={dragState}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              selectedIds={selectedIds}
+              onShiftToggleSelection={onShiftToggleSelection}
+              selectionCount={selectionCount}
+              onDeleteSelectedFiles={onDeleteSelectedFiles}
+              starredFileIds={starredFileIds}
+              onStarFile={handleStarFile}
+              onUnstarFile={handleUnstarFile}
+              onShareFile={handleShareFile}
+              driveAvailable={driveAvailable}
+              oneDriveConnected={oneDriveConnected}
+              triggerSidebarRefresh={triggerSidebarRefresh}
+            />
           )}
 
           {/* Shared with me Files View */}

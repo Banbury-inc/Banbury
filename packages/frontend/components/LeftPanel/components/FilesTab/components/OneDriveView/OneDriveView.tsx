@@ -1,19 +1,19 @@
 import { RefreshCw, Folder, Search, X, FileText, FileSpreadsheet, FileBarChart } from "lucide-react"
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { OneDriveFileTreeItem } from "./OneDriveFileTreeItem"
-import { Button } from "../../../../common/ui/button"
-import { Input } from "../../../../common/ui/input"
-import OneDrive, { OneDriveFile } from "../../../../../../backend/api/onedrive/onedrive"
-import { Typography } from "../../../../common/ui/typography"
-import { handleFetchOneDriveFiles, OneDriveViewMode } from "../handlers/handleFetchOneDriveFiles"
-import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
-import { filterOneDriveFiles } from "../handlers/handleFileTypeFilter"
+import { OneDriveFileTreeItem } from "./components/OneDriveFileTreeItem"
+import { Button } from "../../../../../common/ui/button"
+import { Input } from "../../../../../common/ui/input"
+import OneDrive, { OneDriveFile } from "../../../../../../../backend/api/onedrive/onedrive"
+import { Typography } from "../../../../../common/ui/typography"
+import { handleFetchOneDriveFiles, OneDriveViewMode } from "../../handlers/handleFetchOneDriveFiles"
+import { FileSystemItem } from "../../../../../../utils/fileTreeUtils"
+import { filterOneDriveFiles } from "../../handlers/handleFileTypeFilter"
 import {
   handleCreateOneDriveDocumentSubmit,
   handleCreateOneDriveSpreadsheetSubmit,
   handleCreateOneDrivePresentationSubmit,
   OneDriveFileCreationState
-} from "../handlers/handleCreateOneDriveFile"
+} from "../../handlers/handleCreateOneDriveFile"
 
 interface OneDriveViewProps {
   viewMode?: OneDriveViewMode
@@ -373,7 +373,7 @@ export function OneDriveView({
     setFiles(prev => prev.filter(f => f.id !== fileId))
     setFolderContents(prev => {
       const newMap = new Map(prev)
-      for (const [folderId, files] of newMap) {
+      for (const [folderId, files] of Array.from(newMap.entries())) {
         newMap.set(folderId, files.filter(f => f.id !== fileId))
       }
       return newMap
@@ -385,7 +385,7 @@ export function OneDriveView({
     setFiles(prev => prev.map(f => f.id === fileId ? { ...f, name: newName } : f))
     setFolderContents(prev => {
       const newMap = new Map(prev)
-      for (const [folderId, files] of newMap) {
+      for (const [folderId, files] of Array.from(newMap.entries())) {
         newMap.set(folderId, files.map(f => f.id === fileId ? { ...f, name: newName } : f))
       }
       return newMap

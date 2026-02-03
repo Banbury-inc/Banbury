@@ -1,4 +1,4 @@
-import { CONFIG } from '../../../../../config/config';
+import { CONFIG } from '../../../../../../../../../config/config';
 
 // Toast type
 type Toast = (props: {

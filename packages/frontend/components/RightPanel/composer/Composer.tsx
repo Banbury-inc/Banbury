@@ -1,44 +1,17 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import * as AssistantUI from "@assistant-ui/react";
-import {
-  ChevronRightIcon,
-  Square,
-  Wrench,
-  Mic,
-  MicOff,
-  ChevronDown,
-  Plus,
-  Paperclip,
-  Image,
-  Video,
-  Upload,
-  ClipboardList,
-  Infinity,
-  CornerDownLeft,
-  Search,
-  X,
-} from "lucide-react";
-
 import { ChatTiptapComposer } from "./components/ChatTiptapComposer";
-import { FileAttachmentPicker } from "./components/file-attachment-picker";
 import { FileAttachmentDisplay } from "./components/file-attachment-display";
 import { QueuedMessagesDisplay, type QueuedMessage } from "./components/queued-messages-display";
 import { PendingChangesBar } from "./components/pending-changes-bar";
 import { ContextWheel } from "./components/context-wheel";
+import { ModeSelector } from "./components/ModeSelector";
+import { ModelSelector } from "./components/ModelSelector";
+import { PlusMenu } from "./components/PlusMenu";
+import { VoiceRecordingButton } from "./components/VoiceRecordingButton";
+import { ComposerSendButton } from "./components/ComposerSendButton";
 import { Button } from "../../common/ui/button";
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "../../common/ui/tooltip";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-  DropdownMenuSeparator,
-  DropdownMenuItem,
-} from "../../common/ui/dropdown-menu";
-import { Popover, PopoverTrigger, PopoverContent } from "../../common/ui/popover";
-import { Check } from "lucide-react";
+import { TooltipProvider } from "../../common/ui/tooltip";
 import { FileSystemItem } from "../../../utils/fileTreeUtils";
 import { ThreadScrollToBottom } from "./ThreadScrollToBottom";
 import { handleSend } from "./handlers/handleSend";
@@ -46,23 +19,12 @@ import { createComposerSendEventListener } from "./handlers/handleComposerSendEv
 import { computeContextBudget } from "./handlers/contextBudget";
 import { getDocumentContextPreview } from "../../../assistant/ClaudeRuntimeProvider/handlers/getDocumentContextPreview";
 import {
-  getModelDisplayName,
-  AVAILABLE_MODELS,
-  getModelById,
   getDefaultModelForProvider,
-  DEFAULT_VISIBLE_MODELS,
 } from "./handlers/getModelDisplayName";
-import { toolConfigs } from "./handlers/toolConfig";
-import {
-  toggleToolPreference,
-  setImageGenerationModel,
-  setVideoGenerationModel,
-  IMAGE_GENERATION_MODELS,
-  VIDEO_GENERATION_MODELS
-} from "./handlers/composer-plus-menu-handlers";
-import { handleLocalFileUpload } from "../../handlers/handle-local-file-upload";
 import { checkIsRunning } from "./handlers/messageQueue";
-
+import { checkButtonVisibility, type VisibleButtons } from "./handlers/checkButtonVisibility";
+import { checkForText } from "./handlers/checkForText";
+import { startRecording } from "./handlers/handleStartRecording";
 import type { FC } from "react";
 import { Typography } from "@/components/common/ui/typography";
 
@@ -82,28 +44,21 @@ export interface ComposerToolPreferences {
   browser: boolean;
   x_api: boolean;
   slack: boolean;
-  // Document editing tools
   sheet_ai: boolean;
   docx_ai: boolean;
   pptx_ai: boolean;
   tldraw_ai: boolean;
   document_ai: boolean;
-  // File management tools
   create_file: boolean;
   create_folder: boolean;
   download_from_url: boolean;
   search_files: boolean;
-  // Calendar tools
   calendar: boolean;
   msCalendar: boolean;
-  // Development tools
   github: boolean;
-  // Media tools
   generate_image: boolean;
   generate_video: boolean;
-  // System tools
   memory: boolean;
-  // Agent modes
   plan_mode: boolean;
   ask_mode: boolean;
   model_provider: "anthropic" | "openai" | "google";
@@ -134,17 +89,13 @@ interface ComposerProps {
   onAcceptAll: () => void;
   onRejectAll: () => void;
   onOpenFile?: (change: { id: string; type: string; description: string; filePath?: string }) => void;
-  // Fallback message buffer for context calculation when runtime messages aren't available
   messageBuffer?: any[] | null;
-  // Tab ID for updating tab title on first message
   assistantTabId?: string;
-  // Message queue props
   queuedMessages: QueuedMessage[];
   onQueueMessage: (text: string) => void;
   onRemoveQueuedMessage: (id: string) => void;
   onMoveQueuedMessageToFront: (id: string) => void;
   onSendNextQueued: () => void;
-  /** Disable composer autofocus to prevent scroll-to-input on mount (e.g. in embedded demos) */
   composerAutofocus?: boolean;
 }
 
@@ -156,18 +107,13 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
   const proseMirrorRef = useRef<HTMLElement | null>(null);
   const sendButtonRef = useRef<HTMLButtonElement | null>(null);
   const [isEditingQueuedMessage, setIsEditingQueuedMessage] = useState(false);
-
-  // Check if agent is currently running
   const isRunning = checkIsRunning(threadRuntime);
 
-  // Add attachments to the composer when files or emails are attached
   useEffect(() => {
     if (!composer.attachments) return;
     
-    // Clear existing attachments first
     composer.attachments.clear();
-    
-    // Add file attachments
+
     attachedFiles.forEach((file) => {
       composer.attachments.add({
         type: "file",
@@ -485,7 +431,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
   const buttonsRef = useRef<HTMLDivElement>(null);
   const previousWidthRef = useRef<number>(0);
   const isMeasuringRef = useRef<boolean>(true);
-  const [visibleButtons, setVisibleButtons] = useState({
+  const [visibleButtons, setVisibleButtons] = useState<VisibleButtons>({
     model: true,
     plus: true,
     mic: true,
@@ -600,50 +546,13 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
     });
   }, [getThreadMessages, draftText, attachedFiles, attachedEmails, toolPreferences.model_id, toolPreferences.model_provider, streamingContentLength]);
 
-  const getRecognition = () => {
-    const SpeechRecognitionImpl = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognitionImpl) return null;
-    if (!recognitionRef.current) {
-      const rec = new SpeechRecognitionImpl();
-      rec.continuous = false;
-      rec.interimResults = true;
-      rec.lang = 'en-US';
-      recognitionRef.current = rec;
-    }
-    return recognitionRef.current;
-  };
-
-  const startRecording = () => {
-    const rec = getRecognition();
-    if (!rec) return;
-    let finalTranscript = '';
-    rec.onresult = (event: any) => {
-      let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-        } else {
-          interim += transcript;
-        }
-      }
-      const text = (finalTranscript || interim).trim();
-      const input = inputRef.current;
-      if (input) {
-        input.value = text;
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-      try {
-        window.dispatchEvent(new CustomEvent('composer-set-text', { detail: { text } }));
-      } catch {}
-      setHasText(Boolean(text.length));
-    };
-    rec.onend = () => {
-      setIsRecording(false);
-    };
-    rec.start();
-    setIsRecording(true);
+  const handleStartRecording: () => void = () => {
+    startRecording({
+      recognitionRef,
+      inputRef,
+      setHasText,
+      setIsRecording,
+    });
   };
 
   const stopRecording = () => {
@@ -656,79 +565,14 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
 
   // Check for text content in the hidden input
   useEffect(() => {
-    const checkForText = () => {
-      // Use the ref to get the specific input for this tab instance
-      const input = inputRef.current;
-      if (!input) return;
-      
-      let text = '';
-      
-      // Always check the ProseMirror editor directly as the source of truth
-      // Find the ProseMirror editor that belongs to this composer instance
-      // Strategy 1: Find ProseMirror near the input (they're in the same composer)
-      let proseMirror: Element | null = null;
-      
-      // Try multiple strategies to find the ProseMirror element
-      // Strategy 1: Look for ProseMirror in the same parent container as the input
-      const inputParent = input.parentElement;
-      if (inputParent) {
-        // The input is inside ComposerPrimitive.Root, ProseMirror is in a sibling div
-        const composerRoot = inputParent.closest('[class*="flex-col"]');
-        if (composerRoot) {
-          proseMirror = composerRoot.querySelector('.ProseMirror');
-        }
-      }
-      
-      // Strategy 2: If not found, search from containerRef
-      if (!proseMirror && containerRef.current) {
-        const container = containerRef.current;
-        // Go up to find the composer root, then find ProseMirror
-        const composerRoot = container.closest('[class*="flex-col"]') || container.parentElement;
-        if (composerRoot) {
-          proseMirror = composerRoot.querySelector('.ProseMirror');
-        }
-      }
-      
-      // Strategy 3: Find ProseMirror that's closest to this input (by checking all and finding the one in the same tab)
-      if (!proseMirror) {
-        const allProseMirrors = document.querySelectorAll('.ProseMirror');
-        for (const pm of Array.from(allProseMirrors)) {
-          // Check if this ProseMirror is in the same tab as our input
-          const pmTab = pm.closest('[class*="absolute"]');
-          const inputTab = input.closest('[class*="absolute"]');
-          if (pmTab === inputTab || (pm.closest('.min-h-16') && input.closest('.min-h-16'))) {
-            proseMirror = pm;
-            break;
-          }
-        }
-      }
-      
-      if (proseMirror) {
-        // Get text from ProseMirror element (this is the actual editor content)
-        const paragraphs = Array.from(proseMirror.querySelectorAll('p'));
-        if (paragraphs.length > 0) {
-          text = paragraphs.map((p) => (p.textContent || '').trimEnd()).join('\n\n');
-        } else {
-          text = proseMirror.textContent || '';
-        }
-        
-        // Sync textarea if it's out of sync
-        if (input.value !== text) {
-          input.value = text;
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      } else {
-        // Fallback to textarea value if we can't find ProseMirror
-        text = input.value;
-      }
-      
-      const trimmedText = text.trim();
-      const newHasText = trimmedText.length > 0;
-      
-      // Always update state to ensure button state refreshes, especially when tab becomes active
-      setHasText(newHasText);
-      setDraftText(text);
+    const checkForTextHandler = () => {
+      checkForText({
+        inputRef,
+        containerRef,
+        setHasText,
+        setDraftText,
+        assistantTabId,
+      });
     };
 
     // Listen for custom tiptap update events
@@ -739,14 +583,14 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
     };
 
     // Check immediately
-    checkForText();
+    checkForTextHandler();
     
     // Also check after a short delay to ensure DOM is ready
-    setTimeout(checkForText, 100);
-    setTimeout(checkForText, 300);
+    setTimeout(checkForTextHandler, 100);
+    setTimeout(checkForTextHandler, 300);
 
     // Set up an interval to check for changes more frequently
-    const interval = setInterval(checkForText, 100);
+    const interval = setInterval(checkForTextHandler, 100);
 
     // Listen for tiptap update events
     document.addEventListener('tiptap-update', handleTiptapUpdate as EventListener);
@@ -759,9 +603,9 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
       const activeTabId = (window as any).__banburyActiveAiTabId;
       if (assistantTabId && activeTabId === assistantTabId) {
         // This tab just became active, check text immediately with multiple attempts
-        setTimeout(checkForText, 0);
-        setTimeout(checkForText, 50);
-        setTimeout(checkForText, 150);
+        setTimeout(checkForTextHandler, 0);
+        setTimeout(checkForTextHandler, 50);
+        setTimeout(checkForTextHandler, 150);
       }
     };
 
@@ -775,12 +619,12 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         // Check if this is a new activation (tab just became active)
         if (lastActiveTabId !== activeTabId) {
           // Tab just became active, check immediately
-          checkForText();
-          setTimeout(checkForText, 50);
-          setTimeout(checkForText, 150);
+          checkForTextHandler();
+          setTimeout(checkForTextHandler, 50);
+          setTimeout(checkForTextHandler, 150);
         } else {
           // Tab is already active, just check normally
-          checkForText();
+          checkForTextHandler();
         }
         lastActiveTabId = activeTabId;
       } else {
@@ -797,9 +641,9 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
             entries.forEach((entry) => {
               if (entry.isIntersecting) {
                 // Tab became visible, check text immediately with multiple attempts
-                checkForText();
-                setTimeout(checkForText, 50);
-                setTimeout(checkForText, 150);
+                checkForTextHandler();
+                setTimeout(checkForTextHandler, 50);
+                setTimeout(checkForTextHandler, 150);
               }
             });
           },
@@ -828,9 +672,9 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
               // Check if 'hidden' class was removed (tab became visible)
               if (!target.classList.contains('hidden') && target.offsetParent !== null) {
                 // Tab became visible, check text immediately
-                setTimeout(checkForText, 0);
-                setTimeout(checkForText, 50);
-                setTimeout(checkForText, 150);
+                setTimeout(checkForTextHandler, 0);
+                setTimeout(checkForTextHandler, 50);
+                setTimeout(checkForTextHandler, 150);
               }
             }
           });
@@ -860,522 +704,81 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
         mutationObserver.disconnect();
       }
     };
-  }, [inputRef, assistantTabId]);
+  }, [inputRef, containerRef, setHasText, setDraftText, assistantTabId]);
 
   // Monitor container size and hide buttons when space is limited
   useEffect(() => {
     if (!containerRef.current || !buttonsRef.current) return
 
-    const checkButtonVisibility = () => {
-      const container = containerRef.current
-      const buttonsContainer = buttonsRef.current
-      if (!container || !buttonsContainer) return
-
-      const containerWidth = container.offsetWidth
-      if (containerWidth === 0) return // Container not ready yet
-      
-      const sendButtonWidth = 36 // h-7 w-7 = 28px + padding
-      const padding = 16 // p-2 = 8px on each side
-      const gap = 8 // gap-2 = 8px
-      
-      // Reserve space for send button and padding
-      const availableWidth = containerWidth - sendButtonWidth - padding * 2
-      if (availableWidth <= 0) {
-        // Not enough space for any buttons, hide all
-        setVisibleButtons({
-          model: false,
-          plus: false,
-          mic: false,
-          modeText: false,
-        })
-        setIsMeasuring(false)
-        isMeasuringRef.current = false
-        previousWidthRef.current = containerWidth
-        return
-      }
-      
-      // Function to measure buttons and determine visibility
-      const measureButtons = () => {
-        // Get all button elements in priority order (most important first)
-        const buttonElements = Array.from(buttonsContainer.children) as HTMLElement[]
-        if (buttonElements.length === 0) {
-          // If no buttons are rendered yet and we're measuring, retry
-          if (isMeasuringRef.current) {
-            setTimeout(measureButtons, 50)
-          }
-          return
-        }
-
-        let totalWidth = 0
-        const buttonKeys: Array<keyof typeof visibleButtons> = ['model', 'plus', 'mic']
-        const newVisibility: typeof visibleButtons = {
-          model: false,
-          plus: false,
-          mic: false,
-          modeText: false,
-        }
-
-        // Calculate which buttons fit, starting with highest priority
-        for (let i = 0; i < buttonElements.length && i < buttonKeys.length; i++) {
-          const button = buttonElements[i]
-          const buttonWidth = button.offsetWidth + gap
-          const key = buttonKeys[i]
-          
-          if (key && totalWidth + buttonWidth <= availableWidth) {
-            totalWidth += buttonWidth
-            newVisibility[key] = true
-          } else {
-            // Stop checking remaining buttons
-            break
-          }
-        }
-
-        // Set modeText to true only if all other buttons are visible (no overflow)
-        newVisibility.modeText = newVisibility.model && newVisibility.plus && newVisibility.mic
-
-        setVisibleButtons(newVisibility)
-        setIsMeasuring(false)
-        isMeasuringRef.current = false
-        previousWidthRef.current = containerWidth
-      }
-      
-      // If container got wider, temporarily enable measuring to show all buttons for measurement
-      const containerGotWider = containerWidth > previousWidthRef.current && previousWidthRef.current > 0
-      if (containerGotWider) {
-        setIsMeasuring(true)
-        isMeasuringRef.current = true
-        // Wait for DOM to update before measuring
-        setTimeout(measureButtons, 50)
-        return
-      }
-      
-      // Otherwise measure immediately
-      measureButtons()
+    const handleCheckButtonVisibility = () => {
+      checkButtonVisibility({
+        containerRef,
+        buttonsRef,
+        setVisibleButtons,
+        setIsMeasuring,
+        isMeasuringRef,
+        previousWidthRef,
+      })
     }
 
     // Use ResizeObserver to watch for container size changes
     const resizeObserver = new ResizeObserver(() => {
       // Small delay to ensure DOM has updated
-      setTimeout(checkButtonVisibility, 0)
+      setTimeout(handleCheckButtonVisibility, 0)
     })
 
     resizeObserver.observe(containerRef.current)
 
-    // Initial check after a brief delay to ensure all buttons are rendered
     const timeoutId = setTimeout(() => {
-      checkButtonVisibility()
+      handleCheckButtonVisibility()
     }, 100)
 
-    // Also check on window resize
-    window.addEventListener('resize', checkButtonVisibility)
+    window.addEventListener('resize', handleCheckButtonVisibility)
 
     return () => {
       clearTimeout(timeoutId)
       resizeObserver.disconnect()
-      window.removeEventListener('resize', checkButtonVisibility)
+      window.removeEventListener('resize', handleCheckButtonVisibility)
     }
   }, []);
 
   const handleSendFromButton = () => {
-    // Simply call the onSend function which handles document context
     onSend();
-  };
-
-  // Queue message from button click when agent is running
-  const handleQueueFromButton = () => {
-    // Get current text from editor
-    const proseMirror = document.querySelector('.ProseMirror');
-    let text = '';
-    if (proseMirror) {
-      const paragraphs = Array.from(proseMirror.querySelectorAll('p'));
-      if (paragraphs.length > 0) {
-        text = paragraphs.map((p) => (p.textContent || '').trimEnd()).join('\n\n');
-      } else {
-        text = proseMirror.textContent || '';
-      }
-    }
-    
-    if (text.trim() && onQueueMessage) {
-      onQueueMessage(text.trim());
-      // Clear the editor
-      window.dispatchEvent(new CustomEvent('composer-clear'));
-    }
   };
 
   return (
     <div ref={containerRef} className="bg-accent border-0 relative flex items-center justify-between rounded-b-md p-2 overflow-hidden gap-4">
       <div ref={buttonsRef} className="flex pl-4 items-center gap-2 min-w-0 flex-shrink overflow-x-auto scrollbar-hide flex-nowrap max-w-[calc(100%-120px)]">
         {/* Mode Selector - Agent/Plan/Ask */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="xs"
-              className="h-7 px-2 gap-1 hover:text-primary flex-shrink-0 whitespace-nowrap"
-              title="Mode"
-              aria-label="Mode"
-            >
-              {toolPreferences.ask_mode ? (
-                <Search height={14} width={14} strokeWidth={1.5} className="mr-1" />
-              ) : toolPreferences.plan_mode ? (
-                <ClipboardList height={14} width={14} strokeWidth={1.5} className="mr-1" />
-              ) : (
-                <Infinity height={14} width={14} strokeWidth={1.5} className="mr-1" />
-              )}
-              {visibleButtons.modeText && (
-                <Typography variant="small" className="text-xs font-medium">
-                  {toolPreferences.ask_mode ? "Ask" : toolPreferences.plan_mode ? "Plan" : "Agent"}
-                </Typography>
-              )}
-              <ChevronDown height={16} width={16} strokeWidth={1} />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="top"
-            align="start"
-            className="w-48 p-0 bg-popover text-popover-foreground border shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
-          >
-            <div className="p-1 flex flex-col">
-              {/* Agent Mode Option */}
-              <div
-                className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                onClick={() => {
-                  onUpdateToolPreferences({
-                    ...toolPreferences,
-                    plan_mode: false,
-                    ask_mode: false
-                  })
-                }}
-              >
-                <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                  {!toolPreferences.plan_mode && !toolPreferences.ask_mode && <Check className="size-4" />}
-                </span>
-                <Infinity height={16} width={16} strokeWidth={1.5} className="text-muted-foreground" />
-                <Typography variant="xs">Agent</Typography>
-              </div>
-              {/* Ask Mode Option */}
-              <div
-                className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                onClick={() => {
-                  onUpdateToolPreferences({
-                    ...toolPreferences,
-                    plan_mode: false,
-                    ask_mode: true
-                  })
-                }}
-              >
-                <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                  {toolPreferences.ask_mode && <Check className="size-4" />}
-                </span>
-                <Search height={16} width={16} strokeWidth={1.5} className="text-blue-500" />
-                <Typography variant="xs">Ask</Typography>
-              </div>
-              {/* Plan Mode Option */}
-              <div
-                className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                onClick={() => {
-                  onUpdateToolPreferences({
-                    ...toolPreferences,
-                    plan_mode: true,
-                    ask_mode: false
-                  })
-                }}
-              >
-                <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                  {toolPreferences.plan_mode && <Check className="size-4" />}
-                </span>
-                <ClipboardList height={16} width={16} strokeWidth={1.5} className="text-emerald-500" />
-                <Typography variant="xs">Plan</Typography>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-        {(isMeasuring || visibleButtons.model) && (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="primary"
-                size="xs"
-                className="h-7 px-2 gap-1 flex-shrink-0 whitespace-nowrap"
-                title="Model"
-                aria-label="Model"
-              >
-                <Typography variant="small" className="text-xs font-medium">
-                  {getModelDisplayName(toolPreferences.model_id || getDefaultModelForProvider(toolPreferences.model_provider))}
-                </Typography>
-                <ChevronDown height={16} width={16} strokeWidth={1} />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              side="top"
-              align="start"
-              className="w-56 p-0 bg-popover text-popover-foreground border shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 max-h-96 overflow-y-auto"
-            >
-              <div className="p-1 flex flex-col">
-                {AVAILABLE_MODELS.filter(m => {
-                  const visibleModels = toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS;
-                  return m.provider === "openai" && visibleModels.includes(m.id);
-                }).map(model => {
-                  const isSelected = (toolPreferences.model_id || getDefaultModelForProvider(toolPreferences.model_provider)) === model.id
-                  return (
-                    <div
-                      key={model.id}
-                      className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                      onClick={() => {
-                        const selectedModel = getModelById(model.id)
-                        if (selectedModel) {
-                          onUpdateToolPreferences({ 
-                            ...toolPreferences, 
-                            model_id: model.id,
-                            model_provider: selectedModel.provider 
-                          })
-                        }
-                      }}
-                    >
-                      <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                        {isSelected && <Check className="size-4" />}
-                      </span>
-                      <div className="flex items-center">
-                        <Typography variant="xs">{model.name}</Typography>
-                      </div>
-                    </div>
-                  )
-                })}
-                {AVAILABLE_MODELS.filter(m => {
-                  const visibleModels = toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS;
-                  return m.provider === "anthropic" && visibleModels.includes(m.id);
-                }).map(model => {
-                  const isSelected = (toolPreferences.model_id || getDefaultModelForProvider(toolPreferences.model_provider)) === model.id
-                  return (
-                    <div
-                      key={model.id}
-                      className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                      onClick={() => {
-                        const selectedModel = getModelById(model.id)
-                        if (selectedModel) {
-                          onUpdateToolPreferences({ 
-                            ...toolPreferences, 
-                            model_id: model.id,
-                            model_provider: selectedModel.provider 
-                          })
-                        }
-                      }}
-                    >
-                      <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                        {isSelected && <Check className="size-4" />}
-                      </span>
-                      <div className="flex items-center">
-                        <Typography variant="xs">{model.name}</Typography>
-                      </div>
-                    </div>
-                  )
-                })}
-                {AVAILABLE_MODELS.filter(m => {
-                  const visibleModels = toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS;
-                  return m.provider === "google" && visibleModels.includes(m.id);
-                }).map(model => {
-                  const isSelected = (toolPreferences.model_id || getDefaultModelForProvider(toolPreferences.model_provider)) === model.id
-                  return (
-                    <div
-                      key={model.id}
-                      className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                      onClick={() => {
-                        const selectedModel = getModelById(model.id)
-                        if (selectedModel) {
-                          onUpdateToolPreferences({ 
-                            ...toolPreferences, 
-                            model_id: model.id,
-                            model_provider: selectedModel.provider 
-                          })
-                        }
-                      }}
-                    >
-                      <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                        {isSelected && <Check className="size-4" />}
-                      </span>
-                      <div className="flex items-center">
-                        <Typography variant="xs">{model.name}</Typography>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </PopoverContent>
-          </Popover>
-        )}
-        {(isMeasuring || visibleButtons.plus) && (
-          <DropdownMenu open={isPlusMenuOpen} onOpenChange={setIsPlusMenuOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="primary"
-                size="xs"
-                className="h-7 w-7 flex-shrink-0"
-                title="More actions"
-                aria-label="More actions"
-              >
-                <Plus height={16} width={16} strokeWidth={1} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              side="top" 
-              align="start"
-              className="w-48"
-            >
-              {/* Attach File Submenu */}
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <Paperclip className="mr-2 h-4 w-4" />
-                  <Typography variant="xs">Attach file</Typography>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="p-0">
-                  <FileAttachmentPicker
-                    onFileAttach={(file) => {
-                      onFileAttach(file)
-                      setIsPlusMenuOpen(false)
-                    }}
-                    userInfo={userInfo}
-                    isOpen={isPlusMenuOpen}
-                  />
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-
-              {/* Upload Local File */}
-              <DropdownMenuItem
-                onClick={() => {
-                  handleLocalFileUpload({
-                    userInfo,
-                    onFileAttach,
-                    onAttachmentPayload,
-                    onError: (error) => console.error('Upload error:', error),
-                    onSuccess: () => {}
-                  })
-                  setIsPlusMenuOpen(false)
-                }}
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                <Typography variant="xs">Upload file</Typography>
-              </DropdownMenuItem>
-
-              {/* Image Model Submenu */}
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <Image className="mr-2 h-4 w-4" aria-label="Image generation model icon" />
-                  <Typography variant="xs">Image model</Typography>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="w-56 p-1">
-                  {IMAGE_GENERATION_MODELS.map((model) => {
-                    const isSelected = (toolPreferences.image_generation_model || 'dall-e-3') === model.id
-                    return (
-                      <div
-                        key={model.id}
-                        className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                        onClick={() => {
-                          onUpdateToolPreferences(setImageGenerationModel(toolPreferences, model.id))
-                        }}
-                      >
-                        <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                          {isSelected && <Check className="size-4" />}
-                        </span>
-                        <div className="flex flex-col">
-                          <Typography variant="xs" className="font-medium">{model.name}</Typography>
-                          <Typography variant="xs" className="text-xs text-muted-foreground">{model.description}</Typography>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-
-              {/* Video Model Submenu */}
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <Video className="mr-2 h-4 w-4" />
-                  <Typography variant="xs">Video model</Typography>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="w-56 p-1">
-                  {VIDEO_GENERATION_MODELS.map((model) => {
-                    const isSelected = (toolPreferences.video_generation_model || 'sora-2') === model.id
-                    return (
-                      <div
-                        key={model.id}
-                        className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                        onClick={() => {
-                          onUpdateToolPreferences(setVideoGenerationModel(toolPreferences, model.id))
-                        }}
-                      >
-                        <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                          {isSelected && <Check className="size-4" />}
-                        </span>
-                        <div className="flex flex-col">
-                          <Typography variant="xs" className="font-medium">{model.name}</Typography>
-                          <Typography variant="xs" className="text-xs text-muted-foreground">{model.description}</Typography>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-
-              <DropdownMenuSeparator />
-
-              {/* Tools Submenu */}
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <Wrench className="mr-2 h-4 w-4" />
-                  <Typography variant="xs">Tools</Typography>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="w-72 p-1 max-h-96 overflow-y-auto">
-                  {toolConfigs.map((tool) => {
-                    const Icon = tool.icon
-                    const isEnabled = (toolPreferences[tool.key] as boolean) ?? tool.defaultEnabled
-                    
-                    return (
-                      <div
-                        key={tool.key}
-                        className="relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                        onClick={() => {
-                          const toolKey = tool.key as keyof ComposerToolPreferences
-                          if (typeof toolPreferences[toolKey] === 'boolean') {
-                            onUpdateToolPreferences(
-                              toggleToolPreference(toolPreferences, toolKey, isEnabled)
-                            )
-                          }
-                        }}
-                      >
-                        <span className="absolute right-2 flex size-3.5 items-center justify-center">
-                          {isEnabled && <Check className="size-4" />}
-                        </span>
-                        <div className="flex items-center">
-                          <Icon size={16} strokeWidth={1} className={`mr-2 ${tool.iconColor}`} />
-                          <Typography variant="xs" className="text-xs font-medium">
-                            {tool.label}
-                          </Typography>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-        {(isMeasuring || visibleButtons.mic) && (
-          <Button
-            variant="primary"
-            size="xs"
-            className={`h-7 w-7 flex-shrink-0 ${
-              isRecording
-                ? "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:text-white dark:hover:bg-red-700"
-                : ""
-            }`}
-            onClick={isRecording ? stopRecording : startRecording}
-            title={isRecording ? "Stop recording" : "Start voice input"}
-            aria-label={isRecording ? "Stop recording" : "Start voice input"}
-            disabled={!(typeof window !== 'undefined' && (((window as any).SpeechRecognition) || ((window as any).webkitSpeechRecognition)))}
-          >
-            {isRecording ? <MicOff height={16} width={16} strokeWidth={1} /> : <Mic height={16} width={16} strokeWidth={1} />}
-          </Button>
-        )}
+        <ModeSelector
+          toolPreferences={toolPreferences}
+          onUpdateToolPreferences={onUpdateToolPreferences}
+          showText={visibleButtons.modeText}
+        />
+        <ModelSelector
+          toolPreferences={toolPreferences}
+          onUpdateToolPreferences={onUpdateToolPreferences}
+          isMeasuring={isMeasuring}
+          isVisible={visibleButtons.model}
+        />
+        <PlusMenu
+          isMeasuring={isMeasuring}
+          isVisible={visibleButtons.plus}
+          isOpen={isPlusMenuOpen}
+          onOpenChange={setIsPlusMenuOpen}
+          userInfo={userInfo}
+          toolPreferences={toolPreferences}
+          onUpdateToolPreferences={onUpdateToolPreferences}
+          onFileAttach={onFileAttach}
+          onAttachmentPayload={onAttachmentPayload}
+        />
+        <VoiceRecordingButton
+          isRecording={isRecording}
+          onStartRecording={handleStartRecording}
+          onStopRecording={stopRecording}
+          isVisible={visibleButtons.mic}
+          isMeasuring={isMeasuring}
+        />
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0">
@@ -1390,66 +793,13 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           />
         </TooltipProvider>
 
-        <ThreadPrimitive.If running={false}>
-          <Button
-            ref={sendButtonRef}
-            type="button"
-            variant="primary"
-            size="xs"
-            className={`h-7 w-7 flex-shrink-0 ${
-              hasText
-                ? 'cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100'
-                : 'opacity-50 bg-zinc-300 dark:bg-zinc-600 text-zinc-500 dark:text-zinc-400 cursor-not-allowed'
-            }`}
-            title="Send"
-            aria-label="Send message"
-            onClick={handleSendFromButton}
-            disabled={!hasText}
-          >
-            <ChevronRightIcon height={16} width={16} strokeWidth={1} />
-          </Button>
-        </ThreadPrimitive.If>
-
-        <ThreadPrimitive.If running>
-          <div className="flex items-center gap-2 flex-shrink-0 flex-nowrap">
-            {/* Send Next button - shown when agent is running and there are queued messages */}
-            {hasQueuedMessages && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="primary"
-                      size="xs"
-                      title="Send next queued message (interrupts current)"
-                      aria-label="Send next queued message"
-                      className="h-7 px-2 gap-1 cursor-pointer bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 flex-shrink-0 whitespace-nowrap"
-                      onClick={onSendNextQueued}
-                    >
-                      <CornerDownLeft height={14} width={14} strokeWidth={1.5} />
-                      <Typography variant="xs" className="font-medium">Send Next</Typography>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    <Typography variant="xs">Press Enter to interrupt and send next queued message</Typography>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-            <ComposerPrimitive.Cancel asChild>
-              <Button
-                type="button"
-                variant="primary"
-                size="xs"
-                title="Stop generating"
-                aria-label="Stop generating"
-                className="h-7 w-7 cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 flex-shrink-0" 
-              >
-                <Square height={14} width={14} strokeWidth={1} />
-              </Button>
-            </ComposerPrimitive.Cancel>
-          </div>
-        </ThreadPrimitive.If>
+        <ComposerSendButton
+          sendButtonRef={sendButtonRef}
+          hasText={hasText}
+          onSend={handleSendFromButton}
+          hasQueuedMessages={hasQueuedMessages}
+          onSendNextQueued={onSendNextQueued}
+        />
       </div>
     </div>
   );

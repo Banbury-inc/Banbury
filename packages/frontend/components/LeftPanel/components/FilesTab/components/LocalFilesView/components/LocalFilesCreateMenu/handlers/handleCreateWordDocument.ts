@@ -1,4 +1,4 @@
-import { CONFIG } from '../../../../../config/config';
+import { CONFIG } from '../../../../../../../../../config/config';
 
 interface UserInfo {
   username: string;
@@ -60,66 +60,58 @@ const uploadToS3 = async (
   return await response.json();
 };
 
-// Handle spreadsheet creation
-export const handleCreateSpreadsheet = async (
+// Handle Word document creation
+export const handleCreateWordDocument = async (
   userInfo: UserInfo | null,
   toast: ToastFunction,
   triggerSidebarRefresh: () => void,
-  spreadsheetName?: string
+  documentName?: string
 ) => {
   if (!userInfo?.username) return;
 
   try {
-    // Create simple spreadsheet data with headers and sample data
-    const data = [
-      ['', '', '', ''],
-      ['', '', '', ''],
-    ];
+    // Create simple document content
+    const content = `New Document
+
+Welcome to your new document!`;
+
 
     // Generate filename - use provided name or default
-    const fileName = spreadsheetName 
-      ? `${spreadsheetName}.xlsx`
-      : `New Spreadsheet ${new Date().toISOString().split('T')[0]}.xlsx`;
+    const fileName = documentName 
+      ? `${documentName}.docx`
+      : `New Document ${new Date().toISOString().split('T')[0]}.docx`;
 
-    // Create workbook and worksheet using ExcelJS (same as the loader expects)
-    const ExcelJSImport = await import('exceljs');
-    const ExcelJS = (ExcelJSImport as any).default || ExcelJSImport;
+    // Create .docx using docx library
+    const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import('docx');
     
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Sheet1');
-    
-    // Add the data to the worksheet
-    data.forEach((row, rowIndex) => {
-      row.forEach((cell, colIndex) => {
-        const excelCell = worksheet.getCell(rowIndex + 1, colIndex + 1);
-        excelCell.value = cell;
-      });
-    });
-    
-    // Auto-fit columns
-    worksheet.columns.forEach((column: any) => {
-      if (column && column.eachCell) {
-        let maxLength = 0;
-        column.eachCell({ includeEmpty: false }, (cell: any) => {
-          const columnLength = cell.value ? String(cell.value).length : 0;
-          if (columnLength > maxLength) {
-            maxLength = columnLength;
-          }
-        });
-        column.width = Math.min(maxLength + 2, 50); // Set max width to 50
-      }
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children: [
+          new Paragraph({
+            text: documentName || "New Document",
+            heading: HeadingLevel.HEADING_1,
+          }),
+          ...content.split('\n').slice(2).map(line => 
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: line,
+                  break: 1,
+                }),
+              ],
+            })
+          )
+        ],
+      }],
     });
 
-    // Generate XLSX buffer and create blob
-    const buffer = await workbook.xlsx.writeBuffer();
-    
-    const blob = new Blob([buffer], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-    });
+    // Generate the document as a blob
+    const blob = await Packer.toBlob(doc);
 
-    // Upload spreadsheet using the uploadToS3 function
+    // Upload document using the uploadToS3 function
     
-    const uploadResult = await uploadToS3(
+    await uploadToS3(
       blob,
       userInfo.username,
       fileName,
@@ -128,16 +120,13 @@ export const handleCreateSpreadsheet = async (
     
     // Show success toast
     toast({
-      title: "Spreadsheet created successfully",
+      title: "Document created successfully",
       description: `${fileName} has been created and uploaded.`,
       variant: "success",
     });
     
-    // Add a small delay before refreshing to ensure S3 has processed the file
-    setTimeout(() => {
-      // Trigger sidebar refresh after successful spreadsheet creation
-      triggerSidebarRefresh();
-    }, 1000);
+    // Trigger sidebar refresh after successful document creation
+    triggerSidebarRefresh();
   } catch (error) {
     // Check if it's a storage limit error
     if (error instanceof Error && error.message.includes('STORAGE_LIMIT_EXCEEDED')) {
@@ -150,7 +139,7 @@ export const handleCreateSpreadsheet = async (
     } else {
       // Show generic error toast
       toast({
-        title: "Failed to create spreadsheet",
+        title: "Failed to create document",
         description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });

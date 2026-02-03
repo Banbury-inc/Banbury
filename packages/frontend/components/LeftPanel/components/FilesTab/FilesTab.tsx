@@ -2,15 +2,15 @@ import {
   RefreshCw,
 } from "lucide-react"
 import { useState, useRef, useCallback } from 'react'
-import { LocalFilesView, LocalFilesViewRef } from "./components/LocalFilesView"
-import { GoogleDriveView } from "./components/GoogleDriveView"
-import { OneDriveView } from "./components/OneDriveView"
+import { LocalFilesView, LocalFilesViewRef } from "./components/LocalFilesView/LocalFilesView"
+import { GoogleDriveView } from "./components/GoogleDriveView/GoogleDriveView"
+import { OneDriveView } from "./components/OneDriveView/OneDriveView"
 import { FileProviderSelect } from "./components/FileProviderSelect"
 import { ViewModeSelect } from "./components/ViewModeSelect"
 import { FileTypeFilter } from "./components/FileTypeFilter"
-import { LocalFilesCreateMenu } from "./components/LocalFilesCreateMenu"
-import { GoogleDriveCreateMenu } from "./components/GoogleDriveCreateMenu"
-import { OneDriveCreateMenu } from "./components/OneDriveCreateMenu"
+import { LocalFilesCreateMenu } from "./components/LocalFilesView/components/LocalFilesCreateMenu/LocalFilesCreateMenu"
+import { GoogleDriveCreateMenu } from "./components/GoogleDriveView/components/GoogleDriveCreateMenu"
+import { OneDriveCreateMenu } from "./components/OneDriveView/components/OneDriveCreateMenu"
 import { Button } from "../../../common/ui/button"
 import { FileSystemItem } from "../../../../utils/fileTreeUtils"
 import { handleRefreshFiles } from "./handlers/handleRefreshFiles"
@@ -51,7 +51,6 @@ export function FilesTab({
   onFolderDeleted,
   triggerRootFolderCreation,
   onCreateFolder,
-  onOpenFilesApp,
   activePanelId,
   panelLayout,
   setPanelLayout,

@@ -1,11 +1,5 @@
 import { 
   RefreshCw, 
-  FolderPlus, 
-  FileText,
-  FileSpreadsheet,
-  FilePlus,
-  Plus,
-  Network,
   Folder,
   Clock,
   Star,
@@ -17,9 +11,9 @@ import {
   HardDrive,
 } from "lucide-react"
 import { useState, useRef } from 'react'
-import { LocalFilesView } from "../../LeftPanel/components/FilesTab/components/LocalFilesView"
-import { GoogleDriveView } from "../../LeftPanel/components/FilesTab/components/GoogleDriveView"
-import { OneDriveView } from "../../LeftPanel/components/FilesTab/components/OneDriveView"
+import { LocalFilesView } from "../../LeftPanel/components/FilesTab/components/LocalFilesView/LocalFilesView"
+import { GoogleDriveView } from "../../LeftPanel/components/FilesTab/components/GoogleDriveView/GoogleDriveView"
+import { OneDriveView } from "../../LeftPanel/components/FilesTab/components/OneDriveView/OneDriveView"
 import { GoogleDriveIcon, OneDriveIcon } from "../../icons"
 import { Button } from "../../common/ui/button"
 import { FileSystemItem } from "../../../utils/fileTreeUtils"

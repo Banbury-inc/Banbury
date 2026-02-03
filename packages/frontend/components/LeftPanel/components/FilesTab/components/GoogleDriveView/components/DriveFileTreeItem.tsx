@@ -14,20 +14,20 @@ import {
   ListChecks,
 } from "lucide-react"
 import { useState, useEffect, useRef } from 'react'
-import { DriveFile } from "../../../../../../backend/api/drive/drive"
-import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
-import { Typography } from "../../../../common/ui/typography"
-import { useToast } from "../../../../common/ui/use-toast"
-import { handleCopyDriveToLocal } from "../handlers/handleCopyDriveToLocal"
-import { CloudFileContextMenu } from "./CloudFileContextMenu"
+import { DriveFile } from "../../../../../../../../backend/api/drive/drive"
+import { FileSystemItem } from "../../../../../../../utils/fileTreeUtils"
+import { Typography } from "../../../../../../common/ui/typography"
+import { useToast } from "../../../../../../common/ui/use-toast"
+import { handleCopyDriveToLocal } from "../../FileContextMenu/handlers/handleCopyDriveToLocal"
+import { CloudFileContextMenu } from "../../FileContextMenu/CloudFileContextMenu"
 import { 
   handleDriveRename, 
   handleDriveDelete, 
   handleDriveStar, 
   handleDriveUnstar, 
   handleDriveDownload 
-} from "../handlers/handleDriveFileActions"
-import { getColoredFileIcons } from "../../../../modals/settings-tabs/handlers/appearanceHandlers"
+} from "../../../handlers/handleDriveFileActions"
+import { getColoredFileIcons } from "../../../../../../modals/settings-tabs/handlers/appearanceHandlers"
 
 interface DriveFileTreeItemProps {
   file: DriveFile

@@ -1,35 +1,35 @@
-import { ApiService } from "../../../../../../backend/api/apiService"
+import { ApiService } from "../../../../../../../../backend/api/apiService"
 
-interface CopyLocalToOneDriveParams {
-  s3FileId: string
+interface CopyDriveToLocalParams {
+  driveFileId: string
   fileName: string
-  onSuccess?: (onedriveItemId: string, onedriveFileName: string) => void
+  onSuccess?: (localFileId: string, localPath: string) => void
   onError?: (error: string) => void
   showToast?: (options: { title: string; description?: string; variant?: 'default' | 'destructive' | 'success' }) => void
 }
 
-export async function handleCopyLocalToOneDrive({
-  s3FileId,
+export async function handleCopyDriveToLocal({
+  driveFileId,
   fileName,
   onSuccess,
   onError,
   showToast
-}: CopyLocalToOneDriveParams): Promise<boolean> {
+}: CopyDriveToLocalParams): Promise<boolean> {
   try {
     showToast?.({
       title: 'Copying file...',
-      description: `Copying "${fileName}" to OneDrive`,
+      description: `Copying "${fileName}" to Local storage`,
     })
 
-    const result = await ApiService.Files.copyLocalFileToOneDrive(s3FileId)
+    const result = await ApiService.Files.copyDriveFileToLocal(driveFileId)
 
     if (result.success) {
       showToast?.({
         title: 'File copied successfully',
-        description: `"${result.onedrive_file_name || fileName}" has been copied to OneDrive`,
+        description: `"${result.file_name || fileName}" has been copied to Local storage`,
         variant: 'success'
       })
-      onSuccess?.(result.onedrive_item_id || '', result.onedrive_file_name || fileName)
+      onSuccess?.(result.local_file_id || '', result.local_path || '')
       return true
     } else {
       throw new Error('Copy operation failed')

@@ -184,7 +184,6 @@ const Workspaces = (): React.ReactNode => {
   dragStateRef.current = dragState;
 
 
-
   // File type checking functions are imported from fileTypeUtils
 
   const loadConversationsCallback = async () => {

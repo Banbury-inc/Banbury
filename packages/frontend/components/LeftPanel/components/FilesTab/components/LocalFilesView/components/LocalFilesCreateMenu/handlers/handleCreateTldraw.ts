@@ -1,5 +1,5 @@
-import { ApiService } from '../../../../../../backend/api/apiService';
-import { UserInfo } from '../../../../../pages/Workspaces/types';
+import { ApiService } from '../../../../../../../../../../backend/api/apiService';
+import { UserInfo } from '../../../../../../../../../pages/Workspaces/types';
 
 export const handleCreateTldraw = async (
   userInfo: UserInfo | null | undefined,

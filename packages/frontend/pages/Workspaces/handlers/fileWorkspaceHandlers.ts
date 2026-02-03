@@ -9,7 +9,7 @@ import { handleFolderRenamed as handleFolderRenamedHandler } from '../../../comp
 import { handleCreateWordDocument } from './handleCreateWordDocument'
 import { handleCreateSpreadsheet } from '../../../components/LeftPanel/components/FilesTab/handlers/handleCreateSpreadsheet'
 import { handleCreateNotebook } from '../../../components/LeftPanel/components/FilesTab/handlers/handleCreateNotebook'
-import { handleCreateDrawio } from '../../../components/LeftPanel/components/FilesTab/handlers/handleCreateDrawio'
+import { handleCreateDrawio } from '../../../components/LeftPanel/components/FilesTab/components/LocalFilesView/components/LocalFilesCreateMenu/handlers/handleCreateDrawio'
 import { handleCreateTldraw } from '../../../components/LeftPanel/components/FilesTab/handlers/handleCreateTldraw'
 import { handleCreatePowerpoint } from './handleCreatePowerpoint'
 import { handleGenerateImage } from './handleGenerateImage'

@@ -8,9 +8,9 @@ import {
   Folder,
   FileBarChart,
 } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger } from "../../../../common/ui/select"
-import { Typography } from "../../../../common/ui/typography"
-import { LocalFilesViewRef } from "./LocalFilesView"
+import { Select, SelectContent, SelectItem, SelectTrigger } from "../../../../../../../common/ui/select"
+import { Typography } from "../../../../../../../common/ui/typography"
+import { LocalFilesViewRef } from "../../../LocalFilesView/LocalFilesView"
 
 interface LocalFilesCreateMenuProps {
   onFileUpload: () => void

@@ -1,4 +1,4 @@
-import { CONFIG } from '../../../../../config/config';
+import { CONFIG } from '../../../../../../../../../config/config';
 
 interface UserInfo {
   username: string;
@@ -60,58 +60,66 @@ const uploadToS3 = async (
   return await response.json();
 };
 
-// Handle Word document creation
-export const handleCreateWordDocument = async (
+// Handle spreadsheet creation
+export const handleCreateSpreadsheet = async (
   userInfo: UserInfo | null,
   toast: ToastFunction,
   triggerSidebarRefresh: () => void,
-  documentName?: string
+  spreadsheetName?: string
 ) => {
   if (!userInfo?.username) return;
 
   try {
-    // Create simple document content
-    const content = `New Document
-
-Welcome to your new document!`;
-
+    // Create simple spreadsheet data with headers and sample data
+    const data = [
+      ['', '', '', ''],
+      ['', '', '', ''],
+    ];
 
     // Generate filename - use provided name or default
-    const fileName = documentName 
-      ? `${documentName}.docx`
-      : `New Document ${new Date().toISOString().split('T')[0]}.docx`;
+    const fileName = spreadsheetName 
+      ? `${spreadsheetName}.xlsx`
+      : `New Spreadsheet ${new Date().toISOString().split('T')[0]}.xlsx`;
 
-    // Create .docx using docx library
-    const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import('docx');
+    // Create workbook and worksheet using ExcelJS (same as the loader expects)
+    const ExcelJSImport = await import('exceljs');
+    const ExcelJS = (ExcelJSImport as any).default || ExcelJSImport;
     
-    const doc = new Document({
-      sections: [{
-        properties: {},
-        children: [
-          new Paragraph({
-            text: documentName || "New Document",
-            heading: HeadingLevel.HEADING_1,
-          }),
-          ...content.split('\n').slice(2).map(line => 
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: line,
-                  break: 1,
-                }),
-              ],
-            })
-          )
-        ],
-      }],
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Sheet1');
+    
+    // Add the data to the worksheet
+    data.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        const excelCell = worksheet.getCell(rowIndex + 1, colIndex + 1);
+        excelCell.value = cell;
+      });
+    });
+    
+    // Auto-fit columns
+    worksheet.columns.forEach((column: any) => {
+      if (column && column.eachCell) {
+        let maxLength = 0;
+        column.eachCell({ includeEmpty: false }, (cell: any) => {
+          const columnLength = cell.value ? String(cell.value).length : 0;
+          if (columnLength > maxLength) {
+            maxLength = columnLength;
+          }
+        });
+        column.width = Math.min(maxLength + 2, 50); // Set max width to 50
+      }
     });
 
-    // Generate the document as a blob
-    const blob = await Packer.toBlob(doc);
-
-    // Upload document using the uploadToS3 function
+    // Generate XLSX buffer and create blob
+    const buffer = await workbook.xlsx.writeBuffer();
     
-    await uploadToS3(
+    const blob = new Blob([buffer], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+
+    // Upload spreadsheet using the uploadToS3 function
+    
+    const uploadResult = await uploadToS3(
       blob,
       userInfo.username,
       fileName,
@@ -120,13 +128,16 @@ Welcome to your new document!`;
     
     // Show success toast
     toast({
-      title: "Document created successfully",
+      title: "Spreadsheet created successfully",
       description: `${fileName} has been created and uploaded.`,
       variant: "success",
     });
     
-    // Trigger sidebar refresh after successful document creation
-    triggerSidebarRefresh();
+    // Add a small delay before refreshing to ensure S3 has processed the file
+    setTimeout(() => {
+      // Trigger sidebar refresh after successful spreadsheet creation
+      triggerSidebarRefresh();
+    }, 1000);
   } catch (error) {
     // Check if it's a storage limit error
     if (error instanceof Error && error.message.includes('STORAGE_LIMIT_EXCEEDED')) {
@@ -139,7 +150,7 @@ Welcome to your new document!`;
     } else {
       // Show generic error toast
       toast({
-        title: "Failed to create document",
+        title: "Failed to create spreadsheet",
         description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });

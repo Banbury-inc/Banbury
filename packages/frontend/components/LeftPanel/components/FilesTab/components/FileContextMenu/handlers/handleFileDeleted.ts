@@ -1,6 +1,6 @@
 import React from 'react';
-import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import type { PanelGroup } from '../types';
+import { FileSystemItem } from '../../../../../../../utils/fileTreeUtils';
+import type { PanelGroup } from '../../../../../../../pages/Workspaces/types';
 
 export const handleFileDeleted = <T extends PanelGroup>(
   fileId: string,

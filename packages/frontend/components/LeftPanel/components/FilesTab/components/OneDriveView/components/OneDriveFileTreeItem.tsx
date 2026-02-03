@@ -14,20 +14,20 @@ import {
   ListChecks,
 } from "lucide-react"
 import { useState, useEffect, useRef } from 'react'
-import { OneDriveFile } from "../../../../../../backend/api/onedrive/onedrive"
-import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
-import { Typography } from "../../../../common/ui/typography"
-import { useToast } from "../../../../common/ui/use-toast"
-import { handleCopyOneDriveToLocal } from "../handlers/handleCopyOneDriveToLocal"
-import { CloudFileContextMenu } from "./CloudFileContextMenu"
+import { OneDriveFile } from "../../../../../../../../backend/api/onedrive/onedrive"
+import { FileSystemItem } from "../../../../../../../utils/fileTreeUtils"
+import { Typography } from "../../../../../../common/ui/typography"
+import { useToast } from "../../../../../../common/ui/use-toast"
+import { handleCopyOneDriveToLocal } from "../../FileContextMenu/handlers/handleCopyOneDriveToLocal"
+import { CloudFileContextMenu } from "../../FileContextMenu/CloudFileContextMenu"
 import { 
   handleOneDriveRename, 
   handleOneDriveDelete, 
   handleOneDriveAddFavorite, 
   handleOneDriveRemoveFavorite, 
   handleOneDriveDownload 
-} from "../handlers/handleOneDriveFileActions"
-import { getColoredFileIcons } from "../../../../modals/settings-tabs/handlers/appearanceHandlers"
+} from "../../../handlers/handleOneDriveFileActions"
+import { getColoredFileIcons } from "../../../../../../modals/settings-tabs/handlers/appearanceHandlers"
 
 interface OneDriveFileTreeItemProps {
   file: OneDriveFile

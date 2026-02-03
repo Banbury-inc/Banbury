@@ -1,19 +1,19 @@
 import { RefreshCw, Folder, FileText, FileSpreadsheet, FileBarChart, FolderPlus, Clock, Star, Trash2 } from "lucide-react"
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { DriveFileTreeItem } from "./DriveFileTreeItem"
-import { Button } from "../../../../common/ui/button"
-import { DriveFile } from "../../../../../../backend/api/drive/drive"
-import { ApiService } from "../../../../../../backend/api/apiService"
-import { Typography } from "../../../../common/ui/typography"
-import { handleFetchDriveFiles, DriveViewMode } from "../handlers/handleFetchDriveFiles"
-import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
-import { filterDriveFiles } from "../handlers/handleFileTypeFilter"
+import { DriveFileTreeItem } from "./components/DriveFileTreeItem"
+import { Button } from "../../../../../common/ui/button"
+import { DriveFile } from "../../../../../../../backend/api/drive/drive"
+import { ApiService } from "../../../../../../../backend/api/apiService"
+import { Typography } from "../../../../../common/ui/typography"
+import { handleFetchDriveFiles, DriveViewMode } from "../../handlers/handleFetchDriveFiles"
+import { FileSystemItem } from "../../../../../../utils/fileTreeUtils"
+import { filterDriveFiles } from "../../handlers/handleFileTypeFilter"
 import { 
   handleCreateDriveDocumentSubmit,
   handleCreateDriveSpreadsheetSubmit,
   handleCreateDrivePresentationSubmit,
   DriveFileCreationState
-} from "../handlers/handleCreateDriveFile"
+} from "../../handlers/handleCreateDriveFile"
 
 interface GoogleDriveViewProps {
   viewMode?: DriveViewMode
@@ -342,7 +342,7 @@ export function GoogleDriveView({
     setDriveFiles(prev => prev.filter(f => f.id !== fileId))
     setDriveFolderContents(prev => {
       const newMap = new Map(prev)
-      for (const [folderId, files] of newMap) {
+      for (const [folderId, files] of Array.from(newMap.entries())) {
         newMap.set(folderId, files.filter(f => f.id !== fileId))
       }
       return newMap
@@ -354,7 +354,7 @@ export function GoogleDriveView({
     setDriveFiles(prev => prev.map(f => f.id === fileId ? { ...f, name: newName } : f))
     setDriveFolderContents(prev => {
       const newMap = new Map(prev)
-      for (const [folderId, files] of newMap) {
+      for (const [folderId, files] of Array.from(newMap.entries())) {
         newMap.set(folderId, files.map(f => f.id === fileId ? { ...f, name: newName } : f))
       }
       return newMap
@@ -366,7 +366,7 @@ export function GoogleDriveView({
     setDriveFiles(prev => prev.map(f => f.id === fileId ? { ...f, starred } : f))
     setDriveFolderContents(prev => {
       const newMap = new Map(prev)
-      for (const [folderId, files] of newMap) {
+      for (const [folderId, files] of Array.from(newMap.entries())) {
         newMap.set(folderId, files.map(f => f.id === fileId ? { ...f, starred } : f))
       }
       return newMap

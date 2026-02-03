@@ -4,8 +4,8 @@ import {
   FileSpreadsheet,
   FileBarChart,
 } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger } from "../../../../common/ui/select"
-import { Typography } from "../../../../common/ui/typography"
+import { Select, SelectContent, SelectItem, SelectTrigger } from "../../../../../../common/ui/select"
+import { Typography } from "../../../../../../common/ui/typography"
 
 interface GoogleDriveCreateMenuProps {
   onCreateDocument: () => void
