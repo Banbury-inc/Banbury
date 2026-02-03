@@ -3,8 +3,8 @@ import type { Meta, StoryObj } from "@storybook/react"
 import { Thread } from "frontend/components/RightPanel/composer/thread/thread"
 import { AssistantRuntimeProvider, ChatModelRunOptions, useLocalRuntime } from "@assistant-ui/react"
 import { fn } from "@storybook/test"
-import { TooltipProvider } from "frontend/components/ui/tooltip"
-import { Toaster } from "frontend/components/ui/toaster"
+import { TooltipProvider } from "@/components/common/ui/tooltip"
+import { Toaster } from "@/components/common/ui/toaster"
 
 // Mock runtime for AssistantUI with pre-populated messages
 // Using the event-based message loading approach that the Thread component supports

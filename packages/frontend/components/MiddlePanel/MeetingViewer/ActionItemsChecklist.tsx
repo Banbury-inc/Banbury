@@ -1,6 +1,6 @@
 import { ActionItem } from '../../../types/meeting-types'
-import { Checkbox } from '../../ui/checkbox'
-import { Typography } from '../../ui/typography'
+import { Checkbox } from '../../common/ui/checkbox'
+import { Typography } from '../../common/ui/typography'
 import { cn } from '../../../utils'
 
 interface ActionItemsChecklistProps {

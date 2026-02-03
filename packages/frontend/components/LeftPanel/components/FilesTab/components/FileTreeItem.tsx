@@ -21,14 +21,14 @@ import {
 } from "lucide-react"
 import { useState, useEffect, useRef } from 'react'
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
-import { Typography } from "../../../../ui/typography"
+import { Typography } from "../../../../common/ui/typography"
 import { ApiService } from "../../../../../../backend/api/apiService"
-import { useToast } from "../../../../ui/use-toast"
-import { handleCopyLocalToDrive } from "../handlers/handleCopyLocalToDrive"
-import { handleCopyLocalToOneDrive } from "../handlers/handleCopyLocalToOneDrive"
+import { useToast } from "../../../../common/ui/use-toast"
+import { handleCopyLocalToDrive } from "./FileContextMenu/handlers/handleCopyLocalToDrive"
+import { handleCopyLocalToOneDrive } from "./FileContextMenu/handlers/handleCopyLocalToOneDrive"
 import { handleLocalFileDownload } from "../handlers/handleLocalFileDownload"
-import { handleSaveAsPDF } from "../handlers/handleSaveAsPDF"
-import { CloudFileContextMenu } from "./CloudFileContextMenu"
+import { handleSaveAsPDF } from "./FileContextMenu/handlers/handleSaveAsPDF"
+import { CloudFileContextMenu } from "./FileContextMenu/CloudFileContextMenu"
 import { getColoredFileIcons } from "../../../../modals/settings-tabs/handlers/appearanceHandlers"
 
 // Drag and drop state interfaces

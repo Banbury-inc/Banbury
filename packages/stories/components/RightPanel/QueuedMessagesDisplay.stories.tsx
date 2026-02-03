@@ -2,7 +2,7 @@ import React from "react"
 import type { Meta, StoryObj } from "@storybook/react"
 import { fn } from "@storybook/test"
 import { QueuedMessagesDisplay, type QueuedMessage } from "frontend/components/RightPanel/composer/components/queued-messages-display"
-import { TooltipProvider } from "frontend/components/ui/tooltip"
+import { TooltipProvider } from "@/components/common/ui/tooltip"
 
 // Wrapper for stories
 function QueuedMessagesWrapper({ children }: { children: React.ReactNode }) {

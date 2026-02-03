@@ -12,6 +12,7 @@ interface DocxOperation {
 
 interface DocxAIResponse {
   action: string;
+  fileId: string;
   documentName?: string;
   operations?: DocxOperation[];
   htmlContent?: string;

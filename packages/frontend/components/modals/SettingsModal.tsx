@@ -15,21 +15,21 @@ import {
   Info,
 } from 'lucide-react'
 
-import { Button } from '../ui/button'
+import { Button } from '../common/ui/button'
 import {
   Dialog,
   DialogHeader,
   DialogTitle,
   DialogPortal,
   DialogOverlay,
-} from '../ui/dialog'
+} from '../common/ui/dialog'
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { ApiService } from '../../../backend/api/apiService'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
-import { useToast } from '../ui/use-toast'
-import { Toaster } from '../ui/toaster'
-import { Typography } from '../ui/typography'
+import { useToast } from '../common/ui/use-toast'
+import { Toaster } from '../common/ui/toaster'
+import { Typography } from '../common/ui/typography'
 import { 
   ProfileTab, 
   AppearanceTab, 

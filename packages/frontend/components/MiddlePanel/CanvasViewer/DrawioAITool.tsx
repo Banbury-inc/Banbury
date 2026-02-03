@@ -1,10 +1,10 @@
 import { Network, CheckCircle, AlertCircle, Eye, Edit3, Check, X } from 'lucide-react';
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 
-import { Badge } from '../../ui/badge';
-import { Button } from '../../ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
-import { Typography } from '../../ui/typography';
+import { Badge } from '../../common/ui/badge';
+import { Button } from '../../common/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../common/ui/card';
+import { Typography } from '../../common/ui/typography';
 import DrawioViewer from './DrawioViewer';
 
 interface DrawioOperation {

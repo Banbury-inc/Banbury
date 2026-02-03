@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button } from '../../../components/ui/button'
+import { Button } from '../../../components/common/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -7,15 +7,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../../../components/ui/dialog'
-import { Input } from '../../../components/ui/old-input'
-import { Label } from '../../../components/ui/label'
-import { Switch } from '../../../components/ui/old-switch'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/old-select'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card'
-import { Badge } from '../../../components/ui/badge'
-import { Separator } from '../../../components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/old-tabs'
+} from '../../../components/common/ui/dialog'
+import { Input } from '../../../components/common/ui/old-input'
+import { Label } from '../../../components/common/ui/label'
+import { Switch } from '../../../components/common/ui/old-switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/common/ui/old-select'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/common/ui/card'
+import { Badge } from '../../../components/common/ui/badge'
+import { Separator } from '../../../components/common/ui/separator'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/common/ui/old-tabs'
 import { 
   Video, 
   Mic, 

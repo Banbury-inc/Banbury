@@ -1,5 +1,5 @@
 import { Folder, Mail, Calendar, CheckSquare, Video, UserCog, MessageSquare } from 'lucide-react'
-import { Button } from '../../components/ui/button'
+import { Button } from '../../components/common/ui/button'
 import { UserInfo } from './types'
 
 interface MobileWorkspaceHeaderProps {

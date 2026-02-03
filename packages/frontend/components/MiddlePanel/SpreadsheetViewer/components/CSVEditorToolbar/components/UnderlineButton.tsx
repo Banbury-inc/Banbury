@@ -1,6 +1,6 @@
 import React from 'react'
 import { Underline } from 'lucide-react'
-import { Button } from '../../../../../ui/button'
+import { Button } from '../../../../../common/ui/button'
 
 interface UnderlineButtonProps {
   onClick: () => void

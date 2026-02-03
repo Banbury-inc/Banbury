@@ -1,4 +1,4 @@
-import { processStreamChunk } from "../../pages/api/assistant/langgraph-stream/handlers/processStreamChunk"
+import { processStreamChunk } from "../../pages/api/assistant/langgraph-stream/handlers/processStreamChunk/processStreamChunk"
 
 function buildParams(overrides: Partial<Parameters<typeof processStreamChunk>[0]> = {}) {
   const send = jest.fn()

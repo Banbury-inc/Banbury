@@ -1,4 +1,4 @@
-import { Button } from '../../../../../ui/button'
+import { Button } from '../../../../../common/ui/button'
 import {
   Play,
   Share2,

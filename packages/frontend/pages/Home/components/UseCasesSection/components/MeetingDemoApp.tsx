@@ -5,7 +5,7 @@ import { ApiService } from '../../../../../../backend/api/apiService'
 import { CalendarEvent, CalendarListEntry } from '../../../../../../backend/api/calendar/calendar'
 import { setVisibleCalendarIds, getVisibleCalendarIds } from '../../../../../components/LeftPanel/components/CalendarTab/handlers/calendarVisibility'
 import { Thread } from '../../../../../components/RightPanel/composer/thread/thread'
-import { TooltipProvider } from '../../../../../components/ui/tooltip'
+import { TooltipProvider } from '../../../../../components/common/ui/tooltip'
 import { AssistantRuntimeProvider, useLocalRuntime } from "@assistant-ui/react"
 
 // Mock Calendar Events
@@ -445,6 +445,7 @@ export default function MeetingDemoApp() {
               selectedFile={null}
               selectedEmail={null}
               onEmailSelect={() => {}}
+              composerAutofocus={false}
             />
           </div>
         </div>

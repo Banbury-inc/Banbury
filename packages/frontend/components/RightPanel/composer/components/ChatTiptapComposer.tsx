@@ -16,7 +16,7 @@ import { ApiService } from '../../../../../backend/api/apiService';
 import { extractEmailContent } from '../../../../utils/emailUtils';
 import { buildFileTree, flattenFileTree, FileSystemItem } from '../../../../utils/fileTreeUtils';
 import { handleClipboardPaste } from '../../../handlers/handle-clipboard-paste';
-import { useToast } from '../../../ui/use-toast';
+import { useToast } from '../../../common/ui/use-toast';
 import { useUserFiles } from '../../../../contexts/UserFilesContext';
 
 import type { Editor } from '@tiptap/core';
@@ -36,6 +36,8 @@ type ChatTiptapComposerProps = {
   onQueueMessage?: (text: string) => void;
   hasQueuedMessages?: boolean;
   onSendNextQueued?: () => void;
+  /** Disable autofocus to prevent scroll-to-input on mount (e.g. in embedded demos) */
+  autofocus?: boolean;
 };
 
 type FileMentionItem = {
@@ -120,7 +122,7 @@ const getDocumentEditorContent = (currentEditorDom?: Element | null): string => 
   return '';
 };
 
-export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenInputRef, userInfo, onFileAttach, onAttachmentPayload, placeholder = 'Send a message...', className, onSend, onEditorMount, isRunning = false, onQueueMessage, hasQueuedMessages = false, onSendNextQueued }) => {
+export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenInputRef, userInfo, onFileAttach, onAttachmentPayload, placeholder = 'Send a message...', className, onSend, onEditorMount, isRunning = false, onQueueMessage, hasQueuedMessages = false, onSendNextQueued, autofocus = true }) => {
   const { files: userFiles, loading: filesLoading } = useUserFiles();
   const [files, setFiles] = React.useState<FileSystemItem[]>([]);
   const filesRef = React.useRef<FileSystemItem[]>([]);
@@ -462,7 +464,7 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
       }),
     ],
     content: '',
-    autofocus: true,
+    autofocus,
     editorProps: {
       attributes: {
         class: 'min-h-16 w-full resize-none bg-transparent px-4 pt-2 pb-3 text-base text-zinc-900 dark:text-zinc-200 outline-none',
@@ -650,11 +652,19 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
         onEditorMount(editorInstance);
       }
 
-      // Delay focus to ensure editor is fully mounted
+      // Delay focus to ensure editor is fully mounted (only when autofocus enabled)
+      if (autofocus) {
+        setTimeout(() => {
+          try {
+            editorInstance.commands.focus('end');
+          } catch (e) {
+            // Ignore focus errors if editor not ready
+          }
+        }, 100);
+      }
+      // Initial sync with hidden input
       setTimeout(() => {
         try {
-          editorInstance.commands.focus('end');
-          // Initial sync with hidden input
           const el = hiddenInputRef.current;
           if (el) {
             const text = editorInstance.getText();
@@ -670,7 +680,7 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
     return () => {
       editorInstance?.destroy();
     };
-  }, [editorInstance]);
+  }, [editorInstance, autofocus]);
 
   // Allow external text injection (e.g., voice input) to populate the editor
   useEffect(() => {

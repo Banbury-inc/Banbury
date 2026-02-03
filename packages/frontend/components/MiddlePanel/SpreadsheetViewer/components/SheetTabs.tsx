@@ -1,7 +1,7 @@
 import React from 'react';
 import { Plus, X, Menu, ChevronDown } from 'lucide-react';
-import { Button } from '../../../ui/button';
-import { Typography } from '../../../ui/typography';
+import { Button } from '../../../common/ui/button';
+import { Typography } from '../../../common/ui/typography';
 
 interface SheetTab {
   name: string;

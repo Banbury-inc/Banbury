@@ -23,15 +23,6 @@ import {
 import { 
   Box, 
   Divider, 
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  Button
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { UndoButton } from './components/UndoButton';
@@ -57,13 +48,11 @@ import { ChartButton } from './components/ChartButton';
 import { ShareButton } from './components/ShareButton';
 import { SaveButton } from './components/SaveButton';
 import { DownloadButton } from './components/DownloadButton';
-import { HelpButton } from './components/HelpButton';
 import { OverflowButton } from './components/OverflowButton';
 import { FontSizeControl } from './components/FontSizeControl';
 
 
 interface CSVEditorToolbarProps {
-  // Formatting handlers
   handleUndo: () => void;
   handleRedo: () => void;
   handleCurrencyFormat: () => void;
@@ -80,38 +69,23 @@ interface CSVEditorToolbarProps {
   handleAlignRight: () => void;
   handleMergeCells: () => void;
   handleToggleFilters: () => void;
-  // Conditional formatting panel opener
   onOpenConditionalPanel: () => void;
-  // Chart editor opener
   onOpenChartEditor: () => void;
-  
-  // Font size handlers
   fontSize: number;
   handleFontSizeChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleFontSizeIncrement: () => void;
   handleFontSizeDecrement: () => void;
-  
-  // Style handlers
   applyCellStyle: (property: string, value: any) => void;
   removeCellStyle: (property: string) => void;
   applyBordersOption: (option: 'all' | 'outer' | 'inner' | 'top' | 'right' | 'bottom' | 'left' | 'thick-outer' | 'dashed-outer' | 'none') => void;
-  
-  // Border state
   borderStyle: 'thin' | 'thick' | 'dashed';
   setBorderStyle: (style: 'thin' | 'thick' | 'dashed') => void;
-  
-  // Document actions
   onSaveDocument?: () => void;
   onDownloadDocument?: () => void;
   onShareDocument?: () => void;
   saving?: boolean;
   canSave?: boolean;
-  
-  // Theme
   lightMode?: boolean;
-  
-  // Help dialog
-  setHelpDialogOpen: (open: boolean) => void;
 }
 
 const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
@@ -148,30 +122,12 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
   onShareDocument,
   saving = false,
   canSave = false,
-  setHelpDialogOpen,
 }) => {
-  // Use theme to determine light/dark mode
   const theme = useTheme();
   const lightMode = theme.palette.mode === 'light';
-  
-  // Toolbar-specific state
   const [visibleButtons, setVisibleButtons] = useState<string[]>([]);
   const [overflowOpen, setOverflowOpen] = useState(false);
-  const [helpDialogOpen, setLocalHelpDialogOpen] = useState(false);
-  
   const toolbarRef = useRef<HTMLDivElement>(null);
-
-  // Help dialog handlers
-  const handleOpenHelpDialog = () => {
-    setLocalHelpDialogOpen(true);
-    setHelpDialogOpen(true);
-  };
-  const handleCloseHelpDialog = () => {
-    setLocalHelpDialogOpen(false);
-    setHelpDialogOpen(false);
-  };
-
-  // Define button order for visibility calculation
   const buttonOrder = [
     'undo',
     'redo',
@@ -195,7 +151,6 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
     'chart',
   ];
 
-  // Overflow menu button definitions
   const overflowButtonDefs: Record<string, { icon: React.ReactNode; title: string; handler: (e?: React.MouseEvent<HTMLElement>) => void }> = {
     undo: { icon: <Undo size={16} />, title: 'Undo (Ctrl+Z)', handler: () => handleUndo() },
     redo: { icon: <Redo size={16} />, title: 'Redo (Ctrl+Y)', handler: () => handleRedo() },
@@ -219,7 +174,6 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
     chart: { icon: <BarChart3 size={16} />, title: 'Insert Chart', handler: () => onOpenChartEditor() },
   };
 
-  // Calculate which buttons should be visible based on available space
   const calculateVisibleButtons = useCallback(() => {
     if (!toolbarRef.current) return;
 
@@ -237,11 +191,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
     const overflowButtonWidth = 40; // Width of overflow button
     const saveButtonsWidth = 80; // Approximate width for save/download buttons
     const fontControlWidth = 120; // Width of font size control
-    
-    // Reserve space for font control, save buttons and overflow button
     const availableWidth = toolbarWidth - fontControlWidth - saveButtonsWidth - overflowButtonWidth - 32; // 32px for padding
-    
-    // Calculate how many buttons can fit
     let currentWidth = 0;
     const visible: string[] = [];
     
@@ -511,80 +461,10 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
               {onDownloadDocument && (
                 <DownloadButton onClick={onDownloadDocument} />
               )}
-              <HelpButton onClick={handleOpenHelpDialog} />
             </Box>
           </>
         )}
       </Box>
-
-      {/* Keyboard Shortcuts Help Dialog */}
-      <Dialog
-        open={helpDialogOpen}
-        onClose={handleCloseHelpDialog}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          Keyboard Shortcuts
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', gap: 4 }}>
-            {/* Standard Shortcuts */}
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                Standard Shortcuts
-              </Typography>
-              <List dense>
-                {keyboardShortcuts.map((item, index) => (
-                  <ListItem key={index} sx={{ py: 0.25 }}>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace', fontSize: '12px' }}>
-                            {item.shortcut}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '12px', ml: 2 }}>
-                            {item.description}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Box>
-            {/* Vim Mode Shortcuts */}
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                Vim Mode Shortcuts
-              </Typography>
-              <List dense>
-                {vimShortcuts.map((item, index) => (
-                  <ListItem key={index} sx={{ py: 0.25 }}>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace', fontSize: '12px' }}>
-                            {item.shortcut}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '12px', ml: 2 }}>
-                            {item.description}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseHelpDialog}>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
     </>
   );
 };

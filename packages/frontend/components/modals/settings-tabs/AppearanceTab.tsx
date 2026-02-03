@@ -1,8 +1,8 @@
 import { Palette, Sun, Moon } from 'lucide-react'
-import { Switch } from '../../ui/switch'
-import { Typography } from 'frontend/components/ui/typography'
-import { Label } from 'frontend/components/ui/label'
-import { Separator } from 'frontend/components/ui/separator'
+import { Switch } from '../../common/ui/switch'
+import { Typography } from '@/components/common/ui/typography'
+import { Label } from '@/components/common/ui/label'
+import { Separator } from '@/components/common/ui/separator'
 import { useState, useEffect } from 'react'
 import { getColoredFileIcons, setColoredFileIcons } from './handlers/appearanceHandlers'
 

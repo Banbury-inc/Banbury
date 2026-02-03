@@ -4,7 +4,7 @@ import { Composer } from "frontend/components/RightPanel/composer/Composer"
 import { AssistantRuntimeProvider } from "@assistant-ui/react"
 import { useLocalRuntime } from "@assistant-ui/react"
 import { fn } from "@storybook/test"
-import { TooltipProvider } from "frontend/components/ui/tooltip"
+import { TooltipProvider } from "@/components/common/ui/tooltip"
 import { UserFilesProvider } from "frontend/contexts/UserFilesContext"
 import type { QueuedMessage } from "frontend/components/RightPanel/composer/components/queued-messages-display"
 

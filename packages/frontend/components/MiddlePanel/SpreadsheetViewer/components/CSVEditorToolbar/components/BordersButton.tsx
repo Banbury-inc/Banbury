@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { Grid, X, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Minus } from 'lucide-react'
-import { Button } from '../../../../../ui/button'
+import { Button } from '../../../../../common/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../../../../../ui/dropdown-menu'
+} from '../../../../../common/ui/dropdown-menu'
 
 interface BordersButtonProps {
   applyBordersOption: (option: 'all' | 'outer' | 'inner' | 'top' | 'right' | 'bottom' | 'left' | 'thick-outer' | 'dashed-outer' | 'none') => void

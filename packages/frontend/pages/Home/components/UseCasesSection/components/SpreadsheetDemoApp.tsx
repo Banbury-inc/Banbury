@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, FC, PropsWithChildren } from 'react
 import CSVEditor from '../../../../../components/MiddlePanel/SpreadsheetViewer/CSVEditor'
 import { Thread } from '../../../../../components/RightPanel/composer/thread/thread'
 import { FileSystemItem } from '../../../../../utils/fileTreeUtils'
-import { TooltipProvider } from '../../../../../components/ui/tooltip'
+import { TooltipProvider } from '../../../../../components/common/ui/tooltip'
 import { AssistantRuntimeProvider, useLocalRuntime } from "@assistant-ui/react"
 
 // Mock spreadsheet data - Quarterly Sales Report
@@ -229,6 +229,7 @@ function SpreadsheetDemoApp() {
               selectedFile={mockSpreadsheetFile}
               selectedEmail={null}
               onEmailSelect={() => {}}
+              composerAutofocus={false}
             />
         <div className="w-[200px] h-full flex-shrink-0 border-r border-zinc-200 dark:border-zinc-700 overflow-hidden">
           

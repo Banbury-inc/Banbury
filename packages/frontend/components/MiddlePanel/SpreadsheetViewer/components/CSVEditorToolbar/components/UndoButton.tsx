@@ -1,6 +1,6 @@
 import React from 'react'
 import { Undo } from 'lucide-react'
-import { Button } from '../../../../../ui/button'
+import { Button } from '../../../../../common/ui/button'
 
 interface UndoButtonProps {
   onClick: () => void

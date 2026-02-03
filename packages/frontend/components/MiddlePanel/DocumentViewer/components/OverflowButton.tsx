@@ -1,5 +1,5 @@
 import { Editor } from '@tiptap/react'
-import { Button } from '../../../ui/button'
+import { Button } from '../../../common/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,7 @@ import {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
-} from '../../../ui/dropdown-menu'
+} from '../../../common/ui/dropdown-menu'
 import {
   Bold,
   Italic,

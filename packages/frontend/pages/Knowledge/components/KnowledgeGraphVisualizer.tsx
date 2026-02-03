@@ -3,7 +3,7 @@ import * as d3 from 'd3-force';
 import { zoom, zoomIdentity } from 'd3-zoom';
 import { drag } from 'd3-drag';
 import { select } from 'd3-selection';
-import { Typography } from '../../../components/ui/typography';
+import { Typography } from '../../../components/common/ui/typography';
 
 interface KnowledgeEntity {
   id: string;

@@ -12,8 +12,8 @@ import React, { useState, useEffect } from 'react';
 
 import { AITiptapEditor } from '../components/AITiptapEditor';
 import { AssistantSidebar } from '../components/assistant-sidebar';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/common/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/common/ui/card';
 import { TiptapAIProvider } from '../contexts/TiptapAIContext';
 import { cn } from '../utils';
 

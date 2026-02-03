@@ -1,5 +1,5 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from "../../../ui/tooltip"
-import { Typography } from "../../../ui/typography"
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../../common/ui/tooltip"
+import { Typography } from "../../../common/ui/typography"
 import { formatTokenCount } from "../handlers/contextBudget"
 
 interface ContextWheelProps {

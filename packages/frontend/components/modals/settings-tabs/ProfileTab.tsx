@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { CheckCircle, User, Edit2, Save, X } from 'lucide-react'
-import { Typography } from '../../ui/typography'
-import { Separator } from '../../ui/separator'
-import { Input } from '../../ui/input'
-import { Button } from '../../ui/button'
-import { useToast } from '../../ui/use-toast'
+import { Typography } from '../../common/ui/typography'
+import { Separator } from '../../common/ui/separator'
+import { Input } from '../../common/ui/input'
+import { Button } from '../../common/ui/button'
+import { useToast } from '../../common/ui/use-toast'
 
 interface ProfileTabProps {
   scopeActivated: boolean

@@ -1,8 +1,8 @@
 import { Loader2, Video, Play, Pause, Volume2, VolumeX } from "lucide-react"
 import { RefObject, useEffect } from "react"
-import { Button } from "../../../ui/button"
-import { Card } from "../../../ui/card"
-import { Slider } from "../../../ui/slider"
+import { Button } from "../../../common/ui/button"
+import { Card } from "../../../common/ui/card"
+import { Slider } from "../../../common/ui/slider"
 import { formatTime } from "../utils/duration-formatters"
 
 interface VideoPlayerProps {

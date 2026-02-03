@@ -1,8 +1,8 @@
 import { Loader2 } from "lucide-react"
 import { RefObject } from "react"
-import { Badge } from "../../../ui/badge"
-import { Card } from "../../../ui/card"
-import { Typography } from "../../../ui/typography"
+import { Badge } from "../../../common/ui/badge"
+import { Card } from "../../../common/ui/card"
+import { Typography } from "../../../common/ui/typography"
 import { TranscriptionSegment } from "../../../../types/meeting-types"
 import { formatTimestamp } from "../utils/duration-formatters"
 

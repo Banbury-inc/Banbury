@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { cn } from '../../../../../lib/utils'
 import { Slide } from '../../PowerPointViewer'
 import { renderShapeSvg } from '../../components/shape-catalog'
-import { useContextMenu } from '../../../../ui/context-menu'
+import { useContextMenu } from '../../../../common/ui/context-menu'
 import { getSlideContextMenuItems } from './handlers/handle-slide-context-menu'
 import { fillStyleToCSS, normalizeFill, fillStyleToColorString } from '../../utils/fill-utils'
 

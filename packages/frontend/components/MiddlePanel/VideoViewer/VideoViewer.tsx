@@ -1,6 +1,6 @@
 import { AlertCircle, Download, Play, Pause, Volume2, VolumeX, Maximize2, RotateCcw } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { Button } from '../../ui/button';
+import { Button } from '../../common/ui/button';
 import { ApiService } from '../../../../backend/api/apiService';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { CONFIG } from '../../../config/config';

@@ -33,7 +33,7 @@ import {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
-} from '../../ui/dropdown-menu';
+} from '../../common/ui/dropdown-menu';
 import { useTiptapAIContext } from '../../../contexts/TiptapAIContext';
 import { cn } from '../../../utils';
 import { registerTiptapEditor, unregisterTiptapEditor, isShowingPreview } from '../../RightPanel/handlers/handle-docx-ai-response';

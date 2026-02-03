@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react"
 import type { Meta, StoryObj } from "@storybook/react"
 import { RightPanel } from "frontend/components/RightPanel/RightPanel"
 import { fn } from "@storybook/test"
-import { TooltipProvider } from "frontend/components/ui/tooltip"
-import { Toaster } from "frontend/components/ui/toaster"
+import { TooltipProvider } from "@/components/common/ui/tooltip"
+import { Toaster } from "@/components/common/ui/toaster"
 
 // Mock runtime provider wrapper for AssistantUI
 function RightPanelWrapper({ children }: { children: React.ReactNode }) {

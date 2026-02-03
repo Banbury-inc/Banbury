@@ -25,14 +25,14 @@ import { GoogleDriveViewer } from '../../../components/MiddlePanel/GoogleDriveVi
 import { CalendarEvent } from '../../../../backend/api/calendar/calendar';
 import { Panel, DragState, UserInfo } from '../types';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import { Typography } from '../../../components/ui/typography';
-import { Kbd, KbdGroup } from '../../../components/ui/kbd';
+import { Typography } from '../../../components/common/ui/typography';
+import { Kbd, KbdGroup } from '../../../components/common/ui/kbd';
 import BanburyLogo from '../../../assets/images/Logo.png';
 import { TaskViewer } from '../../../components/MiddlePanel/TaskViewer/TaskViewer';
 import { TaskComposer } from '../../../components/MiddlePanel/TaskViewer/TaskComposer';
 import { MeetingViewer } from '../../../components/MiddlePanel/MeetingViewer/MeetingViewer';
 import { MeetingJoinComposer } from '../../../components/MiddlePanel/MeetingViewer/MeetingJoinComposer';
-import { AdminContent } from '../../../components/AdminContent/AdminContent';
+import { AdminViewer } from '../../../components/MiddlePanel/AdminViewer/AdminViewer';
 
 interface RenderPanelProps {
   panel: Panel;
@@ -582,7 +582,7 @@ export const renderPanel = ({
                 if (tab.type === 'admin') {
                   return (
                     <div className="h-full overflow-y-auto bg-card">
-                      <AdminContent activeTab={`admin-${tab.adminTabType}`} />
+                      <AdminViewer activeTab={`admin-${tab.adminTabType}`} />
                     </div>
                   );
                 }

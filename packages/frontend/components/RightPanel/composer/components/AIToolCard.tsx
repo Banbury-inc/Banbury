@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Check, X, AlertCircle, ExternalLink } from 'lucide-react';
-import { Button } from '../../../ui/button';
-import { Card, CardContent } from '../../../ui/card';
-import { Typography } from '../../../ui/typography';
+import { Button } from '../../../common/ui/button';
+import { Card, CardContent } from '../../../common/ui/card';
+import { Typography } from '../../../common/ui/typography';
 
 // Change types that create or modify documents (mutating tools)
 const MUTATING_CHANGE_TYPES = [
@@ -70,6 +70,7 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
 
   // Resolve display name and file path from localStorage if file extensions provided
   const resolvedDisplayName = React.useMemo(() => {
+    console.log('args', args);
     // First check if fileName is provided directly in args
     if (args?.fileName) {
       return args.fileName;

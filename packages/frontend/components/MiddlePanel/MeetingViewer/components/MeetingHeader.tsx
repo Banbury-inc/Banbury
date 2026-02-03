@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react"
-import { Button } from "../../../ui/button"
-import { Typography } from "../../../ui/typography"
+import { Button } from "../../../common/ui/button"
+import { Typography } from "../../../common/ui/typography"
 import { MeetingSession } from "../../../../types/meeting-types"
 import { formatDate, getMeetingDate } from "../utils/date-formatters"
 

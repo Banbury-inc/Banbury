@@ -2,7 +2,7 @@ import { Box, Paper, List, ListItem, ListItemText, Chip } from '@mui/material';
 import Image from 'next/image';
 import TaskStudioImg from '../../../../assets/images/Task_Studio.png';
 import DocPageLayout from '../DocPageLayout';
-import { Typography } from '../../../../components/ui/typography';
+import { Typography } from '../../../../components/common/ui/typography';
 
 const TaskStudioTab = (): JSX.Element => {
   return (

@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Button } from '../../../components/ui/button'
-import { Input } from '../../../components/ui/old-input'
-import { Label } from '../../../components/ui/label'
-import { Card } from '../../../components/ui/card'
+import { Button } from '../../../components/common/ui/button'
+import { Input } from '../../../components/common/ui/old-input'
+import { Label } from '../../../components/common/ui/label'
+import { Card } from '../../../components/common/ui/card'
 import { CreateTaskData, TaskPriority } from '../types'
 import { taskHandlers } from '../handlers/taskHandlers'
 

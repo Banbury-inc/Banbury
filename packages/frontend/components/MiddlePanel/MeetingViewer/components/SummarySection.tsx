@@ -1,7 +1,7 @@
 import { Loader2, Save, RefreshCw, Sparkles } from "lucide-react"
 import { RefObject } from "react"
-import { Button } from "../../../ui/button"
-import { Typography } from "../../../ui/typography"
+import { Button } from "../../../common/ui/button"
+import { Typography } from "../../../common/ui/typography"
 import { MeetingSummaryEditor } from "../MeetingSummaryEditor"
 
 interface SummarySectionProps {

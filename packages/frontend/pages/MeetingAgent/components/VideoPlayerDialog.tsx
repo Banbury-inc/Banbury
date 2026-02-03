@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import { Button } from '../../../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card'
-import { Badge } from '../../../components/ui/badge'
-import { Slider } from '../../../components/ui/slider'
+import { Button } from '../../../components/common/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/common/ui/card'
+import { Badge } from '../../../components/common/ui/badge'
+import { Slider } from '../../../components/common/ui/slider'
 import { 
   Play, 
   Pause, 
@@ -24,10 +24,10 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '../../../components/ui/dialog'
+} from '../../../components/common/ui/dialog'
 import { MeetingSession } from '../../../types/meeting-types'
 import { ApiService } from '../../../../backend/api/apiService'
-import { useToast } from '../../../components/ui/use-toast'
+import { useToast } from '../../../components/common/ui/use-toast'
 
 interface VideoPlayerDialogProps {
   open: boolean

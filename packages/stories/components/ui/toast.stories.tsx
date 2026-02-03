@@ -9,7 +9,7 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport
-} from "frontend/components/ui/toast"
+} from "@/components/common/ui/toast"
 
 type ToastStoryArgs = {
   variant?: React.ComponentProps<typeof Toast>["variant"]

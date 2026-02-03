@@ -1,6 +1,6 @@
 import { AlertCircle } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { useToast } from '../../ui/use-toast';
+import { useToast } from '../../common/ui/use-toast';
 import CSVEditor from './CSVEditor';
 import { ApiService } from '../../../../backend/api/apiService'
 import { FileSystemItem } from '../../../utils/fileTreeUtils';

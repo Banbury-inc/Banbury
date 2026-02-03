@@ -8,7 +8,7 @@ import {
   Eye
 } from 'lucide-react'
 
-import { Button } from '../../components/ui/button'
+import { Button } from '../../components/common/ui/button'
 import { NavSidebar } from '../../components/nav-sidebar'
 import { ApiService } from '../../../backend/api/apiService'
 import KnowledgeGraphVisualizer from './components/KnowledgeGraphVisualizer'

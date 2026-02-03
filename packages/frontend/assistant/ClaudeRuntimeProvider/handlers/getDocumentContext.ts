@@ -70,6 +70,7 @@ export function getDocumentContext(): string {
   try {
     // First, try to get current unsaved content from the Tiptap editor
     const editor = getCurrentTiptapEditor();
+    console.log('editor', editor)
     if (editor && typeof editor.getHTML === 'function') {
       const currentHtml = editor.getHTML();
       // Only include if it has substantial content

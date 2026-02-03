@@ -5,13 +5,13 @@ import { Tldraw, Editor, exportToBlob, TLShapeId, loadSnapshot, getSnapshot } fr
 // Import Tldraw CSS
 import 'tldraw/tldraw.css';
 
-import { Button } from '../../ui/button';
-import { Card, CardContent, CardTitle } from '../../ui/card';
+import { Button } from '../../common/ui/button';
+import { Card, CardContent, CardTitle } from '../../common/ui/card';
 import { cn } from '../../../utils';
 import { ApiService } from '../../../../backend/api/apiService';
 import { createSaveTldrawHandler } from './handlers/save-tldraw';
 import styles from '../../../styles/SimpleTiptapEditor.module.css';
-import { useToast } from '../../ui/use-toast';
+import { useToast } from '../../common/ui/use-toast';
 import { registerTldrawEditor, unregisterTldrawEditor, setCurrentTldrawEditor } from '../../RightPanel/handlers/handle-tldraw-ai-response';
 
 interface TldrawViewerProps {

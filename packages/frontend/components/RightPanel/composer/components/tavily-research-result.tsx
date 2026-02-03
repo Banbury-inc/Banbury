@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import ToolCallCard from "./ToolCallCard"
 import type { ReactNode, SVGProps } from "react"
-import { Button } from "frontend/components/ui/button"
+import { Button } from "@/components/common/ui/button"
 
 interface Source {
   url: string

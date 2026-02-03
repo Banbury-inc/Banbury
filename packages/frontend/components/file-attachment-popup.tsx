@@ -2,8 +2,8 @@ import { File, Search, ChevronRight, Check, FolderOpen } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
-import { Input } from './ui/old-input';
-import { Typography } from './ui/typography';
+import { Input } from './common/ui/old-input';
+import { Typography } from './common/ui/typography';
 import { ApiService } from '../../backend/api/apiService';
 import { cn } from '../utils';
 import { FileSystemItem } from '../utils/fileTreeUtils';

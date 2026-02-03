@@ -4,16 +4,16 @@ import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { Check, Zap, Shield, Clock, HardDrive, Sparkles, Headphones } from 'lucide-react'
 
-import { Button } from '../components/ui/button'
-import { Badge } from '../components/ui/badge'
-import { Card, CardContent, CardFooter, CardHeader } from '../components/ui/card'
+import { Button } from '../components/common/ui/button'
+import { Badge } from '../components/common/ui/badge'
+import { Card, CardContent, CardFooter, CardHeader } from '../components/common/ui/card'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '../components/ui/dialog'
+} from '../components/common/ui/dialog'
 
 import {
   STRIPE_PUBLIC_KEY,

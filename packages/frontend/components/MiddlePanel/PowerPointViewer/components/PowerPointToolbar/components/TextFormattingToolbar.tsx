@@ -15,17 +15,17 @@ import {
   addHighlight,
 } from '../handlers/advanced-format-handlers'
 import { fillStyleToColorString } from '../../../utils/fill-utils'
-import { Button } from '../../../../../ui/button'
+import { Button } from '../../../../../common/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from '../../../../../ui/dropdown-menu'
-import { Popover, PopoverTrigger, PopoverContent } from '../../../../../ui/popover'
-import { Label } from '../../../../../ui/label'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../../../../ui/tabs'
+} from '../../../../../common/ui/dropdown-menu'
+import { Popover, PopoverTrigger, PopoverContent } from '../../../../../common/ui/popover'
+import { Label } from '../../../../../common/ui/label'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../../../../common/ui/tabs'
 import { ColorPicker, colorPalette } from './ColorPicker'
 import {
   Bold,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { HotTable } from '@handsontable/react';
 import { registerAllModules } from 'handsontable/registry';
-import { textRenderer, registerRenderer, checkboxRenderer } from 'handsontable/renderers';
+import { registerRenderer } from 'handsontable/renderers';
 import 'handsontable/dist/handsontable.full.css';
 import { createAiResponseHandler, createRejectHandler } from './handlers/handle-ai-response';
 import { createDataChangeHandler } from './handlers/handle-data-change';
@@ -17,28 +17,32 @@ import { createCSVLoadHandler } from './handlers/handle-csv-load';
 import { createFormulaEngine } from './handlers/handle-formulas';
 import { createCopyPasteHandlers } from './handlers/handle-copy-paste';
 import { createTableOperationsHandlers } from './handlers/handle-table-operations';
-import { handleEditDropdownOptions } from './handlers/handle-edit-dropdown-options';
-import { parseCSV, convertToCSV, convertToCSVWithMeta } from './utils/csv-parser';
+import { isUrl } from './utils/is-url';
 import { createFormulaSuggestionHandlers } from './handlers/handle-formula-suggestions';
 import { createFormulaNavigationHandler } from './handlers/handle-formula-navigation';
 import CSVEditorToolbar from './components/CSVEditorToolbar/CSVEditorToolbar';
 import { SheetTabs } from './components/SheetTabs';
-import { Button } from '../../ui/button'
-import { Input } from '../../ui/old-input'
-import { Label } from '../../ui/label'
-import { Separator } from '../../ui/separator'
-import { ArrowUpward, ArrowDownward, BorderAll as BorderAllIcon, Delete as DeleteIcon, Link as LinkIcon, Edit as EditIcon, ContentCopy as CopyIcon, LinkOff as UnlinkIcon } from '@mui/icons-material';
+import { SearchOverlay } from './components/SearchOverlay';
+import { ConditionalFormattingPanel } from './components/ConditionalFormattingPanel';
+import { LinkPopover } from './components/LinkPopover';
+import { VimModeIndicator } from './components/VimModeIndicator';
 import { createConditionalFormattingHandlers, computeConditionalFormats } from './handlers/handle-conditional-formatting';
-import { createAddCFRuleHandler } from './handlers/handle-add-cf-rule'
 import type { ConditionalFormattingRule } from './handlers/handle-conditional-formatting';
 import type { SheetData } from './handlers/handle-csv-load';
 import { SpreadsheetChart } from './components/SpreadsheetChart';
 import { ChartEditor } from './components/ChartEditor';
 import { createChartHandlers, extractChartData } from './handlers/handle-charts';
 import type { ChartDefinition } from './types/chart-types';
-import { createLinkHandlers } from './handlers/handle-links';
 import { createFullscreenHandler } from './handlers/handle-fullscreen';
 import { createOpenCellUrlHandler } from './handlers/handle-open-cell-url';
+import { createToggleCellFormatHandler } from './handlers/handle-cell-format';
+import { parseCSVWithMeta } from './handlers/handle-csv-meta';
+import { createToggleFiltersHandler } from './handlers/handle-toggle-filters';
+import { createMergeCellsHandler } from './handlers/handle-merge-cells';
+import { createSheetChangeHandler } from './handlers/handle-sheet-change';
+import { createDeleteSheetHandler } from './handlers/handle-delete-sheet';
+import { createDuplicateSheetHandler } from './handlers/handle-duplicate-sheet';
+import { createCellRenderer } from './handlers/handle-cell-renderer';
 // Register all Handsontable modules
 registerAllModules();
 
@@ -72,12 +76,10 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   srcBlob,
   onError,
   onLoad,
-  onSave,
   onContentChange,
   onFormattingChange,
   onSaveDocument,
   onDownloadDocument,
-  onSheetsLoaded,
   saving = false,
   canSave = false,
 }) => {
@@ -101,39 +103,20 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   const [conditionalRules, setConditionalRules] = useState<ConditionalFormattingRule[]>([]);
   const [conditionalClassOverlay, setConditionalClassOverlay] = useState<{[key: string]: string}>({});
   const [conditionalStyleOverlay, setConditionalStyleOverlay] = useState<{[key: string]: React.CSSProperties}>({});
-  const [queryResultIndex, setQueryResultIndex] = useState<number>(0);
-  
-  // Link state - automatically detected URLs
   const [cellLinks, setCellLinks] = useState<{[key: string]: string}>({});
   const [linkPopover, setLinkPopover] = useState<{row: number; col: number; url: string; position: {top: number; left: number}} | null>(null);
-  
-  // Chart state
   const [charts, setCharts] = useState<ChartDefinition[]>([]);
   const [isChartEditorOpen, setIsChartEditorOpen] = useState(false);
   const [editingChart, setEditingChart] = useState<ChartDefinition | undefined>(undefined);
-  
-  // Multi-sheet support
   const [allSheets, setAllSheets] = useState<SheetData[]>([]);
   const [activeSheetIndex, setActiveSheetIndex] = useState<number>(0);
-
-  // Search state
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchText, setSearchText] = useState('');
   const [searchResultCount, setSearchResultCount] = useState(0);
-  const searchMatchesRef = useRef<Array<{ row: number; col: number }>>([]);
-  const searchCurrentIndexRef = useRef<number>(-1);
-
-  // Vim mode state
   const [isVimMode, setIsVimMode] = useState(() => {
     if (typeof window === 'undefined') return false
     return localStorage.getItem('vimMode') === 'true'
   })
   const [vimDisplayMode, setVimDisplayMode] = useState<VimMode>('normal')
-
-  // Help dialog and editor focus state (declared early for vim handler)
-  const [helpDialogOpen, setHelpDialogOpen] = useState(false);
-  
-  // Persistent vim state ref to survive handler recreation
   const vimStateRef = useRef<{ mode: 'normal' | 'insert' | 'visual' | 'visual-line' | 'visual-column', commandBuffer: string, pendingOperator: string | null, yankRegister: any[][] | null, yankType: 'cells' | 'rows' | 'columns' | null, visualStartCell: { row: number, col: number } | null } | null>(null);
   const [isEditorFocused, setIsEditorFocused] = useState(true);
 
@@ -146,125 +129,32 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
 
 
 
-  const parseCSVWithMeta = (content: string) => {
-    const parsed = parseCSV(content);
-    
-    let metaObj: any = {};
-    if (content.startsWith('##BANBURY_META=')) {
-      const lines = content.split('\n');
-      const metaLine = lines[0];
-      
-      try {
-        const encoded = metaLine.replace('##BANBURY_META=', '');
-        const decoded = atob(encoded);
-        metaObj = JSON.parse(decoded);
-        if (metaObj && metaObj.cells && typeof metaObj.cells === 'object') {
-          // Store cell type metadata
-          const cellTypeMeta: any = {};
-          const cellFormats: any = {};
-          const cellStyles: any = {};
-          
-          const loadedLinks: {[key: string]: string} = {};
-          
-          Object.entries(metaObj.cells).forEach(([key, cellMeta]: [string, any]) => {
-            // Extract type metadata
-            if (cellMeta.type) {
-              const typeMeta: any = { type: cellMeta.type };
-              if (cellMeta.source) typeMeta.source = cellMeta.source;
-              if (cellMeta.numericFormat) typeMeta.numericFormat = cellMeta.numericFormat;
-              if (cellMeta.dateFormat) typeMeta.dateFormat = cellMeta.dateFormat;
-              cellTypeMeta[key] = typeMeta;
-            }
-            
-            // Extract formatting metadata
-            if (cellMeta.className) {
-              cellFormats[key] = { className: cellMeta.className };
-            }
-            
-            if (cellMeta.styles) {
-              cellStyles[key] = cellMeta.styles;
-            }
-            
-            // Extract link metadata
-            if (cellMeta.link) {
-              loadedLinks[key] = cellMeta.link;
-            }
-          });
-          
-          if (Object.keys(loadedLinks).length > 0) {
-            setCellLinks(loadedLinks);
-          }
-          
-          // Extract column widths if present
-          if (metaObj.columnWidths && typeof metaObj.columnWidths === 'object') {
-            setColumnWidths(metaObj.columnWidths);
-          }
-          
-          // Store for Handsontable meta application
-          pendingCellMetaRef.current = cellTypeMeta;
-          
-          // Apply formatting immediately (only if there's actual data)
-          if (Object.keys(cellFormats).length > 0) {
-            setCellFormats(prev => {
-              // Only update if different to prevent unnecessary re-renders
-              if (JSON.stringify(prev) !== JSON.stringify(cellFormats)) {
-                return cellFormats;
-              }
-              return prev;
-            });
-          }
-          if (Object.keys(cellStyles).length > 0) {
-            setCellStyles(prev => {
-              // Only update if different to prevent unnecessary re-renders
-              if (JSON.stringify(prev) !== JSON.stringify(cellStyles)) {
-                return cellStyles;
-              }
-              return prev;
-            });
-          }
-          if (Object.keys(cellTypeMeta).length > 0) {
-            setCellTypeMeta(prev => {
-              // Only update if different to prevent unnecessary re-renders
-              if (JSON.stringify(prev) !== JSON.stringify(cellTypeMeta)) {
-                return cellTypeMeta;
-              }
-              return prev;
-            });
-          }
-          // Load conditional formatting rules if present
-          if (metaObj.conditionalFormatting && Array.isArray(metaObj.conditionalFormatting)) {
-            try { setConditionalRules(metaObj.conditionalFormatting) } catch {}
-          }
-          // Load charts if present
-          if (metaObj.charts && Array.isArray(metaObj.charts)) {
-            try { setCharts(metaObj.charts) } catch {}
-          }
-        }
-      } catch {
-        // Invalid metadata, ignore
-      }
-    }
-    
-    return { parsed, metaObj };
-  };
+  const parseCSVWithMetaHandler = useCallback((content: string) => {
+    return parseCSVWithMeta(content, {
+      setCellLinks,
+      setColumnWidths,
+      pendingCellMetaRef,
+      setCellFormats,
+      setCellStyles,
+      setCellTypeMeta,
+      setConditionalRules,
+      setCharts
+    })
+  }, [setCellLinks, setColumnWidths, setCellFormats, setCellStyles, setCellTypeMeta, setConditionalRules, setCharts])
 
 
 
-  // Calculate container height to use full viewport
   useEffect(() => {
     const calculateHeight = () => {
-      // Use viewport height minus toolbar height and some padding
       const viewportHeight = window.innerHeight;
-      const toolbarHeight = 40; // Height of the toolbar
-      const padding = 20; // Some padding for margins
+      const toolbarHeight = 40;
+      const padding = 20;
       const calculatedHeight = Math.max(600, viewportHeight - toolbarHeight - padding);
       setContainerHeight(calculatedHeight);
     };
 
-    // Initial calculation
     calculateHeight();
 
-    // Recalculate on window resize
     const handleResize = () => {
       calculateHeight();
     };
@@ -276,7 +166,6 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
     };
   }, []);
 
-  // Create HyperFormula engine and store it for HotTable formulas config
   const [formulaEngine, setFormulaEngine] = useState<any | null>(null)
   useEffect(() => {
     let active = true
@@ -288,7 +177,6 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
     return () => { active = false }
   }, [])
 
-  // Listen for vim mode changes from settings
   useEffect(() => {
     function handleStorageChange() {
       setIsVimMode(localStorage.getItem('vimMode') === 'true')
@@ -320,22 +208,19 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
         if (meta.type === 'date' && (meta as any).dateFormat) {
           hotInstance.setCellMeta(r, c, 'dateFormat', (meta as any).dateFormat);
         }
-        // Clean numeric/date format if switching from them
         if (meta.type === 'dropdown' || meta.type === 'checkbox') {
           hotInstance.removeCellMeta(r, c, 'numericFormat');
           hotInstance.removeCellMeta(r, c, 'dateFormat');
         }
       }
       hotInstance.render();
-      // Mirror to our local state so it persists on subsequent renders and edits
       const mirrored: {[key:string]: any} = {};
       Object.entries(pending).forEach(([k, m]) => { mirrored[k] = m as any; });
       setCellTypeMeta((prev) => ({ ...prev, ...mirrored }));
     } catch {}
     pendingCellMetaRef.current = null;
-  }, [data]); // Run when data changes
+  }, [data]);
 
-  // Restore column widths when they change
   useEffect(() => {
     const hotInstance = hotTableRef.current?.hotInstance;
     if (!hotInstance || Object.keys(columnWidths).length === 0) return;
@@ -356,13 +241,11 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
     }
   }, [columnWidths]);
 
-  // Use ref to capture latest onContentChange to avoid dependency issues
   const onContentChangeRef = useRef(onContentChange);
   onContentChangeRef.current = onContentChange;
   const onFormattingChangeRef = useRef(onFormattingChange);
   onFormattingChangeRef.current = onFormattingChange;
 
-  // Listen for AI spreadsheet responses and apply to table
   useEffect(() => {
     const handlerParams = {
       hotTableRef,
@@ -551,37 +434,18 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
     }
   };
 
-  const handleToggleFilters = () => {
-    const hotInstance = hotTableRef.current?.hotInstance;
-    if (hotInstance?.getPlugin) {
-      const filters = hotInstance.getPlugin('filters');
-      if (filters) {
-        if (filters.isEnabled()) {
-          filters.disablePlugin();
-        } else {
-          filters.enablePlugin();
-        }
-        hotInstance.render();
-      }
-    }
-  };
+  const { handleToggleFilters } = useMemo(() => 
+    createToggleFiltersHandler({
+      hotTableRef
+    }), []
+  );
 
-  const handleMergeCells = () => {
-    const hotInstance = hotTableRef.current?.hotInstance;
-    if (hotInstance?.getPlugin) {
-      const mergeCells = hotInstance.getPlugin('mergeCells');
-      if (mergeCells && mergeCells.isEnabled()) {
-        const selected = hotInstance.getSelected();
-        if (selected && selected.length > 0) {
-          const [startRow, startCol, endRow, endCol] = selected[0];
-          if (startRow !== endRow || startCol !== endCol) {
-            mergeCells.merge(startRow, startCol, endRow, endCol);
-            setHasChanges(true);
-          }
-        }
-      }
-    }
-  };
+  const { handleMergeCells } = useMemo(() => 
+    createMergeCellsHandler({
+      hotTableRef,
+      setHasChanges
+    }), [setHasChanges]
+  );
 
 
   const { applyCellStyle, removeCellStyle } = useMemo(() => 
@@ -698,7 +562,6 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
       handleAlignCenter,
       handleAlignRight,
       applyWrapOption,
-      setHelpDialogOpen,
       toggleFullscreen,
       openUrlInCurrentCell,
       stateRef: vimStateRef,
@@ -746,49 +609,15 @@ const searchFieldKeyupCallback = useCallback(
   [hotTableRef.current]
 )
 
-  const toggleCellFormat = (className: string) => {
-    const hotInstance = hotTableRef.current?.hotInstance;
-    if (hotInstance) {
-      const selected = hotInstance.getSelected();
-      if (selected && selected.length > 0) {
-        const [startRow, startCol, endRow, endCol] = selected[0];
-        const newCellFormats = { ...cellFormats };
-        
-        for (let row = startRow; row <= endRow; row++) {
-          for (let col = startCol; col <= endCol; col++) {
-            const cellKey = `${row}-${col}`;
-            const currentFormat = newCellFormats[cellKey] || {};
-            const currentClassName = currentFormat.className || '';
-            const classNames = currentClassName.split(' ').filter((c: string) => c.trim() !== '');
-            
-            // Check if the class is already applied
-            const classIndex = classNames.indexOf(className);
-            
-            if (classIndex > -1) {
-              // Remove the class (toggle off)
-              classNames.splice(classIndex, 1);
-            } else {
-              // Add the class (toggle on)
-              classNames.push(className);
-            }
-            
-            // Update the cell format
-            newCellFormats[cellKey] = {
-              ...currentFormat,
-              className: classNames.join(' ').trim()
-            };
-          }
-        }
-        setCellFormats(newCellFormats);
-        hotInstance.render();
-        setHasChanges(true);
-        try {
-          const current = hotInstance.getData && hotInstance.getData();
-          if (current) onContentChange?.(current);
-        } catch {}
-      }
-    }
-  };
+  const { toggleCellFormat } = useMemo(() => 
+    createToggleCellFormatHandler({
+      hotTableRef,
+      cellFormats,
+      setCellFormats,
+      setHasChanges,
+      onContentChange
+    }), [cellFormats, setCellFormats, setHasChanges, onContentChange]
+  );
 
   const handleBold = () => {
     toggleCellFormat('ht-bold');
@@ -800,42 +629,6 @@ const searchFieldKeyupCallback = useCallback(
 
   const handleUnderline = () => {
     toggleCellFormat('ht-underline');
-  };
-
-  // Helper function to detect if a value is a URL
-  const isUrl = (value: any): string | null => {
-    if (!value || typeof value !== 'string') return null;
-    const trimmed = value.trim();
-    if (!trimmed) return null;
-    
-    // More accurate URL detection patterns
-    // Pattern 1: Starts with http:// or https://
-    if (/^https?:\/\/.+/.test(trimmed)) {
-      return trimmed;
-    }
-    
-    // Pattern 2: Starts with www.
-    if (/^www\..+\.[a-z]{2,}/i.test(trimmed)) {
-      return `https://${trimmed}`;
-    }
-    
-    // Pattern 3: Domain pattern (e.g., example.com, subdomain.example.com)
-    // Must have at least one dot and a valid TLD (2+ chars)
-    const domainPattern = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}(\/.*)?$/i;
-    if (domainPattern.test(trimmed) && trimmed.includes('.')) {
-      // Check it's not just a number or single word
-      const parts = trimmed.split('/')[0].split('.');
-      if (parts.length >= 2 && parts[parts.length - 1].length >= 2) {
-        return `https://${trimmed}`;
-      }
-    }
-    
-    // Pattern 4: mailto: links
-    if (/^mailto:.+@.+\..+/.test(trimmed)) {
-      return trimmed;
-    }
-    
-    return null;
   };
 
   // Load CSV/XLSX content (only when src changes)
@@ -858,7 +651,7 @@ const searchFieldKeyupCallback = useCallback(
       setCellStyles,
       setCellLinks,
       pendingCellMetaRef,
-      parseCSVWithMeta,
+      parseCSVWithMeta: parseCSVWithMetaHandler,
       onSheetsLoaded: (sheets, initialActiveIndex) => {
         setAllSheets(sheets);
         setActiveSheetIndex(initialActiveIndex);
@@ -906,40 +699,23 @@ const searchFieldKeyupCallback = useCallback(
     setAllSheets(updatedSheets);
   }, [allSheets, activeSheetIndex, data, cellFormats, cellStyles, conditionalRules, columnWidths, charts]);
 
-  const handleSheetChange = useCallback((newIndex: number) => {
-    if (newIndex < 0 || newIndex >= allSheets.length || newIndex === activeSheetIndex) return;
-    
-    // Save current sheet state
-    saveCurrentSheetState();
-    
-    // Load new sheet
-    const sheet = allSheets[newIndex];
-    setData(sheet.data);
-    setCellFormats(sheet.cellFormats);
-    setCellStyles(sheet.cellStyles);
-    pendingCellMetaRef.current = sheet.cellMeta || {};
-    setConditionalRules(sheet.conditionalRules || []);
-    setColumnWidths(sheet.columnWidths || {});
-    setCharts(sheet.charts || []);
-    setActiveSheetIndex(newIndex);
-    
-    // Apply cell metadata to Handsontable
-    setTimeout(() => {
-      if (hotTableRef.current) {
-        const hot = hotTableRef.current.hotInstance;
-        if (hot && sheet.cellMeta) {
-          Object.entries(sheet.cellMeta).forEach(([key, meta]: [string, any]) => {
-            const [row, col] = key.split('-').map(Number);
-            if (!isNaN(row) && !isNaN(col)) {
-              hot.setCellMeta(row, col, 'type', meta.type);
-              if (meta.source) hot.setCellMeta(row, col, 'source', meta.source);
-            }
-          });
-          hot.render();
-        }
-      }
-    }, 100);
-  }, [allSheets, activeSheetIndex, saveCurrentSheetState]);
+  const handleSheetChange = useCallback(
+    createSheetChangeHandler({
+      allSheets,
+      activeSheetIndex,
+      saveCurrentSheetState,
+      setData,
+      setCellFormats,
+      setCellStyles,
+      pendingCellMetaRef,
+      setConditionalRules,
+      setColumnWidths,
+      setCharts,
+      setActiveSheetIndex,
+      hotTableRef
+    }),
+    [allSheets, activeSheetIndex, saveCurrentSheetState, setData, setCellFormats, setCellStyles, setConditionalRules, setColumnWidths, setCharts, setActiveSheetIndex, hotTableRef]
+  );
 
   const handleAddSheet = useCallback(() => {
     const newSheetName = `Sheet${allSheets.length + 1}`;
@@ -968,29 +744,22 @@ const searchFieldKeyupCallback = useCallback(
     setCharts([]);
   }, [allSheets, saveCurrentSheetState]);
 
-  const handleDeleteSheet = useCallback((index: number) => {
-    if (allSheets.length <= 1) return; // Don't delete the last sheet
-    
-    const updatedSheets = allSheets.filter((_, i) => i !== index);
-    setAllSheets(updatedSheets);
-    
-    // If we deleted the active sheet, switch to the previous one
-    if (index === activeSheetIndex) {
-      const newActiveIndex = Math.max(0, index - 1);
-      setActiveSheetIndex(newActiveIndex);
-      const sheet = updatedSheets[newActiveIndex];
-      setData(sheet.data);
-      setCellFormats(sheet.cellFormats);
-      setCellStyles(sheet.cellStyles);
-      pendingCellMetaRef.current = sheet.cellMeta || {};
-      setConditionalRules(sheet.conditionalRules || []);
-      setColumnWidths(sheet.columnWidths || {});
-      setCharts(sheet.charts || []);
-    } else if (index < activeSheetIndex) {
-      // Adjust active index if we deleted a sheet before it
-      setActiveSheetIndex(activeSheetIndex - 1);
-    }
-  }, [allSheets, activeSheetIndex]);
+  const handleDeleteSheet = useCallback(
+    createDeleteSheetHandler({
+      allSheets,
+      activeSheetIndex,
+      setAllSheets,
+      setActiveSheetIndex,
+      setData,
+      setCellFormats,
+      setCellStyles,
+      pendingCellMetaRef,
+      setConditionalRules,
+      setColumnWidths,
+      setCharts
+    }),
+    [allSheets, activeSheetIndex, setAllSheets, setActiveSheetIndex, setData, setCellFormats, setCellStyles, setConditionalRules, setColumnWidths, setCharts]
+  );
 
   const handleRenameSheet = useCallback((index: number, newName: string) => {
     const updatedSheets = [...allSheets];
@@ -1001,44 +770,22 @@ const searchFieldKeyupCallback = useCallback(
     setAllSheets(updatedSheets);
   }, [allSheets]);
 
-  const handleDuplicateSheet = useCallback((index: number) => {
-    if (index < 0 || index >= allSheets.length) return;
-    
-    // Save current sheet state
-    saveCurrentSheetState();
-    
-    const sheetToDuplicate = allSheets[index];
-    const newSheetName = `${sheetToDuplicate.name} (Copy)`;
-    const duplicatedSheet: SheetData = {
-      ...sheetToDuplicate,
-      name: newSheetName,
-      // Deep copy the data and formatting
-      data: sheetToDuplicate.data.map(row => [...row]),
-      cellFormats: { ...sheetToDuplicate.cellFormats },
-      cellStyles: { ...sheetToDuplicate.cellStyles },
-      cellMeta: { ...sheetToDuplicate.cellMeta },
-      conditionalRules: sheetToDuplicate.conditionalRules ? [...sheetToDuplicate.conditionalRules] : [],
-      columnWidths: { ...sheetToDuplicate.columnWidths },
-      charts: sheetToDuplicate.charts ? sheetToDuplicate.charts.map(chart => ({ 
-        ...chart, 
-        id: `chart-${Date.now()}-${Math.random()}` 
-      })) : []
-    };
-    
-    const updatedSheets = [...allSheets];
-    updatedSheets.splice(index + 1, 0, duplicatedSheet);
-    setAllSheets(updatedSheets);
-    
-    // Switch to the duplicated sheet
-    setActiveSheetIndex(index + 1);
-    setData(duplicatedSheet.data);
-    setCellFormats(duplicatedSheet.cellFormats);
-    setCellStyles(duplicatedSheet.cellStyles);
-    pendingCellMetaRef.current = duplicatedSheet.cellMeta || {};
-    setConditionalRules(duplicatedSheet.conditionalRules || []);
-    setColumnWidths(duplicatedSheet.columnWidths || {});
-    setCharts(duplicatedSheet.charts || []);
-  }, [allSheets, saveCurrentSheetState]);
+  const handleDuplicateSheet = useCallback(
+    createDuplicateSheetHandler({
+      allSheets,
+      saveCurrentSheetState,
+      setAllSheets,
+      setActiveSheetIndex,
+      setData,
+      setCellFormats,
+      setCellStyles,
+      pendingCellMetaRef,
+      setConditionalRules,
+      setColumnWidths,
+      setCharts
+    }),
+    [allSheets, saveCurrentSheetState, setAllSheets, setActiveSheetIndex, setData, setCellFormats, setCellStyles, setConditionalRules, setColumnWidths, setCharts]
+  );
 
   // Auto-save current sheet state when data changes
   useEffect(() => {
@@ -1063,29 +810,6 @@ const searchFieldKeyupCallback = useCallback(
       });
     } catch {}
   }, []);
-
-
-
-  // Display helper: format dates as MM/DD/YYYY by default when cell type is 'date'
-  const formatDateDisplay = (value: any): string => {
-    if (value == null || value === '') return '';
-    try {
-      if (value instanceof Date) {
-        return value.toLocaleDateString('en-US');
-      }
-      if (typeof value === 'number') {
-        const date = new Date(value);
-        if (!isNaN(date.getTime())) return date.toLocaleDateString('en-US');
-      }
-      if (typeof value === 'string') {
-        const trimmed = value.trim();
-        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) return trimmed;
-        const parsed = new Date(trimmed);
-        if (!isNaN(parsed.getTime())) return parsed.toLocaleDateString('en-US');
-      }
-    } catch {}
-    return String(value);
-  };
 
 
   // Handsontable context menu configuration with custom items
@@ -1282,7 +1006,6 @@ const searchFieldKeyupCallback = useCallback(
       handleAddRow,
       handleAddColumn,
       handleClear,
-      setHelpDialogOpen,
       isVimMode,
       vimModeHandler,
       formulaNavigationHandler
@@ -1310,105 +1033,16 @@ const searchFieldKeyupCallback = useCallback(
     handleAddRow,
     handleAddColumn,
     handleClear,
-    setHelpDialogOpen,
     isVimMode,
     vimModeHandler,
     formulaNavigationHandler
   ]);
 
-  // Simple Conditional Formatting Dialog state
+  // Conditional Formatting Panel state
   const [cfPanelOpen, setCfPanelOpen] = useState(false)
-  const [cfOperator, setCfOperator] = useState<'gt' | 'gte' | 'lt' | 'lte' | 'eq' | 'neq' | 'between'>('gt')
-  const [cfValue, setCfValue] = useState<string>('')
-  const [cfValue2, setCfValue2] = useState<string>('')
-  const [cfStopIfTrue, setCfStopIfTrue] = useState<boolean>(false)
-  const [cfTextOperator, setCfTextOperator] = useState<'contains' | 'startsWith' | 'endsWith' | 'eq' | 'neq' | 'isEmpty' | 'isNotEmpty' | 'duplicate' | 'unique'>('contains')
-  const [cfDateOperator, setCfDateOperator] = useState<'today' | 'yesterday' | 'tomorrow' | 'inLastNDays' | 'inNextNDays' | 'thisWeek' | 'lastWeek' | 'nextWeek' | 'thisMonth' | 'lastMonth' | 'nextMonth' | 'before' | 'after' | 'on' | 'notOn'>('today')
-  const [cfMode, setCfMode] = useState<'numeric' | 'text' | 'date' | 'colorScale' | 'topN' | 'bottomN'>('numeric')
-  const [cfA1Range, setCfA1Range] = useState<string>('')
-  const [cfMinColor, setCfMinColor] = useState<string>('#FDE68A')
-  const [cfMaxColor, setCfMaxColor] = useState<string>('#F59E0B')
-  const [cfTextColor, setCfTextColor] = useState<string>('')
-  const [cfFillColor, setCfFillColor] = useState<string>('#FACC15')
-  const [cfBold, setCfBold] = useState<boolean>(false)
-  const [cfItalic, setCfItalic] = useState<boolean>(false)
-  const [cfUnderline, setCfUnderline] = useState<boolean>(false)
 
   const openCFPanel = () => setCfPanelOpen(true)
   const closeCFPanel = () => setCfPanelOpen(false)
-
-  const addRuleFromPanel = useMemo(() => {
-    const handler = createAddCFRuleHandler({
-      hotTableRef,
-      getCFState: () => ({
-        cfMode,
-        cfOperator,
-        cfTextOperator,
-        cfDateOperator,
-        cfA1Range,
-        cfValue,
-        cfValue2,
-        cfStopIfTrue,
-        cfMinColor,
-        cfMaxColor,
-        cfTextColor,
-        cfFillColor,
-        cfBold,
-        cfItalic,
-        cfUnderline,
-      }),
-      addConditionalRule,
-      getDataSize: () => ({ rows: data.length, cols: data.reduce((m, r) => Math.max(m, r.length), 0) })
-    })
-    return () => handler()
-  }, [hotTableRef, data, cfMode, cfOperator, cfTextOperator, cfDateOperator, cfA1Range, cfValue, cfValue2, cfStopIfTrue, cfMinColor, cfMaxColor, cfTextColor, cfFillColor, cfBold, cfItalic, cfUnderline, addConditionalRule])
-
-  // Rules Manager state
-  const [cfManagerOpen, setCfManagerOpen] = useState(false)
-  const [editingRuleId, setEditingRuleId] = useState<string | null>(null)
-  const [editOperator, setEditOperator] = useState<'gt' | 'gte' | 'lt' | 'lte' | 'eq' | 'neq' | 'between'>('gt')
-  const [editValue, setEditValue] = useState<string>('')
-  const [editValue2, setEditValue2] = useState<string>('')
-  const [editStopIfTrue, setEditStopIfTrue] = useState<boolean>(false)
-
-  const openManager = () => setCfManagerOpen(true)
-  const closeManager = () => { setCfManagerOpen(false); setEditingRuleId(null) }
-
-  const startEditRule = (rule: ConditionalFormattingRule) => {
-    setEditingRuleId(rule.id)
-    if (rule.condition.kind === 'numeric') {
-      setEditOperator(rule.condition.operator as any)
-      setEditValue(typeof rule.condition.value === 'number' ? String(rule.condition.value) : '')
-      setEditValue2(typeof rule.condition.value2 === 'number' ? String(rule.condition.value2) : '')
-    } else {
-      setEditOperator('gt')
-      setEditValue('')
-      setEditValue2('')
-    }
-    setEditStopIfTrue(Boolean(rule.stopIfTrue))
-  }
-
-  const saveEditedRule = () => {
-    if (!editingRuleId) return
-    const v1 = editValue.trim() === '' ? undefined : Number(editValue)
-    const v2 = editValue2.trim() === '' ? undefined : Number(editValue2)
-    updateConditionalRule(editingRuleId, {
-      condition: { kind: 'numeric', operator: editOperator, value: typeof v1 === 'number' && !Number.isNaN(v1) ? v1 : undefined, value2: typeof v2 === 'number' && !Number.isNaN(v2) ? v2 : undefined } as any,
-      stopIfTrue: editStopIfTrue
-    })
-    setEditingRuleId(null)
-  }
-
-  const deleteRule = (id: string) => removeConditionalRule(id)
-
-  const applySelectionToRule = (id: string) => {
-    const hot = hotTableRef.current?.hotInstance
-    if (!hot) return
-    const sel = hot.getSelectedLast?.()
-    if (!sel) return
-    const [r1, c1, r2, c2] = sel
-    updateConditionalRule(id, { range: { startRow: Math.min(r1, r2), endRow: Math.max(r1, r2), startCol: Math.min(c1, c2), endCol: Math.max(c1, c2) } as any })
-  }
 
   const moveRule = (id: string, direction: 'up' | 'down') => {
     setConditionalRules((prev) => {
@@ -1557,7 +1191,6 @@ const searchFieldKeyupCallback = useCallback(
         onDownloadDocument={onDownloadDocument}
         saving={saving}
         canSave={canSave}
-        setHelpDialogOpen={setHelpDialogOpen}
       />
 
       {/* Removed separate conditional formatting control bar; functionality moved into toolbar popover */}
@@ -1627,234 +1260,23 @@ const searchFieldKeyupCallback = useCallback(
               const cellKey = `${row}-${col}`;
               const persisted = cellTypeMeta[cellKey];
               
+              // Create cell renderer function
+              const cellRenderer = createCellRenderer({
+                cellTypeMeta,
+                cellLinks,
+                setCellLinks,
+                cellFormats,
+                cellStyles,
+                conditionalClassOverlay,
+                conditionalStyleOverlay,
+                hotTableRef,
+                containerRef,
+                setLinkPopover
+              });
+              
               // Configure cell properties based on persisted metadata
               const cellConfig: any = {
-                renderer: (instance: any, td: HTMLTableCellElement, r: number, c: number, prop: any, value: any, cellProperties: any) => {
-                  const cellKey = `${r}-${c}`;
-                  
-                  // Delegate to appropriate base renderer based on meta.type
-                  try {
-                    const meta = instance.getCellMeta(r, c) || {};
-                    // Re-apply persisted type meta if Handsontable meta was lost (similar to class/style persistence)
-                    const persisted = cellTypeMeta[cellKey];
-                    if (persisted && (!meta || meta.type !== persisted.type)) {
-                      try {
-                        instance.setCellMeta(r, c, 'type', persisted.type);
-                        if (persisted.type === 'dropdown' && Array.isArray(persisted.source)) {
-                          instance.setCellMeta(r, c, 'source', persisted.source);
-                          instance.setCellMeta(r, c, 'strict', false); // Allow typing custom values
-                        }
-                        if (persisted.type === 'numeric' && persisted.numericFormat) {
-                          instance.setCellMeta(r, c, 'numericFormat', persisted.numericFormat);
-                        }
-                        if (persisted.type === 'date' && persisted.dateFormat) {
-                          instance.setCellMeta(r, c, 'dateFormat', persisted.dateFormat);
-                        }
-                      } catch {}
-                    }
-                    const effectiveType = (persisted && persisted.type) ? persisted.type : meta.type;
-                    
-                    if (effectiveType === 'checkbox') {
-                      checkboxRenderer(instance, td, r, c, prop, value, cellProperties);
-                    } else {
-                      textRenderer(instance, td, r, c, prop, value, cellProperties);
-                      // If this is a date cell, display only the date portion
-                      if (effectiveType === 'date') {
-                        try {
-                          const display = formatDateDisplay(value);
-                          td.textContent = display;
-                        } catch {}
-                      }
-                    }
-                    
-                    // Auto-detect URL from cell value (only for non-checkbox cells)
-                    if (effectiveType !== 'checkbox') {
-                      const detectedUrl = isUrl(value);
-                      if (detectedUrl && !cellLinks[cellKey]) {
-                        setCellLinks(prev => ({ ...prev, [cellKey]: detectedUrl }));
-                      }
-                    }
-                  } catch {
-                    textRenderer(instance, td, r, c, prop, value, cellProperties);
-                    // Also check for URLs in catch block
-                    const detectedUrl = isUrl(value);
-                    if (detectedUrl && !cellLinks[cellKey]) {
-                      setCellLinks(prev => ({ ...prev, [cellKey]: detectedUrl }));
-                    }
-                  }
-                  
-                  const fmt = cellFormats[cellKey];
-                  const sty = cellStyles[cellKey];
-                  const cfClass = conditionalClassOverlay[cellKey];
-                  const cfStyle = conditionalStyleOverlay[cellKey];
-                  
-                  // Get link URL (from stored links or auto-detected)
-                  const storedLink = cellLinks[cellKey];
-                  const detectedUrl = isUrl(value);
-                  const linkUrl = storedLink || detectedUrl;
-                  
-                  const existingClasses = td.className ? td.className.split(' ').filter(Boolean) : [];
-                  let mergedClasses = [...existingClasses];
-                  if (fmt?.className) {
-                    const classes = fmt.className.split(' ').filter(cls => cls.trim());
-                    mergedClasses = classes;
-                  }
-                  if (cfClass) {
-                    const add = cfClass.split(' ').filter(Boolean)
-                    mergedClasses = [...mergedClasses, ...add]
-                  }
-                  try {
-                    const metaForSearch = (instance as any).getCellMeta(r, c) || {};
-                    if (metaForSearch.isSearchResult) {
-                      if (!mergedClasses.includes('htSearchResult')) mergedClasses.push('htSearchResult');
-                    }
-                  } catch {}
-                  td.className = mergedClasses.join(' ');
-                  
-                  td.style.whiteSpace = 'nowrap';
-                  td.style.overflow = 'visible';
-                  td.style.textOverflow = 'clip';
-                  td.style.wordBreak = 'normal';
-                  td.style.setProperty('overflow-wrap', 'normal');
-
-                  if (sty && Object.keys(sty).length > 0) {
-                    const styleEntries = Object.entries(sty);
-                    for (const [prop, val] of styleEntries) {
-                      if (val != null) {
-                        try {
-                          // Convert camelCase to kebab-case for CSS property names
-                          const cssProperty = prop.replace(/([A-Z])/g, '-$1').toLowerCase();
-                          td.style.setProperty(cssProperty, String(val));
-                        } catch {}
-                      }
-                    }
-                  }
-                  if (cfStyle && Object.keys(cfStyle).length > 0) {
-                    const entries = Object.entries(cfStyle)
-                    for (const [prop, val] of entries) {
-                      if (val != null) {
-                        try { 
-                          // Convert camelCase to kebab-case for CSS property names
-                          const cssProperty = prop.replace(/([A-Z])/g, '-$1').toLowerCase();
-                          td.style.setProperty(cssProperty, String(val)) 
-                        } catch {}
-                      }
-                    }
-                  }
-                  
-                  // Handle link rendering AFTER all styling is applied
-                  // Check if this is a checkbox cell by checking the meta
-                  const isCheckboxCell = (() => {
-                    try {
-                      const meta = instance.getCellMeta(r, c) || {};
-                      const persisted = cellTypeMeta[cellKey];
-                      const cellType = (persisted && persisted.type) ? persisted.type : meta.type;
-                      return cellType === 'checkbox';
-                    } catch {
-                      return false;
-                    }
-                  })();
-                  
-                  // Check if cell is currently being edited - don't render link during editing
-                  const isEditing = (() => {
-                    try {
-                      const activeEditor = instance.getActiveEditor();
-                      const selected = instance.getSelected();
-                      if (selected && selected.length > 0) {
-                        const [selRow, selCol] = selected[0];
-                        return activeEditor && selRow === r && selCol === c;
-                      }
-                      return false;
-                    } catch {
-                      return false;
-                    }
-                  })();
-                  
-                  // Only render link if not editing and not checkbox
-                  if (linkUrl && !isCheckboxCell && !isEditing) {
-                    // Store the original text content
-                    const cellText = value ? String(value) : linkUrl;
-                    // Clear and create link element
-                    td.innerHTML = '';
-                    const linkElement = document.createElement('a');
-                    linkElement.href = linkUrl;
-                    linkElement.target = '_blank';
-                    linkElement.rel = 'noopener noreferrer';
-                    linkElement.textContent = cellText;
-                    // Use important styles to ensure link is visible
-                    linkElement.style.setProperty('text-decoration', 'underline', 'important');
-                    linkElement.style.setProperty('color', '#2563eb', 'important');
-                    linkElement.style.setProperty('cursor', 'pointer', 'important');
-                    linkElement.style.setProperty('display', 'inline-block', 'important');
-                    linkElement.style.setProperty('width', '100%', 'important');
-                    linkElement.style.setProperty('height', '100%', 'important');
-                    // Preserve any text color from cell styles, but ensure it's still visible as a link
-                    if (sty?.color) {
-                      linkElement.style.setProperty('color', String(sty.color), 'important');
-                    }
-                    linkElement.onclick = (e) => {
-                      e.preventDefault();
-                      // Get cell position for popover
-                      const rect = td.getBoundingClientRect();
-                      const hotInstance = hotTableRef.current?.hotInstance;
-                      if (hotInstance) {
-                        // Select the cell first
-                        hotInstance.selectCell(r, c);
-                        
-                        // Find the scrollable container (handsontable-container-full)
-                        const scrollableContainer = td.closest('.handsontable-container-full') as HTMLElement;
-                        const container = containerRef.current;
-                        
-                        if (container && scrollableContainer) {
-                          const containerRect = container.getBoundingClientRect();
-                          
-                          // Calculate position relative to the container, positioned below the cell
-                          const relativeTop = rect.bottom - containerRect.top + 4;
-                          const relativeLeft = rect.left - containerRect.left;
-                          
-                          // Show popover after a brief delay to allow selection
-                          setTimeout(() => {
-                            setLinkPopover({
-                              row: r,
-                              col: c,
-                              url: linkUrl,
-                              position: {
-                                top: relativeTop,
-                                left: relativeLeft
-                              }
-                            });
-                          }, 10);
-                        }
-                      }
-                    };
-                    td.appendChild(linkElement);
-                  }
-                  // Add dropdown indicator class for dropdown cells (append after formatting classes)
-                  try {
-                    const metaForIndicator = instance.getCellMeta(r, c) || {};
-                    const persistedForIndicator = cellTypeMeta[cellKey];
-                    const typeForIndicator = (persistedForIndicator && persistedForIndicator.type) ? persistedForIndicator.type : metaForIndicator.type;
-                    if (typeForIndicator === 'dropdown') {
-                      const currentClasses = td.className ? td.className.split(' ').filter(Boolean) : [];
-                      if (!currentClasses.includes('ht-dropdown-indicator')) {
-                        currentClasses.push('ht-dropdown-indicator');
-                        td.className = currentClasses.join(' ');
-                      }
-                      
-                      // Apply value-based styling for dropdown cells
-                      const cellValue = value ? String(value).trim() : '';
-                      if (cellValue === 'Rejected') {
-                        td.style.backgroundColor = '#fee2e2';  // light red/pink
-                        td.style.color = '#991b1b';  // dark red text
-                      } else if (cellValue === 'Applied') {
-                        td.style.backgroundColor = '#fef3c7';  // light yellow/tan
-                        td.style.color = '#92400e';  // dark yellow/brown text
-                      }
-                    }
-                  } catch {}
-                  
-                  return td;
-                }
+                renderer: cellRenderer
               };
               
               // Set cell type and properties if we have persisted metadata
@@ -1878,36 +1300,11 @@ const searchFieldKeyupCallback = useCallback(
           />
 
           {/* Search overlay */}
-          {isSearchOpen && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                background: '#ffffff',
-                border: '1px solid #1f2937',
-                borderRadius: 6,
-                boxShadow: '0 6px 16px rgba(0,0,0,0.16)',
-                padding: '8px 10px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                zIndex: 1000
-              }}
-              className="csv-search-overlay"
-              role="dialog"
-              aria-label="Search table"
-            >
-              <span style={{ fontSize: 12, color: '#111827', minWidth: 64, textAlign: 'center' }}>{(searchResultCount > 0) ? `${searchResultCount} results` : 'No results'}</span>
-              <input
-            id="search_field"
-            type="search"
-            style={{ color: '#111827' }}
-            placeholder="Search"
-            onKeyUp={(event) => searchFieldKeyupCallback(event)}
+          <SearchOverlay
+            isOpen={isSearchOpen}
+            searchResultCount={searchResultCount}
+            onSearchKeyUp={searchFieldKeyupCallback}
           />
-        </div>
-          )}
 
           {/* Chart overlays */}
           {charts.map((chart) => {
@@ -1929,316 +1326,47 @@ const searchFieldKeyupCallback = useCallback(
           })}
 
           {/* Link Popover */}
-          {linkPopover && (
-            <div
-              data-link-popover
-              style={{
-                position: 'absolute',
-                top: `${linkPopover.position.top}px`,
-                left: `${linkPopover.position.left}px`,
-                backgroundColor: '#ffffff',
-                border: '1px solid #e5e7eb',
-                borderRadius: 8,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                padding: '8px 12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                zIndex: 10002,
-                minWidth: 200,
-                maxWidth: 400,
-                pointerEvents: 'auto'
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <LinkIcon sx={{ fontSize: 16, color: '#6b7280' }} />
-              <span
-                style={{
-                  flex: 1,
-                  color: '#2563eb',
-                  textDecoration: 'underline',
-                  fontSize: 13,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  cursor: 'pointer'
-                }}
-                onClick={() => {
-                  window.open(linkPopover.url, '_blank', 'noopener,noreferrer');
-                  setLinkPopover(null);
-                }}
-                title={linkPopover.url}
-              >
-                {linkPopover.url.length > 30 ? `${linkPopover.url.substring(0, 30)}...` : linkPopover.url}
-              </span>
-              <div style={{ display: 'flex', gap: 4 }}>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(linkPopover.url);
-                    setLinkPopover(null);
-                  }}
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    padding: 4,
-                    display: 'flex',
-                    alignItems: 'center',
-                    borderRadius: 4
-                  }}
-                  title="Copy link"
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f3f4f6';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <CopyIcon sx={{ fontSize: 16, color: '#6b7280' }} />
-                </button>
-                <button
-                  onClick={() => {
-                    const newUrl = window.prompt('Edit URL:', linkPopover.url);
-                    if (newUrl !== null && newUrl.trim()) {
-                      const cellKey = `${linkPopover.row}-${linkPopover.col}`;
-                      let normalizedUrl = newUrl.trim();
-                      if (!normalizedUrl.match(/^https?:\/\//i)) {
-                        normalizedUrl = `https://${normalizedUrl}`;
-                      }
-                      setCellLinks(prev => ({ ...prev, [cellKey]: normalizedUrl }));
-                      const hotInstance = hotTableRef.current?.hotInstance;
-                      if (hotInstance) {
-                        hotInstance.render();
-                      }
-                    }
-                    setLinkPopover(null);
-                  }}
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    padding: 4,
-                    display: 'flex',
-                    alignItems: 'center',
-                    borderRadius: 4
-                  }}
-                  title="Edit link"
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f3f4f6';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <EditIcon sx={{ fontSize: 16, color: '#6b7280' }} />
-                </button>
-                <button
-                  onClick={() => {
-                    const cellKey = `${linkPopover.row}-${linkPopover.col}`;
-                    setCellLinks(prev => {
-                      const next = { ...prev };
-                      delete next[cellKey];
-                      return next;
-                    });
-                    const hotInstance = hotTableRef.current?.hotInstance;
-                    if (hotInstance) {
-                      hotInstance.render();
-                    }
-                    setLinkPopover(null);
-                    setHasChanges(true);
-                  }}
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    padding: 4,
-                    display: 'flex',
-                    alignItems: 'center',
-                    borderRadius: 4
-                  }}
-                  title="Remove link"
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f3f4f6';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <UnlinkIcon sx={{ fontSize: 16, color: '#6b7280' }} />
-                </button>
-              </div>
-            </div>
-          )}
+          <LinkPopover
+            linkPopover={linkPopover}
+            onClose={() => setLinkPopover(null)}
+            onEdit={(row, col, newUrl) => {
+              const cellKey = `${row}-${col}`;
+              setCellLinks(prev => ({ ...prev, [cellKey]: newUrl }));
+              const hotInstance = hotTableRef.current?.hotInstance;
+              if (hotInstance) {
+                hotInstance.render();
+              }
+            }}
+            onRemove={(row, col) => {
+              const cellKey = `${row}-${col}`;
+              setCellLinks(prev => {
+                const next = { ...prev };
+                delete next[cellKey];
+                return next;
+              });
+              const hotInstance = hotTableRef.current?.hotInstance;
+              if (hotInstance) {
+                hotInstance.render();
+              }
+              setHasChanges(true);
+            }}
+          />
 
         </div>
       </div>
 
-      {/* Right-side Conditional Formatting Panel (scoped to middle panel) */}
-      {cfPanelOpen && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            height: '100%',
-            width: 360,
-            backgroundColor: '#ffffff',
-            borderLeft: '1px solid #e5e7eb',
-            boxShadow: '-6px 0 16px rgba(0,0,0,0.08)',
-            zIndex: 10000,
-            display: 'flex',
-            flexDirection: 'column'
-          }}
-        >
-          <div style={{ padding: 8, borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#111827' }}>Conditional formatting</h3>
-            <Button size="sm" style={{ color: '#ffffff', backgroundColor: '#111827' , border: '1px solid #111827' }} onClick={closeCFPanel}>Close</Button>
-          </div>
-          <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <Label htmlFor="cf-range" style={{ color: '#111827' }}>Apply to range</Label>
-                <Input id="cf-range" value={cfA1Range} onChange={(e) => setCfA1Range(e.target.value)} placeholder="e.g. A1:D10" style={{ color: '#111827' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <Label htmlFor="cf-mode" style={{ color: '#111827' }}>Rule type</Label>
-                <select id="cf-mode" value={cfMode} onChange={(e) => setCfMode(e.target.value as any)} className="border rounded-md h-9 px-2 bg-white text-black" style={{ color: '#111827' }}>
-                  <option value="numeric">Numeric</option>
-                  <option value="text">Text</option>
-                  <option value="date">Date</option>
-                  <option value="topN">Top N</option>
-                  <option value="bottomN">Bottom N</option>
-                  <option value="colorScale">Color scale</option>
-                </select>
-              </div>
-            </div>
-            {cfMode === 'numeric' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <Label htmlFor="cf-op" style={{ color: '#111827' }}>Condition</Label>
-                <select id="cf-op" value={cfOperator} onChange={(e) => setCfOperator(e.target.value as any)}
-                  className="border rounded-md h-9 px-2 bg-white text-black" style={{ color: '#111827' }}>
-                  <option value="gt">Greater than</option>
-                  <option value="gte">Greater than or equal</option>
-                  <option value="lt">Less than</option>
-                  <option value="lte">Less than or equal</option>
-                  <option value="eq">Equal to</option>
-                  <option value="neq">Not equal to</option>
-                  <option value="between">Between</option>
-                </select>
-              </div>
-            )}
-            {cfMode === 'text' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <Label htmlFor="cf-text-op" style={{ color: '#111827' }}>Text condition</Label>
-                <select id="cf-text-op" value={cfTextOperator} onChange={(e) => setCfTextOperator(e.target.value as any)} className="border rounded-md h-9 px-2 bg-white text-black" style={{ color: '#111827' }}>
-                  <option value="contains">Contains</option>
-                  <option value="startsWith">Starts with</option>
-                  <option value="endsWith">Ends with</option>
-                  <option value="eq">Equals</option>
-                  <option value="neq">Not equal</option>
-                  <option value="isEmpty">Is empty</option>
-                  <option value="isNotEmpty">Is not empty</option>
-                  <option value="duplicate">Duplicate</option>
-                  <option value="unique">Unique</option>
-                </select>
-              </div>
-            )}
-            {cfMode === 'date' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <Label htmlFor="cf-date-op" style={{ color: '#111827' }}>Date condition</Label>
-                <select id="cf-date-op" value={cfDateOperator} onChange={(e) => setCfDateOperator(e.target.value as any)} className="border rounded-md h-9 px-2 bg-white text-black" style={{ color: '#111827' }}>
-                  <option value="today">Today</option>
-                  <option value="yesterday">Yesterday</option>
-                  <option value="tomorrow">Tomorrow</option>
-                  <option value="inLastNDays">In last N days</option>
-                  <option value="inNextNDays">In next N days</option>
-                  <option value="thisWeek">This week</option>
-                  <option value="lastWeek">Last week</option>
-                  <option value="nextWeek">Next week</option>
-                  <option value="thisMonth">This month</option>
-                  <option value="lastMonth">Last month</option>
-                  <option value="nextMonth">Next month</option>
-                  <option value="before">Before</option>
-                  <option value="after">After</option>
-                  <option value="on">On</option>
-                  <option value="notOn">Not on</option>
-                </select>
-              </div>
-            )}
-            {cfMode === 'colorScale' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <Label htmlFor="cf-min-color" style={{ color: '#111827' }}>Min color</Label>
-                  <input id="cf-min-color" type="color" value={cfMinColor} onChange={(e) => setCfMinColor(e.target.value)} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <Label htmlFor="cf-max-color" style={{ color: '#111827' }}>Max color</Label>
-                  <input id="cf-max-color" type="color" value={cfMaxColor} onChange={(e) => setCfMaxColor(e.target.value)} />
-                </div>
-              </div>
-            )}
-            <div style={{ display: cfMode === 'colorScale' ? 'none' : 'flex', gap: 8 }}>
-              <div style={{ flex: 1 }}>
-                <Label htmlFor="cf-val1" style={{ color: '#111827' }}>Value</Label>
-                <Input id="cf-val1" style={{ color: '#111827' }} value={cfValue} onChange={(e) => setCfValue(e.target.value)} />
-              </div>
-              {cfOperator === 'between' && (
-                <div style={{ flex: 1 }}>
-                  <Label htmlFor="cf-val2" style={{ color: '#111827' }}>and</Label>
-                  <Input id="cf-val2" value={cfValue2} onChange={(e) => setCfValue2(e.target.value)} />
-                </div>
-              )}
-            </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input type="checkbox" checked={cfStopIfTrue} onChange={(e) => setCfStopIfTrue(e.target.checked)} />
-              <span style={{ color: '#111827' }}>Stop if true</span>
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, alignItems: 'end' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <Label htmlFor="cf-fill" style={{ color: '#111827' }}>Fill</Label>
-                <input id="cf-fill" type="color" value={cfFillColor} onChange={(e) => setCfFillColor(e.target.value)} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <Label htmlFor="cf-text" style={{ color: '#111827' }}>Text</Label>
-                <input id="cf-text" type="color" value={cfTextColor} onChange={(e) => setCfTextColor(e.target.value)} />
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input type="checkbox" checked={cfBold} onChange={(e) => setCfBold(e.target.checked)} />
-                <span style={{ color: '#111827' }}>Bold</span>
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input type="checkbox" checked={cfItalic} onChange={(e) => setCfItalic(e.target.checked)} />
-                <span style={{ color: '#111827' }}>Italic</span>
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input type="checkbox" checked={cfUnderline} onChange={(e) => setCfUnderline(e.target.checked)} />
-                <span style={{ color: '#111827' }}>Underline</span>
-              </label>
-            </div>
-            <Button style={{ backgroundColor: '#111827', color: '#ffffff' }} onClick={addRuleFromPanel}>Add rule</Button>
-
-            <Separator className="my-2" style={{ borderColor: '#e5e7eb' }} />
-            <p style={{ color: '#111827', fontSize: 12, fontWeight: 600 }}>Rules</p>
-            <div style={{ overflowY: 'auto' }}>
-              {[...conditionalRules].sort((a, b) => a.priority - b.priority).map((rule) => (
-                <div key={rule.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid #e5e7eb' }}>
-                  <div style={{ color: '#111827', fontSize: 13, fontWeight: 600 }}>
-                    {rule.label || `${rule.condition.kind === 'numeric' ? rule.condition.operator : 'rule'} R${rule.range.startRow + 1}:C${rule.range.startCol + 1}–R${rule.range.endRow + 1}:C${rule.range.endCol + 1}`}
-                    {rule.stopIfTrue ? <span style={{ marginLeft: 8, color: '#94a3b8', fontSize: 12, fontWeight: 400 }}>(Stop if true)</span> : null}
-                  </div>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <Button size="icon" style={{ color: '#111827', backgroundColor: '#ffffff', border: '1px solid #111827' }} onClick={() => moveRule(rule.id, 'up')} title="Move up"><ArrowUpward sx={{ fontSize: 16, color: '#111827' }} /></Button>
-                    <Button size="icon" style={{ color: '#111827', backgroundColor: '#ffffff', border: '1px solid #111827' }} onClick={() => moveRule(rule.id, 'down')} title="Move down"><ArrowDownward sx={{ fontSize: 16, color: '#111827' }} /></Button>
-                    <Button size="icon" style={{ color: '#111827', backgroundColor: '#ffffff', border: '1px solid #111827' }} onClick={() => applySelectionToRule(rule.id)} title="Use selection"><BorderAllIcon sx={{ fontSize: 16, color: '#111827' }} /></Button>
-                    <Button size="icon" style={{ color: '#111827', backgroundColor: '#ffffff', border: '1px solid #111827' }} onClick={() => removeConditionalRule(rule.id)} title="Delete"><DeleteIcon sx={{ fontSize: 16, color: '#111827' }} /></Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Right-side Conditional Formatting Panel */}
+      <ConditionalFormattingPanel
+        isOpen={cfPanelOpen}
+        onClose={closeCFPanel}
+        conditionalRules={conditionalRules}
+        onAddRule={addConditionalRule}
+        onUpdateRule={updateConditionalRule}
+        onRemoveRule={removeConditionalRule}
+        hotTableRef={hotTableRef}
+        data={data}
+        onMoveRule={moveRule}
+      />
 
       
       {/* Chart Editor Modal */}
@@ -2264,28 +1392,7 @@ const searchFieldKeyupCallback = useCallback(
       )}
 
       {/* Vim mode indicator */}
-      {isVimMode && (
-        <div style={{
-          position: 'absolute',
-          bottom: 48,
-          right: 8,
-          padding: '4px 12px',
-          backgroundColor: vimDisplayMode === 'insert'
-            ? '#3b82f6'
-            : vimDisplayMode.startsWith('visual')
-            ? '#a855f7'
-            : '#10b981',
-          color: '#ffffff',
-          borderRadius: 4,
-          fontSize: 12,
-          fontWeight: 600,
-          zIndex: 1000,
-          pointerEvents: 'none',
-          textTransform: 'uppercase'
-        }}>
-          {vimDisplayMode.replace('-', ' ')}
-        </div>
-      )}
+      <VimModeIndicator isVimMode={isVimMode} vimDisplayMode={vimDisplayMode} />
 
       {/* Sheet tabs navigation - always visible */}
       <SheetTabs

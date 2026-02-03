@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Button } from '../../../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card'
-import { Badge } from '../../../components/ui/badge'
-import { Progress } from '../../../components/ui/progress'
+import { Button } from '../../../components/common/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/common/ui/card'
+import { Badge } from '../../../components/common/ui/badge'
+import { Progress } from '../../../components/common/ui/progress'
 import { 
   Video, 
   VideoOff, 
@@ -28,10 +28,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../../components/ui/dropdown-menu'
+} from '../../../components/common/ui/dropdown-menu'
 import { MeetingSession } from '../../../types/meeting-types'
 import { ApiService } from '../../../../backend/api/apiService'
-import { useToast } from '../../../components/ui/use-toast'
+import { useToast } from '../../../components/common/ui/use-toast'
 import { RecordingUploadDialog } from './RecordingUploadDialog'
 import { VideoPlayerDialog } from './VideoPlayerDialog'
 

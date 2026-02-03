@@ -1,6 +1,6 @@
 import { Editor } from '@tiptap/react'
 import { Subscript as SubscriptIcon } from 'lucide-react'
-import { Button } from '../../../ui/button'
+import { Button } from '../../../common/ui/button'
 
 interface SubscriptButtonProps {
   editor: Editor

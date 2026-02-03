@@ -1,10 +1,10 @@
 import React from "react";
 import { AssistantRuntimeProvider, useLocalRuntime } from "@assistant-ui/react";
 import { Composer, ComposerToolPreferences } from "../../../components/RightPanel/composer/Composer";
-import { TooltipProvider } from "../../../components/ui/tooltip";
+import { TooltipProvider } from "../../../components/common/ui/tooltip";
 import { toolConfigs } from "../../../components/RightPanel/composer/handlers/toolConfig";
 import { Check } from "lucide-react";
-import { Typography } from "../../../components/ui/typography";
+import { Typography } from "../../../components/common/ui/typography";
 import type { FileSystemItem } from "../../../utils/fileTreeUtils";
 
 // Default tool preferences for mock composers

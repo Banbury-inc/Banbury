@@ -1,6 +1,6 @@
 import React from 'react'
 import { Save } from 'lucide-react'
-import { Button } from '../../../../../ui/button'
+import { Button } from '../../../../../common/ui/button'
 
 interface SaveButtonProps {
   onClick: () => void

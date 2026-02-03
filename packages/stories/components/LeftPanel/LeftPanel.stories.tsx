@@ -2,7 +2,7 @@ import React from "react"
 import type { Meta, StoryObj } from "@storybook/react"
 import { LeftPanel } from "frontend/components/LeftPanel/LeftPanel"
 import { fn } from "@storybook/test"
-import { TooltipProvider } from "frontend/components/ui/tooltip"
+import { TooltipProvider } from "@/components/common/ui/tooltip"
 
 function LeftPanelWrapper({ children }: { children: React.ReactNode }) {
   return (

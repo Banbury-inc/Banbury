@@ -1,6 +1,6 @@
 import { Box } from '@mui/material'
 import { motion } from 'framer-motion'
-import { Typography } from '../../../../components/ui/typography'
+import { Typography } from '../../../../components/common/ui/typography'
 import IntegrationsAutoScroll from './components/IntegrationsAutoScroll'
 
 const fadeInUp = {

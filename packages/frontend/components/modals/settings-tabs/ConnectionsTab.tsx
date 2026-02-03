@@ -5,7 +5,7 @@ import { GitHubConnection } from './GitHubConnection'
 import { OutlookConnection } from './OutlookConnection'
 import { OneDriveConnection } from './OneDriveConnection'
 import { ScopeManager } from './ScopeManager'
-import { Typography } from '../../ui/typography'
+import { Typography } from '../../common/ui/typography'
 
 export function ConnectionsTab() {
   return (

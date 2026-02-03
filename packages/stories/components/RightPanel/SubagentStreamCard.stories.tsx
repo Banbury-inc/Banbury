@@ -1,7 +1,7 @@
 import React from "react"
 import type { Meta, StoryObj } from "@storybook/react"
 import { SubagentStreamCard } from "frontend/components/RightPanel/composer/components/SubagentStreamCard"
-import { TooltipProvider } from "frontend/components/ui/tooltip"
+import { TooltipProvider } from "@/components/common/ui/tooltip"
 
 // Wrapper for stories
 function SubagentStreamCardWrapper({ children }: { children: React.ReactNode }) {

@@ -4,8 +4,8 @@ import { useRouter } from "next/router"
 import type { NextRouter } from "next/router"
 import { useState, useEffect } from "react"
 
-import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar"
-import { Badge } from "./ui/badge"
+import { Avatar, AvatarImage, AvatarFallback } from "./common/ui/avatar"
+import { Badge } from "./common/ui/badge"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,11 +13,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-} from "./ui/dropdown-menu"
+} from "./common/ui/dropdown-menu"
 import { SettingsModal } from "./modals/SettingsModal"
 import { ApiService } from "../../backend/api/apiService"
 import BanburyLogo from "../assets/images/New_Logo.png"
-import { Typography } from "./ui/typography"
+import { Typography } from "./common/ui/typography"
 import { handleDownloadDesktopApp } from "./nav-sidebar/handlers/handleDownloadDesktopApp"
 import { loadUserPicture } from "./nav-sidebar/handlers/loadUserPicture"
 import { loadUserInfo } from "./nav-sidebar/handlers/loadUserInfo"
@@ -26,7 +26,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./ui/tooltip"
+} from "./common/ui/tooltip"
 
 function handleLogout(router: NextRouter) {
   // Clear all authentication data using ApiService

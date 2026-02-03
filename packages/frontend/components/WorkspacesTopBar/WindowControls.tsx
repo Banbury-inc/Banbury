@@ -1,6 +1,6 @@
 import { Minus, Square, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Button } from '../ui/button'
+import { Button } from '../common/ui/button'
 
 export function WindowControls() {
   const [isMaximized, setIsMaximized] = useState(false)

@@ -2,7 +2,7 @@ import { Allotment } from 'allotment'
 import Image from 'next/image'
 import React from 'react'
 import { PanelGroup, Panel } from '../types'
-import { Kbd, KbdGroup } from '../../../components/ui/kbd'
+import { Kbd, KbdGroup } from '../../../components/common/ui/kbd'
 import { getActiveKey, KeybindsState } from '../../../components/modals/settings-tabs/handlers/keybindHandlers'
 import BanburyLogo from '../../../assets/images/Logo.png'
 

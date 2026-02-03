@@ -2,7 +2,7 @@ import { Box, Paper } from '@mui/material';
 import { IntegrationInstructions, Repeat, AccountTree } from '@mui/icons-material';
 import Image from 'next/image';
 import DocPageLayout from '../DocPageLayout';
-import { Typography } from '../../../../components/ui/typography';
+import { Typography } from '../../../../components/common/ui/typography';
 
 export default function WhatIsBanburyTab() {
   return (

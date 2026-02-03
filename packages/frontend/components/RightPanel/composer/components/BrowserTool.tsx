@@ -1,5 +1,5 @@
 import ToolCallCard from "./ToolCallCard";
-import { Button } from "../../../ui/button";
+import { Button } from "../../../common/ui/button";
 
 import type { FC, ReactNode } from "react";
 

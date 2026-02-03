@@ -1,8 +1,8 @@
 import React from 'react';
 import { X } from 'lucide-react';
 
-import { Button } from '../../ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../ui/dialog';
+import { Button } from '../../common/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../common/ui/dialog';
 import DrawioViewer from './DrawioViewer';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 

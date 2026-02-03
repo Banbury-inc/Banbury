@@ -3,14 +3,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 
-import { Button } from '../components/ui/button';
+import { Button } from '../components/common/ui/button';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '../components/ui/sheet';
+} from '../components/common/ui/sheet';
 
 const Header = (): JSX.Element => {
   const router = useRouter();

@@ -6,8 +6,8 @@ import {
   Settings
 } from 'lucide-react'
 
-import { Button } from '../../ui/button'
-import { Typography } from '../../ui/typography'
+import { Button } from '../../common/ui/button'
+import { Typography } from '../../common/ui/typography'
 import { ApiService } from '../../../../backend/api/apiService'
 import { UserScopes, AvailableFeatures } from '../../../../backend/api/scopes/scopes'
 

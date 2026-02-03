@@ -12,9 +12,9 @@ import { SplitZones } from '../../components/common/SplitZones';
 import { useRouter } from 'next/router';
 import { useIsMobile } from '../../hooks/use-mobile';
 import { TiptapAIProvider } from '../../contexts/TiptapAIContext';
-import { TooltipProvider } from "../../components/ui/tooltip";
-import { Toaster } from "../../components/ui/toaster";
-import { useToast } from "../../components/ui/use-toast";
+import { TooltipProvider } from "../../components/common/ui/tooltip";
+import { Toaster } from "../../components/common/ui/toaster";
+import { useToast } from "../../components/common/ui/use-toast";
 import { ApiService } from '../../../backend/api/apiService';
 import { renderPanel } from './handlers/renderPanel';
 import { splitPanel } from './handlers/splitPanel';
@@ -182,7 +182,6 @@ const Workspaces = (): React.ReactNode => {
   });
   const dragStateRef = useRef(dragState);
   dragStateRef.current = dragState;
-
 
 
   // File type checking functions are imported from fileTypeUtils

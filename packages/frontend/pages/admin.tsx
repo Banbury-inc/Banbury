@@ -15,14 +15,14 @@ import {
   XCircle
 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../components/ui/chart'
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../components/common/ui/chart'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { NavSidebar } from '../components/nav-sidebar'
-import { Button } from '../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
-import { Input } from '../components/ui/old-input'
-import { Label } from '../components/ui/label'
+import { Button } from '../components/common/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/common/ui/card'
+import { Input } from '../components/common/ui/old-input'
+import { Label } from '../components/common/ui/label'
 import { ApiService } from '../../backend/api/apiService'
 import { 
   getTotalPages, 

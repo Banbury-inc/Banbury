@@ -5,7 +5,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../ui/dropdown-menu'
+} from '../common/ui/dropdown-menu'
 import OlympusTabs, { Tab as OlympusTab } from '../common/Tabs/Tabs'
 import { AiConversationTabPane } from './AiConversationTabPane'
 import {

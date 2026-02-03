@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/router'
-import { Button } from '../../components/ui/button'
-import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '../../components/ui/tooltip'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
-import { Badge } from '../../components/ui/badge'
-import { Typography } from '../../components/ui/typography'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/old-tabs'
+import { Button } from '../../components/common/ui/button'
+import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '../../components/common/ui/tooltip'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/common/ui/card'
+import { Badge } from '../../components/common/ui/badge'
+import { Typography } from '../../components/common/ui/typography'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/common/ui/old-tabs'
 import { 
   Video, 
   VideoOff, 
@@ -37,7 +37,7 @@ import { RecallBotCard } from './components/RecallBotCard'
 import { TranscriptionDialog } from './components/TranscriptionDialog'
 import { ApiService } from '../../../backend/api/apiService'
 import { MeetingSession, MeetingAgentStatus } from '../../types/meeting-types'
-import { useToast } from '../../components/ui/use-toast'
+import { useToast } from '../../components/common/ui/use-toast'
 import { NavSidebar } from '../../components/nav-sidebar'
 
 export default function MeetingAgent() {

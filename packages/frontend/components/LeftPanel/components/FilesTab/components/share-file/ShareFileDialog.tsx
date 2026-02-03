@@ -10,9 +10,9 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from "../../../../../../components/ui/dialog"
-import { Button } from "../../../../../../components/ui/button"
-import { Input } from "../../../../../../components/ui/input"
+} from "../../../../../common/ui/dialog"
+import { Button } from "../../../../../common/ui/button"
+import { Input } from "../../../../../common/ui/input"
 import Files from "../../../../../../../backend/api/files/files"
 import { ApiService } from "../../../../../../../backend/api/apiService"
 

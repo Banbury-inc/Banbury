@@ -18,18 +18,33 @@ export function createWorkspaceReopenFileHandler({
 }: HandleWorkspaceReopenFileParams): (e: Event) => void {
   return (e: Event) => {
     const detail = (e as CustomEvent).detail || {}
-    const { newFile } = detail as { oldPath?: string; newFile: FileSystemItem }
+    const { newFile, oldPath } = detail as { oldPath?: string; newFile: FileSystemItem }
     if (!newFile) return
 
     try {
       const allTabs = getAllTabs(panelLayout)
       const fileTabs = allTabs.filter((t): t is FileTab => t.type === 'file')
-      const pathToMatch = (detail as { oldPath?: string }).oldPath ?? newFile.path
-      const targets = fileTabs.filter((t) => t.file.path === pathToMatch)
-      targets.forEach((t) => handleCloseTabCallback(t.id, activePanelId))
+      
+      // Check if the file is already open in a tab
+      const existingTab = fileTabs.find((t) => t.file.path === newFile.path)
+      
+      if (existingTab) {
+        // File is already open, just switch to it
+        // openFileInTabCallback will handle switching to the existing tab
+        openFileInTabCallback(newFile, activePanelId)
+        return
+      }
+      
+      // File is not open, handle oldPath cleanup if provided and different
+      if (oldPath && oldPath !== newFile.path) {
+        const targets = fileTabs.filter((t) => t.file.path === oldPath)
+        targets.forEach((t) => handleCloseTabCallback(t.id, activePanelId))
+      }
     } catch {
       /* ignore */
     }
+    
+    // Open the file (will create a new tab since we checked it doesn't exist)
     openFileInTabCallback(newFile, activePanelId)
   }
 }

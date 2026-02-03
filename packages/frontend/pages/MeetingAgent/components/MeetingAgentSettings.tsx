@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Button } from '../../../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card'
-import { Input } from '../../../components/ui/old-input'
-import { Label } from '../../../components/ui/label'
-import { Switch } from '../../../components/ui/old-switch'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/old-select'
-import { Separator } from '../../../components/ui/separator'
-import { Badge } from '../../../components/ui/badge'
+import { Button } from '../../../components/common/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/common/ui/card'
+import { Input } from '../../../components/common/ui/old-input'
+import { Label } from '../../../components/common/ui/label'
+import { Switch } from '../../../components/common/ui/old-switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/common/ui/old-select'
+import { Separator } from '../../../components/common/ui/separator'
+import { Badge } from '../../../components/common/ui/badge'
 import { 
   Settings, 
   Key, 
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import { ApiService } from '../../../../backend/api/apiService'
 import { MeetingAgentConfig, MeetingPlatform } from '../../../types/meeting-types'
-import { useToast } from '../../../components/ui/use-toast'
+import { useToast } from '../../../components/common/ui/use-toast'
 
 export function MeetingAgentSettings() {
   const [config, setConfig] = useState<MeetingAgentConfig | null>(null)

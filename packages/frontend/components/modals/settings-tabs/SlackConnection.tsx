@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { MessageSquare } from 'lucide-react'
-import { Button } from '../../ui/button'
-import { useToast } from '../../ui/use-toast'
-import { Typography } from '../../ui/typography'
+import { Button } from '../../common/ui/button'
+import { useToast } from '../../common/ui/use-toast'
+import { Typography } from '../../common/ui/typography'
 import { CONFIG } from '../../../config/config'
 import { 
   checkSlackConnectionStatus, 

@@ -5,7 +5,7 @@ import { MiddlePanel } from '../../../../../components/MiddlePanel/MiddlePanel'
 import { NavSidebar } from '../../../../../components/nav-sidebar'
 import { PanelGroup, WorkspaceTab } from '../../../../Workspaces/types'
 import { FileSystemItem } from '../../../../../utils/fileTreeUtils'
-import { TooltipProvider } from '../../../../../components/ui/tooltip'
+import { TooltipProvider } from '../../../../../components/common/ui/tooltip'
 import { FileText, Mail, Calendar } from 'lucide-react'
 import { DriveFile } from '../../../../../../backend/api/drive/drive'
 import { CalendarEvent } from '../../../../../../backend/api/calendar/calendar'
@@ -791,6 +791,7 @@ export default function DemoApp() {
               selectedFile={selectedFile}
               selectedEmail={selectedEmail}
               onEmailSelect={handleEmailSelect}
+              composerAutofocus={false}
             />
           </div>
         )}

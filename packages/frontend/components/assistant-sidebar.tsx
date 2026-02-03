@@ -3,7 +3,7 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "./ui/resizable";
+} from "./common/ui/resizable";
 import { ClaudeRuntimeProvider } from "../assistant/ClaudeRuntimeProvider/ClaudeRuntimeProvider";
 
 import type { FC, PropsWithChildren } from "react";

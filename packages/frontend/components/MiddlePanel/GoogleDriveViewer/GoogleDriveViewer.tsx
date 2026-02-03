@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { ExternalLink, RefreshCw, Download } from 'lucide-react'
-import { Button } from '../../ui/button'
-import { Typography } from '../../ui/typography'
+import { Button } from '../../common/ui/button'
+import { Typography } from '../../common/ui/typography'
 import { FileSystemItem } from '../../../utils/fileTreeUtils'
 import { ApiService } from '../../../../backend/api/apiService'
 

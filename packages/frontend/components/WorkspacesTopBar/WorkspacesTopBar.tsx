@@ -1,5 +1,5 @@
 import { PanelLeft, PanelRight } from 'lucide-react'
-import { Button } from '../ui/button'
+import { Button } from '../common/ui/button'
 import { WindowControls } from './WindowControls'
 
 interface WorkspacesTopBarProps {

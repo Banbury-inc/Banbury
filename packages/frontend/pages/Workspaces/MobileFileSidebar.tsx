@@ -1,4 +1,4 @@
-import { Sheet, SheetContent, SheetTitle } from '../../components/ui/sheet'
+import { Sheet, SheetContent, SheetTitle } from '../../components/common/ui/sheet'
 import { LeftPanel } from '../../components/LeftPanel/LeftPanel'
 import { FileSystemItem } from '../../utils/fileTreeUtils'
 import { CalendarEvent } from '../../../backend/api/calendar/calendar'

@@ -1,11 +1,5 @@
 import { 
   RefreshCw, 
-  FolderPlus, 
-  FileText,
-  FileSpreadsheet,
-  FilePlus,
-  Plus,
-  Network,
   Folder,
   Clock,
   Star,
@@ -17,16 +11,16 @@ import {
   HardDrive,
 } from "lucide-react"
 import { useState, useRef } from 'react'
-import { LocalFilesView } from "../../LeftPanel/components/FilesTab/components/LocalFilesView"
-import { GoogleDriveView } from "../../LeftPanel/components/FilesTab/components/GoogleDriveView"
-import { OneDriveView } from "../../LeftPanel/components/FilesTab/components/OneDriveView"
+import { LocalFilesView } from "../../LeftPanel/components/FilesTab/components/LocalFilesView/LocalFilesView"
+import { GoogleDriveView } from "../../LeftPanel/components/FilesTab/components/GoogleDriveView/GoogleDriveView"
+import { OneDriveView } from "../../LeftPanel/components/FilesTab/components/OneDriveView/OneDriveView"
 import { GoogleDriveIcon, OneDriveIcon } from "../../icons"
-import { Button } from "../../ui/button"
+import { Button } from "../../common/ui/button"
 import { FileSystemItem } from "../../../utils/fileTreeUtils"
-import { Typography } from "../../ui/typography"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../../ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover"
-import { Checkbox } from "../../ui/checkbox"
+import { Typography } from "../../common/ui/typography"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../../common/ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "../../common/ui/popover"
+import { Checkbox } from "../../common/ui/checkbox"
 import { FILE_TYPE_CATEGORIES } from "../../LeftPanel/components/FilesTab/handlers/handleFileTypeFilter"
 import { PanelGroup, UserInfo } from "../../../pages/Workspaces/types"
 

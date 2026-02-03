@@ -4,7 +4,7 @@ import { EmailViewer } from '../../../../../components/MiddlePanel/EmailViewer/E
 import { ApiService } from '../../../../../../backend/api/apiService'
 import { GmailMessage, GmailLabel } from '../../../../../../backend/api/emails/emails'
 import { Thread } from '../../../../../components/RightPanel/composer/thread/thread'
-import { TooltipProvider } from '../../../../../components/ui/tooltip'
+import { TooltipProvider } from '../../../../../components/common/ui/tooltip'
 import { AssistantRuntimeProvider, useLocalRuntime } from "@assistant-ui/react"
 
 // Mock Email Messages (matching GmailMessage structure)
@@ -461,6 +461,7 @@ export default function EmailDemoApp() {
               selectedFile={null}
               selectedEmail={selectedEmail}
               onEmailSelect={() => {}}
+              composerAutofocus={false}
             />
         </div>
         </div>
