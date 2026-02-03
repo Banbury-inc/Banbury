@@ -5,13 +5,13 @@ import {
   AlignRight,
   AlignJustify,
 } from 'lucide-react'
-import { Button } from './ui/button'
+import { Button } from './common/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from './ui/dropdown-menu'
+} from './common/ui/dropdown-menu'
 
 interface TextAlignmentButtonProps {
   editor: Editor

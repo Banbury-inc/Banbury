@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Search, X, FileText, FileImage, FileVideo, FileAudio, FileCode, FileSpreadsheet, FileArchive, FileJson, FileType, ListChecks } from 'lucide-react';
 import { ApiService } from '../../backend/api/apiService';
 import { FileSystemItem } from '../utils/fileTreeUtils';
-import { useToast } from './ui/use-toast';
+import { useToast } from './common/ui/use-toast';
 
 interface FileSearchProps {
   onFileSelect: (file: FileSystemItem) => void;

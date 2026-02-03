@@ -1,6 +1,6 @@
 import { Video, AlertCircle, Download, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Button } from '../../ui/button';
+import { Button } from '../../common/ui/button';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { ApiService } from 'backend/api/apiService';
 

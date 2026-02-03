@@ -22,7 +22,7 @@ import { CreateFileTool } from "../../components/CreateFileTool";
 import { DownloadFileTool } from "../../components/DownloadFileTool";
 import { BranchPicker } from "./BranchPicker";
 import { VoiceControls } from "./VoiceControls";
-import { Typography, typographyVariants } from "../../../../ui/typography";
+import { Typography, typographyVariants } from "../../../../common/ui/typography";
 import { cn } from "../../../../../utils";
 import type { FC } from "react";
 

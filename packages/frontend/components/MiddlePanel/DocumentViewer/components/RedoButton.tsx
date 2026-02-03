@@ -1,6 +1,6 @@
 import { Editor } from '@tiptap/react'
 import { Redo } from 'lucide-react'
-import { Button } from '../../../ui/button'
+import { Button } from '../../../common/ui/button'
 
 interface RedoButtonProps {
   editor: Editor

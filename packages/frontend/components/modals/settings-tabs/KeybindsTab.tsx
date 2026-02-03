@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Keyboard, RotateCcw } from 'lucide-react'
-import { Button } from '../../ui/button'
-import { Switch } from '../../ui/switch'
-import { Label } from 'frontend/components/ui/label'
-import { Typography } from 'frontend/components/ui/typography'
-import { Separator } from 'frontend/components/ui/separator'
-import { Kbd, KbdGroup } from '../../ui/kbd'
+import { Button } from '../../common/ui/button'
+import { Switch } from '../../common/ui/switch'
+import { Label } from '@/components/common/ui/label'
+import { Typography } from '@/components/common/ui/typography'
+import { Separator } from '@/components/common/ui/separator'
+import { Kbd, KbdGroup } from '../../common/ui/kbd'
 import {
   KeybindsState,
   KeybindConfig,

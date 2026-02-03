@@ -35,7 +35,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../ui/dropdown-menu';
+} from '../../common/ui/dropdown-menu';
 
 interface EmailTiptapEditorProps {
   value: string;

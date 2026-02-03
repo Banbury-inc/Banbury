@@ -5,8 +5,8 @@ import {
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { NavSidebar } from "../../components/nav-sidebar";
-import { TooltipProvider } from "../../components/ui/tooltip";
-import { Typography } from "../../components/ui/typography";
+import { TooltipProvider } from "../../components/common/ui/tooltip";
+import { Typography } from "../../components/common/ui/typography";
 import { ApiService } from "../../../backend/api/apiService";
 import { TaskScheduler } from "./components/TaskScheduler";
 import { TaskTable } from "./components/TaskTable";

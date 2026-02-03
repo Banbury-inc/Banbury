@@ -1,8 +1,8 @@
 import { FC } from "react";
 import { FolderOpen, RefreshCwIcon, Trash2 } from "lucide-react";
-import { Typography } from "../../../../ui/typography";
+import { Typography } from "../../../../common/ui/typography";
 import { TooltipIconButton } from "../../../tooltip-icon-button";
-import { Button } from "../../../../ui/button";
+import { Button } from "../../../../common/ui/button";
 
 interface LoadConversationDialogProps {
   open: boolean;

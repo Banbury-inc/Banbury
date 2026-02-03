@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react"
 import { cn } from "../../../../lib/utils"
-import { Button } from "../../../ui/button"
+import { Button } from "../../../common/ui/button"
 import ReactMarkdown from "react-markdown"
 import { ToolUI } from "../../ToolUI"
 import styles from "../../../../styles/scrollbar.module.css"

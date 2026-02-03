@@ -2,8 +2,8 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Search, X, File, FileImage, FileVideo, FileAudio, FileText, FileSpreadsheet, FileBarChart, FileCode, FileArchive, FileJson, FileCog, FileType, Mail, ListChecks } from 'lucide-react';
 import { ApiService } from '../../../../backend/api/apiService';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import { useToast } from '../../ui/use-toast';
-import { Input } from '../../ui/old-input';
+import { useToast } from '../../common/ui/use-toast';
+import { Input } from '../../common/ui/old-input';
 import { getColoredFileIcons } from '../../../modals/settings-tabs/handlers/appearanceHandlers';
 import { getUniformFileIconColors } from '../../modals/settings-tabs/handlers/appearanceHandlers';
 

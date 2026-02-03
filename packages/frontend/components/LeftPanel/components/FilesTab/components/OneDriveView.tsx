@@ -1,10 +1,10 @@
 import { RefreshCw, Folder, Search, X, FileText, FileSpreadsheet, FileBarChart } from "lucide-react"
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { OneDriveFileTreeItem } from "./OneDriveFileTreeItem"
-import { Button } from "../../../../ui/button"
-import { Input } from "../../../../ui/input"
+import { Button } from "../../../../common/ui/button"
+import { Input } from "../../../../common/ui/input"
 import OneDrive, { OneDriveFile } from "../../../../../../backend/api/onedrive/onedrive"
-import { Typography } from "../../../../ui/typography"
+import { Typography } from "../../../../common/ui/typography"
 import { handleFetchOneDriveFiles, OneDriveViewMode } from "../handlers/handleFetchOneDriveFiles"
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
 import { filterOneDriveFiles } from "../handlers/handleFileTypeFilter"

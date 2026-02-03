@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import DocPageLayout from '../DocPageLayout';
-import { Typography } from '../../../../components/ui/typography';
+import { Typography } from '../../../../components/common/ui/typography';
 const browserAutomationDemo = require('../../../../assets/images/browser-automation-demo.mp4');
 
 export default function DocsFeatureTab() {

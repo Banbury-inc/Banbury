@@ -6,7 +6,7 @@ import {
   addTableColumn,
   removeTableColumn,
 } from '../handlers/powerpoint-toolbar-handlers'
-import { Button } from '../../../../../ui/button'
+import { Button } from '../../../../../common/ui/button'
 import { ColorPicker } from './ColorPicker'
 import {
   Plus,

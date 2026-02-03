@@ -1,6 +1,6 @@
 import React from 'react'
 import { DollarSign } from 'lucide-react'
-import { Button } from '../../../../../ui/button'
+import { Button } from '../../../../../common/ui/button'
 
 interface CurrencyFormatButtonProps {
   onClick: () => void

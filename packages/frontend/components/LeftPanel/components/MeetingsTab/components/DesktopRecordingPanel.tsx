@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { Badge } from '../../../../ui/badge'
-import { Button } from '../../../../ui/button'
+import { Badge } from '../../../../common/ui/badge'
+import { Button } from '../../../../common/ui/button'
 import { 
   Monitor,
   Video,
@@ -21,7 +21,7 @@ import {
   getPlatformDisplayName,
   formatRecordingDuration
 } from '../../../../../pages/MeetingAgent/handlers/desktopRecordingHandlers'
-import { useToast } from '../../../../ui/use-toast'
+import { useToast } from '../../../../common/ui/use-toast'
 import zoomLogo from '../../../../../assets/images/zoom-fondo-blanco-vertical-seeklogo.png'
 import googleMeetLogo from '../../../../../assets/images/7089160_google_meet_icon.png'
 

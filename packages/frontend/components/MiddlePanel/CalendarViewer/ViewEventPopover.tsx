@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Clock, MapPin, Users, X, Edit3, ExternalLink } from 'lucide-react'
-import { Button } from '../../ui/button'
+import { Button } from '../../common/ui/button'
 import { CalendarEvent } from '../../../../backend/api/calendar/calendar'
 import { FormattedText } from '../../../utils/textFormatter'
 

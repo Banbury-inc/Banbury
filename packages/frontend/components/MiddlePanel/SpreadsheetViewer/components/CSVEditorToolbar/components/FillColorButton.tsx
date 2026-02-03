@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import { PaintBucket } from 'lucide-react'
-import { Button } from '../../../../../ui/button'
+import { Button } from '../../../../../common/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../../../../../ui/dropdown-menu'
+} from '../../../../../common/ui/dropdown-menu'
 
 interface FillColorButtonProps {
   applyCellStyle: (property: string, value: any) => void

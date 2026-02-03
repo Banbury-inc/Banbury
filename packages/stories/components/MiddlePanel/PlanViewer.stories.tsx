@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
 import { PlanViewer } from '../../../frontend/components/MiddlePanel/PlanViewer/PlanViewer'
-import { TooltipProvider } from '../../../frontend/components/ui/tooltip'
+import { TooltipProvider } from '../../../frontend/components/common/ui/tooltip'
 import { ApiService } from '../../../backend/api/apiService'
 import { FileSystemItem } from '../../../frontend/utils/fileTreeUtils'
 

@@ -1,6 +1,6 @@
 import { Folder, Mail, Calendar, CheckSquare, Video, UserCog, X } from 'lucide-react'
-import { Button } from '../../components/ui/button'
-import { Sheet, SheetContent } from '../../components/ui/sheet'
+import { Button } from '../../components/common/ui/button'
+import { Sheet, SheetContent } from '../../components/common/ui/sheet'
 import { UserInfo, PanelGroup } from './types'
 
 interface MobileAssistantPanelProps {

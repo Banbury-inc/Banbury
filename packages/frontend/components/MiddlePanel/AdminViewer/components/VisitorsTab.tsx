@@ -1,5 +1,5 @@
-import { Button } from '../../../ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../ui/card'
+import { Button } from '../../../common/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../common/ui/card'
 import { 
   getTotalPages, 
   getPageSlice, 

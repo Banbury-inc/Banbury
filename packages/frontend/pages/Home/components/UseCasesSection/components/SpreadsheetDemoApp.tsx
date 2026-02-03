@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, FC, PropsWithChildren } from 'react
 import CSVEditor from '../../../../../components/MiddlePanel/SpreadsheetViewer/CSVEditor'
 import { Thread } from '../../../../../components/RightPanel/composer/thread/thread'
 import { FileSystemItem } from '../../../../../utils/fileTreeUtils'
-import { TooltipProvider } from '../../../../../components/ui/tooltip'
+import { TooltipProvider } from '../../../../../components/common/ui/tooltip'
 import { AssistantRuntimeProvider, useLocalRuntime } from "@assistant-ui/react"
 
 // Mock spreadsheet data - Quarterly Sales Report

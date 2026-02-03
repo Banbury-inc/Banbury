@@ -1,6 +1,6 @@
 import { Editor } from '@tiptap/react'
 import { Superscript as SuperscriptIcon } from 'lucide-react'
-import { Button } from '../../../ui/button'
+import { Button } from '../../../common/ui/button'
 
 interface SuperscriptButtonProps {
   editor: Editor

@@ -1,7 +1,7 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../../../../ui/dialog'
-import { Input } from '../../../../../ui/input'
-import { Label } from '../../../../../ui/label'
-import { Button } from '../../../../../ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../../../../common/ui/dialog'
+import { Input } from '../../../../../common/ui/input'
+import { Label } from '../../../../../common/ui/label'
+import { Button } from '../../../../../common/ui/button'
 
 interface UrlImageDialogProps {
   open: boolean

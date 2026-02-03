@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import EmailDemoApp from './components/EmailDemoApp'
 import MeetingDemoApp from './components/MeetingDemoApp'
 import SpreadsheetDemoApp from './components/SpreadsheetDemoApp'
-import { Typography } from '../../../../components/ui/typography'
+import { Typography } from '../../../../components/common/ui/typography'
 import Link from 'next/link'
 
 const fadeInUp = {

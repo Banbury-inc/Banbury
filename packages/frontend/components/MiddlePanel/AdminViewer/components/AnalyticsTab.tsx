@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { RefreshCw, Filter } from 'lucide-react'
 import { XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts'
-import { ChartContainer, ChartTooltip } from '../../../ui/chart'
-import { Button } from '../../../ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../ui/card'
-import { Input } from '../../../ui/old-input'
-import { Label } from '../../../ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '../../../ui/popover'
+import { ChartContainer, ChartTooltip } from '../../../common/ui/chart'
+import { Button } from '../../../common/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../common/ui/card'
+import { Input } from '../../../common/ui/old-input'
+import { Label } from '../../../common/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '../../../common/ui/popover'
 import { ApiService } from '../../../../../backend/api/apiService'
 import { 
   getTotalPages, 

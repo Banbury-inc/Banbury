@@ -1,11 +1,11 @@
 import { RefreshCw, Filter } from 'lucide-react'
 import { useState } from 'react'
 import { XAxis, YAxis, CartesianGrid, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell } from 'recharts'
-import { ChartContainer, ChartTooltip } from '../../../ui/chart'
-import { Button } from '../../../ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../ui/card'
-import { Input } from '../../../ui/old-input'
-import { Label } from '../../../ui/label'
+import { ChartContainer, ChartTooltip } from '../../../common/ui/chart'
+import { Button } from '../../../common/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../common/ui/card'
+import { Input } from '../../../common/ui/old-input'
+import { Label } from '../../../common/ui/label'
 
 interface ErrorAnalytics {
   result: string

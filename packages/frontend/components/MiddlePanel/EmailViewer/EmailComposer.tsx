@@ -5,9 +5,9 @@ import {
   Save
 } from 'lucide-react'
 import { useState, useCallback, useEffect } from 'react'
-import { Button } from '../../ui/button'
-import { Input } from '../../ui/old-input'
-import { useToast } from '../../ui/use-toast'
+import { Button } from '../../common/ui/button'
+import { Input } from '../../common/ui/old-input'
+import { useToast } from '../../common/ui/use-toast'
 import { EmailTiptapEditor } from './EmailTiptapEditor'
 import RecipientChipsInput from './RecipientChipsInput'
 import { ApiService } from '../../../../backend/api/apiService'

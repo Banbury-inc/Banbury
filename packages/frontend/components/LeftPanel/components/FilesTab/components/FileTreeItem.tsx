@@ -21,9 +21,9 @@ import {
 } from "lucide-react"
 import { useState, useEffect, useRef } from 'react'
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
-import { Typography } from "../../../../ui/typography"
+import { Typography } from "../../../../common/ui/typography"
 import { ApiService } from "../../../../../../backend/api/apiService"
-import { useToast } from "../../../../ui/use-toast"
+import { useToast } from "../../../../common/ui/use-toast"
 import { handleCopyLocalToDrive } from "../handlers/handleCopyLocalToDrive"
 import { handleCopyLocalToOneDrive } from "../handlers/handleCopyLocalToOneDrive"
 import { handleLocalFileDownload } from "../handlers/handleLocalFileDownload"

@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { Video, Upload, X } from 'lucide-react'
-import { Button } from '../../ui/button'
-import { Input } from '../../ui/input'
-import { Typography } from '../../ui/typography'
-import { Separator } from '../../ui/separator'
-import { useToast } from '../../ui/use-toast'
+import { Button } from '../../common/ui/button'
+import { Input } from '../../common/ui/input'
+import { Typography } from '../../common/ui/typography'
+import { Separator } from '../../common/ui/separator'
+import { useToast } from '../../common/ui/use-toast'
 import { ApiService } from '../../../../backend/api/apiService'
 
 interface MeetingAgentTabProps {}

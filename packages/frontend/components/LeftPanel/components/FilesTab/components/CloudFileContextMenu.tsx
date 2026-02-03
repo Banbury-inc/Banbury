@@ -10,7 +10,7 @@ import {
   Share2,
   FileOutput,
 } from "lucide-react"
-import { Typography } from "../../../../ui/typography"
+import { Typography } from "../../../../common/ui/typography"
 import { GoogleDriveIcon, OneDriveIcon } from "../../../../icons"
 
 export type CloudProvider = 'local' | 'drive' | 'onedrive'

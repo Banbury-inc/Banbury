@@ -1,12 +1,12 @@
 import { ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
-import { Button } from '../../ui/button'
-import { Input } from '../../ui/old-input'
-import { Label } from '../../ui/label'
-import { Typography } from '../../ui/typography'
+import { Button } from '../../common/ui/button'
+import { Input } from '../../common/ui/old-input'
+import { Label } from '../../common/ui/label'
+import { Typography } from '../../common/ui/typography'
 import { CreateTaskData, TaskPriority } from '../../../pages/TaskStudio/types'
 import { taskHandlers } from '../../../pages/TaskStudio/handlers/taskHandlers'
-import { useToast } from '../../ui/use-toast'
+import { useToast } from '../../common/ui/use-toast'
 
 type RecurringPattern = 'none' | 'daily' | 'weekly' | 'monthly'
 

@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { WrapText, Check } from 'lucide-react'
-import { Button } from '../../../../../ui/button'
+import { Button } from '../../../../../common/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../../../../ui/dropdown-menu'
+} from '../../../../../common/ui/dropdown-menu'
 
 type WrapOption = 'overflow' | 'wrap' | 'clip'
 

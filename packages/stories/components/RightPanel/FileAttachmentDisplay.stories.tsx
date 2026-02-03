@@ -2,7 +2,7 @@ import React from "react"
 import type { Meta, StoryObj } from "@storybook/react"
 import { fn } from "@storybook/test"
 import { FileAttachmentDisplay } from "frontend/components/RightPanel/composer/components/file-attachment-display"
-import { TooltipProvider } from "frontend/components/ui/tooltip"
+import { TooltipProvider } from "@/components/common/ui/tooltip"
 import type { FileSystemItem } from "frontend/utils/fileTreeUtils"
 
 // Wrapper for stories

@@ -1,14 +1,14 @@
 import { Editor } from '@tiptap/react'
 import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
-import { Button } from '../../../ui/button'
+import { Button } from '../../../common/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../../../ui/dropdown-menu'
+} from '../../../common/ui/dropdown-menu'
 import { changeSelectionFontFamily } from '../../../handlers/editorFont'
 
 interface FontFamilyButtonProps {

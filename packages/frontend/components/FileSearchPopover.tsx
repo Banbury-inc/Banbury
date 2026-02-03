@@ -3,9 +3,9 @@ import * as PopoverPrimitive from '@radix-ui/react-popover'
 import { Search, X, FileText, FileImage, FileVideo, FileAudio, FileCode, FileSpreadsheet, FileArchive, FileJson, FileType, ListChecks } from 'lucide-react';
 import { ApiService } from '../../backend/api/apiService';
 import { FileSystemItem } from '../utils/fileTreeUtils';
-import { useToast } from './ui/use-toast';
+import { useToast } from './common/ui/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from './tiptap-ui-primitive/popover/popover';
-import { Input } from './ui/old-input';
+import { Input } from './common/ui/old-input';
 
 interface FileSearchPopoverProps {
   onFileSelect: (file: FileSystemItem) => void;

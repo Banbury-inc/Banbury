@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Network, Upload, FileText } from 'lucide-react';
 
-import { Button } from '../../ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
-import { Badge } from '../../ui/badge';
+import { Button } from '../../common/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../common/ui/card';
+import { Badge } from '../../common/ui/badge';
 import DrawioViewer from './DrawioViewer';
 import DrawioViewerModal from './DrawioViewerModal';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';

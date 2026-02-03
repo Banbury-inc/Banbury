@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Button } from '../../../components/ui/button'
+import { Button } from '../../../components/common/ui/button'
 import { detectOperatingSystem, getDesktopDownloadUrl } from '../../../utils/getDesktopDownloadUrl'
 import { cn } from '../../../lib/utils'
 

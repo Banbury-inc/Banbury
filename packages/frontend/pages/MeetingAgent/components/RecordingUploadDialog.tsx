@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
-import { Button } from '../../../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card'
-import { Progress } from '../../../components/ui/progress'
+import { Button } from '../../../components/common/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/common/ui/card'
+import { Progress } from '../../../components/common/ui/progress'
 import { 
   Upload, 
   File, 
@@ -17,9 +17,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../../../components/ui/dialog'
+} from '../../../components/common/ui/dialog'
 import { ApiService } from '../../../../backend/api/apiService'
-import { useToast } from '../../../components/ui/use-toast'
+import { useToast } from '../../../components/common/ui/use-toast'
 
 interface RecordingUploadDialogProps {
   open: boolean

@@ -2,7 +2,7 @@ import * as AssistantUI from "@assistant-ui/react";
 import { motion } from "framer-motion";
 import { CheckIcon } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Typography } from "../../../../ui/typography";
+import { Typography } from "../../../../common/ui/typography";
 import { cn } from "../../../../../utils";
 import type { FC } from "react";
 

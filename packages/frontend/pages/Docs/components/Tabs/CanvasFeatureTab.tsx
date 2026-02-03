@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
 import Image from 'next/image';
 import DocPageLayout from '../DocPageLayout';
-import { Typography } from '../../../../components/ui/typography';
+import { Typography } from '../../../../components/common/ui/typography';
 const canvasDemo = require('../../../../assets/images/canvas.png');
 
 export default function CanvasFeatureTab() {

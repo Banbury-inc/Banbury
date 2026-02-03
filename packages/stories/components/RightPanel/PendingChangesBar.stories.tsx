@@ -2,7 +2,7 @@ import React from "react"
 import type { Meta, StoryObj } from "@storybook/react"
 import { fn } from "@storybook/test"
 import { PendingChangesBar } from "frontend/components/RightPanel/composer/components/pending-changes-bar"
-import { TooltipProvider } from "frontend/components/ui/tooltip"
+import { TooltipProvider } from "@/components/common/ui/tooltip"
 
 // Wrapper for stories
 function PendingChangesWrapper({ children }: { children: React.ReactNode }) {

@@ -1,6 +1,6 @@
 import { FC } from "react";
-import { Typography } from "../../../../ui/typography";
-import { Button } from "../../../../ui/button";
+import { Typography } from "../../../../common/ui/typography";
+import { Button } from "../../../../common/ui/button";
 
 interface SaveConversationDialogProps {
   open: boolean;

@@ -1,6 +1,6 @@
 import { Editor } from '@tiptap/react'
 import { Link as LinkIcon } from 'lucide-react'
-import { Button } from '../../../ui/button'
+import { Button } from '../../../common/ui/button'
 
 interface LinkButtonProps {
   editor: Editor

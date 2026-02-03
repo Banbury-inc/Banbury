@@ -1,7 +1,7 @@
 import React from 'react'
 import { MeetingSession } from '../../../../../types/meeting-types'
-import { Typography } from '../../../../ui/typography'
-import { Button } from '../../../../ui/button'
+import { Typography } from '../../../../common/ui/typography'
+import { Button } from '../../../../common/ui/button'
 import { Video, Clock, Users, CheckCircle2, XCircle, PlayCircle, Calendar, Trash2 } from 'lucide-react'
 
 interface MeetingsListViewProps {

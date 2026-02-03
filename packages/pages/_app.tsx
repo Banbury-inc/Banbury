@@ -4,7 +4,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { ThemeProvider } from 'frontend/components/ThemeProvider';
 import { useEffect } from 'react';
 import { ClaudeRuntimeProvider } from 'frontend/assistant/ClaudeRuntimeProvider/ClaudeRuntimeProvider';
-import { Toaster } from 'frontend/components/ui/toaster';
+import { Toaster } from '@/components/common/ui/toaster';
 import { UserFilesProvider } from 'frontend/contexts/UserFilesContext';
 import '@/index.css';
 import '@/styles/DiffPreview.css';

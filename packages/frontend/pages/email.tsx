@@ -2,8 +2,8 @@ import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 
 import { NavSidebar } from '../components/nav-sidebar'
-import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/old-input'
+import { Button } from '../components/common/ui/button'
+import { Input } from '../components/common/ui/old-input'
 import { ApiService } from '../../backend/api/apiService'
 import { GmailMessage, GmailMessageListResponse } from '../../backend/api/emails/emails'
 

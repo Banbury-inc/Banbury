@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Download, X, Loader2 } from 'lucide-react'
-import { Button } from './ui/button'
-import { Card } from './ui/card'
-import { Typography } from './ui/typography'
-import { Progress } from './ui/progress'
+import { Button } from './common/ui/button'
+import { Card } from './common/ui/card'
+import { Typography } from './common/ui/typography'
+import { Progress } from './common/ui/progress'
 
 interface UpdateInfo {
   version: string

@@ -23,10 +23,10 @@ import { createFormulaSuggestionHandlers } from './handlers/handle-formula-sugge
 import { createFormulaNavigationHandler } from './handlers/handle-formula-navigation';
 import CSVEditorToolbar from './components/CSVEditorToolbar/CSVEditorToolbar';
 import { SheetTabs } from './components/SheetTabs';
-import { Button } from '../../ui/button'
-import { Input } from '../../ui/old-input'
-import { Label } from '../../ui/label'
-import { Separator } from '../../ui/separator'
+import { Button } from '../../common/ui/button'
+import { Input } from '../../common/ui/old-input'
+import { Label } from '../../common/ui/label'
+import { Separator } from '../../common/ui/separator'
 import { ArrowUpward, ArrowDownward, BorderAll as BorderAllIcon, Delete as DeleteIcon, Link as LinkIcon, Edit as EditIcon, ContentCopy as CopyIcon, LinkOff as UnlinkIcon } from '@mui/icons-material';
 import { createConditionalFormattingHandlers, computeConditionalFormats } from './handlers/handle-conditional-formatting';
 import { createAddCFRuleHandler } from './handlers/handle-add-cf-rule'

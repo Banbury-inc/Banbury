@@ -1,7 +1,7 @@
 import { CheckCircle, Crown, Trash2 } from 'lucide-react'
-import { Button } from '../../ui/button'
-import { Separator } from '../../ui/separator'
-import { Typography } from '../../ui/typography'
+import { Button } from '../../common/ui/button'
+import { Separator } from '../../common/ui/separator'
+import { Typography } from '../../common/ui/typography'
 
 interface SubscriptionTabProps {
   subscriptionStatus: {

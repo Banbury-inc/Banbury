@@ -1,6 +1,6 @@
 import React from 'react'
 import { Ruler } from 'lucide-react'
-import { Button } from '../../../../../ui/button'
+import { Button } from '../../../../../common/ui/button'
 
 interface ConditionalFormattingButtonProps {
   onClick: () => void

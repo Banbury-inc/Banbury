@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react"
-import { useToast } from "../../ui/use-toast"
+import { useToast } from "../../common/ui/use-toast"
 import { TranscriptionSegment } from "../../../types/meeting-types"
 import { ApiService } from "../../../../backend/api/apiService"
 import { handleGenerateAnthropicSummaryWithSave } from "./handlers/anthropicSummaryHandlers"

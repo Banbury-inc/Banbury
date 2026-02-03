@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Users, Settings2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../ui/card'
-import { Button } from '../../../ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../common/ui/card'
+import { Button } from '../../../common/ui/button'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -9,8 +9,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../../../ui/dropdown-menu'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../ui/tooltip'
+} from '../../../common/ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../common/ui/tooltip'
 import { GmailIcon, GoogleDriveIcon, GoogleCalendarIcon } from '../../../icons'
 import { 
   buildUserGoogleIntegrationsMap, 

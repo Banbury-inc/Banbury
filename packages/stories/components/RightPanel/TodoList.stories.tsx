@@ -1,6 +1,6 @@
 import React, { useEffect } from "react"
 import type { Meta, StoryObj } from "@storybook/react"
-import { TooltipProvider } from "frontend/components/ui/tooltip"
+import { TooltipProvider } from "@/components/common/ui/tooltip"
 import { TodoList } from "frontend/components/RightPanel/TodoList"
 import { subscribeTodoEventListener } from "frontend/components/RightPanel/handlers/todoStoreHandlers"
 import type { TodoItem, TodoStatus, TodoSource } from "frontend/types/todo-types"

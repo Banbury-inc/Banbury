@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { BarChart3, Database, Zap, RefreshCw, Infinity } from 'lucide-react'
-import { Typography } from 'frontend/components/ui/typography'
-import { Separator } from 'frontend/components/ui/separator'
-import { Button } from 'frontend/components/ui/button'
-import { Progress } from 'frontend/components/ui/progress'
+import { Typography } from '@/components/common/ui/typography'
+import { Separator } from '@/components/common/ui/separator'
+import { Button } from '@/components/common/ui/button'
+import { Progress } from '@/components/common/ui/progress'
 import { XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts'
-import { ChartContainer, ChartTooltip } from 'frontend/components/ui/chart'
+import { ChartContainer, ChartTooltip } from '@/components/common/ui/chart'
 import {
   getUsageSummary,
   getTokenUsageHistory,

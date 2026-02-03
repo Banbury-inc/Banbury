@@ -1,6 +1,6 @@
 import Image from 'next/image'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../../../../ui/dialog'
-import { Button } from '../../../../../ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../../../../common/ui/dialog'
+import { Button } from '../../../../../common/ui/button'
 import { Image as ImageIcon, RefreshCw } from 'lucide-react'
 import type { DriveFile } from '../../../../../../../../backend/api/drive/drive'
 

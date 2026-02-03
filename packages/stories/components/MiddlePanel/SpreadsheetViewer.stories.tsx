@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
 import { SpreadsheetViewer } from '../../../frontend/components/MiddlePanel/SpreadsheetViewer/SpreadsheetViewer'
-import { TooltipProvider } from '../../../frontend/components/ui/tooltip'
+import { TooltipProvider } from '../../../frontend/components/common/ui/tooltip'
 import { ApiService } from '../../../backend/api/apiService'
 import { mockDownloadS3File, mockUpdateS3File } from '../../mocks/api-service-mock'
 import { mockExportSheetAsXlsx, mockUpdateFile } from '../../mocks/drive-service-mock'

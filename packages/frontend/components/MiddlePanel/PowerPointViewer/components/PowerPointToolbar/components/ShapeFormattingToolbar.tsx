@@ -5,9 +5,9 @@ import {
   setShapeFillGradient,
 } from '../handlers/advanced-format-handlers'
 import { fillStyleToColorString } from '../../../utils/fill-utils'
-import { Button } from '../../../../../ui/button'
-import { Popover, PopoverTrigger, PopoverContent } from '../../../../../ui/popover'
-import { Label } from '../../../../../ui/label'
+import { Button } from '../../../../../common/ui/button'
+import { Popover, PopoverTrigger, PopoverContent } from '../../../../../common/ui/popover'
+import { Label } from '../../../../../common/ui/label'
 import { ColorPicker } from './ColorPicker'
 import { Paintbrush } from 'lucide-react'
 import { getShapeDefinition } from '../../shape-catalog'

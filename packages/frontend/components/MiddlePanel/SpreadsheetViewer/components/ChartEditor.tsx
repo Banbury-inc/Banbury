@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Button } from '../../../ui/button'
-import { Input } from '../../../ui/old-input'
-import { Label } from '../../../ui/label'
+import { Button } from '../../../common/ui/button'
+import { Input } from '../../../common/ui/old-input'
+import { Label } from '../../../common/ui/label'
 import type { ChartDefinition, ChartType, ChartDataRange } from '../types/chart-types'
 
 interface ChartEditorProps {

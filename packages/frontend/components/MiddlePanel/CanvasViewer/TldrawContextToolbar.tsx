@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEditor, track, TLShapeId } from 'tldraw';
-import { Button } from '../../ui/button';
+import { Button } from '../../common/ui/button';
 import { Copy, Group, Ungroup, Lock, Unlock, Trash2, Edit3 } from 'lucide-react';
 import { cn } from '../../../utils';
 

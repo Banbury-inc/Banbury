@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Play, Save, Plus, Type } from 'lucide-react'
 import { FileSystemItem } from '../../../utils/fileTreeUtils'
-import { useToast } from '../../ui/use-toast'
+import { useToast } from '../../common/ui/use-toast'
 import { loadNotebookFile } from './handlers/loadNotebook'
 import { saveNotebookFile } from './handlers/saveNotebook'
 import { runCodeCell } from './handlers/runCell'

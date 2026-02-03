@@ -2,7 +2,7 @@ import CloudIcon from '@mui/icons-material/Cloud'
 import DevicesIcon from '@mui/icons-material/Devices'
 import FlashOnIcon from '@mui/icons-material/FlashOn'
 import { motion } from 'framer-motion'
-import { Typography } from '../../../components/ui/typography'
+import { Typography } from '../../../components/common/ui/typography'
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 16 },

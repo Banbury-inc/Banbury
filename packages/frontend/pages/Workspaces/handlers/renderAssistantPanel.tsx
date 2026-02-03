@@ -6,7 +6,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../../components/ui/dropdown-menu'
+} from '../../../components/common/ui/dropdown-menu'
 import { Panel, WorkspaceTab, DragState, UserInfo, PanelGroup, AiTab } from '../types'
 import { FileSystemItem } from '../../../utils/fileTreeUtils'
 import { getAllTabs } from './panelUtils'

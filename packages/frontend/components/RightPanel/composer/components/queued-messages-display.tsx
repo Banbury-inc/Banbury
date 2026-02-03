@@ -1,8 +1,8 @@
 import { Circle, ChevronDown, ChevronRight, Trash2, ArrowUp, Pencil, CornerDownLeft } from 'lucide-react'
 import React, { useState } from 'react'
 
-import { Button } from '../../../ui/button'
-import { Typography } from '../../../ui/typography'
+import { Button } from '../../../common/ui/button'
+import { Typography } from '../../../common/ui/typography'
 
 export interface QueuedMessage {
   id: string

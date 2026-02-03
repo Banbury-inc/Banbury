@@ -5,9 +5,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '../../../components/ui/dialog'
-import { Button } from '../../../components/ui/button'
-import { Badge } from '../../../components/ui/badge'
+} from '../../../components/common/ui/dialog'
+import { Button } from '../../../components/common/ui/button'
+import { Badge } from '../../../components/common/ui/badge'
 import { 
   Download, 
   Copy, 
@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import { MeetingSession } from '../../../types/meeting-types'
 import { ApiService } from '../../../../backend/api/apiService'
-import { useToast } from '../../../components/ui/use-toast'
+import { useToast } from '../../../components/common/ui/use-toast'
 
 interface TranscriptionSegment {
   id: string

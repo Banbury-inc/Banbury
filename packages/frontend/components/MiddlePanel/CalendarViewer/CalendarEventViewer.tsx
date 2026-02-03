@@ -1,7 +1,7 @@
 import { ArrowLeft, Clock, MapPin, Users, ExternalLink } from 'lucide-react'
 import { useMemo } from 'react'
 
-import { Button } from '../../ui/button'
+import { Button } from '../../common/ui/button'
 import { CalendarEvent } from '../../../../backend/calendarService'
 
 interface CalendarEventViewerProps {

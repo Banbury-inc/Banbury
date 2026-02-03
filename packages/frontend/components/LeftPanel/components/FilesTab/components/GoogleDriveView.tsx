@@ -1,10 +1,10 @@
 import { RefreshCw, Folder, FileText, FileSpreadsheet, FileBarChart, FolderPlus, Clock, Star, Trash2 } from "lucide-react"
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { DriveFileTreeItem } from "./DriveFileTreeItem"
-import { Button } from "../../../../ui/button"
+import { Button } from "../../../../common/ui/button"
 import { DriveFile } from "../../../../../../backend/api/drive/drive"
 import { ApiService } from "../../../../../../backend/api/apiService"
-import { Typography } from "../../../../ui/typography"
+import { Typography } from "../../../../common/ui/typography"
 import { handleFetchDriveFiles, DriveViewMode } from "../handlers/handleFetchDriveFiles"
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
 import { filterDriveFiles } from "../handlers/handleFileTypeFilter"

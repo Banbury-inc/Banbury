@@ -1,8 +1,8 @@
 import { File, ChevronDown, ChevronRight, X, Mail, Network, Eye, PaintbrushIcon } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Button } from '../../../ui/button';
-import { Typography } from '../../../ui/typography';
+import { Button } from '../../../common/ui/button';
+import { Typography } from '../../../common/ui/typography';
 import { FileSystemItem } from '../../../../utils/fileTreeUtils';
 import { isDrawioFile } from '../../../MiddlePanel/CanvasViewer/handlers/drawio-viewer-handlers';
 import { isTldrawFile } from '../../../../pages/Workspaces/handlers/fileTypeUtils';

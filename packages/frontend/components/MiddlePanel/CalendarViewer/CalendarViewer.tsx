@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin, RefreshCw } from 'lucide-react'
-import { Button } from '../../ui/button'
+import { Button } from '../../common/ui/button'
 import { CalendarEvent, CalendarListEntry } from '../../../../backend/api/calendar/calendar'
 import { CreateEventPopover } from './CreateEventPopover'
 import { EditEventPopover } from './EditEventPopover'
@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel
-} from '../../ui/dropdown-menu'
+} from '../../common/ui/dropdown-menu'
 import { loadCalendars } from '../../LeftPanel/components/CalendarTab/handlers/loadCalendars'
 import { loadMicrosoftCalendars } from '../../LeftPanel/components/CalendarTab/handlers/loadMicrosoftCalendars'
 import { getSelectedProvider } from '../../LeftPanel/components/CalendarTab/calendarProvider'

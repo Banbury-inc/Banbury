@@ -4,9 +4,9 @@ import {
 } from 'lucide-react'
 import React, { useState } from 'react'
 
-import { Button } from '../../../ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '../../../ui/dropdown-menu'
-import { Typography } from '../../../ui/typography'
+import { Button } from '../../../common/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '../../../common/ui/dropdown-menu'
+import { Typography } from '../../../common/ui/typography'
 import { cn } from '../../../../utils'
 import { FileSystemItem } from '../../../../utils/fileTreeUtils'
 import { FileAttachmentPicker } from './file-attachment-picker'

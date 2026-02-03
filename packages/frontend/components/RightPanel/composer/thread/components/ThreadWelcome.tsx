@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import BanburyLogo from "../../../../../assets/images/New_Logo.png";
-import { Typography } from "../../../../ui/typography";
-import { Kbd, KbdGroup } from "../../../../ui/kbd";
+import { Typography } from "../../../../common/ui/typography";
+import { Kbd, KbdGroup } from "../../../../common/ui/kbd";
 import {
   getStoredKeybinds,
   getActiveKey,

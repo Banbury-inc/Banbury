@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Maximize2, Minimize2, Download, Edit3, RefreshCw, Eye } from 'lucide-react';
 
-import { Button } from '../../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
-import { Badge } from '../../ui/badge';
+import { Button } from '../../common/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../common/ui/card';
+import { Badge } from '../../common/ui/badge';
 import { cn } from '../../../utils';
 import { ApiService } from '../../../../backend/api/apiService';
 

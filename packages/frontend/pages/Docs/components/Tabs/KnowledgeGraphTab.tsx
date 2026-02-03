@@ -2,7 +2,7 @@ import { Box, Paper } from '@mui/material'
 import Image from 'next/image'
 import KnowledgeGraphImg from '../../../../assets/images/Memories.png'
 import DocPageLayout from '../DocPageLayout'
-import { Typography } from '../../../../components/ui/typography'
+import { Typography } from '../../../../components/common/ui/typography'
 
 export default function KnowledgeGraphTab(): JSX.Element {
   return (

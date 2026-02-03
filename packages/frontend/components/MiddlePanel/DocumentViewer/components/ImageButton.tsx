@@ -1,12 +1,12 @@
 import { Editor } from '@tiptap/react'
 import { useState, useEffect } from 'react'
 import { Image as ImageIcon, Search, FileImage, Link as LinkIcon } from 'lucide-react'
-import { Button } from '../../../ui/button'
+import { Button } from '../../../common/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '../../../ui/dropdown-menu'
+} from '../../../common/ui/dropdown-menu'
 import { insertImageFromBackendFile } from '../../../handlers/editorImage'
 import { FileSystemItem } from '../../../utils/fileTreeUtils'
 import { ApiService } from 'backend/api/apiService'

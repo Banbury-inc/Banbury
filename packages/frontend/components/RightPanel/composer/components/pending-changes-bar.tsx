@@ -9,7 +9,7 @@ import {
   PaintbrushIcon,
   FolderOpen,
 } from "lucide-react";
-import { Button } from "../../../ui/button";
+import { Button } from "../../../common/ui/button";
 
 import type { FC } from "react";
 

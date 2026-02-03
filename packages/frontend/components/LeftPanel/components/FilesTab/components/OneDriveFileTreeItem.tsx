@@ -16,8 +16,8 @@ import {
 import { useState, useEffect, useRef } from 'react'
 import { OneDriveFile } from "../../../../../../backend/api/onedrive/onedrive"
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
-import { Typography } from "../../../../ui/typography"
-import { useToast } from "../../../../ui/use-toast"
+import { Typography } from "../../../../common/ui/typography"
+import { useToast } from "../../../../common/ui/use-toast"
 import { handleCopyOneDriveToLocal } from "../handlers/handleCopyOneDriveToLocal"
 import { CloudFileContextMenu } from "./CloudFileContextMenu"
 import { 

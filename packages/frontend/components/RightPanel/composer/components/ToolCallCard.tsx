@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from "react";
 
-import { Button } from "../../../ui/button";
+import { Button } from "../../../common/ui/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "../../../ui/dropdown-menu";
+} from "../../../common/ui/dropdown-menu";
 
 import type { ReactNode, SVGProps } from "react";
 

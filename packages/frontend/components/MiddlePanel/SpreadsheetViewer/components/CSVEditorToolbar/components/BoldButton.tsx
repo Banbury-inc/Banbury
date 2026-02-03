@@ -1,6 +1,6 @@
 import React from 'react'
 import { Bold } from 'lucide-react'
-import { Button } from '../../../../../ui/button'
+import { Button } from '../../../../../common/ui/button'
 
 interface BoldButtonProps {
   onClick: () => void

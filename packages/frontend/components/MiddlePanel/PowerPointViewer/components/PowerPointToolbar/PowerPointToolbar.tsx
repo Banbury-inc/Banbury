@@ -10,15 +10,15 @@ import {
   resolveWebImageToDataUrl,
   resolveDriveImageToDataUrl,
 } from './handlers/powerpoint-image-handlers'
-import { Button } from '../../../../ui/button'
+import { Button } from '../../../../common/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from '../../../../ui/dropdown-menu'
-import { Popover, PopoverTrigger, PopoverContent } from '../../../../ui/popover'
+} from '../../../../common/ui/dropdown-menu'
+import { Popover, PopoverTrigger, PopoverContent } from '../../../../common/ui/popover'
 import { ApiService } from '../../../../../../backend/api/apiService'
 import type { DriveFile } from '../../../../../../backend/api/drive/drive'
 import { BackgroundPanel, LayoutPanel, ThemePanel, TransitionPanel } from './components/SlideLayoutSelector'

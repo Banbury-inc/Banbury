@@ -16,15 +16,15 @@ import {
   UserPlus,
   Bot
 } from "lucide-react"
-import { Button } from "../../ui/button"
-import { Typography } from "../../ui/typography"
+import { Button } from "../../common/ui/button"
+import { Typography } from "../../common/ui/typography"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../ui/select"
+} from "../../common/ui/select"
 import { cn } from "../../../utils"
 import styles from "../../../styles/scrollbar.module.css"
 import { PlanTiptapEditor } from "./PlanTiptapEditor"

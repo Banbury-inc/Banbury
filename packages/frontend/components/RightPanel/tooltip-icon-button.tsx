@@ -1,12 +1,12 @@
 "use client";
 
 import React, { ComponentPropsWithoutRef, forwardRef } from "react";
-import { Button } from "../ui/button";
+import { Button } from "../common/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "../ui/tooltip";
+} from "../common/ui/tooltip";
 import { cn } from "../../utils";
 
 export type TooltipIconButtonProps = ComponentPropsWithoutRef<typeof Button> & {

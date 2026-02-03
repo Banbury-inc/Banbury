@@ -1,10 +1,10 @@
-import { Button } from '../../../../../ui/button'
+import { Button } from '../../../../../common/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../../../../../ui/dropdown-menu'
+} from '../../../../../common/ui/dropdown-menu'
 import { Paintbrush, PaintBucket } from 'lucide-react'
 
 const colorPalette = [

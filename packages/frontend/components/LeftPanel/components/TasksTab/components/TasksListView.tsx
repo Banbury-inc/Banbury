@@ -1,6 +1,6 @@
 import { Task, TaskStatus } from '../../../../../pages/TaskStudio/types'
-import { Badge } from '../../../../ui/badge'
-import { Typography } from '../../../../ui/typography'
+import { Badge } from '../../../../common/ui/badge'
+import { Typography } from '../../../../common/ui/typography'
 import { Clock, CheckCircle2, XCircle, PlayCircle } from 'lucide-react'
 
 interface TasksListViewProps {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useToast } from '../../ui/use-toast'
+import { useToast } from '../../common/ui/use-toast'
 import { FileSystemItem } from '../../../utils/fileTreeUtils'
 import { SlidePanel } from './components/SlidePanel/SlidePanel'
 import { SlideCanvas } from './components/SlideCanvas/SlideCanvas'
@@ -15,9 +15,9 @@ import {
   redo,
   clearHistory,
 } from './components/PowerPointToolbar/handlers/powerpoint-toolbar-handlers'
-import { Card } from '../../ui/card'
-import { ContextMenuProvider } from '../../ui/context-menu'
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../../ui/resizable'
+import { Card } from '../../common/ui/card'
+import { ContextMenuProvider } from '../../common/ui/context-menu'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../../common/ui/resizable'
 import {
   duplicateSlide,
   insertSlideBefore,

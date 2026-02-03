@@ -16,7 +16,7 @@ import { ApiService } from '../../../../../backend/api/apiService';
 import { extractEmailContent } from '../../../../utils/emailUtils';
 import { buildFileTree, flattenFileTree, FileSystemItem } from '../../../../utils/fileTreeUtils';
 import { handleClipboardPaste } from '../../../handlers/handle-clipboard-paste';
-import { useToast } from '../../../ui/use-toast';
+import { useToast } from '../../../common/ui/use-toast';
 import { useUserFiles } from '../../../../contexts/UserFilesContext';
 
 import type { Editor } from '@tiptap/core';

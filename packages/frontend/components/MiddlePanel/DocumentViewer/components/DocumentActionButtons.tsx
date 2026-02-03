@@ -1,5 +1,5 @@
 import { Save, Download, Share2 } from 'lucide-react'
-import { Button } from '../../../ui/button'
+import { Button } from '../../../common/ui/button'
 
 interface DocumentActionButtonsProps {
   onShare?: () => void

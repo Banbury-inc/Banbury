@@ -9,7 +9,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "./ui/command"
+} from "./common/ui/command"
 import { ApiService } from "../../backend/api/apiService"
 import { FileSystemItem } from "../utils/fileTreeUtils"
 import { CalendarEvent } from "../../backend/api/calendar/calendar"

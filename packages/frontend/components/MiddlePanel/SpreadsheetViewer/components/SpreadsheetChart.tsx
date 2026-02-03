@@ -20,7 +20,7 @@ import {
   ResponsiveContainer
 } from 'recharts'
 import type { ChartDefinition, ChartData } from '../types/chart-types'
-import { Button } from '../../../ui/button'
+import { Button } from '../../../common/ui/button'
 import { X as CloseIcon, Edit2 as EditIcon, Move as MoveIcon, Maximize2 as ResizeIcon } from 'lucide-react'
 
 interface SpreadsheetChartProps {

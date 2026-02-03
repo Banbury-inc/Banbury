@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { inlineImagesInHtml } from './handlers/inlineImages';
-import { useToast } from '../../ui/use-toast';
+import { useToast } from '../../common/ui/use-toast';
 import WordViewer from './WordViewer';
 import { ApiService } from '../../../../backend/api/apiService'
 import { FileSystemItem } from '../../../utils/fileTreeUtils';

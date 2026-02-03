@@ -5,8 +5,8 @@ import {
 } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
 
-import { Input } from '../../../ui/old-input'
-import { Typography } from '../../../ui/typography'
+import { Input } from '../../../common/ui/old-input'
+import { Typography } from '../../../common/ui/typography'
 import { cn } from '../../../../utils'
 import { FileSystemItem } from '../../../../utils/fileTreeUtils'
 import { buildFileTree } from '../../../../utils/fileTreeUtils'

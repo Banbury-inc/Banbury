@@ -9,7 +9,7 @@ import {
   ListTodo,
 } from 'lucide-react'
 import { cn } from '../../../utils'
-import { Typography } from '../../ui/typography'
+import { Typography } from '../../common/ui/typography'
 import type { TodoItem, ThreadTodoState, TodoStatus } from '../../../types/todo-types'
 import {
   getThreadTodoState,

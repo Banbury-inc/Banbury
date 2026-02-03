@@ -25,8 +25,8 @@ import { FileAttachmentDisplay } from "./components/file-attachment-display";
 import { QueuedMessagesDisplay, type QueuedMessage } from "./components/queued-messages-display";
 import { PendingChangesBar } from "./components/pending-changes-bar";
 import { ContextWheel } from "./components/context-wheel";
-import { Button } from "../../ui/button";
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "../../ui/tooltip";
+import { Button } from "../../common/ui/button";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "../../common/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -36,8 +36,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSeparator,
   DropdownMenuItem,
-} from "../../ui/dropdown-menu";
-import { Popover, PopoverTrigger, PopoverContent } from "../../ui/popover";
+} from "../../common/ui/dropdown-menu";
+import { Popover, PopoverTrigger, PopoverContent } from "../../common/ui/popover";
 import { Check } from "lucide-react";
 import { FileSystemItem } from "../../../utils/fileTreeUtils";
 import { ThreadScrollToBottom } from "./ThreadScrollToBottom";
@@ -64,7 +64,7 @@ import { handleLocalFileUpload } from "../../handlers/handle-local-file-upload";
 import { checkIsRunning } from "./handlers/messageQueue";
 
 import type { FC } from "react";
-import { Typography } from "frontend/components/ui/typography";
+import { Typography } from "@/components/common/ui/typography";
 
 const {
   ComposerPrimitive,
