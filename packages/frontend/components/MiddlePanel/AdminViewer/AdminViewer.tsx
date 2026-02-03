@@ -151,7 +151,7 @@ export function AdminViewer({ activeTab }: AdminViewerProps) {
   const loadVisitorData = async (days: number = 30) => {
     setVisitorLoading(true)
     try {
-      const response = await ApiService.getSiteVisitorInfoEnhanced(10000, days) as any
+      const response = await ApiService.getSiteVisitorInfoEnhanced(1000, days) as any
 
       const visitors = response.visitors || []
       setVisitorData(visitors)
@@ -210,7 +210,7 @@ export function AdminViewer({ activeTab }: AdminViewerProps) {
       console.error('Enhanced visitor data failed, falling back to legacy:', error)
 
       try {
-        const legacyResponse = await ApiService.getSiteVisitorInfo(10000, days) as any
+        const legacyResponse = await ApiService.getSiteVisitorInfo(1000, days) as any
         if (legacyResponse.result === 'success') {
           setVisitorData(legacyResponse.visitors || [])
           setVisitorPage(1)
@@ -242,7 +242,7 @@ export function AdminViewer({ activeTab }: AdminViewerProps) {
   const loadLoginData = async (days: number = 30) => {
     setLoginLoading(true)
     try {
-      const response = await ApiService.getLoginAnalytics(10000, days) as any
+      const response = await ApiService.getLoginAnalytics(1000, days) as any
       if (response.result === 'success') {
         setLoginData(response.logins || [])
 
@@ -383,7 +383,7 @@ export function AdminViewer({ activeTab }: AdminViewerProps) {
   const loadFileTypeAnalytics = async (days: number = 30, usersToExclude: string[] = excludedUsers) => {
     setFileTypeLoading(true)
     try {
-      const response = await ApiService.getFileTypeAnalytics(days, 10000, usersToExclude) as FileTypeAnalytics
+      const response = await ApiService.getFileTypeAnalytics(days, 1000, usersToExclude) as FileTypeAnalytics
       if (response.result === 'success') {
         setFileTypeAnalytics(response)
       }
