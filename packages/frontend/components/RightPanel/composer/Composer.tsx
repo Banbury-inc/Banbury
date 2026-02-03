@@ -1011,7 +1011,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
             <Button
               variant="ghost"
               size="xs"
-              className="h-7 px-2 gap-1 hover:bg-accent hover:text-primary flex-shrink-0 whitespace-nowrap"
+              className="h-7 px-2 gap-1 hover:text-primary flex-shrink-0 whitespace-nowrap"
               title="Mode"
               aria-label="Mode"
             >
