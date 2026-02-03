@@ -18,7 +18,6 @@ interface KeyboardHandlerParams {
   handleAddRow: () => void
   handleAddColumn: () => void
   handleClear: () => void
-  setHelpDialogOpen: (open: boolean) => void
   isVimMode?: boolean
   vimModeHandler?: ReturnType<typeof createVimModeHandler>
   formulaNavigationHandler?: ReturnType<typeof createFormulaNavigationHandler>
@@ -41,7 +40,6 @@ export function createKeyboardHandler({
   handleAddRow,
   handleAddColumn,
   handleClear,
-  setHelpDialogOpen,
   isVimMode,
   vimModeHandler,
   formulaNavigationHandler
@@ -199,7 +197,6 @@ export function createKeyboardHandler({
         break
       case 'f1':
         event.preventDefault()
-        setHelpDialogOpen(true)
         break
     }
   }
