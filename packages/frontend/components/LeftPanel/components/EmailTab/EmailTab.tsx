@@ -1307,9 +1307,44 @@ export function EmailTab({
                                   }`}>
                                     {email.subject}
                                   </Typography>
-                                  <Typography variant="muted" className="text-xs line-clamp-1">
-                                    {email.snippet}
-                                  </Typography>
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <Typography variant="muted" className="text-xs line-clamp-1 flex-1 min-w-0">
+                                      {email.snippet}
+                                    </Typography>
+                                    {/* Display user labels for Gmail */}
+                                    {email.provider === 'gmail' && email.labels && email.labels.length > 0 && (
+                                      <div className="flex gap-1 flex-shrink-0">
+                                        {email.labels
+                                          .filter(labelId => {
+                                            // Filter out system labels
+                                            const systemLabelIds = ['INBOX', 'SENT', 'DRAFT', 'STARRED', 'SPAM', 'TRASH', 'IMPORTANT', 'UNREAD', 'CATEGORY_PERSONAL', 'CATEGORY_SOCIAL', 'CATEGORY_PROMOTIONS', 'CATEGORY_UPDATES', 'CATEGORY_FORUMS', 'CHAT']
+                                            return !systemLabelIds.includes(labelId)
+                                          })
+                                          .slice(0, 2) // Limit to 2 labels for horizontal layout
+                                          .map(labelId => {
+                                            const label = labels.find(l => l.id === labelId)
+                                            if (!label) return null
+                                            
+                                            const bgColor = label.color?.backgroundColor || '#e5e7eb'
+                                            const textColor = label.color?.textColor || '#374151'
+                                            
+                                            return (
+                                              <span
+                                                key={labelId}
+                                                className="px-1.5 py-0.5 text-[10px] font-medium rounded truncate max-w-[60px]"
+                                                style={{
+                                                  backgroundColor: bgColor,
+                                                  color: textColor
+                                                }}
+                                                title={label.name}
+                                              >
+                                                {label.name}
+                                              </span>
+                                            )
+                                          })}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="relative ml-2">
                                   <Typography variant="muted" className="text-xs text-gray-400 dark:text-gray-500 group-hover:opacity-0 transition-opacity">
