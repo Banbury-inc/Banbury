@@ -28,6 +28,7 @@ import { loadLabels as fetchLabels } from './handlers/loadLabels'
 import { checkOutlookConnectionStatus } from '../../../../components/handlers/outlook-connection'
 import { useEmailWorkspaceHandlers } from './handlers/emailWorkspaceHandlers'
 import { PanelGroup } from '../../../../pages/Workspaces/types'
+import { EmailContextMenu } from './components/EmailContextMenu/EmailContextMenu'
 
 type EmailProvider = 'gmail' | 'outlook'
 
@@ -586,6 +587,16 @@ export function EmailTab({
               flag: 'notFlagged'
             })
             break
+          case 'markRead':
+            await ApiService.Emails.modifyOutlookMessage(messageId, {
+              isRead: true
+            })
+            break
+          case 'markUnread':
+            await ApiService.Emails.modifyOutlookMessage(messageId, {
+              isRead: false
+            })
+            break
         }
         loadOutlookMessages()
       } else {
@@ -610,6 +621,16 @@ export function EmailTab({
               removeLabelIds: ['STARRED']
             })
             break
+          case 'markRead':
+            await ApiService.Emails.modifyMessage(messageId, {
+              removeLabelIds: ['UNREAD']
+            })
+            break
+          case 'markUnread':
+            await ApiService.Emails.modifyMessage(messageId, {
+              addLabelIds: ['UNREAD']
+            })
+            break
           case 'edit':
             // TODO: Implement draft editing - open in composer
             break
@@ -623,6 +644,53 @@ export function EmailTab({
       console.error('Failed to perform message action:', error)
     }
   }, [loadMessages, loadOutlookMessages])
+
+  // Handle reply to email
+  const handleReplyToEmail = useCallback((email: ParsedEmail) => {
+    const replySubject = email.subject.startsWith('Re:') 
+      ? email.subject 
+      : `Re: ${email.subject}`
+    
+    setComposeForm({
+      to: email.from,
+      subject: replySubject,
+      body: `\n\n---\nOn ${email.date}, ${email.from} wrote:\n${email.snippet}`
+    })
+    setComposeOpen(true)
+  }, [])
+
+  // Handle reply all to email
+  const handleReplyAllToEmail = useCallback((email: ParsedEmail) => {
+    const replySubject = email.subject.startsWith('Re:') 
+      ? email.subject 
+      : `Re: ${email.subject}`
+    
+    // Combine from and to addresses
+    const allRecipients = [email.from, email.to]
+      .filter(Boolean)
+      .join(', ')
+    
+    setComposeForm({
+      to: allRecipients,
+      subject: replySubject,
+      body: `\n\n---\nOn ${email.date}, ${email.from} wrote:\n${email.snippet}`
+    })
+    setComposeOpen(true)
+  }, [])
+
+  // Handle forward email
+  const handleForwardEmail = useCallback((email: ParsedEmail) => {
+    const forwardSubject = email.subject.startsWith('Fwd:') 
+      ? email.subject 
+      : `Fwd: ${email.subject}`
+    
+    setComposeForm({
+      to: '',
+      subject: forwardSubject,
+      body: `\n\n---\nForwarded message from ${email.from} on ${email.date}:\n\nSubject: ${email.subject}\n\n${email.snippet}`
+    })
+    setComposeOpen(true)
+  }, [])
 
   // Check Gmail access
   const checkGmailAccess = useCallback(async () => {
@@ -1184,82 +1252,99 @@ export function EmailTab({
                     </div>
                   ) : (
                     <>
-                      {parsedMessages.map((email) => (
-                        <div
-                          key={email.id}
-                          onClick={() => loadMessageDetails(email.id, email.provider)}
-                          className={`group p-3 border-b border-zinc-300 dark:border-zinc-700 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors min-w-0 ${
-                            !email.isRead ? 'bg-zinc-50 dark:bg-zinc-800/30' : ''
-                          }`}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1 min-w-0">
-                                {!email.isRead && (
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
-                                )}
-                                {email.threadId && threadCounts.get(email.threadId) && threadCounts.get(email.threadId)! > 1 && (
-                                  <Typography variant="xs" className="flex-shrink-0 px-1.5 py-0.5 font-medium bg-accent rounded-full">
-                                    {threadCounts.get(email.threadId)}
+                      {parsedMessages.map((email) => {
+                        const isStarred = email.provider === 'gmail' 
+                          ? email.labels.includes('STARRED')
+                          : email.isStarred || false
+                        
+                        return (
+                          <EmailContextMenu
+                            key={email.id}
+                            isRead={email.isRead}
+                            isStarred={isStarred}
+                            onMarkRead={email.isRead ? undefined : () => handleMessageAction(email.id, 'markRead', email.provider)}
+                            onMarkUnread={email.isRead ? () => handleMessageAction(email.id, 'markUnread', email.provider) : undefined}
+                            onStar={isStarred ? undefined : () => handleMessageAction(email.id, 'star', email.provider)}
+                            onUnstar={isStarred ? () => handleMessageAction(email.id, 'unstar', email.provider) : undefined}
+                            onDelete={() => handleMessageAction(email.id, 'delete', email.provider)}
+                            onArchive={() => handleMessageAction(email.id, 'archive', email.provider)}
+                            onReply={() => handleReplyToEmail(email)}
+                            onReplyAll={() => handleReplyAllToEmail(email)}
+                            onForward={() => handleForwardEmail(email)}
+                          >
+                            <div
+                              onClick={() => loadMessageDetails(email.id, email.provider)}
+                              className={`group p-3 border-b border-zinc-300 dark:border-zinc-700 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors min-w-0 ${
+                                !email.isRead ? 'bg-zinc-50 dark:bg-zinc-800/30' : ''
+                              }`}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1 min-w-0">
+                                    {!email.isRead && (
+                                      <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
+                                    )}
+                                    {email.threadId && threadCounts.get(email.threadId) && threadCounts.get(email.threadId)! > 1 && (
+                                      <Typography variant="xs" className="flex-shrink-0 px-1.5 py-0.5 font-medium bg-accent rounded-full">
+                                        {threadCounts.get(email.threadId)}
+                                      </Typography>
+                                    )}
+                                    <Typography variant="small" className={`font-medium truncate min-w-0 ${
+                                      !email.isRead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'
+                                    }`}>
+                                      {email.isDraft ? 'Draft' : email.from}
+                                    </Typography>
+                                    {email.hasAttachments && (
+                                      <Paperclip className="h-4 w-4 text-gray-400 dark:text-gray-400 flex-shrink-0" strokeWidth={1} />
+                                    )}
+                                  </div>
+                                  <Typography variant="small" className={`truncate mb-1 block ${
+                                    !email.isRead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'
+                                  }`}>
+                                    {email.subject}
                                   </Typography>
-                                )}
-                                <Typography variant="small" className={`font-medium truncate min-w-0 ${
-                                  !email.isRead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'
-                                }`}>
-                                  {email.isDraft ? 'Draft' : email.from}
-                                </Typography>
-                                {email.hasAttachments && (
-                                  <Paperclip className="h-4 w-4 text-gray-400 dark:text-gray-400 flex-shrink-0" strokeWidth={1} />
-                                )}
-                              </div>
-                              <Typography variant="small" className={`truncate mb-1 block ${
-                                !email.isRead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'
-                              }`}>
-                                {email.subject}
-                              </Typography>
-                              <Typography variant="muted" className="text-xs line-clamp-1">
-                                {email.snippet}
-                              </Typography>
-                            </div>
-                            <div className="relative ml-2">
-                              <Typography variant="muted" className="text-xs text-gray-400 dark:text-gray-500 group-hover:opacity-0 transition-opacity">
-                                {formatDate(email.date)}
-                              </Typography>
-                               <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                 <Button
-                                   variant="primary"
-                                   size="sm"
-                                   onClick={(e: React.MouseEvent) => {
-                                     e.stopPropagation()
-                                     const isStarred = email.provider === 'gmail' 
-                                       ? email.labels.includes('STARRED')
-                                       : email.isStarred
-                                     handleMessageAction(email.id, isStarred ? 'unstar' : 'star', email.provider)
-                                   }}
-                                   className="h-6 w-6 p-0 text-gray-400 dark:text-gray-400 hover:text-yellow-400 dark:hover:text-yellow-400"
-                                 >
-                                   {(email.provider === 'gmail' ? email.labels.includes('STARRED') : email.isStarred) ? (
-                                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" strokeWidth={1} />
-                                   ) : (
-                                     <StarOff className="h-4 w-4" strokeWidth={1} />
-                                   )}
-                                 </Button>
-                                 <Button
-                                   variant="primary"
-                                   size="sm"
-                                   onClick={(e: React.MouseEvent) => {
-                                     e.stopPropagation()
-                                     handleMessageAction(email.id, 'delete', email.provider)
-                                   }}
-                                   className="h-6 w-6 p-0 text-gray-400 dark:text-gray-400 hover:text-red-400 dark:hover:text-red-400"
-                                 >
-                                   <Trash2 className="h-4 w-4" strokeWidth={1} />
-                                 </Button>
+                                  <Typography variant="muted" className="text-xs line-clamp-1">
+                                    {email.snippet}
+                                  </Typography>
+                                </div>
+                                <div className="relative ml-2">
+                                  <Typography variant="muted" className="text-xs text-gray-400 dark:text-gray-500 group-hover:opacity-0 transition-opacity">
+                                    {formatDate(email.date)}
+                                  </Typography>
+                                   <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                     <Button
+                                       variant="primary"
+                                       size="sm"
+                                       onClick={(e: React.MouseEvent) => {
+                                         e.stopPropagation()
+                                         handleMessageAction(email.id, isStarred ? 'unstar' : 'star', email.provider)
+                                       }}
+                                       className="h-6 w-6 p-0 text-gray-400 dark:text-gray-400 hover:text-yellow-400 dark:hover:text-yellow-400"
+                                     >
+                                       {isStarred ? (
+                                         <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" strokeWidth={1} />
+                                       ) : (
+                                         <StarOff className="h-4 w-4" strokeWidth={1} />
+                                       )}
+                                     </Button>
+                                     <Button
+                                       variant="primary"
+                                       size="sm"
+                                       onClick={(e: React.MouseEvent) => {
+                                         e.stopPropagation()
+                                         handleMessageAction(email.id, 'delete', email.provider)
+                                       }}
+                                       className="h-6 w-6 p-0 text-gray-400 dark:text-gray-400 hover:text-red-400 dark:hover:text-red-400"
+                                     >
+                                       <Trash2 className="h-4 w-4" strokeWidth={1} />
+                                     </Button>
+                                   </div>
+                                 </div>
                                </div>
                              </div>
-                           </div>
-                         </div>
-                      ))}
+                          </EmailContextMenu>
+                        )
+                      })}
                       
                       {/* Loading indicator for infinite scroll */}
                       {isLoadingMore && (
