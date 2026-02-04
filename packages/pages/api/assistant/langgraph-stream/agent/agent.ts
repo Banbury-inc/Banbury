@@ -57,6 +57,7 @@ import {
   gmailGetMessageTool,
   gmailSendMessageTool,
   gmailCreateDraftTool,
+  gmailLabelEmailTool,
 } from "./tools/gmailTools";
 import {
   calendarListEventsTool,
@@ -215,6 +216,7 @@ const planningTools = [
   gmailGetRecentTool,
   gmailSearchTool,
   gmailGetMessageTool,
+  gmailLabelEmailTool,
   // Calendar reading tools
   calendarListEventsTool,
   calendarGetEventTool,
@@ -311,6 +313,7 @@ const tools = [
   gmailGetMessageTool,
   gmailSendMessageTool,
   gmailCreateDraftTool,
+  gmailLabelEmailTool,
   calendarListEventsTool,
   calendarGetEventTool,
   calendarCreateEventTool,
