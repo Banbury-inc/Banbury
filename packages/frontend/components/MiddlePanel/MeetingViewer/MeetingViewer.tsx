@@ -7,7 +7,7 @@ import { handleRegenerateSummary } from "./handlers/regenerateSummaryHandlers"
 import { handleSaveEditedSummary } from "./handlers/saveEditedSummaryHandlers"
 import { handleDownloadRecording } from "./handlers/handle-download-recording"
 import { handleDownloadTranscription } from "./handlers/handle-download-transcription"
-import { toggleVideoPlayPause, handleVideoSeek, handleVideoVolumeChange, toggleVideoMute, handleTranscriptSegmentClick } from "./handlers/video-player-handlers"
+import { toggleVideoPlayPause, handleVideoSeek, handleVideoVolumeChange, toggleVideoMute, handleTranscriptSegmentClick, toggleFullscreen } from "./handlers/video-player-handlers"
 import { fetchTranscriptFromUrl } from "./handlers/transcript-handlers"
 import { VideoPlayerDialog } from "../../../pages/MeetingAgent/components/VideoPlayerDialog"
 import { RecordingUploadDialog } from "../../../pages/MeetingAgent/components/RecordingUploadDialog"
@@ -33,6 +33,7 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
   const [currentMeeting, setCurrentMeeting] = useState<MeetingSession>(meeting)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const videoContainerRef = useRef<HTMLDivElement>(null)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const [videoCurrentTime, setVideoCurrentTime] = useState(0)
   const [videoDuration, setVideoDuration] = useState(0)
@@ -149,6 +150,10 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
   const onToggleVideoMute = useCallback(() => {
     toggleVideoMute(videoRef, isVideoMuted, setIsVideoMuted)
   }, [isVideoMuted])
+
+  const onToggleFullscreen = useCallback(() => {
+    toggleFullscreen(videoContainerRef)
+  }, [])
 
   useEffect(() => {
     const videoUrl = currentMeeting.recordingUrl || currentMeeting.recallBot?.videoUrl
@@ -462,6 +467,7 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
                 <div>
                   <VideoPlayer
                     videoRef={videoRef}
+                    containerRef={videoContainerRef}
                     videoStreamUrl={videoStreamUrl}
                     isVideoLoading={isVideoLoading}
                     isVideoPlaying={isVideoPlaying}
@@ -474,6 +480,7 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
                     onVideoSeek={onVideoSeek}
                     onVolumeChange={onVideoVolumeChange}
                     onToggleMute={onToggleVideoMute}
+                    onToggleFullscreen={onToggleFullscreen}
                     onLoadStart={() => setIsVideoLoading(true)}
                     setVideoError={setVideoError}
                     setIsVideoLoading={setIsVideoLoading}

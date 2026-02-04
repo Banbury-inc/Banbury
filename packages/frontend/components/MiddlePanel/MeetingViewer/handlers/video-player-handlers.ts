@@ -57,3 +57,21 @@ export function handleTranscriptSegmentClick(
     setVideoCurrentTime(startTime)
   }
 }
+
+export function toggleFullscreen(
+  containerRef: RefObject<HTMLDivElement>
+): void {
+  if (!containerRef.current) return
+
+  if (!document.fullscreenElement) {
+    containerRef.current.requestFullscreen().catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error(`Error attempting to enable fullscreen: ${err.message}`)
+    })
+  } else {
+    document.exitFullscreen().catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error(`Error attempting to exit fullscreen: ${err.message}`)
+    })
+  }
+}

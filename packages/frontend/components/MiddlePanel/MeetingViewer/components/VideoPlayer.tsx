@@ -1,5 +1,5 @@
-import { Loader2, Video, Play, Pause, Volume2, VolumeX } from "lucide-react"
-import { RefObject, useEffect } from "react"
+import { Loader2, Video, Play, Pause, Volume2, VolumeX, Maximize, Minimize } from "lucide-react"
+import { RefObject, useEffect, useState } from "react"
 import { Button } from "../../../common/ui/button"
 import { Card } from "../../../common/ui/card"
 import { Slider } from "../../../common/ui/slider"
@@ -7,6 +7,7 @@ import { formatTime } from "../utils/duration-formatters"
 
 interface VideoPlayerProps {
   videoRef: RefObject<HTMLVideoElement>
+  containerRef: RefObject<HTMLDivElement>
   videoStreamUrl: string | null
   isVideoLoading: boolean
   isVideoPlaying: boolean
@@ -19,6 +20,7 @@ interface VideoPlayerProps {
   onVideoSeek: (value: number[]) => void
   onVolumeChange: (value: number[]) => void
   onToggleMute: () => void
+  onToggleFullscreen: () => void
   onLoadStart: () => void
   setVideoError: (error: string | null) => void
   setIsVideoLoading: (loading: boolean) => void
@@ -26,6 +28,7 @@ interface VideoPlayerProps {
 
 export function VideoPlayer({
   videoRef,
+  containerRef,
   videoStreamUrl,
   isVideoLoading,
   isVideoPlaying,
@@ -38,13 +41,27 @@ export function VideoPlayer({
   onVideoSeek,
   onVolumeChange,
   onToggleMute,
+  onToggleFullscreen,
   onLoadStart,
   setVideoError,
   setIsVideoLoading
 }: VideoPlayerProps) {
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }
+  }, [])
+
   return (
     <Card className="bg-muted/50 border-border">
-      <div className="relative aspect-video bg-black rounded-t-lg overflow-hidden">
+      <div ref={containerRef} className="relative aspect-video bg-black rounded-t-lg overflow-hidden">
         {isVideoLoading && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center text-muted-foreground">
@@ -89,7 +106,8 @@ export function VideoPlayer({
 
         {/* Video Overlay Controls */}
         {!isVideoLoading && !videoError && videoStreamUrl && (
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200 group">
+            {/* Center Play/Pause Button */}
             <div className="absolute inset-0 flex items-center justify-center">
               <Button
                 variant="ghost"
@@ -104,66 +122,74 @@ export function VideoPlayer({
                 )}
               </Button>
             </div>
-          </div>
-        )}
-      </div>
 
-      {/* Video Controls */}
-      {!isVideoLoading && !videoError && videoStreamUrl && (
-        <div className="bg-card p-4 space-y-3 rounded-b-lg border-t border-border">
-          {/* Progress Bar */}
-          <div className="space-y-2">
-            <Slider
-              value={[videoCurrentTime]}
-              max={videoDuration || 100}
-              step={0.1}
-              onValueChange={onVideoSeek}
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{formatTime(videoCurrentTime)}</span>
-              <span>{formatTime(videoDuration)}</span>
-            </div>
-          </div>
+            {/* Bottom Controls Bar */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 space-y-3">
+              {/* Progress Bar */}
+              <div className="space-y-2">
+                <Slider
+                  value={[videoCurrentTime]}
+                  max={videoDuration || 100}
+                  step={0.1}
+                  onValueChange={onVideoSeek}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-white">
+                  <span>{formatTime(videoCurrentTime)}</span>
+                  <span>{formatTime(videoDuration)}</span>
+                </div>
+              </div>
 
-          {/* Control Buttons */}
-          <div className="flex items-center justify-between overflow-hidden">
-            <div className="flex items-center gap-2 min-w-0 flex-shrink">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onTogglePlayPause}
-                className="flex-shrink-0"
-              >
-                {isVideoPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-              </Button>
+              {/* Control Buttons */}
+              <div className="flex items-center justify-between overflow-hidden">
+                <div className="flex items-center gap-2 min-w-0 flex-shrink">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onTogglePlayPause}
+                    className="flex-shrink-0 text-white hover:bg-white/20"
+                  >
+                    {isVideoPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                  </Button>
 
-              {/* Volume Control */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* Volume Control */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onToggleMute}
+                      className="flex-shrink-0 text-white hover:bg-white/20"
+                    >
+                      {isVideoMuted || videoVolume === 0 ? (
+                        <VolumeX className="h-4 w-4" />
+                      ) : (
+                        <Volume2 className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Slider
+                      value={[isVideoMuted ? 0 : videoVolume]}
+                      max={1}
+                      step={0.1}
+                      onValueChange={onVolumeChange}
+                      className="w-20 flex-shrink-0"
+                    />
+                  </div>
+                </div>
+
+                {/* Fullscreen Button */}
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onToggleMute}
-                  className="flex-shrink-0"
+                  onClick={onToggleFullscreen}
+                  className="flex-shrink-0 text-white hover:bg-white/20"
                 >
-                  {isVideoMuted || videoVolume === 0 ? (
-                    <VolumeX className="h-4 w-4" />
-                  ) : (
-                    <Volume2 className="h-4 w-4" />
-                  )}
+                  {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
                 </Button>
-                <Slider
-                  value={[isVideoMuted ? 0 : videoVolume]}
-                  max={1}
-                  step={0.1}
-                  onValueChange={onVolumeChange}
-                  className="w-20 flex-shrink-0"
-                />
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </Card>
   )
 }
