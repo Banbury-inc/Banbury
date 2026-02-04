@@ -1262,6 +1262,9 @@ export function EmailTab({
                             key={email.id}
                             isRead={email.isRead}
                             isStarred={isStarred}
+                            emailId={email.id}
+                            emailLabels={email.labels || []}
+                            provider={email.provider}
                             onMarkRead={email.isRead ? undefined : () => handleMessageAction(email.id, 'markRead', email.provider)}
                             onMarkUnread={email.isRead ? () => handleMessageAction(email.id, 'markUnread', email.provider) : undefined}
                             onStar={isStarred ? undefined : () => handleMessageAction(email.id, 'star', email.provider)}
@@ -1271,6 +1274,7 @@ export function EmailTab({
                             onReply={() => handleReplyToEmail(email)}
                             onReplyAll={() => handleReplyAllToEmail(email)}
                             onForward={() => handleForwardEmail(email)}
+                            onLabelChange={() => loadMessages()}
                           >
                             <div
                               onClick={() => loadMessageDetails(email.id, email.provider)}
