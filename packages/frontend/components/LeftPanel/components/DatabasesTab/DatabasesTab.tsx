@@ -61,6 +61,14 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
     username: '',
     password: '',
     database: '',
+    sshEnabled: false,
+    sshHost: '',
+    sshPort: '22',
+    sshUsername: '',
+    sshAuthMethod: 'password',
+    sshPassword: '',
+    sshPrivateKey: '',
+    sshPassphrase: '',
   })
   const [activeConnection, setActiveConnection] = useState<DatabaseConnectionConfig | null>(null)
   const [tree, setTree] = useState<DatabaseTreeNode[]>([])
@@ -73,6 +81,13 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
     if (!formState.port.trim()) return false
     if (!formState.username.trim()) return false
     if (!formState.password.trim()) return false
+    if (formState.sshEnabled && formState.provider !== 'mongodb') {
+      if (!formState.sshHost.trim()) return false
+      if (!formState.sshPort.trim()) return false
+      if (!formState.sshUsername.trim()) return false
+      if (formState.sshAuthMethod === 'password' && !formState.sshPassword.trim()) return false
+      if (formState.sshAuthMethod === 'publicKey' && !formState.sshPrivateKey.trim()) return false
+    }
     return true
   }, [formState])
 
@@ -118,6 +133,7 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
                   provider,
                   port: providerPorts[provider],
                   uri: provider === 'mongodb' ? prev.uri : '',
+                  sshEnabled: provider === 'mongodb' ? false : prev.sshEnabled,
                 }))
               }}
             >
@@ -197,6 +213,109 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
               className="h-8 text-xs"
             />
           </div>
+          <div className="col-span-2 pt-1">
+            {formState.provider !== 'mongodb' ? (
+              <label className="flex items-center gap-2 text-xs text-foreground">
+                <input
+                  type="checkbox"
+                  checked={formState.sshEnabled}
+                  onChange={event => setFormState(prev => ({ ...prev, sshEnabled: event.target.checked }))}
+                  className="h-3.5 w-3.5 rounded border-input bg-background"
+                />
+                Use SSH tunnel
+              </label>
+            ) : null}
+          </div>
+          {formState.provider !== 'mongodb' && formState.sshEnabled ? (
+            <>
+              <div className="col-span-2 mt-1 border border-border rounded-md bg-background p-2 space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="col-span-2 space-y-1">
+                    <Label htmlFor="db-ssh-host" className="text-xs">SSH Host</Label>
+                    <Input
+                      id="db-ssh-host"
+                      value={formState.sshHost}
+                      onChange={event => setFormState(prev => ({ ...prev, sshHost: event.target.value }))}
+                      placeholder="bastion.example.com"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="db-ssh-port" className="text-xs">SSH Port</Label>
+                    <Input
+                      id="db-ssh-port"
+                      value={formState.sshPort}
+                      onChange={event => setFormState(prev => ({ ...prev, sshPort: event.target.value }))}
+                      placeholder="22"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="db-ssh-username" className="text-xs">SSH Username</Label>
+                    <Input
+                      id="db-ssh-username"
+                      value={formState.sshUsername}
+                      onChange={event => setFormState(prev => ({ ...prev, sshUsername: event.target.value }))}
+                      placeholder="ubuntu"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="db-ssh-auth-method" className="text-xs">SSH Authentication</Label>
+                  <select
+                    id="db-ssh-auth-method"
+                    className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs text-foreground"
+                    value={formState.sshAuthMethod}
+                    onChange={(event) => {
+                      const sshAuthMethod = event.target.value as 'password' | 'publicKey'
+                      setFormState(prev => ({ ...prev, sshAuthMethod }))
+                    }}
+                  >
+                    <option value="password">Password</option>
+                    <option value="publicKey">Public Key</option>
+                  </select>
+                </div>
+                {formState.sshAuthMethod === 'password' ? (
+                  <div className="space-y-1">
+                    <Label htmlFor="db-ssh-password" className="text-xs">SSH Password</Label>
+                    <Input
+                      id="db-ssh-password"
+                      type="password"
+                      value={formState.sshPassword}
+                      onChange={event => setFormState(prev => ({ ...prev, sshPassword: event.target.value }))}
+                      placeholder="••••••••"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-1">
+                      <Label htmlFor="db-ssh-private-key" className="text-xs">SSH Private Key</Label>
+                      <textarea
+                        id="db-ssh-private-key"
+                        value={formState.sshPrivateKey}
+                        onChange={event => setFormState(prev => ({ ...prev, sshPrivateKey: event.target.value }))}
+                        placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
+                        className="min-h-24 w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs text-foreground"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="db-ssh-passphrase" className="text-xs">Key Passphrase (optional)</Label>
+                      <Input
+                        id="db-ssh-passphrase"
+                        type="password"
+                        value={formState.sshPassphrase}
+                        onChange={event => setFormState(prev => ({ ...prev, sshPassphrase: event.target.value }))}
+                        placeholder="Optional"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
+          ) : null}
           <div className="col-span-2 pt-1">
             <Button
               type="button"

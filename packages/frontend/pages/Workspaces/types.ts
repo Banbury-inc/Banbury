@@ -80,6 +80,17 @@ export interface EmailInboxTab {
 
 export type DatabaseProvider = 'postgres' | 'mysql' | 'mongodb'
 
+export interface DatabaseSshConfig {
+  enabled: boolean
+  host: string
+  port: number
+  username: string
+  authMethod: 'password' | 'publicKey'
+  password?: string
+  privateKey?: string
+  passphrase?: string
+}
+
 export interface DatabaseConnectionConfig {
   provider: DatabaseProvider
   uri?: string
@@ -88,6 +99,7 @@ export interface DatabaseConnectionConfig {
   username: string
   password: string
   database?: string
+  ssh?: DatabaseSshConfig
 }
 
 export interface DatabaseTableTab {

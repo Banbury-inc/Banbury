@@ -8,6 +8,14 @@ export interface DatabaseConnectionFormState {
   username: string
   password: string
   database: string
+  sshEnabled: boolean
+  sshHost: string
+  sshPort: string
+  sshUsername: string
+  sshAuthMethod: 'password' | 'publicKey'
+  sshPassword: string
+  sshPrivateKey: string
+  sshPassphrase: string
 }
 
 export interface DatabaseTreeNode {

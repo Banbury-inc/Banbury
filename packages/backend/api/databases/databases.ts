@@ -2,6 +2,17 @@ import { ApiService } from '../apiService'
 
 export type DatabaseProvider = 'postgres' | 'mysql' | 'mongodb'
 
+export interface DatabaseSshPayload {
+  enabled: boolean
+  host: string
+  port: number
+  username: string
+  authMethod: 'password' | 'publicKey'
+  password?: string
+  privateKey?: string
+  passphrase?: string
+}
+
 export interface DatabaseConnectionPayload {
   provider: DatabaseProvider
   uri?: string
@@ -10,6 +21,7 @@ export interface DatabaseConnectionPayload {
   username: string
   password: string
   database?: string
+  ssh?: DatabaseSshPayload
 }
 
 export interface DatabaseTreeNode {
