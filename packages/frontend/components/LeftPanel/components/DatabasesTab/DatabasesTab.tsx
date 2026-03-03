@@ -55,6 +55,7 @@ function TreeNodeItem({ node, depth = 0, onSelect }: TreeNodeItemProps) {
 export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) {
   const [formState, setFormState] = useState<DatabaseConnectionFormState>({
     provider: 'postgres',
+    uri: '',
     host: '',
     port: providerPorts.postgres,
     username: '',
@@ -67,6 +68,7 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const canConnect = useMemo(() => {
+    if (formState.provider === 'mongodb' && formState.uri.trim()) return true
     if (!formState.host.trim()) return false
     if (!formState.port.trim()) return false
     if (!formState.username.trim()) return false
@@ -115,6 +117,7 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
                   ...prev,
                   provider,
                   port: providerPorts[provider],
+                  uri: provider === 'mongodb' ? prev.uri : '',
                 }))
               }}
             >
@@ -123,8 +126,22 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
               <option value="mongodb">MongoDB</option>
             </select>
           </div>
+          {formState.provider === 'mongodb' ? (
+            <div className="space-y-1 col-span-2">
+              <Label htmlFor="db-uri" className="text-xs">MongoDB URI</Label>
+              <Input
+                id="db-uri"
+                value={formState.uri}
+                onChange={event => setFormState(prev => ({ ...prev, uri: event.target.value }))}
+                placeholder="mongodb+srv://user:password@cluster.mongodb.net/app_db"
+                className="h-8 text-xs"
+              />
+            </div>
+          ) : null}
           <div className="space-y-1 col-span-2">
-            <Label htmlFor="db-host" className="text-xs">Host</Label>
+            <Label htmlFor="db-host" className="text-xs">
+              {formState.provider === 'mongodb' ? 'Host (optional when URI is set)' : 'Host'}
+            </Label>
             <Input
               id="db-host"
               value={formState.host}
@@ -134,7 +151,9 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="db-port" className="text-xs">Port</Label>
+            <Label htmlFor="db-port" className="text-xs">
+              {formState.provider === 'mongodb' ? 'Port (optional when URI is set)' : 'Port'}
+            </Label>
             <Input
               id="db-port"
               value={formState.port}
@@ -154,7 +173,9 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="db-username" className="text-xs">Username</Label>
+            <Label htmlFor="db-username" className="text-xs">
+              {formState.provider === 'mongodb' ? 'Username (optional when URI is set)' : 'Username'}
+            </Label>
             <Input
               id="db-username"
               value={formState.username}
@@ -164,7 +185,9 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="db-password" className="text-xs">Password</Label>
+            <Label htmlFor="db-password" className="text-xs">
+              {formState.provider === 'mongodb' ? 'Password (optional when URI is set)' : 'Password'}
+            </Label>
             <Input
               id="db-password"
               type="password"

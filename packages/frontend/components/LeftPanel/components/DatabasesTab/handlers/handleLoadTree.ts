@@ -1,4 +1,4 @@
-import { ApiService } from '../../../../../../../backend/api/apiService'
+import { ApiService } from 'backend/api/apiService'
 import { DatabaseConnectionConfig } from '../../../../../../pages/Workspaces/types'
 import { DatabaseTreeNode } from '../types'
 

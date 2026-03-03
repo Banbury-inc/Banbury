@@ -2,6 +2,7 @@ import { DatabaseConnectionConfig, DatabaseProvider, OpenDatabaseTablePayload } 
 
 export interface DatabaseConnectionFormState {
   provider: DatabaseProvider
+  uri: string
   host: string
   port: string
   username: string

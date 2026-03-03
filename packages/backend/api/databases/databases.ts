@@ -4,6 +4,7 @@ export type DatabaseProvider = 'postgres' | 'mysql' | 'mongodb'
 
 export interface DatabaseConnectionPayload {
   provider: DatabaseProvider
+  uri?: string
   host: string
   port: number
   username: string
