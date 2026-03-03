@@ -78,7 +78,39 @@ export interface EmailInboxTab {
   provider?: 'gmail' | 'outlook'
 }
 
-export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab | FileBrowserTab | EmailInboxTab
+export type DatabaseProvider = 'postgres' | 'mysql' | 'mongodb'
+
+export interface DatabaseConnectionConfig {
+  provider: DatabaseProvider
+  host: string
+  port: number
+  username: string
+  password: string
+  database?: string
+}
+
+export interface DatabaseTableTab {
+  id: string
+  title: string
+  type: 'database-table'
+  provider: DatabaseProvider
+  connection: DatabaseConnectionConfig
+  database: string
+  schema?: string
+  table?: string
+  collection?: string
+}
+
+export interface OpenDatabaseTablePayload {
+  provider: DatabaseProvider
+  connection: DatabaseConnectionConfig
+  database: string
+  schema?: string
+  table?: string
+  collection?: string
+}
+
+export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab | FileBrowserTab | EmailInboxTab | DatabaseTableTab
 
 export interface Panel {
   id: string
@@ -109,7 +141,7 @@ export interface DragState {
 }
 
 // Left panel tab types
-export type WorkspaceLeftPanelTabId = 'files' | 'email' | 'calendar' | 'tasks' | 'meetings' | 'admin'
+export type WorkspaceLeftPanelTabId = 'files' | 'email' | 'calendar' | 'tasks' | 'meetings' | 'databases' | 'admin'
 export type AdminTabId =
   | 'admin-overview'
   | 'admin-users'

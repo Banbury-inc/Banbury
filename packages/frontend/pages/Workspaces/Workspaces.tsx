@@ -27,7 +27,7 @@ import { handleReplyToEmail } from '../../components/LeftPanel/components/EmailT
 import { handleComposeEmail } from '../../components/LeftPanel/components/EmailTab/handlers/handleComposeEmail';
 import { loadConversations, loadConversation, deleteConversation } from './handlers/conversationManagement';
 import { findPanel, getAllTabs, updatePanelActiveTab, addTabToPanel, removeTabFromPanel } from './handlers/panelUtils';
-import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, openAdminInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
+import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, openAdminInTab, openDatabaseTableInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
 import { 
   isDrawioFile, 
   isTldrawFile, 
@@ -65,6 +65,7 @@ import { MeetingSession } from '../../types/meeting-types';
 import {
   UserInfo,
   FileTab,
+  OpenDatabaseTablePayload,
   Panel,
   SplitDirection,
   PanelGroup,
@@ -254,6 +255,19 @@ const Workspaces = (): React.ReactNode => {
       setPanelLayout
     );
   }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
+
+  const openDatabaseTableInTabCallback = useCallback((payload: OpenDatabaseTablePayload, targetPanelId: string = activePanelId) => {
+    openDatabaseTableInTab(
+      payload,
+      targetPanelId,
+      panelLayout,
+      getAllTabs,
+      updatePanelActiveTab,
+      addTabToPanel,
+      setActivePanelId,
+      setPanelLayout
+    )
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout])
 
   const handleCloseTabCallback = useCallback((tabId: string, panelId: string) => {
     handleCloseTab(tabId, panelId, findPanel, removeTabFromPanel, setPanelLayout, setSelectedFile, setSelectedEmail);
@@ -847,6 +861,7 @@ const Workspaces = (): React.ReactNode => {
                 onMeetingSelect={handleMeetingSelect}
                 onJoinMeeting={handleJoinMeeting}
                 onDesktopRecordingStarted={handleDesktopRecordingStarted}
+                onOpenDatabaseTable={payload => openDatabaseTableInTabCallback(payload, activePanelId)}
                 onClose={() => setMobileFileSidebarOpen(false)}
                 panelLayout={panelLayout}
                 setPanelLayout={setPanelLayout}
@@ -956,6 +971,7 @@ const Workspaces = (): React.ReactNode => {
                             setCalendarSelectedEvent={setCalendarSelectedEvent}
                             setSelectedTask={setSelectedTask}
                             setSelectedMeeting={setSelectedMeeting}
+                            onOpenDatabaseTable={payload => openDatabaseTableInTabCallback(payload, activePanelId)}
                           />
                         </div>
                       </div>

@@ -1,4 +1,4 @@
-import { LogOut, Settings, Folder, Mail, Calendar, CheckSquare, Video, UserCog, Download } from "lucide-react"
+import { LogOut, Settings, Folder, Mail, Calendar, CheckSquare, Video, UserCog, Download, Database } from "lucide-react"
 import Image from 'next/image'
 import { useRouter } from "next/router"
 import type { NextRouter } from "next/router"
@@ -57,6 +57,7 @@ const workspaceTabs = [
   { id: 'calendar', icon: Calendar, label: 'Calendar' },
   { id: 'tasks', icon: CheckSquare, label: 'Tasks' },
   { id: 'meetings', icon: Video, label: 'Meetings' },
+  { id: 'databases', icon: Database, label: 'Databases' },
 ]
 
 function isElectronApp(): boolean {

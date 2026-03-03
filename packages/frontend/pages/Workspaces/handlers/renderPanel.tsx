@@ -33,6 +33,7 @@ import { TaskComposer } from '../../../components/MiddlePanel/TaskViewer/TaskCom
 import { MeetingViewer } from '../../../components/MiddlePanel/MeetingViewer/MeetingViewer';
 import { MeetingJoinComposer } from '../../../components/MiddlePanel/MeetingViewer/MeetingJoinComposer';
 import { AdminViewer } from '../../../components/MiddlePanel/AdminViewer/AdminViewer';
+import { DatabaseViewer } from '../../../components/MiddlePanel/DatabaseViewer/DatabaseViewer';
 
 interface RenderPanelProps {
   panel: Panel;
@@ -144,6 +145,7 @@ export const renderPanel = ({
                 else if (t.type === 'task') label = t.title;
                 else if (t.type === 'meeting') label = t.title;
                 else if (t.type === 'admin') label = t.title;
+                else if (t.type === 'database-table') label = t.title;
                 return { id: t.id, label };
               })}
               activeTab={panel.activeTabId || panel.tabs[0]?.id}
@@ -585,6 +587,10 @@ export const renderPanel = ({
                       <AdminViewer activeTab={`admin-${tab.adminTabType}`} />
                     </div>
                   );
+                }
+
+                if (tab.type === 'database-table') {
+                  return <DatabaseViewer tab={tab} />
                 }
 
                 return null;

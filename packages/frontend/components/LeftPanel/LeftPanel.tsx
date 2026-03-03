@@ -4,12 +4,13 @@ import { CalendarTab } from "./components/CalendarTab/CalendarTab"
 import { FilesTab } from "./components/FilesTab/FilesTab"
 import { TasksTab } from "./components/TasksTab/TasksTab"
 import { MeetingsTab } from "./components/MeetingsTab/MeetingsTab"
+import { DatabasesTab } from "./components/DatabasesTab/DatabasesTab"
 import { FileSystemItem } from "../../utils/fileTreeUtils"
 import { Task } from "../../pages/TaskStudio/types"
 import { MeetingSession } from "../../types/meeting-types"
 import { adminTabs } from './components/AdminTabs/adminTabConfig'
 
-import { PanelGroup, UserInfo } from '../../pages/Workspaces/types'
+import { OpenDatabaseTablePayload, PanelGroup, UserInfo } from '../../pages/Workspaces/types'
 
 interface AppSidebarProps {
   userInfo?: UserInfo | null
@@ -39,6 +40,7 @@ interface AppSidebarProps {
   setCalendarSelectedEvent?: React.Dispatch<React.SetStateAction<any | null>>
   setSelectedTask?: React.Dispatch<React.SetStateAction<Task | null>>
   setSelectedMeeting?: React.Dispatch<React.SetStateAction<MeetingSession | null>>
+  onOpenDatabaseTable?: (payload: OpenDatabaseTablePayload) => void
 }
 
 export function LeftPanel({ 
@@ -68,7 +70,8 @@ export function LeftPanel({
   setCalendarJumpDate,
   setCalendarSelectedEvent,
   setSelectedTask,
-  setSelectedMeeting
+  setSelectedMeeting,
+  onOpenDatabaseTable
 }: AppSidebarProps) {
   const router = useRouter()
   const currentActiveTab = activeTab || 'files'
@@ -151,6 +154,15 @@ export function LeftPanel({
               setPanelLayout={setPanelLayout}
               setActivePanelId={setActivePanelId}
               setSelectedMeeting={setSelectedMeeting}
+            />
+          </div>
+        )}
+
+        {currentActiveTab === 'databases' && (
+          <div className="flex-1 flex flex-col mt-0 overflow-hidden">
+            <DatabasesTab
+              onOpenDatabaseTable={payload => onOpenDatabaseTable?.(payload)}
+              toast={toast || (() => {})}
             />
           </div>
         )}

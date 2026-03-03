@@ -4,7 +4,7 @@ import { FileSystemItem } from '../../utils/fileTreeUtils'
 import { CalendarEvent } from '../../../backend/api/calendar/calendar'
 import { Task } from '../../pages/TaskStudio/types'
 import { MeetingSession } from '../../types/meeting-types'
-import { UserInfo, PanelGroup } from './types'
+import { UserInfo, PanelGroup, OpenDatabaseTablePayload } from './types'
 
 interface MobileFileSidebarProps {
   open: boolean
@@ -30,6 +30,7 @@ interface MobileFileSidebarProps {
   onMeetingSelect: (meeting: MeetingSession) => void
   onJoinMeeting: () => void
   onDesktopRecordingStarted: (data: { sessionId: string; windowId: string; platform: string; meetingTitle: string }) => void
+  onOpenDatabaseTable: (payload: OpenDatabaseTablePayload) => void
   onClose: () => void
   // Workspace dependencies for FilesTab
   panelLayout: PanelGroup
@@ -74,6 +75,7 @@ export function MobileFileSidebar({
   onMeetingSelect,
   onJoinMeeting,
   onDesktopRecordingStarted,
+  onOpenDatabaseTable,
   onClose,
   panelLayout,
   setPanelLayout,
@@ -168,6 +170,7 @@ export function MobileFileSidebar({
               setCalendarSelectedEvent={setCalendarSelectedEvent}
               setSelectedTask={setSelectedTask}
               setSelectedMeeting={setSelectedMeeting}
+              onOpenDatabaseTable={onOpenDatabaseTable}
             />
           </div>
         </div>
