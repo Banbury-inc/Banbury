@@ -60,6 +60,17 @@ interface TableDataResponse {
   page?: number
   pageSize?: number
   totalCount?: number
+  primaryKeyColumns?: string[]
+  error?: string
+}
+
+interface UpdateRowsResponse {
+  success: boolean
+  error?: string
+}
+
+interface InsertRowsResponse {
+  success: boolean
   error?: string
 }
 
@@ -106,12 +117,15 @@ export default class Databases {
     }
     page: number
     pageSize: number
+    orderBy?: { column: string; direction: 'asc' | 'desc' }
+    filters?: Array<{ column: string; operator: string; value: string }>
   }): Promise<{
     columns: string[]
     rows: Record<string, unknown>[]
     page: number
     pageSize: number
     totalCount: number
+    primaryKeyColumns: string[]
     error?: string
   }> {
     const response = await ApiService.post<TableDataResponse>('/databases/table-data/', params)
@@ -123,6 +137,7 @@ export default class Databases {
         page: params.page,
         pageSize: params.pageSize,
         totalCount: 0,
+        primaryKeyColumns: [],
         error: response.error || 'Unable to load table data',
       }
     }
@@ -133,7 +148,38 @@ export default class Databases {
       page: response.page || params.page,
       pageSize: response.pageSize || params.pageSize,
       totalCount: response.totalCount || 0,
+      primaryKeyColumns: response.primaryKeyColumns || [],
     }
+  }
+
+  static async updateRows(params: {
+    connection: DatabaseConnectionPayload
+    target: {
+      database: string
+      schema?: string
+      table?: string
+      collection?: string
+    }
+    updates: Array<{ primaryKey: Record<string, unknown>; changes: Record<string, unknown> }>
+  }): Promise<{ error?: string }> {
+    const response = await ApiService.post<UpdateRowsResponse>('/databases/update-rows/', params)
+    if (!response.success) return { error: response.error || 'Failed to update rows' }
+    return {}
+  }
+
+  static async insertRows(params: {
+    connection: DatabaseConnectionPayload
+    target: {
+      database: string
+      schema?: string
+      table?: string
+      collection?: string
+    }
+    rows: Record<string, unknown>[]
+  }): Promise<{ error?: string }> {
+    const response = await ApiService.post<InsertRowsResponse>('/databases/insert-rows/', params)
+    if (!response.success) return { error: response.error || 'Failed to insert rows' }
+    return {}
   }
 
   static async saveConnection(name: string, config: DatabaseConnectionPayload): Promise<{ connection?: SavedConnectionRecord; error?: string }> {
