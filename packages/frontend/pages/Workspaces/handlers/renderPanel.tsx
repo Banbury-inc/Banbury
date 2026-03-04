@@ -34,6 +34,7 @@ import { MeetingViewer } from '../../../components/MiddlePanel/MeetingViewer/Mee
 import { MeetingJoinComposer } from '../../../components/MiddlePanel/MeetingViewer/MeetingJoinComposer';
 import { AdminViewer } from '../../../components/MiddlePanel/AdminViewer/AdminViewer';
 import { DatabaseViewer } from '../../../components/MiddlePanel/DatabaseViewer/DatabaseViewer';
+import { FlowViewer } from '../../../components/MiddlePanel/FlowViewer/FlowViewer';
 
 interface RenderPanelProps {
   panel: Panel;
@@ -146,6 +147,7 @@ export const renderPanel = ({
                 else if (t.type === 'meeting') label = t.title;
                 else if (t.type === 'admin') label = t.title;
                 else if (t.type === 'database-table') label = t.title;
+                else if (t.type === 'flow') label = t.title;
                 return { id: t.id, label };
               })}
               activeTab={panel.activeTabId || panel.tabs[0]?.id}
@@ -591,6 +593,41 @@ export const renderPanel = ({
 
                 if (tab.type === 'database-table') {
                   return <DatabaseViewer tab={tab} />
+                }
+
+                if (tab.type === 'flow') {
+                  if (tab.flow === null) {
+                    return (
+                      <div className="h-full flex items-center justify-center">
+                        <div className="text-center">
+                          <Typography variant="p" className="text-muted-foreground">
+                            Flow not found.
+                          </Typography>
+                        </div>
+                      </div>
+                    )
+                  }
+                  return (
+                    <FlowViewer
+                      flow={tab.flow}
+                      onFlowUpdated={(updatedFlow) => {
+                        setPanelLayout((prev: any) => {
+                          const updateFlowInLayout = (layout: any): any => {
+                            if (layout.type === 'panel' && layout.panel?.id === panel.id) {
+                              const updatedTabs = layout.panel.tabs.map((t: any) =>
+                                t.id === tab.id ? { ...t, flow: updatedFlow, title: updatedFlow.name } : t
+                              )
+                              return { ...layout, panel: { ...layout.panel, tabs: updatedTabs } }
+                            }
+                            if (layout.type === 'group' && layout.children)
+                              return { ...layout, children: layout.children.map(updateFlowInLayout) }
+                            return layout
+                          }
+                          return updateFlowInLayout(prev)
+                        })
+                      }}
+                    />
+                  )
                 }
 
                 return null;

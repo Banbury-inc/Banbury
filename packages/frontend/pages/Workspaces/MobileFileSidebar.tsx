@@ -4,7 +4,7 @@ import { FileSystemItem } from '../../utils/fileTreeUtils'
 import { CalendarEvent } from '../../../backend/api/calendar/calendar'
 import { Task } from '../../pages/TaskStudio/types'
 import { MeetingSession } from '../../types/meeting-types'
-import { UserInfo, PanelGroup, OpenDatabaseTablePayload } from './types'
+import { UserInfo, PanelGroup, OpenDatabaseTablePayload, FlowItem } from './types'
 
 interface MobileFileSidebarProps {
   open: boolean
@@ -49,6 +49,10 @@ interface MobileFileSidebarProps {
   setSelectedTask: React.Dispatch<React.SetStateAction<Task | null>>
   // Workspace dependencies for MeetingsTab
   setSelectedMeeting: React.Dispatch<React.SetStateAction<MeetingSession | null>>
+  // Workspace dependencies for FlowsTab
+  selectedFlow?: FlowItem | null
+  setSelectedFlow?: React.Dispatch<React.SetStateAction<FlowItem | null>>
+  onFlowSelect?: (flow: FlowItem) => void
 }
 
 export function MobileFileSidebar({
@@ -89,6 +93,9 @@ export function MobileFileSidebar({
   setCalendarSelectedEvent,
   setSelectedTask,
   setSelectedMeeting,
+  selectedFlow,
+  setSelectedFlow,
+  onFlowSelect,
 }: MobileFileSidebarProps) {
   return (
     <>
@@ -171,6 +178,9 @@ export function MobileFileSidebar({
               setSelectedTask={setSelectedTask}
               setSelectedMeeting={setSelectedMeeting}
               onOpenDatabaseTable={onOpenDatabaseTable}
+              selectedFlow={selectedFlow}
+              setSelectedFlow={setSelectedFlow}
+              onFlowSelect={onFlowSelect}
             />
           </div>
         </div>

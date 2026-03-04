@@ -36,6 +36,12 @@ export interface DatabaseTreeNode {
   children?: DatabaseTreeNode[]
 }
 
+export interface SavedConnectionRecord {
+  id: string
+  name: string
+  config: DatabaseConnectionPayload
+}
+
 interface ConnectionTestResponse {
   success: boolean
   error?: string
@@ -54,6 +60,18 @@ interface TableDataResponse {
   page?: number
   pageSize?: number
   totalCount?: number
+  error?: string
+}
+
+interface SaveConnectionResponse {
+  success: boolean
+  connection?: SavedConnectionRecord
+  error?: string
+}
+
+interface ListConnectionsResponse {
+  success: boolean
+  connections?: SavedConnectionRecord[]
   error?: string
 }
 
@@ -116,5 +134,22 @@ export default class Databases {
       pageSize: response.pageSize || params.pageSize,
       totalCount: response.totalCount || 0,
     }
+  }
+
+  static async saveConnection(name: string, config: DatabaseConnectionPayload): Promise<{ connection?: SavedConnectionRecord; error?: string }> {
+    const response = await ApiService.post<SaveConnectionResponse>('/databases/connections/save/', { name, config })
+    if (!response.success) return { error: response.error || 'Failed to save connection' }
+    return { connection: response.connection }
+  }
+
+  static async listConnections(): Promise<{ connections: SavedConnectionRecord[]; error?: string }> {
+    const response = await ApiService.get<ListConnectionsResponse>('/databases/connections/')
+    if (!response.success) return { connections: [], error: response.error || 'Failed to load connections' }
+    return { connections: response.connections ?? [] }
+  }
+
+  static async deleteConnection(connectionId: string): Promise<{ error?: string }> {
+    await ApiService.delete<{ success: boolean; error?: string }>(`/databases/connections/${connectionId}/`)
+    return {}
   }
 }

@@ -1,4 +1,4 @@
-import { Folder, Mail, Calendar, CheckSquare, Video, UserCog, MessageSquare, Database } from 'lucide-react'
+import { Folder, Mail, Calendar, CheckSquare, Video, UserCog, MessageSquare, Database, GitBranch } from 'lucide-react'
 import { Button } from '../../components/common/ui/button'
 import { UserInfo } from './types'
 
@@ -24,6 +24,7 @@ export function MobileWorkspaceHeader({
     { id: 'tasks', icon: CheckSquare, label: 'Tasks' },
     { id: 'meetings', icon: Video, label: 'Meetings' },
     { id: 'databases', icon: Database, label: 'Databases' },
+    { id: 'flows', icon: GitBranch, label: 'Flows' },
     ...(userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com'
       ? [{ id: 'admin', icon: UserCog, label: 'Admin' }]
       : []),

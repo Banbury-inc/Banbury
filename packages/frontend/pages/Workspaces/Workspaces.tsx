@@ -27,7 +27,7 @@ import { handleReplyToEmail } from '../../components/LeftPanel/components/EmailT
 import { handleComposeEmail } from '../../components/LeftPanel/components/EmailTab/handlers/handleComposeEmail';
 import { loadConversations, loadConversation, deleteConversation } from './handlers/conversationManagement';
 import { findPanel, getAllTabs, updatePanelActiveTab, addTabToPanel, removeTabFromPanel } from './handlers/panelUtils';
-import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, openAdminInTab, openDatabaseTableInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
+import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, openAdminInTab, openDatabaseTableInTab, openFlowInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
 import { 
   isDrawioFile, 
   isTldrawFile, 
@@ -65,6 +65,7 @@ import { MeetingSession } from '../../types/meeting-types';
 import {
   UserInfo,
   FileTab,
+  FlowItem,
   OpenDatabaseTablePayload,
   Panel,
   SplitDirection,
@@ -99,6 +100,7 @@ const Workspaces = (): React.ReactNode => {
   const [selectedEmail, setSelectedEmail] = useState<any | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [selectedMeeting, setSelectedMeeting] = useState<MeetingSession | null>(null);
+  const [selectedFlow, setSelectedFlow] = useState<FlowItem | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [meetingsRefreshTrigger, _setMeetingsRefreshTrigger] = useState<number>(0);
   const [folderCreationTrigger] = useState<boolean>(false);
@@ -607,6 +609,19 @@ const Workspaces = (): React.ReactNode => {
     );
   }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
 
+  const openFlowInTabCallback = useCallback((flow: FlowItem | null, targetPanelId: string = activePanelId) => {
+    openFlowInTab(
+      flow,
+      targetPanelId,
+      panelLayout,
+      getAllTabs,
+      updatePanelActiveTab,
+      addTabToPanel,
+      setActivePanelId,
+      setPanelLayout
+    );
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
+
   const handleTaskSelect = useCallback((task: Task) => {
     setSelectedTask(task);
     openTaskInTabCallback(task, activePanelId);
@@ -628,6 +643,11 @@ const Workspaces = (): React.ReactNode => {
   const handleJoinMeeting = useCallback(() => {
     openMeetingInTabCallback(null, activePanelId); // null means join meeting composer
   }, [openMeetingInTabCallback, activePanelId]);
+
+  const handleFlowSelect = useCallback((flow: FlowItem) => {
+    setSelectedFlow(flow);
+    openFlowInTabCallback(flow, activePanelId);
+  }, [openFlowInTabCallback, activePanelId]);
 
   // Handle desktop recording started - create a temporary meeting session and open in tab
   const handleDesktopRecordingStarted = useCallback((data: { sessionId: string; windowId: string; platform: string; meetingTitle: string }) => {
@@ -862,6 +882,9 @@ const Workspaces = (): React.ReactNode => {
                 onJoinMeeting={handleJoinMeeting}
                 onDesktopRecordingStarted={handleDesktopRecordingStarted}
                 onOpenDatabaseTable={payload => openDatabaseTableInTabCallback(payload, activePanelId)}
+                selectedFlow={selectedFlow}
+                setSelectedFlow={setSelectedFlow}
+                onFlowSelect={handleFlowSelect}
                 onClose={() => setMobileFileSidebarOpen(false)}
                 panelLayout={panelLayout}
                 setPanelLayout={setPanelLayout}
@@ -972,6 +995,9 @@ const Workspaces = (): React.ReactNode => {
                             setSelectedTask={setSelectedTask}
                             setSelectedMeeting={setSelectedMeeting}
                             onOpenDatabaseTable={payload => openDatabaseTableInTabCallback(payload, activePanelId)}
+                            selectedFlow={selectedFlow}
+                            setSelectedFlow={setSelectedFlow}
+                            onFlowSelect={handleFlowSelect}
                           />
                         </div>
                       </div>

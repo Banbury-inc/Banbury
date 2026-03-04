@@ -123,7 +123,40 @@ export interface OpenDatabaseTablePayload {
   collection?: string
 }
 
-export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab | FileBrowserTab | EmailInboxTab | DatabaseTableTab
+export interface FlowNode {
+  id: string
+  type?: string
+  position: { x: number; y: number }
+  data: Record<string, unknown>
+  [key: string]: unknown
+}
+
+export interface FlowEdge {
+  id: string
+  source: string
+  target: string
+  [key: string]: unknown
+}
+
+export interface FlowItem {
+  id: string
+  name: string
+  graph_json: { nodes: FlowNode[]; edges: FlowEdge[]; viewport?: { x: number; y: number; zoom: number } }
+  created_at: string
+  updated_at: string
+  last_run_status?: 'pending' | 'running' | 'success' | 'failed' | null
+  last_run_at?: string | null
+}
+
+export interface FlowTab {
+  id: string
+  flowId: string
+  title: string
+  flow: FlowItem | null
+  type: 'flow'
+}
+
+export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab | FileBrowserTab | EmailInboxTab | DatabaseTableTab | FlowTab
 
 export interface Panel {
   id: string
@@ -154,7 +187,7 @@ export interface DragState {
 }
 
 // Left panel tab types
-export type WorkspaceLeftPanelTabId = 'files' | 'email' | 'calendar' | 'tasks' | 'meetings' | 'databases' | 'admin'
+export type WorkspaceLeftPanelTabId = 'files' | 'email' | 'calendar' | 'tasks' | 'meetings' | 'databases' | 'flows' | 'admin'
 export type AdminTabId =
   | 'admin-overview'
   | 'admin-users'

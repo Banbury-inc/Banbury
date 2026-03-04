@@ -1,5 +1,11 @@
 import { DatabaseConnectionConfig, DatabaseProvider, OpenDatabaseTablePayload } from '../../../../../pages/Workspaces/types'
 
+export interface SavedDatabaseConnection {
+  id: string
+  name: string
+  config: DatabaseConnectionConfig
+}
+
 export interface DatabaseConnectionFormState {
   provider: DatabaseProvider
   uri: string

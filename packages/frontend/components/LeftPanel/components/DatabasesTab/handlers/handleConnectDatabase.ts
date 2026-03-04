@@ -7,17 +7,15 @@ import { handleLoadTree } from './handleLoadTree'
 interface HandleConnectDatabaseParams {
   formState: DatabaseConnectionFormState
   setIsConnecting: React.Dispatch<React.SetStateAction<boolean>>
-  setActiveConnection: React.Dispatch<React.SetStateAction<DatabaseConnectionConfig | null>>
-  setTree: React.Dispatch<React.SetStateAction<DatabaseTreeNode[]>>
   toast: (props: { title: string; description: string; variant: 'default' | 'destructive' | 'success' | 'error' }) => void
+  onSuccess: (connection: DatabaseConnectionConfig, tree: DatabaseTreeNode[]) => void
 }
 
 export async function handleConnectDatabase({
   formState,
   setIsConnecting,
-  setActiveConnection,
-  setTree,
   toast,
+  onSuccess,
 }: HandleConnectDatabaseParams): Promise<void> {
   setIsConnecting(true)
   const connection = buildConnectionConfig(formState)
@@ -52,12 +50,11 @@ export async function handleConnectDatabase({
     return
   }
 
-  setActiveConnection(connection)
-  setTree(treeResult.tree)
   setIsConnecting(false)
   toast({
     title: 'Connected',
     description: 'Database tree loaded successfully.',
     variant: 'success',
   })
+  onSuccess(connection, treeResult.tree)
 }
