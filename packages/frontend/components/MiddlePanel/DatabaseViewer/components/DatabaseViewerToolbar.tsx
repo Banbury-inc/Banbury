@@ -58,39 +58,37 @@ export function DatabaseViewerToolbar({
           Refresh
         </Button>
 
-        {isDirty && (
-          <>
-            <Button
-              type="button"
-              size="xs"
-              variant="default"
-              onClick={onSave}
-              disabled={isSaving || isLoading}
-              title="Save changes"
-              className="gap-1"
-            >
-              {isSaving ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Save className="h-3.5 w-3.5" />
-              )}
-              Save
-            </Button>
+        <div className="w-px h-4 bg-border mx-0.5" />
 
-            <Button
-              type="button"
-              size="xs"
-              variant="ghost"
-              onClick={onCancel}
-              disabled={isSaving}
-              title="Discard changes"
-              className="gap-1"
-            >
-              <X className="h-3.5 w-3.5" />
-              Cancel
-            </Button>
-          </>
-        )}
+        <Button
+          type="button"
+          size="xs"
+          variant="default"
+          onClick={onSave}
+          disabled={!isDirty || isSaving || isLoading}
+          title="Save changes"
+          className="gap-1"
+        >
+          {isSaving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Save className="h-3.5 w-3.5" />
+          )}
+          Save
+        </Button>
+
+        <Button
+          type="button"
+          size="xs"
+          variant="ghost"
+          onClick={onCancel}
+          disabled={!isDirty || isSaving}
+          title="Discard changes"
+          className="gap-1"
+        >
+          <X className="h-3.5 w-3.5" />
+          Cancel
+        </Button>
       </div>
 
       <div className="text-xs text-muted-foreground shrink-0">Rows: {totalCount}</div>

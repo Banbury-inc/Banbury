@@ -378,7 +378,7 @@ export function DatabaseViewer({ tab }: DatabaseViewerProps) {
                     className={isRowEdited ? 'bg-yellow-500/10' : 'odd:bg-background even:bg-card'}
                   >
                     <td
-                      className="border-b border-r border-border px-2 py-2 text-center text-muted-foreground select-none cursor-context-menu w-10 min-w-[2.5rem]"
+                      className="border-b border-r border-border px-2 py-1.5 text-center text-muted-foreground select-none cursor-context-menu w-10 min-w-[2.5rem]"
                       onContextMenu={e => handleRowNumberContextMenu(e, absoluteIndex)}
                     >
                       {absoluteIndex + 1}
@@ -390,7 +390,7 @@ export function DatabaseViewer({ tab }: DatabaseViewerProps) {
                         <td
                           key={`${column}-${rowIndex}`}
                           className={[
-                            'border-b border-border px-3 py-2 align-top text-foreground cursor-pointer',
+                            'border-b border-border px-3 py-1.5 align-middle text-foreground cursor-pointer overflow-hidden max-w-xs',
                             isCellEdited ? 'bg-yellow-500/15' : '',
                           ].join(' ')}
                           onClick={() => !isEditing && handleCellClick(rowIndex, column, row)}
@@ -405,7 +405,9 @@ export function DatabaseViewer({ tab }: DatabaseViewerProps) {
                               onKeyDown={e => handleEditKeyDown(e, rowIndex, column)}
                             />
                           ) : (
-                            getCellDisplayValue(rowIndex, column, row)
+                            <span className="block truncate whitespace-nowrap">
+                              {getCellDisplayValue(rowIndex, column, row)}
+                            </span>
                           )}
                         </td>
                       )
@@ -419,7 +421,7 @@ export function DatabaseViewer({ tab }: DatabaseViewerProps) {
                 return (
                   <tr key={`${tab.id}-new-row-${newRowIndex}`} className="bg-green-500/10">
                     <td
-                      className="border-b border-r border-border px-2 py-2 text-center text-muted-foreground select-none cursor-context-menu w-10 min-w-[2.5rem]"
+                      className="border-b border-r border-border px-2 py-1.5 text-center text-muted-foreground select-none cursor-context-menu w-10 min-w-[2.5rem]"
                       onContextMenu={e => handleRowNumberContextMenu(e, absoluteIndex)}
                     >
                       {absoluteIndex + 1}
@@ -429,7 +431,7 @@ export function DatabaseViewer({ tab }: DatabaseViewerProps) {
                       return (
                         <td
                           key={`new-${column}-${newRowIndex}`}
-                          className="border-b border-border px-3 py-2 align-top text-foreground cursor-pointer"
+                          className="border-b border-border px-3 py-1.5 align-middle text-foreground cursor-pointer overflow-hidden max-w-xs"
                           onClick={() => !isEditing && handleNewRowCellClick(newRowIndex, column)}
                         >
                           {isEditing ? (
@@ -448,7 +450,9 @@ export function DatabaseViewer({ tab }: DatabaseViewerProps) {
                               }}
                             />
                           ) : (
-                            stringifyCellValue(newRow[column])
+                            <span className="block truncate whitespace-nowrap">
+                              {stringifyCellValue(newRow[column])}
+                            </span>
                           )}
                         </td>
                       )
