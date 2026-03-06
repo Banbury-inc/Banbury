@@ -9,9 +9,10 @@ interface RunFlowParams {
   setRunLogs: (logs: string[]) => void
   abortRef: { current: AbortController | null }
   onFlowUpdated?: (flow: FlowItem) => void
+  onLogsReceived?: (logs: string[]) => void
 }
 
-export async function runFlow({ flowId, setRunStatus, setRunLogs, abortRef, onFlowUpdated }: RunFlowParams) {
+export async function runFlow({ flowId, setRunStatus, setRunLogs, abortRef, onFlowUpdated, onLogsReceived }: RunFlowParams) {
   const controller = new AbortController()
   abortRef.current = controller
 
@@ -24,6 +25,7 @@ export async function runFlow({ flowId, setRunStatus, setRunLogs, abortRef, onFl
 
     const logs = result.logs ?? ['Flow completed successfully']
     setRunLogs(logs)
+    onLogsReceived?.(logs)
     setRunStatus(result.success ? 'success' : 'failed')
 
     if (onFlowUpdated) {
@@ -33,7 +35,9 @@ export async function runFlow({ flowId, setRunStatus, setRunLogs, abortRef, onFl
   } catch (err: unknown) {
     if (controller.signal.aborted) return
     const message = err instanceof Error ? err.message : 'Run failed'
-    setRunLogs([message])
+    const errorLogs = [message]
+    setRunLogs(errorLogs)
+    onLogsReceived?.(errorLogs)
     setRunStatus('failed')
   } finally {
     abortRef.current = null

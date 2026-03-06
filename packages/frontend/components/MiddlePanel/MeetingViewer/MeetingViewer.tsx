@@ -9,14 +9,13 @@ import { handleDownloadRecording } from "./handlers/handle-download-recording"
 import { handleDownloadTranscription } from "./handlers/handle-download-transcription"
 import { toggleVideoPlayPause, handleVideoSeek, handleVideoVolumeChange, toggleVideoMute, handleTranscriptSegmentClick, toggleFullscreen } from "./handlers/video-player-handlers"
 import { fetchTranscriptFromUrl } from "./handlers/transcript-handlers"
-import { VideoPlayerDialog } from "../../../pages/MeetingAgent/components/VideoPlayerDialog"
 import { RecordingUploadDialog } from "../../../pages/MeetingAgent/components/RecordingUploadDialog"
-import { MeetingHeader } from "./components/MeetingHeader"
 import { MeetingActionsBar } from "./components/MeetingActionsBar"
 import { VideoPlayer } from "./components/VideoPlayer"
 import { TranscriptPanel } from "./components/TranscriptPanel"
 import { SummarySection } from "./components/SummarySection"
 import { extractParticipantsFromSegments, getDisplayParticipantNames, getDuration } from "./utils/meeting-utils"
+import { MeetingSummaryEditorRef } from "./MeetingSummaryEditor"
 
 import { MeetingSession } from "../../../types/meeting-types"
 
@@ -29,7 +28,6 @@ interface MeetingViewerProps {
 export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingViewerProps) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
-  const [isVideoPlayerOpen, setIsVideoPlayerOpen] = useState(false)
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
   const [currentMeeting, setCurrentMeeting] = useState<MeetingSession>(meeting)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -50,8 +48,7 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
   const [summaryHtml, setSummaryHtml] = useState<string>('')
   const [isSavingSummary, setIsSavingSummary] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [actionItemCheckedStates, setActionItemCheckedStates] = useState<Map<string, boolean>>(new Map())
-  const summaryEditorRef = useRef<any>(null)
+  const summaryEditorRef = useRef<MeetingSummaryEditorRef>(null)
 
   useEffect(() => {
     setCurrentMeeting(meeting)
@@ -70,21 +67,9 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
     }
   }, [currentMeeting.summary?.summary, isGeneratingSummary, isSavingSummary])
 
-  useEffect(() => {
-    if (currentMeeting.summary?.actionItems) {
-      const checkedStates = new Map<string, boolean>()
-      currentMeeting.summary.actionItems.forEach(item => {
-        checkedStates.set(item.id, item.status === 'completed')
-      })
-      setActionItemCheckedStates(checkedStates)
-    }
-  }, [currentMeeting.summary?.actionItems])
-  
-  const allSegments = transcriptionSegments
-
   const extractedParticipants = useMemo(() => {
-    return extractParticipantsFromSegments(allSegments)
-  }, [allSegments])
+    return extractParticipantsFromSegments(transcriptionSegments)
+  }, [transcriptionSegments])
 
   const displayParticipantNames = useMemo(() => {
     return getDisplayParticipantNames(currentMeeting.participants, extractedParticipants)
@@ -285,13 +270,6 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
           onMeetingUpdated?.(updatedMeeting)
           setSummaryHtml(updatedMeeting.summary?.summary || htmlContent)
           setHasUnsavedChanges(false)
-          if (updatedMeeting.summary?.actionItems) {
-            const checkedStates = new Map<string, boolean>()
-            updatedMeeting.summary.actionItems.forEach(item => {
-              checkedStates.set(item.id, item.status === 'completed')
-            })
-            setActionItemCheckedStates(checkedStates)
-          }
           toast({
             title: 'Success',
             description: 'Summary saved successfully'
@@ -323,7 +301,7 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
       setSummaryHtml('')
       setHasUnsavedChanges(false)
       const availableTranscription = currentMeeting.transcriptionText || transcriptionFullText
-      const editor = summaryEditorRef.current?.editor
+      const editor = summaryEditorRef.current?.editor ?? null
 
       await handleRegenerateSummary({
         sessionId: currentMeeting.id,
@@ -334,13 +312,6 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
           onMeetingUpdated?.(updatedMeeting)
           setSummaryHtml(updatedMeeting.summary?.summary || '')
           setHasUnsavedChanges(false)
-          if (updatedMeeting.summary?.actionItems) {
-            const checkedStates = new Map<string, boolean>()
-            updatedMeeting.summary.actionItems.forEach(item => {
-              checkedStates.set(item.id, item.status === 'completed')
-            })
-            setActionItemCheckedStates(checkedStates)
-          }
           toast({
             title: 'Success',
             description: 'Summary regenerated and saved successfully'
@@ -403,13 +374,6 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
           onMeetingUpdated?.(updatedMeeting)
           setSummaryHtml(updatedMeeting.summary?.summary || '')
           setHasUnsavedChanges(false)
-          if (updatedMeeting.summary?.actionItems) {
-            const checkedStates = new Map<string, boolean>()
-            updatedMeeting.summary.actionItems.forEach(item => {
-              checkedStates.set(item.id, item.status === 'completed')
-            })
-            setActionItemCheckedStates(checkedStates)
-          }
           toast({
             title: 'Success',
             description: 'Summary generated successfully'
@@ -457,38 +421,34 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="px-3 py-3 space-y-3">
-          {/* Two-column layout: Video/Notes on left, Transcript on right */}
-          <div className="flex gap-3">
-            {/* Left Column: Video and Notes */}
-            <div className="flex-1 space-y-3 min-w-0">
-              {/* Video Player */}
+        <div className="px-4 py-4 space-y-4">
+          {/* Two-column layout: Video/Summary on left, Transcript on right */}
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Left Column: Video and Summary */}
+            <div className="flex-1 space-y-4 min-w-0">
               {(currentMeeting.recordingUrl || currentMeeting.recallBot?.videoUrl || videoStreamUrl) && (
-                <div>
-                  <VideoPlayer
-                    videoRef={videoRef}
-                    containerRef={videoContainerRef}
-                    videoStreamUrl={videoStreamUrl}
-                    isVideoLoading={isVideoLoading}
-                    isVideoPlaying={isVideoPlaying}
-                    videoError={videoError}
-                    videoCurrentTime={videoCurrentTime}
-                    videoDuration={videoDuration}
-                    videoVolume={videoVolume}
-                    isVideoMuted={isVideoMuted}
-                    onTogglePlayPause={onToggleVideoPlayPause}
-                    onVideoSeek={onVideoSeek}
-                    onVolumeChange={onVideoVolumeChange}
-                    onToggleMute={onToggleVideoMute}
-                    onToggleFullscreen={onToggleFullscreen}
-                    onLoadStart={() => setIsVideoLoading(true)}
-                    setVideoError={setVideoError}
-                    setIsVideoLoading={setIsVideoLoading}
-                  />
-                </div>
+                <VideoPlayer
+                  videoRef={videoRef}
+                  containerRef={videoContainerRef}
+                  videoStreamUrl={videoStreamUrl}
+                  isVideoLoading={isVideoLoading}
+                  isVideoPlaying={isVideoPlaying}
+                  videoError={videoError}
+                  videoCurrentTime={videoCurrentTime}
+                  videoDuration={videoDuration}
+                  videoVolume={videoVolume}
+                  isVideoMuted={isVideoMuted}
+                  onTogglePlayPause={onToggleVideoPlayPause}
+                  onVideoSeek={onVideoSeek}
+                  onVolumeChange={onVideoVolumeChange}
+                  onToggleMute={onToggleVideoMute}
+                  onToggleFullscreen={onToggleFullscreen}
+                  onLoadStart={() => setIsVideoLoading(true)}
+                  setVideoError={setVideoError}
+                  setIsVideoLoading={setIsVideoLoading}
+                />
               )}
 
-              {/* Summary Section */}
               <SummarySection
                 summaryEditorRef={summaryEditorRef}
                 summaryHtml={summaryHtml}
@@ -502,18 +462,16 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
                 onRegenerate={onRegenerateSummary}
                 onGenerate={onGenerateSummary}
                 onContentChange={() => {
-                  if (!isGeneratingSummary) {
-                    setHasUnsavedChanges(true)
-                  }
+                  if (!isGeneratingSummary) setHasUnsavedChanges(true)
                 }}
               />
             </div>
 
             {/* Right Column: Transcript */}
-            {(allSegments.length > 0 || transcriptionFullText || currentMeeting.transcriptionText || currentMeeting.transcriptionUrl || currentMeeting.recallBot?.transcriptUrl) && (
+            {(transcriptionSegments.length > 0 || transcriptionFullText || currentMeeting.transcriptionText || currentMeeting.transcriptionUrl || currentMeeting.recallBot?.transcriptUrl) && (
               <TranscriptPanel
                 transcriptScrollRef={transcriptScrollRef}
-                allSegments={allSegments}
+                allSegments={transcriptionSegments}
                 transcriptionFullText={transcriptionFullText || currentMeeting.transcriptionText || ''}
                 isTranscriptionLoading={isTranscriptionLoading}
                 videoCurrentTime={videoCurrentTime}
@@ -523,16 +481,6 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
           </div>
         </div>
       </div>
-
-      {/* Video Player Dialog */}
-      {(currentMeeting.recordingUrl || videoStreamUrl) && (
-        <VideoPlayerDialog
-          open={isVideoPlayerOpen}
-          onOpenChange={setIsVideoPlayerOpen}
-          session={currentMeeting}
-          videoUrl={currentMeeting.recordingUrl || videoStreamUrl || ''}
-        />
-      )}
 
       {/* Recording Upload Dialog */}
       <RecordingUploadDialog

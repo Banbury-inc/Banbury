@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowDown, ArrowUp, Check, Filter, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Check, Filter, Key, X } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '../../common/ui/button'
@@ -23,6 +23,7 @@ interface ColumnHeaderMenuProps {
   column: string
   orderBy: ColumnOrderBy | null
   filters: ColumnFilter[]
+  primaryKeyColumns: string[]
   onOrderByChange: (orderBy: ColumnOrderBy | null) => void
   onFiltersChange: (filters: ColumnFilter[]) => void
 }
@@ -31,6 +32,7 @@ export function ColumnHeaderMenu({
   column,
   orderBy,
   filters,
+  primaryKeyColumns,
   onOrderByChange,
   onFiltersChange,
 }: ColumnHeaderMenuProps) {
@@ -82,6 +84,9 @@ export function ColumnHeaderMenu({
           type="button"
         >
           <span className="truncate">{column}</span>
+          {primaryKeyColumns.includes(column) && (
+            <Key className="h-2.5 w-2.5 shrink-0 text-muted-foreground" title="Primary key" />
+          )}
           {isSortedAsc && <ArrowUp className="h-3 w-3 shrink-0 text-primary" />}
           {isSortedDesc && <ArrowDown className="h-3 w-3 shrink-0 text-primary" />}
           {activeFilter && <Filter className="h-3 w-3 shrink-0 text-primary" />}

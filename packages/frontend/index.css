@@ -78,31 +78,18 @@
 
 /* Allotment custom styles */
 .allotment > .allotment-separator {
-  background-color: #e5e7eb !important; /* Light mode: Gray-200 */
+  background-color: var(--border) !important;
   border: none !important;
   opacity: 1 !important;
 }
 
 .allotment > .allotment-separator:hover {
-  background-color: #d1d5db !important; /* Light mode: Gray-300 */
+  background-color: var(--muted-foreground) !important;
+  opacity: 0.4 !important;
 }
 
 .allotment > .allotment-separator > .allotment-separator-grip {
-  background-color: #9ca3af !important; /* Light mode: Gray-400 */
-}
-
-/* Dark theme overrides */
-.dark .allotment > .allotment-separator {
-  background-color: rgba(255, 255, 255, 0.06) !important;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-}
-
-.dark .allotment > .allotment-separator:hover {
-  background-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-.dark .allotment > .allotment-separator > .allotment-separator-grip {
-  background-color: rgba(255, 255, 255, 0.12) !important;
+  background-color: var(--muted-foreground) !important;
 }
 
 :root {
@@ -138,6 +125,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --row-edited: oklch(0.85 0.15 85 / 0.12);
+  --cell-edited: oklch(0.85 0.15 85 / 0.18);
+  --row-new: oklch(0.72 0.17 155 / 0.12);
 }
 
 .dark {
@@ -172,6 +162,9 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 6%);
   --sidebar-ring: oklch(0.556 0 0);
+  --row-edited: oklch(0.85 0.15 85 / 0.15);
+  --cell-edited: oklch(0.85 0.15 85 / 0.22);
+  --row-new: oklch(0.72 0.17 155 / 0.15);
 }
 :root {
   --color-background: var(--background);
@@ -193,6 +186,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-row-edited: var(--row-edited);
+  --color-cell-edited: var(--cell-edited);
+  --color-row-new: var(--row-new);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -230,11 +226,11 @@
 
 @layer components {
   .btn-download {
-    @apply rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-black shadow-lg transition-all hover:bg-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:bg-zinc-800 disabled:text-zinc-400;
+    @apply rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg transition-all hover:brightness-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:bg-muted disabled:text-muted-foreground;
   }
 
   .btn-download:disabled {
-    @apply bg-zinc-800 text-zinc-400;
+    @apply bg-muted text-muted-foreground;
   }
 
   /* Soft shadows for dark mode */
@@ -278,14 +274,14 @@
   span.file-mention,
   span.tiptap-mention-chip,
   .mention-chip-white {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    color: #ffffff !important;
-    border-radius: 0.3rem !important;
+    background-color: color-mix(in oklch, var(--foreground) 10%, transparent) !important;
+    color: var(--foreground) !important;
+    border-radius: var(--radius-sm) !important;
     padding: 0.01rem 0.2rem !important;
     text-decoration: none !important;
     font-size: 0.8rem !important;
     font-weight: 300 !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid color-mix(in oklch, var(--foreground) 20%, transparent) !important;
     display: inline-block !important;
     box-decoration-break: clone !important;
   }
@@ -298,7 +294,7 @@
   span.file-mention:hover,
   span.tiptap-mention-chip:hover,
   .mention-chip-white:hover {
-    background-color: rgba(255, 255, 255, 0.15) !important;
+    background-color: color-mix(in oklch, var(--foreground) 15%, transparent) !important;
   }
 
   /* Tiptap placeholder styles */

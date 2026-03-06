@@ -138,6 +138,27 @@ export interface FlowEdge {
   [key: string]: unknown
 }
 
+export type FlowSchedulePattern =
+  | 'every_minute'
+  | 'hourly'
+  | 'daily'
+  | 'weekly'
+  | 'monthly'
+  | 'custom_interval'
+
+export interface FlowSchedule {
+  schedule_enabled: boolean
+  schedule_pattern: FlowSchedulePattern | null
+  schedule_time: string | null
+  schedule_days_of_week: number[] | null
+  schedule_day_of_month: number | null
+  schedule_interval_minutes: number | null
+  schedule_timezone: string
+  schedule_next_run: string | null
+  schedule_end_date: string | null
+  schedule_last_triggered: string | null
+}
+
 export interface FlowItem {
   id: string
   name: string
@@ -146,6 +167,16 @@ export interface FlowItem {
   updated_at: string
   last_run_status?: 'pending' | 'running' | 'success' | 'failed' | null
   last_run_at?: string | null
+  schedule_enabled?: boolean
+  schedule_pattern?: FlowSchedulePattern | null
+  schedule_time?: string | null
+  schedule_days_of_week?: number[] | null
+  schedule_day_of_month?: number | null
+  schedule_interval_minutes?: number | null
+  schedule_timezone?: string
+  schedule_next_run?: string | null
+  schedule_end_date?: string | null
+  schedule_last_triggered?: string | null
 }
 
 export interface FlowTab {

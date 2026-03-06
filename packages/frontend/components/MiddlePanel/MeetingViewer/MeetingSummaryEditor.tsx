@@ -168,7 +168,7 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
   }
 
   return (
-    <div className={cn("meeting-summary-wrapper h-full overflow-auto bg-card border border-border rounded-lg", styles.darkScrollbar)}>
+    <div className={cn("relative meeting-summary-wrapper h-full overflow-auto bg-card border border-border rounded-lg", styles.darkScrollbar)}>
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
           <div className="text-muted-foreground">Generating summary...</div>
@@ -179,8 +179,8 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
           outline: none;
           padding: 1.5rem;
           min-height: 400px;
-          color: hsl(var(--foreground));
-          background: hsl(var(--card));
+          color: var(--foreground);
+          background: var(--card);
         }
         
         .meeting-summary-wrapper .ProseMirror[contenteditable="false"] {
@@ -193,7 +193,7 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
           margin-top: 1.5rem;
           margin-bottom: 0.75rem;
           line-height: 1.2;
-          color: hsl(var(--foreground));
+          color: var(--foreground);
         }
         
         .meeting-summary-wrapper .ProseMirror h1:first-child {
@@ -206,7 +206,7 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
           margin-top: 1.25rem;
           margin-bottom: 0.625rem;
           line-height: 1.3;
-          color: hsl(var(--foreground));
+          color: var(--foreground);
         }
         
         .meeting-summary-wrapper .ProseMirror h3 {
@@ -215,7 +215,7 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
           margin-top: 1rem;
           margin-bottom: 0.5rem;
           line-height: 1.4;
-          color: hsl(var(--foreground));
+          color: var(--foreground);
         }
         
         .meeting-summary-wrapper .ProseMirror h4 {
@@ -224,13 +224,13 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
           margin-top: 0.875rem;
           margin-bottom: 0.5rem;
           line-height: 1.4;
-          color: hsl(var(--foreground));
+          color: var(--foreground);
         }
         
         .meeting-summary-wrapper .ProseMirror p {
           margin: 0.75rem 0;
           line-height: 1.6;
-          color: hsl(var(--foreground));
+          color: var(--foreground);
         }
         
         .meeting-summary-wrapper .ProseMirror ul,
@@ -242,7 +242,7 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
         .meeting-summary-wrapper .ProseMirror li {
           margin: 0.5rem 0;
           line-height: 1.6;
-          color: hsl(var(--foreground));
+          color: var(--foreground);
         }
         
         .meeting-summary-wrapper .ProseMirror ul {
@@ -285,7 +285,7 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
         
         .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"][data-checked="true"] > div {
           text-decoration: line-through;
-          color: hsl(var(--muted-foreground));
+          color: var(--muted-foreground);
         }
         
         .meeting-summary-wrapper .ProseMirror ol {
@@ -294,7 +294,7 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
         
         .meeting-summary-wrapper .ProseMirror strong {
           font-weight: 600;
-          color: hsl(var(--foreground));
+          color: var(--foreground);
         }
         
         .meeting-summary-wrapper .ProseMirror em {
@@ -302,19 +302,19 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
         }
         
         .meeting-summary-wrapper .ProseMirror code {
-          background: hsl(var(--muted));
-          color: hsl(var(--foreground));
+          background: var(--muted);
+          color: var(--foreground);
           padding: 0.125rem 0.375rem;
-          border-radius: 0.25rem;
-          font-family: monospace;
+          border-radius: var(--radius-sm);
+          font-family: var(--font-mono, 'SF Pro', monospace);
           font-size: 0.875em;
         }
         
         .meeting-summary-wrapper .ProseMirror pre {
-          background: hsl(var(--muted));
-          color: hsl(var(--foreground));
+          background: var(--muted);
+          color: var(--foreground);
           padding: 1rem;
-          border-radius: 0.375rem;
+          border-radius: var(--radius-md);
           overflow-x: auto;
           margin: 1rem 0;
         }
@@ -325,17 +325,17 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
         }
         
         .meeting-summary-wrapper .ProseMirror blockquote {
-          border-left: 4px solid hsl(var(--border));
+          border-left: 4px solid var(--border);
           padding-left: 1rem;
           margin: 1rem 0;
-          color: hsl(var(--muted-foreground));
+          color: var(--muted-foreground);
           font-style: italic;
         }
         
         .meeting-summary-wrapper .ProseMirror .is-empty::before {
           content: attr(data-placeholder);
           float: left;
-          color: hsl(var(--muted-foreground));
+          color: var(--muted-foreground);
           pointer-events: none;
           height: 0;
         }

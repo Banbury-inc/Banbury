@@ -1,5 +1,5 @@
 import { ApiService } from '../apiService'
-import { FlowItem } from '../../../frontend/pages/Workspaces/types'
+import { FlowItem, FlowSchedule } from '../../../frontend/pages/Workspaces/types'
 
 const BASE = '/flows'
 
@@ -30,5 +30,13 @@ export default class Flows {
 
   static async runFlow(flowId: string): Promise<{ success: boolean; logs?: string[]; message?: string }> {
     return ApiService.post<{ success: boolean; logs?: string[]; message?: string }>(`${BASE}/${flowId}/run/`, {})
+  }
+
+  static async getSchedule(flowId: string): Promise<FlowSchedule> {
+    return ApiService.get<FlowSchedule>(`${BASE}/${flowId}/schedule/`)
+  }
+
+  static async updateSchedule(flowId: string, schedule: Partial<FlowSchedule>): Promise<FlowItem> {
+    return ApiService.put<FlowItem>(`${BASE}/${flowId}/schedule/`, schedule)
   }
 }

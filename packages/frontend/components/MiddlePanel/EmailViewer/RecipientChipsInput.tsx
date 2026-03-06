@@ -23,10 +23,6 @@ const splitToTokens = (raw: string): string[] => {
     .filter((s) => s.length > 0)
 }
 
-const isLikelyEmail = (s: string): boolean => {
-  // Lightweight check; avoid over-restricting valid addresses
-  return /@/.test(s)
-}
 
 export function RecipientChipsInput({ value, onChange, placeholder, disabled, className, loadSuggestions }: RecipientChipsInputProps) {
   const [tokens, setTokens] = useState<string[]>(() => splitToTokens(value || ''))
@@ -190,7 +186,7 @@ export function RecipientChipsInput({ value, onChange, placeholder, disabled, cl
             title={t}
           >
             <span className="truncate text-sm font-medium">
-              {isLikelyEmail(t) ? t : t}
+              {t}
             </span>
             <button
               type="button"

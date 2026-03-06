@@ -2,10 +2,10 @@ import { Loader2, Save, RefreshCw, Sparkles } from "lucide-react"
 import { RefObject } from "react"
 import { Button } from "../../../common/ui/button"
 import { Typography } from "../../../common/ui/typography"
-import { MeetingSummaryEditor } from "../MeetingSummaryEditor"
+import { MeetingSummaryEditor, MeetingSummaryEditorRef } from "../MeetingSummaryEditor"
 
 interface SummarySectionProps {
-  summaryEditorRef: RefObject<any>
+  summaryEditorRef: RefObject<MeetingSummaryEditorRef>
   summaryHtml: string
   isGeneratingSummary: boolean
   isSavingSummary: boolean
@@ -46,16 +46,17 @@ export function SummarySection({
               variant="primary"
               onClick={onSave}
               disabled={isSavingSummary || isGeneratingSummary}
+              className="min-w-[72px]"
             >
               {isSavingSummary ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  <Typography variant="xs">Saving...</Typography>
+                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                  <span className="text-xs">Saving…</span>
                 </>
               ) : (
                 <>
-                  <Save className="h-4 w-4 mr-2" />
-                  <Typography variant="xs">Save</Typography>
+                  <Save className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="text-xs">Save</span>
                 </>
               )}
             </Button>
@@ -66,22 +67,24 @@ export function SummarySection({
               variant="ghost"
               onClick={onRegenerate}
               disabled={isGeneratingSummary || isSavingSummary || !hasTranscription}
+              className="min-w-[104px]"
             >
               {isGeneratingSummary ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  <Typography variant="xs">Regenerating...</Typography>
+                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                  <span className="text-xs">Regenerating…</span>
                 </>
               ) : (
                 <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  <Typography variant="xs">Regenerate</Typography>
+                  <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="text-xs">Regenerate</span>
                 </>
               )}
             </Button>
           )}
         </div>
       </div>
+
       {/* Always render the editor so the ref is available for summary generation */}
       <div className={hasSummary || isGeneratingSummary ? "min-h-[200px]" : "hidden"}>
         <MeetingSummaryEditor
@@ -94,15 +97,21 @@ export function SummarySection({
           ref={summaryEditorRef}
         />
       </div>
+
       {!hasSummary && !isGeneratingSummary && (
-        <div className="flex flex-col items-center justify-center py-12">
-          <Typography variant="h4" className="text-lg font-semibold mb-2">
-            No Summary Available
-          </Typography>
-          <Typography variant="p" className="text-sm text-muted-foreground mb-6 text-center max-w-md">
-            Generate an AI-powered summary based on the meeting transcription
-          </Typography>
+        <div className="py-8 space-y-3">
+          <div className="space-y-1">
+            <Typography variant="p" className="text-sm font-medium">
+              No summary yet
+            </Typography>
+            <Typography variant="p" className="text-sm text-muted-foreground">
+              {hasTranscription
+                ? "Generate an AI summary from the meeting transcript."
+                : "Upload a recording or wait for transcription to complete."}
+            </Typography>
+          </div>
           <Button
+            size="sm"
             onClick={onGenerate}
             disabled={isGeneratingSummary || !hasTranscription}
           >
