@@ -75,14 +75,14 @@ export function FlowViewer({ flow, onFlowUpdated }: FlowViewerProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
-  const viewportRef = useRef<Viewport | undefined>(flow.graph_json?.viewport)
+  const viewportRef = useRef<Viewport | undefined>(flow.graph_json?.viewport ?? undefined)
 
   useEffect(() => {
     const newNodes = (flow.graph_json?.nodes as Node[]) ?? DEFAULT_NODES
     const newEdges = (flow.graph_json?.edges as Edge[]) ?? DEFAULT_EDGES
     setNodes(newNodes)
     setEdges(newEdges)
-    viewportRef.current = flow.graph_json?.viewport
+    viewportRef.current = flow.graph_json?.viewport ?? undefined
     setIsDirty(false)
   }, [flow.id, flow.updated_at, setNodes, setEdges])
 
@@ -200,7 +200,7 @@ export function FlowViewer({ flow, onFlowUpdated }: FlowViewerProps) {
           onEdgesChange={handleEdgesChange}
           onConnect={onConnect}
           onMoveEnd={(_, vp) => { viewportRef.current = vp }}
-          defaultViewport={flow.graph_json?.viewport}
+          defaultViewport={flow.graph_json?.viewport ?? undefined}
           fitView={!flow.graph_json?.viewport}
           colorMode="system"
         >
