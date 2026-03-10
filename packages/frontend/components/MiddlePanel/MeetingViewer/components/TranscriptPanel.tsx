@@ -24,7 +24,7 @@ export function TranscriptPanel({
   onSegmentClick
 }: TranscriptPanelProps) {
   return (
-    <div className="w-96 flex-shrink-0">
+    <div className="w-full lg:w-80 lg:min-w-64 flex-shrink-0 self-start lg:sticky lg:top-4">
       {isTranscriptionLoading ? (
         <Card className="border-border">
           <div className="flex items-center justify-center p-8">
@@ -33,41 +33,48 @@ export function TranscriptPanel({
         </Card>
       ) : allSegments.length > 0 ? (
         <Card className="border-border">
-          <div ref={transcriptScrollRef} className="p-1 max-h-[calc(100vh-300px)] overflow-y-auto space-y-1">
-            {allSegments.map((segment, index) => (
-              <div
-                key={segment.id || index}
-                data-segment-start={Math.floor(segment.startTime)}
-                className={`px-1.5 py-1 rounded-md cursor-pointer transition-colors ${
-                  videoCurrentTime >= segment.startTime && videoCurrentTime < segment.endTime
-                    ? 'bg-primary/20 border border-primary/30'
-                    : 'hover:bg-muted border border-transparent'
-                }`}
-                onClick={() => onSegmentClick(segment.startTime)}
-              >
-                <div className="flex items-start gap-1.5">
-                  <div className="flex-shrink-0">
-                    <Badge variant="outline" className="text-xs py-0 px-1.5 text-muted-foreground">
-                      {formatTimestamp(segment.startTime)}
-                    </Badge>
+          <div
+            ref={transcriptScrollRef}
+            className="p-1.5 max-h-[calc(100svh-80px)] overflow-y-auto space-y-0.5"
+          >
+            {allSegments.map((segment, index) => {
+              const isActive = videoCurrentTime >= segment.startTime && videoCurrentTime < segment.endTime
+              return (
+                <button
+                  key={segment.id || index}
+                  data-segment-start={Math.floor(segment.startTime)}
+                  className={`w-full text-left px-1.5 py-1 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                    isActive
+                      ? 'bg-primary/10 ring-1 ring-inset ring-primary/30'
+                      : 'hover:bg-muted/60'
+                  }`}
+                  onClick={() => onSegmentClick(segment.startTime)}
+                  aria-label={`Seek to ${formatTimestamp(segment.startTime)} — ${segment.speakerName || 'Speaker'}`}
+                >
+                  <div className="flex items-start gap-1.5">
+                    <div className="flex-shrink-0 pt-0.5">
+                      <Badge variant="outline" className="text-xs py-0 px-1.5 text-muted-foreground font-mono" aria-hidden="true">
+                        {formatTimestamp(segment.startTime)}
+                      </Badge>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Typography variant="small" className="font-medium text-foreground leading-tight">
+                        {segment.speakerName || 'Speaker'}
+                      </Typography>
+                      <Typography variant="p" className="text-sm text-muted-foreground leading-snug">
+                        {segment.text}
+                      </Typography>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <Typography variant="small" className="font-medium text-foreground leading-tight">
-                      {segment.speakerName || 'Speaker'}
-                    </Typography>
-                    <Typography variant="p" className="text-sm text-muted-foreground leading-snug">
-                      {segment.text}
-                    </Typography>
-                  </div>
-                </div>
-              </div>
-            ))}
+                </button>
+              )
+            })}
           </div>
         </Card>
       ) : transcriptionFullText ? (
         <Card className="border-border">
-          <div className="max-h-[calc(100vh-300px)] overflow-y-auto">
-            <Typography variant="p" className="whitespace-pre-wrap leading-snug text-muted-foreground">
+          <div className="p-3 max-h-[calc(100svh-80px)] overflow-y-auto">
+            <Typography variant="p" className="whitespace-pre-wrap leading-relaxed text-sm text-muted-foreground">
               {transcriptionFullText}
             </Typography>
           </div>

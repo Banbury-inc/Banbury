@@ -78,7 +78,116 @@ export interface EmailInboxTab {
   provider?: 'gmail' | 'outlook'
 }
 
-export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab | FileBrowserTab | EmailInboxTab
+export type DatabaseProvider = 'postgres' | 'mysql' | 'mongodb'
+
+export interface DatabaseSshConfig {
+  enabled: boolean
+  host: string
+  port: number
+  username: string
+  authMethod: 'password' | 'publicKey'
+  password?: string
+  privateKey?: string
+  passphrase?: string
+}
+
+export interface DatabaseConnectionConfig {
+  provider: DatabaseProvider
+  uri?: string
+  host: string
+  port: number
+  username: string
+  password: string
+  database?: string
+  ssh?: DatabaseSshConfig
+}
+
+export interface DatabaseTableTab {
+  id: string
+  title: string
+  type: 'database-table'
+  provider: DatabaseProvider
+  connection: DatabaseConnectionConfig
+  database: string
+  schema?: string
+  table?: string
+  collection?: string
+}
+
+export interface OpenDatabaseTablePayload {
+  provider: DatabaseProvider
+  connection: DatabaseConnectionConfig
+  database: string
+  schema?: string
+  table?: string
+  collection?: string
+}
+
+export interface FlowNode {
+  id: string
+  type?: string
+  position: { x: number; y: number }
+  data: Record<string, unknown>
+  [key: string]: unknown
+}
+
+export interface FlowEdge {
+  id: string
+  source: string
+  target: string
+  [key: string]: unknown
+}
+
+export type FlowSchedulePattern =
+  | 'every_minute'
+  | 'hourly'
+  | 'daily'
+  | 'weekly'
+  | 'monthly'
+  | 'custom_interval'
+
+export interface FlowSchedule {
+  schedule_enabled: boolean
+  schedule_pattern: FlowSchedulePattern | null
+  schedule_time: string | null
+  schedule_days_of_week: number[] | null
+  schedule_day_of_month: number | null
+  schedule_interval_minutes: number | null
+  schedule_timezone: string
+  schedule_next_run: string | null
+  schedule_end_date: string | null
+  schedule_last_triggered: string | null
+}
+
+export interface FlowItem {
+  id: string
+  name: string
+  graph_json: { nodes: FlowNode[]; edges: FlowEdge[]; viewport?: { x: number; y: number; zoom: number } }
+  created_at: string
+  updated_at: string
+  last_run_status?: 'pending' | 'running' | 'success' | 'failed' | null
+  last_run_at?: string | null
+  schedule_enabled?: boolean
+  schedule_pattern?: FlowSchedulePattern | null
+  schedule_time?: string | null
+  schedule_days_of_week?: number[] | null
+  schedule_day_of_month?: number | null
+  schedule_interval_minutes?: number | null
+  schedule_timezone?: string
+  schedule_next_run?: string | null
+  schedule_end_date?: string | null
+  schedule_last_triggered?: string | null
+}
+
+export interface FlowTab {
+  id: string
+  flowId: string
+  title: string
+  flow: FlowItem | null
+  type: 'flow'
+}
+
+export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab | FileBrowserTab | EmailInboxTab | DatabaseTableTab | FlowTab
 
 export interface Panel {
   id: string
@@ -109,7 +218,7 @@ export interface DragState {
 }
 
 // Left panel tab types
-export type WorkspaceLeftPanelTabId = 'files' | 'email' | 'calendar' | 'tasks' | 'meetings' | 'admin'
+export type WorkspaceLeftPanelTabId = 'files' | 'email' | 'calendar' | 'tasks' | 'meetings' | 'databases' | 'flows' | 'admin'
 export type AdminTabId =
   | 'admin-overview'
   | 'admin-users'

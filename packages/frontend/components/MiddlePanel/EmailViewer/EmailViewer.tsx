@@ -2,7 +2,7 @@ import { ArrowLeft, Reply, Trash2, Archive, Star, Paperclip, Download, Send, X, 
 import { useEffect, useMemo, useState, useCallback } from "react"
 import { Button } from "../../common/ui/button"
 import { Input } from "../../common/ui/old-input"
-import { extractEmailContent, hasAttachments, formatFileSize, cleanHtmlContent } from "../../../utils/emailUtils"
+import { extractEmailContent, hasAttachments, formatFileSize, cleanHtmlContent, arrayBufferToBase64 } from "../../../utils/emailUtils"
 import { useToast } from "../../common/ui/use-toast"
 import { Typography } from "@/components/common/ui/typography"
 import { Popover, PopoverContent, PopoverTrigger } from "../../common/ui/popover"
@@ -10,6 +10,9 @@ import { ApiService } from "../../../../backend/api/apiService"
 import { GmailLabel, OutlookMessage } from "../../../../backend/api/emails/emails"
 import { loadThreadMessages } from "./handlers/loadThreadMessages"
 import { loadAvailableLabels, toggleLabel, createAndApplyLabel, dispatchLabelRefreshEvents } from "./handlers/labelActions"
+import { EmailTiptapEditor } from "./EmailTiptapEditor"
+
+const MAX_ATTACHMENT_SIZE = 25 * 1024 * 1024 // 25MB
 
 type EmailProvider = 'gmail' | 'outlook'
 
@@ -95,7 +98,8 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
     return extractEmailContent(email.payload)
   }
 
-  // Generate avatar for email sender
+  const avatarHues = [0, 220, 140, 45, 280, 340, 250, 170]
+
   const generateAvatar = (name: string, email: string) => {
     const initials = name
       .split(' ')
@@ -104,15 +108,14 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
       .toUpperCase()
       .slice(0, 2)
     
-    // Generate a consistent color based on the email
-    const colors = [
-      'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 
-      'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'
-    ]
-    const colorIndex = email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length
+    const hueIndex = email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % avatarHues.length
+    const hue = avatarHues[hueIndex]
     
     return (
-      <div className={`w-10 h-10 rounded-full ${colors[colorIndex]} flex items-center justify-center text-white font-medium text-sm`}>
+      <div
+        className="w-10 h-10 rounded-full flex items-center justify-center text-primary-foreground font-medium text-sm"
+        style={{ backgroundColor: `oklch(0.55 0.2 ${hue})` }}
+      >
         {initials}
       </div>
     )
@@ -126,6 +129,13 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
     }
     return fromHeader.split('@')[0]
   }
+
+  const isContentEmpty = useCallback((html: string): boolean => {
+    const div = document.createElement('div')
+    div.innerHTML = html
+    const text = div.textContent || div.innerText || ''
+    return !text.trim()
+  }, [])
 
   const [labels, setLabels] = useState<string[]>(email?.labelIds || [])
   const [actionLoading, setActionLoading] = useState<boolean>(false)
@@ -226,8 +236,12 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
       }
-    } catch (error) {
-      alert('Failed to download attachment')
+    } catch {
+      toast({
+        title: "Download failed",
+        description: "Failed to download attachment. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -264,27 +278,29 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
     setReplyAttachments([])
   }
 
-  const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-    let binary = ''
-    const bytes = new Uint8Array(buffer)
-    const len = bytes.byteLength
-    for (let i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i])
-    }
-    return btoa(binary)
-  }
-
   const handleReplyAttachmentChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
-    setReplyAttachments(prev => [...prev, ...files])
-  }, [])
+    const oversized = files.filter(f => f.size > MAX_ATTACHMENT_SIZE)
+    if (oversized.length > 0) {
+      oversized.forEach(f => {
+        toast({
+          title: "File too large",
+          description: `"${f.name}" exceeds the 25MB attachment limit.`,
+          variant: "destructive",
+        })
+      })
+    }
+    const valid = files.filter(f => f.size <= MAX_ATTACHMENT_SIZE)
+    if (valid.length > 0) setReplyAttachments(prev => [...prev, ...valid])
+    event.target.value = ''
+  }, [toast])
 
   const removeReplyAttachment = useCallback((index: number) => {
     setReplyAttachments(prev => prev.filter((_, i) => i !== index))
   }, [])
 
   const handleSendReply = useCallback(async () => {
-    if (!replyForm.to || !replyForm.subject || !replyForm.body.trim()) {
+    if (!replyForm.to || !replyForm.subject || isContentEmpty(replyForm.body)) {
       toast({
         title: "Missing required fields",
         description: "Please fill in all required fields (To, Subject, and Message).",
@@ -342,10 +358,10 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
     } finally {
       setSendingReply(false)
     }
-  }, [replyForm, email.id, toast, onRefresh, replyAttachments, isOutlook])
+  }, [replyForm, email.id, toast, onRefresh, replyAttachments, isOutlook, isContentEmpty])
 
   const handleSaveReplyDraft = useCallback(async () => {
-    if (!replyForm.body.trim()) {
+    if (isContentEmpty(replyForm.body)) {
       toast({
         title: "No content to save",
         description: "Please add some content before saving as draft.",
@@ -374,7 +390,7 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
         variant: "destructive",
       })
     }
-  }, [replyForm, toast])
+  }, [replyForm, toast, isContentEmpty])
 
   const handleForward = () => {
     if (onForward) {
@@ -399,8 +415,12 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('email-refresh'))
       }
-    } catch (error) {
-      alert('Failed to archive email')
+    } catch {
+      toast({
+        title: "Archive failed",
+        description: "Failed to archive email. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setActionLoading(false)
     }
@@ -431,8 +451,12 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('email-refresh'))
       }
-    } catch (error) {
-      alert('Failed to toggle star')
+    } catch {
+      toast({
+        title: "Action failed",
+        description: "Failed to toggle star. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setActionLoading(false)
     }
@@ -482,8 +506,12 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
           window.dispatchEvent(new Event('email-refresh'))
         }
       }
-    } catch (error) {
-      alert('Failed to toggle star')
+    } catch {
+      toast({
+        title: "Action failed",
+        description: "Failed to toggle star. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setActionLoading(false)
     }
@@ -504,8 +532,12 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
         window.dispatchEvent(new Event('email-refresh'))
       }
       if (onBack) onBack()
-    } catch (error) {
-      alert('Failed to delete email')
+    } catch {
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete email. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setActionLoading(false)
     }
@@ -719,7 +751,7 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
           <Button 
             variant="primary" 
             size="icon-sm" 
-            className={`${isStarred ? 'text-yellow-400 hover:text-yellow-500' : ''}`}
+            className={`${isStarred ? 'text-[var(--chart-4)] hover:opacity-80' : ''}`}
             onClick={handleToggleStar}
             disabled={actionLoading}
           >
@@ -732,17 +764,17 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
       </div>
 
       {/* Email Content */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-400 scrollbar-track-zinc-100 hover:scrollbar-thumb-zinc-500 flex flex-col">
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-background hover:scrollbar-thumb-muted-foreground flex flex-col">
         <div className="w-full flex-1 flex flex-col">
           <div className="w-full flex-1 flex flex-col">
             {threadLoading && (
-              <div className="p-6 text-sm text-zinc-500 flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-zinc-400"></div>
+              <div className="p-6 text-sm text-muted-foreground flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-border"></div>
                 Loading email thread...
               </div>
             )}
             {!threadLoading && (threadMessages.length > 0 ? (
-              <div className="bg-white flex-1 flex flex-col">
+              <div className="bg-background flex-1 flex flex-col">
                 {threadMessages.map((msg, index) => {
                   const content = extractEmailContent(msg?.payload)
                   const header = (n: string) => msg?.payload?.headers?.find((h: any) => h.name.toLowerCase() === n.toLowerCase())?.value || 'Unknown'
@@ -753,7 +785,7 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
                   const isLastMessage = index === threadMessages.length - 1
                   
                   return (
-                    <div key={msg.id} className={`border-b border-gray-200 ${isLastMessage ? 'border-b-2 flex-1 flex flex-col' : ''} ${index > 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                    <div key={msg.id} className={`border-b border-border ${isLastMessage ? 'border-b-2 flex-1 flex flex-col' : ''} ${index > 0 ? 'bg-muted/30' : 'bg-background'}`}>
                       {/* Email Header */}
                       <div className="px-6 py-4 flex-shrink-0">
                         <div className="flex items-start gap-3">
@@ -766,24 +798,24 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-gray-900">{senderName}</span>
-                                <span className="text-xs text-gray-500">to me</span>
+                                <span className="text-sm font-medium text-foreground">{senderName}</span>
+                                <span className="text-xs text-muted-foreground">to me</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-gray-500">{formatDate(msg.internalDate)}</span>
+                                <span className="text-xs text-muted-foreground">{formatDate(msg.internalDate)}</span>
                                 <div className="flex items-center gap-1">
                                   <Button
-                                    variant="primaryonWhite"
+                                    variant="ghost"
                                     size="icon-sm"
                                     title="Star email"
-                                    className={`${(msg?.labelIds || []).includes('STARRED') ? 'text-yellow-400 hover:text-yellow-500' : ''}`}
+                                    className={`${(msg?.labelIds || []).includes('STARRED') ? 'text-[var(--chart-4)] hover:opacity-80' : ''}`}
                                     onClick={() => handleToggleStarForMessage(msg)}
                                     disabled={actionLoading}
                                   >
                                     <Star className="h-3 w-3" fill={(msg?.labelIds || []).includes('STARRED') ? 'currentColor' : 'none'} />
                                   </Button>
                                   <Button
-                                    variant="primaryonWhite"
+                                    variant="ghost"
                                     size="icon-sm"
                                     title="Reply"
                                     onClick={() => {
@@ -798,7 +830,7 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
                                     <Reply className="h-3 w-3" />
                                   </Button>
                                   <Button
-                                    variant="primaryonWhite"
+                                    variant="ghost"
                                     size="icon-sm"
                                     title="More options"
                                   >
@@ -817,9 +849,9 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
                       <div className={`px-6 pb-4 ${isLastMessage ? 'flex-1 flex flex-col min-h-0' : ''}`}>
                         <div className={`ml-13 ${isLastMessage ? 'flex-1 min-h-0' : ''}`}>
                           {content?.html ? (
-                            <div className="text-gray-900 leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: cleanHtmlContent(content.html) }} />
+                            <div className="text-foreground leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: cleanHtmlContent(content.html) }} />
                           ) : (
-                            <div className="text-gray-900 leading-relaxed whitespace-pre-wrap font-sans">
+                            <div className="text-foreground leading-relaxed whitespace-pre-wrap font-sans">
                               {content?.text || msg?.snippet || 'No content available'}
                             </div>
                           )}
@@ -830,26 +862,26 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
                       {msgHasAttachments && content.attachments && (
                         <div className={`px-6 pb-4 ${isLastMessage ? 'flex-shrink-0' : ''}`}>
                           <div className="ml-13">
-                            <div className="border-t border-gray-200 pt-4">
+                            <div className="border-t border-border pt-4">
                               <div className="flex items-center gap-2 mb-3">
-                                <Paperclip className="h-4 w-4 text-slate-500" />
-                                <span className="text-sm font-medium text-slate-700">Attachments</span>
-                                <span className="text-xs text-slate-500">({content.attachments.length})</span>
+                                <Paperclip className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm font-medium text-foreground">Attachments</span>
+                                <span className="text-xs text-muted-foreground">({content.attachments.length})</span>
                               </div>
                               <div className="space-y-2">
                                 {content.attachments.map((attachment: any) => (
-                                  <div key={attachment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                                  <div key={attachment.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border hover:bg-accent transition-colors">
                                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                                      <Paperclip className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                                      <Paperclip className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                       <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-medium text-slate-900 truncate">{attachment.filename}</p>
-                                        <p className="text-xs text-slate-600">{attachment.mimeType} • {formatFileSize(attachment.size)}</p>
+                                        <p className="text-sm font-medium text-foreground truncate">{attachment.filename}</p>
+                                        <p className="text-xs text-muted-foreground">{attachment.mimeType} • {formatFileSize(attachment.size)}</p>
                                       </div>
                                     </div>
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="text-slate-500 hover:bg-slate-100 hover:text-slate-700 p-1 h-8 w-8 flex-shrink-0 rounded-md transition-colors duration-200"
+                                      className="text-muted-foreground hover:bg-accent hover:text-foreground p-1 h-8 w-8 flex-shrink-0 rounded-md transition-colors duration-200"
                                       title="Download attachment"
                                       onClick={() => handleDownloadAttachment(attachment.id, attachment.filename, msg.id)}
                                     >
@@ -867,28 +899,24 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
                 })}
               </div>
             ) : (
-              <div className="p-6 text-sm text-slate-500">No messages in this thread</div>
+              <div className="p-6 text-sm text-muted-foreground">No messages in this thread</div>
             ))}
           </div>
 
           {/* Inline Reply Composer */}
           {showReplyComposer && (
-            <div className="bg-white border-t border-zinc-200 shadow-lg w-full flex-shrink-0" data-reply-composer>
+            <div className="bg-background border-t border-border shadow-lg w-full flex-shrink-0" data-reply-composer>
               {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <div className="flex items-center gap-3">
-                  {/* Profile Picture */}
-                  <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-medium">
-                    M
-                  </div>
                   <div className="flex items-center gap-2">
-                    <Reply className="h-4 w-4 text-zinc-500" />
-                    <span className="text-sm text-zinc-600">to</span>
-                    <span className="text-sm font-medium text-zinc-900">{extractSenderName(getHeader('From'))}</span>
+                    <Reply className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">to</span>
+                    <span className="text-sm font-medium text-foreground">{extractSenderName(getHeader('From'))}</span>
                   </div>
                 </div>
                 <Button
-                  variant="primaryonWhite"
+                  variant="ghost"
                   size="icon-sm"
                   onClick={handleCancelReply}
                 >
@@ -898,27 +926,27 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
 
               {/* Attachments */}
               {replyAttachments.length > 0 && (
-                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <div className="px-4 py-3 border-b border-border bg-muted/50">
                   <div className="flex items-center gap-2 mb-3">
-                    <Paperclip className="h-4 w-4 text-gray-700" />
-                    <span className="text-sm font-semibold text-gray-900">Attachments</span>
-                    <span className="text-xs text-gray-600 bg-gray-200 px-2 py-0.5 rounded-full">
+                    <Paperclip className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-semibold text-foreground">Attachments</span>
+                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                       {replyAttachments.length}
                     </span>
                   </div>
                   <div className="space-y-2">
                     {replyAttachments.map((file, index) => (
-                      <div 
+                      <div
                         key={index}
-                        className="flex items-center justify-between p-3 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-all group"
+                        className="flex items-center justify-between p-3 bg-background hover:bg-accent rounded-lg border border-border hover:border-border/80 transition-all group"
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <Paperclip className="h-4 w-4 text-blue-600" />
+                          <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <Paperclip className="h-4 w-4 text-primary" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-                            <p className="text-xs text-gray-600 mt-0.5">
+                            <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
                               {(file.size / 1024).toFixed(1)} KB
                             </p>
                           </div>
@@ -927,7 +955,7 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
                           variant="ghost"
                           size="sm"
                           onClick={() => removeReplyAttachment(index)}
-                          className="text-gray-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all"
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -938,44 +966,48 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
               )}
 
               {/* Message Body */}
-              <div className="px-4 py-4">
-                <textarea
+              <div className="w-full">
+                <EmailTiptapEditor
                   value={replyForm.body}
-                  onChange={(e) => setReplyForm(prev => ({ ...prev, body: e.target.value }))}
-                  className="w-full min-h-32 border-0 shadow-none bg-transparent text-gray-900 resize-none focus:ring-0 focus:outline-none focus:border-0 p-0"
-                  placeholder="Compose email..."
+                  onChange={(value) => setReplyForm(prev => ({ ...prev, body: value }))}
+                  placeholder="Compose reply..."
+                  className="w-full h-48"
                   disabled={sendingReply}
                 />
               </div>
 
-              {/* Footer with Actions - matching EmailComposer style */}
-              <div className="px-2 py-2 border-t border-zinc-200">
+              {/* Footer with Actions */}
+              <div className="px-4 py-3 border-t border-border bg-card">
                 <div className="flex items-center flex-wrap gap-3">
                   <Button
-                    variant="primary"
-                    size="icon-sm"
+                    variant="default"
+                    size="sm"
                     onClick={handleSendReply}
-                    disabled={sendingReply || !replyForm.body.trim()}
-                    className="bg-blue-600 hover:bg-blue-700 text-white flex-shrink-0 w-auto px-2"
+                    disabled={sendingReply || isContentEmpty(replyForm.body)}
+                    className="flex-shrink-0 w-auto px-4"
                   >
-                    <Send className="h-4 w-10" />
+                    <Send className="h-4 w-4 mr-2" />
                     {sendingReply ? 'Sending...' : 'Send'}
                   </Button>
                   <Button
-                    variant="primaryonWhite"
-                    size="icon-sm"
+                    variant="secondary"
+                    size="sm"
                     onClick={handleSaveReplyDraft}
                     disabled={sendingReply}
+                    className="bg-background/80 hover:bg-background border-border"
                   >
-                    <Save className="h-4 w-10" />
+                    <Save className="h-4 w-4 mr-2" />
+                    Save draft
                   </Button>
                   <Button
-                    variant="primaryonWhite"
-                    size="icon-sm"
+                    variant="secondary"
+                    size="sm"
                     onClick={() => document.getElementById('reply-attachment-input')?.click()}
                     disabled={sendingReply}
+                    className="bg-background/80 hover:bg-background border-border"
                   >
-                    <Paperclip className="h-4 w-10" />
+                    <Paperclip className="h-4 w-4 mr-2" />
+                    Attach
                   </Button>
                   <input
                     id="reply-attachment-input"
@@ -984,11 +1016,6 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
                     onChange={handleReplyAttachmentChange}
                     className="hidden"
                   />
-                  {replyAttachments.length > 0 && (
-                    <span className="text-xs text-zinc-400 bg-zinc-700/50 px-3 py-1.5 rounded-md flex-shrink-0">
-                      {replyAttachments.length} file{replyAttachments.length !== 1 ? 's' : ''} attached
-                    </span>
-                  )}
                 </div>
               </div>
             </div>

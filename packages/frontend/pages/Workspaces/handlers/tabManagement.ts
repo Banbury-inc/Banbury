@@ -1,5 +1,5 @@
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import { Panel, PanelGroup, WorkspaceTab, FileTab, EmailTab, TaskTab, MeetingTab, AdminTab } from '../types';
+import { Panel, PanelGroup, WorkspaceTab, FileTab, EmailTab, TaskTab, MeetingTab, AdminTab, DatabaseTableTab, OpenDatabaseTablePayload, FlowTab, FlowItem } from '../types';
 import { Task } from '../../../pages/TaskStudio/types';
 import { MeetingSession } from '../../../types/meeting-types';
 import { ApiService } from '../../../../backend/api/apiService';
@@ -414,6 +414,123 @@ export const openAdminInTab = (
   }
 
   // Add tab to the target panel
+  setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab))
+  setActivePanelId(targetPanelId)
+}
+
+export const openDatabaseTableInTab = (
+  payload: OpenDatabaseTablePayload,
+  targetPanelId: string,
+  panelLayout: PanelGroup,
+  getAllTabs: (layout: PanelGroup) => WorkspaceTab[],
+  updatePanelActiveTab: (layout: PanelGroup, panelId: string, tabId: string) => PanelGroup,
+  addTabToPanel: (layout: PanelGroup, panelId: string, tab: WorkspaceTab) => PanelGroup,
+  setActivePanelId: React.Dispatch<React.SetStateAction<string>>,
+  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
+) => {
+  const allTabs = getAllTabs(panelLayout)
+  const existingTab = allTabs.find(tab => (
+    tab.type === 'database-table'
+    && tab.provider === payload.provider
+    && tab.database === payload.database
+    && tab.schema === payload.schema
+    && tab.table === payload.table
+    && tab.collection === payload.collection
+  ))
+
+  if (existingTab) {
+    const switchToExistingTab = (layout: PanelGroup): boolean => {
+      if (layout.type === 'panel' && layout.panel) {
+        const tabExists = layout.panel.tabs.some(tab => tab.id === existingTab.id)
+        if (tabExists) {
+          setActivePanelId(layout.panel.id)
+          setPanelLayout(prev => updatePanelActiveTab(prev, layout.panel!.id, existingTab.id))
+          return true
+        }
+      }
+
+      if (layout.type === 'group' && layout.children)
+        return layout.children.some(child => switchToExistingTab(child))
+
+      return false
+    }
+
+    switchToExistingTab(panelLayout)
+    return
+  }
+
+  const targetName = payload.table || payload.collection || 'Database'
+  const descriptor = payload.schema ? `${payload.database}.${payload.schema}` : payload.database
+  const newTab: DatabaseTableTab = {
+    id: `db_${payload.provider}_${targetName}_${Date.now()}`,
+    title: `${targetName} (${descriptor})`,
+    type: 'database-table',
+    provider: payload.provider,
+    connection: payload.connection,
+    database: payload.database,
+    schema: payload.schema,
+    table: payload.table,
+    collection: payload.collection,
+  }
+
+  setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab))
+  setActivePanelId(targetPanelId)
+}
+
+export const openFlowInTab = (
+  flow: FlowItem | null,
+  targetPanelId: string,
+  panelLayout: PanelGroup,
+  getAllTabs: (layout: PanelGroup) => WorkspaceTab[],
+  updatePanelActiveTab: (layout: PanelGroup, panelId: string, tabId: string) => PanelGroup,
+  addTabToPanel: (layout: PanelGroup, panelId: string, tab: WorkspaceTab) => PanelGroup,
+  setActivePanelId: React.Dispatch<React.SetStateAction<string>>,
+  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
+) => {
+  if (flow === null) {
+    const tabId = `flow_create_${Date.now()}`
+    const newTab: FlowTab = {
+      id: tabId,
+      flowId: '',
+      title: 'New Flow',
+      flow: null,
+      type: 'flow',
+    }
+    setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab))
+    setActivePanelId(targetPanelId)
+    return
+  }
+
+  const allTabs = getAllTabs(panelLayout)
+  const existingTab = allTabs.find(tab => tab.type === 'flow' && tab.flowId === flow.id)
+
+  if (existingTab) {
+    const switchToExistingTab = (layout: PanelGroup): boolean => {
+      if (layout.type === 'panel' && layout.panel) {
+        const tabExists = layout.panel.tabs.some(tab => tab.id === existingTab.id)
+        if (tabExists) {
+          setActivePanelId(layout.panel.id)
+          setPanelLayout(prev => updatePanelActiveTab(prev, layout.panel!.id, existingTab.id))
+          return true
+        }
+      }
+      if (layout.type === 'group' && layout.children)
+        return layout.children.some(child => switchToExistingTab(child))
+      return false
+    }
+    switchToExistingTab(panelLayout)
+    return
+  }
+
+  const tabId = `flow_${flow.id}_${Date.now()}`
+  const newTab: FlowTab = {
+    id: tabId,
+    flowId: flow.id,
+    title: flow.name,
+    flow,
+    type: 'flow',
+  }
+
   setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab))
   setActivePanelId(targetPanelId)
 }

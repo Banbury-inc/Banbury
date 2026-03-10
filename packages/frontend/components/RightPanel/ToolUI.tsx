@@ -90,6 +90,7 @@ export const ToolUI: React.FC<ToolUIProps> = ({ toolName, toolCallId, args: args
     case 'gmail_search':
     case 'gmail_get_message':
     case 'gmail_send_message':
+    case 'gmail_label_email':
       return (
         <ToolCallCard
           toolName={toolName}
@@ -220,6 +221,7 @@ function getToolLabel(toolName: string): string {
     'gmail_search': 'Gmail - Search',
     'gmail_get_message': 'Gmail - Get Message',
     'gmail_send_message': 'Gmail - Send',
+    'gmail_label_email': 'Gmail - Label Email',
     'calendar_list_events': 'Calendar - List Events',
     'calendar_get_event': 'Calendar - Get Event',
     'calendar_create_event': 'Calendar - Create Event',

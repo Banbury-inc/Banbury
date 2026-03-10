@@ -1,27 +1,27 @@
-import { 
-  Send, 
-  X, 
-  Paperclip, 
-  Save
+import {
+  Send,
+  X,
+  Paperclip,
+  Save,
 } from 'lucide-react'
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Button } from '../../common/ui/button'
 import { Input } from '../../common/ui/old-input'
 import { useToast } from '../../common/ui/use-toast'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../../common/ui/dialog'
 import { EmailTiptapEditor } from './EmailTiptapEditor'
 import RecipientChipsInput from './RecipientChipsInput'
 import { ApiService } from '../../../../backend/api/apiService'
 import { useKeyboardShortcuts, getSendShortcutText } from './handlers/useKeyboardShortcuts'
+import { arrayBufferToBase64 } from '../../../utils/emailUtils'
 
-const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-  let binary = ''
-  const bytes = new Uint8Array(buffer)
-  const len = bytes.byteLength
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i])
-  }
-  return btoa(binary)
-}
+const MAX_ATTACHMENT_SIZE = 25 * 1024 * 1024 // 25MB
 
 interface EmailComposerProps {
   onBack?: () => void
@@ -37,9 +37,14 @@ interface EmailComposerProps {
 export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposerProps) {
   const [form, setForm] = useState({
     to: replyTo?.to || '',
+    cc: '',
+    bcc: '',
     subject: replyTo?.subject ? `Re: ${replyTo.subject}` : '',
     body: replyTo?.body ? `<br><br>${replyTo.body}` : ''
   })
+  const [showCc, setShowCc] = useState(false)
+  const [showBcc, setShowBcc] = useState(false)
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false)
   const [sending, setSending] = useState(false)
   const [attachments, setAttachments] = useState<File[]>([])
   const [signature, setSignature] = useState<string>('')
@@ -47,11 +52,18 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
   const { toast } = useToast()
   const sendShortcutText = getSendShortcutText()
 
+  // Ref to track form.body without causing fetchSignature to re-create on every keystroke
+  const formBodyRef = useRef(form.body)
+  useEffect(() => {
+    formBodyRef.current = form.body
+  }, [form.body])
+
   // Fetch signature when component mounts (only for new emails, not replies)
   useEffect(() => {
     if (!replyTo) {
       fetchSignature()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [replyTo])
 
   // Helper function to convert HTML to plain text
@@ -69,15 +81,14 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
 
   // Helper function to clean up HTML signature
   const cleanSignature = useCallback((html: string): string => {
-    // Remove excessive styling and keep essential formatting
     return html
-      .replace(/style="[^"]*"/g, '') // Remove inline styles
-      .replace(/class="[^"]*"/g, '') // Remove classes
-      .replace(/<div[^>]*>/g, '<p>') // Convert divs to paragraphs
-      .replace(/<\/div>/g, '</p>') // Close paragraphs
-      .replace(/<br\s*\/>?/g, '<br>') // Normalize line breaks
-      .replace(/<p><\/p>/g, '') // Remove empty paragraphs
-      .replace(/<p><br><\/p>/g, '<br>') // Convert empty paragraphs to line breaks
+      .replace(/style="[^"]*"/g, '')
+      .replace(/class="[^"]*"/g, '')
+      .replace(/<div[^>]*>/g, '<p>')
+      .replace(/<\/div>/g, '</p>')
+      .replace(/<br\s*\/>?/g, '<br>')
+      .replace(/<p><\/p>/g, '')
+      .replace(/<p><br><\/p>/g, '<br>')
   }, [])
 
   // Helpers to support multiple recipients in the To field
@@ -96,7 +107,6 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
   // Suggest contacts from recent email headers
   const loadRecipientSuggestions = useCallback(async (query: string) => {
     try {
-      // Use Gmail search to fetch recent messages matching the query in from/to headers
       const q = `from:${query} OR to:${query}`
       const result = await ApiService.Emails.searchEmails(q)
       const suggestionsMap = new Map<string, { label: string; value: string }>()
@@ -122,7 +132,6 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
         combined.split(',').forEach((raw: string) => {
           const part = raw.trim()
           if (!part) return
-          // Try to parse "Name <email>" or just email
           const match = part.match(/^(.*?)(<([^>]+)>)?$/)
           let name = ''
           let email = part
@@ -150,19 +159,18 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
     setLoadingSignature(true)
     try {
       const response = await ApiService.Emails.getSignature()
-      
+
       if (response.result === "success" && response.signature) {
         const cleanedSignature = cleanSignature(response.signature)
         setSignature(cleanedSignature)
-        
-        // For new emails (not replies), automatically add signature to the body
-        if (!replyTo && isContentEmpty(form.body)) {
+
+        // Read body from ref to avoid stale closure
+        if (!replyTo && isContentEmpty(formBodyRef.current)) {
           setForm(prev => ({ ...prev, body: cleanedSignature }))
         }
       }
     } catch (error) {
       console.warn('Failed to fetch signature:', error)
-      // Don't show error toast for signature fetch failure as it's not critical
     } finally {
       setLoadingSignature(false)
     }
@@ -181,13 +189,13 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
 
     setSending(true)
     try {
-      // Use sendReply if this is a reply to an existing message
+      const attachmentsPayload = await Promise.all(attachments.map(async (file) => ({
+        filename: file.name,
+        mimeType: file.type || 'application/octet-stream',
+        content: await file.arrayBuffer().then((buf) => arrayBufferToBase64(buf))
+      })))
+
       if (replyTo?.messageId) {
-        const attachmentsPayload = await Promise.all(attachments.map(async (file) => ({
-          filename: file.name,
-          mimeType: file.type || 'application/octet-stream',
-          content: await file.arrayBuffer().then((buf) => arrayBufferToBase64(buf))
-        })))
         await ApiService.Emails.sendReply({
           original_message_id: replyTo.messageId,
           to: normalizedTo,
@@ -196,14 +204,10 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
           attachments: attachmentsPayload
         })
       } else {
-        // Use regular sendMessage since the signature is already visible and editable in the composer
-        const attachmentsPayload = await Promise.all(attachments.map(async (file) => ({
-          filename: file.name,
-          mimeType: file.type || 'application/octet-stream',
-          content: await file.arrayBuffer().then((buf) => arrayBufferToBase64(buf))
-        })))
         await ApiService.Emails.sendMessage({
           to: normalizedTo,
+          cc: normalizeRecipients(form.cc) || undefined,
+          bcc: normalizeRecipients(form.bcc) || undefined,
           subject: form.subject,
           body: form.body,
           attachments: attachmentsPayload
@@ -217,7 +221,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
       })
 
       onSendComplete?.()
-    } catch (error) {
+    } catch {
       toast({
         title: "Failed to send email",
         description: "There was an error sending your email. Please try again.",
@@ -226,7 +230,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
     } finally {
       setSending(false)
     }
-  }, [form, onSendComplete, toast, signature, normalizeRecipients, isContentEmpty])
+  }, [form, onSendComplete, toast, attachments, normalizeRecipients, isContentEmpty, replyTo])
 
   const handleSaveDraft = useCallback(async () => {
     if (!form.to && !form.subject && isContentEmpty(form.body)) {
@@ -239,7 +243,6 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
     }
 
     try {
-      // Create a draft message using Gmail API
       const normalizedTo = normalizeRecipients(form.to)
       await ApiService.Emails.sendMessage({
         to: normalizedTo,
@@ -253,10 +256,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
         description: "Your draft has been saved.",
         variant: "success",
       })
-
-      // Optionally close the composer or stay open for further editing
-      // onSendComplete?.()
-    } catch (error) {
+    } catch {
       toast({
         title: "Failed to save draft",
         description: "There was an error saving your draft. Please try again.",
@@ -267,12 +267,33 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
 
   const handleAttachmentChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
-    setAttachments(prev => [...prev, ...files])
-  }, [])
+    const oversized = files.filter(f => f.size > MAX_ATTACHMENT_SIZE)
+    if (oversized.length > 0) {
+      oversized.forEach(f => {
+        toast({
+          title: "File too large",
+          description: `"${f.name}" exceeds the 25MB attachment limit.`,
+          variant: "destructive",
+        })
+      })
+    }
+    const valid = files.filter(f => f.size <= MAX_ATTACHMENT_SIZE)
+    if (valid.length > 0) setAttachments(prev => [...prev, ...valid])
+    event.target.value = ''
+  }, [toast])
 
   const removeAttachment = useCallback((index: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== index))
   }, [])
+
+  const handleDiscard = useCallback(() => {
+    const hasContent = form.to || form.subject || !isContentEmpty(form.body)
+    if (hasContent) {
+      setShowDiscardDialog(true)
+    } else {
+      onBack?.()
+    }
+  }, [form.to, form.subject, form.body, isContentEmpty, onBack])
 
   // Enable keyboard shortcut (Ctrl+Enter / Cmd+Enter) when form is valid and not sending
   const canSend = parseRecipients(form.to).length > 0 && !isContentEmpty(form.body) && !sending
@@ -283,12 +304,29 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
 
   return (
     <div className="h-full flex flex-col bg-card">
+      {/* Header with discard button */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card flex-shrink-0">
+        <span className="text-sm font-medium text-foreground">
+          {replyTo ? 'Reply' : 'New Message'}
+        </span>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={handleDiscard}
+          disabled={sending}
+          title="Discard"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+
       {/* Email Form */}
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-background hover:scrollbar-thumb-muted-foreground">
         <div className="w-full">
           {/* Recipients */}
           <div className="px-4 py-3 border-b border-border bg-background/50">
             <div className="space-y-3">
+              {/* To */}
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-muted-foreground min-w-[60px]">To:</span>
                 <div className="flex-1">
@@ -300,8 +338,79 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
                     loadSuggestions={loadRecipientSuggestions}
                   />
                 </div>
+                {(!showCc || !showBcc) && (
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {!showCc && (
+                      <button
+                        type="button"
+                        onClick={() => setShowCc(true)}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1"
+                      >
+                        CC
+                      </button>
+                    )}
+                    {!showBcc && (
+                      <button
+                        type="button"
+                        onClick={() => setShowBcc(true)}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1"
+                      >
+                        BCC
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
-              
+
+              {/* CC */}
+              {showCc && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-muted-foreground min-w-[60px]">CC:</span>
+                  <div className="flex-1">
+                    <RecipientChipsInput
+                      value={form.cc}
+                      onChange={(next) => setForm(prev => ({ ...prev, cc: next }))}
+                      placeholder="Add CC recipients"
+                      disabled={sending}
+                      loadSuggestions={loadRecipientSuggestions}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setShowCc(false); setForm(prev => ({ ...prev, cc: '' })) }}
+                    className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                    aria-label="Remove CC"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+
+              {/* BCC */}
+              {showBcc && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-muted-foreground min-w-[60px]">BCC:</span>
+                  <div className="flex-1">
+                    <RecipientChipsInput
+                      value={form.bcc}
+                      onChange={(next) => setForm(prev => ({ ...prev, bcc: next }))}
+                      placeholder="Add BCC recipients"
+                      disabled={sending}
+                      loadSuggestions={loadRecipientSuggestions}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setShowBcc(false); setForm(prev => ({ ...prev, bcc: '' })) }}
+                    className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                    aria-label="Remove BCC"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+
+              {/* Subject */}
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-muted-foreground min-w-[60px]">Subject:</span>
                 <div className="flex-1">
@@ -316,9 +425,9 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
             </div>
           </div>
 
-                    {/* Attachments */}
+          {/* Attachments */}
           {attachments.length > 0 && (
-            <div className="px-6 py-4 border-b border-border bg-muted/50">
+            <div className="px-4 py-3 border-b border-border bg-muted/50">
               <div className="flex items-center gap-2 mb-3">
                 <Paperclip className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-semibold text-foreground">Attachments</span>
@@ -328,7 +437,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
               </div>
               <div className="space-y-2">
                 {attachments.map((file, index) => (
-                  <div 
+                  <div
                     key={index}
                     className="flex items-center justify-between p-3 bg-background hover:bg-accent rounded-lg border border-border hover:border-border/80 transition-all group"
                   >
@@ -368,7 +477,6 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
                 disabled={sending}
                 onInsertSignature={() => {
                   const currentBody = form.body
-                  // Check if signature is already in the body to prevent duplicates
                   if (signature && currentBody.includes(signature)) {
                     toast({
                       title: "Signature already present",
@@ -377,10 +485,8 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
                     })
                     return
                   }
-                  // If body is empty or just whitespace, replace with signature
-                  // Otherwise, append signature with proper spacing
                   const newBody = isContentEmpty(currentBody)
-                    ? signature 
+                    ? signature
                     : `${currentBody}<br><br>${signature}`
                   setForm(prev => ({ ...prev, body: newBody }))
                 }}
@@ -390,7 +496,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
             </div>
           </div>
 
-          {/* Attachment Button and Action Buttons */}
+          {/* Action Buttons */}
           <div className="px-4 py-3 bg-card border-t border-border">
             <div className="flex items-center flex-wrap gap-3">
               <Button
@@ -398,7 +504,7 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
                 size="sm"
                 onClick={handleSend}
                 disabled={!canSend}
-                className="flex-shrink-0 w-auto px-4 bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="flex-shrink-0 w-auto px-4"
               >
                 <Send className="h-4 w-4 mr-2" />
                 {sending ? 'Sending...' : 'Send'}
@@ -431,15 +537,46 @@ export function EmailComposer({ onBack, onSendComplete, replyTo }: EmailComposer
                 onChange={handleAttachmentChange}
                 className="hidden"
               />
-              {attachments.length > 0 && (
-                <span className="text-xs text-muted-foreground bg-background/60 px-3 py-1.5 rounded-md flex-shrink-0">
-                  {attachments.length} file{attachments.length !== 1 ? 's' : ''} attached
-                </span>
-              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Discard confirmation dialog */}
+      <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Discard message?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Your message will be lost. Save as draft to continue later.
+          </p>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setShowDiscardDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowDiscardDialog(false)
+                handleSaveDraft()
+              }}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save draft
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setShowDiscardDialog(false)
+                onBack?.()
+              }}
+            >
+              Discard
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

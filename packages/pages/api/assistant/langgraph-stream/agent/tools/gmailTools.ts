@@ -488,3 +488,116 @@ export const gmailCreateDraftTool = tool(
   }
 )
 
+export const gmailLabelEmailTool = tool(
+  async (input: { messageId: string; labelName?: string; labelId?: string; action: 'add' | 'remove' }) => {
+    const prefs = (getServerContextValue<any>("toolPreferences") || {}) as { gmail?: boolean }
+    if (prefs.gmail === false) {
+      return JSON.stringify({ success: false, error: "Gmail access is disabled by user preference" })
+    }
+
+    const apiBase = CONFIG.url
+    const token = getServerContextValue<string>("authToken")
+    if (!token) {
+      throw new Error("Missing auth token in server context")
+    }
+
+    let targetLabelId = input.labelId
+
+    // If labelName is provided but no labelId, fetch all labels and find the matching one
+    if (input.labelName && !input.labelId) {
+      const labelsUrl = `${apiBase}/authentication/gmail/labels/`
+      const labelsResp = await fetch(labelsUrl, { 
+        method: "GET", 
+        headers: { Authorization: `Bearer ${token}` } 
+      })
+      
+      if (!labelsResp.ok) {
+        return JSON.stringify({ success: false, error: `Failed to fetch labels: HTTP ${labelsResp.status}` })
+      }
+      
+      const labelsData = await labelsResp.json()
+      const matchingLabel = labelsData.labels?.find(
+        (label: any) => label.name.toLowerCase() === input.labelName!.toLowerCase()
+      )
+      
+      if (matchingLabel) {
+        targetLabelId = matchingLabel.id
+      } else {
+        // Label doesn't exist, create it
+        const createLabelUrl = `${apiBase}/authentication/gmail/labels/`
+        const createLabelResp = await fetch(createLabelUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            name: input.labelName,
+            labelListVisibility: "labelShow",
+            messageListVisibility: "show"
+          })
+        })
+        
+        if (!createLabelResp.ok) {
+          return JSON.stringify({ 
+            success: false, 
+            error: `Failed to create label: HTTP ${createLabelResp.status}` 
+          })
+        }
+        
+        const newLabelData = await createLabelResp.json()
+        targetLabelId = newLabelData.id
+      }
+    }
+
+    if (!targetLabelId) {
+      return JSON.stringify({ 
+        success: false, 
+        error: "Either labelId or labelName must be provided" 
+      })
+    }
+
+    // Modify the message with the label
+    const modifyUrl = `${apiBase}/authentication/gmail/messages/${encodeURIComponent(input.messageId)}/modify/`
+    const modifyPayload = input.action === 'add' 
+      ? { addLabelIds: [targetLabelId] }
+      : { removeLabelIds: [targetLabelId] }
+    
+    const modifyResp = await fetch(modifyUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(modifyPayload)
+    })
+    
+    if (!modifyResp.ok) {
+      return JSON.stringify({ 
+        success: false, 
+        error: `Failed to modify message: HTTP ${modifyResp.status}` 
+      })
+    }
+    
+    const modifyData = await modifyResp.json()
+    
+    return JSON.stringify({ 
+      success: true, 
+      result: modifyData,
+      message: `Label ${input.action === 'add' ? 'added to' : 'removed from'} email successfully`,
+      labelId: targetLabelId,
+      labelName: input.labelName
+    })
+  },
+  {
+    name: "gmail_label_email",
+    description: "Add or remove a label from a Gmail message. You can specify either a labelId (for existing labels) or a labelName (will be created if it doesn't exist). Common system labels include: INBOX, SENT, DRAFT, STARRED, SPAM, TRASH, IMPORTANT, UNREAD.",
+    schema: z.object({
+      messageId: z.string().describe("The Gmail message ID to label"),
+      labelName: z.string().optional().describe("The label name (will be created if it doesn't exist). Use this for user-friendly label names."),
+      labelId: z.string().optional().describe("The label ID (use this if you already know the exact label ID from a previous query)"),
+      action: z.enum(['add', 'remove']).describe("Whether to add or remove the label from the email")
+    }),
+  }
+)
+

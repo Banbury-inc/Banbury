@@ -27,7 +27,7 @@ import { handleReplyToEmail } from '../../components/LeftPanel/components/EmailT
 import { handleComposeEmail } from '../../components/LeftPanel/components/EmailTab/handlers/handleComposeEmail';
 import { loadConversations, loadConversation, deleteConversation } from './handlers/conversationManagement';
 import { findPanel, getAllTabs, updatePanelActiveTab, addTabToPanel, removeTabFromPanel } from './handlers/panelUtils';
-import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, openAdminInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
+import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, openAdminInTab, openDatabaseTableInTab, openFlowInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
 import { 
   isDrawioFile, 
   isTldrawFile, 
@@ -65,6 +65,8 @@ import { MeetingSession } from '../../types/meeting-types';
 import {
   UserInfo,
   FileTab,
+  FlowItem,
+  OpenDatabaseTablePayload,
   Panel,
   SplitDirection,
   PanelGroup,
@@ -98,6 +100,7 @@ const Workspaces = (): React.ReactNode => {
   const [selectedEmail, setSelectedEmail] = useState<any | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [selectedMeeting, setSelectedMeeting] = useState<MeetingSession | null>(null);
+  const [selectedFlow, setSelectedFlow] = useState<FlowItem | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [meetingsRefreshTrigger, _setMeetingsRefreshTrigger] = useState<number>(0);
   const [folderCreationTrigger] = useState<boolean>(false);
@@ -254,6 +257,19 @@ const Workspaces = (): React.ReactNode => {
       setPanelLayout
     );
   }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
+
+  const openDatabaseTableInTabCallback = useCallback((payload: OpenDatabaseTablePayload, targetPanelId: string = activePanelId) => {
+    openDatabaseTableInTab(
+      payload,
+      targetPanelId,
+      panelLayout,
+      getAllTabs,
+      updatePanelActiveTab,
+      addTabToPanel,
+      setActivePanelId,
+      setPanelLayout
+    )
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout])
 
   const handleCloseTabCallback = useCallback((tabId: string, panelId: string) => {
     handleCloseTab(tabId, panelId, findPanel, removeTabFromPanel, setPanelLayout, setSelectedFile, setSelectedEmail);
@@ -593,6 +609,19 @@ const Workspaces = (): React.ReactNode => {
     );
   }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
 
+  const openFlowInTabCallback = useCallback((flow: FlowItem | null, targetPanelId: string = activePanelId) => {
+    openFlowInTab(
+      flow,
+      targetPanelId,
+      panelLayout,
+      getAllTabs,
+      updatePanelActiveTab,
+      addTabToPanel,
+      setActivePanelId,
+      setPanelLayout
+    );
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
+
   const handleTaskSelect = useCallback((task: Task) => {
     setSelectedTask(task);
     openTaskInTabCallback(task, activePanelId);
@@ -614,6 +643,11 @@ const Workspaces = (): React.ReactNode => {
   const handleJoinMeeting = useCallback(() => {
     openMeetingInTabCallback(null, activePanelId); // null means join meeting composer
   }, [openMeetingInTabCallback, activePanelId]);
+
+  const handleFlowSelect = useCallback((flow: FlowItem) => {
+    setSelectedFlow(flow);
+    openFlowInTabCallback(flow, activePanelId);
+  }, [openFlowInTabCallback, activePanelId]);
 
   // Handle desktop recording started - create a temporary meeting session and open in tab
   const handleDesktopRecordingStarted = useCallback((data: { sessionId: string; windowId: string; platform: string; meetingTitle: string }) => {
@@ -752,8 +786,8 @@ const Workspaces = (): React.ReactNode => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background dark:bg-background">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-zinc-900 dark:border-white"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -765,7 +799,7 @@ const Workspaces = (): React.ReactNode => {
       <TiptapAIProvider>
         <ClaudeRuntimeProvider>
           <div 
-            className="flex h-screen overflow-hidden bg-background dark:bg-background"
+            className="flex h-screen overflow-hidden bg-background"
             onClick={(e) => {
               // Check if the click is outside any CSV editor
               const target = e.target as HTMLElement;
@@ -847,6 +881,10 @@ const Workspaces = (): React.ReactNode => {
                 onMeetingSelect={handleMeetingSelect}
                 onJoinMeeting={handleJoinMeeting}
                 onDesktopRecordingStarted={handleDesktopRecordingStarted}
+                onOpenDatabaseTable={payload => openDatabaseTableInTabCallback(payload, activePanelId)}
+                selectedFlow={selectedFlow}
+                setSelectedFlow={setSelectedFlow}
+                onFlowSelect={handleFlowSelect}
                 onClose={() => setMobileFileSidebarOpen(false)}
                 panelLayout={panelLayout}
                 setPanelLayout={setPanelLayout}
@@ -919,11 +957,11 @@ const Workspaces = (): React.ReactNode => {
                         {!isFileSidebarCollapsed && (
                           <button
                             onClick={() => setIsFileSidebarCollapsed(true)}
-                            className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20 h-11 w-11 md:h-6 md:w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
+                            className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 h-11 w-11 md:h-6 md:w-6 text-foreground hover:bg-accent bg-background border border-border transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background shadow-soft burger-button"
                             title="Collapse file sidebar"
                             onMouseDown={(e) => e.stopPropagation()}
                           >
-                            <Menu className="h-4 w-4 md:h-4 md:w-4" strokeWidth={1} />
+                            <Menu className="h-4 w-4" strokeWidth={1} />
                           </button>
                         )}
                         {/* File Sidebar Content */}
@@ -956,6 +994,10 @@ const Workspaces = (): React.ReactNode => {
                             setCalendarSelectedEvent={setCalendarSelectedEvent}
                             setSelectedTask={setSelectedTask}
                             setSelectedMeeting={setSelectedMeeting}
+                            onOpenDatabaseTable={payload => openDatabaseTableInTabCallback(payload, activePanelId)}
+                            selectedFlow={selectedFlow}
+                            setSelectedFlow={setSelectedFlow}
+                            onFlowSelect={handleFlowSelect}
                           />
                         </div>
                       </div>
@@ -1003,10 +1045,10 @@ const Workspaces = (): React.ReactNode => {
                       {(selectedFile || selectedEmail || getAllTabs(panelLayout).some(tab => tab.type === 'calendar')) && (
                         <button
                           onClick={() => setIsAssistantPanelCollapsed(true)}
-                          className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20 h-11 w-11 md:h-6 md:w-6 text-zinc-900 dark:text-white hover:bg-accent dark:hover:bg-accent bg-background border border-zinc-300 dark:border-white/[0.06] transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black shadow-soft burger-button"
+                          className="absolute -left-3 top-1/2 -translate-y-1/2 z-20 h-11 w-11 md:h-6 md:w-6 text-foreground hover:bg-accent bg-background border border-border transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background shadow-soft burger-button"
                           title="Collapse assistant panel"
                         >
-                          <Menu className="h-4 w-4 md:h-4 md:w-4" strokeWidth={1} />
+                          <Menu className="h-4 w-4" strokeWidth={1} />
                         </button>
                       )}
                       {renderAssistantPanelGroup(assistantDockLayout)}
@@ -1022,11 +1064,11 @@ const Workspaces = (): React.ReactNode => {
           {/* Context Menu */}
           {contextMenu && (
             <div
-              className="fixed bg-zinc-800 border border-white/[0.06] rounded-md shadow-soft-md py-2 z-50"
+              className="fixed bg-popover border border-border rounded-md shadow-soft-md py-2 z-50"
               style={{ left: contextMenu.x, top: contextMenu.y }}
               onClick={closeContextMenu}
             >
-              <div className="px-4 py-2 text-zinc-400 text-sm border-b border-white/[0.06]">
+              <div className="px-4 py-2 text-muted-foreground text-sm border-b border-border">
                 Tip: Drag the tab to create a new panel
               </div>
               <button
@@ -1036,12 +1078,12 @@ const Workspaces = (): React.ReactNode => {
                   }
                   closeContextMenu();
                 }}
-                className="w-full px-4 py-2 text-left text-white hover:bg-zinc-700 flex items-center gap-2"
+                className="w-full px-4 py-2 text-left text-popover-foreground hover:bg-accent flex items-center gap-2"
               >
                 <X size={16} strokeWidth={1} />
                 Close Tab
               </button>
-        </div>
+            </div>
           )}
           
           {/* Click outside to close context menu */}
@@ -1084,15 +1126,9 @@ const Workspaces = (): React.ReactNode => {
           }
           .burger-button:hover {
             transform: translateY(-50%) scale(1.1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 12px color-mix(in oklch, var(--color-foreground) 20%, transparent);
           }
           @media (max-width: 767px) {
-            /* Improve spacing for mobile */
-            .mobile-spacing {
-              padding: 0.75rem;
-              gap: 0.75rem;
-            }
-            /* Responsive typography */
             .mobile-text {
               font-size: 0.875rem;
               line-height: 1.5;

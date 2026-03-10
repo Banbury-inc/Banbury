@@ -16,6 +16,8 @@ import WebSearch from './web-search/web-search'
 import Browserbase from './browserbase/browserbase'
 import Tracking from './tracking/tracking'
 import Themes from './themes/themes'
+import Databases from './databases/databases'
+import Flows from './flows/flows'
 
 // Configure axios defaults
 axios.defaults.timeout = 30000; // 30 second timeout
@@ -59,6 +61,8 @@ export class ApiService {
   Browserbase: Browserbase
   Tracking: Tracking
   Themes: Themes
+  Databases: Databases
+  Flows: typeof Flows
   constructor() {
     this.Files = new Files(this)
     this.Emails = new Emails(this)
@@ -75,6 +79,8 @@ export class ApiService {
     this.Browserbase = new Browserbase(this)
     this.Tracking = new Tracking(this)
     this.Themes = new Themes(this)
+    this.Databases = new Databases(this)
+    this.Flows = Flows
   }
   static baseURL = CONFIG.url;
   static Files = Files;
@@ -92,6 +98,8 @@ export class ApiService {
   static Browserbase = Browserbase;
   static Tracking = Tracking;
   static Themes = Themes;
+  static Databases = Databases;
+  static Flows = Flows;
   /**
    * Set global authorization token for all requests
    */

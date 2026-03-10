@@ -123,6 +123,7 @@
     "@tldraw/sync": "3.6.0",
     "@tldraw/tlschema": "3.6.0",
     "@xmldom/xmldom": "^0.8.10",
+    "@xyflow/react": "^12.10.1",
     "ai": "^5.0.5",
     "allotment": "^1.20.4",
     "axios": "^1.4.0",

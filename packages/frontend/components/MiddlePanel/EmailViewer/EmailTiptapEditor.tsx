@@ -36,6 +36,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../common/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '../../common/ui/popover';
 
 interface EmailTiptapEditorProps {
   value: string;
@@ -59,10 +64,15 @@ export const EmailTiptapEditor: React.FC<EmailTiptapEditorProps> = ({
   loadingSignature = false
 }) => {
   const [isClient, setIsClient] = React.useState(false);
+  const [linkUrl, setLinkUrl] = React.useState('');
+  const [linkPopoverOpen, setLinkPopoverOpen] = React.useState(false);
+  const [imageUrl, setImageUrl] = React.useState('');
+  const [imagePopoverOpen, setImagePopoverOpen] = React.useState(false);
 
   React.useEffect(() => {
     setIsClient(true);
   }, []);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -76,7 +86,7 @@ export const EmailTiptapEditor: React.FC<EmailTiptapEditorProps> = ({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-blue-500 underline',
+          class: 'text-primary underline',
         },
       }),
       Underline,
@@ -88,7 +98,6 @@ export const EmailTiptapEditor: React.FC<EmailTiptapEditorProps> = ({
     editable: !disabled,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      // Get HTML content
       const html = editor.getHTML();
       onChange(html);
     },
@@ -107,32 +116,26 @@ export const EmailTiptapEditor: React.FC<EmailTiptapEditorProps> = ({
     }
   }, [editor, value]);
 
-  if (!editor) {
-    return null;
+  const handleInsertLink = () => {
+    if (!editor || !linkUrl.trim()) return
+    const url = linkUrl.trim()
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run()
+    } else {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+    }
+    setLinkUrl('')
+    setLinkPopoverOpen(false)
   }
 
-  const addImage = () => {
-    const url = window.prompt('Enter image URL:');
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
-  };
+  const handleInsertImage = () => {
+    if (!editor || !imageUrl.trim()) return
+    editor.chain().focus().setImage({ src: imageUrl.trim() }).run()
+    setImageUrl('')
+    setImagePopoverOpen(false)
+  }
 
-  const setLink = () => {
-    const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('URL', previousUrl);
-
-    if (url === null) {
-      return;
-    }
-
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run();
-      return;
-    }
-
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  };
+  if (!editor) return null;
 
   if (!isClient) {
     return (
@@ -150,8 +153,7 @@ export const EmailTiptapEditor: React.FC<EmailTiptapEditorProps> = ({
     <div className={`${styles['simple-tiptap-container']} ${className}`}>
       {/* Toolbar */}
       <div className={styles['simple-tiptap-toolbar']}>
-        {/* Left side toolbar items */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1 }}>
+        <div className="flex items-center gap-1 flex-1">
           {/* Undo/Redo */}
           <div className={styles['toolbar-group']}>
             <button
@@ -281,6 +283,100 @@ export const EmailTiptapEditor: React.FC<EmailTiptapEditorProps> = ({
 
           <div className={styles['toolbar-separator']} />
 
+          {/* Link popover */}
+          <div className={styles['toolbar-group']}>
+            <Popover open={linkPopoverOpen} onOpenChange={(open) => {
+              setLinkPopoverOpen(open)
+              if (open) {
+                const existing = editor.getAttributes('link').href || ''
+                setLinkUrl(existing)
+              }
+            }}>
+              <PopoverTrigger asChild>
+                <button
+                  className={`${styles['toolbar-button']} ${editor.isActive('link') ? styles['active'] : ''}`}
+                  title="Link"
+                >
+                  <LinkIcon size={16} />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-3" align="start">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Insert link</p>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={linkUrl}
+                    onChange={(e) => setLinkUrl(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); handleInsertLink() }
+                      if (e.key === 'Escape') { setLinkPopoverOpen(false) }
+                    }}
+                    placeholder="https://..."
+                    className="flex-1 text-sm border border-border rounded-md px-2 py-1.5 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleInsertLink}
+                    className="text-sm px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                  >
+                    Insert
+                  </button>
+                </div>
+                {editor.isActive('link') && (
+                  <button
+                    onClick={() => {
+                      editor.chain().focus().extendMarkRange('link').unsetLink().run()
+                      setLinkPopoverOpen(false)
+                    }}
+                    className="mt-2 text-xs text-destructive hover:underline"
+                  >
+                    Remove link
+                  </button>
+                )}
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Image popover */}
+          <div className={styles['toolbar-group']}>
+            <Popover open={imagePopoverOpen} onOpenChange={(open) => {
+              setImagePopoverOpen(open)
+              if (!open) setImageUrl('')
+            }}>
+              <PopoverTrigger asChild>
+                <button
+                  className={styles['toolbar-button']}
+                  title="Insert Image"
+                >
+                  <ImageIcon size={16} />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-3" align="start">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Insert image</p>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); handleInsertImage() }
+                      if (e.key === 'Escape') { setImagePopoverOpen(false) }
+                    }}
+                    placeholder="https://..."
+                    className="flex-1 text-sm border border-border rounded-md px-2 py-1.5 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleInsertImage}
+                    className="text-sm px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                  >
+                    Insert
+                  </button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
           {/* More Tools */}
           <div className={styles['toolbar-group']}>
             <DropdownMenu>
@@ -290,15 +386,7 @@ export const EmailTiptapEditor: React.FC<EmailTiptapEditorProps> = ({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={addImage}>
-                  <ImageIcon className="h-4 w-4 mr-2" />
-                  Add Image
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={setLink}>
-                  <LinkIcon className="h-4 w-4 mr-2" />
-                  Add Link
-                </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => editor.chain().focus().setHorizontalRule().run()}
                 >
                   <Minus className="h-4 w-4 mr-2" />
@@ -308,12 +396,10 @@ export const EmailTiptapEditor: React.FC<EmailTiptapEditorProps> = ({
             </DropdownMenu>
           </div>
         </div>
-
-
       </div>
 
-      <EditorContent 
-        editor={editor} 
+      <EditorContent
+        editor={editor}
         className={styles['simple-tiptap-content']}
       />
     </div>
