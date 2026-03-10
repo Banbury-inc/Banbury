@@ -20,25 +20,19 @@ export async function handleConnectDatabase({
   setIsConnecting(true)
   const connection = buildConnectionConfig(formState)
 
-  const testResult = await handleConnectionTest(connection).catch(() => ({
-    success: false,
-    error: 'Connection test failed',
-  }))
+  const testResult = await handleConnectionTest(connection)
 
   if (!testResult.success) {
     toast({
       title: 'Connection failed',
-      description: testResult.error || 'Please verify connection details.',
+      description: testResult.error ?? 'Please verify connection details.',
       variant: 'destructive',
     })
     setIsConnecting(false)
     return
   }
 
-  const treeResult = await handleLoadTree(connection).catch(() => ({
-    tree: [],
-    error: 'Failed to load database tree',
-  }))
+  const treeResult = await handleLoadTree(connection)
 
   if (treeResult.error) {
     toast({
