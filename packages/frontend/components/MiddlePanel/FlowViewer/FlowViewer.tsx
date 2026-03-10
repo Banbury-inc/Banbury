@@ -194,6 +194,7 @@ function FlowViewerInner({ flow, onFlowUpdated }: FlowViewerProps) {
       setRunStatus('idle')
       return
     }
+    if (isDirty) await handleSave()
     setShowLogs(false)
     await runFlow({
       flowId: flow.id,
@@ -203,7 +204,7 @@ function FlowViewerInner({ flow, onFlowUpdated }: FlowViewerProps) {
       onFlowUpdated,
       onLogsReceived: updateOutputNodes,
     })
-  }, [flow.id, runStatus, onFlowUpdated, updateOutputNodes])
+  }, [flow.id, runStatus, isDirty, handleSave, onFlowUpdated, updateOutputNodes])
 
   const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     setSelectedNodeId(node.id)
