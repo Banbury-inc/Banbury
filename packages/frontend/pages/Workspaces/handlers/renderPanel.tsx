@@ -35,6 +35,7 @@ import { MeetingJoinComposer } from '../../../components/MiddlePanel/MeetingView
 import { AdminViewer } from '../../../components/MiddlePanel/AdminViewer/AdminViewer';
 import { DatabaseViewer } from '../../../components/MiddlePanel/DatabaseViewer/DatabaseViewer';
 import { FlowViewer } from '../../../components/MiddlePanel/FlowViewer/FlowViewer';
+import TerminalViewer from '../../../components/MiddlePanel/TerminalViewer/TerminalViewer';
 
 interface RenderPanelProps {
   panel: Panel;
@@ -146,6 +147,7 @@ export const renderPanel = ({
                 else if (t.type === 'task') label = t.title;
                 else if (t.type === 'meeting') label = t.title;
                 else if (t.type === 'admin') label = t.title;
+                else if (t.type === 'terminal') label = t.title;
                 else if (t.type === 'database-table') label = t.title;
                 else if (t.type === 'flow') label = t.title;
                 return { id: t.id, label };
@@ -593,6 +595,10 @@ export const renderPanel = ({
 
                 if (tab.type === 'database-table') {
                   return <DatabaseViewer tab={tab} />
+                }
+
+                if (tab.type === 'terminal') {
+                  return <TerminalViewer cwd={tab.cwd} />
                 }
 
                 if (tab.type === 'flow') {
