@@ -98,10 +98,9 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
   triggerSidebarRefresh,
 }, ref) {
   const { toast } = useToast()
-  const { files: userFiles, loading: filesLoading, error: filesError, refetch, initialized } = useUserFiles()
+  const { files: userFiles, loading: filesLoading, refetch, initialized } = useUserFiles()
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [fileSystem, setFileSystem] = useState<FileSystemItem[]>([])
-  const [error, setError] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   
   // Recent/Starred/Shared state
@@ -309,12 +308,6 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
     }
   }, [userFiles, initialized])
 
-  // Handle errors from context
-  useEffect(() => {
-    if (filesError) {
-      setError(filesError)
-    }
-  }, [filesError])
 
   // Refresh handler - Use a ref to avoid recreating the function
   const onRefreshCompleteRef = useRef(onRefreshComplete)
@@ -1107,11 +1100,6 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
             </div>
           )}
           
-          {viewMode === 'local' && error && (
-            <div className="px-3 py-2">
-              <Typography variant="small" className="text-destructive">{error}</Typography>
-            </div>
-          )}
           
           {viewMode === 'local' && uploadingFolder && (
             <div className="flex items-center gap-2 px-3 py-2">
@@ -1120,7 +1108,7 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
             </div>
           )}
           
-          {viewMode === 'local' && !filesLoading && !error && filteredFileSystem.length === 0 && !uploadingFolder && (
+          {viewMode === 'local' && !filesLoading && filteredFileSystem.length === 0 && !uploadingFolder && (
             <div className="flex flex-col items-center justify-center py-12 px-4">
               {activeFilters.size > 0 ? (
                 <>

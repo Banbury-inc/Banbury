@@ -1,7 +1,7 @@
 .simple-tiptap-container {
   border: none;
   border-radius: 0;
-  background: var(--color-background);
+  background: white;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -87,7 +87,7 @@
   outline: none;
   min-height: 200px;
   line-height: 1.6;
-  color: var(--color-foreground);
+  color: #1e293b;
 }
 
 .simple-tiptap-editor h1 {
@@ -156,7 +156,7 @@
 
 .simple-tiptap-editor li {
   margin: 0.25em 0;
-  list-style-color: var(--color-foreground);
+  list-style-color: #1e293b;
 }
 
 .simple-tiptap-editor blockquote {
