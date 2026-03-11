@@ -24,6 +24,7 @@ import { handleCreateDocumentSubmit } from "../../handlers/handleCreateDocumentS
 import { handleCreateSpreadsheetSubmit } from "../../handlers/handleCreateSpreadsheetSubmit"
 import { handleCreateDrawioSubmit as handleCreateDrawioSubmitHandler } from "../../handlers/handleCreateDrawioSubmit"
 import { handleCreatePowerpointSubmit } from "../../handlers/handleCreatePowerpointSubmit"
+import { handleCreateCodeFileSubmit } from "../../handlers/handleCreateCodeFileSubmit"
 import { handleCreateRootFolderSubmit } from "../../handlers/handleCreateRootFolderSubmit"
 import { getRecentFileIds, addRecentFileId } from "../../handlers/handleRecentFiles"
 import { fetchStarredFileIds, starFile, unstarFile } from "../../handlers/handleStarredFiles"
@@ -60,6 +61,7 @@ interface LocalFilesViewProps {
   onCreateDrawio?: (diagramName: string) => void
   onCreateTldraw?: (drawingName: string) => void
   onCreatePowerpoint?: (presentationName: string) => void
+  onCreateCodeFile?: (fileName: string) => void
   fileInputRef: React.RefObject<HTMLInputElement>
   folderInputRef: React.RefObject<HTMLInputElement>
   activeFilters?: Set<string>
@@ -71,6 +73,7 @@ export interface LocalFilesViewRef {
   triggerCreateSpreadsheet: () => void
   triggerCreateTldraw: () => void
   triggerCreatePowerpoint: () => void
+  triggerCreateCodeFile: () => void
 }
 
 export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>(function LocalFilesView({
@@ -92,6 +95,7 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
   onCreateDrawio,
   onCreateTldraw,
   onCreatePowerpoint,
+  onCreateCodeFile,
   fileInputRef,
   folderInputRef,
   activeFilters = new Set(),
@@ -148,6 +152,13 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
   const [isCreatingPowerpointPending, setIsCreatingPowerpointPending] = useState(false)
   const [pendingPowerpointName, setPendingPowerpointName] = useState<string | null>(null)
   const powerpointInputRef = useRef<HTMLInputElement | null>(null)
+
+  // Code file creation state
+  const [isCreatingCodeFile, setIsCreatingCodeFile] = useState(false)
+  const [newCodeFileName, setNewCodeFileName] = useState('main.py')
+  const [isCreatingCodeFilePending, setIsCreatingCodeFilePending] = useState(false)
+  const [pendingCodeFileName, setPendingCodeFileName] = useState<string | null>(null)
+  const codeFileInputRef = useRef<HTMLInputElement | null>(null)
   
   const [uploadingFolder, setUploadingFolder] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
@@ -786,6 +797,43 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
     }
   }
 
+  // Code file creation handlers
+  const handleCreateCodeFile = useCallback(() => {
+    setIsCreatingCodeFile(true)
+    setNewCodeFileName('main.py')
+  }, [])
+
+  useEffect(() => {
+    if (isCreatingCodeFile && codeFileInputRef.current) {
+      const timeoutId = setTimeout(() => {
+        if (codeFileInputRef.current) {
+          codeFileInputRef.current.focus()
+          selectFilenameWithoutExtension(codeFileInputRef.current)
+        }
+      }, 10)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [isCreatingCodeFile])
+
+  const handleCreateCodeFileSubmitAction = async () => {
+    await handleCreateCodeFileSubmit({
+      newCodeFileName,
+      setIsCreatingCodeFile,
+      setNewCodeFileName,
+      setIsCreatingCodeFilePending,
+      setPendingCodeFileName,
+      onCreateCodeFile,
+    })
+  }
+
+  const handleCreateCodeFileKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleCreateCodeFileSubmitAction()
+    else if (e.key === 'Escape') {
+      setIsCreatingCodeFile(false)
+      setNewCodeFileName('main.py')
+    }
+  }
+
   // Handle file upload
   const handleFileUpload = () => {
     if (fileInputRef.current) {
@@ -942,7 +990,8 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
     triggerCreateSpreadsheet: handleCreateSpreadsheet,
     triggerCreateTldraw: handleCreateTldraw,
     triggerCreatePowerpoint: handleCreatePowerpoint,
-  }), [handleCreateDocument, handleCreateSpreadsheet, handleCreateTldraw, handleCreatePowerpoint])
+    triggerCreateCodeFile: handleCreateCodeFile,
+  }), [handleCreateDocument, handleCreateSpreadsheet, handleCreateTldraw, handleCreatePowerpoint, handleCreateCodeFile])
 
   // Expose handlers for parent components (legacy window-based approach)
   useEffect(() => {
@@ -961,6 +1010,9 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
     if (onCreatePowerpoint) {
       (window as any).__handleCreatePowerpoint = handleCreatePowerpoint
     }
+    if (onCreateCodeFile) {
+      (window as any).__handleCreateCodeFile = handleCreateCodeFile
+    }
 
     // Cleanup on unmount
     return () => {
@@ -969,8 +1021,9 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
       delete (window as any).__handleCreateDrawio
       delete (window as any).__handleCreateTldraw
       delete (window as any).__handleCreatePowerpoint
+      delete (window as any).__handleCreateCodeFile
     }
-  }, [onCreateDocument, onCreateSpreadsheet, onCreateDrawio, onCreateTldraw, onCreatePowerpoint, handleCreateDocument, handleCreateSpreadsheet, handleCreateTldraw, handleCreatePowerpoint])
+  }, [onCreateDocument, onCreateSpreadsheet, onCreateDrawio, onCreateTldraw, onCreatePowerpoint, onCreateCodeFile, handleCreateDocument, handleCreateSpreadsheet, handleCreateTldraw, handleCreatePowerpoint, handleCreateCodeFile])
 
   return (
     <div className="h-full overflow-hidden flex flex-col">
@@ -1301,6 +1354,33 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
               <div className="w-3" />
               <RefreshCw className="h-4 w-4 animate-spin" />
               <Typography variant="xs" className="truncate min-w-0 flex-1">{pendingPowerpointName}</Typography>
+              <Typography variant="muted" className="text-xs">Creating...</Typography>
+            </div>
+          )}
+
+          {/* Root level code file creation */}
+          {viewMode === 'local' && isCreatingCodeFile && (
+            <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
+              <div className="w-3" />
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={newCodeFileName}
+                onChange={(e) => setNewCodeFileName(e.target.value)}
+                onKeyDown={handleCreateCodeFileKeyDown}
+                onBlur={handleCreateCodeFileSubmitAction}
+                className="text-sm bg-muted text-foreground px-1 py-0 rounded border-none outline-none flex-1"
+                ref={codeFileInputRef}
+                onFocus={(e) => selectFilenameWithoutExtension(e.currentTarget)}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          )}
+          {viewMode === 'local' && isCreatingCodeFilePending && pendingCodeFileName && (
+            <div className="w-full flex items-center gap-2 text-left px-3 py-2" style={{ paddingLeft: '12px' }}>
+              <div className="w-3" />
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              <Typography variant="xs" className="truncate min-w-0 flex-1">{pendingCodeFileName}</Typography>
               <Typography variant="muted" className="text-xs">Creating...</Typography>
             </div>
           )}

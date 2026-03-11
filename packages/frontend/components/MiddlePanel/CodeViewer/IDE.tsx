@@ -1,24 +1,16 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Editor } from '@monaco-editor/react';
-import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import { ApiService } from '../../../../backend/api/apiService';
-import { CONFIG } from '../../../config/config';
-import IDESettings from './IDESettings';
-import { 
-  File, 
-  Folder, 
-  Save, 
-  Play, 
-  Settings, 
-  Search, 
-  Terminal, 
-  GitBranch, 
-  Eye,
-  Edit3,
-  Download,
-  Upload,
-  Trash2,
-  Plus,
+import React, { useState, useEffect, useRef, useCallback, useId } from 'react'
+import { Editor } from '@monaco-editor/react'
+import { FileSystemItem } from '../../../utils/fileTreeUtils'
+import { ApiService } from '../../../../backend/api/apiService'
+import IDESettings from './IDESettings'
+import { useDesktopTerminal, isDesktopTerminalAvailable } from './handlers/useDesktopTerminal'
+import '@xterm/xterm/css/xterm.css'
+import {
+  File,
+  Play,
+  Settings,
+  Search,
+  Terminal,
   ChevronDown,
   ChevronRight,
   FileText,
@@ -32,325 +24,279 @@ import {
   FileType,
   FileBarChart,
   FileCog,
-  ListChecks
-} from 'lucide-react';
+  ListChecks,
+} from 'lucide-react'
 
 interface IDEProps {
-  file: FileSystemItem;
+  file: FileSystemItem
   userInfo?: {
-    username: string;
-    email?: string;
-  } | null;
-  onSaveComplete?: () => void;
+    username: string
+    email?: string
+  } | null
+  onSaveComplete?: () => void
 }
 
 interface FileTab {
-  id: string;
-  file: FileSystemItem;
-  content: string;
-  isModified: boolean;
-  isActive: boolean;
+  id: string
+  file: FileSystemItem
+  content: string
+  isModified: boolean
+  isActive: boolean
 }
 
-interface FileExplorerItem {
-  id: string;
-  name: string;
-  type: 'file' | 'folder';
-  path: string;
-  children?: FileExplorerItem[];
-  isExpanded?: boolean;
+const getLanguageFromExtension = (fileName: string): string => {
+  const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
+
+  const languageMap: Record<string, string> = {
+    '.js': 'javascript',
+    '.jsx': 'javascript',
+    '.ts': 'typescript',
+    '.tsx': 'typescript',
+    '.py': 'python',
+    '.java': 'java',
+    '.cpp': 'cpp',
+    '.c': 'c',
+    '.h': 'c',
+    '.hpp': 'cpp',
+    '.cs': 'csharp',
+    '.php': 'php',
+    '.rb': 'ruby',
+    '.go': 'go',
+    '.rs': 'rust',
+    '.swift': 'swift',
+    '.kt': 'kotlin',
+    '.scala': 'scala',
+    '.html': 'html',
+    '.htm': 'html',
+    '.css': 'css',
+    '.scss': 'scss',
+    '.sass': 'sass',
+    '.less': 'less',
+    '.xml': 'xml',
+    '.json': 'json',
+    '.yaml': 'yaml',
+    '.yml': 'yaml',
+    '.toml': 'toml',
+    '.ini': 'ini',
+    '.cfg': 'ini',
+    '.conf': 'ini',
+    '.sh': 'shell',
+    '.bash': 'shell',
+    '.zsh': 'shell',
+    '.fish': 'shell',
+    '.sql': 'sql',
+    '.r': 'r',
+    '.m': 'matlab',
+    '.mat': 'matlab',
+    '.ipynb': 'json',
+    '.jl': 'julia',
+    '.dart': 'dart',
+    '.lua': 'lua',
+    '.pl': 'perl',
+    '.pm': 'perl',
+    '.tcl': 'tcl',
+    '.vbs': 'vb',
+    '.ps1': 'powershell',
+    '.bat': 'batch',
+    '.cmd': 'batch',
+    '.coffee': 'coffeescript',
+    '.litcoffee': 'coffeescript',
+    '.iced': 'coffeescript',
+    '.md': 'markdown',
+    '.markdown': 'markdown',
+    '.tex': 'latex',
+    '.rtex': 'latex',
+    '.bib': 'bibtex',
+    '.vue': 'vue',
+    '.svelte': 'svelte',
+  }
+
+  return languageMap[extension] || 'plaintext'
+}
+
+const getFileIcon = (fileName: string) => {
+  const lowerName = fileName.toLowerCase()
+
+  if (lowerName.endsWith('.plan.md') || lowerName.endsWith('.plan.json')) return ListChecks
+
+  const extension = lowerName.substring(lowerName.lastIndexOf('.'))
+
+  if (['.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala'].includes(extension))
+    return FileCode
+  if (['.html', '.htm', '.css', '.scss', '.sass', '.less'].includes(extension)) return FileText
+  if (['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'].includes(extension)) return FileImage
+  if (['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv'].includes(extension)) return FileVideo
+  if (['.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma'].includes(extension)) return FileAudio
+  if (['.xlsx', '.xls', '.csv'].includes(extension)) return FileSpreadsheet
+  if (['.zip', '.rar', '.7z', '.tar', '.gz'].includes(extension)) return FileArchive
+  if (['.json', '.xml', '.yaml', '.yml'].includes(extension)) return FileJson
+  if (['.ttf', '.otf', '.woff', '.woff2'].includes(extension)) return FileType
+  if (['.pptx', '.ppt'].includes(extension)) return FileBarChart
+  if (['.exe', '.msi', '.app', '.dmg'].includes(extension)) return FileCog
+
+  return File
 }
 
 const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
-  const [tabs, setTabs] = useState<FileTab[]>([]);
-  const [activeTabId, setActiveTabId] = useState<string | null>(null);
-  const [fileExplorer, setFileExplorer] = useState<FileExplorerItem[]>([]);
-  const [isFileExplorerOpen, setIsFileExplorerOpen] = useState(true);
-  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [currentFile, setCurrentFile] = useState<FileSystemItem>(file);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [language, setLanguage] = useState<string>('plaintext');
-  const [theme, setTheme] = useState<'vs-dark' | 'vs-light'>('vs-dark');
-  const [fontSize, setFontSize] = useState(14);
-  const [wordWrap, setWordWrap] = useState<'on' | 'off'>('on');
-  const [showLineNumbers, setShowLineNumbers] = useState(true);
-  const [showMinimap, setShowMinimap] = useState(true);
-  const [terminalOutput, setTerminalOutput] = useState<string[]>([]);
-  const [terminalInput, setTerminalInput] = useState('');
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const editorRef = useRef<any>(null);
-  const terminalRef = useRef<HTMLDivElement>(null);
+  const [tabs, setTabs] = useState<FileTab[]>([])
+  const [activeTabId, setActiveTabId] = useState<string | null>(null)
+  const [isFileExplorerOpen, setIsFileExplorerOpen] = useState(true)
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [currentFile, setCurrentFile] = useState<FileSystemItem>(file)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [language, setLanguage] = useState<string>('plaintext')
+  const [theme, setTheme] = useState<'vs-dark' | 'vs-light'>('vs-dark')
+  const [fontSize, setFontSize] = useState(14)
+  const [wordWrap, setWordWrap] = useState<'on' | 'off'>('on')
+  const [showLineNumbers, setShowLineNumbers] = useState(true)
+  const [showMinimap, setShowMinimap] = useState(true)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
-  // Map file extensions to Monaco Editor language IDs
-  const getLanguageFromExtension = (fileName: string): string => {
-    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
-    
-    const languageMap: { [key: string]: string } = {
-      '.js': 'javascript',
-      '.jsx': 'javascript',
-      '.ts': 'typescript',
-      '.tsx': 'typescript',
-      '.py': 'python',
-      '.java': 'java',
-      '.cpp': 'cpp',
-      '.c': 'c',
-      '.h': 'c',
-      '.hpp': 'cpp',
-      '.cs': 'csharp',
-      '.php': 'php',
-      '.rb': 'ruby',
-      '.go': 'go',
-      '.rs': 'rust',
-      '.swift': 'swift',
-      '.kt': 'kotlin',
-      '.scala': 'scala',
-      '.html': 'html',
-      '.htm': 'html',
-      '.css': 'css',
-      '.scss': 'scss',
-      '.sass': 'sass',
-      '.less': 'less',
-      '.xml': 'xml',
-      '.json': 'json',
-      '.yaml': 'yaml',
-      '.yml': 'yaml',
-      '.toml': 'toml',
-      '.ini': 'ini',
-      '.cfg': 'ini',
-      '.conf': 'ini',
-      '.sh': 'shell',
-      '.bash': 'shell',
-      '.zsh': 'shell',
-      '.fish': 'shell',
-      '.sql': 'sql',
-      '.r': 'r',
-      '.m': 'matlab',
-      '.mat': 'matlab',
-      '.ipynb': 'json',
-      '.jl': 'julia',
-      '.dart': 'dart',
-      '.lua': 'lua',
-      '.pl': 'perl',
-      '.pm': 'perl',
-      '.tcl': 'tcl',
-      '.vbs': 'vb',
-      '.ps1': 'powershell',
-      '.bat': 'batch',
-      '.cmd': 'batch',
-      '.coffee': 'coffeescript',
-      '.litcoffee': 'coffeescript',
-      '.iced': 'coffeescript',
-      '.md': 'markdown',
-      '.markdown': 'markdown',
-      '.tex': 'latex',
-      '.rtex': 'latex',
-      '.bib': 'bibtex',
-      '.vue': 'vue',
-      '.svelte': 'svelte',
-    };
+  const editorRef = useRef<any>(null)
+  const xtermContainerRef = useRef<HTMLDivElement>(null)
+  const uid = useId()
+  const sessionId = `ide-terminal-${uid.replace(/:/g, '')}`
 
-    return languageMap[extension] || 'plaintext';
-  };
+  const { writeToTerminal } = useDesktopTerminal({
+    sessionId,
+    containerRef: xtermContainerRef,
+    isOpen: isTerminalOpen,
+  })
 
-  // Get file icon based on type
-  const getFileIcon = (fileName: string) => {
-    const lowerName = fileName.toLowerCase();
-    
-    // Check for plan files first
-    if (lowerName.endsWith('.plan.md') || lowerName.endsWith('.plan.json')) {
-      return ListChecks;
-    }
-    
-    const extension = lowerName.substring(lowerName.lastIndexOf('.'));
-    
-    if (['.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala'].includes(extension)) {
-      return FileCode;
-    } else if (['.html', '.htm', '.css', '.scss', '.sass', '.less'].includes(extension)) {
-      return FileText;
-    } else if (['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'].includes(extension)) {
-      return FileImage;
-    } else if (['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv'].includes(extension)) {
-      return FileVideo;
-    } else if (['.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma'].includes(extension)) {
-      return FileAudio;
-    } else if (['.xlsx', '.xls', '.csv'].includes(extension)) {
-      return FileSpreadsheet;
-    } else if (['.zip', '.rar', '.7z', '.tar', '.gz'].includes(extension)) {
-      return FileArchive;
-    } else if (['.json', '.xml', '.yaml', '.yml'].includes(extension)) {
-      return FileJson;
-    } else if (['.ttf', '.otf', '.woff', '.woff2'].includes(extension)) {
-      return FileType;
-    } else if (['.pptx', '.ppt'].includes(extension)) {
-      return FileBarChart;
-    } else if (['.exe', '.msi', '.app', '.dmg'].includes(extension)) {
-      return FileCog;
-    }
-    
-    return File;
-  };
+  const handleRunActiveFile = useCallback(() => {
+    const tab = tabs.find(t => t.id === activeTabId)
+    if (!tab) return
+    const isPython = tab.file.name.toLowerCase().endsWith('.py')
+    const cmd = isPython ? `python "${tab.file.name}"\r` : `"./${tab.file.name}"\r`
+    if (!isTerminalOpen) setIsTerminalOpen(true)
+    // Give the terminal a moment to mount before writing
+    setTimeout(() => writeToTerminal(cmd), 100)
+  }, [tabs, activeTabId, isTerminalOpen, writeToTerminal])
 
-  // Load file content
   const loadFileContent = useCallback(async (fileItem: FileSystemItem) => {
-
     try {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
 
-      const downloadResult = await ApiService.downloadS3File(fileItem.file_id || '', fileItem.name);
-      
+      const downloadResult = await ApiService.Files.downloadS3File(fileItem.file_id || '', fileItem.name)
+
       if (!downloadResult.success) {
-        throw new Error('Failed to download file');
+        throw new Error('Failed to download file')
       }
 
-      const fileContent = await downloadResult.blob.text();
-      const detectedLanguage = getLanguageFromExtension(fileItem.name);
-      
-      setLanguage(detectedLanguage);
-      setCurrentFile(fileItem);
-      
-      // Add to tabs if not already present
+      const fileContent = await downloadResult.blob.text()
+      const detectedLanguage = getLanguageFromExtension(fileItem.name)
+
+      setLanguage(detectedLanguage)
+      setCurrentFile(fileItem)
+
       setTabs(prevTabs => {
-        const existingTab = prevTabs.find(tab => tab.file.file_id === fileItem.file_id);
+        const existingTab = prevTabs.find(tab => tab.file.file_id === fileItem.file_id)
         if (existingTab) {
-          // Update existing tab
-          return prevTabs.map(tab => 
-            tab.file.file_id === fileItem.file_id 
+          return prevTabs.map(tab =>
+            tab.file.file_id === fileItem.file_id
               ? { ...tab, content: fileContent, isActive: true }
               : { ...tab, isActive: false }
-          );
-        } else {
-          // Add new tab
-          const newTab: FileTab = {
-            id: fileItem.file_id,
-            file: fileItem,
-            content: fileContent,
-            isModified: false,
-            isActive: true
-          };
-          return prevTabs.map(tab => ({ ...tab, isActive: false })).concat(newTab);
+          )
         }
-      });
-      
-      setActiveTabId(fileItem.file_id);
-    } catch (err) {
-      console.error('Error loading file content:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load file content');
-    } finally {
-      setLoading(false);
-    }
-  }, [userInfo]);
+        const newTab: FileTab = {
+          id: fileItem.file_id,
+          file: fileItem,
+          content: fileContent,
+          isModified: false,
+          isActive: true,
+        }
+        return prevTabs.map(tab => ({ ...tab, isActive: false })).concat(newTab)
+      })
 
-  // Save file content
+      setActiveTabId(fileItem.file_id)
+    } catch (err) {
+      console.error('Error loading file content:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load file content')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   const saveFile = useCallback(async (tabId: string) => {
-    const tab = tabs.find(t => t.id === tabId);
-    if (!tab || !tab.isModified) return;
+    const tab = tabs.find(t => t.id === tabId)
+    if (!tab || !tab.isModified) return
 
     try {
-      // Get current editor content
-      const currentContent = editorRef.current?.getValue() || tab.content;
-      
-      // Create blob from content
-      const blob = new Blob([currentContent], { type: 'text/plain' });
-      
-      // Upload to S3
-      await ApiService.uploadToS3(
+      const currentContent = editorRef.current?.getValue() || tab.content
+      const blob = new Blob([currentContent], { type: 'text/plain' })
+
+      await ApiService.Files.uploadToS3(
         blob,
         tab.file.name,
-        userInfo?.username || 'web-editor' || '',
+        userInfo?.username || 'web-editor',
         tab.file.path,
-        'uploads'
-      );
-
-      // Update tab
-      setTabs(prevTabs => 
-        prevTabs.map(t => 
-          t.id === tabId 
-            ? { ...t, content: currentContent, isModified: false }
-            : t
-        )
-      );
-
-      onSaveComplete?.();
-    } catch (error) {
-      console.error('Error saving file:', error);
-      setError('Failed to save file');
-    }
-  }, [tabs, userInfo, onSaveComplete]);
-
-  // Handle editor change
-  const handleEditorChange = useCallback((value: string | undefined, event: any) => {
-    if (!activeTabId) return;
-    
-    setTabs(prevTabs => 
-      prevTabs.map(tab => 
-        tab.id === activeTabId 
-          ? { ...tab, content: value || '', isModified: true }
-          : tab
+        ''
       )
-    );
-  }, [activeTabId]);
 
-  // Handle tab close
+      setTabs(prevTabs =>
+        prevTabs.map(t =>
+          t.id === tabId ? { ...t, content: currentContent, isModified: false } : t
+        )
+      )
+
+      onSaveComplete?.()
+    } catch (saveError) {
+      console.error('Error saving file:', saveError)
+      setError('Failed to save file')
+    }
+  }, [tabs, userInfo, onSaveComplete])
+
+  const handleEditorChange = useCallback((value: string | undefined) => {
+    if (!activeTabId) return
+    setTabs(prevTabs =>
+      prevTabs.map(tab =>
+        tab.id === activeTabId ? { ...tab, content: value || '', isModified: true } : tab
+      )
+    )
+  }, [activeTabId])
+
   const closeTab = useCallback((tabId: string) => {
-    const tab = tabs.find(t => t.id === tabId);
+    const tab = tabs.find(t => t.id === tabId)
     if (tab?.isModified) {
-      if (!window.confirm('File has unsaved changes. Close anyway?')) {
-        return;
-      }
+      if (!window.confirm('File has unsaved changes. Close anyway?')) return
     }
 
     setTabs(prevTabs => {
-      const newTabs = prevTabs.filter(t => t.id !== tabId);
+      const newTabs = prevTabs.filter(t => t.id !== tabId)
       if (newTabs.length > 0 && activeTabId === tabId) {
-        setActiveTabId(newTabs[newTabs.length - 1].id);
+        setActiveTabId(newTabs[newTabs.length - 1].id)
       }
-      return newTabs;
-    });
-  }, [tabs, activeTabId]);
+      return newTabs
+    })
+  }, [tabs, activeTabId])
 
-  // Handle terminal input
-  const handleTerminalInput = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      const command = terminalInput.trim();
-      if (command) {
-        setTerminalOutput(prev => [...prev, `$ ${command}`, 'Command executed (simulated)']);
-        setTerminalInput('');
-      }
-    }
-  }, [terminalInput]);
-
-  // Load initial file
   useEffect(() => {
-    loadFileContent(file);
-  }, [file, loadFileContent]);
+    loadFileContent(file)
+  }, [file, loadFileContent])
 
-  // Auto-save functionality
+  // Auto-save every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       if (activeTabId) {
-        const tab = tabs.find(t => t.id === activeTabId);
-        if (tab?.isModified) {
-          saveFile(activeTabId);
-        }
+        const tab = tabs.find(t => t.id === activeTabId)
+        if (tab?.isModified) saveFile(activeTabId)
       }
-    }, 30000); // Auto-save every 30 seconds
-
-    return () => clearInterval(interval);
-  }, [activeTabId, tabs, saveFile]);
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [activeTabId, tabs, saveFile])
 
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center bg-zinc-800">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4" />
           <p className="text-gray-400">Loading IDE...</p>
         </div>
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -361,10 +307,11 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
           <p className="text-gray-400 mb-4">{error}</p>
         </div>
       </div>
-    );
+    )
   }
 
-  const activeTab = tabs.find(t => t.id === activeTabId);
+  const activeTab = tabs.find(t => t.id === activeTabId)
+  const isDesktop = isDesktopTerminalAvailable()
 
   return (
     <div className="h-full bg-zinc-800 flex flex-col">
@@ -379,8 +326,17 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
           </button>
           <span className="text-sm text-gray-300 font-medium">IDE</span>
         </div>
-        
+
         <div className="flex items-center gap-2">
+          {activeTab && isDesktop && (
+            <button
+              onClick={handleRunActiveFile}
+              className="text-green-400 hover:text-green-300 p-1"
+              title={`Run ${activeTab.file.name} in terminal`}
+            >
+              <Play size={16} />
+            </button>
+          )}
           <button
             onClick={() => setIsSearchOpen(!isSearchOpen)}
             className="text-gray-400 hover:text-white p-1"
@@ -390,8 +346,8 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
           </button>
           <button
             onClick={() => setIsTerminalOpen(!isTerminalOpen)}
-            className="text-gray-400 hover:text-white p-1"
-            title="Terminal"
+            className={`p-1 ${isTerminalOpen ? 'text-green-400' : 'text-gray-400 hover:text-white'}`}
+            title={isDesktop ? 'Toggle Terminal' : 'Terminal (desktop app only)'}
           >
             <Terminal size={16} />
           </button>
@@ -406,27 +362,26 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
       </div>
 
       {/* Main IDE Content */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
         {/* File Explorer Sidebar */}
         {isFileExplorerOpen && (
-          <div className="w-64 bg-zinc-800 border-r  border-zinc-600 flex flex-col">
+          <div className="w-64 bg-zinc-800 border-r border-zinc-600 flex flex-col">
             <div className="p-3 border-b border-zinc-600">
               <h3 className="text-sm font-medium text-gray-300">Explorer</h3>
             </div>
             <div className="flex-1 overflow-y-auto p-2">
-              {/* File tree would go here */}
               <div className="text-sm text-gray-400">File explorer coming soon...</div>
             </div>
           </div>
         )}
 
-        {/* Editor Area */}
-        <div className="flex-1 flex flex-col">
+        {/* Editor + Terminal column */}
+        <div className="flex-1 flex flex-col overflow-hidden">
           {/* Tab Bar */}
           {tabs.length > 0 && (
             <div className="bg-zinc-800 border-b border-zinc-600 flex items-center">
               {tabs.map(tab => {
-                const FileIcon = getFileIcon(tab.file.name);
+                const FileIcon = getFileIcon(tab.file.name)
                 return (
                   <div
                     key={tab.id}
@@ -439,22 +394,22 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
                     <span className="truncate max-w-32">{tab.file.name}</span>
                     {tab.isModified && <span className="text-yellow-400">•</span>}
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        closeTab(tab.id);
+                      onClick={e => {
+                        e.stopPropagation()
+                        closeTab(tab.id)
                       }}
                       className="ml-2 text-gray-500 hover:text-red-400"
                     >
                       ×
                     </button>
                   </div>
-                );
+                )
               })}
             </div>
           )}
 
-          {/* Editor */}
-          <div className="flex-1 relative">
+          {/* Monaco Editor */}
+          <div className="flex-1 relative overflow-hidden">
             {activeTab ? (
               <Editor
                 height="100%"
@@ -462,22 +417,20 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
                 value={activeTab.content}
                 theme={theme}
                 onChange={handleEditorChange}
-                onMount={(editor) => {
-                  editorRef.current = editor;
+                onMount={editor => {
+                  editorRef.current = editor
                 }}
                 options={{
                   readOnly: false,
                   minimap: { enabled: showMinimap },
-                  fontSize: fontSize,
+                  fontSize,
                   lineNumbers: showLineNumbers ? 'on' : 'off',
-                  wordWrap: wordWrap,
+                  wordWrap,
                   automaticLayout: true,
                   bracketPairColorization: { enabled: true },
                   folding: true,
                   renderWhitespace: 'selection',
                   renderControlCharacters: false,
-                  renderIndentGuides: true,
-                  highlightActiveIndentGuide: true,
                   guides: {
                     bracketPairs: true,
                     indentation: true,
@@ -491,36 +444,39 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
             )}
           </div>
 
-          {/* Terminal */}
+          {/* Terminal Panel */}
           {isTerminalOpen && (
-            <div className="h-48 bg-zinc-700 border-t border-zinc-700 flex flex-col">
-              <div className="px-3 py-2 border-b border-zinc-700 flex items-center justify-between">
-                <span className="text-sm text-gray-300">Terminal</span>
+            <div className="h-56 bg-zinc-900 border-t border-zinc-700 flex flex-col flex-shrink-0">
+              <div className="px-3 py-1.5 border-b border-zinc-700 flex items-center justify-between bg-zinc-800">
+                <div className="flex items-center gap-2">
+                  <Terminal size={13} className="text-green-400" />
+                  <span className="text-xs text-gray-300 font-medium">Terminal</span>
+                  {!isDesktop && (
+                    <span className="text-xs text-yellow-400 ml-2">
+                      (desktop app only)
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={() => setIsTerminalOpen(false)}
-                  className="text-gray-400 hover:text-white"
+                  className="text-gray-400 hover:text-white text-sm leading-none"
                 >
                   ×
                 </button>
               </div>
-              <div className="flex-1 p-3 overflow-y-auto" ref={terminalRef}>
-                {terminalOutput.map((line, index) => (
-                  <div key={index} className="text-sm text-gray-300 font-mono">
-                    {line}
-                  </div>
-                ))}
-                <div className="flex items-center">
-                  <span className="text-green-400 mr-2">$</span>
-                  <input
-                    type="text"
-                    value={terminalInput}
-                    onChange={(e) => setTerminalInput(e.target.value)}
-                    onKeyDown={handleTerminalInput}
-                    className="flex-1 bg-transparent text-gray-300 outline-none font-mono"
-                    placeholder="Enter command..."
-                  />
+              {isDesktop ? (
+                <div
+                  ref={xtermContainerRef}
+                  className="flex-1 overflow-hidden p-1"
+                  style={{ background: '#18181b' }}
+                />
+              ) : (
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-sm text-gray-400 text-center max-w-xs">
+                    The live terminal is only available in the Banbury desktop app.
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
@@ -555,7 +511,7 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
         onShowMinimapChange={setShowMinimap}
       />
     </div>
-  );
-};
+  )
+}
 
-export default IDE;
+export default IDE

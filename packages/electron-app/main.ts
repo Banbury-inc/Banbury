@@ -3,6 +3,7 @@ import { app, BrowserWindow, Menu, shell, ipcMain } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { initDesktopRecording, setupDesktopRecordingIPC, cleanupDesktopRecording } from './desktop-recording'
+import { setupTerminalIPC, cleanupAllTerminalSessions, cleanupTerminalSessionsForWebContents } from './terminal'
 
 let autoUpdater: any = null
 let isUpdaterAvailable = false
@@ -430,6 +431,11 @@ function createWindow(): void {
     mainWindow?.webContents.send('window:maximize-changed', false)
   })
 
+  // Clean up terminal sessions when the window's renderer is destroyed
+  mainWindow.webContents.on('destroyed', () => {
+    cleanupTerminalSessionsForWebContents(mainWindow?.webContents?.id ?? -1)
+  })
+
   // Clean up reference when window is closed
   mainWindow.on('closed', () => {
     mainWindow = null
@@ -508,6 +514,9 @@ app.whenReady().then(() => {
   
   // Set up desktop recording IPC handlers before creating window
   setupDesktopRecordingIPC()
+
+  // Set up terminal PTY IPC handlers
+  setupTerminalIPC()
   
   // Set up IPC handler for opening URLs in system browser (required for OAuth)
   ipcMain.handle('shell:open-external', async (_event, url: string) => {
@@ -717,6 +726,7 @@ app.on('window-all-closed', () => {
 // Clean up desktop recording when app is quitting
 app.on('before-quit', () => {
   cleanupDesktopRecording()
+  cleanupAllTerminalSessions()
 })
 
 // Security: Prevent new window creation from web content

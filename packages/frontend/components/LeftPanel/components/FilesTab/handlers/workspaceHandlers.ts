@@ -12,6 +12,7 @@ import { handleCreateNotebook } from '../components/LocalFilesView/components/Lo
 import { handleCreateDrawio } from '../components/LocalFilesView/components/LocalFilesCreateMenu/handlers/handleCreateDrawio'
 import { handleCreateTldraw } from '../components/LocalFilesView/components/LocalFilesCreateMenu/handlers/handleCreateTldraw'
 import { handleCreatePowerpoint } from '../components/LocalFilesView/components/LocalFilesCreateMenu/handlers/handleCreatePowerpoint'
+import { handleCreateCodeFile } from '../components/LocalFilesView/components/LocalFilesCreateMenu/handlers/handleCreateCodeFile'
 import { handleGenerateImage } from '../../../../../pages/Workspaces/handlers/handleGenerateImage'
 import { getAllTabs, updatePanelActiveTab, addTabToPanel } from '../../../../../pages/Workspaces/handlers/panelUtils'
 
@@ -102,6 +103,10 @@ export function useWorkspaceHandlers(deps: WorkspaceDependencies) {
     handleCreatePowerpoint(userInfo, toast, triggerSidebarRefresh, name)
   }, [userInfo, toast, triggerSidebarRefresh])
 
+  const handleCreateCodeFileCallback = useCallback((name?: string) => {
+    handleCreateCodeFile(userInfo, toast, triggerSidebarRefresh, name)
+  }, [userInfo, toast, triggerSidebarRefresh])
+
   const handleGenerateImageCallback = useCallback(async () => {
     await handleGenerateImage({ userInfo, toast, triggerSidebarRefresh })
   }, [userInfo, toast, triggerSidebarRefresh])
@@ -118,6 +123,7 @@ export function useWorkspaceHandlers(deps: WorkspaceDependencies) {
     handleCreateDrawio: handleCreateDrawioCallback,
     handleCreateTldraw: handleCreateTldrawCallback,
     handleCreatePowerpoint: handleCreatePowerpointCallback,
+    handleCreateCodeFile: handleCreateCodeFileCallback,
     handleGenerateImage: handleGenerateImageCallback
   }
 }
