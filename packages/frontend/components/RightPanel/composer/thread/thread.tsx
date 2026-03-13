@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { useState, useEffect, useRef, useCallback } from "react";
 import DrawioViewerModal from "../../../MiddlePanel/CanvasViewer/DrawioViewerModal";
 import { Button } from "../../../common/ui/button";
-import { handleDocxAIResponse } from "../../handlers/handle-docx-ai-response";
+import { handleDocxAIResponse } from "../../handlers/handle-docx-ai-response"
+import { handleCodeEditAIResponse } from "../../handlers/handle-code-edit-ai-response"
 import { handleTldrawAIResponse } from "../../handlers/handle-tldraw-ai-response";
 import { ToolUI } from "../../ToolUI";
 import { ApiService } from "../../../../../backend/api/apiService";
@@ -468,12 +469,22 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   // Listen for DOCX AI response events
   useEffect(() => {
     const handleDocxResponse = (event: CustomEvent) => {
-      handleDocxAIResponse(event.detail);
-    };
+      handleDocxAIResponse(event.detail)
+    }
 
-    window.addEventListener('docx-ai-response', handleDocxResponse as EventListener);
-    return () => window.removeEventListener('docx-ai-response', handleDocxResponse as EventListener);
-  }, []);
+    window.addEventListener('docx-ai-response', handleDocxResponse as EventListener)
+    return () => window.removeEventListener('docx-ai-response', handleDocxResponse as EventListener)
+  }, [])
+
+  // Listen for code edit AI response events (applies edits to IDE in middle panel)
+  useEffect(() => {
+    const handleCodeEditResponse = (event: CustomEvent) => {
+      handleCodeEditAIResponse(event.detail)
+    }
+
+    window.addEventListener('code-edit-ai-response', handleCodeEditResponse as EventListener)
+    return () => window.removeEventListener('code-edit-ai-response', handleCodeEditResponse as EventListener)
+  }, [])
 
   // Listen for Tldraw AI response events
   useEffect(() => {

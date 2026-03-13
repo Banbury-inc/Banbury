@@ -8,7 +8,7 @@ import { formatRelative } from './handlers/formatRelative'
 import { getLanguageMonacoId, getLanguageDisplayName } from './languageUtils'
 import { runPythonFile, type RunPythonFileResult } from './handlers/runPythonFile'
 import { setCurrentCodeFileContext, clearCurrentCodeFileContext } from './handlers/currentCodeFileContext'
-import { createCodeEditApplyHandler } from './handlers/createCodeEditApplyHandler'
+import { registerCodeEditor, unregisterCodeEditor } from '../../RightPanel/handlers/handle-code-edit-ai-response'
 import { CodeHeader } from './CodeHeader'
 import { Play, Save } from 'lucide-react'
 
@@ -154,17 +154,19 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
   }, [content, currentFile?.path, currentFile?.name])
 
   useEffect(() => {
-    const handler = createCodeEditApplyHandler({
-      getCurrentContent: () => editorRef.current?.getValue() || content,
-      currentFilePath: currentFile.path || '',
+    const filePath = currentFile.path || ''
+    if (!filePath) return
+
+    registerCodeEditor({
+      filePath,
+      getContent: () => editorRef.current?.getValue() || content,
       setContent,
       setIsModified,
-      setCodeEditStatus,
-      appliedChangeIdsRef,
+      setStatus: setCodeEditStatus,
+      appliedChangeIds: appliedChangeIdsRef.current,
     })
 
-    window.addEventListener('assistant-code-edit-apply', handler)
-    return () => window.removeEventListener('assistant-code-edit-apply', handler)
+    return () => unregisterCodeEditor(filePath)
   }, [content, currentFile.path])
 
   useEffect(() => {

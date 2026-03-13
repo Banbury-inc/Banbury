@@ -24,7 +24,14 @@ export function createCodeEditApplyHandler({
     if (!detail || detail.preview) return
     if (!detail.changeId || appliedChangeIdsRef.current.has(detail.changeId)) return
 
-    if (!detail.filePath || detail.filePath !== currentFilePath) {
+    const proposalPath = detail.filePath?.trim() || ""
+    const proposalFileName = proposalPath.split("/").pop() || proposalPath
+    const currentFileName = currentFilePath.split("/").pop() || currentFilePath
+    const pathsMatch =
+      proposalPath === currentFilePath ||
+      (proposalFileName && currentFileName && proposalFileName === currentFileName)
+
+    if (!pathsMatch) {
       setCodeEditStatus("This code edit proposal targets a different file than the one currently open.")
       return
     }

@@ -59,37 +59,23 @@ export const CodeEditTool: React.FC<CodeEditToolProps> = ({ args, result }) => {
       icon: Code2,
       displayName: normalizedProposal?.fileName || normalizedProposal?.filePath || "Code edit proposal",
       changeType: "code-edit",
+      eventPrefix: "code-edit-ai",
       subtitle: normalizedProposal
         ? `${normalizedProposal.summary} (${normalizedProposal.edits.length} edit${normalizedProposal.edits.length === 1 ? "" : "s"})`
         : undefined,
-      customPreviewHandler: ({ args: eventArgs, changeId }) => {
-        window.dispatchEvent(
-          new CustomEvent("assistant-code-edit-proposed", {
-            detail: { ...eventArgs, changeId, preview: true },
-          })
-        )
-      },
-      customAcceptHandler: ({ args: eventArgs, changeId }) => {
-        window.dispatchEvent(
-          new CustomEvent("assistant-code-edit-apply", {
-            detail: { ...eventArgs, changeId, preview: false },
-          })
-        )
-      },
-      customRejectHandler: ({ args: eventArgs, changeId }) => {
-        window.dispatchEvent(
-          new CustomEvent("assistant-code-edit-reject", {
-            detail: { ...eventArgs, changeId },
-          })
-        )
-      },
     }),
     [normalizedProposal?.fileName, normalizedProposal?.filePath]
   )
 
   if (!normalizedProposal) return <AIToolCard config={config} args={{}} hasContent={false} />
 
-  return <AIToolCard config={config} args={normalizedProposal} hasContent={hasContent} />
+  return (
+    <AIToolCard
+      config={config}
+      args={{ ...normalizedProposal, preview: false }}
+      hasContent={hasContent}
+    />
+  )
 }
 
 export default CodeEditTool

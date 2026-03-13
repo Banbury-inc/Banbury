@@ -62,8 +62,8 @@ export const codeEditOpenFileTool = tool(
       const replacementSnippet = typeof edit.replacementSnippet === "string" ? edit.replacementSnippet : ""
       const description = typeof edit.description === "string" ? edit.description : `Edit ${index + 1}`
 
-      if (!originalSnippet.trim()) {
-        throw new Error(`Edit ${index + 1} is missing originalSnippet.`)
+      if (replacementSnippet === "" && originalSnippet === "") {
+        throw new Error(`Edit ${index + 1} must have either originalSnippet or replacementSnippet.`)
       }
 
       return {

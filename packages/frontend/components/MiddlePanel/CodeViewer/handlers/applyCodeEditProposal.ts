@@ -17,8 +17,12 @@ interface ApplyCodeEditProposalResult {
 }
 
 function applySingleOperation(content: string, operation: CodeEditOperation): string | null {
-  const originalSnippet = operation.originalSnippet
-  if (!originalSnippet) return null
+  const originalSnippet = operation.originalSnippet ?? ""
+  const replacementSnippet = operation.replacementSnippet ?? ""
+
+  if (!originalSnippet) {
+    return replacementSnippet + content
+  }
 
   const firstIndex = content.indexOf(originalSnippet)
   if (firstIndex === -1) return null
@@ -26,7 +30,7 @@ function applySingleOperation(content: string, operation: CodeEditOperation): st
   const lastIndex = content.lastIndexOf(originalSnippet)
   if (firstIndex !== lastIndex) return null
 
-  return `${content.slice(0, firstIndex)}${operation.replacementSnippet}${content.slice(firstIndex + originalSnippet.length)}`
+  return `${content.slice(0, firstIndex)}${replacementSnippet}${content.slice(firstIndex + originalSnippet.length)}`
 }
 
 export function applyCodeEditProposal({
