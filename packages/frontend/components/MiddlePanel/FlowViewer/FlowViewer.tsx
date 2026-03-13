@@ -39,6 +39,7 @@ import { GitHubNode } from './nodes/GitHubNode'
 import { XApiNode } from './nodes/XApiNode'
 import { GoogleDriveNode } from './nodes/GoogleDriveNode'
 import { OneDriveNode } from './nodes/OneDriveNode'
+import { PythonCodeNode } from './nodes/PythonCodeNode'
 import { NodeToolbar } from './NodeToolbar'
 import { NodeConfigPanel } from './NodeConfigPanel'
 import { FlowSchedulePanel } from './FlowSchedulePanel'
@@ -65,6 +66,7 @@ const NODE_TYPES: NodeTypes = {
   'x-api': XApiNode,
   'google-drive': GoogleDriveNode,
   onedrive: OneDriveNode,
+  'python-code': PythonCodeNode,
 }
 
 const DEFAULT_NODES: Node[] = [

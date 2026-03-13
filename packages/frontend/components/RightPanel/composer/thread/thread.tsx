@@ -33,6 +33,7 @@ import { saveCurrentConversation as saveCurrentConversationHandler } from "./han
 import { loadConversations as loadConversationsHandler } from "./handlers/loadConversations";
 import { handleStorageChange } from "./handlers/handleStorageChange";
 import { syncAttachmentsToLocalStorage } from "./handlers/syncAttachmentsToLocalStorage";
+import { syncCurrentCodeFileContext } from "./handlers/syncCurrentCodeFileContext";
 
 
 // Destructure Assistant UI primitives from namespace import to avoid named import type issues
@@ -296,6 +297,11 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       }
     }
   }, [selectedEmail]);
+
+  // Keep active code-file context in localStorage for AI code-edit tool calls.
+  useEffect(() => {
+    syncCurrentCodeFileContext(selectedFile || null);
+  }, [selectedFile]);
 
   // Auto-save conversation when langgraph stream completes
   useEffect(() => {

@@ -103,6 +103,11 @@ export interface StreamRequestBody {
   toolPreferences?: ToolPreferences
   documentContext?: string
   presentationContext?: string
+  currentCodeFile?: {
+    filePath: string
+    fileName?: string
+    content?: string
+  }
   dateTimeContext?: DateTimeContext
   recursionLimit?: number
   webSearchOptions?: WebSearchOptions

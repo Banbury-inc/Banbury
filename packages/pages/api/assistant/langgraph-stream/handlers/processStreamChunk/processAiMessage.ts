@@ -11,6 +11,7 @@ const TOOL_STATUS_MESSAGES: Record<string, string> = {
   store_memory: "Storing information in memory...",
   search_memory: "Searching memory...",
   create_file: "Creating file...",
+  code_edit_open_file: "Preparing code edit proposal...",
   spawn_subagents: "Spawning subagents...",
   write_todos: "Updating task list..."
 }

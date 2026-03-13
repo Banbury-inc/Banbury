@@ -7,6 +7,7 @@ import { getToolPreferences } from "./handlers/getToolPreferences";
 import { checkRateLimit } from "./handlers/checkRateLimit";
 import { getDocumentContext } from "./handlers/getDocumentContext";
 import { getPresentationContext } from "./handlers/getPresentationContext";
+import { getCurrentCodeFileContext } from "./handlers/getCurrentCodeFileContext";
 import { handleFetchError } from "./handlers/handleFetchError";
 import { processStreamEvents } from "./handlers/processStreamEvents";
 import type { FC, PropsWithChildren } from "react";
@@ -54,6 +55,7 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
 
       // Get current date/time context
       const dateTimeContext = getCurrentDateTimeContext();
+      const currentCodeFile = getCurrentCodeFileContext();
 
       // Removed client-side browser shim - now handled by AI tools
 
@@ -62,6 +64,7 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
         toolPreferences,
         documentContext: documentContext || undefined,
         presentationContext: presentationContext || undefined,
+        currentCodeFile,
         dateTimeContext,
         recursionLimit: langGraphConfig.recursionLimit, // Add recursion limit
       };

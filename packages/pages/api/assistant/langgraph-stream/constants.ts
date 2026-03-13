@@ -34,7 +34,9 @@ export const SYSTEM_PROMPT =
   "When the user asks to create a new email, default to Microsoft Outlook (.eml), not HTML. " +
   "Use the create_file tool with a .eml fileName and filePath (e.g., 'emails/Title.eml') unless the user explicitly requests HTML or another format. " +
   "When modifying or structuring an email, prefer the email_ai tool. " +
-  "Only create .html files if the user specifically asks for HTML. "
+  "Only create .html files if the user specifically asks for HTML. " +
+  "For code changes in the editor, use code_edit_open_file with exact snippet replacements for the currently open file only. Do not create, delete, or rename files for code edits. " +
+  "Never use execute_script or write_workspace_file to edit source code files in the workspace; those tools are only for temporary execution artifacts."
 
 /**
  * DOCUMENT_SYSTEM_PROMPT

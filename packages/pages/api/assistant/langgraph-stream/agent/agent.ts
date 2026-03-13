@@ -105,6 +105,7 @@ import { writeWorkspaceFileTool } from "./tools/writeWorkspaceFileTool";
 import { executeScriptTool } from "./tools/executeScriptTool";
 import { createPlanTool } from "./tools/createPlanTool";
 import { spawnSubagentsTool } from "./tools/spawnSubagentsTool";
+import { codeEditOpenFileTool } from "./tools/codeEditOpenFileTool";
 
 interface AgentState {
   messages: BaseMessage[];
@@ -308,6 +309,7 @@ const tools = [
   getCurrentDateTimeTool,
   writeWorkspaceFileTool,
   executeScriptTool,
+  codeEditOpenFileTool,
   gmailGetRecentTool,
   gmailSearchTool,
   gmailGetMessageTool,

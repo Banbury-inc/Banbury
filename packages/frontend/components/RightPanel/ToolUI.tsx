@@ -17,6 +17,7 @@ import { TldrawAITool } from './composer/components/TldrawAITool';
 import { SubagentTool } from './composer/components/SubagentTool';
 import { CreateFileTool } from './composer/components/CreateFileTool';
 import { DownloadFileTool } from './composer/components/DownloadFileTool';
+import { CodeEditTool } from './composer/components/CodeEditTool';
 
 interface ToolUIProps {
   toolName: string;
@@ -166,6 +167,9 @@ export const ToolUI: React.FC<ToolUIProps> = ({ toolName, toolCallId, args: args
     
     case 'download_from_url':
       return <DownloadFileTool args={args} result={result} />;
+
+    case 'code_edit_open_file':
+      return <CodeEditTool args={args} result={result} />;
     
     case 'search_files':
       return (
@@ -244,6 +248,7 @@ function getToolLabel(toolName: string): string {
     'search_memory': 'Search Memory',
     'create_file': 'Create File',
     'download_from_url': 'Download File',
+    'code_edit_open_file': 'Code Edit Proposal',
     'search_files': 'Search Files',
     'generate_image': 'Generate Image',
     'get_current_datetime': 'Get Date/Time',

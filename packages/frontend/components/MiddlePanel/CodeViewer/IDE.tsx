@@ -7,8 +7,10 @@ import { getIDESettings } from '../../modals/settings-tabs/handlers/ideSettingsH
 import { formatRelative } from './handlers/formatRelative'
 import { getLanguageMonacoId, getLanguageDisplayName } from './languageUtils'
 import { runPythonFile, type RunPythonFileResult } from './handlers/runPythonFile'
+import { setCurrentCodeFileContext, clearCurrentCodeFileContext } from './handlers/currentCodeFileContext'
+import { createCodeEditApplyHandler } from './handlers/createCodeEditApplyHandler'
 import { CodeHeader } from './CodeHeader'
-import { Play } from 'lucide-react'
+import { Play, Save } from 'lucide-react'
 
 interface IDEProps {
   file: FileSystemItem
@@ -36,13 +38,16 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
   const [currentFile, setCurrentFile] = useState<FileSystemItem>(file)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
   const [isRunningFile, setIsRunningFile] = useState(false)
   const [runOutput, setRunOutput] = useState<PythonRunOutput | null>(null)
   const [runError, setRunError] = useState<string | null>(null)
+  const [codeEditStatus, setCodeEditStatus] = useState<string | null>(null)
   const [language, setLanguage] = useState<string>('plaintext')
   const [ideSettings, setIdeSettings] = useState(() => getIDESettings())
 
   const editorRef = useRef<Parameters<NonNullable<React.ComponentProps<typeof Editor>['onMount']>>[0] | null>(null)
+  const appliedChangeIdsRef = useRef<Set<string>>(new Set())
 
   const handleRunActiveFile = useCallback(async () => {
     if (!currentFile) return
@@ -100,9 +105,10 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
   }, [])
 
   const saveFile = useCallback(async () => {
-    if (!isModified) return
+    if (!isModified || isSaving) return
 
     try {
+      setIsSaving(true)
       const currentContent = editorRef.current?.getValue() || content
       const blob = new Blob([currentContent], { type: 'text/plain' })
 
@@ -120,8 +126,10 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
       onSaveComplete?.()
     } catch {
       setError('Failed to save file')
+    } finally {
+      setIsSaving(false)
     }
-  }, [content, currentFile, isModified, userInfo, onSaveComplete])
+  }, [content, currentFile, isModified, isSaving, userInfo, onSaveComplete])
 
   const handleEditorChange = useCallback((value: string | undefined) => {
     setContent(value || '')
@@ -131,6 +139,39 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
   useEffect(() => {
     loadFileContent(file)
   }, [file, loadFileContent])
+
+  useEffect(() => {
+    if (!currentFile?.path || !currentFile?.name) return
+    setCurrentCodeFileContext({
+      filePath: currentFile.path,
+      fileName: currentFile.name,
+      content: editorRef.current?.getValue() || content,
+    })
+
+    return () => {
+      clearCurrentCodeFileContext(currentFile.path)
+    }
+  }, [content, currentFile?.path, currentFile?.name])
+
+  useEffect(() => {
+    const handler = createCodeEditApplyHandler({
+      getCurrentContent: () => editorRef.current?.getValue() || content,
+      currentFilePath: currentFile.path || '',
+      setContent,
+      setIsModified,
+      setCodeEditStatus,
+      appliedChangeIdsRef,
+    })
+
+    window.addEventListener('assistant-code-edit-apply', handler)
+    return () => window.removeEventListener('assistant-code-edit-apply', handler)
+  }, [content, currentFile.path])
+
+  useEffect(() => {
+    if (!codeEditStatus) return
+    const timeoutId = window.setTimeout(() => setCodeEditStatus(null), 5000)
+    return () => window.clearTimeout(timeoutId)
+  }, [codeEditStatus])
 
   useEffect(() => {
     const handleSettingsUpdate = () => setIdeSettings(getIDESettings())
@@ -183,6 +224,19 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
 
   const headerActions = (
     <>
+      {currentFile && (
+        <button
+          type="button"
+          onClick={saveFile}
+          disabled={!isModified || isSaving}
+          className="bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed px-2 py-1 rounded text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[2rem] inline-flex items-center justify-center gap-1.5"
+          title={isModified ? `Save ${currentFile.name}` : `${currentFile.name} is already saved`}
+          aria-label={isModified ? `Save ${currentFile.name}` : `${currentFile.name} is already saved`}
+        >
+          <Save size={14} aria-hidden />
+          <span className="hidden md:inline">{isSaving ? 'Saving...' : 'Save'}</span>
+        </button>
+      )}
       {currentFile && (
         <button
           type="button"
@@ -297,14 +351,13 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
             <span className="text-chart-4">Modified</span>
           ) : lastSavedAt ? (
             <span>Saved {formatRelative(lastSavedAt)}</span>
-          ) : (
-            <span>Saves automatically</span>
-          )}
+          ) : null}
         </div>
         <div className="flex items-center gap-4">
           <span>Line {editorRef.current?.getPosition()?.lineNumber || 1}</span>
           <span>Column {editorRef.current?.getPosition()?.column || 1}</span>
           <span>{ideSettings.fontSize}px</span>
+          {codeEditStatus && <span>{codeEditStatus}</span>}
         </div>
       </div>
 

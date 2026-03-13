@@ -16,6 +16,7 @@ import { GitHubConfig } from './config/GitHubConfig'
 import { XApiConfig } from './config/XApiConfig'
 import { GoogleDriveConfig } from './config/GoogleDriveConfig'
 import { OneDriveConfig } from './config/OneDriveConfig'
+import { PythonCodeConfig } from './config/PythonCodeConfig'
 
 interface Props {
   node: Node | null
@@ -58,6 +59,8 @@ function ConfigBody({
       return <GoogleDriveConfig data={data} onChange={onChange} />
     case 'onedrive':
       return <OneDriveConfig data={data} onChange={onChange} />
+    case 'python-code':
+      return <PythonCodeConfig data={data} onChange={onChange} />
     case 'start':
       return <p className="text-xs text-muted-foreground italic">The Start node has no configuration — it triggers the flow.</p>
     case 'output':

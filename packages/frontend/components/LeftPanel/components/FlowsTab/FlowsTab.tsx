@@ -6,6 +6,9 @@ import { ApiService } from '../../../../../backend/api/apiService'
 import { useToast } from '../../../common/ui/use-toast'
 import { FlowsListView } from './components/FlowsListView'
 import { handleDeleteFlow } from './handlers/handleDeleteFlow'
+import { handleDuplicateFlow } from './handlers/handleDuplicateFlow'
+import { handleRenameFlow } from './handlers/handleRenameFlow'
+import { handleSyncFlowTabs } from './handlers/handleSyncFlowTabs'
 import { useFlowWorkspaceHandlers } from './handlers/workspaceHandlers'
 
 interface FlowsTabProps {
@@ -112,13 +115,54 @@ export function FlowsTab({
       onSuccess: () => {
         toast({ title: 'Success', description: 'Flow deleted' })
         closeFlowTabs(flowId)
+        if (selectedFlow?.id === flowId) setSelectedFlowProp?.(null)
         setRefreshCounter(prev => prev + 1)
       },
       onError: (message) => {
         toast({ title: 'Error', description: message, variant: 'destructive' })
       },
     })
-  }, [toast, closeFlowTabs])
+  }, [toast, closeFlowTabs, selectedFlow, setSelectedFlowProp])
+
+  const handleFlowRename = useCallback(async (flow: FlowItem) => {
+    const nextName = window.prompt('Rename flow', flow.name)?.trim()
+    if (!nextName || nextName === flow.name) return
+
+    await handleRenameFlow({
+      flow,
+      nextName,
+      onSuccess: (updatedFlow) => {
+        toast({ title: 'Success', description: 'Flow renamed' })
+        setFlows(prev => prev.map(item => item.id === updatedFlow.id ? updatedFlow : item))
+        if (selectedFlow?.id === updatedFlow.id) setSelectedFlowProp?.(updatedFlow)
+        if (setPanelLayout) setPanelLayout(prev => handleSyncFlowTabs(prev, updatedFlow))
+      },
+      onError: (message) => {
+        toast({ title: 'Error', description: message, variant: 'destructive' })
+      },
+    })
+  }, [toast, selectedFlow, setSelectedFlowProp, setPanelLayout])
+
+  const handleFlowDuplicateRequest = useCallback(async (flow: FlowItem) => {
+    await handleDuplicateFlow({
+      flow,
+      existingFlowNames: flows.map(item => item.name),
+      onSuccess: (duplicatedFlow) => {
+        toast({ title: 'Success', description: 'Flow duplicated' })
+        setRefreshCounter(prev => prev + 1)
+        if (handleFlowSelectInternal) handleFlowSelectInternal(duplicatedFlow)
+      },
+      onError: (message) => {
+        toast({ title: 'Error', description: message, variant: 'destructive' })
+      },
+    })
+  }, [flows, toast, handleFlowSelectInternal])
+
+  const handleFlowDeleteRequest = useCallback(async (flow: FlowItem) => {
+    const isConfirmed = window.confirm(`Delete "${flow.name}"? This action cannot be undone.`)
+    if (!isConfirmed) return
+    await handleFlowDeleted(flow.id)
+  }, [handleFlowDeleted])
 
   const handleNewFlowClick = () => {
     setIsCreating(true)
@@ -174,7 +218,9 @@ export function FlowsTab({
           loading={loading}
           selectedFlow={selectedFlow}
           onFlowSelect={handleFlowSelectInternal}
-          onFlowDeleted={handleFlowDeleted}
+          onFlowRename={handleFlowRename}
+          onFlowDuplicate={handleFlowDuplicateRequest}
+          onFlowDeleted={handleFlowDeleteRequest}
         />
       </div>
     </div>
