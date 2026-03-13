@@ -7,7 +7,7 @@ interface ValidateTokenResponse {
 
 const DEFAULT_BACKEND_URL = 'https://www.api.dev.banbury.io'
 
-function extractBearerToken(req: NextApiRequest) {
+export function extractBearerToken(req: NextApiRequest) {
   const authHeader = req.headers.authorization
   if (!authHeader) return null
   if (!authHeader.startsWith('Bearer ')) return null

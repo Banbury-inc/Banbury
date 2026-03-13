@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>prompt_engineering.docx</title>
+    <meta name="original-format" content="docx">
+    <meta name="editor" content="banbury-editor">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <h1>prompt engineering notes</h1><p></p><ol><li><p>provide context and examples </p></li><li><p>The four pillars</p><ol><li><p>assign the AI a role (“you are a helpful AI agent”)</p></li><li><p>define what the AI agent should do (“analyze code for security vulnerabilities”)</p></li><li><p>context - provide background information</p></li><li><p>format - specify the output structure</p></li></ol></li><li><p><span><strong>Be Precise and Direct:</strong> State goals clearly, avoiding unnecessary language.</span></p></li><li><p><span><strong>Use Delimiters:</strong> Employ tags or Markdown headers to separate instructions.</span></p></li><li><p><span><strong>Define Constraints:</strong> Clearly state what the AI should not do.</span></p></li><li><p><span><strong>Prioritize Instructions:</strong> Place core directives and constraints at the beginning.</span></p></li><li><p><span><strong>Control Verbosity:</strong> Explicitly request detailed answers if needed.</span></p></li></ol><p></p><p><strong>K - Keep it simple</strong></p><ul><li><p>Bad: 500 words of context</p></li><li><p>Good: One clear goal</p></li><li><p>Example: Instead of "I need help writing something about Redis," use "Write a technical tutorial on Redis caching"</p></li><li><p>Result: 70% less token usage, 3x faster responses</p></li></ul><p><strong>E - Easy to verify</strong></p><ul><li><p>Your prompt needs clear success criteria</p></li><li><p>Replace "make it engaging" with "include 3 code examples"</p></li><li><p>If you can't verify success, AI can't deliver it</p></li><li><p>My testing: 85% success rate with clear criteria vs 41% without</p></li></ul><p><strong>R - Reproducible results</strong></p><ul><li><p>Avoid temporal references ("current trends", "latest best practices")</p></li><li><p>Use specific versions and exact requirements</p></li><li><p>Same prompt should work next week, next month</p></li><li><p>94% consistency across 30 days in my tests</p></li></ul><p><strong>N - Narrow scope</strong></p><ul><li><p>One prompt = one goal</p></li><li><p>Don't combine code + docs + tests in one request</p></li><li><p>Split complex tasks</p></li><li><p>Single-goal prompts: 89% satisfaction vs 41% for multi-goal</p></li></ul><p><strong>E - Explicit constraints</strong></p><ul><li><p>Tell AI what NOT to do</p></li><li><p>"Python code" → "Python code. No external libraries. No functions over 20 lines."</p></li><li><p>Constraints reduce unwanted outputs by 91%</p></li></ul><p><strong>L - Logical structure</strong> Format every prompt like:</p><ol><li><p>Context (input)</p></li><li><p>Task (function)</p></li><li><p>Constraints (parameters)</p></li><li><p>Format (output)</p></li></ol><p></p><p></p><p></p>
+</body>
+</html>

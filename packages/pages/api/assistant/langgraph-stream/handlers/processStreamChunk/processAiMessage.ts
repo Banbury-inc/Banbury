@@ -18,7 +18,7 @@ const TOOL_STATUS_MESSAGES: Record<string, string> = {
 function getToolStatusMessage(toolName: string): string {
   if (TOOL_STATUS_MESSAGES[toolName]) return TOOL_STATUS_MESSAGES[toolName]
   if (toolName.startsWith('gmail_')) return 'Accessing Gmail…'
-  return `Executing ${toolName}...`
+  return `Executing...`
 }
 
 async function streamTextContent(text: string, send: (event: any) => void): Promise<void> {

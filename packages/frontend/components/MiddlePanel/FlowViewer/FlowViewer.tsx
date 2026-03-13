@@ -15,7 +15,6 @@ import {
   type Edge,
   type Viewport,
   type NodeTypes,
-  Panel,
   useReactFlow,
   ReactFlowProvider,
 } from '@xyflow/react'
@@ -44,6 +43,7 @@ import { NodeToolbar } from './NodeToolbar'
 import { NodeConfigPanel } from './NodeConfigPanel'
 import { FlowSchedulePanel } from './FlowSchedulePanel'
 import { NODE_REGISTRY_MAP } from './nodes/nodeRegistry'
+import { getRunLogEntryPresentation } from './handlers/runLogPresentation'
 
 interface FlowViewerProps {
   flow: FlowItem
@@ -304,49 +304,73 @@ function FlowViewerInner({ flow, onFlowUpdated }: FlowViewerProps) {
 
       {/* Canvas + Config panel side-by-side */}
       <div className="flex-1 min-h-0 flex">
-        <div className="flex-1 min-h-0 relative">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={NODE_TYPES}
-            onNodesChange={handleNodesChange}
-            onEdgesChange={handleEdgesChange}
-            onConnect={onConnect}
-            onNodeClick={handleNodeClick}
-            onPaneClick={handlePaneClick}
-            onMoveEnd={(_, vp) => { viewportRef.current = vp }}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-            defaultViewport={flow.graph_json?.viewport ?? undefined}
-            fitView={!flow.graph_json?.viewport}
-            colorMode="system"
-          >
-            <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
-            <Controls />
-            <MiniMap zoomable pannable />
-            <NodeToolbar />
-            {showLogs && runLogs.length > 0 && (
-              <Panel position="bottom-center">
-                <div className="max-w-xl w-full bg-card border border-border rounded-md shadow-md p-3 max-h-48 overflow-y-auto animate-in fade-in slide-in-from-bottom-2 duration-200">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-medium text-foreground">Run output</span>
-                    <button
-                      onClick={() => setShowLogs(false)}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                      aria-label="Dismiss logs"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  {runLogs.map((log, i) => (
-                    <Typography key={i} variant="xs" className="text-muted-foreground font-mono leading-relaxed">
-                      {log}
-                    </Typography>
-                  ))}
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div className="flex-1 min-h-0">
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={NODE_TYPES}
+              onNodesChange={handleNodesChange}
+              onEdgesChange={handleEdgesChange}
+              onConnect={onConnect}
+              onNodeClick={handleNodeClick}
+              onPaneClick={handlePaneClick}
+              onMoveEnd={(_, vp) => { viewportRef.current = vp }}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
+              defaultViewport={flow.graph_json?.viewport ?? undefined}
+              fitView={!flow.graph_json?.viewport}
+              colorMode="system"
+            >
+              <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
+              <Controls />
+              <MiniMap zoomable pannable />
+              <NodeToolbar />
+            </ReactFlow>
+          </div>
+          {showLogs && runLogs.length > 0 && (
+            <div className="w-full border-t border-border bg-card">
+              <div className="flex items-center justify-between border-b border-border px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-foreground">Terminal output</span>
+                  <span className="rounded-sm border border-border px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
+                    {runLogs.length} line{runLogs.length === 1 ? '' : 's'}
+                  </span>
                 </div>
-              </Panel>
-            )}
-          </ReactFlow>
+                <button
+                  onClick={() => setShowLogs(false)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Dismiss logs"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="max-h-60 overflow-y-auto p-2">
+                {runLogs.map((log, i) => {
+                  const presentation = getRunLogEntryPresentation(log)
+                  return (
+                    <div
+                      key={`${log}-${i}`}
+                      className={`mb-1 last:mb-0 w-full rounded border px-2 py-1 text-xs font-mono leading-relaxed ${presentation.rowClassName}`}
+                    >
+                      <div className="grid grid-cols-[auto_auto_1fr] items-start gap-2 whitespace-pre-wrap break-words">
+                        <span className="text-[10px] text-muted-foreground/80">{String(i + 1).padStart(2, '0')}</span>
+                        <span className={`text-[10px] font-semibold ${presentation.markerClassName}`} aria-hidden="true">
+                          {presentation.marker}
+                        </span>
+                        <div className="min-w-0">
+                          <span className={`mr-2 text-[10px] font-semibold ${presentation.levelClassName}`}>
+                            [{presentation.levelLabel}]
+                          </span>
+                          <span className={presentation.textClassName}>{presentation.content}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {selectedNode && (

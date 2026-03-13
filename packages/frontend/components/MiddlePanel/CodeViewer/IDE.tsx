@@ -1,31 +1,14 @@
-import React, { useState, useEffect, useRef, useCallback, useId } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Editor } from '@monaco-editor/react'
 import { FileSystemItem } from '../../../utils/fileTreeUtils'
 import { ApiService } from '../../../../backend/api/apiService'
-import IDESettings from './IDESettings'
-import { useDesktopTerminal, isDesktopTerminalAvailable } from './handlers/useDesktopTerminal'
-import '@xterm/xterm/css/xterm.css'
-import {
-  File,
-  Play,
-  Settings,
-  Search,
-  Terminal,
-  ChevronDown,
-  ChevronRight,
-  FileText,
-  FileCode,
-  FileImage,
-  FileVideo,
-  FileAudio,
-  FileSpreadsheet,
-  FileArchive,
-  FileJson,
-  FileType,
-  FileBarChart,
-  FileCog,
-  ListChecks,
-} from 'lucide-react'
+import { getMonacoThemeId, registerMonacoThemes, type MonacoThemeRegistry } from './ideThemes'
+import { getIDESettings } from '../../modals/settings-tabs/handlers/ideSettingsHandlers'
+import { formatRelative } from './handlers/formatRelative'
+import { getLanguageMonacoId, getLanguageDisplayName } from './languageUtils'
+import { runPythonFile, type RunPythonFileResult } from './handlers/runPythonFile'
+import { CodeHeader } from './CodeHeader'
+import { Play } from 'lucide-react'
 
 interface IDEProps {
   file: FileSystemItem
@@ -36,144 +19,60 @@ interface IDEProps {
   onSaveComplete?: () => void
 }
 
-interface FileTab {
-  id: string
-  file: FileSystemItem
-  content: string
-  isModified: boolean
-  isActive: boolean
-}
-
-const getLanguageFromExtension = (fileName: string): string => {
-  const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
-
-  const languageMap: Record<string, string> = {
-    '.js': 'javascript',
-    '.jsx': 'javascript',
-    '.ts': 'typescript',
-    '.tsx': 'typescript',
-    '.py': 'python',
-    '.java': 'java',
-    '.cpp': 'cpp',
-    '.c': 'c',
-    '.h': 'c',
-    '.hpp': 'cpp',
-    '.cs': 'csharp',
-    '.php': 'php',
-    '.rb': 'ruby',
-    '.go': 'go',
-    '.rs': 'rust',
-    '.swift': 'swift',
-    '.kt': 'kotlin',
-    '.scala': 'scala',
-    '.html': 'html',
-    '.htm': 'html',
-    '.css': 'css',
-    '.scss': 'scss',
-    '.sass': 'sass',
-    '.less': 'less',
-    '.xml': 'xml',
-    '.json': 'json',
-    '.yaml': 'yaml',
-    '.yml': 'yaml',
-    '.toml': 'toml',
-    '.ini': 'ini',
-    '.cfg': 'ini',
-    '.conf': 'ini',
-    '.sh': 'shell',
-    '.bash': 'shell',
-    '.zsh': 'shell',
-    '.fish': 'shell',
-    '.sql': 'sql',
-    '.r': 'r',
-    '.m': 'matlab',
-    '.mat': 'matlab',
-    '.ipynb': 'json',
-    '.jl': 'julia',
-    '.dart': 'dart',
-    '.lua': 'lua',
-    '.pl': 'perl',
-    '.pm': 'perl',
-    '.tcl': 'tcl',
-    '.vbs': 'vb',
-    '.ps1': 'powershell',
-    '.bat': 'batch',
-    '.cmd': 'batch',
-    '.coffee': 'coffeescript',
-    '.litcoffee': 'coffeescript',
-    '.iced': 'coffeescript',
-    '.md': 'markdown',
-    '.markdown': 'markdown',
-    '.tex': 'latex',
-    '.rtex': 'latex',
-    '.bib': 'bibtex',
-    '.vue': 'vue',
-    '.svelte': 'svelte',
-  }
-
-  return languageMap[extension] || 'plaintext'
-}
-
-const getFileIcon = (fileName: string) => {
-  const lowerName = fileName.toLowerCase()
-
-  if (lowerName.endsWith('.plan.md') || lowerName.endsWith('.plan.json')) return ListChecks
-
-  const extension = lowerName.substring(lowerName.lastIndexOf('.'))
-
-  if (['.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.cpp', '.c', '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala'].includes(extension))
-    return FileCode
-  if (['.html', '.htm', '.css', '.scss', '.sass', '.less'].includes(extension)) return FileText
-  if (['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'].includes(extension)) return FileImage
-  if (['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv'].includes(extension)) return FileVideo
-  if (['.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma'].includes(extension)) return FileAudio
-  if (['.xlsx', '.xls', '.csv'].includes(extension)) return FileSpreadsheet
-  if (['.zip', '.rar', '.7z', '.tar', '.gz'].includes(extension)) return FileArchive
-  if (['.json', '.xml', '.yaml', '.yml'].includes(extension)) return FileJson
-  if (['.ttf', '.otf', '.woff', '.woff2'].includes(extension)) return FileType
-  if (['.pptx', '.ppt'].includes(extension)) return FileBarChart
-  if (['.exe', '.msi', '.app', '.dmg'].includes(extension)) return FileCog
-
-  return File
+interface PythonRunOutput {
+  success: boolean
+  stdout: string
+  stderr: string
+  exitCode: number
+  interpreter: string
+  timedOut: boolean
+  truncated: boolean
 }
 
 const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
-  const [tabs, setTabs] = useState<FileTab[]>([])
-  const [activeTabId, setActiveTabId] = useState<string | null>(null)
-  const [isFileExplorerOpen, setIsFileExplorerOpen] = useState(true)
-  const [isTerminalOpen, setIsTerminalOpen] = useState(false)
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [content, setContent] = useState('')
+  const [isModified, setIsModified] = useState(false)
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
   const [currentFile, setCurrentFile] = useState<FileSystemItem>(file)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isRunningFile, setIsRunningFile] = useState(false)
+  const [runOutput, setRunOutput] = useState<PythonRunOutput | null>(null)
+  const [runError, setRunError] = useState<string | null>(null)
   const [language, setLanguage] = useState<string>('plaintext')
-  const [theme, setTheme] = useState<'vs-dark' | 'vs-light'>('vs-dark')
-  const [fontSize, setFontSize] = useState(14)
-  const [wordWrap, setWordWrap] = useState<'on' | 'off'>('on')
-  const [showLineNumbers, setShowLineNumbers] = useState(true)
-  const [showMinimap, setShowMinimap] = useState(true)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [ideSettings, setIdeSettings] = useState(() => getIDESettings())
 
-  const editorRef = useRef<any>(null)
-  const xtermContainerRef = useRef<HTMLDivElement>(null)
-  const uid = useId()
-  const sessionId = `ide-terminal-${uid.replace(/:/g, '')}`
+  const editorRef = useRef<Parameters<NonNullable<React.ComponentProps<typeof Editor>['onMount']>>[0] | null>(null)
 
-  const { writeToTerminal } = useDesktopTerminal({
-    sessionId,
-    containerRef: xtermContainerRef,
-    isOpen: isTerminalOpen,
-  })
+  const handleRunActiveFile = useCallback(async () => {
+    if (!currentFile) return
 
-  const handleRunActiveFile = useCallback(() => {
-    const tab = tabs.find(t => t.id === activeTabId)
-    if (!tab) return
-    const isPython = tab.file.name.toLowerCase().endsWith('.py')
-    const cmd = isPython ? `python "${tab.file.name}"\r` : `"./${tab.file.name}"\r`
-    if (!isTerminalOpen) setIsTerminalOpen(true)
-    // Give the terminal a moment to mount before writing
-    setTimeout(() => writeToTerminal(cmd), 100)
-  }, [tabs, activeTabId, isTerminalOpen, writeToTerminal])
+    try {
+      setIsRunningFile(true)
+      setRunError(null)
+
+      const currentContent = editorRef.current?.getValue() || content
+      const runResult: RunPythonFileResult = await runPythonFile({
+        file: currentFile,
+        content: currentContent,
+      })
+
+      setRunOutput({
+        success: runResult.success,
+        stdout: runResult.stdout,
+        stderr: runResult.stderr,
+        exitCode: runResult.exitCode,
+        interpreter: runResult.interpreter,
+        timedOut: runResult.timedOut,
+        truncated: runResult.truncated,
+      })
+    } catch (runError) {
+      const message = runError instanceof Error ? runError.message : 'Failed to run active file'
+      setRunError(message)
+    } finally {
+      setIsRunningFile(false)
+    }
+  }, [content, currentFile])
 
   const loadFileContent = useCallback(async (fileItem: FileSystemItem) => {
     try {
@@ -187,113 +86,84 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
       }
 
       const fileContent = await downloadResult.blob.text()
-      const detectedLanguage = getLanguageFromExtension(fileItem.name)
+      const detectedLanguage = getLanguageMonacoId(fileItem.name)
 
       setLanguage(detectedLanguage)
       setCurrentFile(fileItem)
-
-      setTabs(prevTabs => {
-        const existingTab = prevTabs.find(tab => tab.file.file_id === fileItem.file_id)
-        if (existingTab) {
-          return prevTabs.map(tab =>
-            tab.file.file_id === fileItem.file_id
-              ? { ...tab, content: fileContent, isActive: true }
-              : { ...tab, isActive: false }
-          )
-        }
-        const newTab: FileTab = {
-          id: fileItem.file_id,
-          file: fileItem,
-          content: fileContent,
-          isModified: false,
-          isActive: true,
-        }
-        return prevTabs.map(tab => ({ ...tab, isActive: false })).concat(newTab)
-      })
-
-      setActiveTabId(fileItem.file_id)
+      setContent(fileContent)
+      setIsModified(false)
     } catch (err) {
-      console.error('Error loading file content:', err)
       setError(err instanceof Error ? err.message : 'Failed to load file content')
     } finally {
       setLoading(false)
     }
   }, [])
 
-  const saveFile = useCallback(async (tabId: string) => {
-    const tab = tabs.find(t => t.id === tabId)
-    if (!tab || !tab.isModified) return
+  const saveFile = useCallback(async () => {
+    if (!isModified) return
 
     try {
-      const currentContent = editorRef.current?.getValue() || tab.content
+      const currentContent = editorRef.current?.getValue() || content
       const blob = new Blob([currentContent], { type: 'text/plain' })
 
       await ApiService.Files.uploadToS3(
         blob,
-        tab.file.name,
+        currentFile.name,
         userInfo?.username || 'web-editor',
-        tab.file.path,
+        currentFile.path,
         ''
       )
 
-      setTabs(prevTabs =>
-        prevTabs.map(t =>
-          t.id === tabId ? { ...t, content: currentContent, isModified: false } : t
-        )
-      )
-
+      setContent(currentContent)
+      setIsModified(false)
+      setLastSavedAt(new Date())
       onSaveComplete?.()
-    } catch (saveError) {
-      console.error('Error saving file:', saveError)
+    } catch {
       setError('Failed to save file')
     }
-  }, [tabs, userInfo, onSaveComplete])
+  }, [content, currentFile, isModified, userInfo, onSaveComplete])
 
   const handleEditorChange = useCallback((value: string | undefined) => {
-    if (!activeTabId) return
-    setTabs(prevTabs =>
-      prevTabs.map(tab =>
-        tab.id === activeTabId ? { ...tab, content: value || '', isModified: true } : tab
-      )
-    )
-  }, [activeTabId])
-
-  const closeTab = useCallback((tabId: string) => {
-    const tab = tabs.find(t => t.id === tabId)
-    if (tab?.isModified) {
-      if (!window.confirm('File has unsaved changes. Close anyway?')) return
-    }
-
-    setTabs(prevTabs => {
-      const newTabs = prevTabs.filter(t => t.id !== tabId)
-      if (newTabs.length > 0 && activeTabId === tabId) {
-        setActiveTabId(newTabs[newTabs.length - 1].id)
-      }
-      return newTabs
-    })
-  }, [tabs, activeTabId])
+    setContent(value || '')
+    setIsModified(true)
+  }, [])
 
   useEffect(() => {
     loadFileContent(file)
   }, [file, loadFileContent])
 
+  useEffect(() => {
+    const handleSettingsUpdate = () => setIdeSettings(getIDESettings())
+    window.addEventListener('ide-settings-updated', handleSettingsUpdate)
+    return () => window.removeEventListener('ide-settings-updated', handleSettingsUpdate)
+  }, [])
+
   // Auto-save every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      if (activeTabId) {
-        const tab = tabs.find(t => t.id === activeTabId)
-        if (tab?.isModified) saveFile(activeTabId)
-      }
+      if (isModified) saveFile()
     }, 30000)
     return () => clearInterval(interval)
-  }, [activeTabId, tabs, saveFile])
+  }, [isModified, saveFile])
+
+  // Cmd/Ctrl+S to save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+        saveFile()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [saveFile])
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center bg-zinc-800">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4" />
-          <p className="text-gray-400">Loading IDE...</p>
+      <div className="h-full flex items-center justify-center bg-background" aria-busy="true">
+        <div className="text-center" role="status" aria-live="polite">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto mb-4 motion-reduce:animate-none" aria-hidden />
+          <p className="text-muted-foreground">Loading IDE...</p>
         </div>
       </div>
     )
@@ -301,215 +171,143 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
 
   if (error) {
     return (
-      <div className="h-full flex items-center justify-center bg-zinc-800">
-        <div className="text-center max-w-md">
-          <h3 className="text-xl font-semibold text-white mb-2">Error Loading IDE</h3>
-          <p className="text-gray-400 mb-4">{error}</p>
+      <div className="h-full flex items-center justify-center bg-background">
+        <div className="text-center max-w-md px-4">
+          <h3 className="text-xl font-semibold text-foreground mb-2">Error loading IDE</h3>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <p className="text-muted-foreground text-sm">Try opening another file or refreshing.</p>
         </div>
       </div>
     )
   }
 
-  const activeTab = tabs.find(t => t.id === activeTabId)
-  const isDesktop = isDesktopTerminalAvailable()
+  const headerActions = (
+    <>
+      {currentFile && (
+        <button
+          type="button"
+          onClick={handleRunActiveFile}
+          disabled={isRunningFile}
+          className="bg-primary text-primary-foreground hover:bg-primary/90 px-2 py-1 rounded text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background min-h-[2rem] inline-flex items-center justify-center gap-1.5"
+          title={`Run ${currentFile.name}`}
+          aria-label={`Run ${currentFile.name}`}
+        >
+          <Play size={14} aria-hidden />
+          <span className="hidden md:inline">{isRunningFile ? 'Running...' : 'Run'}</span>
+        </button>
+      )}
+      {(runOutput || runError) && (
+        <button
+          type="button"
+          onClick={() => {
+            setRunOutput(null)
+            setRunError(null)
+          }}
+          className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          Clear output
+        </button>
+      )}
+    </>
+  )
 
   return (
-    <div className="h-full bg-zinc-800 flex flex-col">
-      {/* IDE Header */}
-      <div className="bg-zinc-800 border-b border-zinc-600 px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setIsFileExplorerOpen(!isFileExplorerOpen)}
-            className="text-gray-400 hover:text-white"
-          >
-            {isFileExplorerOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-          </button>
-          <span className="text-sm text-gray-300 font-medium">IDE</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {activeTab && isDesktop && (
-            <button
-              onClick={handleRunActiveFile}
-              className="text-green-400 hover:text-green-300 p-1"
-              title={`Run ${activeTab.file.name} in terminal`}
-            >
-              <Play size={16} />
-            </button>
-          )}
-          <button
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
-            className="text-gray-400 hover:text-white p-1"
-            title="Search"
-          >
-            <Search size={16} />
-          </button>
-          <button
-            onClick={() => setIsTerminalOpen(!isTerminalOpen)}
-            className={`p-1 ${isTerminalOpen ? 'text-green-400' : 'text-gray-400 hover:text-white'}`}
-            title={isDesktop ? 'Toggle Terminal' : 'Terminal (desktop app only)'}
-          >
-            <Terminal size={16} />
-          </button>
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="text-gray-400 hover:text-white p-1"
-            title="Settings"
-          >
-            <Settings size={16} />
-          </button>
-        </div>
-      </div>
+    <div className="h-full bg-background flex flex-col">
+      <CodeHeader
+        fileName={currentFile?.name ?? file.name}
+        language={getLanguageDisplayName(currentFile?.name ?? file.name)}
+        mode="edit"
+        actions={headerActions}
+      />
 
       {/* Main IDE Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* File Explorer Sidebar */}
-        {isFileExplorerOpen && (
-          <div className="w-64 bg-zinc-800 border-r border-zinc-600 flex flex-col">
-            <div className="p-3 border-b border-zinc-600">
-              <h3 className="text-sm font-medium text-gray-300">Explorer</h3>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 relative overflow-hidden">
+          {currentFile ? (
+            <Editor
+              height="100%"
+              defaultLanguage={getLanguageMonacoId(currentFile.name)}
+              value={content}
+              theme={getMonacoThemeId(ideSettings.theme)}
+              beforeMount={(monaco) => registerMonacoThemes(monaco as MonacoThemeRegistry)}
+              onChange={handleEditorChange}
+              onMount={editor => {
+                editorRef.current = editor
+              }}
+              options={{
+                readOnly: false,
+                minimap: { enabled: ideSettings.showMinimap },
+                fontSize: ideSettings.fontSize,
+                lineNumbers: ideSettings.showLineNumbers ? 'on' : 'off',
+                wordWrap: ideSettings.wordWrap,
+                automaticLayout: true,
+                bracketPairColorization: { enabled: true },
+                folding: true,
+                renderWhitespace: 'selection',
+                renderControlCharacters: false,
+                guides: {
+                  bracketPairs: true,
+                  indentation: true,
+                },
+              }}
+            />
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center gap-4 px-4 text-center">
+              <p className="text-muted-foreground">No file open</p>
+              <p className="text-sm text-muted-foreground">Select a file from the file tree to edit.</p>
             </div>
-            <div className="flex-1 overflow-y-auto p-2">
-              <div className="text-sm text-gray-400">File explorer coming soon...</div>
+          )}
+        </div>
+
+        {(runOutput || runError) && (
+          <div className="h-56 bg-card border-t border-border flex flex-col flex-shrink-0">
+            <div className="px-3 py-1.5 border-b border-border flex items-center justify-between bg-card">
+              <span className="text-xs text-foreground font-medium">Output</span>
+              {runOutput && (
+                <span className="text-xs text-muted-foreground">
+                  Exit {runOutput.exitCode} • {runOutput.interpreter}
+                  {runOutput.timedOut ? ' • timed out' : ''}
+                  {runOutput.truncated ? ' • truncated' : ''}
+                </span>
+              )}
+            </div>
+            <div className="flex-1 overflow-auto p-3 space-y-2">
+              {runError && (
+                <pre className="text-xs whitespace-pre-wrap font-mono text-destructive">{runError}</pre>
+              )}
+              {runOutput?.stdout && (
+                <pre className="text-xs whitespace-pre-wrap font-mono text-foreground">{runOutput.stdout}</pre>
+              )}
+              {runOutput?.stderr && (
+                <pre className="text-xs whitespace-pre-wrap font-mono text-destructive">{runOutput.stderr}</pre>
+              )}
+              {!runError && runOutput && !runOutput.stdout && !runOutput.stderr && (
+                <p className="text-xs text-muted-foreground">Program finished with no output.</p>
+              )}
             </div>
           </div>
         )}
-
-        {/* Editor + Terminal column */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Tab Bar */}
-          {tabs.length > 0 && (
-            <div className="bg-zinc-800 border-b border-zinc-600 flex items-center">
-              {tabs.map(tab => {
-                const FileIcon = getFileIcon(tab.file.name)
-                return (
-                  <div
-                    key={tab.id}
-                    className={`flex items-center gap-2 px-3 py-2 text-sm cursor-pointer border-r border-zinc-700 ${
-                      tab.isActive ? 'bg-zinc-700 text-white' : 'text-gray-400 hover:text-gray-300'
-                    }`}
-                    onClick={() => setActiveTabId(tab.id)}
-                  >
-                    <FileIcon size={14} />
-                    <span className="truncate max-w-32">{tab.file.name}</span>
-                    {tab.isModified && <span className="text-yellow-400">•</span>}
-                    <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        closeTab(tab.id)
-                      }}
-                      className="ml-2 text-gray-500 hover:text-red-400"
-                    >
-                      ×
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Monaco Editor */}
-          <div className="flex-1 relative overflow-hidden">
-            {activeTab ? (
-              <Editor
-                height="100%"
-                defaultLanguage={getLanguageFromExtension(activeTab.file.name)}
-                value={activeTab.content}
-                theme={theme}
-                onChange={handleEditorChange}
-                onMount={editor => {
-                  editorRef.current = editor
-                }}
-                options={{
-                  readOnly: false,
-                  minimap: { enabled: showMinimap },
-                  fontSize,
-                  lineNumbers: showLineNumbers ? 'on' : 'off',
-                  wordWrap,
-                  automaticLayout: true,
-                  bracketPairColorization: { enabled: true },
-                  folding: true,
-                  renderWhitespace: 'selection',
-                  renderControlCharacters: false,
-                  guides: {
-                    bracketPairs: true,
-                    indentation: true,
-                  },
-                }}
-              />
-            ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">
-                No file open
-              </div>
-            )}
-          </div>
-
-          {/* Terminal Panel */}
-          {isTerminalOpen && (
-            <div className="h-56 bg-zinc-900 border-t border-zinc-700 flex flex-col flex-shrink-0">
-              <div className="px-3 py-1.5 border-b border-zinc-700 flex items-center justify-between bg-zinc-800">
-                <div className="flex items-center gap-2">
-                  <Terminal size={13} className="text-green-400" />
-                  <span className="text-xs text-gray-300 font-medium">Terminal</span>
-                  {!isDesktop && (
-                    <span className="text-xs text-yellow-400 ml-2">
-                      (desktop app only)
-                    </span>
-                  )}
-                </div>
-                <button
-                  onClick={() => setIsTerminalOpen(false)}
-                  className="text-gray-400 hover:text-white text-sm leading-none"
-                >
-                  ×
-                </button>
-              </div>
-              {isDesktop ? (
-                <div
-                  ref={xtermContainerRef}
-                  className="flex-1 overflow-hidden p-1"
-                  style={{ background: '#18181b' }}
-                />
-              ) : (
-                <div className="flex-1 flex items-center justify-center">
-                  <p className="text-sm text-gray-400 text-center max-w-xs">
-                    The live terminal is only available in the Banbury desktop app.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Status Bar */}
-      <div className="bg-zinc-800 border-t border-zinc-700 px-4 py-1 flex items-center justify-between text-xs text-gray-400">
+      <div className="bg-background border-t border-border px-4 py-1 flex items-center justify-between text-xs text-muted-foreground">
         <div className="flex items-center gap-4">
-          <span>{activeTab ? `${language} • ${activeTab.file.name}` : 'No file'}</span>
-          {activeTab?.isModified && <span className="text-yellow-400">Modified</span>}
+          <span>{currentFile ? `${getLanguageDisplayName(currentFile.name)} • ${currentFile.name}` : 'No file'}</span>
+          {isModified ? (
+            <span className="text-chart-4">Modified</span>
+          ) : lastSavedAt ? (
+            <span>Saved {formatRelative(lastSavedAt)}</span>
+          ) : (
+            <span>Saves automatically</span>
+          )}
         </div>
         <div className="flex items-center gap-4">
-          <span>Ln {editorRef.current?.getPosition()?.lineNumber || 1}</span>
-          <span>Col {editorRef.current?.getPosition()?.column || 1}</span>
-          <span>{fontSize}px</span>
+          <span>Line {editorRef.current?.getPosition()?.lineNumber || 1}</span>
+          <span>Column {editorRef.current?.getPosition()?.column || 1}</span>
+          <span>{ideSettings.fontSize}px</span>
         </div>
       </div>
 
-      {/* Settings Panel */}
-      <IDESettings
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        theme={theme}
-        onThemeChange={setTheme}
-        fontSize={fontSize}
-        onFontSizeChange={setFontSize}
-        wordWrap={wordWrap}
-        onWordWrapChange={setWordWrap}
-        showLineNumbers={showLineNumbers}
-        onShowLineNumbersChange={setShowLineNumbers}
-        showMinimap={showMinimap}
-        onShowMinimapChange={setShowMinimap}
-      />
     </div>
   )
 }

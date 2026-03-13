@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Norm_AI_Interview_Preparation_Guide.docx</title>
+    <style>body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }</style>
+</head>
+<body>
+<h1>Norm AI Full Stack Engineer Interview Preparation Guide</h1>
+<h2>Company Overview</h2>
+<p><strong>Norm AI</strong> is a Compliance AI Platform specializing in legal standards-based reasoning and workflow automation. They&#39;ve developed the first Domain Specific Language (DSL) for fully representing regulatory requirements in AI code.</p>
+<h3>Key Facts:</h3>
+<ul>
+<li><strong>Funding</strong>: $85 million raised over 18 months</li>
+<li><strong>Clients</strong>: Firms with combined $17 Trillion in AUM</li>
+<li><strong>Investors</strong>: Vanguard, Blackstone, Bain Capital, Coatue, Craft Ventures, New York Life, Citi, TIAA, Marc Benioff</li>
+<li><strong>Team Background</strong>: Engineers from Palantir, Google, Meta, AWS, Harvard, Stanford, MIT</li>
+<li><strong>Legal Team</strong>: Harvard Law, Stanford Law, Yale Law, top law firms, SEC, FINRA</li>
+</ul>
+<h2>Position Details</h2>
+<p><strong>Role</strong>: Full Stack Engineer (Staff &amp; Senior levels)<br><strong>Salary</strong>:</p>
+<ul>
+<li>Staff: $235,000-$270,000 + equity</li>
+<li>Senior: $190,000-$240,000 + equity</li>
+<p><strong>Location</strong>: NYC (hybrid 3-4 days/week)</p>
+</ul>
+<h3>Two Main Teams:</h3>
+<ol>
+<li><strong>Product Engineering</strong>: Customer-facing enterprise application (workflows, UI, AI features)</li>
+<li><strong>Legal Engineering Automation Platform (LEAP)</strong>: Proprietary platform for building/configuring AI agents</li>
+</ol>
+<h2>Technical Stack</h2>
+<h3>Core Technologies:</h3>
+<ul>
+<li><strong>Backend</strong>: Python (4+ years required), FastAPI</li>
+<li><strong>Frontend</strong>: React + TypeScript (2+ years required)</li>
+<li><strong>Database</strong>: PostgreSQL</li>
+<li><strong>Cloud</strong>: AWS infrastructure</li>
+<li><strong>AI/ML</strong>: LLM integration, agentic workflows</li>
+<li><strong>File Processing</strong>: PDFs, Excel files</li>
+</ul>
+<h3>Key Technical Concepts:</h3>
+<ul>
+<li><strong>Domain Specific Language (DSL)</strong>: Custom language for regulatory requirements</li>
+<li><strong>AI Agents</strong>: Execute thousands of LLM calls per document</li>
+<li><strong>Multi-tenant Platform</strong>: Enterprise-grade security and isolation</li>
+<li><strong>Compliance Workflows</strong>: Automated regulatory checks</li>
+</ul>
+<h2>Potential Interview Questions</h2>
+<h3>1. Technical/Coding Questions</h3>
+<h4>Python &amp; Backend:</h4>
+<ul>
+<li>&quot;How would you design a system to process thousands of LLM API calls efficiently?&quot;</li>
+<li>&quot;Explain how you&#39;d implement rate limiting for API calls to external LLM services.&quot;</li>
+<li>&quot;How would you handle database transactions when processing compliance documents?&quot;</li>
+<li>&quot;Design a caching strategy for regulatory rule lookups.&quot;</li>
+<li>&quot;How would you implement a queue system for processing large documents?&quot;</li>
+</ul>
+<h4>React &amp; Frontend:</h4>
+<ul>
+<li>&quot;How would you build a real-time dashboard showing compliance check progress?&quot;</li>
+<li>&quot;Explain how you&#39;d handle streaming responses from AI models in a React app.&quot;</li>
+<li>&quot;How would you implement a complex form for configuring AI agents?&quot;</li>
+<li>&quot;Design a component for displaying PDF annotations and compliance issues.&quot;</li>
+<li>&quot;How would you optimize performance for large data tables showing compliance results?&quot;</li>
+</ul>
+<h4>System Design:</h4>
+<ul>
+<li>&quot;Design a system to handle document uploads and AI-powered compliance checking.&quot;</li>
+<li>&quot;How would you architect a multi-tenant platform for compliance data?&quot;</li>
+<li>&quot;Design a workflow engine for regulatory compliance processes.&quot;</li>
+<li>&quot;How would you implement audit logging for compliance activities?&quot;</li>
+</ul>
+<h3>2. AI/ML Specific Questions</h3>
+<ul>
+<li>&quot;How would you handle inconsistent responses from LLMs in a compliance context?&quot;</li>
+<li>&quot;Explain how you&#39;d implement prompt engineering for regulatory analysis.&quot;</li>
+<li>&quot;How would you ensure AI model outputs are explainable for compliance officers?&quot;</li>
+<li>&quot;Design a system to version and manage different AI agent configurations.&quot;</li>
+<li>&quot;How would you handle model drift in a compliance AI system?&quot;</li>
+</ul>
+<h3>3. Compliance/Regulatory Questions</h3>
+<ul>
+<li>&quot;What challenges do you see in applying AI to regulatory compliance?&quot;</li>
+<li>&quot;How would you ensure data privacy in a compliance platform?&quot;</li>
+<li>&quot;Explain the importance of audit trails in regulatory software.&quot;</li>
+<li>&quot;How would you handle different regulatory frameworks (SEC, FINRA, etc.)?&quot;</li>
+<li>&quot;What are the key considerations for enterprise compliance software?&quot;</li>
+</ul>
+<h3>4. Behavioral Questions</h3>
+<ul>
+<li>&quot;Tell me about a time you worked on a complex, regulated system.&quot;</li>
+<li>&quot;How do you approach working with domain experts (lawyers, compliance officers)?&quot;</li>
+<li>&quot;Describe a challenging technical problem you solved recently.&quot;</li>
+<li>&quot;How do you ensure code quality in a fast-paced startup environment?&quot;</li>
+<li>&quot;Tell me about a time you had to learn a new technology quickly.&quot;</li>
+</ul>
+<h3>5. Company-Specific Questions</h3>
+<ul>
+<li>&quot;Why are you interested in working in the compliance/regulatory space?&quot;</li>
+<li>&quot;How would you approach building trust with enterprise clients?&quot;</li>
+<li>&quot;What excites you about AI applications in legal/compliance domains?&quot;</li>
+<li>&quot;How do you handle the balance between innovation and regulatory requirements?&quot;</li>
+</ul>
+<h2>Technical Deep Dives to Prepare</h2>
+<h3>1. FastAPI &amp; Python</h3>
+<ul>
+<li>Async/await patterns</li>
+<li>Dependency injection</li>
+<li>Background tasks</li>
+<li>WebSocket implementation</li>
+<li>Error handling and validation</li>
+<li>Database connection pooling</li>
+</ul>
+<h3>2. React &amp; TypeScript</h3>
+<ul>
+<li>State management (Redux, Context)</li>
+<li>Performance optimization</li>
+<li>Real-time updates (WebSockets, SSE)</li>
+<li>Form handling and validation</li>
+<li>Component architecture</li>
+<li>Testing strategies</li>
+</ul>
+<h3>3. PostgreSQL</h3>
+<ul>
+<li>Query optimization</li>
+<li>Indexing strategies</li>
+<li>Transaction management</li>
+<li>Connection pooling</li>
+<li>Data modeling for compliance data</li>
+</ul>
+<h3>4. AI/LLM Integration</h3>
+<ul>
+<li>API rate limiting and retry logic</li>
+<li>Prompt engineering best practices</li>
+<li>Handling streaming responses</li>
+<li>Error handling for AI services</li>
+<li>Cost optimization strategies</li>
+</ul>
+<h3>5. Enterprise Software Patterns</h3>
+<ul>
+<li>Multi-tenancy architecture</li>
+<li>Audit logging</li>
+<li>Role-based access control</li>
+<li>Data encryption</li>
+<li>Compliance reporting</li>
+</ul>
+<h2>Questions to Ask Them</h2>
+<h3>Technical:</h3>
+<ol>
+<li>&quot;What&#39;s the most challenging aspect of your DSL implementation?&quot;</li>
+<li>&quot;How do you handle model versioning and deployment?&quot;</li>
+<li>&quot;What&#39;s your approach to testing AI-powered features?&quot;</li>
+<li>&quot;How do you ensure data consistency across your multi-tenant platform?&quot;</li>
+</ol>
+<h3>Product/Business:</h3>
+<ol>
+<li>&quot;What&#39;s the biggest technical challenge facing the compliance AI space?&quot;</li>
+<li>&quot;How do you balance AI automation with human oversight in compliance?&quot;</li>
+<li>&quot;What&#39;s your roadmap for expanding to new regulatory frameworks?&quot;</li>
+</ol>
+<h3>Team/Culture:</h3>
+<ol>
+<li>&quot;How do engineering and legal teams collaborate on product development?&quot;</li>
+<li>&quot;What&#39;s the learning curve like for engineers new to the compliance domain?&quot;</li>
+<li>&quot;How do you maintain code quality while moving fast in a startup environment?&quot;</li>
+</ol>
+<h2>Key Success Metrics (30/60 Days)</h2>
+<h3>30 Days:</h3>
+<ul>
+<li>Understand Norm AI&#39;s technology stack and regulatory landscape</li>
+<li>Establish collaborative relationships with team</li>
+<li>Make meaningful contributions to existing system</li>
+</ul>
+<h3>60 Days:</h3>
+<ul>
+<li>Implement and deploy significant AI-forward features</li>
+<li>Demonstrate understanding of customer needs</li>
+<li>Begin owning initiatives internally</li>
+</ul>
+<h2>Preparation Tips</h2>
+<ol>
+<li><strong>Review the Tech Stack</strong>: Ensure you&#39;re comfortable with Python, React, TypeScript, FastAPI, and PostgreSQL</li>
+<li><strong>Understand Compliance</strong>: Research basic compliance concepts, especially in financial services</li>
+<li><strong>AI/LLM Knowledge</strong>: Understand how to integrate with LLM APIs, handle streaming, and manage costs</li>
+<li><strong>System Design</strong>: Practice designing scalable, secure systems for enterprise clients</li>
+<li><strong>Regulatory Awareness</strong>: Learn about SEC, FINRA, and other financial regulations</li>
+<li><strong>Enterprise Software</strong>: Understand multi-tenancy, security, and audit requirements</li>
+</ol>
+<h2>Sample Code Challenges to Practice</h2>
+<ol>
+<li>Build a simple document processing pipeline with AI integration</li>
+<li>Create a React component for displaying compliance check results</li>
+<li>Design a database schema for storing regulatory rules</li>
+<li>Implement rate limiting for external API calls</li>
+<li>Build a real-time notification system for compliance alerts</li>
+</ol>
+<h2>Key Takeaways</h2>
+<p>Remember: Norm AI values engineers who can work at the intersection of cutting-edge AI technology and highly regulated industries. Show your ability to balance innovation with reliability and compliance requirements.</p>
+<p>Focus on demonstrating:</p>
+<ul>
+<li>Technical expertise in their stack</li>
+<li>Understanding of enterprise/compliance requirements</li>
+<li>Ability to work with domain experts</li>
+<li>Experience with AI/ML integration</li>
+<li>Problem-solving skills for complex systems</li>
+</ul>
+</body>
+</html>

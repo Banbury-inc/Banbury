@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { ipcMain, WebContents } from 'electron'
-import os from 'os'
+import path from 'path'
 
 interface TerminalSession {
   pty: any
@@ -15,7 +15,22 @@ function getDefaultShell(): string {
 }
 
 function getDefaultCwd(): string {
-  return os.homedir()
+  return process.cwd()
+}
+
+function resolveSafeCwd(requestedCwd?: string): string {
+  const workspaceRoot = getDefaultCwd()
+  if (!requestedCwd) return workspaceRoot
+
+  const normalized = requestedCwd.trim()
+  if (!normalized) return workspaceRoot
+
+  const absolutePath = path.isAbsolute(normalized)
+    ? path.resolve(normalized)
+    : path.resolve(workspaceRoot, normalized)
+
+  if (!absolutePath.startsWith(workspaceRoot)) return workspaceRoot
+  return absolutePath
 }
 
 export function setupTerminalIPC(): void {
@@ -30,7 +45,7 @@ export function setupTerminalIPC(): void {
       }
 
       const shell = getDefaultShell()
-      const workingDir = cwd || getDefaultCwd()
+      const workingDir = resolveSafeCwd(cwd)
 
       const ptyProcess = nodePty.spawn(shell, [], {
         name: 'xterm-256color',

@@ -39,6 +39,8 @@ export function useDesktopTerminal({
   const cleanupDataRef = useRef<(() => void) | null>(null)
   const cleanupExitRef = useRef<(() => void) | null>(null)
   const startedRef = useRef(false)
+  const readyRef = useRef(false)
+  const pendingWritesRef = useRef<string[]>([])
 
   const fitTerminal = useCallback(() => {
     if (!fitAddonRef.current || !terminalRef.current) return
@@ -54,9 +56,13 @@ export function useDesktopTerminal({
   }, [sessionId])
 
   const writeToTerminal = useCallback((data: string) => {
-    if (window.desktopApp?.terminal) {
-      window.desktopApp.terminal.write(sessionId, data)
+    if (!window.desktopApp?.terminal) return
+    if (!readyRef.current) {
+      pendingWritesRef.current.push(data)
+      return
     }
+
+    window.desktopApp.terminal.write(sessionId, data)
   }, [sessionId])
 
   useEffect(() => {
@@ -64,11 +70,13 @@ export function useDesktopTerminal({
     if (!isDesktopTerminalAvailable()) return
 
     startedRef.current = true
+    readyRef.current = false
 
     const xterm = new Terminal({
       cursorBlink: true,
       fontSize: 13,
       fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+      // Theme aligned with zinc palette for consistency with app UI
       theme: {
         background: '#18181b',
         foreground: '#d4d4d8',
@@ -130,7 +138,14 @@ export function useDesktopTerminal({
     window.desktopApp!.terminal!.start(sessionId, cwd).then((result) => {
       if (!result.success) {
         xterm.writeln(`\r\n\x1b[31mFailed to start terminal: ${result.error ?? 'unknown error'}\x1b[0m`)
+        return
       }
+
+      readyRef.current = true
+      for (const pendingWrite of pendingWritesRef.current) {
+        window.desktopApp?.terminal?.write(sessionId, pendingWrite)
+      }
+      pendingWritesRef.current = []
     })
 
     // Resize observer to auto-fit on container resize
@@ -152,6 +167,8 @@ export function useDesktopTerminal({
       cleanupExitRef.current?.()
       window.desktopApp?.terminal?.close(sessionId)
       xterm.dispose()
+      pendingWritesRef.current = []
+      readyRef.current = false
       terminalRef.current = null
       fitAddonRef.current = null
       startedRef.current = false

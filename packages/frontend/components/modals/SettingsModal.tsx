@@ -39,7 +39,7 @@ import {
   AISettingsTab,
   KeybindsTab,
   UsageTab,
-  AboutTab
+  AboutTab,
 } from './settings-tabs'
 import { handleUpdateProfile } from './handlers/settingsHandlers'
 

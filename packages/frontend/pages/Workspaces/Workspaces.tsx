@@ -27,7 +27,7 @@ import { handleReplyToEmail } from '../../components/LeftPanel/components/EmailT
 import { handleComposeEmail } from '../../components/LeftPanel/components/EmailTab/handlers/handleComposeEmail';
 import { loadConversations, loadConversation, deleteConversation } from './handlers/conversationManagement';
 import { findPanel, getAllTabs, updatePanelActiveTab, addTabToPanel, removeTabFromPanel } from './handlers/panelUtils';
-import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, openAdminInTab, openTerminalInTab, openDatabaseTableInTab, openFlowInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
+import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, openAdminInTab, openDatabaseTableInTab, openFlowInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
 import { 
   isDrawioFile, 
   isTldrawFile, 
@@ -257,18 +257,6 @@ const Workspaces = (): React.ReactNode => {
       setPanelLayout
     );
   }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
-
-  const openTerminalInTabCallback = useCallback((targetPanelId: string = activePanelId) => {
-    openTerminalInTab(
-      targetPanelId,
-      panelLayout,
-      getAllTabs,
-      updatePanelActiveTab,
-      addTabToPanel,
-      setActivePanelId,
-      setPanelLayout
-    )
-  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout])
 
   const openDatabaseTableInTabCallback = useCallback((payload: OpenDatabaseTablePayload, targetPanelId: string = activePanelId) => {
     openDatabaseTableInTab(
@@ -865,7 +853,6 @@ const Workspaces = (): React.ReactNode => {
               isAssistantPanelCollapsed={isAssistantPanelCollapsed}
               onToggleFileSidebar={() => setIsFileSidebarCollapsed(prev => !prev)}
               onToggleAssistantPanel={() => setIsAssistantPanelCollapsed(prev => !prev)}
-              onOpenTerminal={() => openTerminalInTabCallback(activePanelId)}
             />
 
             {/* Mobile File Sidebar Drawer */}

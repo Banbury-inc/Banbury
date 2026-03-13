@@ -1,8 +1,7 @@
 import { FitAddon } from '@xterm/addon-fit'
 import { Terminal } from '@xterm/xterm'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { io, type Socket } from 'socket.io-client'
-import { createTerminalSession, closeTerminalSession, ensureTerminalSocketServer } from './webTerminalApi'
+import { CONFIG } from '../../../../config/config'
 
 type TerminalStatus = 'idle' | 'connecting' | 'connected' | 'error' | 'closed'
 
@@ -16,11 +15,8 @@ interface UseWebTerminalSessionResult {
   status: TerminalStatus
   errorMessage: string | null
   reconnect: () => void
-}
-
-interface SessionState {
-  sessionId: string
-  sessionToken: string
+  sendInput: (data: string) => boolean
+  isReady: boolean
 }
 
 function createTerminalTheme() {
@@ -30,6 +26,12 @@ function createTerminalTheme() {
     cursor: '#e4e4e7',
     selectionBackground: '#27272a',
   }
+}
+
+function buildTerminalWsUrl(): string {
+  const sessionId = crypto.randomUUID()
+  const base = CONFIG.wsBaseUrl
+  return `${base}/ws/terminal/${sessionId}/`
 }
 
 export function useWebTerminalSession({
@@ -42,35 +44,30 @@ export function useWebTerminalSession({
   const [connectionAttempt, setConnectionAttempt] = useState(0)
   const xtermRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
-  const socketRef = useRef<Socket | null>(null)
+  const wsRef = useRef<WebSocket | null>(null)
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
-  const sessionRef = useRef<SessionState | null>(null)
+  const isReadyRef = useRef(false)
 
   const reconnect = useCallback(() => {
     setConnectionAttempt((prev) => prev + 1)
+  }, [])
+
+  const sendInput = useCallback((data: string): boolean => {
+    const ws = wsRef.current
+    if (!ws || ws.readyState !== WebSocket.OPEN || !isReadyRef.current) return false
+    ws.send(JSON.stringify({ type: 'input', data }))
+    return true
   }, [])
 
   useEffect(() => {
     if (!isActive || !containerRef.current) return
 
     let cancelled = false
-    let authToken = ''
 
-    async function initializeTerminal() {
+    function initializeTerminal() {
       try {
         setStatus('connecting')
         setErrorMessage(null)
-
-        authToken = localStorage.getItem('authToken') || ''
-        if (!authToken) throw new Error('You need to sign in before opening a terminal.')
-
-        await ensureTerminalSocketServer()
-        const session = await createTerminalSession({ authToken, cwd })
-        if (cancelled) return
-        sessionRef.current = {
-          sessionId: session.sessionId,
-          sessionToken: session.sessionToken,
-        }
 
         const xterm = new Terminal({
           cursorBlink: true,
@@ -87,68 +84,62 @@ export function useWebTerminalSession({
         xtermRef.current = xterm
         fitAddonRef.current = fitAddon
 
-        const socket = io({
-          path: '/api/terminal/socket',
-          transports: ['websocket'],
-        })
-        socketRef.current = socket
+        const wsUrl = buildTerminalWsUrl()
+        const ws = new WebSocket(wsUrl)
+        wsRef.current = ws
+
+        ws.onopen = () => {
+          if (cancelled) return
+          ws.send(JSON.stringify({ type: 'start', cwd }))
+        }
+
+        ws.onmessage = (event) => {
+          if (cancelled) return
+          let payload: { type: string; data?: string; exitCode?: number }
+          try { payload = JSON.parse(event.data) } catch { return }
+
+          if (payload.type === 'ready') {
+            setStatus('connected')
+            isReadyRef.current = true
+            sendResize()
+          } else if (payload.type === 'data') {
+            xterm.write(payload.data || '')
+          } else if (payload.type === 'exit') {
+            xterm.writeln(`\r\n\x1b[33m[Process exited with code ${payload.exitCode ?? 0}]\x1b[0m`)
+            setStatus('closed')
+            isReadyRef.current = false
+          }
+        }
+
+        ws.onerror = () => {
+          if (cancelled) return
+          setErrorMessage('Terminal WebSocket connection failed.')
+          setStatus('error')
+          isReadyRef.current = false
+        }
+
+        ws.onclose = () => {
+          if (cancelled) return
+          if (status !== 'error') setStatus('closed')
+          isReadyRef.current = false
+        }
 
         xterm.onData((data) => {
-          const currentSession = sessionRef.current
-          if (!currentSession) return
-          socket.emit('terminal:input', {
-            sessionId: currentSession.sessionId,
-            data,
-          })
-        })
-
-        socket.on('terminal:ready', () => {
-          if (cancelled) return
-          setStatus('connected')
-        })
-
-        socket.on('terminal:data', (payload: { data: string }) => {
-          xterm.write(payload.data || '')
-        })
-
-        socket.on('terminal:exit', (payload: { exitCode: number }) => {
-          xterm.writeln(`\r\n\x1b[33m[Process exited with code ${payload.exitCode}]\x1b[0m`)
-          setStatus('closed')
-        })
-
-        socket.on('terminal:error', (payload: { message?: string }) => {
-          const message = payload.message || 'Terminal connection failed'
-          xterm.writeln(`\r\n\x1b[31m${message}\x1b[0m`)
-          setErrorMessage(message)
-          setStatus('error')
-        })
-
-        socket.on('connect', () => {
-          const currentSession = sessionRef.current
-          if (!currentSession) return
-          socket.emit('terminal:join', {
-            sessionId: currentSession.sessionId,
-            sessionToken: currentSession.sessionToken,
-            authToken,
-          })
+          sendInput(data)
         })
 
         const sendResize = () => {
-          const currentSession = sessionRef.current
-          if (!currentSession || !fitAddonRef.current) return
+          if (!fitAddonRef.current || !wsRef.current) return
           fitAddonRef.current.fit()
-          const dimensions = fitAddonRef.current.proposeDimensions()
-          if (!dimensions) return
-          socket.emit('terminal:resize', {
-            sessionId: currentSession.sessionId,
-            cols: dimensions.cols,
-            rows: dimensions.rows,
-          })
+          const dims = fitAddonRef.current.proposeDimensions()
+          if (!dims) return
+          if (wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ type: 'resize', cols: dims.cols, rows: dims.rows }))
+          }
         }
 
         resizeObserverRef.current = new ResizeObserver(sendResize)
         resizeObserverRef.current.observe(containerRef.current!)
-        sendResize()
       } catch (error) {
         if (cancelled) return
         const message = error instanceof Error ? error.message : 'Unable to initialize terminal'
@@ -161,34 +152,23 @@ export function useWebTerminalSession({
 
     return () => {
       cancelled = true
+      isReadyRef.current = false
       resizeObserverRef.current?.disconnect()
       resizeObserverRef.current = null
 
-      const currentSession = sessionRef.current
-      if (currentSession) {
-        const sessionId = currentSession.sessionId
-        socketRef.current?.emit('terminal:close', { sessionId })
-        if (authToken) {
-          closeTerminalSession({
-            authToken,
-            sessionId,
-            sessionToken: currentSession.sessionToken,
-          }).catch(() => {})
-        }
-      }
-
-      sessionRef.current = null
-      socketRef.current?.disconnect()
-      socketRef.current = null
+      wsRef.current?.close()
+      wsRef.current = null
       xtermRef.current?.dispose()
       xtermRef.current = null
       fitAddonRef.current = null
     }
-  }, [isActive, containerRef, cwd, connectionAttempt])
+  }, [isActive, containerRef, cwd, connectionAttempt, sendInput])
 
   return {
     status,
     errorMessage,
     reconnect,
+    sendInput,
+    isReady: status === 'connected',
   }
 }
