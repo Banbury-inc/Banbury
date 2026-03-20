@@ -92,8 +92,9 @@ export const codeEditOpenFileTool = tool(
   {
     name: "code_edit_open_file",
     description:
-      "Create a code-edit proposal for the currently open code file only. " +
+      "Primary tool for editing the user's open source code file in the IDE (TypeScript, JavaScript, Python, etc.). " +
       "Use exact snippet replacements (originalSnippet -> replacementSnippet). " +
+      "Do not use docx_ai for code files — docx_ai is only for Word .docx documents. " +
       "Never use this tool for creating, deleting, renaming, or editing other files.",
     schema: z.object({
       filePath: z

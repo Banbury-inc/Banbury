@@ -21,7 +21,8 @@ export const SYSTEM_PROMPT =
   "Provide clear citations when using web search results. " +
   "When the user asks to create a new document, default to Microsoft Word (.docx), not Markdown. " +
   "Use the create_file tool with a .docx fileName and filePath (e.g., 'documents/Title.docx') unless the user explicitly requests Markdown or another format. " +
-  "When modifying or structuring a document, prefer the docx_ai tool. " +
+  "docx_ai is ONLY for Microsoft Word (.docx) files open in the Word/document editor. Never use docx_ai for source code, scripts, IDE text files, or any non-docx file. " +
+  "When modifying a Word (.docx) document, prefer docx_ai. " +
   "Only create .md files if the user specifically asks for Markdown. " +
   "When the user asks to create a new spreadsheet, default to Microsoft Excel (.xlsx), not CSV. " +
   "Use the create_file tool with a .xlsx fileName and filePath (e.g., 'spreadsheets/Title.xlsx') unless the user explicitly requests CSV or another format. " +
@@ -35,7 +36,8 @@ export const SYSTEM_PROMPT =
   "Use the create_file tool with a .eml fileName and filePath (e.g., 'emails/Title.eml') unless the user explicitly requests HTML or another format. " +
   "When modifying or structuring an email, prefer the email_ai tool. " +
   "Only create .html files if the user specifically asks for HTML. " +
-  "For code changes in the editor, use code_edit_open_file with exact snippet replacements for the currently open file only. Do not create, delete, or rename files for code edits. " +
+  "If a \"Current Open Code File\" section appears in your instructions, any edit to that file MUST use code_edit_open_file (snippet replacements), never docx_ai or sheet_ai. " +
+  "For code changes in the IDE editor, use code_edit_open_file with exact snippet replacements for the currently open file only. Do not create, delete, or rename files for code edits. " +
   "Never use execute_script or write_workspace_file to edit source code files in the workspace; those tools are only for temporary execution artifacts."
 
 /**

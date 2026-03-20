@@ -53,11 +53,6 @@ export function handleToolResult({ evt, contentParts }: HandleToolResultParams):
 
       if (parsed?.success && parsed.proposal) {
         window.dispatchEvent(new CustomEvent("assistant-code-edit-proposed", { detail: parsed.proposal }))
-        window.dispatchEvent(
-          new CustomEvent("code-edit-ai-response", {
-            detail: { ...parsed.proposal, preview: false },
-          })
-        )
       }
     } else if (toolName === 'pptx_create_presentation') {
       // Handle PowerPoint presentation creation - dispatch workspace-reopen-file event

@@ -172,7 +172,8 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
           `\n\n## Current Open Code File\n` +
           `- fileName: ${fileName}\n` +
           `- filePath: ${effectiveCurrentCodeFile.filePath}\n` +
-          `\nWhen proposing code changes, use the code_edit_open_file tool and set filePath exactly to the open file path above.` +
+          `\nThe user is focused on this IDE code file. For ANY edit to this file, you MUST call code_edit_open_file with filePath exactly as above and snippet-based edits. ` +
+          `Do NOT use docx_ai, sheet_ai, or other document tools for this path — those apply only to Office documents in their viewers, not to source code.` +
           (codePreview
             ? `\n\n### Open File Content (preview)\n\`\`\`\n${codePreview}\n\`\`\``
             : "")
@@ -262,7 +263,10 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
           reactAgent = createDocumentAgentForProvider(modelProvider)
           agentType = "document"
         } else {
-          reactAgent = createReactAgentForProvider(modelProvider)
+          const excludeDocxWhenCodeFocused = Boolean(effectiveCurrentCodeFile?.filePath)
+          reactAgent = createReactAgentForProvider(modelProvider, {
+            excludeToolNames: excludeDocxWhenCodeFocused ? ["docx_ai"] : undefined,
+          })
           agentType = "general"
         }
         

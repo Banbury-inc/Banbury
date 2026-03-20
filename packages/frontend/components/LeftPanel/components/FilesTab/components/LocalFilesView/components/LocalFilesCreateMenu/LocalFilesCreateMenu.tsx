@@ -77,7 +77,7 @@ export function LocalFilesCreateMenu({
         <SelectItem value="code-file" className="[&_svg]:!text-sky-400">
           <div className="flex items-center">
             <FileCode size={16} strokeWidth={1} className="mr-2" />
-            <Typography variant="xs" className="font-medium">Code File</Typography>
+            <Typography variant="xs" className="font-medium">Python</Typography>
           </div>
         </SelectItem>
         <SelectItem value="document" className="[&_svg]:!text-blue-500">

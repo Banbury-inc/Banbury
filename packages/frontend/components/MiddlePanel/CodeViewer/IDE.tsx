@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Editor } from '@monaco-editor/react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { DiffEditor, Editor } from '@monaco-editor/react'
+import type { CodeEditProposal } from '../../../assistant/ClaudeRuntimeProvider/types/codeEdit'
 import { FileSystemItem } from '../../../utils/fileTreeUtils'
 import { ApiService } from '../../../../backend/api/apiService'
 import { getMonacoThemeId, registerMonacoThemes, type MonacoThemeRegistry } from './ideThemes'
@@ -11,7 +12,14 @@ import { saveCodeFileToS3 } from './handlers/saveCodeFileToS3'
 import { setCurrentCodeFileContext, clearCurrentCodeFileContext } from './handlers/currentCodeFileContext'
 import { registerCodeEditor, unregisterCodeEditor } from '../../RightPanel/handlers/handle-code-edit-ai-response'
 import { CodeHeader } from './CodeHeader'
-import { Play, Save } from 'lucide-react'
+import { Check, CheckCheck, Play, Save, X } from 'lucide-react'
+import { matchCodeEditProposalToIdeFile } from './handlers/matchCodeEditProposalToIdeFile'
+import {
+  computeReviewDiffModified,
+  tryAcceptAllRemainingReviewHunks,
+  tryAcceptReviewHunk,
+  type IdeCodeEditReviewSession,
+} from './handlers/ideCodeEditReviewHandlers'
 
 interface IDEProps {
   file: FileSystemItem
@@ -49,6 +57,17 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
 
   const editorRef = useRef<Parameters<NonNullable<React.ComponentProps<typeof Editor>['onMount']>>[0] | null>(null)
   const appliedChangeIdsRef = useRef<Set<string>>(new Set())
+  const [reviewSession, setReviewSession] = useState<IdeCodeEditReviewSession | null>(null)
+  const reviewSessionRef = useRef<IdeCodeEditReviewSession | null>(null)
+  const isModifiedAtReviewStartRef = useRef(false)
+  const isModifiedRef = useRef(isModified)
+  isModifiedRef.current = isModified
+  reviewSessionRef.current = reviewSession
+
+  const reviewDiffPreview = useMemo(() => {
+    if (!reviewSession) return null
+    return computeReviewDiffModified(reviewSession)
+  }, [reviewSession])
 
   const handleRunActiveFile = useCallback(async () => {
     if (!currentFile) return
@@ -133,22 +152,75 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
     setIsModified(true)
   }, [])
 
+  const dismissCodeEditReview = useCallback(() => {
+    const session = reviewSessionRef.current
+    if (!session) return
+    setContent(session.baselineContent)
+    setIsModified(isModifiedAtReviewStartRef.current)
+    setReviewSession(null)
+    setCodeEditStatus('AI code review dismissed.')
+  }, [])
+
+  const handleAcceptReviewHunk = useCallback(() => {
+    const session = reviewSessionRef.current
+    if (!session) return
+    const outcome = tryAcceptReviewHunk(session)
+    if (!outcome.ok) {
+      setCodeEditStatus(outcome.error)
+      return
+    }
+    setContent(outcome.nextWorking)
+    setIsModified(true)
+    const total = session.proposal.edits.length
+    if (outcome.finished) {
+      if (session.proposal.changeId) appliedChangeIdsRef.current.add(session.proposal.changeId)
+      setCodeEditStatus(`Applied all ${total} AI edit${total === 1 ? '' : 's'}.`)
+      setReviewSession(null)
+      return
+    }
+    setCodeEditStatus(`Accepted hunk ${session.hunkIndex + 1} of ${total}. Review the next change.`)
+    setReviewSession({
+      ...session,
+      workingContent: outcome.nextWorking,
+      hunkIndex: outcome.nextIndex,
+    })
+  }, [])
+
+  const handleAcceptAllReviewHunks = useCallback(() => {
+    const session = reviewSessionRef.current
+    if (!session) return
+    const result = tryAcceptAllRemainingReviewHunks(session)
+    if (!result.success) {
+      setCodeEditStatus(result.error || 'Failed to apply AI edits.')
+      return
+    }
+    if (session.proposal.changeId) appliedChangeIdsRef.current.add(session.proposal.changeId)
+    setContent(result.updatedContent)
+    setIsModified(true)
+    setCodeEditStatus(
+      `Applied ${result.appliedCount} AI edit${result.appliedCount === 1 ? '' : 's'}.`,
+    )
+    setReviewSession(null)
+  }, [])
+
   useEffect(() => {
     loadFileContent(file)
   }, [file, loadFileContent])
 
   useEffect(() => {
     if (!currentFile?.path || !currentFile?.name) return
+    const liveContent =
+      reviewSession?.workingContent ?? editorRef.current?.getValue() ?? content
     setCurrentCodeFileContext({
       filePath: currentFile.path,
       fileName: currentFile.name,
-      content: editorRef.current?.getValue() || content,
+      content: liveContent,
     })
 
     return () => {
       clearCurrentCodeFileContext(currentFile.path)
     }
-  }, [content, currentFile?.path, currentFile?.name])
+  }, [content, currentFile?.path, currentFile?.name, reviewSession])
 
   useEffect(() => {
     const filePath = currentFile.path || ''
@@ -156,7 +228,11 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
 
     registerCodeEditor({
       filePath,
-      getContent: () => editorRef.current?.getValue() || content,
+      getContent: () => {
+        const rs = reviewSessionRef.current
+        if (rs) return rs.workingContent
+        return editorRef.current?.getValue() || content
+      },
       setContent,
       setIsModified,
       setStatus: setCodeEditStatus,
@@ -171,6 +247,68 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
     const timeoutId = window.setTimeout(() => setCodeEditStatus(null), 5000)
     return () => window.clearTimeout(timeoutId)
   }, [codeEditStatus])
+
+  useEffect(() => {
+    const idePath = currentFile.path || ''
+    if (!idePath) return
+
+    const onProposed = (event: Event) => {
+      const detail = (event as CustomEvent<CodeEditProposal>).detail
+      if (!detail?.filePath || !detail.edits?.length) return
+      if (!matchCodeEditProposalToIdeFile(detail.filePath, idePath)) return
+      if (appliedChangeIdsRef.current.has(detail.changeId)) {
+        setCodeEditStatus('This AI code change was already applied.')
+        return
+      }
+      const baseline = editorRef.current?.getValue() ?? content
+      isModifiedAtReviewStartRef.current = isModifiedRef.current
+      setReviewSession({
+        proposal: detail,
+        baselineContent: baseline,
+        workingContent: baseline,
+        hunkIndex: 0,
+      })
+      const n = detail.edits.length
+      setCodeEditStatus(`Reviewing ${n} AI code edit${n === 1 ? '' : 's'}…`)
+    }
+
+    window.addEventListener('assistant-code-edit-proposed', onProposed as EventListener)
+    return () => window.removeEventListener('assistant-code-edit-proposed', onProposed as EventListener)
+  }, [content, currentFile.path])
+
+  useEffect(() => {
+    const idePath = currentFile.path || ''
+    setReviewSession((session) => {
+      if (!session) return null
+      if (!idePath || !matchCodeEditProposalToIdeFile(session.proposal.filePath, idePath)) return null
+      return session
+    })
+  }, [currentFile.path])
+
+  useEffect(() => {
+    const filePath = currentFile.path || ''
+    if (!filePath) return
+
+    const onCodeEditFailed = (event: Event) => {
+      const detail = (event as CustomEvent<{ reason?: string; filePath?: string }>).detail
+      if (!detail?.reason) return
+      if (detail.reason === 'wrong-target-file') {
+        setCodeEditStatus(
+          'Could not apply AI edit: this proposal targets a different file than the one open here. Open the correct file, then accept again.'
+        )
+        return
+      }
+      if (detail.reason === 'no-matching-editor') {
+        if (!detail.filePath || detail.filePath !== filePath) return
+        setCodeEditStatus(
+          'Could not apply AI edit: editor was not ready for this file. Keep this file open in the IDE and try again.'
+        )
+      }
+    }
+
+    window.addEventListener('assistant-code-edit-failed', onCodeEditFailed as EventListener)
+    return () => window.removeEventListener('assistant-code-edit-failed', onCodeEditFailed as EventListener)
+  }, [currentFile.path])
 
   useEffect(() => {
     const handleSettingsUpdate = () => setIdeSettings(getIDESettings())
@@ -273,10 +411,89 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
         actions={headerActions}
       />
 
+      {reviewSession && (
+        <div
+          className="border-b border-border bg-muted/40 px-3 py-2 flex flex-col gap-2 shrink-0"
+          role="region"
+          aria-label="AI code edit review"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-foreground font-medium truncate min-w-0 flex-1">
+              {reviewSession.proposal.summary}
+            </span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              Hunk {Math.min(reviewSession.hunkIndex + 1, reviewSession.proposal.edits.length)} of{' '}
+              {reviewSession.proposal.edits.length}
+            </span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handleAcceptReviewHunk}
+                disabled={
+                  reviewSession.hunkIndex >= reviewSession.proposal.edits.length ||
+                  Boolean(reviewDiffPreview?.error)
+                }
+                className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed px-2 py-1 rounded text-xs font-medium inline-flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                <Check size={14} aria-hidden />
+                Accept hunk
+              </button>
+              <button
+                type="button"
+                onClick={handleAcceptAllReviewHunks}
+                disabled={Boolean(reviewDiffPreview?.error)}
+                className="bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed px-2 py-1 rounded text-xs font-medium inline-flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                <CheckCheck size={14} aria-hidden />
+                Accept all
+              </button>
+              <button
+                type="button"
+                onClick={dismissCodeEditReview}
+                className="border border-border bg-background hover:bg-muted px-2 py-1 rounded text-xs font-medium inline-flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                <X size={14} aria-hidden />
+                Reject all
+              </button>
+            </div>
+          </div>
+          {reviewDiffPreview?.error ? (
+            <p className="text-xs text-destructive" role="alert">
+              {reviewDiffPreview.error} Dismiss review to edit the file, then retry from the assistant if needed.
+            </p>
+          ) : null}
+        </div>
+      )}
+
       {/* Main IDE Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 relative overflow-hidden">
-          {currentFile ? (
+          {currentFile && reviewSession && reviewDiffPreview ? (
+            <DiffEditor
+              height="100%"
+              language={language}
+              original={reviewSession.workingContent}
+              modified={reviewDiffPreview.modified}
+              keepCurrentOriginalModel
+              keepCurrentModifiedModel
+              theme={getMonacoThemeId(ideSettings.theme)}
+              beforeMount={(monaco) => registerMonacoThemes(monaco as MonacoThemeRegistry)}
+              options={{
+                readOnly: true,
+                minimap: { enabled: ideSettings.showMinimap },
+                fontSize: ideSettings.fontSize,
+                lineNumbers: ideSettings.showLineNumbers ? 'on' : 'off',
+                wordWrap: ideSettings.wordWrap,
+                automaticLayout: true,
+                renderWhitespace: 'selection',
+                renderControlCharacters: false,
+                guides: {
+                  bracketPairs: true,
+                  indentation: true,
+                },
+              }}
+            />
+          ) : currentFile ? (
             <Editor
               height="100%"
               defaultLanguage={getLanguageMonacoId(currentFile.name)}
@@ -353,10 +570,16 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
           ) : null}
         </div>
         <div className="flex items-center gap-4">
-          <span>Line {editorRef.current?.getPosition()?.lineNumber || 1}</span>
-          <span>Column {editorRef.current?.getPosition()?.column || 1}</span>
+          {reviewSession ? (
+            <span className="text-foreground">AI diff review</span>
+          ) : (
+            <>
+              <span>Line {editorRef.current?.getPosition()?.lineNumber || 1}</span>
+              <span>Column {editorRef.current?.getPosition()?.column || 1}</span>
+            </>
+          )}
           <span>{ideSettings.fontSize}px</span>
-          {codeEditStatus && <span>{codeEditStatus}</span>}
+          {codeEditStatus && <span className="text-foreground">{codeEditStatus}</span>}
         </div>
       </div>
 

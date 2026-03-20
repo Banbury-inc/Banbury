@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Check, X, AlertCircle, ExternalLink } from 'lucide-react';
+import { AlertCircle, ExternalLink } from 'lucide-react';
 import { Button } from '../../../common/ui/button';
 import { Card, CardContent } from '../../../common/ui/card';
 import { Typography } from '../../../common/ui/typography';
@@ -67,12 +67,10 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
   const [applied, setApplied] = useState(false);
   const [rejected, setRejected] = useState(false);
   const hasPreviewedRef = useRef(false);
-  const changeIdRef = useRef<string>('');
   const Icon = config.icon;
 
   // Resolve display name and file path from localStorage if file extensions provided
   const resolvedDisplayName = React.useMemo(() => {
-    console.log('args', args);
     // First check if fileName is provided directly in args
     if (args?.fileName) {
       return args.fileName;
@@ -126,26 +124,36 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
     return undefined;
   }, [args?.filePath, config.fileExtensions]);
 
+  const effectiveChangeId = React.useMemo(() => {
+    const serverId = typeof args?.changeId === 'string' ? args.changeId.trim() : '';
+    if (serverId) return serverId;
+    return generateDeterministicChangeId(config.changeType, resolvedDisplayName, args);
+  }, [args, config.changeType, resolvedDisplayName]);
+
+  const effectiveChangeIdRef = useRef(effectiveChangeId);
+  effectiveChangeIdRef.current = effectiveChangeId;
+
   const handleAcceptAll = () => {
     if (applied || rejected) return;
+    const changeId = effectiveChangeIdRef.current;
     
     // Use custom handler if provided
     if (config.customAcceptHandler) {
-      config.customAcceptHandler({ changeId: changeIdRef.current, preview: false, args });
+      config.customAcceptHandler({ changeId, preview: false, args });
     } else if (onAccept) {
       onAccept();
     } else if (config.eventPrefix) {
       // Default: dispatch CustomEvent with changeId
       window.dispatchEvent(new CustomEvent(`${config.eventPrefix}-response`, { 
-        detail: { ...args, preview: false, changeId: changeIdRef.current } 
+        detail: { ...args, preview: false, changeId } 
       }));
     }
     
     setApplied(true);
 
-    if (changeIdRef.current) {
+    if (changeId) {
       window.dispatchEvent(new CustomEvent('ai-change-resolved', {
-        detail: { id: changeIdRef.current }
+        detail: { id: changeId }
       }));
     }
 
@@ -157,35 +165,37 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
     if (applied || rejected) return;
     
     // Use custom handler if provided
+    const changeId = effectiveChangeIdRef.current;
     if (config.customRejectHandler) {
-      config.customRejectHandler({ changeId: changeIdRef.current, args });
+      config.customRejectHandler({ changeId, args });
     } else if (onReject) {
       onReject();
     } else if (config.eventPrefix) {
       // Default: dispatch reject event with changeId
       window.dispatchEvent(new CustomEvent(`${config.eventPrefix}-response-reject`, {
-        detail: { changeId: changeIdRef.current }
+        detail: { changeId }
       }));
     }
     
     setRejected(true);
     
-    if (changeIdRef.current) {
+    if (changeId) {
       window.dispatchEvent(new CustomEvent('ai-change-resolved', { 
-        detail: { id: changeIdRef.current } 
+        detail: { id: changeId } 
       }));
     }
   };
 
   const handlePreview = () => {
+    const changeId = effectiveChangeIdRef.current;
     if (config.customPreviewHandler) {
-      config.customPreviewHandler({ changeId: changeIdRef.current, preview: true, args });
+      config.customPreviewHandler({ changeId, preview: true, args });
     } else if (onPreview) {
       onPreview();
     } else if (config.eventPrefix) {
       // Default: dispatch preview event with changeId
       window.dispatchEvent(new CustomEvent(`${config.eventPrefix}-response`, { 
-        detail: { ...args, preview: true, changeId: changeIdRef.current } 
+        detail: { ...args, preview: true, changeId } 
       }));
     }
   };
@@ -233,9 +243,7 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
   // Auto-preview or auto-apply on mount
   useEffect(() => {
     if (hasContent && !hasPreviewedRef.current) {
-      // Generate deterministic changeId based on content
-      const changeId = generateDeterministicChangeId(config.changeType, resolvedDisplayName, args);
-      changeIdRef.current = changeId;
+      const changeId = effectiveChangeIdRef.current;
       
       window.dispatchEvent(new CustomEvent('ai-change-registered', {
         detail: {
@@ -271,9 +279,9 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
         clearTimeout(timer);
         window.removeEventListener('ai-accept-all', handleGlobalAccept);
         window.removeEventListener('ai-reject-all', handleGlobalReject);
-        if (!applied && !rejected && changeIdRef.current) {
+        if (!applied && !rejected && effectiveChangeIdRef.current) {
           window.dispatchEvent(new CustomEvent('ai-change-resolved', { 
-            detail: { id: changeIdRef.current } 
+            detail: { id: effectiveChangeIdRef.current } 
           }));
         }
       };

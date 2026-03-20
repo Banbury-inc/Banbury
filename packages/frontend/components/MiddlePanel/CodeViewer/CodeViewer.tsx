@@ -86,13 +86,6 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file }) => {
 
   return (
     <div className="h-full bg-background flex flex-col">
-      <CodeHeader
-        fileName={file.name}
-        language={getLanguageDisplayName(file.name)}
-        mode="view"
-        fileSize={file.size}
-      />
-
       {/* Code Content */}
       <div className="flex-1 min-h-0 p-4">
         <pre className="bg-background text-foreground text-sm p-2 rounded-lg overflow-auto h-full font-mono whitespace-pre-wrap">

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import DrawioViewerModal from "../../../MiddlePanel/CanvasViewer/DrawioViewerModal";
 import { Button } from "../../../common/ui/button";
 import { handleDocxAIResponse } from "../../handlers/handle-docx-ai-response"
-import { handleCodeEditAIResponse } from "../../handlers/handle-code-edit-ai-response"
+import { ensureCodeEditAIResponseWindowListener } from "../../handlers/handle-code-edit-ai-response"
 import { handleTldrawAIResponse } from "../../handlers/handle-tldraw-ai-response";
 import { ToolUI } from "../../ToolUI";
 import { ApiService } from "../../../../../backend/api/apiService";
@@ -517,14 +517,9 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     return () => window.removeEventListener('docx-ai-response', handleDocxResponse as EventListener)
   }, [])
 
-  // Listen for code edit AI response events (applies edits to IDE in middle panel)
+  // Single global listener lives in handle-code-edit-ai-response (avoids duplicating with IDE/subscribers).
   useEffect(() => {
-    const handleCodeEditResponse = (event: CustomEvent) => {
-      handleCodeEditAIResponse(event.detail)
-    }
-
-    window.addEventListener('code-edit-ai-response', handleCodeEditResponse as EventListener)
-    return () => window.removeEventListener('code-edit-ai-response', handleCodeEditResponse as EventListener)
+    ensureCodeEditAIResponseWindowListener()
   }, [])
 
   // Listen for Tldraw AI response events
