@@ -70,6 +70,11 @@ const nextConfig = {
     // Disable memory-intensive features
     optimizeCss: false,
     scrollRestoration: false,
+    outputFileTracingIncludes: {
+      '/api/assistant/langgraph-stream': [
+        './pages/api/assistant/langgraph-stream/prompts/**/*.md',
+      ],
+    },
   },
   webpack: (config, { dev, isServer }) => {
     // Configure path aliases

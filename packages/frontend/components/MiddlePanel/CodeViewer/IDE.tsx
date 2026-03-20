@@ -422,7 +422,7 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
               {reviewSession.proposal.summary}
             </span>
             <span className="text-xs text-muted-foreground whitespace-nowrap">
-              Hunk {Math.min(reviewSession.hunkIndex + 1, reviewSession.proposal.edits.length)} of{' '}
+              {Math.min(reviewSession.hunkIndex + 1, reviewSession.proposal.edits.length)} of{' '}
               {reviewSession.proposal.edits.length}
             </span>
             <div className="flex flex-wrap items-center gap-1.5">
@@ -436,7 +436,7 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
                 className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed px-2 py-1 rounded text-xs font-medium inline-flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <Check size={14} aria-hidden />
-                Accept hunk
+                Accept
               </button>
               <button
                 type="button"
