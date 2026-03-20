@@ -1,4 +1,3 @@
-import { Box } from '@mui/material'
 import { useEffect, useRef, useState, ReactNode } from 'react'
 import TableOfContents from './TableOfContents'
 
@@ -36,7 +35,7 @@ export default function DocPageLayout({ children }: { children: ReactNode }) {
       // Find all elements with data-typography-variant attribute
       const typographyElements = contentElement.querySelectorAll('[data-typography-variant]')
       
-      typographyElements.forEach((element, index) => {
+      typographyElements.forEach((element) => {
         const variant = element.getAttribute('data-typography-variant')
         const textContent = element.textContent?.trim()
         
@@ -87,17 +86,12 @@ export default function DocPageLayout({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <Box 
-        sx={{ 
-          width: '100%', 
-          maxWidth: { xs: '100%', lg: '1600px' }, 
-          overflow: 'visible',
-          pr: { lg: '260px' }, // Make room for TableOfContents on large screens
-        }} 
+      <div
         ref={contentRef}
+        className="w-full max-w-full overflow-visible lg:max-w-[1600px] lg:pr-[260px]"
       >
         {children}
-      </Box>
+      </div>
       <TableOfContents headings={headings} />
     </>
   )

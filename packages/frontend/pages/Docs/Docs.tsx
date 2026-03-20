@@ -1,32 +1,31 @@
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
-import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { Menu } from 'lucide-react'
+import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
 
-import DocsSidebar from './components/DocsSidebar';
-import WhatIsBanburyTab from './components/Tabs/WhatIsBanburyTab';
-import FeaturesTab from './components/Tabs/FeaturesTab';
-import UsingBanburyTab from './components/UsingBanbury';
-import TaskStudioTab from './components/Tabs/TaskStudioTab';
-import KnowledgeGraphTab from './components/Tabs/KnowledgeGraphTab';
-import IntegrationsTab from './components/Tabs/IntegrationsTab';
-import GmailTab from './components/Tabs/GmailTab';
-import GoogleDocsTab from './components/Tabs/GoogleDocsTab';
-import GoogleSheetsTab from './components/Tabs/GoogleSheetsTab';
-import OutlookTab from './components/Tabs/OutlookTab';
-import MicrosoftCalendarTab from './components/Tabs/MicrosoftCalendarTab';
-import OneDriveTab from './components/Tabs/OneDriveTab';
-import XTab from './components/Tabs/XTab';
-import MemoriesTab from './components/Tabs/MemoriesTab';
-import DocsFeatureTab from './components/Tabs/DocsFeatureTab';
-import SpreadsheetsFeatureTab from './components/Tabs/SpreadsheetsFeatureTab';
-import FoldersFeatureTab from './components/Tabs/FoldersFeatureTab';
-import BrowseFeatureTab from './components/Tabs/BrowseFeatureTab';
-import CalendarFeatureTab from './components/Tabs/CalendarFeatureTab';
-import CanvasFeatureTab from './components/Tabs/CanvasFeatureTab';
-import GmailFeatureTab from './components/Tabs/GmailFeatureTab';
-import MeetingAgentFeatureTab from './components/Tabs/MeetingAgentFeatureTab';
+import { Button } from '../../components/common/ui/button'
+import DocsSidebar from './components/DocsSidebar'
+import WhatIsBanburyTab from './components/Tabs/WhatIsBanburyTab'
+import FeaturesTab from './components/Tabs/FeaturesTab'
+import UsingBanburyTab from './components/UsingBanbury'
+import TaskStudioTab from './components/Tabs/TaskStudioTab'
+import KnowledgeGraphTab from './components/Tabs/KnowledgeGraphTab'
+import IntegrationsTab from './components/Tabs/IntegrationsTab'
+import GmailTab from './components/Tabs/GmailTab'
+import GoogleDocsTab from './components/Tabs/GoogleDocsTab'
+import GoogleSheetsTab from './components/Tabs/GoogleSheetsTab'
+import OutlookTab from './components/Tabs/OutlookTab'
+import MicrosoftCalendarTab from './components/Tabs/MicrosoftCalendarTab'
+import OneDriveTab from './components/Tabs/OneDriveTab'
+import XTab from './components/Tabs/XTab'
+import MemoriesTab from './components/Tabs/MemoriesTab'
+import DocsFeatureTab from './components/Tabs/DocsFeatureTab'
+import SpreadsheetsFeatureTab from './components/Tabs/SpreadsheetsFeatureTab'
+import FoldersFeatureTab from './components/Tabs/FoldersFeatureTab'
+import BrowseFeatureTab from './components/Tabs/BrowseFeatureTab'
+import CalendarFeatureTab from './components/Tabs/CalendarFeatureTab'
+import CanvasFeatureTab from './components/Tabs/CanvasFeatureTab'
+import GmailFeatureTab from './components/Tabs/GmailFeatureTab'
+import MeetingAgentFeatureTab from './components/Tabs/MeetingAgentFeatureTab'
 import PowerPointFeatureTab from './components/Tabs/PowerPointFeatureTab'
 import ContextWheelTab from './components/Tabs/ContextWheelTab'
 import FileSharingTab from './components/Tabs/FileSharingTab'
@@ -36,188 +35,102 @@ import ParallelAgentsTab from './components/Tabs/ParallelAgentsTab'
 import QueuedMessagesTab from './components/Tabs/QueuedMessagesTab'
 import VideoGenerationTab from './components/Tabs/VideoGenerationTab'
 import DesktopAppTab from './components/Tabs/DesktopAppTab'
+import {
+  handleDocsMobileOpenToggle,
+  handleDocsMobileSheetOpenChange,
+} from './handlers/docs-mobile-nav'
 
 const Docs = () => {
-  const router = useRouter();
-  const section = router.query.section as string | undefined;
-  const activeSection = section || 'what-is-banbury';
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const router = useRouter()
+  const section = router.query.section as string | undefined
+  const activeSection = section || 'what-is-banbury'
+  const [mobileOpen, setMobileOpen] = useState(false)
 
-  const handleMobileToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
-  const handleMobileClose = () => {
-    setMobileOpen(false);
-  };
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(min-width: 768px)')
+    function closeSheetOnDesktop() {
+      if (mq.matches) setMobileOpen(false)
+    }
+    closeSheetOnDesktop()
+    mq.addEventListener('change', closeSheetOnDesktop)
+    return () => mq.removeEventListener('change', closeSheetOnDesktop)
+  }, [])
 
   return (
-    <Box sx={{ 
-      overflow: 'visible', 
-      background: '#000000', 
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
-      {/* Mobile Menu Button */}
-      <Box sx={{ 
-        display: { xs: 'flex', md: 'none' },
-        alignItems: 'center',
-        px: 2,
-        py: 1.5,
-        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-        background: 'rgba(255, 255, 255, 0.02)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-      }}>
-        <IconButton
-          color="inherit"
-          aria-label="open navigation menu"
-          onClick={handleMobileToggle}
-          sx={{ 
-            color: '#ffffff',
-            mr: 2,
-          }}
+    <div className="flex flex-col overflow-visible bg-background">
+      <div className="sticky top-0 z-[100] flex items-center border-b border-border bg-muted/30 px-4 py-3 md:hidden">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="me-2 shrink-0 text-foreground"
+          aria-label="Open navigation menu"
+          onClick={() => handleDocsMobileOpenToggle(setMobileOpen)}
         >
-          <MenuIcon />
-        </IconButton>
-        <Box 
-          component="span" 
-          sx={{ 
-            color: '#ffffff', 
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          }}
-        >
+          <Menu className="size-5" />
+        </Button>
+        <span className="text-sm font-medium text-foreground">
           Documentation
-        </Box>
-      </Box>
+        </span>
+      </div>
 
-      {/* Main Content with Sidebar */}
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', md: 'row' },
-        minHeight: { xs: 'calc(100vh - 120px)', md: 'calc(100vh - 200px)' },
-        height: { xs: 'auto', md: 'calc(100vh - 200px)' },
-      }}>
-        {/* Sidebar - Fixed position on desktop, drawer on mobile */}
-        <DocsSidebar 
+      <div className="flex min-h-[calc(100vh-120px)] flex-col md:h-[calc(100vh-200px)] md:min-h-[calc(100vh-200px)] md:flex-row">
+        <DocsSidebar
           activeSection={activeSection}
           mobileOpen={mobileOpen}
-          onMobileClose={handleMobileClose}
+          onMobileOpenChange={(open) =>
+            handleDocsMobileSheetOpenChange(open, setMobileOpen)
+          }
         />
-        
-        {/* Content Area - Scrollable with left margin for fixed sidebar */}
-        <Box sx={{ 
-          flex: 1, 
-          px: { xs: 2, sm: 3, md: 4 }, 
-          py: { xs: 3, md: 6 },
-          minHeight: { xs: 'auto', md: 'calc(100vh - 70px)' },
-          height: { xs: 'auto', md: 'calc(100vh - 70px)' },
-          ml: { xs: 0, md: '280px' },
-          overflowY: { xs: 'visible', md: 'auto' },
-          '&::-webkit-scrollbar': {
-            width: '8px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: 'rgba(255, 255, 255, 0.05)',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: 'rgba(255, 255, 255, 0.2)',
-            borderRadius: '4px',
-          },
-          '&::-webkit-scrollbar-thumb:hover': {
-            background: 'rgba(255, 255, 255, 0.3)',
-          },
-        }}>
-          {/* Documentation Content */}
-          <Box sx={{ maxWidth: '1800px', mx: 'auto' }}>
-            {/* Quick Start Guide Tab */}
-            {activeSection === 'what-is-banbury' && (
-              <WhatIsBanburyTab />
-            )}
 
-            {activeSection === 'features' && (
-              <FeaturesTab />
-            )}
+        <div
+          className="ms-0 min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 md:ms-[280px] md:min-h-[calc(100vh-70px)] md:h-[calc(100vh-70px)] md:px-8 md:py-6 [scrollbar-color:var(--muted-foreground)_var(--muted)] [scrollbar-width:thin]"
+        >
+          <div className="mx-auto max-w-[1800px]">
+            {activeSection === 'what-is-banbury' && <WhatIsBanburyTab />}
 
-            {activeSection === 'using-banbury' && (
-              <UsingBanburyTab />
-            )}
+            {activeSection === 'features' && <FeaturesTab />}
 
-            {activeSection === 'task-studio' && (
-              <TaskStudioTab />
-            )}
+            {activeSection === 'using-banbury' && <UsingBanburyTab />}
 
-            {activeSection === 'knowledge-graph' && (
-              <KnowledgeGraphTab />
-            )}
+            {activeSection === 'task-studio' && <TaskStudioTab />}
 
-            {activeSection === 'memories' && (
-              <MemoriesTab />
-            )}
+            {activeSection === 'knowledge-graph' && <KnowledgeGraphTab />}
 
-            {activeSection === 'integrations' && (
-              <IntegrationsTab />
-            )}
+            {activeSection === 'memories' && <MemoriesTab />}
 
-            {activeSection === 'gmail' && (
-              <GmailTab />
-            )}
+            {activeSection === 'integrations' && <IntegrationsTab />}
 
-            {activeSection === 'google-docs' && (
-              <GoogleDocsTab />
-            )}
+            {activeSection === 'gmail' && <GmailTab />}
 
-            {activeSection === 'google-sheets' && (
-              <GoogleSheetsTab />
-            )}
+            {activeSection === 'google-docs' && <GoogleDocsTab />}
 
-            {activeSection === 'outlook' && (
-              <OutlookTab />
-            )}
+            {activeSection === 'google-sheets' && <GoogleSheetsTab />}
 
-            {activeSection === 'microsoft-calendar' && (
-              <MicrosoftCalendarTab />
-            )}
+            {activeSection === 'outlook' && <OutlookTab />}
 
-            {activeSection === 'onedrive' && (
-              <OneDriveTab />
-            )}
+            {activeSection === 'microsoft-calendar' && <MicrosoftCalendarTab />}
 
-            {activeSection === 'x' && (
-              <XTab />
-            )}
+            {activeSection === 'onedrive' && <OneDriveTab />}
 
-            {activeSection === 'docs-feature' && (
-              <DocsFeatureTab />
-            )}
+            {activeSection === 'x' && <XTab />}
+
+            {activeSection === 'docs-feature' && <DocsFeatureTab />}
 
             {activeSection === 'spreadsheets-feature' && (
               <SpreadsheetsFeatureTab />
             )}
 
-            {activeSection === 'calendar-feature' && (
-              <CalendarFeatureTab />
-            )}
+            {activeSection === 'calendar-feature' && <CalendarFeatureTab />}
 
-            {activeSection === 'folders-feature' && (
-              <FoldersFeatureTab />
-            )}
+            {activeSection === 'folders-feature' && <FoldersFeatureTab />}
 
-            {activeSection === 'browse-feature' && (
-              <BrowseFeatureTab />
-            )}
+            {activeSection === 'browse-feature' && <BrowseFeatureTab />}
 
+            {activeSection === 'canvas-feature' && <CanvasFeatureTab />}
 
-            {activeSection === 'canvas-feature' && (
-              <CanvasFeatureTab />
-            )}
-
-            {activeSection === 'gmail-feature' && (
-              <GmailFeatureTab />
-            )}
+            {activeSection === 'gmail-feature' && <GmailFeatureTab />}
 
             {activeSection === 'meeting-agent-feature' && (
               <MeetingAgentFeatureTab />
@@ -227,47 +140,30 @@ const Docs = () => {
               <PowerPointFeatureTab />
             )}
 
-            {activeSection === 'context-wheel' && (
-              <ContextWheelTab />
-            )}
+            {activeSection === 'context-wheel' && <ContextWheelTab />}
 
-            {activeSection === 'file-sharing' && (
-              <FileSharingTab />
-            )}
+            {activeSection === 'file-sharing' && <FileSharingTab />}
 
-            {activeSection === 'billing' && (
-              <BillingTab />
-            )}
+            {activeSection === 'billing' && <BillingTab />}
 
-            {activeSection === 'agent-modes' && (
-              <AgentModesTab />
-            )}
+            {activeSection === 'agent-modes' && <AgentModesTab />}
 
-            {activeSection === 'parallel-agents' && (
-              <ParallelAgentsTab />
-            )}
+            {activeSection === 'parallel-agents' && <ParallelAgentsTab />}
 
-            {activeSection === 'queued-messages' && (
-              <QueuedMessagesTab />
-            )}
+            {activeSection === 'queued-messages' && <QueuedMessagesTab />}
 
-            {activeSection === 'video-generation' && (
-              <VideoGenerationTab />
-            )}
+            {activeSection === 'video-generation' && <VideoGenerationTab />}
 
-            {activeSection === 'desktop-app' && (
-              <DesktopAppTab />
-            )}
+            {activeSection === 'desktop-app' && <DesktopAppTab />}
 
-            {/* Default Tab - Show when no specific tab is selected */}
             {!['what-is-banbury', 'features', 'using-banbury', 'task-studio', 'knowledge-graph', 'memories', 'integrations', 'gmail', 'google-docs', 'google-sheets', 'outlook', 'microsoft-calendar', 'onedrive', 'x', 'docs-feature', 'spreadsheets-feature', 'folders-feature', 'browse-feature', 'calendar-feature', 'canvas-feature', 'gmail-feature', 'meeting-agent-feature', 'powerpoint-feature', 'context-wheel', 'file-sharing', 'billing', 'agent-modes', 'parallel-agents', 'queued-messages', 'video-generation', 'desktop-app'].includes(activeSection) && (
               <WhatIsBanburyTab />
             )}
-          </Box>
-        </Box>
-      </Box>
-    </Box>
-  );
-};
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
-export default Docs;
+export default Docs

@@ -1,24 +1,23 @@
-import { Box } from '@mui/material';
-import Image from 'next/image';
-import DocPageLayout from '../DocPageLayout';
-import { Typography } from '../../../../components/common/ui/typography';
-const calendarDemo = require('../../../../assets/images/calendar_demo.mp4');
+import Image from 'next/image'
+import DocPageLayout from '../DocPageLayout'
+import { Card } from '../../../../components/common/ui/card'
+import { Typography } from '../../../../components/common/ui/typography'
+const calendarDemo = require('../../../../assets/images/calendar_demo.mp4')
 
 export default function CalendarFeatureTab() {
   return (
     <DocPageLayout>
-      <Box>
+      <div>
         <Typography variant="h2" className="mb-3">
           Calendar
         </Typography>
-        
+
         <Typography variant="p" className="mb-6">
-          Banbury's calendar integration allows you to seamlessly manage your schedule through natural conversation. 
+          Banbury's calendar integration allows you to seamlessly manage your schedule through natural conversation.
           Connect your calendar to enable Banbury to view, create, and modify events on your behalf.
         </Typography>
 
-        {/* Visibility */}
-        <Box sx={{ mb: 4 }}>
+        <div className="mb-4">
           <Typography variant="h4" className="mb-2">
             <strong>Visibility:</strong>
           </Typography>
@@ -27,10 +26,9 @@ export default function CalendarFeatureTab() {
             <li>Ask questions like "What's on my calendar today?" or "When is my next meeting?" to get instant insights.</li>
             <li>Banbury can help identify conflicts, suggest optimal meeting times, and provide schedule summaries.</li>
           </Typography>
-        </Box>
+        </div>
 
-        {/* Actions */}
-        <Box sx={{ mb: 5 }}>
+        <div className="mb-5">
           <Typography variant="h4" className="mb-2">
             <strong>Actions - Banbury can:</strong>
           </Typography>
@@ -40,79 +38,44 @@ export default function CalendarFeatureTab() {
             <li><strong>Edit existing events:</strong> Modify event details like time, location, or description through simple requests.</li>
             <li><strong>Manage availability:</strong> Check free time slots and coordinate scheduling across multiple calendars.</li>
           </Typography>
-        </Box>
+        </div>
 
-        {/* Demo Video */}
-        <Box sx={{
-          p: 3,
-          mb: 5,
-          background: 'rgba(255,255,255,0.02)',
-          borderRadius: '20px',
-          border: '1px solid rgba(255,255,255,0.08)',
-          position: 'relative',
-          overflow: 'hidden',
-        }}>
+        <Card className="relative mb-5 overflow-hidden rounded-2xl p-6">
           <Typography variant="h4" className="mb-3">
             Demo: Calendar in Action
           </Typography>
-          <Box sx={{ 
-            position: 'relative', 
-            width: '100%', 
-            borderRadius: '12px', 
-            overflow: 'hidden',
-            minHeight: '300px'
-          }}>
-            <video 
-              src={calendarDemo} 
-              controls 
-              muted 
-              playsInline 
-              style={{ 
-                width: '100%', 
-                height: '100%', 
-                borderRadius: '12px',
-                objectFit: 'cover'
-              }} 
+          <div className="relative min-h-[300px] w-full overflow-hidden rounded-xl">
+            <video
+              src={calendarDemo}
+              controls
+              muted
+              playsInline
+              className="h-full w-full rounded-xl object-cover"
             />
-          </Box>
-        </Box>
+          </div>
+        </Card>
 
-        {/* Creating Events */}
-        <Box sx={{ mb: 5 }}>
+        <div className="mb-5">
           <Typography variant="h4" className="mb-3">
             Creating Calendar Events with AI
           </Typography>
           <Typography variant="p" className="mb-3">
-            Traditionally, you can create a calendar event manually from the left panel. 
+            Traditionally, you can create a calendar event manually from the left panel.
             With Banbury, you simply have a conversation - tell Banbury what you need, and it creates the event for you:
           </Typography>
-          <Box sx={{
-            borderRadius: '12px',
-            overflow: 'hidden',
-            border: '1px solid rgba(255,255,255,0.08)',
-            mb: 3
-          }}>
-            <Image 
-              src="/create-calendar-event.png" 
+          <div className="mb-3 overflow-hidden rounded-xl border border-border">
+            <Image
+              src="/create-calendar-event.png"
               alt="Traditional calendar event creation form"
               width={1200}
               height={800}
-              style={{ 
-                width: '100%', 
-                height: 'auto',
-                display: 'block'
-              }} 
+              className="block h-auto w-full"
             />
-          </Box>
+          </div>
           <Typography variant="p" className="mb-3">
             <strong>Instead of manually filling out forms</strong>, just chat with Banbury and it will create the event for you automatically:
           </Typography>
-          <Box sx={{
-            p: 3,
-            background: 'rgba(255,255,255,0.02)',
-            borderRadius: '20px',
-            border: '1px solid rgba(255,255,255,0.08)',
-          }}>
+          <Card className="rounded-2xl p-6">
             <Typography variant="p" className="mb-2 italic">
               💬 "Schedule a team meeting next Tuesday at 2 PM for 1 hour"
             </Typography>
@@ -122,48 +85,33 @@ export default function CalendarFeatureTab() {
             <Typography variant="p" className="italic">
               💬 "Block my calendar for focus time every morning from 9-11"
             </Typography>
-          </Box>
+          </Card>
           <Typography variant="p" className="mt-3">
             Banbury understands your request, fills in all the necessary details, and creates the event instantly - no forms, no clicking through menus.
           </Typography>
-        </Box>
+        </div>
 
-        {/* Editing Events */}
-        <Box sx={{ mb: 4 }}>
+        <div className="mb-4">
           <Typography variant="h4" className="mb-3">
             Editing Calendar Events with AI
           </Typography>
           <Typography variant="p" className="mb-3">
-            Normally, you can edit an event manually by clickong on the event and then editing the event details. 
+            Normally, you can edit an event manually by clickong on the event and then editing the event details.
             With Banbury, you simply have a conversation - tell Banbury what you need, and it edits the event for you:
           </Typography>
-          <Box sx={{
-            borderRadius: '12px',
-            overflow: 'hidden',
-            border: '1px solid rgba(255,255,255,0.08)',
-            mb: 3
-          }}>
-            <Image 
-              src="/edit-calendar-event.png" 
+          <div className="mb-3 overflow-hidden rounded-xl border border-border">
+            <Image
+              src="/edit-calendar-event.png"
               alt="Traditional calendar event editing form"
               width={1200}
               height={800}
-              style={{ 
-                width: '100%', 
-                height: 'auto',
-                display: 'block'
-              }} 
+              className="block h-auto w-full"
             />
-          </Box>
+          </div>
           <Typography variant="p" className="mb-3">
             <strong>Instead of manually filling out forms</strong>, just chat with Banbury and it will edit the event for you automatically:
           </Typography>
-          <Box sx={{
-            p: 3,
-            background: 'rgba(255,255,255,0.02)',
-            borderRadius: '20px',
-            border: '1px solid rgba(255,255,255,0.08)',
-          }}>
+          <Card className="rounded-2xl p-6">
             <Typography variant="p" className="mb-2 italic">
               💬 "Move my 3 PM meeting to 4 PM tomorrow"
             </Typography>
@@ -173,12 +121,12 @@ export default function CalendarFeatureTab() {
             <Typography variant="p" className="italic">
               💬 "Update the client meeting description to include the project proposal and add Sarah as a co-host"
             </Typography>
-          </Box>
+          </Card>
           <Typography variant="p" className="mt-3">
             Banbury understands your request, fills in all the necessary details, and edits the event instantly - no forms, no clicking through menus.
           </Typography>
-        </Box>
-      </Box>
+        </div>
+      </div>
     </DocPageLayout>
-  );
+  )
 }

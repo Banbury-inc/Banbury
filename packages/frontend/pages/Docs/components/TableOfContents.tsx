@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material'
+import { cn } from '../../../utils'
 import { useEffect, useState } from 'react'
 
 interface Heading {
@@ -9,6 +9,13 @@ interface Heading {
 
 interface TableOfContentsProps {
   headings: Heading[]
+}
+
+function headingIndentClass(level: number): string {
+  if (level <= 2) return ''
+  const steps = level - 2
+  const map: Record<number, string> = { 1: 'ps-2', 2: 'ps-4', 3: 'ps-6', 4: 'ps-8' }
+  return map[steps] ?? 'ps-8'
 }
 
 export default function TableOfContents({ headings }: TableOfContentsProps) {
@@ -46,7 +53,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     }
   }, [headings])
 
-  const handleClick = (id: string) => {
+  function handleNavigate(id: string) {
     const element = document.getElementById(id)
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' })
@@ -58,64 +65,41 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
   }
 
   return (
-    <Box
-      sx={{
-        position: 'fixed',
-        right: '40px',
-        top: '120px',
-        width: '240px',
-        height: 'fit-content',
-        maxHeight: 'calc(100vh - 140px)',
-        overflowY: 'auto',
-        display: { xs: 'none', lg: 'block' },
-        '&::-webkit-scrollbar': {
-          width: '4px',
-        },
-        '&::-webkit-scrollbar-track': {
-          background: 'rgba(255, 255, 255, 0.05)',
-        },
-        '&::-webkit-scrollbar-thumb': {
-          background: 'rgba(255, 255, 255, 0.2)',
-          borderRadius: '4px',
-        },
-        '&::-webkit-scrollbar-thumb:hover': {
-          background: 'rgba(255, 255, 255, 0.3)',
-        },
-      }}
+    <nav
+      aria-label="On this page"
+      className={cn(
+        'fixed right-10 top-[120px] hidden h-fit max-h-[calc(100vh-140px)] w-60 overflow-y-auto lg:block',
+        'scrollbar-thin scrollbar-thumb-border scrollbar-track-background hover:scrollbar-thumb-muted-foreground'
+      )}
     >
-      <Typography
-        sx={{
-          fontSize: '0.875rem',
-          fontWeight: 600,
-          color: '#ffffff',
-          mb: 2,
-          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        }}
-      >
+      <p className="mb-2 text-sm font-semibold text-foreground">
         On this page
-      </Typography>
-      
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {headings.map((heading) => (
-          <Typography
-            key={heading.id}
-            onClick={() => handleClick(heading.id)}
-            sx={{
-              fontSize: '0.875rem',
-              color: activeHeading === heading.id ? '#3b82f6' : '#ffffff',
-              cursor: 'pointer',
-              transition: 'color 0.2s ease',
-              '&:hover': {
-                color: '#60a5fa'
-              },
-              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-              pl: heading.level === 2 ? 0 : (heading.level - 2) * 1,
-            }}
-          >
-            {heading.title}
-          </Typography>
-        ))}
-      </Box>
-    </Box>
+      </p>
+      <ul className="flex flex-col gap-1">
+        {headings.map((heading) => {
+          const isActive = activeHeading === heading.id
+          return (
+            <li key={heading.id}>
+              <a
+                href={`#${heading.id}`}
+                className={cn(
+                  'block text-sm font-sans transition-colors',
+                  headingIndentClass(heading.level),
+                  isActive
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleNavigate(heading.id)
+                }}
+              >
+                {heading.title}
+              </a>
+            </li>
+          )
+        })}
+      </ul>
+    </nav>
   )
 }

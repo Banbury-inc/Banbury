@@ -1,11 +1,10 @@
-import { Box } from '@mui/material'
 import DocPageLayout from '../DocPageLayout'
 import { Typography } from '../../../../components/common/ui/typography'
 
 export default function FileSharingTab() {
   return (
     <DocPageLayout>
-      <Box>
+      <div>
         <Typography variant="h2" className="mb-3">
           File Sharing
         </Typography>
@@ -14,15 +13,15 @@ export default function FileSharingTab() {
           Share files with other users in your workspace so you can collaborate. Sharing is edit-only today (everyone you share with gets edit access).
         </Typography>
 
-        <Box sx={{ mb: 6 }}>
+        <div className="mb-12">
           <Typography variant="h3" className="mb-2">Where to find it</Typography>
           <Typography variant="list">
             <li>From the file tree: open a file's context menu and select "Share"</li>
             <li>From the document viewer: use the share action (opens the same share dialog)</li>
           </Typography>
-        </Box>
+        </div>
 
-        <Box sx={{ mb: 6 }}>
+        <div className="mb-12">
           <Typography variant="h3" className="mb-2">How it works</Typography>
           <Typography variant="list">
             <li>Search for users by username, name, or email</li>
@@ -32,17 +31,17 @@ export default function FileSharingTab() {
           <Typography variant="p" className="mt-3">
             Note: Banbury currently supports edit-only sharing. View-only permissions are not available yet.
           </Typography>
-        </Box>
+        </div>
 
-        <Box>
+        <div>
           <Typography variant="h3" className="mb-2">Good practices</Typography>
           <Typography variant="list">
             <li>Share the smallest set of files needed for the task</li>
             <li>Use clear file names to avoid confusion when collaborating</li>
             <li>If sensitive content is involved, confirm recipients before sharing</li>
           </Typography>
-        </Box>
-      </Box>
+        </div>
+      </div>
     </DocPageLayout>
   )
 }
