@@ -56,6 +56,7 @@ const sections: SidebarSection[] = [
       { id: 'meeting-agent-feature', title: 'Meetings', href: '/docs/meeting-agent-feature' },
       { id: 'folders-feature', title: 'Folders', href: '/docs/folders-feature' },
       { id: 'browse-feature', title: 'Browse', href: '/docs/browse-feature' },
+      { id: 'databases', title: 'Databases', href: '/docs/databases' },
       { id: 'canvas-feature', title: 'Canvas', href: '/docs/canvas-feature' },
       { id: 'file-sharing', title: 'File Sharing', href: '/docs/file-sharing' },
     ],
@@ -71,7 +72,10 @@ const sections: SidebarSection[] = [
   {
     id: 'automating-workflows',
     title: 'Automating Workflows',
-    items: [{ id: 'task-studio', title: 'Task Studio', href: '/docs/task-studio' }],
+    items: [
+      { id: 'task-studio', title: 'Task Studio', href: '/docs/task-studio' },
+      { id: 'flows', title: 'Flows', href: '/docs/flows' },
+    ],
   },
   {
     id: 'integrations',

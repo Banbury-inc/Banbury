@@ -35,10 +35,48 @@ import ParallelAgentsTab from './components/Tabs/ParallelAgentsTab'
 import QueuedMessagesTab from './components/Tabs/QueuedMessagesTab'
 import VideoGenerationTab from './components/Tabs/VideoGenerationTab'
 import DesktopAppTab from './components/Tabs/DesktopAppTab'
+import FlowsTab from './components/Tabs/FlowsTab'
+import DatabasesTab from './components/Tabs/DatabasesTab'
 import {
   handleDocsMobileOpenToggle,
   handleDocsMobileSheetOpenChange,
 } from './handlers/docs-mobile-nav'
+
+const DOCS_SECTION_IDS = [
+  'what-is-banbury',
+  'features',
+  'using-banbury',
+  'task-studio',
+  'knowledge-graph',
+  'memories',
+  'integrations',
+  'gmail',
+  'google-docs',
+  'google-sheets',
+  'outlook',
+  'microsoft-calendar',
+  'onedrive',
+  'x',
+  'docs-feature',
+  'spreadsheets-feature',
+  'folders-feature',
+  'browse-feature',
+  'calendar-feature',
+  'canvas-feature',
+  'gmail-feature',
+  'meeting-agent-feature',
+  'powerpoint-feature',
+  'context-wheel',
+  'file-sharing',
+  'billing',
+  'agent-modes',
+  'parallel-agents',
+  'queued-messages',
+  'video-generation',
+  'desktop-app',
+  'flows',
+  'databases',
+] as const
 
 const Docs = () => {
   const router = useRouter()
@@ -156,7 +194,11 @@ const Docs = () => {
 
             {activeSection === 'desktop-app' && <DesktopAppTab />}
 
-            {!['what-is-banbury', 'features', 'using-banbury', 'task-studio', 'knowledge-graph', 'memories', 'integrations', 'gmail', 'google-docs', 'google-sheets', 'outlook', 'microsoft-calendar', 'onedrive', 'x', 'docs-feature', 'spreadsheets-feature', 'folders-feature', 'browse-feature', 'calendar-feature', 'canvas-feature', 'gmail-feature', 'meeting-agent-feature', 'powerpoint-feature', 'context-wheel', 'file-sharing', 'billing', 'agent-modes', 'parallel-agents', 'queued-messages', 'video-generation', 'desktop-app'].includes(activeSection) && (
+            {activeSection === 'flows' && <FlowsTab />}
+
+            {activeSection === 'databases' && <DatabasesTab />}
+
+            {!DOCS_SECTION_IDS.includes(activeSection as (typeof DOCS_SECTION_IDS)[number]) && (
               <WhatIsBanburyTab />
             )}
           </div>

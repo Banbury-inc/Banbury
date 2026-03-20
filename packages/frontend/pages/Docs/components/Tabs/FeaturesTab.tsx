@@ -36,11 +36,13 @@ export default function FeaturesTab() {
             <li><strong>Agent Modes</strong> — Switch between Agent, Ask, and Planning modes</li>
             <li><strong>Parallel Agents</strong> — Run multiple agents simultaneously for faster execution</li>
             <li><strong>Queued Messages</strong> — Queue up follow-up messages while the agent works</li>
+            <li><strong>Flows</strong> — Build and schedule visual automations (integrations, HTTP, code, and more)</li>
             <li><strong>Video Generation</strong> — Create videos from text descriptions</li>
             <li><strong>Docs</strong> — Create, edit, and manage documents</li>
             <li><strong>Spreadsheets</strong> — Work with spreadsheet data and formulas</li>
             <li><strong>Folders</strong> — Organize and analyze folder contents</li>
             <li><strong>Browse</strong> — Web browsing and automation capabilities</li>
+            <li><strong>Databases</strong> — Connect PostgreSQL, MySQL, and MongoDB; browse and edit data</li>
             <li><strong>Calendar</strong> — Manage events and calendar data</li>
             <li><strong>Canvas</strong> — Create and manage visual canvas elements</li>
             <li><strong>Gmail</strong> — Manage emails and automate communication</li>
@@ -76,6 +78,12 @@ export default function FeaturesTab() {
             </li>
             <li>
               <Link href="/docs/outlook" className="underline underline-offset-4">Outlook</Link> — Microsoft Outlook integration for email and calendar
+            </li>
+            <li>
+              <Link href="/docs/flows" className="underline underline-offset-4">Flows</Link> — Visual automation with integrations, scheduling, and run logs
+            </li>
+            <li>
+              <Link href="/docs/databases" className="underline underline-offset-4">Databases</Link> — Saved connections, SSH tunnels, table viewer, and Flow query nodes
             </li>
           </Typography>
         </div>
