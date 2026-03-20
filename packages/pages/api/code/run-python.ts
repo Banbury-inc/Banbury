@@ -1,11 +1,25 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import fs from 'fs/promises'
+import os from 'os'
+import path from 'path'
 import { executePython } from './handlers/executePython'
 import { authenticateTerminalUser } from '../terminal/handlers/authenticateTerminalUser'
-import { stageRuntimeFile, getRuntimeS3RootAbsolutePath } from '../terminal/handlers/stageRuntimeFile'
 
 interface RunPythonRequestBody {
   filePath?: string
   content?: string
+}
+
+const DEFAULT_RUNTIME_FILE = 'main.py'
+
+function normalizeRelativeFilePath(filePath: string): string {
+  const normalized = (filePath || '').replaceAll('\\', '/').trim()
+  const pathParts = normalized
+    .split('/')
+    .filter((part) => part && part !== '.' && part !== '..')
+
+  if (pathParts.length === 0) return DEFAULT_RUNTIME_FILE
+  return pathParts.join('/')
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -31,13 +45,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return
     }
 
-    const staged = await stageRuntimeFile({ filePath, content })
-    const result = await executePython({
-      cwd: getRuntimeS3RootAbsolutePath(),
-      relativeFilePath: staged.relativePath,
-    })
+    const relativePath = normalizeRelativeFilePath(filePath)
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'banbury-python-run-'))
 
-    res.status(200).json(result)
+    try {
+      const absoluteFilePath = path.resolve(tempRoot, relativePath)
+      await fs.mkdir(path.dirname(absoluteFilePath), { recursive: true })
+      await fs.writeFile(absoluteFilePath, content, 'utf8')
+
+      const result = await executePython({
+        cwd: tempRoot,
+        relativeFilePath: relativePath,
+      })
+
+      res.status(200).json(result)
+    } finally {
+      await fs.rm(tempRoot, { recursive: true, force: true })
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to run python file'
     res.status(400).json({ error: message })

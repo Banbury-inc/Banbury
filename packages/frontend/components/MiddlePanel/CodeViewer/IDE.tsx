@@ -7,6 +7,7 @@ import { getIDESettings } from '../../modals/settings-tabs/handlers/ideSettingsH
 import { formatRelative } from './handlers/formatRelative'
 import { getLanguageMonacoId, getLanguageDisplayName } from './languageUtils'
 import { runPythonFile, type RunPythonFileResult } from './handlers/runPythonFile'
+import { saveCodeFileToS3 } from './handlers/saveCodeFileToS3'
 import { setCurrentCodeFileContext, clearCurrentCodeFileContext } from './handlers/currentCodeFileContext'
 import { registerCodeEditor, unregisterCodeEditor } from '../../RightPanel/handlers/handle-code-edit-ai-response'
 import { CodeHeader } from './CodeHeader'
@@ -110,15 +111,11 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
     try {
       setIsSaving(true)
       const currentContent = editorRef.current?.getValue() || content
-      const blob = new Blob([currentContent], { type: 'text/plain' })
-
-      await ApiService.Files.uploadToS3(
-        blob,
-        currentFile.name,
-        userInfo?.username || 'web-editor',
-        currentFile.path,
-        ''
-      )
+      await saveCodeFileToS3({
+        file: currentFile,
+        content: currentContent,
+        username: userInfo?.username,
+      })
 
       setContent(currentContent)
       setIsModified(false)

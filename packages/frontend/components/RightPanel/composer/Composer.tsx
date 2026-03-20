@@ -69,6 +69,8 @@ export interface ComposerToolPreferences {
 }
 
 interface ComposerProps {
+  /** Bumps when OpenAI and/or Anthropic model catalogs load (refreshes selector + context wheel). */
+  dynamicModelsCatalogRevision?: number;
   attachedFiles: FileSystemItem[];
   attachedEmails: any[];
   onFileAttach: (file: FileSystemItem) => void;
@@ -99,7 +101,34 @@ interface ComposerProps {
   composerAutofocus?: boolean;
 }
 
-export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, attachmentPayloads, onAttachmentPayload, onSend, onFileView, pendingChanges, onAcceptAll, onRejectAll, onOpenFile, messageBuffer, assistantTabId, queuedMessages, onQueueMessage, onRemoveQueuedMessage, onMoveQueuedMessageToFront, onSendNextQueued, composerAutofocus = true }) => {
+export const Composer: FC<ComposerProps> = ({
+  dynamicModelsCatalogRevision = 0,
+  attachedFiles,
+  attachedEmails,
+  onFileAttach,
+  onFileRemove,
+  onEmailAttach,
+  onEmailRemove,
+  userInfo,
+  toolPreferences,
+  onUpdateToolPreferences,
+  attachmentPayloads,
+  onAttachmentPayload,
+  onSend,
+  onFileView,
+  pendingChanges,
+  onAcceptAll,
+  onRejectAll,
+  onOpenFile,
+  messageBuffer,
+  assistantTabId,
+  queuedMessages,
+  onQueueMessage,
+  onRemoveQueuedMessage,
+  onMoveQueuedMessageToFront,
+  onSendNextQueued,
+  composerAutofocus = true,
+}) => {
   const composer = useComposerRuntime();
   const threadRuntime = useThreadRuntime();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -360,6 +389,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
           </div>
 
           <ComposerAction
+            dynamicModelsCatalogRevision={dynamicModelsCatalogRevision}
             attachedFiles={attachedFiles}
             attachedEmails={attachedEmails}
             onFileAttach={onFileAttach}
@@ -394,6 +424,7 @@ export const Composer: FC<ComposerProps> = ({ attachedFiles, attachedEmails, onF
 };
 
 interface ComposerActionProps {
+  dynamicModelsCatalogRevision?: number;
   attachedFiles: FileSystemItem[];
   attachedEmails: any[];
   onFileAttach: (file: FileSystemItem) => void;
@@ -420,7 +451,28 @@ interface ComposerActionProps {
   onQueueMessage: (text: string) => void;
 }
 
-const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails, onFileAttach, onFileRemove, onEmailAttach, onEmailRemove, userInfo, toolPreferences, onUpdateToolPreferences, onAttachmentPayload, onSend, messageBuffer, inputRef, sendButtonRef, assistantTabId, isRunning, hasQueuedMessages, onSendNextQueued, onQueueMessage }) => {
+const ComposerAction: FC<ComposerActionProps> = ({
+  dynamicModelsCatalogRevision = 0,
+  attachedFiles,
+  attachedEmails,
+  onFileAttach,
+  onFileRemove,
+  onEmailAttach,
+  onEmailRemove,
+  userInfo,
+  toolPreferences,
+  onUpdateToolPreferences,
+  onAttachmentPayload,
+  onSend,
+  messageBuffer,
+  inputRef,
+  sendButtonRef,
+  assistantTabId,
+  isRunning,
+  hasQueuedMessages,
+  onSendNextQueued,
+  onQueueMessage,
+}) => {
   const composer = useComposerRuntime();
   const threadRuntime = useThreadRuntime();
   const [hasText, setHasText] = useState(false);
@@ -544,7 +596,16 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
       documentContextPreview,
       attachmentsSummary,
     });
-  }, [getThreadMessages, draftText, attachedFiles, attachedEmails, toolPreferences.model_id, toolPreferences.model_provider, streamingContentLength]);
+  }, [
+    getThreadMessages,
+    draftText,
+    attachedFiles,
+    attachedEmails,
+    toolPreferences.model_id,
+    toolPreferences.model_provider,
+    streamingContentLength,
+    dynamicModelsCatalogRevision,
+  ]);
 
   const handleStartRecording: () => void = () => {
     startRecording({
@@ -756,6 +817,7 @@ const ComposerAction: FC<ComposerActionProps> = ({ attachedFiles, attachedEmails
           showText={visibleButtons.modeText}
         />
         <ModelSelector
+          dynamicModelsCatalogRevision={dynamicModelsCatalogRevision}
           toolPreferences={toolPreferences}
           onUpdateToolPreferences={onUpdateToolPreferences}
           isMeasuring={isMeasuring}

@@ -21,7 +21,10 @@ import { AssistantMessage } from "./components/AssistantMessage";
 import { LoadConversationDialog } from "./components/LoadConversationDialog";
 import { SaveConversationDialog } from "./components/SaveConversationDialog";
 import type { QueuedMessage } from "../components/queued-messages-display";
-import { getDefaultModelForProvider, getModelById, DEFAULT_VISIBLE_MODELS } from "../handlers/getModelDisplayName";
+import { getDefaultVisibleModels, getModelsCatalogRevision } from "../handlers/getModelDisplayName"
+import { fetchAnthropicModelsCatalog } from "../handlers/fetchAnthropicModelsCatalog"
+import { fetchGoogleModelsCatalog } from "../handlers/fetchGoogleModelsCatalog"
+import { fetchOpenAIModelsCatalog } from "../handlers/fetchOpenAIModelsCatalog"
 import type { FC } from "react";
 import { Typography } from "../../../common/ui/typography";
 import { isViewableFileExtended } from "../../../../pages/Workspaces/handlers/fileTypeUtils";
@@ -83,6 +86,44 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     } catch {}
     return deriveToolPreferences();
   });
+  const [dynamicModelsCatalogRevision, setDynamicModelsCatalogRevision] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.allSettled([
+      fetchOpenAIModelsCatalog(),
+      fetchAnthropicModelsCatalog(),
+      fetchGoogleModelsCatalog(),
+    ])
+      .then((results) => {
+        if (cancelled) return;
+        setDynamicModelsCatalogRevision(getModelsCatalogRevision());
+        const openaiModels =
+          results[0].status === "fulfilled" ? results[0].value : [];
+        const claudeModels =
+          results[1].status === "fulfilled" ? results[1].value : [];
+        const googleModels =
+          results[2].status === "fulfilled" ? results[2].value : [];
+        try {
+          const saved = localStorage.getItem("toolPreferences");
+          if (saved) return;
+          setToolPreferences((prev) => ({
+            ...prev,
+            visibleModels: getDefaultVisibleModels(
+              openaiModels.map((m) => m.id),
+              claudeModels.map((m) => m.id),
+              googleModels.map((m) => m.id),
+            ),
+          }));
+        } catch {
+          // ignore
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [attachmentPayloads, setAttachmentPayloads] = useState<Record<string, { fileData: string; mimeType: string }>>({});
   const [threadKey, setThreadKey] = useState<number>(0);
   const [loadedMessagesBuffer, setLoadedMessagesBuffer] = useState<any[] | null>(null);
@@ -637,6 +678,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       </ThreadPrimitive.Viewport>
 
       <Composer
+        dynamicModelsCatalogRevision={dynamicModelsCatalogRevision}
         attachedFiles={attachedFiles}
         attachedEmails={attachedEmails}
         composerAutofocus={composerAutofocus}

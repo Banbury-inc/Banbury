@@ -1,4 +1,8 @@
-import { getDefaultModelForProvider, getModelById, DEFAULT_VISIBLE_MODELS } from "../../handlers/getModelDisplayName";
+import {
+  getDefaultModelForProvider,
+  normalizePersistedModelId,
+  DEFAULT_VISIBLE_MODELS,
+} from "../../handlers/getModelDisplayName"
 
 export interface ThreadToolPreferences {
   web_search: boolean;
@@ -51,8 +55,8 @@ export function deriveToolPreferences(raw?: any): ThreadToolPreferences {
 
   const provider = data.model_provider === "openai" ? "openai" : data.model_provider === "google" ? "google" : "anthropic";
   const fallbackModelId = getDefaultModelForProvider(provider);
-  const rawModelId = typeof data.model_id === "string" ? data.model_id : fallbackModelId;
-  const modelId = getModelById(rawModelId)?.id || fallbackModelId;
+  const rawModelId = typeof data.model_id === "string" ? data.model_id : fallbackModelId
+  const modelId = normalizePersistedModelId(rawModelId, provider, fallbackModelId)
 
   return {
     web_search: data.web_search !== false,

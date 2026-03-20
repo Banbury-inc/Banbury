@@ -1,7 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
 import { getDocumentContext } from '../assistant/ClaudeRuntimeProvider/handlers/getDocumentContext';
 import { generateThreadId } from '../assistant/langraph/utils';
-import { getDefaultModelForProvider, getModelById } from '../components/RightPanel/composer/handlers/getModelDisplayName';
+import {
+  getDefaultModelForProvider,
+  normalizePersistedModelId,
+} from '../components/RightPanel/composer/handlers/getModelDisplayName'
 
 // Types following athena-intelligence patterns
 export interface ToolCall {
@@ -144,10 +147,16 @@ export function useLangGraphAssistant(initialThreadId?: string) {
     }));
 
     // Normalize tool preferences
-    const modelProvider = toolPreferences?.model_provider === "openai" ? "openai" : "anthropic";
-    const fallbackModelId = getDefaultModelForProvider(modelProvider);
-    const rawModelId = typeof toolPreferences?.model_id === "string" ? toolPreferences.model_id : fallbackModelId;
-    const modelId = getModelById(rawModelId)?.id || fallbackModelId;
+    const modelProvider =
+      toolPreferences?.model_provider === "openai"
+        ? "openai"
+        : toolPreferences?.model_provider === "google"
+          ? "google"
+          : "anthropic"
+    const fallbackModelId = getDefaultModelForProvider(modelProvider)
+    const rawModelId =
+      typeof toolPreferences?.model_id === "string" ? toolPreferences.model_id : fallbackModelId
+    const modelId = normalizePersistedModelId(rawModelId, modelProvider, fallbackModelId)
 
     const normalizedToolPreferences: ToolPreferences = {
       web_search: toolPreferences?.web_search !== false,

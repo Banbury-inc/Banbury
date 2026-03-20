@@ -25,6 +25,7 @@ test-results
 .DS_Store
 .eslintcache
 *.log
+.banbury-runtime/
 
 # TypeScript
 *.tsbuildinfo
