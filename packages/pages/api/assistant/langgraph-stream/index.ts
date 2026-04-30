@@ -17,6 +17,47 @@ import { detectDocumentRequest } from "../claude-skills-stream/handlers/detectDo
 
 export const config = API_CONFIG
 
+interface CurrentCodeFileContext {
+  filePath: string
+  fileName?: string
+  content?: string
+}
+
+const CODE_FILE_EXTENSIONS = [
+  ".js", ".jsx", ".ts", ".tsx", ".py", ".java", ".cpp", ".c", ".cs", ".php", ".rb", ".go", ".rs",
+  ".swift", ".kt", ".html", ".css", ".scss", ".sass", ".less", ".json", ".xml", ".yaml", ".yml",
+  ".md", ".sql", ".sh", ".bash", ".vue", ".svelte", ".r", ".m", ".pl", ".lua", ".dart", ".elm",
+  ".clj", ".hs", ".fs", ".vb", ".asm", ".s", ".coffee", ".litcoffee", ".iced",
+]
+
+function isCodeFileName(fileName: string): boolean {
+  const lower = fileName.toLowerCase()
+  return CODE_FILE_EXTENSIONS.some((ext) => lower.endsWith(ext))
+}
+
+function inferCurrentCodeFileFromMessages(messages: any[]): CurrentCodeFileContext | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i]
+    if (!Array.isArray(message?.content)) continue
+
+    const fileAttachmentParts = message.content.filter((part: any) => part?.type === "file-attachment")
+    for (let j = fileAttachmentParts.length - 1; j >= 0; j--) {
+      const part = fileAttachmentParts[j]
+      const filePath = typeof part?.filePath === "string" ? part.filePath : ""
+      const fileName = typeof part?.fileName === "string" ? part.fileName : ""
+      if (!filePath || !fileName) continue
+      if (!isCodeFileName(fileName)) continue
+
+      return {
+        filePath,
+        fileName,
+      }
+    }
+  }
+
+  return undefined
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"])
@@ -49,6 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const body = req.body as StreamRequestBody
+    const effectiveCurrentCodeFile = body.currentCodeFile || inferCurrentCodeFileFromMessages(body.messages || [])
     const token = req.headers.authorization?.replace('Bearer ', '')
     
     // Normalize messages
@@ -117,6 +159,25 @@ ${todoList}
 
 Focus on completing your current task thoroughly. ${isSubAgent ? "You are working in parallel with other sub-agents on different tasks." : "Execute each task in sequence."}`
       }
+
+      // Add currently open code file context so code-edit tools can be used reliably.
+      let codeFileContextSuffix = ""
+      if (effectiveCurrentCodeFile?.filePath) {
+        const fileName = effectiveCurrentCodeFile.fileName || effectiveCurrentCodeFile.filePath.split("/").pop() || "unknown"
+        const codePreview = typeof effectiveCurrentCodeFile.content === "string"
+          ? effectiveCurrentCodeFile.content.slice(0, 12000)
+          : ""
+
+        codeFileContextSuffix =
+          `\n\n## Current Open Code File\n` +
+          `- fileName: ${fileName}\n` +
+          `- filePath: ${effectiveCurrentCodeFile.filePath}\n` +
+          `\nThe user is focused on this IDE code file. For ANY edit to this file, you MUST call code_edit_open_file with filePath exactly as above and snippet-based edits. ` +
+          `Do NOT use docx_ai, sheet_ai, or other document tools for this path — those apply only to Office documents in their viewers, not to source code.` +
+          (codePreview
+            ? `\n\n### Open File Content (preview)\n\`\`\`\n${codePreview}\n\`\`\``
+            : "")
+      }
       
       // Use appropriate system prompt based on mode:
       // 1. Ask mode: Use ask mode prompt for read-only exploration
@@ -133,7 +194,7 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
       } else {
         basePrompt = SYSTEM_PROMPT
       }
-      const systemText = basePrompt + dateTimeSuffix + planContextSuffix
+      const systemText = basePrompt + dateTimeSuffix + planContextSuffix + codeFileContextSuffix
       // Google's API doesn't support SystemMessage - convert to ChatMessage for Google provider
       if (modelProvider === "google") {
         const systemAsUserMessage = new ChatMessage({ content: `System: ${systemText}`, role: "human" })
@@ -178,6 +239,7 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
         dateTimeContext: body.dateTimeContext,
         documentContext: body.documentContext,
         presentationContext: body.presentationContext,
+        currentCodeFile: effectiveCurrentCodeFile,
         webSearchDefaults: body.webSearchOptions || {},
         // Todo middleware context
         sendEvent: send,
@@ -201,7 +263,10 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
           reactAgent = createDocumentAgentForProvider(modelProvider)
           agentType = "document"
         } else {
-          reactAgent = createReactAgentForProvider(modelProvider)
+          const excludeDocxWhenCodeFocused = Boolean(effectiveCurrentCodeFile?.filePath)
+          reactAgent = createReactAgentForProvider(modelProvider, {
+            excludeToolNames: excludeDocxWhenCodeFocused ? ["docx_ai"] : undefined,
+          })
           agentType = "general"
         }
         

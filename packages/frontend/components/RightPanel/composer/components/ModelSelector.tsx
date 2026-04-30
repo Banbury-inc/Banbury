@@ -1,17 +1,20 @@
+import { useMemo } from "react"
 import { ChevronDown, Check } from "lucide-react"
 import { Button } from "../../../common/ui/button"
 import { Popover, PopoverTrigger, PopoverContent } from "../../../common/ui/popover"
 import { Typography } from "@/components/common/ui/typography"
 import {
   getModelDisplayName,
-  AVAILABLE_MODELS,
+  getAvailableModels,
   getModelById,
   getDefaultModelForProvider,
   DEFAULT_VISIBLE_MODELS,
 } from "../handlers/getModelDisplayName"
+import { getModelsForSelectorSection } from "../handlers/getModelsForSelector"
 import type { ComposerToolPreferences } from "../Composer"
 
 interface ModelSelectorProps {
+  dynamicModelsCatalogRevision?: number
   toolPreferences: ComposerToolPreferences
   onUpdateToolPreferences: (prefs: ComposerToolPreferences) => void
   isMeasuring: boolean
@@ -19,11 +22,29 @@ interface ModelSelectorProps {
 }
 
 export function ModelSelector({
+  dynamicModelsCatalogRevision = 0,
   toolPreferences,
   onUpdateToolPreferences,
   isMeasuring,
   isVisible,
 }: ModelSelectorProps) {
+  const availableModels = useMemo(
+    () => getAvailableModels(),
+    [dynamicModelsCatalogRevision],
+  )
+  const visibleModels = toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS
+  const openaiSection = useMemo(
+    () => getModelsForSelectorSection(availableModels, visibleModels, "openai"),
+    [availableModels, visibleModels],
+  )
+  const anthropicSection = useMemo(
+    () => getModelsForSelectorSection(availableModels, visibleModels, "anthropic"),
+    [availableModels, visibleModels],
+  )
+  const googleSection = useMemo(
+    () => getModelsForSelectorSection(availableModels, visibleModels, "google"),
+    [availableModels, visibleModels],
+  )
   if (!isMeasuring && !isVisible) {
     return null
   }
@@ -50,10 +71,7 @@ export function ModelSelector({
         className="w-56 p-0 bg-popover text-popover-foreground border shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 max-h-96 overflow-y-auto"
       >
         <div className="p-1 flex flex-col">
-          {AVAILABLE_MODELS.filter(m => {
-            const visibleModels = toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS;
-            return m.provider === "openai" && visibleModels.includes(m.id);
-          }).map(model => {
+          {openaiSection.map((model) => {
             const isSelected = (toolPreferences.model_id || getDefaultModelForProvider(toolPreferences.model_provider)) === model.id
             return (
               <div
@@ -79,10 +97,7 @@ export function ModelSelector({
               </div>
             )
           })}
-          {AVAILABLE_MODELS.filter(m => {
-            const visibleModels = toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS;
-            return m.provider === "anthropic" && visibleModels.includes(m.id);
-          }).map(model => {
+          {anthropicSection.map((model) => {
             const isSelected = (toolPreferences.model_id || getDefaultModelForProvider(toolPreferences.model_provider)) === model.id
             return (
               <div
@@ -108,10 +123,7 @@ export function ModelSelector({
               </div>
             )
           })}
-          {AVAILABLE_MODELS.filter(m => {
-            const visibleModels = toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS;
-            return m.provider === "google" && visibleModels.includes(m.id);
-          }).map(model => {
+          {googleSection.map((model) => {
             const isSelected = (toolPreferences.model_id || getDefaultModelForProvider(toolPreferences.model_provider)) === model.id
             return (
               <div

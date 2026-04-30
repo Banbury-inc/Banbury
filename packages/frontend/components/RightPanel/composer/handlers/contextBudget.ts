@@ -1,22 +1,22 @@
-import type { ModelProvider } from "./getModelDisplayName"
+import {
+  getAnthropicMaxInputTokensForModel,
+  getGoogleMaxInputTokensForModel,
+  type ModelProvider,
+} from "./getModelDisplayName"
 
-// Context window sizes (in tokens) for each model
+// Context window sizes (in tokens) for each model (non-Anthropic; Claude uses List Models API)
 const MODEL_CONTEXT_WINDOWS: Record<string, number> = {
-  // OpenAI models - GPT-5.x series
   "gpt-5.2": 128_000,
   "gpt-5.2-pro": 128_000,
   "gpt-5-mini": 128_000,
   "gpt-5-nano": 128_000,
   "gpt-5": 128_000,
-  // OpenAI models - GPT-4.1 series
   "gpt-4.1": 1_000_000,
   "gpt-4.1-mini": 1_000_000,
   "gpt-4.1-nano": 1_000_000,
-  // OpenAI models - GPT-4o series
   "gpt-4o": 128_000,
   "gpt-4o-mini": 128_000,
   "gpt-4-turbo": 128_000,
-  // OpenAI models - o-series reasoning
   "o3": 200_000,
   "o3-pro": 200_000,
   "o3-mini": 200_000,
@@ -24,17 +24,13 @@ const MODEL_CONTEXT_WINDOWS: Record<string, number> = {
   "o1": 200_000,
   "o1-pro": 200_000,
   "o1-mini": 200_000,
-  // Anthropic models
-  "claude-opus-4-5-20251101": 200_000,
-  "claude-sonnet-4-20250514": 200_000,
-  "claude-3-5-sonnet-20241022": 200_000,
-  "claude-3-5-haiku-20241022": 200_000,
 }
 
 // Default context windows by provider (fallback)
 const DEFAULT_CONTEXT_WINDOWS: Record<ModelProvider, number> = {
   openai: 128_000,
   anthropic: 200_000,
+  google: 200_000,
 }
 
 // Average characters per token varies by provider/language
@@ -42,6 +38,7 @@ const DEFAULT_CONTEXT_WINDOWS: Record<ModelProvider, number> = {
 const CHARS_PER_TOKEN: Record<ModelProvider, number> = {
   openai: 4,
   anthropic: 3.8,
+  google: 4,
 }
 
 // Default output token reservation (matches defaultLangGraphConfig.maxTokens)
@@ -53,19 +50,21 @@ interface GetModelContextWindowParams {
 }
 
 export function getModelContextWindowTokens({ modelId, provider }: GetModelContextWindowParams): number {
-  // Check exact model id first
-  if (MODEL_CONTEXT_WINDOWS[modelId]) {
-    return MODEL_CONTEXT_WINDOWS[modelId]
+  if (provider === "anthropic") {
+    const fromApi = getAnthropicMaxInputTokensForModel(modelId)
+    if (fromApi != null) return fromApi
   }
-  
-  // Check for partial match (e.g. "claude-3-5-sonnet" prefix)
+  if (provider === "google") {
+    const fromApi = getGoogleMaxInputTokensForModel(modelId)
+    if (fromApi != null) return fromApi
+  }
+
+  if (MODEL_CONTEXT_WINDOWS[modelId]) return MODEL_CONTEXT_WINDOWS[modelId]
+
   for (const [key, value] of Object.entries(MODEL_CONTEXT_WINDOWS)) {
-    if (modelId.startsWith(key) || key.startsWith(modelId)) {
-      return value
-    }
+    if (modelId.startsWith(key) || key.startsWith(modelId)) return value
   }
-  
-  // Fallback to provider default
+
   return DEFAULT_CONTEXT_WINDOWS[provider] || 128_000
 }
 

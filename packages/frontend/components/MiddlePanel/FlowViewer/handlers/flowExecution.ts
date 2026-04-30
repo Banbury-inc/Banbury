@@ -1,5 +1,6 @@
 import { ApiService } from '../../../../../backend/api/apiService'
 import { FlowItem } from '../../../../pages/Workspaces/types'
+import { formatRunLogs } from './formatRunLogs'
 
 export type RunStatus = 'idle' | 'running' | 'success' | 'failed'
 
@@ -23,7 +24,7 @@ export async function runFlow({ flowId, setRunStatus, setRunLogs, abortRef, onFl
     const result = await ApiService.Flows.runFlow(flowId)
     if (controller.signal.aborted) return
 
-    const logs = result.logs ?? ['Flow completed successfully']
+    const logs = formatRunLogs(result.logs)
     setRunLogs(logs)
     onLogsReceived?.(logs)
     setRunStatus(result.success ? 'success' : 'failed')

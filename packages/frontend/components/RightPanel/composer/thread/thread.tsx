@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { useState, useEffect, useRef, useCallback } from "react";
 import DrawioViewerModal from "../../../MiddlePanel/CanvasViewer/DrawioViewerModal";
 import { Button } from "../../../common/ui/button";
-import { handleDocxAIResponse } from "../../handlers/handle-docx-ai-response";
+import { handleDocxAIResponse } from "../../handlers/handle-docx-ai-response"
+import { ensureCodeEditAIResponseWindowListener } from "../../handlers/handle-code-edit-ai-response"
 import { handleTldrawAIResponse } from "../../handlers/handle-tldraw-ai-response";
 import { ToolUI } from "../../ToolUI";
 import { ApiService } from "../../../../../backend/api/apiService";
@@ -20,7 +21,10 @@ import { AssistantMessage } from "./components/AssistantMessage";
 import { LoadConversationDialog } from "./components/LoadConversationDialog";
 import { SaveConversationDialog } from "./components/SaveConversationDialog";
 import type { QueuedMessage } from "../components/queued-messages-display";
-import { getDefaultModelForProvider, getModelById, DEFAULT_VISIBLE_MODELS } from "../handlers/getModelDisplayName";
+import { getDefaultVisibleModels, getModelsCatalogRevision } from "../handlers/getModelDisplayName"
+import { fetchAnthropicModelsCatalog } from "../handlers/fetchAnthropicModelsCatalog"
+import { fetchGoogleModelsCatalog } from "../handlers/fetchGoogleModelsCatalog"
+import { fetchOpenAIModelsCatalog } from "../handlers/fetchOpenAIModelsCatalog"
 import type { FC } from "react";
 import { Typography } from "../../../common/ui/typography";
 import { isViewableFileExtended } from "../../../../pages/Workspaces/handlers/fileTypeUtils";
@@ -33,6 +37,7 @@ import { saveCurrentConversation as saveCurrentConversationHandler } from "./han
 import { loadConversations as loadConversationsHandler } from "./handlers/loadConversations";
 import { handleStorageChange } from "./handlers/handleStorageChange";
 import { syncAttachmentsToLocalStorage } from "./handlers/syncAttachmentsToLocalStorage";
+import { syncCurrentCodeFileContext } from "./handlers/syncCurrentCodeFileContext";
 
 
 // Destructure Assistant UI primitives from namespace import to avoid named import type issues
@@ -81,6 +86,44 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     } catch {}
     return deriveToolPreferences();
   });
+  const [dynamicModelsCatalogRevision, setDynamicModelsCatalogRevision] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.allSettled([
+      fetchOpenAIModelsCatalog(),
+      fetchAnthropicModelsCatalog(),
+      fetchGoogleModelsCatalog(),
+    ])
+      .then((results) => {
+        if (cancelled) return;
+        setDynamicModelsCatalogRevision(getModelsCatalogRevision());
+        const openaiModels =
+          results[0].status === "fulfilled" ? results[0].value : [];
+        const claudeModels =
+          results[1].status === "fulfilled" ? results[1].value : [];
+        const googleModels =
+          results[2].status === "fulfilled" ? results[2].value : [];
+        try {
+          const saved = localStorage.getItem("toolPreferences");
+          if (saved) return;
+          setToolPreferences((prev) => ({
+            ...prev,
+            visibleModels: getDefaultVisibleModels(
+              openaiModels.map((m) => m.id),
+              claudeModels.map((m) => m.id),
+              googleModels.map((m) => m.id),
+            ),
+          }));
+        } catch {
+          // ignore
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [attachmentPayloads, setAttachmentPayloads] = useState<Record<string, { fileData: string; mimeType: string }>>({});
   const [threadKey, setThreadKey] = useState<number>(0);
   const [loadedMessagesBuffer, setLoadedMessagesBuffer] = useState<any[] | null>(null);
@@ -297,6 +340,11 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     }
   }, [selectedEmail]);
 
+  // Keep active code-file context in localStorage for AI code-edit tool calls.
+  useEffect(() => {
+    syncCurrentCodeFileContext(selectedFile || null);
+  }, [selectedFile]);
+
   // Auto-save conversation when langgraph stream completes
   useEffect(() => {
     if (!runtime || !userInfo?.username) {
@@ -462,12 +510,17 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
   // Listen for DOCX AI response events
   useEffect(() => {
     const handleDocxResponse = (event: CustomEvent) => {
-      handleDocxAIResponse(event.detail);
-    };
+      handleDocxAIResponse(event.detail)
+    }
 
-    window.addEventListener('docx-ai-response', handleDocxResponse as EventListener);
-    return () => window.removeEventListener('docx-ai-response', handleDocxResponse as EventListener);
-  }, []);
+    window.addEventListener('docx-ai-response', handleDocxResponse as EventListener)
+    return () => window.removeEventListener('docx-ai-response', handleDocxResponse as EventListener)
+  }, [])
+
+  // Single global listener lives in handle-code-edit-ai-response (avoids duplicating with IDE/subscribers).
+  useEffect(() => {
+    ensureCodeEditAIResponseWindowListener()
+  }, [])
 
   // Listen for Tldraw AI response events
   useEffect(() => {
@@ -620,6 +673,7 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       </ThreadPrimitive.Viewport>
 
       <Composer
+        dynamicModelsCatalogRevision={dynamicModelsCatalogRevision}
         attachedFiles={attachedFiles}
         attachedEmails={attachedEmails}
         composerAutofocus={composerAutofocus}

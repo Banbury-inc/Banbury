@@ -1,5 +1,5 @@
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import { Panel, PanelGroup, WorkspaceTab, FileTab, EmailTab, TaskTab, MeetingTab, AdminTab, DatabaseTableTab, OpenDatabaseTablePayload, FlowTab, FlowItem } from '../types';
+import { Panel, PanelGroup, WorkspaceTab, FileTab, EmailTab, TaskTab, MeetingTab, AdminTab, TerminalTab, DatabaseTableTab, OpenDatabaseTablePayload, FlowTab, FlowItem } from '../types';
 import { Task } from '../../../pages/TaskStudio/types';
 import { MeetingSession } from '../../../types/meeting-types';
 import { ApiService } from '../../../../backend/api/apiService';
@@ -414,6 +414,50 @@ export const openAdminInTab = (
   }
 
   // Add tab to the target panel
+  setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab))
+  setActivePanelId(targetPanelId)
+}
+
+export const openTerminalInTab = (
+  targetPanelId: string,
+  panelLayout: PanelGroup,
+  getAllTabs: (layout: PanelGroup) => WorkspaceTab[],
+  updatePanelActiveTab: (layout: PanelGroup, panelId: string, tabId: string) => PanelGroup,
+  addTabToPanel: (layout: PanelGroup, panelId: string, tab: WorkspaceTab) => PanelGroup,
+  setActivePanelId: React.Dispatch<React.SetStateAction<string>>,
+  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>,
+  cwd?: string
+) => {
+  const allTabs = getAllTabs(panelLayout)
+  const existingTab = allTabs.find(tab => tab.type === 'terminal' && tab.cwd === cwd)
+
+  if (existingTab) {
+    const switchToExistingTab = (layout: PanelGroup): boolean => {
+      if (layout.type === 'panel' && layout.panel) {
+        const tabExists = layout.panel.tabs.some(tab => tab.id === existingTab.id)
+        if (tabExists) {
+          setActivePanelId(layout.panel.id)
+          setPanelLayout(prev => updatePanelActiveTab(prev, layout.panel!.id, existingTab.id))
+          return true
+        }
+      }
+      if (layout.type === 'group' && layout.children)
+        return layout.children.some(child => switchToExistingTab(child))
+      return false
+    }
+
+    switchToExistingTab(panelLayout)
+    return
+  }
+
+  const tabId = `terminal_${Date.now()}`
+  const newTab: TerminalTab = {
+    id: tabId,
+    title: 'Terminal',
+    type: 'terminal',
+    cwd,
+  }
+
   setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab))
   setActivePanelId(targetPanelId)
 }

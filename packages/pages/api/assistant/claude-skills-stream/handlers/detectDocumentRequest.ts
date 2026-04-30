@@ -25,6 +25,19 @@ export function detectDocumentRequest(messages: any[]): boolean {
       .toLowerCase()
   }
 
+  // If the user is clearly asking about source code / the IDE, do not route to the document agent
+  // unless they also name an Office file type (avoids "edit documentation" → Word, etc.).
+  const officeExplicit =
+    /\b(\.docx|\.xlsx|\.pptx|ms word|microsoft word|word document|excel spreadsheet|powerpoint)\b/.test(
+      text
+    )
+  const codeOrIdeSignals =
+    /\.(tsx?|jsx?|vue|svelte|py|rs|go|java|kt|swift|cs|php|rb)\b/.test(text) ||
+    /\b(code file|source file|in the (ide|editor)|typescript|javascript|refactor|implement|lint|eslint|npm|git diff)\b/.test(
+      text
+    )
+  if (codeOrIdeSignals && !officeExplicit) return false
+
   // Keywords that indicate document generation/editing requests
   const documentKeywords = [
     // PowerPoint - Creation

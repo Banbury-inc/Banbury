@@ -108,10 +108,7 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
     if (connectionTrees[saved.id]?.length) return
 
     setLoadingConnections(prev => new Set(prev).add(saved.id))
-    const result = await handleLoadTree(saved.config).catch(() => ({
-      tree: [] as DatabaseTreeNode[],
-      error: 'Failed to load database tree',
-    }))
+    const result = await handleLoadTree(saved.config)
     setLoadingConnections(prev => {
       const next = new Set(prev)
       next.delete(saved.id)
@@ -128,10 +125,7 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
 
   async function refreshConnection(saved: SavedDatabaseConnection) {
     setLoadingConnections(prev => new Set(prev).add(saved.id))
-    const result = await handleLoadTree(saved.config).catch(() => ({
-      tree: [] as DatabaseTreeNode[],
-      error: 'Failed to refresh database tree',
-    }))
+    const result = await handleLoadTree(saved.config)
     setLoadingConnections(prev => {
       const next = new Set(prev)
       next.delete(saved.id)

@@ -1,4 +1,3 @@
-import { Box } from '@mui/material'
 import DocPageLayout from '../DocPageLayout'
 import { Typography } from '../../../../components/common/ui/typography'
 
@@ -26,7 +25,7 @@ const CANCELLATION_STEPS = [
 export default function BillingTab() {
   return (
     <DocPageLayout>
-      <Box>
+      <div>
         <Typography variant="h2" className="mb-3">
           Billing
         </Typography>
@@ -35,23 +34,23 @@ export default function BillingTab() {
           This page explains where to manage your subscription, how billing cycles work, what’s included in each plan, and what happens when you cancel.
         </Typography>
 
-        <Box sx={{ mb: 6 }}>
+        <div className="mb-12">
           <Typography variant="h3" className="mb-2">
             Access billing settings
           </Typography>
           <Typography variant="p" className="mb-3">
             You can manage your subscription from within the app:
           </Typography>
-          <Box sx={{ pl: 2 }}>
+          <div className="pl-4">
             {ACCESS_STEPS.map((step, index) => (
               <Typography key={step} variant="p" className={index === ACCESS_STEPS.length - 1 ? undefined : 'mb-1'}>
                 {index + 1}. {step}
               </Typography>
             ))}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
-        <Box sx={{ mb: 6 }}>
+        <div className="mb-12">
           <Typography variant="h3" className="mb-2">
             Billing cycles
           </Typography>
@@ -60,18 +59,18 @@ export default function BillingTab() {
             <li>Your subscription <strong>auto-renews monthly</strong> unless you cancel</li>
             <li>Your next renewal date is based on your last successful payment date</li>
           </Typography>
-        </Box>
+        </div>
 
-        <Box sx={{ mb: 6 }}>
+        <div className="mb-12">
           <Typography variant="h3" className="mb-2">
             Plans (Free vs Pro)
           </Typography>
           <Typography variant="p" className="mb-3">
             Banbury offers a Free plan and a Pro plan:
           </Typography>
-          <Box sx={{ pl: 2 }}>
+          <div className="pl-4">
             {BILLING_PLANS.map((plan) => (
-              <Box key={plan.title} sx={{ mb: plan.title === 'Pro' ? 0 : 3 }}>
+              <div key={plan.title} className={plan.title === 'Pro' ? undefined : 'mb-6'}>
                 <Typography variant="p" className="mb-1">
                   <strong>{plan.title}</strong> — {plan.price}
                 </Typography>
@@ -80,33 +79,31 @@ export default function BillingTab() {
                     <li key={detail}>{detail}</li>
                   ))}
                 </Typography>
-              </Box>
+              </div>
             ))}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
-        <Box>
+        <div>
           <Typography variant="h3" className="mb-2">
             Cancel subscription
           </Typography>
           <Typography variant="p" className="mb-3">
             To cancel, use the Subscription settings in-app:
           </Typography>
-          <Box sx={{ pl: 2, mb: 3 }}>
+          <div className="mb-6 pl-4">
             {CANCELLATION_STEPS.map((step, index) => (
               <Typography key={step} variant="p" className={index === CANCELLATION_STEPS.length - 1 ? undefined : 'mb-1'}>
                 {index + 1}. {step}
               </Typography>
             ))}
-          </Box>
+          </div>
           <Typography variant="list">
             <li>Cancellation is <strong>end-of-period</strong>: your subscription remains active until the end of your current billing period</li>
             <li>After your billing period ends, your account transitions to the Free plan (feature limits apply)</li>
           </Typography>
-        </Box>
-      </Box>
+        </div>
+      </div>
     </DocPageLayout>
   )
 }
-
-

@@ -78,6 +78,13 @@ export interface EmailInboxTab {
   provider?: 'gmail' | 'outlook'
 }
 
+export interface TerminalTab {
+  id: string
+  title: string
+  type: 'terminal'
+  cwd?: string
+}
+
 export type DatabaseProvider = 'postgres' | 'mysql' | 'mongodb'
 
 export interface DatabaseSshConfig {
@@ -187,7 +194,7 @@ export interface FlowTab {
   type: 'flow'
 }
 
-export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab | FileBrowserTab | EmailInboxTab | DatabaseTableTab | FlowTab
+export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab | FileBrowserTab | EmailInboxTab | TerminalTab | DatabaseTableTab | FlowTab
 
 export interface Panel {
   id: string

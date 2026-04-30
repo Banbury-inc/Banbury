@@ -57,7 +57,7 @@ export const docxAiTool = tool(
   {
     name: 'docx_ai',
     description:
-      'Use this tool to deliver AI-generated DOCX document edits. Provide either a list of operations (preferred) or full htmlContent to replace the document. IMPORTANT: Call this tool only ONCE per user request. After calling this tool, the changes are immediately applied to the document in the frontend. Do not call this tool multiple times for the same edit request.',
+      'Use ONLY for Microsoft Word .docx documents in the document/Word editor. Never use for source code (.ts, .tsx, .js, .py, etc.) or IDE code files — use code_edit_open_file for those. Deliver AI-generated DOCX edits via operations (preferred) or full htmlContent. Call only ONCE per user request; changes apply immediately in the frontend.',
     schema: z.object({
       action: z.string().describe("Description of the action performed (e.g. 'Add heading', 'Format text', 'Insert table', 'Restructure document')"),
       documentName: z.string().optional().describe('Optional document name for context'),

@@ -227,6 +227,56 @@ contextBridge.exposeInMainWorld('desktopApp', {
   },
 
   /**
+   * Terminal / PTY API (desktop only)
+   */
+  terminal: {
+    /**
+     * Start a new PTY session. Returns { success, error? }.
+     * Output is delivered via onData / onExit listeners.
+     */
+    start: (sessionId: string, cwd?: string): Promise<{ success: boolean; error?: string }> => {
+      return ipcRenderer.invoke('terminal:start', sessionId, cwd)
+    },
+
+    /**
+     * Write data (user keystrokes) to the PTY session.
+     */
+    write: (sessionId: string, data: string): void => {
+      ipcRenderer.send('terminal:input', sessionId, data)
+    },
+
+    /**
+     * Resize the PTY session to new dimensions.
+     */
+    resize: (sessionId: string, cols: number, rows: number): void => {
+      ipcRenderer.send('terminal:resize', sessionId, cols, rows)
+    },
+
+    /**
+     * Close and destroy a PTY session.
+     */
+    close: (sessionId: string): void => {
+      ipcRenderer.send('terminal:close', sessionId)
+    },
+
+    /**
+     * Subscribe to data (output) from a PTY session.
+     * Returns a cleanup function.
+     */
+    onData: (callback: (sessionId: string, data: string) => void): () => void => {
+      return addIPCListener<[string, string]>('terminal:data', callback)
+    },
+
+    /**
+     * Subscribe to session exit events.
+     * Returns a cleanup function.
+     */
+    onExit: (callback: (sessionId: string, exitCode: number) => void): () => void => {
+      return addIPCListener<[string, number]>('terminal:exit', callback)
+    },
+  },
+
+  /**
    * Auto-updater API
    */
   updater: {
@@ -316,6 +366,14 @@ declare global {
         closeWindow: () => Promise<void>
         isMaximized: () => Promise<boolean>
         onMaximizeChanged: (callback: (isMaximized: boolean) => void) => () => void
+      }
+      terminal: {
+        start: (sessionId: string, cwd?: string) => Promise<{ success: boolean; error?: string }>
+        write: (sessionId: string, data: string) => void
+        resize: (sessionId: string, cols: number, rows: number) => void
+        close: (sessionId: string) => void
+        onData: (callback: (sessionId: string, data: string) => void) => () => void
+        onExit: (callback: (sessionId: string, exitCode: number) => void) => () => void
       }
       desktopRecording: {
         getStatus: () => Promise<DesktopRecordingStatus>

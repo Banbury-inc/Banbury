@@ -7,6 +7,7 @@ import {
   Network,
   Folder,
   FileBarChart,
+  FileCode,
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "../../../../../../../common/ui/select"
 import { Typography } from "../../../../../../../common/ui/typography"
@@ -48,6 +49,9 @@ export function LocalFilesCreateMenu({
           case 'presentation':
             localFilesViewRef.current?.triggerCreatePowerpoint()
             break
+          case 'code-file':
+            localFilesViewRef.current?.triggerCreateCodeFile()
+            break
           case 'folder':
             onCreateFolder?.()
             break
@@ -68,6 +72,12 @@ export function LocalFilesCreateMenu({
           <div className="flex items-center">
             <FolderPlus size={16} strokeWidth={1} className="mr-2" />
             <Typography variant="xs" className="font-medium">Upload Folder</Typography>
+          </div>
+        </SelectItem>
+        <SelectItem value="code-file" className="[&_svg]:!text-sky-400">
+          <div className="flex items-center">
+            <FileCode size={16} strokeWidth={1} className="mr-2" />
+            <Typography variant="xs" className="font-medium">Python</Typography>
           </div>
         </SelectItem>
         <SelectItem value="document" className="[&_svg]:!text-blue-500">

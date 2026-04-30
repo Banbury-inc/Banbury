@@ -204,7 +204,7 @@ export function NavSidebar({ activeTab = 'files', onTabChange, showAdminToggle =
                       <Icon className="h-5 w-5" strokeWidth={1.5} />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="right" className="font-normal">
+                  <TooltipContent side="right" className="font-normal bg-popover text-popover-foreground border border-border">
                     {tab.label}
                   </TooltipContent>
                 </Tooltip>

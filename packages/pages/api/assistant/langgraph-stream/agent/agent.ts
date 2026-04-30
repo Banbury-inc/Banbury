@@ -105,6 +105,7 @@ import { writeWorkspaceFileTool } from "./tools/writeWorkspaceFileTool";
 import { executeScriptTool } from "./tools/executeScriptTool";
 import { createPlanTool } from "./tools/createPlanTool";
 import { spawnSubagentsTool } from "./tools/spawnSubagentsTool";
+import { codeEditOpenFileTool } from "./tools/codeEditOpenFileTool";
 
 interface AgentState {
   messages: BaseMessage[];
@@ -168,10 +169,28 @@ function resolveModelId(): string | undefined {
   return prefs?.model_id
 }
 
-export function createReactAgentForProvider(provider: ModelProvider) {
+export interface CreateReactAgentForProviderOptions {
+  /** Tool names to omit from the bound tool list (e.g. hide docx_ai when the IDE has a code file focused). */
+  excludeToolNames?: string[]
+}
+
+function filterToolsByName<T extends { name: string }>(
+  toolList: T[],
+  excludeToolNames?: string[]
+): T[] {
+  if (!excludeToolNames?.length) return toolList
+  const exclude = new Set(excludeToolNames)
+  return toolList.filter((t) => !exclude.has(t.name))
+}
+
+export function createReactAgentForProvider(
+  provider: ModelProvider,
+  options?: CreateReactAgentForProviderOptions
+) {
   const modelId = resolveModelId()
   const llm = createChatModel(provider, modelId)
-  return createReactAgent({ llm, tools })
+  const chosenTools = filterToolsByName(tools, options?.excludeToolNames)
+  return createReactAgent({ llm, tools: chosenTools })
 }
 
 /**
@@ -206,6 +225,12 @@ const documentTools = [
   createFolderTool,
   getCurrentDateTimeTool,
 ]
+
+export function createDocumentAgentForProvider(provider: ModelProvider) {
+  const modelId = resolveModelId()
+  const llm = createChatModel(provider, modelId)
+  return createReactAgent({ llm, tools: documentTools })
+}
 
 const planningTools = [
   createPlanTool,
@@ -308,6 +333,7 @@ const tools = [
   getCurrentDateTimeTool,
   writeWorkspaceFileTool,
   executeScriptTool,
+  codeEditOpenFileTool,
   gmailGetRecentTool,
   gmailSearchTool,
   gmailGetMessageTool,
@@ -397,7 +423,7 @@ async function agentNode(state: AgentState): Promise<AgentState> {
               }
               return fileInfo
             }).join('\n') +
-            "\n\nIMPORTANT: When using docx_ai, sheet_ai, pptx_ai, or tldraw_ai tools, you MUST include the actual file name in the documentName/sheetName/presentationName/canvasName parameter. For example, if the user has attached 'Report.docx', use documentName: 'Report.docx' in your tool call. For presentations, use presentationName with the .pptx file name." +
+            "\n\nIMPORTANT: docx_ai applies only to .docx attachments; never use it for source code or generic files. When using docx_ai, sheet_ai, pptx_ai, or tldraw_ai tools, you MUST include the actual file name in the documentName/sheetName/presentationName/canvasName parameter. For example, if the user has attached 'Report.docx', use documentName: 'Report.docx' in your tool call. For presentations, use presentationName with the .pptx file name." +
             "\n\nFor IMAGE files: When adding images to presentations using pptx_ai, use the driveFileId or s3FileId shown in brackets above. For example, if you see an image with [driveFileId: \"abc123\"], use { type: 'addImage', element: { x: 10, y: 10, width: 40, height: 30, driveFileId: \"abc123\" } }. For S3 images, include both s3FileId and s3FileName: { type: 'addImage', element: { x: 10, y: 10, width: 40, height: 30, s3FileId: \"xyz789\", s3FileName: \"photo.jpg\" } }. For web images (http/https URLs), use imageUrl."
         }
       }

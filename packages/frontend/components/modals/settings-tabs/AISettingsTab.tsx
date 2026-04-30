@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Brain, Mail, Sparkles, Trash2 } from 'lucide-react'
 import { Switch } from '../../common/ui/switch'
 import { Button } from '../../common/ui/button'
@@ -6,7 +6,11 @@ import { Typography } from '@/components/common/ui/typography'
 import { Label } from '@/components/common/ui/label'
 import { Separator } from '@/components/common/ui/separator'
 import { useToast } from '../../common/ui/use-toast'
-import { AVAILABLE_MODELS, DEFAULT_VISIBLE_MODELS } from '../../RightPanel/composer/handlers/getModelDisplayName'
+import { getAvailableModels, DEFAULT_VISIBLE_MODELS } from '../../RightPanel/composer/handlers/getModelDisplayName'
+import { fetchAnthropicModelsCatalog } from '../../RightPanel/composer/handlers/fetchAnthropicModelsCatalog'
+import { fetchOpenAIModelsCatalog } from '../../RightPanel/composer/handlers/fetchOpenAIModelsCatalog'
+import { fetchGoogleModelsCatalog } from '../../RightPanel/composer/handlers/fetchGoogleModelsCatalog'
+import { getModelsCatalogRevision } from '../../RightPanel/composer/handlers/getModelDisplayName'
 import { deleteAllConversations } from './handlers/aiSettingsHandlers'
 
 interface ToolPreferences {
@@ -25,7 +29,23 @@ interface ToolPreferences {
 
 export function AISettingsTab() {
   const { toast } = useToast()
+  const [modelsCatalogRevision, setModelsCatalogRevision] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  useEffect(() => {
+    Promise.allSettled([
+      fetchOpenAIModelsCatalog(),
+      fetchAnthropicModelsCatalog(),
+      fetchGoogleModelsCatalog(),
+    ]).then(() => {
+      setModelsCatalogRevision(getModelsCatalogRevision())
+    })
+  }, [])
+
+  const availableModels = useMemo(
+    () => getAvailableModels(),
+    [modelsCatalogRevision],
+  )
   const [toolPreferences, setToolPreferences] = useState<ToolPreferences>(() => {
     try {
       const saved = localStorage.getItem('toolPreferences')
@@ -174,7 +194,7 @@ export function AISettingsTab() {
               OpenAI Models
             </Typography>
             <div className="space-y-2">
-              {AVAILABLE_MODELS.filter(m => m.provider === "openai").map(model => (
+              {availableModels.filter(m => m.provider === "openai").map(model => (
                 <div key={model.id} className="flex items-center justify-between py-1">
                   <div className="flex-1">
                     <Label htmlFor={`model-${model.id}`}>
@@ -200,7 +220,7 @@ export function AISettingsTab() {
               Anthropic Models
             </Typography>
             <div className="space-y-2">
-              {AVAILABLE_MODELS.filter(m => m.provider === "anthropic").map(model => (
+              {availableModels.filter(m => m.provider === "anthropic").map(model => (
                 <div key={model.id} className="flex items-center justify-between py-1">
                   <div className="flex-1">
                     <Label htmlFor={`model-${model.id}`}>
@@ -226,7 +246,7 @@ export function AISettingsTab() {
               Google Models
             </Typography>
             <div className="space-y-2">
-              {AVAILABLE_MODELS.filter(m => m.provider === "google").map(model => (
+              {availableModels.filter(m => m.provider === "google").map(model => (
                 <div key={model.id} className="flex items-center justify-between py-1">
                   <div className="flex-1">
                     <Label htmlFor={`model-${model.id}`}>

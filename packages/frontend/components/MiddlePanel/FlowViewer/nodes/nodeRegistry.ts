@@ -155,6 +155,22 @@ export const NODE_REGISTRY: NodeDefinition[] = [
     hasInput: true,
     hasOutput: true,
   },
+  {
+    type: 'python-code',
+    label: 'Python Code',
+    category: 'development',
+    iconName: 'Code2',
+    description: 'Run inline Python or execute a Python file path',
+    defaultData: {
+      executionMode: 'inline',
+      script: 'import json\n\nprint(json.dumps({"message": "hello from python"}))',
+      filePath: '',
+      input: '',
+      timeoutSeconds: 30,
+    },
+    hasInput: true,
+    hasOutput: true,
+  },
   // Utility
   {
     type: 'format-text',

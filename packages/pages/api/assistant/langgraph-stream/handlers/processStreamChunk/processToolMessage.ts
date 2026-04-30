@@ -11,6 +11,7 @@ const TOOL_COMPLETION_MESSAGES: Record<string, string> = {
   store_memory: "Memory stored successfully",
   search_memory: "Memory search completed",
   create_file: "File created successfully",
+  code_edit_open_file: "Code edit proposal ready",
   spawn_subagents: "Subagents completed",
   write_todos: "Task list updated"
 }

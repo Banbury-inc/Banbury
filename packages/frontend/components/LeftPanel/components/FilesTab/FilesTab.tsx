@@ -70,6 +70,7 @@ export function FilesTab({
     handleCreateDrawio,
     handleCreateTldraw,
     handleCreatePowerpoint,
+    handleCreateCodeFile,
   } = useWorkspaceHandlers({
     activePanelId,
     panelLayout,
@@ -229,6 +230,7 @@ export function FilesTab({
             onCreateDrawio={handleCreateDrawio}
             onCreateTldraw={handleCreateTldraw}
             onCreatePowerpoint={handleCreatePowerpoint}
+            onCreateCodeFile={handleCreateCodeFile}
             fileInputRef={fileInputRef}
             folderInputRef={folderInputRef}
             activeFilters={activeFilters}

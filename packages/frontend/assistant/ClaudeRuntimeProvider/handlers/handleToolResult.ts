@@ -1,3 +1,5 @@
+import type { CodeEditToolResultEnvelope } from "../types/codeEdit"
+
 interface HandleToolResultParams {
   evt: any
   contentParts: any[]
@@ -38,6 +40,20 @@ export function handleToolResult({ evt, contentParts }: HandleToolResultParams):
       }
       const detail = { result: parsed }
       window.dispatchEvent(new CustomEvent('assistant-file-created', { detail }))
+    } else if (toolName === "code_edit_open_file") {
+      const raw = (evt as any).part?.result
+      let parsed: CodeEditToolResultEnvelope | null = null
+      if (typeof raw === "string") {
+        try {
+          parsed = JSON.parse(raw) as CodeEditToolResultEnvelope
+        } catch {}
+      } else if (raw && typeof raw === "object") {
+        parsed = raw as CodeEditToolResultEnvelope
+      }
+
+      if (parsed?.success && parsed.proposal) {
+        window.dispatchEvent(new CustomEvent("assistant-code-edit-proposed", { detail: parsed.proposal }))
+      }
     } else if (toolName === 'pptx_create_presentation') {
       // Handle PowerPoint presentation creation - dispatch workspace-reopen-file event
       const raw = (evt as any).part?.result

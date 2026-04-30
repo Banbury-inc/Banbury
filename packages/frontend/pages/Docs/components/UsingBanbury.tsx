@@ -1,4 +1,3 @@
-import { Box } from '@mui/material';
 import DocPageLayout from './DocPageLayout';
 import { Typography } from '../../../components/common/ui/typography';
 import {
@@ -13,22 +12,11 @@ interface StepIndicatorProps {
 
 function StepIndicator({ stepNumber }: StepIndicatorProps) {
   return (
-    <Box sx={{
-      width: '28px',
-      height: '28px',
-      minWidth: '28px',
-      borderRadius: '50%',
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-      border: '2px solid rgba(255, 255, 255, 0.2)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      mr: 2,
-    }}>
+    <div className="mr-2 flex size-7 shrink-0 items-center justify-center rounded-full border-2 border-border bg-muted/50">
       <Typography variant="small" className="font-semibold">
         {stepNumber}
       </Typography>
-    </Box>
+    </div>
   );
 }
 
@@ -38,48 +26,33 @@ interface PromptBoxProps {
 
 function PromptBox({ text }: PromptBoxProps) {
   return (
-    <Box sx={{ mb: 3, maxWidth: '400px' }}>
-      <Box sx={{
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
-        border: '1px solid rgba(255, 255, 255, 0.15)',
-        borderRadius: '10px',
-        overflow: 'hidden',
-      }}>
+    <div className="mb-3 max-w-[400px]">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         {/* Header bar */}
-        <Box sx={{
-          backgroundColor: 'rgba(255, 255, 255, 0.05)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          px: 2,
-          py: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}>
-          <Typography variant="xs" className="text-zinc-400 font-medium uppercase tracking-wider">
+        <div className="flex items-center justify-between border-b border-border bg-muted/50 px-2 py-1">
+          <Typography
+            variant="xs"
+            className="font-medium uppercase tracking-wider text-muted-foreground"
+          >
             Example Prompt
           </Typography>
-          <Box sx={{ display: 'flex', gap: 0.75 }}>
-            <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'rgba(255, 99, 99, 0.6)' }} />
-            <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'rgba(255, 199, 99, 0.6)' }} />
-            <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'rgba(99, 255, 99, 0.6)' }} />
-          </Box>
-        </Box>
+          <div className="flex gap-1.5" aria-hidden>
+            <span className="size-2 rounded-full bg-destructive/60" />
+            <span className="size-2 rounded-full bg-chart-4/60" />
+            <span className="size-2 rounded-full bg-chart-2/60" />
+          </div>
+        </div>
         {/* Content */}
-        <Box sx={{ p: 2 }}>
+        <div className="p-2">
           <Typography
             variant="p"
-            className="font-mono"
-            sx={{
-              wordBreak: 'break-word',
-              color: 'rgba(255, 255, 255, 0.9)',
-              lineHeight: 1.6,
-            }}
+            className="break-words font-mono leading-relaxed text-foreground/90 [&:not(:first-child)]:mt-0"
           >
             {text}
           </Typography>
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -99,104 +72,88 @@ export default function UsingBanburyTab() {
       </Typography>
 
       {/* Step 1 */}
-      <Box sx={{ 
-        mb: 4,
-        pl: { xs: 0, md: 2 },
-        borderLeft: { xs: 'none', md: '2px solid rgba(255, 255, 255, 0.1)' },
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+      <div className="mb-4 border-border pl-0 md:border-l-2 md:pl-2">
+        <div className="mb-2 flex items-center">
           <StepIndicator stepNumber={1} />
           <Typography variant="h4" id="web-research">
             Web Research
           </Typography>
-        </Box>
+        </div>
         
-        <Box sx={{ pl: { xs: 0, md: '44px' } }}>
+        <div className="pl-0 md:pl-11">
           <Typography variant="p" className="mb-3">
             In the Chat window, type the following prompt and press Enter.
           </Typography>
           
           <PromptBox text="Search the web for latest NFL news." />
           
-          <Box sx={{ mb: 3 }}>
+          <div className="mb-3">
             <MockComposerBasic />
-          </Box>
-        </Box>
-      </Box>
+          </div>
+        </div>
+      </div>
 
       {/* Step 2 */}
-      <Box sx={{ 
-        mb: 4,
-        pl: { xs: 0, md: 2 },
-        borderLeft: { xs: 'none', md: '2px solid rgba(255, 255, 255, 0.1)' },
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+      <div className="mb-4 border-border pl-0 md:border-l-2 md:pl-2">
+        <div className="mb-2 flex items-center">
           <StepIndicator stepNumber={2} />
           <Typography variant="h4" id="draft-report">
             Draft a report
           </Typography>
-        </Box>
+        </div>
         
-        <Box sx={{ pl: { xs: 0, md: '44px' } }}>
+        <div className="pl-0 md:pl-11">
           <Typography variant="p" className="mb-3">
             Type the following prompt and press Enter.
           </Typography>
           
           <PromptBox text="Create a new document with a summary of your results." />
           
-          <Box sx={{ mb: 3 }}>
+          <div className="mb-3">
             <MockComposerBasic />
-          </Box>
-        </Box>
-      </Box>
+          </div>
+        </div>
+      </div>
 
       {/* Step 3 */}
-      <Box sx={{ 
-        mb: 4,
-        pl: { xs: 0, md: 2 },
-        borderLeft: { xs: 'none', md: '2px solid rgba(255, 255, 255, 0.1)' },
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+      <div className="mb-4 border-border pl-0 md:border-l-2 md:pl-2">
+        <div className="mb-2 flex items-center">
           <StepIndicator stepNumber={3} />
           <Typography variant="h4" id="attach-files">
             Attach Files
           </Typography>
-        </Box>
+        </div>
         
-        <Box sx={{ pl: { xs: 0, md: '44px' } }}>
+        <div className="pl-0 md:pl-11">
           <Typography variant="p" className="mb-3">
             You can attach files to your prompts by clicking the attachment icon in the composer or simply opening a file in the left panel.
           </Typography>
           
-          <Box sx={{ mb: 3 }}>
+          <div className="mb-3">
             <MockComposerWithFile />
-          </Box>
-        </Box>
-      </Box>
+          </div>
+        </div>
+      </div>
 
       {/* Step 4 */}
-      <Box sx={{ 
-        mb: 4,
-        pl: { xs: 0, md: 2 },
-        borderLeft: { xs: 'none', md: '2px solid rgba(255, 255, 255, 0.1)' },
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+      <div className="mb-4 border-border pl-0 md:border-l-2 md:pl-2">
+        <div className="mb-2 flex items-center">
           <StepIndicator stepNumber={4} />
           <Typography variant="h4" id="toggle-tools">
             Toggle Tools
           </Typography>
-        </Box>
+        </div>
         
-        <Box sx={{ pl: { xs: 0, md: '44px' } }}>
+        <div className="pl-0 md:pl-11">
           <Typography variant="p" className="mb-3">
             Enable or disable specific tools in the composer to customize Banbury's capabilities for your task.
           </Typography>
           
-          <Box sx={{ mb: 3 }}>
+          <div className="mb-3">
             <MockComposerWithToolsOpen />
-          </Box>
-        </Box>
-      </Box>
+          </div>
+        </div>
+      </div>
     </DocPageLayout>
   );
 }

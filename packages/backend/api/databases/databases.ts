@@ -1,4 +1,19 @@
+import axios from 'axios'
 import { ApiService } from '../apiService'
+
+function extractErrorMessage(error: unknown, fallback: string): string {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data
+    if (data && typeof data === 'object' && 'error' in data && typeof (data as { error: string }).error === 'string')
+      return (data as { error: string }).error
+    if (data && typeof data === 'object' && 'message' in data && typeof (data as { message: string }).message === 'string')
+      return (data as { message: string }).message
+    if (data && typeof data === 'string') return data
+    if (error.message) return error.message
+  }
+  if (error instanceof Error) return error.message
+  return fallback
+}
 
 export type DatabaseProvider = 'postgres' | 'mysql' | 'mongodb'
 
@@ -90,21 +105,27 @@ export default class Databases {
   constructor(_apiService: ApiService) {}
 
   static async testConnection(connection: DatabaseConnectionPayload): Promise<{ success: boolean; error?: string }> {
-    const response = await ApiService.post<ConnectionTestResponse>('/databases/connections/test/', {
-      connection,
-    })
-
-    if (!response.success) return { success: false, error: response.error || 'Connection failed' }
-    return { success: true }
+    try {
+      const response = await ApiService.post<ConnectionTestResponse>('/databases/connections/test/', {
+        connection,
+      })
+      if (!response.success) return { success: false, error: response.error || 'Connection failed' }
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: extractErrorMessage(error, 'Connection test failed') }
+    }
   }
 
   static async loadTree(connection: DatabaseConnectionPayload): Promise<{ tree: DatabaseTreeNode[]; error?: string }> {
-    const response = await ApiService.post<TreeResponse>('/databases/tree/', {
-      connection,
-    })
-
-    if (!response.success || !response.tree) return { tree: [], error: response.error || 'Unable to load tree' }
-    return { tree: response.tree }
+    try {
+      const response = await ApiService.post<TreeResponse>('/databases/tree/', {
+        connection,
+      })
+      if (!response.success || !response.tree) return { tree: [], error: response.error || 'Unable to load tree' }
+      return { tree: response.tree }
+    } catch (error) {
+      return { tree: [], error: extractErrorMessage(error, 'Failed to load database tree') }
+    }
   }
 
   static async loadTableData(params: {

@@ -16,10 +16,7 @@ export async function handleRefreshDatabaseTree({
   toast,
 }: HandleRefreshDatabaseTreeParams): Promise<void> {
   setIsRefreshing(true)
-  const treeResult = await handleLoadTree(activeConnection).catch(() => ({
-    tree: [],
-    error: 'Failed to refresh database tree',
-  }))
+  const treeResult = await handleLoadTree(activeConnection)
 
   if (treeResult.error) {
     toast({

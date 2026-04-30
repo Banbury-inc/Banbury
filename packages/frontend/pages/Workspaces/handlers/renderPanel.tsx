@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import OlympusTabs, { Tab as OlympusTab } from '../../../components/common/Tabs/Tabs';
 import { DocumentViewer } from '../../../components/MiddlePanel/DocumentViewer/DocumentViewer';
 import { EmailComposer } from '../../../components/MiddlePanel/EmailViewer/EmailComposer';
@@ -15,7 +16,6 @@ import BrowserViewer from '../../../components/MiddlePanel/BrowserViewer/Browser
 import NotebookViewer from '../../../components/MiddlePanel/NotebookViewer/NotebookViewer';
 import NotebookLabViewer from '../../../components/MiddlePanel/NotebookViewer/NotebookLabViewer';
 import { CONFIG } from '../../../config/config';
-import { PDFViewer } from '../../../components/MiddlePanel/PDFViewer/PDFViewer';
 import { isNotebookFile, isDriveImageFile, isDrivePdfFile, isDriveDocumentFile, isDriveSpreadsheetFile, isDriveVideoFile, isDriveCodeFile, isDrivePresentationFile, isPlanFile } from './fileTypeUtils';
 import { PlanViewer } from '../../../components/MiddlePanel/PlanViewer/PlanViewer';
 import DrawioViewer from '../../../components/MiddlePanel/CanvasViewer/DrawioViewer';
@@ -35,6 +35,19 @@ import { MeetingJoinComposer } from '../../../components/MiddlePanel/MeetingView
 import { AdminViewer } from '../../../components/MiddlePanel/AdminViewer/AdminViewer';
 import { DatabaseViewer } from '../../../components/MiddlePanel/DatabaseViewer/DatabaseViewer';
 import { FlowViewer } from '../../../components/MiddlePanel/FlowViewer/FlowViewer';
+import TerminalViewer from '../../../components/MiddlePanel/TerminalViewer/TerminalViewer';
+
+const PDFViewer = dynamic(
+  () => import('../../../components/MiddlePanel/PDFViewer/PDFViewer').then((module) => module.PDFViewer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    ),
+  }
+)
 
 interface RenderPanelProps {
   panel: Panel;
@@ -146,6 +159,7 @@ export const renderPanel = ({
                 else if (t.type === 'task') label = t.title;
                 else if (t.type === 'meeting') label = t.title;
                 else if (t.type === 'admin') label = t.title;
+                else if (t.type === 'terminal') label = t.title;
                 else if (t.type === 'database-table') label = t.title;
                 else if (t.type === 'flow') label = t.title;
                 return { id: t.id, label };
@@ -593,6 +607,10 @@ export const renderPanel = ({
 
                 if (tab.type === 'database-table') {
                   return <DatabaseViewer tab={tab} />
+                }
+
+                if (tab.type === 'terminal') {
+                  return <TerminalViewer cwd={tab.cwd} />
                 }
 
                 if (tab.type === 'flow') {
