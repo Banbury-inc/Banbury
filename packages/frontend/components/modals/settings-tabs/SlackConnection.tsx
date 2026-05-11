@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react'
-import { MessageSquare } from 'lucide-react'
 import { Button } from '../../common/ui/button'
 import { useToast } from '../../common/ui/use-toast'
 import { Typography } from '../../common/ui/typography'
 import { CONFIG } from '../../../config/config'
+import { SlackIcon } from '../../icons'
 import { 
   checkSlackConnectionStatus, 
   initiateSlackOAuth, 
   disconnectSlackAccount, 
   type SlackConnectionStatus 
 } from '../../handlers/slack-connection'
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback
+}
 
 export const SlackConnection = () => {
   const { toast } = useToast()
@@ -27,7 +31,7 @@ export const SlackConnection = () => {
       setLoading(true)
       const status = await checkSlackConnectionStatus()
       setConnectionStatus(status)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error checking Slack connection status:', error)
       setConnectionStatus({ connected: false })
     } finally {
@@ -42,11 +46,11 @@ export const SlackConnection = () => {
       const callbackUrl = `${backendUrl}/authentication/slack/oauth_callback/`
       const { authUrl } = await initiateSlackOAuth({ callbackUrl })
       window.location.href = authUrl
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error initiating Slack connection:', error)
       toast({
         title: 'Connection failed',
-        description: error.message || 'Failed to connect to Slack workspace',
+        description: getErrorMessage(error, 'Failed to connect to Slack workspace'),
         variant: 'destructive'
       })
     } finally {
@@ -63,11 +67,11 @@ export const SlackConnection = () => {
         title: 'Disconnected',
         description: 'Successfully disconnected from Slack workspace'
       })
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error disconnecting Slack account:', error)
       toast({
         title: 'Disconnection failed',
-        description: error.message || 'Failed to disconnect from Slack workspace',
+        description: getErrorMessage(error, 'Failed to disconnect from Slack workspace'),
         variant: 'destructive'
       })
     } finally {
@@ -78,20 +82,20 @@ export const SlackConnection = () => {
   if (loading) {
     return (
       <div className="flex items-center">
-        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-zinc-400 mr-2"></div>
-        <Typography variant="small" className="text-zinc-400">Checking Slack connection...</Typography>
+        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-muted-foreground"></div>
+        <Typography variant="small" className="text-muted-foreground">Checking Slack connection...</Typography>
       </div>
     )
   }
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-lg ${connectionStatus.connected ? 'bg-green-900/20' : 'bg-zinc-800'}`}>
-          <MessageSquare className={`h-5 w-5 ${connectionStatus.connected ? 'text-green-400' : 'text-zinc-400'}`} />
+        <div className={`rounded-lg p-2 ${connectionStatus.connected ? 'bg-primary/10' : 'bg-muted'}`}>
+          <SlackIcon size={20} />
         </div>
         <div>
-          <Typography variant="small" className="text-white font-medium">Slack</Typography>
+          <Typography variant="small" className="font-medium text-foreground">Slack</Typography>
         </div>
       </div>
 
@@ -101,7 +105,6 @@ export const SlackConnection = () => {
           variant="outline"
           size="sm"
           disabled={disconnecting}
-          className="border-zinc-600 text-zinc-300 hover:bg-zinc-800"
         >
           {disconnecting ? 'Disconnecting…' : 'Disconnect'}
         </Button>
@@ -113,12 +116,12 @@ export const SlackConnection = () => {
         >
           {connecting ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-primary-foreground"></div>
               Connecting…
             </>
           ) : (
             <>
-              <MessageSquare className="h-4 w-4 mr-2" />
+              <SlackIcon size={16} className="mr-2" />
               Connect
             </>
           )}

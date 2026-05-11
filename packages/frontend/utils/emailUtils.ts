@@ -349,6 +349,101 @@ export function cleanHtmlContent(html: string): string {
     .replace(/â€¦/g, '…')
 }
 
+const urlPattern = /\bhttps?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)]/gi
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function applySafeExternalLinkAttributes(anchor: HTMLAnchorElement): void {
+  anchor.target = '_blank'
+  anchor.rel = 'noopener noreferrer'
+}
+
+function createLinkifiedFragment(text: string): DocumentFragment {
+  const fragment = document.createDocumentFragment()
+  let lastIndex = 0
+  urlPattern.lastIndex = 0
+  let match = urlPattern.exec(text)
+
+  while (match) {
+    const url = match[0]
+    if (match.index > lastIndex) {
+      fragment.append(document.createTextNode(text.slice(lastIndex, match.index)))
+    }
+
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.textContent = url
+    applySafeExternalLinkAttributes(anchor)
+    fragment.append(anchor)
+
+    lastIndex = match.index + url.length
+    match = urlPattern.exec(text)
+  }
+
+  if (lastIndex < text.length) {
+    fragment.append(document.createTextNode(text.slice(lastIndex)))
+  }
+
+  urlPattern.lastIndex = 0
+  return fragment
+}
+
+function serializeLinkifiedText(text: string): string {
+  const template = document.createElement('template')
+  template.content.append(createLinkifiedFragment(text))
+  return template.innerHTML
+}
+
+/**
+ * Detect plain URLs in sanitized email HTML without touching existing links.
+ */
+export function linkifyHtmlContent(html: string): string {
+  if (!html) return html
+  if (typeof document === 'undefined') return html
+
+  const template = document.createElement('template')
+  template.innerHTML = html
+
+  template.content.querySelectorAll('a[href]').forEach((anchor) => {
+    applySafeExternalLinkAttributes(anchor as HTMLAnchorElement)
+  })
+
+  const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_TEXT)
+  const textNodes: Text[] = []
+  let node = walker.nextNode()
+
+  while (node) {
+    if (node.textContent && urlPattern.test(node.textContent)) textNodes.push(node as Text)
+    urlPattern.lastIndex = 0
+    node = walker.nextNode()
+  }
+
+  textNodes.forEach((textNode) => {
+    if (textNode.parentElement?.closest('a')) return
+
+    textNode.replaceWith(createLinkifiedFragment(textNode.textContent || ''))
+  })
+
+  return template.innerHTML
+}
+
+/**
+ * Detect plain URLs in text-only email content and render safe external links.
+ */
+export function linkifyPlainTextContent(text: string): string {
+  if (!text) return text
+  if (typeof document === 'undefined') return escapeHtml(text)
+
+  return serializeLinkifiedText(text)
+}
+
 /**
  * Check if email has attachments
  */

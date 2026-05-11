@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CheckCircle, User, Edit2, Save, X } from 'lucide-react'
 import { Typography } from '../../common/ui/typography'
 import { Separator } from '../../common/ui/separator'
@@ -27,6 +27,16 @@ export function ProfileTab({ scopeActivated, userInfo, onUpdateProfile }: Profil
     email: userInfo?.email || ''
   })
 
+  useEffect(() => {
+    if (!userInfo || isEditing) return
+
+    setFormData({
+      first_name: userInfo.first_name || '',
+      last_name: userInfo.last_name || '',
+      email: userInfo.email || ''
+    })
+  }, [isEditing, userInfo])
+
   async function handleSave() {
     setLoading(true)
     try {
@@ -45,7 +55,7 @@ export function ProfileTab({ scopeActivated, userInfo, onUpdateProfile }: Profil
           variant: "destructive",
         })
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "An unexpected error occurred",
@@ -68,10 +78,10 @@ export function ProfileTab({ scopeActivated, userInfo, onUpdateProfile }: Profil
   return (
     <div className="space-y-6">
       {scopeActivated && (
-        <div className="p-4 bg-green-900/20 border border-green-700 rounded-lg">
+        <div className="rounded-lg border border-primary/30 bg-primary/10 p-4">
           <div className="flex items-center">
-            <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
-            <Typography variant="p" className="text-green-400">
+            <CheckCircle className="h-5 w-5 text-primary mr-2" />
+            <Typography variant="p" className="text-foreground">
               Google integration features activated successfully!
             </Typography>
           </div>
@@ -81,7 +91,7 @@ export function ProfileTab({ scopeActivated, userInfo, onUpdateProfile }: Profil
       {userInfo && (
         <>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold flex items-center text-zinc-900 dark:text-white">
+            <h3 className="flex items-center font-semibold text-foreground">
               <User className="h-5 w-5 mr-2" />
               <Typography variant="h3">
                 Profile
@@ -102,16 +112,17 @@ export function ProfileTab({ scopeActivated, userInfo, onUpdateProfile }: Profil
 
           <div className="space-y-4">
             <div>
-              <Typography variant="small" className="text-zinc-600 dark:text-gray-400">Username</Typography>
-              <Typography variant="p" className="text-zinc-900 dark:text-white">{userInfo.username}</Typography>
+              <Typography variant="small" className="text-muted-foreground">Username</Typography>
+              <Typography variant="p" className="text-foreground">{userInfo.username}</Typography>
             </div>
             
             <Separator />
             
             <div>
-              <Typography variant="small" className="text-zinc-600 dark:text-gray-400">Email</Typography>
+              <Typography variant="small" className="text-muted-foreground">Email</Typography>
               {isEditing ? (
                 <Input
+                  aria-label="Email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -119,16 +130,17 @@ export function ProfileTab({ scopeActivated, userInfo, onUpdateProfile }: Profil
                   placeholder="Enter your email"
                 />
               ) : (
-                <Typography variant="p" className="text-zinc-900 dark:text-white">{userInfo.email || 'Not provided'}</Typography>
+                <Typography variant="p" className="text-foreground">{userInfo.email || 'Not provided'}</Typography>
               )}
             </div>
             
             <Separator />
             
             <div>
-              <Typography variant="small" className="text-zinc-600 dark:text-gray-400">First Name</Typography>
+              <Typography variant="small" className="text-muted-foreground">First Name</Typography>
               {isEditing ? (
                 <Input
+                  aria-label="First name"
                   type="text"
                   value={formData.first_name}
                   onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
@@ -136,16 +148,17 @@ export function ProfileTab({ scopeActivated, userInfo, onUpdateProfile }: Profil
                   placeholder="Enter your first name"
                 />
               ) : (
-                <Typography variant="p" className="text-zinc-900 dark:text-white">{userInfo.first_name || 'Not provided'}</Typography>
+                <Typography variant="p" className="text-foreground">{userInfo.first_name || 'Not provided'}</Typography>
               )}
             </div>
             
             <Separator />
             
             <div>
-              <Typography variant="small" className="text-zinc-600 dark:text-gray-400">Last Name</Typography>
+              <Typography variant="small" className="text-muted-foreground">Last Name</Typography>
               {isEditing ? (
                 <Input
+                  aria-label="Last name"
                   type="text"
                   value={formData.last_name}
                   onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
@@ -153,7 +166,7 @@ export function ProfileTab({ scopeActivated, userInfo, onUpdateProfile }: Profil
                   placeholder="Enter your last name"
                 />
               ) : (
-                <Typography variant="p" className="text-zinc-900 dark:text-white">{userInfo.last_name || 'Not provided'}</Typography>
+                <Typography variant="p" className="text-foreground">{userInfo.last_name || 'Not provided'}</Typography>
               )}
             </div>
 

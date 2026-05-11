@@ -4,10 +4,12 @@ import {
   parseKeyString,
   KeybindsState 
 } from '../../../components/modals/settings-tabs/handlers/keybindHandlers'
+import { OPEN_AI_PANEL_EVENT } from './handleOpenAiPanel'
 
 interface KeyboardShortcutCallbacks {
   onFileSearchOpen?: () => void
   onToggleFileSidebar?: () => void
+  onToggleAssistantPanel?: () => void
 }
 
 // Cache keybinds to avoid reading localStorage on every keypress
@@ -33,7 +35,7 @@ function matchesKeybind(event: KeyboardEvent, keybindKey: string): boolean {
 }
 
 export function createKeyboardShortcutHandler(callbacks: KeyboardShortcutCallbacks = {}) {
-  const { onFileSearchOpen, onToggleFileSidebar } = callbacks
+  const { onFileSearchOpen, onToggleFileSidebar, onToggleAssistantPanel } = callbacks
 
   return function handleKeyDown(event: KeyboardEvent) {
     // Guard against undefined event.key
@@ -52,6 +54,7 @@ export function createKeyboardShortcutHandler(callbacks: KeyboardShortcutCallbac
       // Prevent default to override browser behavior
       event.preventDefault()
       event.stopPropagation()
+      window.dispatchEvent(new CustomEvent(OPEN_AI_PANEL_EVENT))
       // Dispatch the create-new-ai-tab event to create a new tab
       window.dispatchEvent(new CustomEvent('create-new-ai-tab'))
       return
@@ -92,6 +95,15 @@ export function createKeyboardShortcutHandler(callbacks: KeyboardShortcutCallbac
       event.preventDefault()
       event.stopPropagation()
       onToggleFileSidebar?.()
+      return
+    }
+
+    // Check for toggle right sidebar shortcut (default: Ctrl+L)
+    const toggleAssistantPanelKey = getActiveKey(keybinds.toggleAssistantPanel)
+    if (matchesKeybind(event, toggleAssistantPanelKey)) {
+      event.preventDefault()
+      event.stopPropagation()
+      onToggleAssistantPanel?.()
       return
     }
   }

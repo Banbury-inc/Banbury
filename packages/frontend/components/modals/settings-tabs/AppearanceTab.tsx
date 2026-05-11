@@ -44,7 +44,7 @@ export function AppearanceTab({ isDarkMode, onThemeToggle }: AppearanceTabProps)
 
   return (
     <div className="space-y-6">
-      <Typography variant="h3" className="mb-4 flex items-center text-zinc-900 dark:text-white">
+      <Typography variant="h3" className="mb-4 flex items-center text-foreground">
         <Palette className="h-5 w-5 mr-2" />
         Theme Settings
       </Typography>
@@ -53,22 +53,21 @@ export function AppearanceTab({ isDarkMode, onThemeToggle }: AppearanceTabProps)
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <Label htmlFor="dark-mode-switch">
-            <Typography variant="p" className="text-zinc-900 dark:text-white">Dark Mode</Typography>
+            <Typography variant="p" className="text-foreground">Dark Mode</Typography>
           </Label>
           <Switch
             id="dark-mode-switch"
             checked={isDarkMode}
             onCheckedChange={onThemeToggle}
-            className="data-[state=checked]:bg-blue-600"
           />
         </div>
 
         <div className="flex items-center justify-between">
           <Label htmlFor="colored-file-icons-switch">
             <div className="flex flex-col">
-              <Typography variant="p" className="text-zinc-900 dark:text-white">Colored Icons</Typography>
-              <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 mt-1">
-                Show different colors for different file types. When off, all icons use the same color as navigation bar icons.
+              <Typography variant="p" className="text-foreground">Colored Icons</Typography>
+              <Typography variant="small" className="mt-1 text-muted-foreground">
+                Show distinct colors for different file types. When off, icons match the navigation color.
               </Typography>
             </div>
           </Label>
@@ -76,12 +75,11 @@ export function AppearanceTab({ isDarkMode, onThemeToggle }: AppearanceTabProps)
             id="colored-file-icons-switch"
             checked={coloredFileIcons}
             onCheckedChange={handleColoredFileIconsToggle}
-            className="data-[state=checked]:bg-blue-600"
           />
         </div>
       </div>
 
-      <Typography variant="h3" className="mb-4 mt-8 flex items-center text-zinc-900 dark:text-white">
+      <Typography variant="h3" className="mb-4 mt-8 flex items-center text-foreground">
         <Monitor className="h-5 w-5 mr-2" />
         Code Editor
       </Typography>
@@ -90,13 +88,13 @@ export function AppearanceTab({ isDarkMode, onThemeToggle }: AppearanceTabProps)
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <Label htmlFor="ide-theme-select">
-            <Typography variant="p" className="text-zinc-900 dark:text-white">Theme</Typography>
+            <Typography variant="p" className="text-foreground">Theme</Typography>
           </Label>
           <select
             id="ide-theme-select"
             value={ideSettings.theme}
             onChange={(e) => updateIDESetting('theme', e.target.value as IDEThemeId)}
-            className="px-3 py-1.5 rounded border border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             {IDE_THEME_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>
@@ -109,12 +107,12 @@ export function AppearanceTab({ isDarkMode, onThemeToggle }: AppearanceTabProps)
         <div className="flex items-center justify-between">
           <Label htmlFor="ide-font-size">
             <div className="flex flex-col">
-              <Typography variant="p" className="text-zinc-900 dark:text-white flex items-center gap-2">
+              <Typography variant="p" className="flex items-center gap-2 text-foreground">
                 <Type size={16} />
                 Font Size
               </Typography>
-              <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 mt-1">
-                Editor font size in pixels
+              <Typography variant="small" className="mt-1 text-muted-foreground">
+                Editor font size in pixels.
               </Typography>
             </div>
           </Label>
@@ -128,7 +126,7 @@ export function AppearanceTab({ isDarkMode, onThemeToggle }: AppearanceTabProps)
               onChange={(e) => updateIDESetting('fontSize', Number(e.target.value))}
               className="w-28"
             />
-            <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 w-8 text-right">
+            <Typography variant="small" className="w-8 text-right text-muted-foreground">
               {ideSettings.fontSize}px
             </Typography>
           </div>
@@ -136,37 +134,34 @@ export function AppearanceTab({ isDarkMode, onThemeToggle }: AppearanceTabProps)
 
         <div className="flex items-center justify-between">
           <Label htmlFor="ide-word-wrap-switch">
-            <Typography variant="p" className="text-zinc-900 dark:text-white">Word Wrap</Typography>
+            <Typography variant="p" className="text-foreground">Word Wrap</Typography>
           </Label>
           <Switch
             id="ide-word-wrap-switch"
             checked={ideSettings.wordWrap === 'on'}
             onCheckedChange={(checked) => updateIDESetting('wordWrap', checked ? 'on' : 'off')}
-            className="data-[state=checked]:bg-blue-600"
           />
         </div>
 
         <div className="flex items-center justify-between">
           <Label htmlFor="ide-line-numbers-switch">
-            <Typography variant="p" className="text-zinc-900 dark:text-white">Line Numbers</Typography>
+            <Typography variant="p" className="text-foreground">Line Numbers</Typography>
           </Label>
           <Switch
             id="ide-line-numbers-switch"
             checked={ideSettings.showLineNumbers}
             onCheckedChange={(checked) => updateIDESetting('showLineNumbers', checked)}
-            className="data-[state=checked]:bg-blue-600"
           />
         </div>
 
         <div className="flex items-center justify-between">
           <Label htmlFor="ide-minimap-switch">
-            <Typography variant="p" className="text-zinc-900 dark:text-white">Minimap</Typography>
+            <Typography variant="p" className="text-foreground">Minimap</Typography>
           </Label>
           <Switch
             id="ide-minimap-switch"
             checked={ideSettings.showMinimap}
             onCheckedChange={(checked) => updateIDESetting('showMinimap', checked)}
-            className="data-[state=checked]:bg-blue-600"
           />
         </div>
       </div>

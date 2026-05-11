@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 
 import { Button } from '../common/ui/button'
+import { cn } from '../../lib/utils'
 import {
   Dialog,
   DialogHeader,
@@ -43,12 +44,33 @@ import {
 } from './settings-tabs'
 import { handleUpdateProfile } from './handlers/settingsHandlers'
 
-// Initialize Stripe
 const stripePromise = loadStripe('pk_live_51PGNdQJ2FLdDk2RmRpHZE9kX2yHJ9rIiVr5t8JfmV5eB1LyazU2uei7Qe0GdkpTnsMOz69w6hPNsU3KDmbUxyGOx00WxE03DQP')
 
 interface SettingsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+}
+
+interface UserInfo {
+  username: string
+  email: string
+  first_name: string
+  last_name: string
+}
+
+interface PaymentStatus {
+  subscription: 'pro' | 'free'
+  payment_status: string
+  payment_succeeded: boolean
+  payment_succeeded_at?: string
+}
+
+interface PaymentVerificationResponse {
+  payment_succeeded: boolean
+}
+
+interface PaymentIntentResponse {
+  clientSecret?: string
 }
 
 function getUserInfo() {
@@ -67,7 +89,7 @@ async function verifyPaymentSuccess(paymentIntentId: string) {
   try {
     const response = await ApiService.post('/billing/verify-payment-intent/', {
       payment_intent_id: paymentIntentId
-    }) as any
+    }) as PaymentVerificationResponse
     
     if (response.payment_succeeded) {
       return response
@@ -82,7 +104,7 @@ async function verifyPaymentSuccess(paymentIntentId: string) {
 
 async function checkPaymentStatus() {
   try {
-    const response = await ApiService.get('/billing/check-payment-status/') as any
+    const response = await ApiService.get('/billing/check-payment-status/') as PaymentStatus
     return response
   } catch (error) {
     console.error('Error checking payment status:', error)
@@ -177,8 +199,8 @@ function CheckoutForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel
       />
       
       {error && (
-        <div className="p-3 bg-red-900/20 border border-red-700 rounded">
-          <Typography variant="small" className="text-red-400">
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3">
+          <Typography variant="small" className="text-destructive">
             {error}
           </Typography>
         </div>
@@ -209,14 +231,13 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const router = useRouter()
   const { toast } = useToast()
   const { theme, setTheme } = useTheme()
-  const [loading, setLoading] = useState(true)
-  const [userInfo, setUserInfo] = useState<any>(null)
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [scopeActivated, setScopeActivated] = useState(false)
   const [activeTab, setActiveTab] = useState('profile')
   const [subscriptionLoading, setSubscriptionLoading] = useState(false)
   const [showCheckout, setShowCheckout] = useState(false)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
-  const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null)
+  const [subscriptionStatus, setSubscriptionStatus] = useState<PaymentStatus | null>(null)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [cancelLoading, setCancelLoading] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(theme === 'dark')
@@ -325,7 +346,6 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
   async function loadUserInfo() {
     try {
-      setLoading(true)
       const username = localStorage.getItem('username')
       const email = localStorage.getItem('userEmail')
       setUserInfo({
@@ -338,20 +358,18 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       await loadSubscriptionStatus()
     } catch (error) {
       console.error('Error loading user info:', error)
-    } finally {
-      setLoading(false)
     }
   }
 
   async function updateProfile(data: { first_name: string; last_name: string; email: string }) {
     const result = await handleUpdateProfile(data, (updatedData) => {
       // Update local state with new data
-      setUserInfo(prev => ({
-        ...prev!,
+      setUserInfo(prev => prev ? ({
+        ...prev,
         first_name: data.first_name,
         last_name: data.last_name,
         email: data.email
-      }))
+      }) : null)
     })
     
     return result
@@ -381,7 +399,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
       const response = await ApiService.post('/billing/create-payment-intent/', {
         amount: 1000,
-      }) as any
+      }) as PaymentIntentResponse
 
       if (response.clientSecret) {
         setClientSecret(response.clientSecret)
@@ -447,31 +465,34 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogPortal>
-          <DialogOverlay className="bg-black/0 backdrop-blur-sm" />
-          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-4xl h-[80vh] translate-x-[-50%] translate-y-[-50%] border bg-card border-zinc-300 dark:border-zinc-700 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg p-0">
-          <div className="flex h-full">
-            {/* Sidebar */}
-            <div className="w-64 border-r border-zinc-300 dark:border-zinc-700 p-6 overflow-y-auto bg-card">
-              <DialogHeader className="mb-6">
-                <DialogTitle className="text-xl font-bold text-zinc-900 dark:text-white">
+          <DialogOverlay className="bg-background/60 backdrop-blur-sm" />
+          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 h-[92vh] w-[calc(100vw-1.5rem)] max-w-5xl translate-x-[-50%] translate-y-[-50%] overflow-hidden border border-border bg-card shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:h-[82vh] sm:rounded-lg">
+          <div className="flex h-full flex-col md:flex-row">
+            <div className="border-b border-border bg-card p-4 md:w-64 md:border-b-0 md:border-r md:p-6">
+              <DialogHeader className="mb-4 md:mb-6">
+                <DialogTitle className="text-xl font-bold text-foreground">
                   <Typography variant="h2">Settings</Typography>
                 </DialogTitle>
               </DialogHeader>
-              <nav className="space-y-2">
+              <nav className="flex gap-2 overflow-x-auto pb-1 md:block md:space-y-2 md:overflow-x-visible md:pb-0" aria-label="Settings sections">
                 {settingsTabs.map((tab) => {
                   const Icon = tab.icon
+                  const isActive = activeTab === tab.id
                   return (
                     <button
                       key={tab.id}
+                      type="button"
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-start gap-3 p-3 rounded-lg transition-colors text-left ${
-                        activeTab === tab.id
-                          ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white'
-                          : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-white'
-                      }`}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={cn(
+                        'flex min-w-fit items-center gap-3 rounded-lg p-3 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:w-full',
+                        isActive
+                          ? 'bg-muted text-foreground'
+                          : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
+                      )}
                     >
-                      <Icon className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
+                      <Icon className="h-5 w-5 flex-shrink-0" />
+                      <div className="min-w-0 flex-1 whitespace-nowrap">
                         <Typography variant="small">{tab.label}</Typography>
                       </div>
                     </button>
@@ -480,8 +501,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               </nav>
             </div>
 
-            {/* Main Content */}
-            <div className="flex-1 p-8 overflow-y-auto bg-card">
+            <div className="flex-1 overflow-y-auto bg-card p-5 sm:p-6 md:p-8">
               {activeTab === 'profile' && (
                 <ProfileTab 
                   scopeActivated={scopeActivated}
@@ -531,8 +551,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               )}
             </div>
           </div>
-          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-            <X className="h-4 w-4 text-zinc-900 dark:text-white" />
+          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-md p-1 text-muted-foreground opacity-80 transition-opacity hover:bg-muted hover:text-foreground hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+            <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         </DialogPrimitive.Content>
@@ -543,10 +563,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       {showCheckout && clientSecret && (
         <Dialog open={showCheckout} onOpenChange={() => setShowCheckout(false)}>
           <DialogPortal>
-            <DialogOverlay className="bg-black/30 backdrop-blur-sm" />
-            <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] border bg-card border-zinc-300 dark:border-zinc-700 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg p-6">
+            <DialogOverlay className="bg-background/60 backdrop-blur-sm" />
+            <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 w-[calc(100vw-1.5rem)] max-w-md translate-x-[-50%] translate-y-[-50%] border border-border bg-card p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg">
             <div className="mb-4">
-              <Typography variant="h3" className="text-zinc-900 dark:text-white">Subscribe to Pro</Typography>
+              <Typography variant="h3" className="text-foreground">Subscribe to Pro</Typography>
             </div>
             
             <Elements 
@@ -563,8 +583,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 onCancel={handleCheckoutCancel}
               />
             </Elements>
-            <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none">
-              <X className="h-4 w-4 text-zinc-900 dark:text-white" />
+            <DialogPrimitive.Close className="absolute right-4 top-4 rounded-md p-1 text-muted-foreground opacity-80 transition-opacity hover:bg-muted hover:text-foreground hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring">
+              <X className="h-4 w-4" />
               <span className="sr-only">Close</span>
             </DialogPrimitive.Close>
           </DialogPrimitive.Content>
@@ -576,56 +596,56 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       {showCancelModal && (
         <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
           <DialogPortal>
-            <DialogOverlay className="bg-black/30 backdrop-blur-sm" />
-            <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] border bg-card border-zinc-300 dark:border-zinc-700 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg p-6">
+            <DialogOverlay className="bg-background/60 backdrop-blur-sm" />
+            <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 w-[calc(100vw-1.5rem)] max-w-md translate-x-[-50%] translate-y-[-50%] border border-border bg-card p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg">
             <div className="mb-4">
-              <Typography variant="h3" className="flex items-center gap-3 text-zinc-900 dark:text-white">
-                <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+              <Typography variant="h3" className="flex items-center gap-3 text-foreground">
+                <XCircle className="h-6 w-6 text-destructive" />
                 Cancel Subscription
               </Typography>
             </div>
             
             <div className="space-y-4">
-              <Typography variant="p" className="text-zinc-700 dark:text-zinc-300">
+              <Typography variant="p" className="text-muted-foreground">
                 Are you sure you want to cancel your Pro subscription?
               </Typography>
-              <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-4">
-                <Typography variant="h4" className="text-zinc-900 dark:text-white mb-2">You will lose access to:</Typography>
+              <div className="rounded-lg border border-border bg-muted/50 p-4">
+                <Typography variant="h4" className="mb-2 text-foreground">You will lose access to:</Typography>
                 <ul className="space-y-1">
                   <li>
-                    <Typography variant="small" className="text-zinc-700 dark:text-zinc-400">• Unlimited storage</Typography>
+                    <Typography variant="small" className="text-muted-foreground">Unlimited storage</Typography>
                   </li>
                   <li>
-                    <Typography variant="small" className="text-zinc-700 dark:text-zinc-400">• Unlimited AI requests</Typography>
+                    <Typography variant="small" className="text-muted-foreground">Unlimited AI requests</Typography>
                   </li>
                   <li>
-                    <Typography variant="small" className="text-zinc-700 dark:text-zinc-400">• Priority support</Typography>
+                    <Typography variant="small" className="text-muted-foreground">Priority support</Typography>
                   </li>
                 </ul>
               </div>
-              <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">
+              <Typography variant="small" className="text-muted-foreground">
                 Your subscription will remain active until the end of your current billing period.
               </Typography>
             </div>
             
-            <div className="flex gap-3">
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row">
               <Button
                 onClick={handleCancelSubscription}
                 disabled={cancelLoading}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                variant="destructive"
+                className="flex-1"
               >
                 {cancelLoading ? 'Canceling...' : 'Yes, Cancel Subscription'}
               </Button>
               <Button
                 onClick={() => setShowCancelModal(false)}
                 variant="outline"
-                className="border-zinc-400 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
                 Keep Subscription
               </Button>
             </div>
-            <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none">
-              <X className="h-4 w-4 text-zinc-900 dark:text-white" />
+            <DialogPrimitive.Close className="absolute right-4 top-4 rounded-md p-1 text-muted-foreground opacity-80 transition-opacity hover:bg-muted hover:text-foreground hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring">
+              <X className="h-4 w-4" />
               <span className="sr-only">Close</span>
             </DialogPrimitive.Close>
           </DialogPrimitive.Content>

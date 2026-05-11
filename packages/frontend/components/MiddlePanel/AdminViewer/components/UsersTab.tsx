@@ -281,7 +281,7 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
             </DropdownMenu>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
           {/* Mobile Card View */}
           <div className="md:hidden space-y-3">
             {sortedUsers.map((user) => {

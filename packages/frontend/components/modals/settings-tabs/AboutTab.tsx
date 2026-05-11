@@ -22,7 +22,6 @@ export function AboutTab() {
       // Try to get version from electron if available
       if (window.desktopApp?.updater) {
         window.desktopApp.updater.getCurrentVersion().then((v) => {
-          console.log('v', v)
           setVersion(v)
         }).catch(() => {
           // Fallback to default if unavailable
@@ -49,7 +48,6 @@ export function AboutTab() {
     setIsChecking(true)
     try {
       const result = await checkForUpdates()
-      console.log('result', result)
       if (!result.success) {
         toast({
           title: "Error",
@@ -84,18 +82,18 @@ export function AboutTab() {
   return (
     <div className="space-y-6">
       <div className="flex items-center mb-4">
-        <Info className="h-5 w-5 mr-2 text-zinc-900 dark:text-white" />
-        <Typography variant="h3" className="text-zinc-900 dark:text-white">
+        <Info className="h-5 w-5 mr-2 text-foreground" />
+        <Typography variant="h3" className="text-foreground">
           About
         </Typography>
       </div>
 
       <div className="space-y-4">
         <div>
-          <Typography variant="small" className="text-zinc-600 dark:text-gray-400 mb-2">
+          <Typography variant="small" className="mb-2 text-muted-foreground">
             Version
           </Typography>
-          <Typography variant="p" className="text-zinc-900 dark:text-white">
+          <Typography variant="p" className="text-foreground">
             {version || 'Loading...'}
           </Typography>
         </div>

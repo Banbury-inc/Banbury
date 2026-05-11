@@ -23,7 +23,7 @@ export function MiddlePanel({
   const isMobile = useIsMobile()
 
   return (
-    <main className="h-full bg-background relative border-0">
+    <main className="h-full bg-card relative border-0">
       <style>{`
         /* Burger button styling */
         .burger-button {

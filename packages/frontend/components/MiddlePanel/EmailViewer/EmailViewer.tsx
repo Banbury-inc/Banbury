@@ -2,7 +2,7 @@ import { ArrowLeft, Reply, Trash2, Archive, Star, Paperclip, Download, Send, X, 
 import { useEffect, useMemo, useState, useCallback } from "react"
 import { Button } from "../../common/ui/button"
 import { Input } from "../../common/ui/old-input"
-import { extractEmailContent, hasAttachments, formatFileSize, cleanHtmlContent, arrayBufferToBase64 } from "../../../utils/emailUtils"
+import { extractEmailContent, hasAttachments, formatFileSize, cleanHtmlContent, linkifyHtmlContent, linkifyPlainTextContent, arrayBufferToBase64 } from "../../../utils/emailUtils"
 import { useToast } from "../../common/ui/use-toast"
 import { Typography } from "@/components/common/ui/typography"
 import { Popover, PopoverContent, PopoverTrigger } from "../../common/ui/popover"
@@ -13,6 +13,8 @@ import { loadAvailableLabels, toggleLabel, createAndApplyLabel, dispatchLabelRef
 import { EmailTiptapEditor } from "./EmailTiptapEditor"
 
 const MAX_ATTACHMENT_SIZE = 25 * 1024 * 1024 // 25MB
+const emailBodyContentClassName = "text-background leading-relaxed [&_a]:!text-blue-600 dark:[&_a]:!text-blue-400 [&_a]:!underline [&_a]:underline-offset-2 [&_a]:decoration-current [&_a:hover]:!text-blue-800 dark:[&_a:hover]:!text-blue-300"
+const htmlEmailBodyContentClassName = `${emailBodyContentClassName} prose prose-sm max-w-none prose-headings:text-background prose-p:text-background prose-strong:text-background prose-em:text-background prose-li:text-background prose-blockquote:text-background prose-td:text-background prose-th:text-background`
 
 type EmailProvider = 'gmail' | 'outlook'
 
@@ -774,7 +776,7 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
               </div>
             )}
             {!threadLoading && (threadMessages.length > 0 ? (
-              <div className="bg-background flex-1 flex flex-col">
+              <div className="bg-foreground text-background flex-1 flex flex-col">
                 {threadMessages.map((msg, index) => {
                   const content = extractEmailContent(msg?.payload)
                   const header = (n: string) => msg?.payload?.headers?.find((h: any) => h.name.toLowerCase() === n.toLowerCase())?.value || 'Unknown'
@@ -785,7 +787,7 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
                   const isLastMessage = index === threadMessages.length - 1
                   
                   return (
-                    <div key={msg.id} className={`border-b border-border ${isLastMessage ? 'border-b-2 flex-1 flex flex-col' : ''} ${index > 0 ? 'bg-muted/30' : 'bg-background'}`}>
+                    <div key={msg.id} className={`border-b border-border ${isLastMessage ? 'border-b-2 flex-1 flex flex-col' : ''} ${index > 0 ? 'bg-muted/30' : 'bg-foreground'}`}>
                       {/* Email Header */}
                       <div className="px-6 py-4 flex-shrink-0">
                         <div className="flex items-start gap-3">
@@ -798,11 +800,11 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-foreground">{senderName}</span>
-                                <span className="text-xs text-muted-foreground">to me</span>
+                                <span className="text-sm font-medium text-background">{senderName}</span>
+                                <span className="text-xs text-background/70">to me</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground">{formatDate(msg.internalDate)}</span>
+                                <span className="text-xs text-background/70">{formatDate(msg.internalDate)}</span>
                                 <div className="flex items-center gap-1">
                                   <Button
                                     variant="ghost"
@@ -849,11 +851,9 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
                       <div className={`px-6 pb-4 ${isLastMessage ? 'flex-1 flex flex-col min-h-0' : ''}`}>
                         <div className={`ml-13 ${isLastMessage ? 'flex-1 min-h-0' : ''}`}>
                           {content?.html ? (
-                            <div className="text-foreground leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: cleanHtmlContent(content.html) }} />
+                            <div className={htmlEmailBodyContentClassName} dangerouslySetInnerHTML={{ __html: linkifyHtmlContent(cleanHtmlContent(content.html)) }} />
                           ) : (
-                            <div className="text-foreground leading-relaxed whitespace-pre-wrap font-sans">
-                              {content?.text || msg?.snippet || 'No content available'}
-                            </div>
+                            <div className={`${emailBodyContentClassName} whitespace-pre-wrap`} dangerouslySetInnerHTML={{ __html: linkifyPlainTextContent(content?.text || msg?.snippet || 'No content available') }} />
                           )}
                         </div>
                       </div>
@@ -864,24 +864,24 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
                           <div className="ml-13">
                             <div className="border-t border-border pt-4">
                               <div className="flex items-center gap-2 mb-3">
-                                <Paperclip className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm font-medium text-foreground">Attachments</span>
-                                <span className="text-xs text-muted-foreground">({content.attachments.length})</span>
+                                <Paperclip className="h-4 w-4 text-background/70" />
+                                <span className="text-sm font-medium text-background">Attachments</span>
+                                <span className="text-xs text-background/70">({content.attachments.length})</span>
                               </div>
                               <div className="space-y-2">
                                 {content.attachments.map((attachment: any) => (
-                                  <div key={attachment.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border hover:bg-accent transition-colors">
+                                  <div key={attachment.id} className="flex items-center justify-between p-3 bg-background/10 rounded-lg border border-background/20 hover:bg-background/15 transition-colors">
                                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                                      <Paperclip className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                      <Paperclip className="h-4 w-4 text-background/70 flex-shrink-0" />
                                       <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-medium text-foreground truncate">{attachment.filename}</p>
-                                        <p className="text-xs text-muted-foreground">{attachment.mimeType} • {formatFileSize(attachment.size)}</p>
+                                        <p className="text-sm font-medium text-background truncate">{attachment.filename}</p>
+                                        <p className="text-xs text-background/70">{attachment.mimeType} • {formatFileSize(attachment.size)}</p>
                                       </div>
                                     </div>
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="text-muted-foreground hover:bg-accent hover:text-foreground p-1 h-8 w-8 flex-shrink-0 rounded-md transition-colors duration-200"
+                                      className="text-background/70 hover:bg-background/15 hover:text-background p-1 h-8 w-8 flex-shrink-0 rounded-md transition-colors duration-200"
                                       title="Download attachment"
                                       onClick={() => handleDownloadAttachment(attachment.id, attachment.filename, msg.id)}
                                     >

@@ -27,7 +27,7 @@ import { Panel, DragState, UserInfo } from '../types';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { Typography } from '../../../components/common/ui/typography';
 import { Kbd, KbdGroup } from '../../../components/common/ui/kbd';
-import BanburyLogo from '../../../assets/images/Logo.png';
+import BanburyLogo from '../../../assets/images/New_Logo.png';
 import { TaskViewer } from '../../../components/MiddlePanel/TaskViewer/TaskViewer';
 import { TaskComposer } from '../../../components/MiddlePanel/TaskViewer/TaskComposer';
 import { MeetingViewer } from '../../../components/MiddlePanel/MeetingViewer/MeetingViewer';
@@ -690,7 +690,7 @@ export const renderPanel = ({
                 </KbdGroup>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm" style={{ color: '#9ca3af' }}>Toggle sidebar:</span>
+                <span className="text-sm" style={{ color: '#9ca3af' }}>Toggle left sidebar:</span>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
                   <span style={{ color: '#9ca3af' }}>+</span>
@@ -701,6 +701,14 @@ export const renderPanel = ({
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
                   <span style={{ color: '#9ca3af' }}>+</span>
                   <Kbd>⇧</Kbd>
+                  <span style={{ color: '#9ca3af' }}>+</span>
+                  <Kbd>L</Kbd>
+                </KbdGroup>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm" style={{ color: '#9ca3af' }}>Toggle right sidebar:</span>
+                <KbdGroup>
+                  <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
                   <span style={{ color: '#9ca3af' }}>+</span>
                   <Kbd>L</Kbd>
                 </KbdGroup>

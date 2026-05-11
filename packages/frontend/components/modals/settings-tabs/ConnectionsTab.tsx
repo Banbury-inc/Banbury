@@ -6,36 +6,26 @@ import { OutlookConnection } from './OutlookConnection'
 import { OneDriveConnection } from './OneDriveConnection'
 import { ScopeManager } from './ScopeManager'
 import { Typography } from '../../common/ui/typography'
+import { Separator } from '../../common/ui/separator'
 
 export function ConnectionsTab() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="space-y-4">
-        <Typography variant="h3" className="mb-4 flex items-center text-zinc-900 dark:text-white">
+        <Typography variant="h3" className="mb-4 flex items-center text-foreground">
           <Link className="h-5 w-5 mr-2" />
-         Connections 
+          Connections
         </Typography>
         <ScopeManager 
           onFeatureActivated={() => {}}
         />
       </div>
-      <div className="space-y-4">
+      <Separator />
+      <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
         <XApiConnection />
-      </div>
-
-      <div className="space-y-4">
         <SlackConnection />
-      </div>
-
-      <div className="space-y-4">
         <GitHubConnection />
-      </div>
-
-      <div className="space-y-4">
         <OutlookConnection />
-      </div>
-
-      <div className="space-y-4">
         <OneDriveConnection />
       </div>
     </div>
