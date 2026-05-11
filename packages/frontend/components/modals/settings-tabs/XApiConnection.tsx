@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Twitter } from 'lucide-react'
 import { Button } from '../../common/ui/button'
 import { useToast } from '../../common/ui/use-toast'
 import { Typography } from '../../common/ui/typography'
 import { CONFIG } from '../../../config/config'
+import { TwitterIcon } from '../../icons'
 import { 
   checkXConnectionStatus, 
   initiateXOAuth, 
@@ -88,7 +88,7 @@ export const XApiConnection = () => {
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
         <div className={`p-2 rounded-lg ${connectionStatus.connected ? 'bg-green-900/20' : 'bg-zinc-800'}`}>
-          <Twitter className={`h-5 w-5 ${connectionStatus.connected ? 'text-green-400' : 'text-zinc-400'}`} />
+          <TwitterIcon size={20} />
         </div>
         <div>
           <Typography variant="small" className="text-white font-medium">X (Twitter)</Typography>
@@ -118,7 +118,7 @@ export const XApiConnection = () => {
             </>
           ) : (
             <>
-              <Twitter className="h-4 w-4 mr-2" />
+              <TwitterIcon size={16} className="mr-2" />
               Connect
             </>
           )}
