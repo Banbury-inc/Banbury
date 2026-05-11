@@ -1,18 +1,29 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Maximize2, Minimize2, Download, RefreshCw, Save } from 'lucide-react';
-import { Tldraw, Editor, exportToBlob, TLShapeId, loadSnapshot, getSnapshot } from 'tldraw';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { Maximize2, Minimize2, RefreshCw, Save, MousePointer2, Hand, Pencil, Eraser, ArrowUpRight, Type, StickyNote, Image, Square, Menu, Plus, Undo, Redo } from 'lucide-react';
+import { Tldraw, Editor, loadSnapshot, TLPage, TLPageId } from 'tldraw';
 
 // Import Tldraw CSS
 import 'tldraw/tldraw.css';
 
 import { Button } from '../../common/ui/button';
-import { Card, CardContent, CardTitle } from '../../common/ui/card';
+import { Card, CardContent } from '../../common/ui/card';
 import { cn } from '../../../utils';
 import { ApiService } from '../../../../backend/api/apiService';
 import { createSaveTldrawHandler } from './handlers/save-tldraw';
+import { createTldrawHistoryHandlers } from './handlers/tldraw-history-handlers';
+import { createCreateTldrawPageHandler, createSetTldrawPageHandler } from './handlers/tldraw-menu-handlers';
+import { createSetTldrawToolHandler } from './handlers/tldraw-tool-handlers';
 import styles from '../../../styles/SimpleTiptapEditor.module.css';
 import { useToast } from '../../common/ui/use-toast';
 import { registerTldrawEditor, unregisterTldrawEditor, setCurrentTldrawEditor } from '../../RightPanel/handlers/handle-tldraw-ai-response';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../common/ui/dropdown-menu';
 
 interface TldrawViewerProps {
   fileUrl: string;
@@ -23,8 +34,21 @@ interface TldrawViewerProps {
   className?: string;
 }
 
+const TLDRAW_TOOLBAR_ITEMS = [
+  { id: 'select', label: 'Select', shortcut: 'V', Icon: MousePointer2 },
+  { id: 'hand', label: 'Hand', shortcut: 'H', Icon: Hand },
+  { id: 'draw', label: 'Draw', shortcut: 'D', Icon: Pencil },
+  { id: 'eraser', label: 'Eraser', shortcut: 'E', Icon: Eraser },
+  { id: 'arrow', label: 'Arrow', shortcut: 'A', Icon: ArrowUpRight },
+  { id: 'text', label: 'Text', shortcut: 'T', Icon: Type },
+  { id: 'note', label: 'Note', shortcut: 'N', Icon: StickyNote },
+  { id: 'asset', label: 'Asset', shortcut: 'Ctrl U', Icon: Image },
+  { id: 'rectangle', label: 'Rectangle', shortcut: 'R', Icon: Square },
+];
+
+const TLDRAW_LICENSE_KEY = process.env.NEXT_PUBLIC_TLDRAW_LICENSE_KEY;
+
 export const TldrawViewer: React.FC<TldrawViewerProps> = ({
-  fileUrl,
   fileName,
   fileId,
   isEmbedded = false,
@@ -36,10 +60,36 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isEditMode, setIsEditMode] = useState(true); // Default to edit mode for tldraw files
   const [fileContent, setFileContent] = useState<string | null>(null);
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [currentToolId, setCurrentToolId] = useState('select');
+  const [pages, setPages] = useState<TLPage[]>([]);
+  const [currentPageId, setCurrentPageId] = useState<TLPageId | null>(null);
+
+  const components = useMemo(() => ({
+    MenuPanel: null,
+    Toolbar: null
+  }), []);
+
+  const setTldrawTool = useMemo(() => createSetTldrawToolHandler({
+    editorRef,
+    setCurrentToolId,
+  }), []);
+
+  const setTldrawPage = useMemo(() => createSetTldrawPageHandler({
+    editorRef,
+    setCurrentPageId,
+  }), []);
+
+  const createTldrawPage = useMemo(() => createCreateTldrawPageHandler({
+    editorRef,
+    setCurrentPageId,
+    setPages,
+  }), []);
+
+  const { undo, redo } = useMemo(() => createTldrawHistoryHandlers({
+    editorRef,
+  }), []);
 
   // Get file extension to determine if it's a tldraw file
   const getFileExtension = (filename: string): string => {
@@ -56,6 +106,9 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
 
     
     editorRef.current = editor;
+    setCurrentToolId(editor.getCurrentToolId());
+    setPages(editor.getPages());
+    setCurrentPageId(editor.getCurrentPageId());
     
     // Register this editor for AI interactions
     registerTldrawEditor(editor);
@@ -94,6 +147,9 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
     // Listen for changes to track unsaved state
     const handleChange = () => {
       setHasUnsavedChanges(true);
+      setCurrentToolId(editor.getCurrentToolId());
+      setPages(editor.getPages());
+      setCurrentPageId(editor.getCurrentPageId());
     };
 
     const unsubscribe = editor.store.listen(handleChange);
@@ -134,27 +190,10 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
     }
   }, [fileContent]);
 
-  // Handle iframe load events
-  const handleIframeLoad = useCallback(() => {
-    setIsLoading(false);
-    setError(null);
-  }, []);
-
-  const handleIframeError = useCallback(() => {
-    setIsLoading(false);
-    setError('Failed to load diagram. Please check the file and try again.');
-  }, []);
-
   // Toggle fullscreen mode
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen(!isFullscreen);
   }, [isFullscreen]);
-
-  // Toggle between view and edit mode
-  const toggleMode = useCallback(() => {
-    setIsEditMode(!isEditMode);
-    setIsLoading(true);
-  }, [isEditMode]);
 
   // Save the current drawing
   const handleSave = useCallback(async () => {
@@ -173,102 +212,6 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
       toast({ title: 'Save failed', description: 'Could not save the drawing. Check console for details.', variant: 'destructive' })
     }
   }, [editorRef, fileId, fileName, onSaveComplete, toast])
-
-  // Context toolbar handlers
-  const handleEditShapes = useCallback((shapeIds: TLShapeId[]) => {
-  }, []);
-
-  const handleDuplicateShapes = useCallback((shapeIds: TLShapeId[]) => {
-  }, []);
-
-  const handleDeleteShapes = useCallback((shapeIds: TLShapeId[]) => {
-  }, []);
-
-  const handleGroupShapes = useCallback((shapeIds: TLShapeId[]) => {
-  }, []);
-
-  const handleUngroupShapes = useCallback((shapeIds: TLShapeId[]) => {
-  }, []);
-
-  const handleLockShapes = useCallback((shapeIds: TLShapeId[]) => {
-  }, []);
-
-  const handleUnlockShapes = useCallback((shapeIds: TLShapeId[]) => {
-  }, []);
-
-  // Export drawing as image
-  const handleExportImage = useCallback(async () => {
-    if (!editorRef.current) return;
-
-    try {
-      const blob = await exportToBlob({
-        editor: editorRef.current,
-        ids: Array.from(editorRef.current.getCurrentPageShapeIds()),
-        format: 'png',
-        opts: { background: true, padding: 32 }
-      });
-
-      if (blob) {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${fileName.replace(/\.[^/.]+$/, '')}.png`;
-        link.click();
-        URL.revokeObjectURL(url);
-      }
-    } catch (error) {
-      console.error('[TldrawViewer] Error exporting image:', error);
-    }
-  }, [fileName]);
-
-  // Download the file
-  const handleDownload = useCallback(async () => {
-    // Prefer downloading the live editor snapshot to avoid any remote cache staleness
-    if (editorRef.current) {
-      try {
-        const snapshot = editorRef.current.store.getStoreSnapshot()
-        const content = JSON.stringify(snapshot, null, 2)
-        const freshBlob = new Blob([content], { type: 'application/json' })
-        const freshUrl = URL.createObjectURL(freshBlob)
-        const link = document.createElement('a')
-        link.href = freshUrl
-        link.download = fileName
-        link.click()
-        setTimeout(() => URL.revokeObjectURL(freshUrl), 5000)
-        return
-      } catch {}
-    }
-
-    if (blobUrl) {
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = fileName;
-      link.click();
-    } else if (fileId) {
-      // Fetch file through API if we have fileId
-      try {
-        const result = await ApiService.downloadFromS3(fileId, fileName);
-        if (result.success && result.url) {
-          const link = document.createElement('a');
-          link.href = result.url;
-          link.download = fileName;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          // Clean up the blob URL after download
-          setTimeout(() => window.URL.revokeObjectURL(result.url), 1000);
-        }
-      } catch (err) {
-        console.error('Failed to download file:', err);
-      }
-    } else {
-      // Fallback to direct URL
-      const link = document.createElement('a');
-      link.href = fileUrl;
-      link.download = fileName;
-      link.click();
-    }
-  }, [fileUrl, fileName, blobUrl, fileId]);
 
   // Refresh the viewer
   const reloadFromServer = useCallback(async () => {
@@ -300,13 +243,12 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
     reloadFromServer()
   }, [reloadFromServer]);
 
+  const currentPageName = pages.find((page) => page.id === currentPageId)?.name ?? 'Page';
+
   // Effect to fetch file content
   useEffect(() => {
-    let currentBlobUrl: string | null = null;
-
     const fetchFileContent = async () => {
       if (!fileId) {
-        // If no fileId, try to use the fileUrl directly
         setIsLoading(false);
         return;
       }
@@ -324,18 +266,12 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
             try {
               const text = await blob.text()
               setFileContent(text)
-              // Create/refresh a local object URL for download
-              const objUrl = URL.createObjectURL(blob)
-              currentBlobUrl = objUrl
-              setBlobUrl(objUrl)
             } catch (e) {
               console.warn('[TldrawViewer] Failed to read blob as text:', e)
             }
           } else if ((result as any).url) {
             // Fallback: fetch from remote URL with cache-busting
             const remoteUrl = (result as any).url as string
-            currentBlobUrl = remoteUrl
-            setBlobUrl(remoteUrl)
             try {
               const response = await fetch(`${remoteUrl}${remoteUrl.includes('?') ? '&' : '?'}t=${Date.now()}`, { cache: 'no-store' })
               const text = await response.text()
@@ -361,11 +297,7 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
 
     // Cleanup function to revoke blob URL
     return () => {
-      if (currentBlobUrl && currentBlobUrl.startsWith('blob:')) {
-        window.URL.revokeObjectURL(currentBlobUrl);
-        setBlobUrl(null);
-        setFileContent(null);
-      }
+      setFileContent(null);
     };
   }, [fileId, fileName]);
 
@@ -428,24 +360,113 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
 
   return (
     <div className={containerClasses}>
-      <Card className="w-full h-full flex flex-col pb-1">
+      <Card className="w-full h-full flex flex-col rounded-bl-none pb-1">
         <div className={styles['simple-tiptap-toolbar']} style={{ border: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className={styles['toolbar-button']}
+                    title="Menu"
+                    aria-label="Menu"
+                  >
+                    <Menu size={16} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-44">
+                  <DropdownMenuLabel>Drawing</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSave} disabled={!hasUnsavedChanges}>
+                    Save drawing
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleRefresh}>
+                    Refresh
+                  </DropdownMenuItem>
+                  {!isEmbedded && (
+                    <DropdownMenuItem onClick={toggleFullscreen}>
+                      {isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(styles['toolbar-button'], 'w-auto min-w-20 max-w-32 justify-start px-2 text-xs')}
+                    title={currentPageName}
+                    aria-label={`Current page: ${currentPageName}`}
+                  >
+                    <span className="truncate">{currentPageName}</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-44">
+                  <DropdownMenuLabel>Pages</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {pages.map((page) => (
+                    <DropdownMenuItem
+                      key={page.id}
+                      onClick={() => setTldrawPage(page.id)}
+                      className={cn(page.id === currentPageId && 'bg-accent text-accent-foreground')}
+                    >
+                      {page.name}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={createTldrawPage}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    New page
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <button
+                type="button"
+                onClick={undo}
+                className={styles['toolbar-button']}
+                title="Undo"
+                aria-label="Undo"
+              >
+                <Undo size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={redo}
+                className={styles['toolbar-button']}
+                title="Redo"
+                aria-label="Redo"
+              >
+                <Redo size={16} />
+              </button>
+              {TLDRAW_TOOLBAR_ITEMS.map(({ id, label, shortcut, Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setTldrawTool(id)}
+                  className={cn(
+                    styles['toolbar-button'],
+                    currentToolId === id && styles.active
+                  )}
+                  title={`${label} - ${shortcut}`}
+                  aria-label={label}
+                  aria-pressed={currentToolId === id}
+                >
+                  <Icon size={16} />
+                </button>
+              ))}
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            {isEditMode && (
-              <button
-                onClick={handleSave}
-                disabled={!hasUnsavedChanges}
-                className={styles['toolbar-button']}
-                title="Save drawing"
-              >
-                <Save size={16} />
-              </button>
-            )}
+            <button
+              onClick={handleSave}
+              disabled={!hasUnsavedChanges}
+              className={styles['toolbar-button']}
+              title="Save drawing"
+            >
+              <Save size={16} />
+            </button>
             <button
               onClick={handleRefresh}
               className={styles['toolbar-button']}
@@ -520,14 +541,19 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
                           background-color: hsl(var(--accent)) !important;
                           color: hsl(var(--accent-foreground)) !important;
                         }
-                        .tlui-toolbar__tools {
-                          background-color: hsl(var(--accent)) !important;
-                        }
                         [data-radix-popper-content-wrapper] {
                           background-color: hsl(var(--accent)) !important;
                         }
+                        .tldraw-viewer-container .tlui-layout__bottom {
+                          display: none !important;
+                        }
                       `}</style>
-                      <Tldraw onMount={handleEditorMount} inferDarkMode />
+                      <Tldraw
+                        onMount={handleEditorMount}
+                        inferDarkMode
+                        components={components}
+                        licenseKey={TLDRAW_LICENSE_KEY}
+                      />
 
 
                     </div>
