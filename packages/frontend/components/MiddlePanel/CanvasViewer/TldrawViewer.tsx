@@ -418,10 +418,10 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
   }
 
   const containerClasses = cn(
-    'tldraw-viewer-container h-screen',
+    'tldraw-viewer-container',
     {
-      'fixed inset-0 z-50 bg-card': isFullscreen,
-      'relative': !isFullscreen,
+      'fixed inset-0 z-50 h-screen bg-card': isFullscreen,
+      'relative h-full min-h-0': !isFullscreen,
     },
     className
   );
@@ -507,7 +507,7 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
 
                 try {
                   return (
-                    <div className="w-full h-full pb-10">
+                    <div className="h-full min-h-0 w-full">
                       <style>{`
                         .tl-background {
                           background-color: hsl(var(--card)) !important;
