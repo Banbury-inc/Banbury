@@ -48,6 +48,11 @@ export function createAIConversationsHandlers(deps: ConversationHandlersDeps) {
     setConversationDetails(null)
   }
 
+  function closeExpandedPanel() {
+    setExpandedConversation(null)
+    setConversationDetails(null)
+  }
+
   function handleApplyFilter(userFilter: string) {
     loadConversationsAnalytics(30, userFilter)
   }
@@ -65,6 +70,7 @@ export function createAIConversationsHandlers(deps: ConversationHandlersDeps) {
     loadConversationDetails,
     handleConversationRowClick,
     handleCloseConversation,
+    closeExpandedPanel,
     handleApplyFilter,
     handleClearFilter,
     handleRefresh

@@ -690,7 +690,7 @@ export const renderPanel = ({
                 </KbdGroup>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm" style={{ color: '#9ca3af' }}>Toggle sidebar:</span>
+                <span className="text-sm" style={{ color: '#9ca3af' }}>Toggle left sidebar:</span>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
                   <span style={{ color: '#9ca3af' }}>+</span>
@@ -701,6 +701,14 @@ export const renderPanel = ({
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
                   <span style={{ color: '#9ca3af' }}>+</span>
                   <Kbd>⇧</Kbd>
+                  <span style={{ color: '#9ca3af' }}>+</span>
+                  <Kbd>L</Kbd>
+                </KbdGroup>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm" style={{ color: '#9ca3af' }}>Toggle right sidebar:</span>
+                <KbdGroup>
+                  <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
                   <span style={{ color: '#9ca3af' }}>+</span>
                   <Kbd>L</Kbd>
                 </KbdGroup>

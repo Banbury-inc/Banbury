@@ -563,13 +563,14 @@ const Workspaces = (): React.ReactNode => {
     const keyboardHandler = createWorkspacesKeyboardHandler({
       setFileSearchOpen,
       setIsFileSidebarCollapsed: toggleStoredFileSidebarCollapsed,
+      setIsAssistantPanelCollapsed: toggleStoredAssistantPanelCollapsed,
     })
     // Use capture phase to ensure shortcuts work before other handlers
     window.addEventListener('keydown', keyboardHandler, true)
     return () => {
       window.removeEventListener('keydown', keyboardHandler, true)
     }
-  }, [toggleStoredFileSidebarCollapsed]);
+  }, [toggleStoredFileSidebarCollapsed, toggleStoredAssistantPanelCollapsed]);
 
   // Listen for create-new-ai-tab events to create a new tab in the active assistant panel
   useEffect(() => {

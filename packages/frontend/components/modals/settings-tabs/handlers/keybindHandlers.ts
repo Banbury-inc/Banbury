@@ -12,6 +12,7 @@ export interface KeybindsState {
   searchFiles: KeybindConfig
   toggleFileSidebar: KeybindConfig
   toggleFileSidebarAlt: KeybindConfig
+  toggleAssistantPanel: KeybindConfig
 }
 
 const KEYBINDS_STORAGE_KEY = 'customKeybinds'
@@ -45,6 +46,13 @@ export const defaultKeybinds: KeybindsState = {
     defaultKey: 'shift+l',
     customKey: null,
   },
+  toggleAssistantPanel: {
+    id: 'toggleAssistantPanel',
+    label: 'Toggle Right Sidebar',
+    description: 'Show or hide the right sidebar',
+    defaultKey: 'l',
+    customKey: null,
+  },
 }
 
 export function getStoredKeybinds(): KeybindsState {
@@ -60,6 +68,7 @@ export function getStoredKeybinds(): KeybindsState {
         searchFiles: { ...defaultKeybinds.searchFiles, customKey: parsed.searchFiles?.customKey ?? null },
         toggleFileSidebar: { ...defaultKeybinds.toggleFileSidebar, customKey: parsed.toggleFileSidebar?.customKey ?? null },
         toggleFileSidebarAlt: { ...defaultKeybinds.toggleFileSidebarAlt, customKey: parsed.toggleFileSidebarAlt?.customKey ?? null },
+        toggleAssistantPanel: { ...defaultKeybinds.toggleAssistantPanel, customKey: parsed.toggleAssistantPanel?.customKey ?? null },
       }
     }
   } catch (error) {
@@ -79,6 +88,7 @@ export function saveKeybinds(keybinds: KeybindsState): void {
       searchFiles: { customKey: keybinds.searchFiles.customKey },
       toggleFileSidebar: { customKey: keybinds.toggleFileSidebar.customKey },
       toggleFileSidebarAlt: { customKey: keybinds.toggleFileSidebarAlt.customKey },
+      toggleAssistantPanel: { customKey: keybinds.toggleAssistantPanel.customKey },
     }
     localStorage.setItem(KEYBINDS_STORAGE_KEY, JSON.stringify(toStore))
     

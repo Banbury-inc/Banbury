@@ -88,9 +88,9 @@ const getDocumentEditorContent = (currentEditorDom?: Element | null): string => 
                             element.closest('.h-full.border-0.rounded-none'); // TiptapWordEditor class
       
       // Skip if it's inside a chat composer area
-      const isInChatComposer = element.closest('.bg-zinc-800') || 
-                              element.closest('[aria-label*="Message input"]') ||
+      const isInChatComposer = element.closest('[aria-label*="Message input"]') ||
                               element.closest('[data-role="composer"]') ||
+                              element.closest('.mention-dropdown') ||
                               element.closest('.min-h-16'); // ChatTiptapComposer class
       
       if ((hasSimpleTiptapClass || isInAITiptap || isInWordViewer) && !isInChatComposer) {
@@ -210,16 +210,17 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
       let items: FileMentionItem[] = [];
       let selectedIndex = 0;
       let currentCommand: any = null;
+      const activeItemClasses = ['bg-accent', 'text-accent-foreground'];
 
       const updateSelection = () => {
         if (!component) return;
         const children = Array.from(component.querySelectorAll('[data-index]')) as HTMLDivElement[];
         children.forEach((el) => {
-          el.classList.remove('bg-zinc-700');
+          el.classList.remove(...activeItemClasses);
         });
         const active = children[selectedIndex];
         if (active) {
-          active.classList.add('bg-zinc-700');
+          active.classList.add(...activeItemClasses);
         }
       };
 
@@ -227,14 +228,14 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
         onStart(props: any) {
           currentCommand = props.command;
           component = document.createElement('div');
-          component.className = 'bg-zinc-800 border-zinc-600 text-white shadow-xl min-w-[160px] border rounded-md overflow-hidden';
+          component.className = 'bg-popover border-border text-popover-foreground shadow-xl min-w-[160px] border rounded-md overflow-hidden';
           component.style.maxHeight = '200px';
           component.style.overflowY = 'auto';
           component.style.zIndex = '999999';
           
-          // Dark mode scrollbar
+          // Match the theme tokens used by the rest of the popover surface.
           component.style.scrollbarWidth = 'thin';
-          component.style.scrollbarColor = '#52525b #27272a';
+          component.style.scrollbarColor = 'var(--muted-foreground) var(--popover)';
           
           // Webkit scrollbar styling and tippy override for Chrome/Safari
           const style = document.createElement('style');
@@ -243,14 +244,14 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
               width: 6px;
             }
             .mention-dropdown::-webkit-scrollbar-track {
-              background: #27272a;
+              background: var(--popover);
             }
             .mention-dropdown::-webkit-scrollbar-thumb {
-              background: #52525b;
+              background: var(--muted-foreground);
               border-radius: 3px;
             }
             .mention-dropdown::-webkit-scrollbar-thumb:hover {
-              background: #71717a;
+              background: var(--foreground);
             }
             
             /* Override tippy default styling */
@@ -311,14 +312,14 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
           component.innerHTML = '';
           if (items.length === 0) {
             const empty = document.createElement('div');
-            empty.className = 'text-white hover:bg-zinc-700 focus:bg-zinc-700 px-3 py-2 text-sm text-zinc-400';
+            empty.className = 'px-3 py-2 text-sm text-muted-foreground';
             empty.textContent = 'No matches';
             component.appendChild(empty);
           } else {
             items.forEach((item, index) => {
               const el = document.createElement('div');
               el.dataset.index = String(index);
-              el.className = 'text-white hover:bg-zinc-700 focus:bg-zinc-700 px-3 py-2 text-sm cursor-pointer transition-colors truncate';
+              el.className = 'px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer transition-colors truncate';
               el.textContent = item.label;
               el.title = item.label; // Show full name on hover
               el.addEventListener('mousedown', (e) => {

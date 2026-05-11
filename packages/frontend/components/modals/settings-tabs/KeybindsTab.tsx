@@ -228,6 +228,7 @@ export function KeybindsTab() {
     { id: 'searchFiles', config: keybinds.searchFiles },
     { id: 'toggleFileSidebar', config: keybinds.toggleFileSidebar },
     { id: 'toggleFileSidebarAlt', config: keybinds.toggleFileSidebarAlt },
+    { id: 'toggleAssistantPanel', config: keybinds.toggleAssistantPanel },
   ]
   
   const hasCustomizations = keybindEntries.some(({ config }) => config.customKey !== null)

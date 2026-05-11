@@ -66,6 +66,7 @@ export function createRenderPanelGroup({
     const searchFilesKey = getActiveKey(keybinds.searchFiles)
     const toggleSidebarKey = getActiveKey(keybinds.toggleFileSidebar)
     const toggleSidebarAltKey = getActiveKey(keybinds.toggleFileSidebarAlt)
+    const toggleAssistantPanelKey = getActiveKey(keybinds.toggleAssistantPanel)
 
     return (
       <div className="h-full flex flex-col items-center justify-center gap-4 px-4">
@@ -89,12 +90,16 @@ export function createRenderPanelGroup({
                 {renderKeybind(searchFilesKey)}
               </div>
               <div className="flex flex-col items-center gap-2">
-                <p className="text-sm text-muted-foreground">Toggle file sidebar</p>
+                <p className="text-sm text-muted-foreground">Toggle left sidebar</p>
                 <div className="flex items-center gap-2">
                   {renderKeybind(toggleSidebarKey)}
                   <span className="text-xs text-muted-foreground">or</span>
                   {renderKeybind(toggleSidebarAltKey)}
                 </div>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-sm text-muted-foreground">Toggle right sidebar</p>
+                {renderKeybind(toggleAssistantPanelKey)}
               </div>
             </>
           ) : (
