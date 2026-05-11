@@ -535,7 +535,7 @@ export function CalendarTab({
                       <div
                         key={`${ev.calendarId}-${ev.id}`}
                         onClick={() => handleSelect(ev)}
-                        className="group p-3 border-b border-border cursor-pointer hover:bg-accent/50 transition-colors"
+                        className="group bg-card p-3 border-b border-border cursor-pointer hover:bg-accent/50 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
