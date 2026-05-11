@@ -2,7 +2,7 @@ import { ArrowLeft, Reply, Trash2, Archive, Star, Paperclip, Download, Send, X, 
 import { useEffect, useMemo, useState, useCallback } from "react"
 import { Button } from "../../common/ui/button"
 import { Input } from "../../common/ui/old-input"
-import { extractEmailContent, hasAttachments, formatFileSize, cleanHtmlContent, arrayBufferToBase64 } from "../../../utils/emailUtils"
+import { extractEmailContent, hasAttachments, formatFileSize, cleanHtmlContent, linkifyHtmlContent, linkifyPlainTextContent, arrayBufferToBase64 } from "../../../utils/emailUtils"
 import { useToast } from "../../common/ui/use-toast"
 import { Typography } from "@/components/common/ui/typography"
 import { Popover, PopoverContent, PopoverTrigger } from "../../common/ui/popover"
@@ -13,6 +13,8 @@ import { loadAvailableLabels, toggleLabel, createAndApplyLabel, dispatchLabelRef
 import { EmailTiptapEditor } from "./EmailTiptapEditor"
 
 const MAX_ATTACHMENT_SIZE = 25 * 1024 * 1024 // 25MB
+const emailBodyContentClassName = "text-background leading-relaxed [&_a]:!text-blue-600 dark:[&_a]:!text-blue-400 [&_a]:!underline [&_a]:underline-offset-2 [&_a]:decoration-current [&_a:hover]:!text-blue-800 dark:[&_a:hover]:!text-blue-300"
+const htmlEmailBodyContentClassName = `${emailBodyContentClassName} prose prose-sm max-w-none prose-headings:text-background prose-p:text-background prose-strong:text-background prose-em:text-background prose-li:text-background prose-blockquote:text-background prose-td:text-background prose-th:text-background`
 
 type EmailProvider = 'gmail' | 'outlook'
 
@@ -849,11 +851,9 @@ export function EmailViewer({ email, provider = 'gmail', onBack, onReply, onForw
                       <div className={`px-6 pb-4 ${isLastMessage ? 'flex-1 flex flex-col min-h-0' : ''}`}>
                         <div className={`ml-13 ${isLastMessage ? 'flex-1 min-h-0' : ''}`}>
                           {content?.html ? (
-                            <div className="text-background leading-relaxed prose prose-sm max-w-none prose-headings:text-background prose-p:text-background prose-a:text-background prose-strong:text-background prose-em:text-background prose-li:text-background prose-blockquote:text-background prose-td:text-background prose-th:text-background" dangerouslySetInnerHTML={{ __html: cleanHtmlContent(content.html) }} />
+                            <div className={htmlEmailBodyContentClassName} dangerouslySetInnerHTML={{ __html: linkifyHtmlContent(cleanHtmlContent(content.html)) }} />
                           ) : (
-                            <div className="text-background leading-relaxed whitespace-pre-wrap font-sans">
-                              {content?.text || msg?.snippet || 'No content available'}
-                            </div>
+                            <div className={`${emailBodyContentClassName} whitespace-pre-wrap`} dangerouslySetInnerHTML={{ __html: linkifyPlainTextContent(content?.text || msg?.snippet || 'No content available') }} />
                           )}
                         </div>
                       </div>
