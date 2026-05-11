@@ -5,12 +5,11 @@ import { Button } from '../../common/ui/button'
 import { Input } from '../../common/ui/input'
 import { Typography } from '../../common/ui/typography'
 import { Separator } from '../../common/ui/separator'
+import { Label } from '../../common/ui/label'
 import { useToast } from '../../common/ui/use-toast'
 import { ApiService } from '../../../../backend/api/apiService'
 
-interface MeetingAgentTabProps {}
-
-export function MeetingAgentTab({}: MeetingAgentTabProps) {
+export function MeetingAgentTab() {
   const { toast } = useToast()
   const [botName, setBotName] = useState('Meeting Recorder')
   const [profilePictureUrl, setProfilePictureUrl] = useState('')
@@ -208,13 +207,13 @@ export function MeetingAgentTab({}: MeetingAgentTabProps) {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <h3 className="font-semibold mb-4 flex items-center text-zinc-900 dark:text-white">
+        <h3 className="mb-4 flex items-center font-semibold text-foreground">
           <Video className="h-5 w-5 mr-2" />
           <Typography variant="h3">Meeting Agent</Typography>
         </h3>
         <div className="animate-pulse space-y-4">
-          <div className="h-32 bg-zinc-200 dark:bg-zinc-700 rounded"></div>
-          <div className="h-10 bg-zinc-200 dark:bg-zinc-700 rounded"></div>
+          <div className="h-32 rounded bg-muted"></div>
+          <div className="h-10 rounded bg-muted"></div>
         </div>
       </div>
     )
@@ -222,7 +221,7 @@ export function MeetingAgentTab({}: MeetingAgentTabProps) {
 
   return (
     <div className="space-y-6">
-      <h3 className="font-semibold mb-4 flex items-center text-zinc-900 dark:text-white">
+      <h3 className="mb-4 flex items-center font-semibold text-foreground">
         <Video className="h-5 w-5 mr-2" />
         <Typography variant="h3">Meeting Agent</Typography>
       </h3>
@@ -230,17 +229,19 @@ export function MeetingAgentTab({}: MeetingAgentTabProps) {
       <div className="space-y-4">
         {/* Bot Name */}
         <div>
-          <Typography variant="small" className="text-zinc-600 dark:text-gray-400 mb-2 block font-medium">
+          <Label htmlFor="meeting-agent-bot-name" className="mb-2 block">
+            <Typography variant="small" className="font-medium text-muted-foreground">
             Bot Name
-          </Typography>
+            </Typography>
+          </Label>
           <Input
+            id="meeting-agent-bot-name"
             value={botName}
             onChange={(e) => setBotName(e.target.value)}
             placeholder="Meeting Recorder"
-            className="bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600"
           />
-          <Typography variant="xs" className="text-zinc-500 dark:text-zinc-400 mt-1">
-            This name will be displayed when the bot joins meetings
+          <Typography variant="xs" className="mt-1 text-muted-foreground">
+            This name appears when the bot joins meetings.
           </Typography>
         </div>
 
@@ -248,7 +249,7 @@ export function MeetingAgentTab({}: MeetingAgentTabProps) {
 
         {/* Profile Picture */}
         <div>
-          <Typography variant="small" className="text-zinc-600 dark:text-gray-400 mb-2 block font-medium">
+          <Typography variant="small" className="mb-2 block font-medium text-muted-foreground">
             Profile Picture
           </Typography>
           
@@ -260,30 +261,31 @@ export function MeetingAgentTab({}: MeetingAgentTabProps) {
                   alt="Bot profile"
                   width={128}
                   height={128}
-                  className="w-32 h-32 rounded-full object-cover border-2 border-zinc-300 dark:border-zinc-600"
+                  className="h-32 w-32 rounded-full border-2 border-border object-cover"
                   unoptimized={displayImageUrl.startsWith('data:')}
                 />
                 <button
+                  type="button"
                   onClick={handleRemoveImage}
-                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1"
+                  className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="Remove image"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <Typography variant="xs" className="text-zinc-500 dark:text-zinc-400">
-                {previewUrl ? 'New image selected (click Save to upload)' : 'Current profile picture'}
+              <Typography variant="xs" className="text-muted-foreground">
+                {previewUrl ? 'New image selected. Save to upload it.' : 'Current profile picture'}
               </Typography>
             </div>
           ) : (
-            <div className="border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg p-8 text-center">
-              <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Video className="h-8 w-8 text-zinc-400" />
+            <div className="rounded-lg border-2 border-dashed border-border p-8 text-center">
+              <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <Video className="h-8 w-8 text-muted-foreground" />
               </div>
-              <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 mb-1">
+              <Typography variant="small" className="mb-1 text-muted-foreground">
                 No profile picture set
               </Typography>
-              <Typography variant="xs" className="text-zinc-500 dark:text-zinc-500">
+              <Typography variant="xs" className="text-muted-foreground">
                 Select an image to upload
               </Typography>
             </div>
@@ -308,14 +310,14 @@ export function MeetingAgentTab({}: MeetingAgentTabProps) {
           </Button>
 
           <div className="mt-3 space-y-1">
-            <Typography variant="xs" className="text-zinc-500 dark:text-zinc-400">
-              • Formats: JPG, PNG, GIF, WEBP
+            <Typography variant="xs" className="text-muted-foreground">
+              Formats: JPG, PNG, GIF, WEBP
             </Typography>
-            <Typography variant="xs" className="text-zinc-500 dark:text-zinc-400">
-              • Max size: 5MB
+            <Typography variant="xs" className="text-muted-foreground">
+              Max size: 5MB
             </Typography>
-            <Typography variant="xs" className="text-zinc-500 dark:text-zinc-400">
-              • Recommended: Square aspect ratio (1:1), minimum 200x200px
+            <Typography variant="xs" className="text-muted-foreground">
+              Recommended: square aspect ratio (1:1), minimum 200x200px
             </Typography>
           </div>
         </div>

@@ -11,6 +11,10 @@ import {
   type OutlookConnectionStatus 
 } from '../../handlers/outlook-connection'
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback
+}
+
 export function OutlookConnection() {
   const { toast } = useToast()
   const [connectionStatus, setConnectionStatus] = useState<OutlookConnectionStatus>({ connected: false })
@@ -27,7 +31,7 @@ export function OutlookConnection() {
       setLoading(true)
       const status = await checkOutlookConnectionStatus()
       setConnectionStatus(status)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error checking Outlook connection status:', error)
       setConnectionStatus({ connected: false })
     } finally {
@@ -42,11 +46,11 @@ export function OutlookConnection() {
       const callbackUrl = `${backendUrl}/authentication/outlook/oauth_callback/`
       const { authUrl } = await initiateOutlookOAuth({ callbackUrl })
       window.location.href = authUrl
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error initiating Outlook connection:', error)
       toast({
         title: 'Connection failed',
-        description: error.message || 'Failed to connect to Outlook',
+        description: getErrorMessage(error, 'Failed to connect to Outlook'),
         variant: 'destructive'
       })
     } finally {
@@ -63,11 +67,11 @@ export function OutlookConnection() {
         title: 'Disconnected',
         description: 'Successfully disconnected from Outlook'
       })
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error disconnecting Outlook account:', error)
       toast({
         title: 'Disconnection failed',
-        description: error.message || 'Failed to disconnect from Outlook',
+        description: getErrorMessage(error, 'Failed to disconnect from Outlook'),
         variant: 'destructive'
       })
     } finally {
@@ -78,20 +82,20 @@ export function OutlookConnection() {
   if (loading) {
     return (
       <div className="flex items-center">
-        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-zinc-400 mr-2"></div>
-        <Typography variant="small" className="text-zinc-400">Checking Outlook connection...</Typography>
+        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-muted-foreground"></div>
+        <Typography variant="small" className="text-muted-foreground">Checking Outlook connection...</Typography>
       </div>
     )
   }
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-lg ${connectionStatus.connected ? 'bg-green-900/20' : 'bg-zinc-800'}`}>
+        <div className={`rounded-lg p-2 ${connectionStatus.connected ? 'bg-primary/10' : 'bg-muted'}`}>
           <OutlookIcon size={20} className={connectionStatus.connected ? '' : 'opacity-60'} />
         </div>
         <div>
-          <Typography variant="small" className="text-white font-medium">Outlook</Typography>
+          <Typography variant="small" className="font-medium text-foreground">Outlook</Typography>
         </div>
       </div>
 
@@ -101,7 +105,6 @@ export function OutlookConnection() {
           variant="outline"
           size="sm"
           disabled={disconnecting}
-          className="border-zinc-600 text-zinc-300 hover:bg-zinc-800"
         >
           {disconnecting ? 'Disconnecting…' : 'Disconnect'}
         </Button>
@@ -113,7 +116,7 @@ export function OutlookConnection() {
         >
           {connecting ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-primary-foreground"></div>
               Connecting…
             </>
           ) : (

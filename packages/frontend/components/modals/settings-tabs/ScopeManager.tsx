@@ -124,24 +124,24 @@ export function ScopeManager({ onFeatureActivated, className = '' }: ScopeManage
   if (loading) {
     return (
       <div className={`flex items-center justify-center p-6 ${className}`}>
-        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-        <Typography variant="small" className="ml-2 text-gray-600">Loading Google integration settings...</Typography>
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Typography variant="small" className="ml-2 text-muted-foreground">Loading Google integration settings...</Typography>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className={`p-4 bg-red-900/20 border border-red-700 rounded-lg ${className}`}>
+      <div className={`rounded-lg border border-destructive/30 bg-destructive/10 p-4 ${className}`}>
         <div className="flex items-center">
-          <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-          <Typography variant="small" className="text-red-400">{error}</Typography>
+          <AlertCircle className="h-5 w-5 text-destructive mr-2" />
+          <Typography variant="small" className="text-destructive">{error}</Typography>
         </div>
         <Button 
           variant="outline" 
           size="sm" 
           onClick={loadScopeData}
-          className="mt-2 border-red-600 text-red-400 hover:bg-red-900/20"
+          className="mt-2"
         >
           Retry
         </Button>
@@ -151,10 +151,10 @@ export function ScopeManager({ onFeatureActivated, className = '' }: ScopeManage
 
   if (!userScopes || !availableFeatures) {
     return (
-      <div className={`p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg ${className}`}>
+      <div className={`rounded-lg border border-border bg-muted/50 p-4 ${className}`}>
         <div className="flex items-center">
-          <AlertCircle className="h-5 w-5 text-yellow-400 mr-2" />
-          <Typography variant="small" className="text-yellow-400">No Google integration data available</Typography>
+          <AlertCircle className="h-5 w-5 text-muted-foreground mr-2" />
+          <Typography variant="small" className="text-muted-foreground">No Google integration data available</Typography>
         </div>
       </div>
     )
@@ -168,18 +168,18 @@ export function ScopeManager({ onFeatureActivated, className = '' }: ScopeManage
         const isActive = status === 'active' || status === 'required'
         
         return (
-          <div 
+          <div
             key={featureKey}
-            className="flex items-center justify-between"
+            className="flex items-center justify-between gap-4"
           >
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${isActive ? 'bg-green-900/20' : 'bg-zinc-800'}`}>
+              <div className={`rounded-lg p-2 ${isActive ? 'bg-primary/10' : 'bg-muted'}`}>
                 <div className={isActive ? '[&_img]:brightness-110' : '[&_img]:opacity-60'}>
                   {getFeatureIcon(featureKey)}
                 </div>
               </div>
               <div>
-                <Typography variant="small" className="text-white font-medium">{feature.name}</Typography>
+                <Typography variant="small" className="font-medium text-foreground">{feature.name}</Typography>
               </div>
             </div>
 
@@ -191,7 +191,7 @@ export function ScopeManager({ onFeatureActivated, className = '' }: ScopeManage
               >
                 {isActivating ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-primary-foreground"></div>
                     Activating…
                   </>
                 ) : (
@@ -203,7 +203,6 @@ export function ScopeManager({ onFeatureActivated, className = '' }: ScopeManage
                 variant="outline"
                 size="sm"
                 disabled
-                className="border-zinc-600 text-zinc-300 hover:bg-zinc-800"
               >
                 Connected
               </Button>

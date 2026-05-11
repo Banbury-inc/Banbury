@@ -81,20 +81,20 @@ function KeybindRow({
   const displayKey = pendingKey ?? activeKey
   
   return (
-    <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+    <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3 transition-colors hover:bg-muted/60 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex-1">
-        <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">
+        <Typography variant="p" className="font-medium text-foreground">
           {keybind.label}
         </Typography>
-        <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 mt-0.5">
+        <Typography variant="small" className="mt-0.5 text-muted-foreground">
           {keybind.description}
         </Typography>
       </div>
       
       <div className="flex items-center gap-3">
         {isEditing ? (
-          <div className="flex items-center gap-2">
-            <div className="px-3 py-1.5 rounded border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/30 min-w-[120px] text-center">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="min-w-[120px] rounded border-2 border-ring bg-primary/10 px-3 py-1.5 text-center">
               {pendingKey ? (
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
@@ -108,7 +108,7 @@ function KeybindRow({
                   <Kbd>{pendingKey.replace('shift+', '').toUpperCase()}</Kbd>
                 </KbdGroup>
               ) : (
-                <Typography variant="small" className="text-zinc-500 dark:text-zinc-400 italic">
+                <Typography variant="small" className="italic text-muted-foreground">
                   Press a key...
                 </Typography>
               )}
@@ -117,7 +117,7 @@ function KeybindRow({
               size="sm"
               variant="ghost"
               onClick={onCancelEdit}
-              className="text-zinc-600 dark:text-zinc-400"
+              className="text-muted-foreground"
             >
               Cancel
             </Button>
@@ -125,7 +125,6 @@ function KeybindRow({
               <Button
                 size="sm"
                 onClick={() => onSaveEdit(pendingKey)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Save
               </Button>
@@ -134,8 +133,10 @@ function KeybindRow({
         ) : (
           <>
             <button
+              type="button"
               onClick={onStartEdit}
-              className="px-3 py-1.5 rounded border border-zinc-200 dark:border-zinc-700 hover:border-blue-500 dark:hover:border-blue-500 transition-colors cursor-pointer bg-white dark:bg-zinc-900"
+              className="cursor-pointer rounded border border-border bg-background px-3 py-1.5 transition-colors hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={`Edit ${keybind.label} shortcut`}
             >
               <KbdGroup>
                 <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
@@ -155,7 +156,7 @@ function KeybindRow({
                 variant="ghost"
                 onClick={onReset}
                 title="Reset to default"
-                className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 p-1 h-auto"
+                className="h-auto p-1 text-muted-foreground hover:text-foreground"
               >
                 <RotateCcw className="h-4 w-4" />
               </Button>
@@ -234,7 +235,7 @@ export function KeybindsTab() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <Typography variant="h3" className="flex items-center text-zinc-900 dark:text-white">
+        <Typography variant="h3" className="flex items-center text-foreground">
           <Keyboard className="h-5 w-5 mr-2" />
           Keyboard Shortcuts
         </Typography>
@@ -243,7 +244,7 @@ export function KeybindsTab() {
             variant="outline"
             size="sm"
             onClick={handleResetAll}
-            className="text-zinc-600 dark:text-zinc-400"
+            className="text-muted-foreground"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             Reset All
@@ -253,7 +254,7 @@ export function KeybindsTab() {
       <Separator />
       
       <div className="space-y-2">
-        <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 mb-4">
+        <Typography variant="small" className="mb-4 text-muted-foreground">
           Click on a shortcut to customize it. All shortcuts use {isMac ? '⌘ (Command)' : 'Ctrl'} as the modifier key.
         </Typography>
         
@@ -274,8 +275,8 @@ export function KeybindsTab() {
         </div>
       </div>
       
-      <div className="mt-6 p-4 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
-        <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">
+      <div className="mt-6 rounded-lg border border-border bg-muted/50 p-4">
+        <Typography variant="small" className="text-muted-foreground">
           <strong>Tip:</strong> Press a letter or number key (with optional Shift) while editing to set a new shortcut. Press Escape to cancel or Enter to confirm.
         </Typography>
       </div>
@@ -283,26 +284,25 @@ export function KeybindsTab() {
       <Separator className="my-6" />
 
       <div className="space-y-4">
-        <Typography variant="h4" className="text-zinc-900 dark:text-white">
+        <Typography variant="h4" className="text-foreground">
           Editor Settings
         </Typography>
 
-        <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
+        <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-4 py-3">
           <div className="flex-1">
             <Label htmlFor="vim-mode-switch">
-              <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">
+              <Typography variant="p" className="font-medium text-foreground">
                 Vim Keybindings (Spreadsheet)
               </Typography>
             </Label>
-            <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 mt-1">
-              Enable vim modal editing in spreadsheet editor with Normal, Insert, and Visual modes
+            <Typography variant="small" className="mt-1 text-muted-foreground">
+              Enable Vim modal editing in the spreadsheet editor with Normal, Insert, and Visual modes.
             </Typography>
           </div>
           <Switch
             id="vim-mode-switch"
             checked={isVimMode}
             onCheckedChange={handleVimModeToggle}
-            className="data-[state=checked]:bg-blue-600"
           />
         </div>
       </div>

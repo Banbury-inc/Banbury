@@ -121,7 +121,7 @@ export function UsageTab() {
       {/* Token Usage */}
       <div className="space-y-4 p-4 rounded-lg bg-muted/50 border border-border">
         <div className="flex items-center gap-2">
-          <Zap className="h-5 w-5 text-amber-500" />
+          <Zap className="h-5 w-5 text-primary" />
           <Typography variant="h4" className="text-foreground">
             Token Usage
           </Typography>
@@ -147,7 +147,7 @@ export function UsageTab() {
               </div>
               <Progress 
                 value={tokenPercent} 
-                className={`h-2 ${tokenPercent >= 90 ? '[&>div]:bg-destructive' : tokenPercent >= 75 ? '[&>div]:bg-amber-500' : ''}`}
+                className={`h-2 ${tokenPercent >= 90 ? '[&>div]:bg-destructive' : tokenPercent >= 75 ? '[&>div]:bg-primary/80' : ''}`}
               />
             </div>
             <Typography variant="small" className="text-muted-foreground">
@@ -217,7 +217,7 @@ export function UsageTab() {
       {/* Storage Usage */}
       <div className="space-y-4 p-4 rounded-lg bg-muted/50 border border-border">
         <div className="flex items-center gap-2">
-          <Database className="h-5 w-5 text-blue-500" />
+          <Database className="h-5 w-5 text-primary" />
           <Typography variant="h4" className="text-foreground">
             File Storage
           </Typography>
@@ -242,7 +242,7 @@ export function UsageTab() {
             </div>
             <Progress 
               value={storagePercent} 
-              className={`h-2 ${storagePercent >= 90 ? '[&>div]:bg-destructive' : storagePercent >= 75 ? '[&>div]:bg-amber-500' : ''}`}
+              className={`h-2 ${storagePercent >= 90 ? '[&>div]:bg-destructive' : storagePercent >= 75 ? '[&>div]:bg-primary/80' : ''}`}
             />
           </div>
         )}

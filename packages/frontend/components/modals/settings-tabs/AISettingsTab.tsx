@@ -47,6 +47,22 @@ export function AISettingsTab() {
     [modelsCatalogRevision],
   )
   const [toolPreferences, setToolPreferences] = useState<ToolPreferences>(() => {
+    if (typeof window === 'undefined') {
+      return {
+        web_search: true,
+        tiptap_ai: true,
+        read_file: true,
+        gmail: true,
+        gmailSend: true,
+        langgraph_mode: true,
+        browser: false,
+        x_api: false,
+        slack: false,
+        model_provider: 'anthropic',
+        visibleModels: DEFAULT_VISIBLE_MODELS,
+      }
+    }
+
     try {
       const saved = localStorage.getItem('toolPreferences')
       if (saved) {
@@ -65,7 +81,9 @@ export function AISettingsTab() {
           visibleModels: Array.isArray(parsed.visibleModels) ? parsed.visibleModels : DEFAULT_VISIBLE_MODELS,
         }
       }
-    } catch {}
+    } catch {
+      localStorage.removeItem('toolPreferences')
+    }
     return {
       web_search: true,
       tiptap_ai: true,
@@ -140,7 +158,7 @@ export function AISettingsTab() {
 
   return (
     <div className="space-y-6">
-      <Typography variant="h3" className="mb-4 flex items-center text-zinc-900 dark:text-white">
+      <Typography variant="h3" className="mb-4 flex items-center text-foreground">
         <Brain className="h-5 w-5 mr-2" />
         AI Tool Settings
       </Typography>
@@ -151,15 +169,15 @@ export function AISettingsTab() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Mail className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+              <Mail className="h-5 w-5 text-muted-foreground" />
               <div className="flex-1">
                 <Label htmlFor="gmail-send-toggle">
-                  <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">
+                  <Typography variant="p" className="font-medium text-foreground">
                     Gmail Send Email
                   </Typography>
                 </Label>
-                <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 mt-1">
-                  Allow the AI assistant to send emails on your behalf (reading emails and creating drafts is always allowed)
+                <Typography variant="small" className="mt-1 text-muted-foreground">
+                  Allow the AI assistant to send emails on your behalf. Reading emails and creating drafts stays available.
                 </Typography>
               </div>
             </div>
@@ -167,7 +185,6 @@ export function AISettingsTab() {
               id="gmail-send-toggle"
               checked={toolPreferences.gmailSend}
               onCheckedChange={handleGmailSendToggle}
-              className="data-[state=checked]:bg-blue-600"
             />
           </div>
         </div>
@@ -177,20 +194,20 @@ export function AISettingsTab() {
         {/* Model Visibility Settings */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <Sparkles className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+            <Sparkles className="h-5 w-5 text-muted-foreground" />
             <div>
-              <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">
+              <Typography variant="p" className="font-medium text-foreground">
                 Visible Models
               </Typography>
-              <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 mt-1">
-                Choose which AI models appear in the model dropdown
+              <Typography variant="small" className="mt-1 text-muted-foreground">
+                Choose which AI models appear in the model picker.
               </Typography>
             </div>
           </div>
 
           {/* OpenAI Models */}
           <div className="space-y-2 pl-8">
-            <Typography variant="small" className="text-zinc-700 dark:text-zinc-300 font-semibold">
+            <Typography variant="small" className="font-semibold text-foreground">
               OpenAI Models
             </Typography>
             <div className="space-y-2">
@@ -198,7 +215,7 @@ export function AISettingsTab() {
                 <div key={model.id} className="flex items-center justify-between py-1">
                   <div className="flex-1">
                     <Label htmlFor={`model-${model.id}`}>
-                      <Typography variant="small" className="text-zinc-900 dark:text-white">
+                      <Typography variant="small" className="text-foreground">
                         {model.name}
                       </Typography>
                     </Label>
@@ -207,7 +224,6 @@ export function AISettingsTab() {
                     id={`model-${model.id}`}
                     checked={(toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS).includes(model.id)}
                     onCheckedChange={(checked) => handleModelVisibilityToggle(model.id, checked)}
-                    className="data-[state=checked]:bg-blue-600"
                   />
                 </div>
               ))}
@@ -216,7 +232,7 @@ export function AISettingsTab() {
 
           {/* Anthropic Models */}
           <div className="space-y-2 pl-8">
-            <Typography variant="small" className="text-zinc-700 dark:text-zinc-300 font-semibold">
+            <Typography variant="small" className="font-semibold text-foreground">
               Anthropic Models
             </Typography>
             <div className="space-y-2">
@@ -224,7 +240,7 @@ export function AISettingsTab() {
                 <div key={model.id} className="flex items-center justify-between py-1">
                   <div className="flex-1">
                     <Label htmlFor={`model-${model.id}`}>
-                      <Typography variant="small" className="text-zinc-900 dark:text-white">
+                      <Typography variant="small" className="text-foreground">
                         {model.name}
                       </Typography>
                     </Label>
@@ -233,7 +249,6 @@ export function AISettingsTab() {
                     id={`model-${model.id}`}
                     checked={(toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS).includes(model.id)}
                     onCheckedChange={(checked) => handleModelVisibilityToggle(model.id, checked)}
-                    className="data-[state=checked]:bg-blue-600"
                   />
                 </div>
               ))}
@@ -242,7 +257,7 @@ export function AISettingsTab() {
 
           {/* Google Models */}
           <div className="space-y-2 pl-8">
-            <Typography variant="small" className="text-zinc-700 dark:text-zinc-300 font-semibold">
+            <Typography variant="small" className="font-semibold text-foreground">
               Google Models
             </Typography>
             <div className="space-y-2">
@@ -250,7 +265,7 @@ export function AISettingsTab() {
                 <div key={model.id} className="flex items-center justify-between py-1">
                   <div className="flex-1">
                     <Label htmlFor={`model-${model.id}`}>
-                      <Typography variant="small" className="text-zinc-900 dark:text-white">
+                      <Typography variant="small" className="text-foreground">
                         {model.name}
                       </Typography>
                     </Label>
@@ -259,7 +274,6 @@ export function AISettingsTab() {
                     id={`model-${model.id}`}
                     checked={(toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS).includes(model.id)}
                     onCheckedChange={(checked) => handleModelVisibilityToggle(model.id, checked)}
-                    className="data-[state=checked]:bg-blue-600"
                   />
                 </div>
               ))}
@@ -268,8 +282,8 @@ export function AISettingsTab() {
         </div>
       </div>
 
-      <div className="mt-6 p-4 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
-        <Typography variant="small" className="text-zinc-600 dark:text-zinc-400">
+      <div className="mt-6 rounded-lg border border-border bg-muted/50 p-4">
+        <Typography variant="small" className="text-muted-foreground">
           <strong>Note:</strong> Disabling tools will prevent the AI from using them in conversations. Changes take effect immediately.
         </Typography>
       </div>
@@ -285,10 +299,10 @@ export function AISettingsTab() {
         <div className="p-4 border border-destructive/50 rounded-lg bg-destructive/5">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <Typography variant="p" className="text-zinc-900 dark:text-white font-medium">
+              <Typography variant="p" className="font-medium text-foreground">
                 Delete All AI Conversations
               </Typography>
-              <Typography variant="small" className="text-zinc-600 dark:text-zinc-400 mt-1">
+              <Typography variant="small" className="mt-1 text-muted-foreground">
                 Permanently delete all saved AI conversations associated with your account. This action cannot be undone.
               </Typography>
             </div>

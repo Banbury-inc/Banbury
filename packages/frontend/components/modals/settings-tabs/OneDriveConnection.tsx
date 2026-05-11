@@ -11,6 +11,10 @@ import {
   type OneDriveConnectionStatus 
 } from '../../handlers/onedrive-connection'
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback
+}
+
 export function OneDriveConnection() {
   const { toast } = useToast()
   const [connectionStatus, setConnectionStatus] = useState<OneDriveConnectionStatus>({ connected: false })
@@ -27,7 +31,7 @@ export function OneDriveConnection() {
       setLoading(true)
       const status = await checkOneDriveConnectionStatus()
       setConnectionStatus(status)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error checking OneDrive connection status:', error)
       setConnectionStatus({ connected: false })
     } finally {
@@ -42,11 +46,11 @@ export function OneDriveConnection() {
       const callbackUrl = `${backendUrl}/authentication/onedrive/oauth_callback/`
       const { authUrl } = await initiateOneDriveOAuth({ callbackUrl })
       window.location.href = authUrl
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error initiating OneDrive connection:', error)
       toast({
         title: 'Connection failed',
-        description: error.message || 'Failed to connect to OneDrive',
+        description: getErrorMessage(error, 'Failed to connect to OneDrive'),
         variant: 'destructive'
       })
     } finally {
@@ -63,11 +67,11 @@ export function OneDriveConnection() {
         title: 'Disconnected',
         description: 'Successfully disconnected from OneDrive'
       })
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error disconnecting OneDrive account:', error)
       toast({
         title: 'Disconnection failed',
-        description: error.message || 'Failed to disconnect from OneDrive',
+        description: getErrorMessage(error, 'Failed to disconnect from OneDrive'),
         variant: 'destructive'
       })
     } finally {
@@ -78,20 +82,20 @@ export function OneDriveConnection() {
   if (loading) {
     return (
       <div className="flex items-center">
-        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-zinc-400 mr-2"></div>
-        <Typography variant="small" className="text-zinc-400">Checking OneDrive connection...</Typography>
+        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-muted-foreground"></div>
+        <Typography variant="small" className="text-muted-foreground">Checking OneDrive connection...</Typography>
       </div>
     )
   }
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-lg ${connectionStatus.connected ? 'bg-blue-900/20' : 'bg-zinc-800'}`}>
+        <div className={`rounded-lg p-2 ${connectionStatus.connected ? 'bg-primary/10' : 'bg-muted'}`}>
           <OneDriveIcon size={20} className={connectionStatus.connected ? '' : 'opacity-60'} />
         </div>
         <div>
-          <Typography variant="small" className="text-white font-medium">OneDrive</Typography>
+          <Typography variant="small" className="font-medium text-foreground">OneDrive</Typography>
         </div>
       </div>
 
@@ -101,7 +105,6 @@ export function OneDriveConnection() {
           variant="outline"
           size="sm"
           disabled={disconnecting}
-          className="border-zinc-600 text-zinc-300 hover:bg-zinc-800"
         >
           {disconnecting ? 'Disconnecting…' : 'Disconnect'}
         </Button>
@@ -113,7 +116,7 @@ export function OneDriveConnection() {
         >
           {connecting ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-primary-foreground"></div>
               Connecting…
             </>
           ) : (
