@@ -3,6 +3,7 @@
 # Install dependencies only once (leverages Docker cache)
 FROM node:20-alpine AS deps
 WORKDIR /app
+RUN apk add --no-cache python3 make g++
 COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
 RUN \
   if [ -f yarn.lock ]; then \
