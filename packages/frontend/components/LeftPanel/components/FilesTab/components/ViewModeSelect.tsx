@@ -6,6 +6,7 @@ import {
   Users,
   Search,
 } from "lucide-react"
+import type { Dispatch } from "react"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../../../../common/ui/select"
 import { Typography } from "../../../../common/ui/typography"
 
@@ -19,7 +20,7 @@ interface ViewModeSelectProps {
   localViewMode: LocalViewMode
   googleDriveViewMode: GoogleDriveViewMode
   oneDriveViewMode: OneDriveViewMode
-  onViewModeChange: (value: string) => void
+  onViewModeChange: Dispatch<string>
 }
 
 function getViewModeIcon(provider: FileProvider, localViewMode: LocalViewMode, googleDriveViewMode: GoogleDriveViewMode, oneDriveViewMode: OneDriveViewMode) {
@@ -105,7 +106,7 @@ export function ViewModeSelect({
 
   return (
     <Select key={`view-mode-${fileProvider}-${currentViewMode}`} value={currentViewMode} onValueChange={onViewModeChange}>
-      <SelectTrigger size="xs" className="min-w-0 w-auto max-w-full overflow-hidden">
+      <SelectTrigger size="xs" className="min-w-14 w-auto max-w-full">
         <SelectValue>
           <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
             <Icon className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.5} />

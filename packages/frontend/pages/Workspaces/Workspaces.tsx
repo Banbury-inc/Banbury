@@ -1007,8 +1007,7 @@ const Workspaces = (): React.ReactNode => {
                 <div className="flex-1 min-w-0 overflow-hidden min-h-0">
                   <Allotment className="h-full">
                 
-                {/* Main Content Panel - Show when tabs are open */}
-                {getAllTabs(panelLayout).length > 0 && (
+                {/* Main Content Panel */}
                   <Allotment.Pane minSize={isMobile ? 300 : 400} preferredSize={isMobile ? 800 : 1200}>
                     <MiddlePanel
                       isFileSidebarCollapsed={isMobile ? true : isFileSidebarCollapsed}
@@ -1032,7 +1031,6 @@ const Workspaces = (): React.ReactNode => {
                       hasFilesOpen={getAllTabs(panelLayout).length > 0}
                     />
                   </Allotment.Pane>
-                )}
                 
                 {/* Assistant Panel - Dock-based with draggable tabs - Desktop Only */}
                 {!isMobile && !isAssistantPanelCollapsed && (

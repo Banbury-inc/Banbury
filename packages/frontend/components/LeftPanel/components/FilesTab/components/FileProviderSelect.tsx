@@ -1,4 +1,5 @@
 import { HardDrive } from "lucide-react"
+import type { Dispatch } from "react"
 import { GoogleDriveIcon, OneDriveIcon } from "../../../../icons"
 import { Typography } from "../../../../common/ui/typography"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../../../../common/ui/select"
@@ -7,7 +8,7 @@ type FileProvider = 'local' | 'google-drive' | 'onedrive'
 
 interface FileProviderSelectProps {
   fileProvider: FileProvider
-  onProviderChange: (provider: FileProvider) => void
+  onProviderChange: Dispatch<FileProvider>
 }
 
 function getProviderIcon(provider: FileProvider) {
@@ -29,7 +30,7 @@ function getProviderDisplayName(provider: FileProvider) {
 export function FileProviderSelect({ fileProvider, onProviderChange }: FileProviderSelectProps) {
   return (
     <Select key={`provider-${fileProvider}`} value={fileProvider} onValueChange={(value) => onProviderChange(value as FileProvider)}>
-      <SelectTrigger size="xs" className="min-w-0 w-auto max-w-full overflow-hidden">
+      <SelectTrigger size="xs" className="min-w-14 w-auto max-w-full">
         <SelectValue>
           <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
             {(() => {

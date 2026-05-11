@@ -27,7 +27,7 @@ import { Panel, DragState, UserInfo } from '../types';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { Typography } from '../../../components/common/ui/typography';
 import { Kbd, KbdGroup } from '../../../components/common/ui/kbd';
-import BanburyLogo from '../../../assets/images/Logo.png';
+import BanburyLogo from '../../../assets/images/New_Logo.png';
 import { TaskViewer } from '../../../components/MiddlePanel/TaskViewer/TaskViewer';
 import { TaskComposer } from '../../../components/MiddlePanel/TaskViewer/TaskComposer';
 import { MeetingViewer } from '../../../components/MiddlePanel/MeetingViewer/MeetingViewer';

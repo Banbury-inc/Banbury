@@ -4,7 +4,7 @@ import React from 'react'
 import { PanelGroup, Panel } from '../types'
 import { Kbd, KbdGroup } from '../../../components/common/ui/kbd'
 import { getActiveKey, KeybindsState } from '../../../components/modals/settings-tabs/handlers/keybindHandlers'
-import BanburyLogo from '../../../assets/images/Logo.png'
+import BanburyLogo from '../../../assets/images/New_Logo.png'
 
 interface RenderPanelGroupParams {
   renderPanelWrapper: (panel: Panel) => React.ReactNode
