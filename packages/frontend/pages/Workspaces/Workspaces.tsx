@@ -86,6 +86,7 @@ import { createOpenAiPanelHandler, OPEN_AI_PANEL_EVENT } from './handlers/handle
 import { MobileFileSidebar } from './MobileFileSidebar';
 import { MobileWorkspaceHeader } from './MobileWorkspaceHeader';
 import { MobileAssistantPanel } from './MobileAssistantPanel';
+import { getStoredPanelState, saveStoredPanelState } from './handlers/panelStorage';
 
 
 
@@ -108,8 +109,8 @@ const Workspaces = (): React.ReactNode => {
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [replyToEmail, setReplyToEmail] = useState<any>(null);
   const [activePanelId, setActivePanelId] = useState<string>('main-panel');
-  const [isFileSidebarCollapsed, setIsFileSidebarCollapsed] = useState(false);
-  const [isAssistantPanelCollapsed, setIsAssistantPanelCollapsed] = useState(false);
+  const [isFileSidebarCollapsed, setIsFileSidebarCollapsed] = useState(() => getStoredPanelState().isFileSidebarCollapsed);
+  const [isAssistantPanelCollapsed, setIsAssistantPanelCollapsed] = useState(() => getStoredPanelState().isAssistantPanelCollapsed);
   const [isMac, setIsMac] = useState(false);
   const [fileSearchOpen, setFileSearchOpen] = useState(false);
   const [activeLeftPanelTab, setActiveLeftPanelTab] = useState<string>('files');
@@ -185,6 +186,32 @@ const Workspaces = (): React.ReactNode => {
   });
   const dragStateRef = useRef(dragState);
   dragStateRef.current = dragState;
+
+  const setStoredFileSidebarCollapsed = useCallback((collapsed: boolean) => {
+    setIsFileSidebarCollapsed(collapsed)
+    saveStoredPanelState({ isFileSidebarCollapsed: collapsed })
+  }, [])
+
+  const toggleStoredFileSidebarCollapsed = useCallback(() => {
+    setIsFileSidebarCollapsed((prev) => {
+      const next = !prev
+      saveStoredPanelState({ isFileSidebarCollapsed: next })
+      return next
+    })
+  }, [])
+
+  const setStoredAssistantPanelCollapsed = useCallback((collapsed: boolean) => {
+    setIsAssistantPanelCollapsed(collapsed)
+    saveStoredPanelState({ isAssistantPanelCollapsed: collapsed })
+  }, [])
+
+  const toggleStoredAssistantPanelCollapsed = useCallback(() => {
+    setIsAssistantPanelCollapsed((prev) => {
+      const next = !prev
+      saveStoredPanelState({ isAssistantPanelCollapsed: next })
+      return next
+    })
+  }, [])
 
 
   // File type checking functions are imported from fileTypeUtils
@@ -517,9 +544,9 @@ const Workspaces = (): React.ReactNode => {
       // Open assistant panel by default on mobile
       setMobileAssistantOpen(true);
     } else {
-      // Restore desktop state when switching back
-      setIsFileSidebarCollapsed(false);
-      setIsAssistantPanelCollapsed(false);
+      const storedPanelState = getStoredPanelState()
+      setIsFileSidebarCollapsed(storedPanelState.isFileSidebarCollapsed);
+      setIsAssistantPanelCollapsed(storedPanelState.isAssistantPanelCollapsed);
       setMobileAssistantOpen(false);
     }
   }, [isMobile]);
@@ -535,14 +562,14 @@ const Workspaces = (): React.ReactNode => {
   useEffect(() => {
     const keyboardHandler = createWorkspacesKeyboardHandler({
       setFileSearchOpen,
-      setIsFileSidebarCollapsed,
+      setIsFileSidebarCollapsed: toggleStoredFileSidebarCollapsed,
     })
     // Use capture phase to ensure shortcuts work before other handlers
     window.addEventListener('keydown', keyboardHandler, true)
     return () => {
       window.removeEventListener('keydown', keyboardHandler, true)
     }
-  }, []);
+  }, [toggleStoredFileSidebarCollapsed]);
 
   // Listen for create-new-ai-tab events to create a new tab in the active assistant panel
   useEffect(() => {
@@ -558,13 +585,13 @@ const Workspaces = (): React.ReactNode => {
   // Listen for open-ai-panel events to ensure the assistant panel is visible
   useEffect(() => {
     const handler = createOpenAiPanelHandler({
-      setIsAssistantPanelCollapsed,
+      setIsAssistantPanelCollapsed: setStoredAssistantPanelCollapsed,
       isMobile,
       setMobileAssistantOpen
     })
     window.addEventListener(OPEN_AI_PANEL_EVENT, handler)
     return () => window.removeEventListener(OPEN_AI_PANEL_EVENT, handler)
-  }, [setIsAssistantPanelCollapsed, isMobile, setMobileAssistantOpen])
+  }, [setStoredAssistantPanelCollapsed, isMobile, setMobileAssistantOpen])
 
   // Set global active AI tab ID for plan execution coordination
   // This allows the PlanViewer to know which AI tab to send messages to
@@ -851,8 +878,8 @@ const Workspaces = (): React.ReactNode => {
             <WorkspacesTopBar
               isFileSidebarCollapsed={isFileSidebarCollapsed}
               isAssistantPanelCollapsed={isAssistantPanelCollapsed}
-              onToggleFileSidebar={() => setIsFileSidebarCollapsed(prev => !prev)}
-              onToggleAssistantPanel={() => setIsAssistantPanelCollapsed(prev => !prev)}
+              onToggleFileSidebar={toggleStoredFileSidebarCollapsed}
+              onToggleAssistantPanel={toggleStoredAssistantPanelCollapsed}
             />
 
             {/* Mobile File Sidebar Drawer */}
@@ -956,7 +983,7 @@ const Workspaces = (): React.ReactNode => {
                         {/* Collapse button for file sidebar - positioned on right border, offset to avoid resize handle */}
                         {!isFileSidebarCollapsed && (
                           <button
-                            onClick={() => setIsFileSidebarCollapsed(true)}
+                            onClick={() => setStoredFileSidebarCollapsed(true)}
                             className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 h-11 w-11 md:h-6 md:w-6 text-foreground hover:bg-accent bg-background border border-border transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background shadow-soft burger-button"
                             title="Collapse file sidebar"
                             onMouseDown={(e) => e.stopPropagation()}
@@ -1017,14 +1044,14 @@ const Workspaces = (): React.ReactNode => {
                         if (isMobile) {
                           setMobileFileSidebarOpen(true);
                         } else {
-                          setIsFileSidebarCollapsed(false);
+                          setStoredFileSidebarCollapsed(false);
                         }
                       }}
                       onToggleAssistantPanel={() => {
                         if (isMobile) {
                           setMobileAssistantOpen(true);
                         } else {
-                          setIsAssistantPanelCollapsed(false);
+                          setStoredAssistantPanelCollapsed(false);
                         }
                       }}
                       renderPanelGroup={renderPanelGroup}
@@ -1042,7 +1069,7 @@ const Workspaces = (): React.ReactNode => {
                       {/* Collapse button for assistant panel - positioned on left border */}
                       {(selectedFile || selectedEmail || getAllTabs(panelLayout).some(tab => tab.type === 'calendar')) && (
                         <button
-                          onClick={() => setIsAssistantPanelCollapsed(true)}
+                          onClick={() => setStoredAssistantPanelCollapsed(true)}
                           className="absolute -left-3 top-1/2 -translate-y-1/2 z-20 h-11 w-11 md:h-6 md:w-6 text-foreground hover:bg-accent bg-background border border-border transition-colors rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background shadow-soft burger-button"
                           title="Collapse assistant panel"
                         >

@@ -2,7 +2,7 @@ import { createKeyboardShortcutHandler } from './handleKeyboardShortcuts'
 
 interface CreateWorkspacesKeyboardHandlerParams {
   setFileSearchOpen: (open: boolean) => void
-  setIsFileSidebarCollapsed: React.Dispatch<React.SetStateAction<boolean>>
+  setIsFileSidebarCollapsed: () => void
 }
 
 export function createWorkspacesKeyboardHandler({
@@ -11,7 +11,7 @@ export function createWorkspacesKeyboardHandler({
 }: CreateWorkspacesKeyboardHandlerParams) {
   return createKeyboardShortcutHandler({
     onFileSearchOpen: () => setFileSearchOpen(true),
-    onToggleFileSidebar: () => setIsFileSidebarCollapsed((prev) => !prev),
+    onToggleFileSidebar: setIsFileSidebarCollapsed,
   })
 }
 
