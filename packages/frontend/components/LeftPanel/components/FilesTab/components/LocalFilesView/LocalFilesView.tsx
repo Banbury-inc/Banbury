@@ -15,6 +15,7 @@ import { RecentFilesView } from "./components/RecentFilesView"
 import { StarredFilesView } from "./components/StarredFilesView"
 import { ApiService } from "../../../../../../../backend/api/apiService"
 import OneDrive from "../../../../../../../backend/api/onedrive/onedrive"
+import Dropbox from "../../../../../../../backend/api/dropbox/dropbox"
 import { buildFileTree, FileSystemItem, flattenFileTree } from "../../../../../../utils/fileTreeUtils"
 import { Typography } from "../../../../../common/ui/typography"
 import { ShareFileDialog } from "../share-file/ShareFileDialog"
@@ -165,11 +166,12 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
   
   // Share dialog state
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
-  const [fileToShare, setFileToShare] = useState<{ id: string; name: string; type: 's3' | 'drive' } | null>(null)
+  const [fileToShare, setFileToShare] = useState<{ id: string; name: string; type: 's3' | 'drive' | 'onedrive' | 'dropbox' } | null>(null)
   
   // Cloud provider availability state
   const [driveAvailable, setDriveAvailable] = useState(false)
   const [oneDriveConnected, setOneDriveConnected] = useState(false)
+  const [dropboxConnected, setDropboxConnected] = useState(false)
   
   // Drag and drop state
   const [dragState, setDragState] = useState<DragState>({
@@ -453,6 +455,13 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
         setOneDriveConnected(oneDriveStatus.connected)
       } catch {
         setOneDriveConnected(false)
+      }
+
+      try {
+        const dropboxStatus = await Dropbox.getStatus()
+        setDropboxConnected(dropboxStatus.connected)
+      } catch {
+        setDropboxConnected(false)
       }
     }
 
@@ -1418,6 +1427,7 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
               onShareFile={handleShareFile}
               driveAvailable={driveAvailable}
               oneDriveConnected={oneDriveConnected}
+              dropboxConnected={dropboxConnected}
               triggerSidebarRefresh={triggerSidebarRefresh}
             />
           )}
@@ -1455,6 +1465,7 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
               onShareFile={handleShareFile}
               driveAvailable={driveAvailable}
               oneDriveConnected={oneDriveConnected}
+              dropboxConnected={dropboxConnected}
               triggerSidebarRefresh={triggerSidebarRefresh}
             />
           )}
@@ -1522,6 +1533,7 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
                     onShareFile={handleShareFile}
                     driveAvailable={driveAvailable}
                     oneDriveConnected={oneDriveConnected}
+                    dropboxConnected={dropboxConnected}
                     triggerSidebarRefresh={triggerSidebarRefresh}
                   />
                 ))
@@ -1565,6 +1577,7 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
               onShareFile={handleShareFile}
               driveAvailable={driveAvailable}
               oneDriveConnected={oneDriveConnected}
+              dropboxConnected={dropboxConnected}
               triggerSidebarRefresh={triggerSidebarRefresh}
             />
           ))}

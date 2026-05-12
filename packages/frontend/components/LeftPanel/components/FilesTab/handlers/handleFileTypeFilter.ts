@@ -1,6 +1,7 @@
 import { FileSystemItem } from "../../../../../utils/fileTreeUtils"
 import { DriveFile } from "../../../../../../backend/api/drive/drive"
 import { OneDriveFile } from "../../../../../../backend/api/onedrive/onedrive"
+import { DropboxFile } from "../../../../../../backend/api/dropbox/dropbox"
 
 // File type category definitions
 export interface FileTypeCategory {
@@ -200,6 +201,38 @@ export function filterOneDriveFiles(files: OneDriveFile[], activeFilters: Set<st
     if (file.folder) return false
     
     return matchesOneDriveFileTypeFilter(file, activeFilters)
+  })
+}
+
+export function matchesDropboxFileTypeFilter(file: DropboxFile, activeFilters: Set<string>): boolean {
+  if (activeFilters.size === 0) return true
+
+  const mimeType = file.file?.mimeType || file.mimeType
+  const name = file.name
+
+  for (const categoryKey of activeFilters) {
+    const category = FILE_TYPE_CATEGORIES[categoryKey]
+    if (!category) continue
+
+    if (mimeType && category.mimeTypes) {
+      for (const mType of category.mimeTypes) {
+        if (mimeType.includes(mType)) return true
+      }
+    }
+
+    const extension = getFileExtension(name)
+    if (extension && category.extensions.includes(extension)) return true
+  }
+
+  return false
+}
+
+export function filterDropboxFiles(files: DropboxFile[], activeFilters: Set<string>): DropboxFile[] {
+  if (activeFilters.size === 0) return files
+
+  return files.filter(file => {
+    if (file.folder) return false
+    return matchesDropboxFileTypeFilter(file, activeFilters)
   })
 }
 

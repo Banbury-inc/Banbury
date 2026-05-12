@@ -13,6 +13,7 @@ export async function saveNotebookFile({ notebook, file }: SaveArgs) {
   
   const isDriveFile = file.path?.startsWith('drive://')
   const isOneDriveFile = file.path?.startsWith('onedrive://')
+  const isDropboxFile = file.path?.startsWith('dropbox://')
   
   if (isDriveFile) {
     // Save to Google Drive
@@ -22,6 +23,9 @@ export async function saveNotebookFile({ notebook, file }: SaveArgs) {
     // Save to OneDrive
     const fileToUpload = new File([blob], file.name, { type: 'application/json' })
     await ApiService.OneDrive.updateFile(file.file_id, fileToUpload, file.name)
+  } else if (isDropboxFile) {
+    const fileToUpload = new File([blob], file.name, { type: 'application/json' })
+    await ApiService.Dropbox.updateFile(file.file_id, fileToUpload, file.name)
   } else {
     // Delete existing file in S3 (id changes on re-upload)
     if (file.file_id) {

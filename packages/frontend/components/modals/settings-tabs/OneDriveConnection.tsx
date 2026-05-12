@@ -4,6 +4,7 @@ import { useToast } from '../../common/ui/use-toast'
 import { Typography } from '../../common/ui/typography'
 import { CONFIG } from '../../../config/config'
 import { OneDriveIcon } from '../../icons/OneDriveIcon'
+import { ConnectionIconFrame } from './ConnectionIconFrame'
 import { 
   checkOneDriveConnectionStatus, 
   initiateOneDriveOAuth, 
@@ -11,29 +12,47 @@ import {
   type OneDriveConnectionStatus 
 } from '../../handlers/onedrive-connection'
 
+interface OneDriveConnectionProps {
+  cachedConnectionStatus?: OneDriveConnectionStatus
+  shouldLoadStatus?: boolean
+  onStatusChange?: (status: OneDriveConnectionStatus) => void
+}
+
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback
 }
 
-export function OneDriveConnection() {
+export function OneDriveConnection({
+  cachedConnectionStatus,
+  shouldLoadStatus = true,
+  onStatusChange,
+}: OneDriveConnectionProps) {
   const { toast } = useToast()
-  const [connectionStatus, setConnectionStatus] = useState<OneDriveConnectionStatus>({ connected: false })
-  const [loading, setLoading] = useState(true)
+  const [connectionStatus, setConnectionStatus] = useState<OneDriveConnectionStatus>(cachedConnectionStatus ?? { connected: false })
+  const [loading, setLoading] = useState(shouldLoadStatus && !cachedConnectionStatus)
   const [connecting, setConnecting] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
 
   useEffect(() => {
-    loadStatus()
-  }, [])
+    if (cachedConnectionStatus) {
+      setConnectionStatus(cachedConnectionStatus)
+      setLoading(false)
+      return
+    }
+
+    if (shouldLoadStatus) loadStatus()
+  }, [cachedConnectionStatus, shouldLoadStatus])
 
   async function loadStatus() {
     try {
       setLoading(true)
       const status = await checkOneDriveConnectionStatus()
       setConnectionStatus(status)
+      onStatusChange?.(status)
     } catch (error) {
       console.error('Error checking OneDrive connection status:', error)
       setConnectionStatus({ connected: false })
+      onStatusChange?.({ connected: false })
     } finally {
       setLoading(false)
     }
@@ -63,6 +82,7 @@ export function OneDriveConnection() {
       setDisconnecting(true)
       await disconnectOneDriveAccount()
       setConnectionStatus({ connected: false })
+      onStatusChange?.({ connected: false })
       toast({
         title: 'Disconnected',
         description: 'Successfully disconnected from OneDrive'
@@ -91,9 +111,9 @@ export function OneDriveConnection() {
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <div className={`rounded-lg p-2 ${connectionStatus.connected ? 'bg-primary/10' : 'bg-muted'}`}>
-          <OneDriveIcon size={20} className={connectionStatus.connected ? '' : 'opacity-60'} />
-        </div>
+        <ConnectionIconFrame isActive={connectionStatus.connected}>
+          <OneDriveIcon size={20} />
+        </ConnectionIconFrame>
         <div>
           <Typography variant="small" className="font-medium text-foreground">OneDrive</Typography>
         </div>
@@ -120,10 +140,7 @@ export function OneDriveConnection() {
               Connecting…
             </>
           ) : (
-            <>
-              <OneDriveIcon size={16} className="mr-2" />
-              Connect
-            </>
+            'Connect'
           )}
         </Button>
       )}

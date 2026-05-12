@@ -16,8 +16,11 @@ import {
   Calendar,
   CalendarDays,
   Github,
+  NotebookText,
   Image,
   Video,
+  Users,
+  Cloud,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -38,6 +41,8 @@ export interface ComposerToolPreferences {
   browser: boolean;
   x_api: boolean;
   slack: boolean;
+  teams: boolean;
+  onedrive: boolean;
   sheet_ai: boolean;
   docx_ai: boolean;
   pptx_ai: boolean;
@@ -49,6 +54,7 @@ export interface ComposerToolPreferences {
   search_files: boolean;
   calendar: boolean;
   msCalendar: boolean;
+  notion: boolean;
   github: boolean;
   generate_image: boolean;
   generate_video: boolean;
@@ -180,6 +186,20 @@ export const toolConfigs: ToolConfig[] = [
     defaultEnabled: true,
   },
   {
+    key: "teams",
+    label: "Microsoft Teams",
+    icon: Users,
+    iconColor: "text-blue-600",
+    defaultEnabled: false,
+  },
+  {
+    key: "onedrive",
+    label: "OneDrive",
+    icon: Cloud,
+    iconColor: "text-blue-500",
+    defaultEnabled: false,
+  },
+  {
     key: "x_api",
     label: "X (Twitter)",
     icon: MessageSquare,
@@ -202,6 +222,13 @@ export const toolConfigs: ToolConfig[] = [
     defaultEnabled: true,
   },
   // Development tools
+  {
+    key: "notion",
+    label: "Notion",
+    icon: NotebookText,
+    iconColor: "text-foreground",
+    defaultEnabled: true,
+  },
   {
     key: "github",
     label: "GitHub",

@@ -8,6 +8,9 @@ interface ToolPreferences {
   browserbase: boolean;
   x_api: boolean;
   slack: boolean;
+  teams: boolean;
+  onedrive: boolean;
+  notion: boolean;
   use_skills: boolean;
   plan_mode: boolean;
   ask_mode: boolean;
@@ -24,6 +27,9 @@ export function getToolPreferences(): ToolPreferences {
     browserbase: true, // Enable Browserbase tool by default
     x_api: false, // Disable X API by default for security
     slack: false, // Disable Slack by default for security
+    teams: false, // Disable Teams by default for workspace messaging safety
+    onedrive: false, // Disable OneDrive by default for storage safety
+    notion: false, // Disable Notion by default for security
     use_skills: false, // Disabled by default until API access confirmed
     plan_mode: false, // Disabled by default - use Agent mode
     ask_mode: false, // Disabled by default - use Agent mode
@@ -41,6 +47,9 @@ export function getToolPreferences(): ToolPreferences {
         x_api: (parsed && typeof parsed.x_api === 'boolean') ? parsed.x_api : false,
         gmailSend: (parsed && typeof parsed.gmailSend === 'boolean') ? parsed.gmailSend : true,
         slack: (parsed && typeof parsed.slack === 'boolean') ? parsed.slack : false,
+        teams: (parsed && typeof parsed.teams === 'boolean') ? parsed.teams : false,
+        onedrive: (parsed && typeof parsed.onedrive === 'boolean') ? parsed.onedrive : false,
+        notion: (parsed && typeof parsed.notion === 'boolean') ? parsed.notion : false,
         // Auto-enable skills for Anthropic provider
         use_skills: (parsed?.model_provider === 'anthropic'),
         // Plan mode preference

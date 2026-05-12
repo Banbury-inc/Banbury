@@ -18,6 +18,7 @@ import { SubagentTool } from './composer/components/SubagentTool';
 import { CreateFileTool } from './composer/components/CreateFileTool';
 import { DownloadFileTool } from './composer/components/DownloadFileTool';
 import { CodeEditTool } from './composer/components/CodeEditTool';
+import { getOneDriveToolLabel, OneDriveTool, oneDriveToolNames } from './composer/components/OneDriveTool';
 
 interface ToolUIProps {
   toolName: string;
@@ -148,6 +149,42 @@ export const ToolUI: React.FC<ToolUIProps> = ({ toolName, toolCallId, args: args
           label={getToolLabel(toolName)}
         />
       );
+
+    // Microsoft Teams tools
+    case 'ms_teams_list_teams':
+    case 'ms_teams_list_channels':
+    case 'ms_teams_list_channel_messages':
+    case 'ms_teams_get_channel_message':
+    case 'ms_teams_send_channel_message':
+    case 'ms_teams_list_message_replies':
+    case 'ms_teams_reply_to_message':
+    case 'ms_teams_list_members':
+    case 'ms_teams_list_chats':
+      return (
+        <ToolCallCard
+          toolName={toolName}
+          argsText={JSON.stringify(args)}
+          result={result}
+          label={getToolLabel(toolName)}
+        />
+      );
+
+    // OneDrive tools
+    case 'onedrive_status':
+    case 'onedrive_list_root':
+    case 'onedrive_list_folder':
+    case 'onedrive_search':
+    case 'onedrive_get_item':
+    case 'onedrive_download_file':
+    case 'onedrive_upload_text_file':
+    case 'onedrive_update_text_file':
+    case 'onedrive_create_folder':
+    case 'onedrive_rename_move':
+    case 'onedrive_delete_item':
+    case 'onedrive_create_share_link':
+    case 'onedrive_invite':
+    case 'onedrive_get_permissions':
+      return <OneDriveTool toolName={toolName} args={args} argsText={argsText} result={result} />;
     
     // Memory tools
     case 'store_memory':
@@ -244,6 +281,15 @@ function getToolLabel(toolName: string): string {
     'slack_get_user_info': 'Slack - Get User Info',
     'slack_set_channel_topic': 'Slack - Set Topic',
     'slack_add_reaction': 'Slack - Add Reaction',
+    'ms_teams_list_teams': 'Teams - List Teams',
+    'ms_teams_list_channels': 'Teams - List Channels',
+    'ms_teams_list_channel_messages': 'Teams - List Messages',
+    'ms_teams_get_channel_message': 'Teams - Get Message',
+    'ms_teams_send_channel_message': 'Teams - Send Message',
+    'ms_teams_list_message_replies': 'Teams - List Replies',
+    'ms_teams_reply_to_message': 'Teams - Reply',
+    'ms_teams_list_members': 'Teams - List Members',
+    'ms_teams_list_chats': 'Teams - List Chats',
     'store_memory': 'Store Memory',
     'search_memory': 'Search Memory',
     'create_file': 'Create File',
@@ -260,6 +306,8 @@ function getToolLabel(toolName: string): string {
     'stagehand_close': 'Browser - Close',
     'spawn_subagents': 'Multi-Agent Execution',
   };
+
+  if (oneDriveToolNames.includes(toolName)) return getOneDriveToolLabel(toolName);
 
   return labels[toolName] || toolName;
 }

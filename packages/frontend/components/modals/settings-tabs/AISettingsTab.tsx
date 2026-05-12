@@ -23,6 +23,8 @@ interface ToolPreferences {
   browser: boolean
   x_api: boolean
   slack: boolean
+  onedrive: boolean
+  notion: boolean
   model_provider: "anthropic" | "openai" | "google"
   visibleModels?: string[]
 }
@@ -58,6 +60,8 @@ export function AISettingsTab() {
         browser: false,
         x_api: false,
         slack: false,
+        onedrive: false,
+        notion: false,
         model_provider: 'anthropic',
         visibleModels: DEFAULT_VISIBLE_MODELS,
       }
@@ -77,6 +81,8 @@ export function AISettingsTab() {
           browser: typeof parsed.browser === 'boolean' ? parsed.browser : false,
           x_api: typeof parsed.x_api === 'boolean' ? parsed.x_api : false,
           slack: typeof parsed.slack === 'boolean' ? parsed.slack : false,
+          onedrive: typeof parsed.onedrive === 'boolean' ? parsed.onedrive : false,
+          notion: typeof parsed.notion === 'boolean' ? parsed.notion : false,
           model_provider: parsed.model_provider === 'google' ? 'google' : (parsed.model_provider === 'openai' ? 'openai' : 'anthropic'),
           visibleModels: Array.isArray(parsed.visibleModels) ? parsed.visibleModels : DEFAULT_VISIBLE_MODELS,
         }
@@ -94,6 +100,8 @@ export function AISettingsTab() {
       browser: false,
       x_api: false,
       slack: false,
+      onedrive: false,
+      notion: false,
       model_provider: 'anthropic',
       visibleModels: DEFAULT_VISIBLE_MODELS,
     }

@@ -13,6 +13,8 @@ export interface ThreadToolPreferences {
   browser: boolean;
   x_api: boolean;
   slack: boolean;
+  teams: boolean;
+  onedrive: boolean;
   // Document editing tools
   sheet_ai: boolean;
   docx_ai: boolean;
@@ -27,6 +29,7 @@ export interface ThreadToolPreferences {
   // Calendar tools
   calendar: boolean;
   msCalendar: boolean;
+  notion: boolean;
   // Development tools
   github: boolean;
   // Media tools
@@ -67,6 +70,8 @@ export function deriveToolPreferences(raw?: any): ThreadToolPreferences {
     browser: mappedBrowser,
     x_api: data.x_api !== false,
     slack: data.slack !== false,
+    teams: typeof data.teams === "boolean" ? data.teams : false,
+    onedrive: typeof data.onedrive === "boolean" ? data.onedrive : false,
     // Document editing tools
     sheet_ai: data.sheet_ai !== false,
     docx_ai: data.docx_ai !== false,
@@ -81,6 +86,7 @@ export function deriveToolPreferences(raw?: any): ThreadToolPreferences {
     // Calendar tools
     calendar: data.calendar !== false,
     msCalendar: data.msCalendar !== false,
+    notion: data.notion !== false,
     // Development tools
     github: data.github !== false,
     // Media tools

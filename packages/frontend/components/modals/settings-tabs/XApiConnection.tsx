@@ -4,6 +4,7 @@ import { useToast } from '../../common/ui/use-toast'
 import { Typography } from '../../common/ui/typography'
 import { CONFIG } from '../../../config/config'
 import { TwitterIcon } from '../../icons'
+import { ConnectionIconFrame } from './ConnectionIconFrame'
 import { 
   checkXConnectionStatus, 
   initiateXOAuth, 
@@ -11,29 +12,47 @@ import {
   type XApiConnectionStatus 
 } from '../../handlers/x-api-connection'
 
+interface XApiConnectionProps {
+  cachedConnectionStatus?: XApiConnectionStatus
+  shouldLoadStatus?: boolean
+  onStatusChange?: (status: XApiConnectionStatus) => void
+}
+
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback
 }
 
-export const XApiConnection = () => {
+export const XApiConnection = ({
+  cachedConnectionStatus,
+  shouldLoadStatus = true,
+  onStatusChange,
+}: XApiConnectionProps) => {
   const { toast } = useToast()
-  const [connectionStatus, setConnectionStatus] = useState<XApiConnectionStatus>({ connected: false })
-  const [loading, setLoading] = useState(true)
+  const [connectionStatus, setConnectionStatus] = useState<XApiConnectionStatus>(cachedConnectionStatus ?? { connected: false })
+  const [loading, setLoading] = useState(shouldLoadStatus && !cachedConnectionStatus)
   const [connecting, setConnecting] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
 
   useEffect(() => {
-    loadStatus()
-  }, [])
+    if (cachedConnectionStatus) {
+      setConnectionStatus(cachedConnectionStatus)
+      setLoading(false)
+      return
+    }
+
+    if (shouldLoadStatus) loadStatus()
+  }, [cachedConnectionStatus, shouldLoadStatus])
 
   async function loadStatus() {
     try {
       setLoading(true)
       const status = await checkXConnectionStatus()
       setConnectionStatus(status)
+      onStatusChange?.(status)
     } catch (error) {
       console.error('Error checking X API connection status:', error)
       setConnectionStatus({ connected: false })
+      onStatusChange?.({ connected: false })
     } finally {
       setLoading(false)
     }
@@ -63,6 +82,7 @@ export const XApiConnection = () => {
       setDisconnecting(true)
       await disconnectXAccount()
       setConnectionStatus({ connected: false })
+      onStatusChange?.({ connected: false })
       toast({
         title: 'Disconnected',
         description: 'Successfully disconnected from X account'
@@ -91,9 +111,9 @@ export const XApiConnection = () => {
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <div className={`rounded-lg p-2 ${connectionStatus.connected ? 'bg-primary/10' : 'bg-muted'}`}>
+        <ConnectionIconFrame isActive={connectionStatus.connected}>
           <TwitterIcon size={20} />
-        </div>
+        </ConnectionIconFrame>
         <div>
           <Typography variant="small" className="font-medium text-foreground">X</Typography>
         </div>
@@ -120,10 +140,7 @@ export const XApiConnection = () => {
               Connecting…
             </>
           ) : (
-            <>
-              <TwitterIcon size={16} className="mr-2" />
-              Connect
-            </>
+            'Connect'
           )}
         </Button>
       )}

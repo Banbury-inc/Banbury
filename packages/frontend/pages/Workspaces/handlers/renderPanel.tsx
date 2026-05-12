@@ -251,6 +251,7 @@ export const renderPanel = ({
                   
                   // Check if this is a Google Drive file
                   const isDriveFile = file.path?.startsWith('drive://');
+                  const isDropboxFile = file.path?.startsWith('dropbox://');
                   
                   // For Google Drive files, route to appropriate viewer based on mimeType
                   if (isDriveFile) {
@@ -335,6 +336,43 @@ export const renderPanel = ({
                     } else {
                       // Fallback to GoogleDriveViewer for unsupported types
                       return <GoogleDriveViewer file={file} />
+                    }
+                  }
+
+                  if (isDropboxFile) {
+                    const mimeType = file.mimeType
+                    if (isDriveImageFile(mimeType)) {
+                      return <ImageViewer file={file} userInfo={userInfo} />
+                    } else if (isDrivePdfFile(mimeType)) {
+                      return <PDFViewer file={file} userInfo={userInfo} />
+                    } else if (isDriveVideoFile(mimeType)) {
+                      return <VideoViewer file={file} userInfo={userInfo} />
+                    } else if (isDriveCodeFile(mimeType, file.name)) {
+                      return <IDE file={file} userInfo={userInfo} onSaveComplete={triggerSidebarRefresh} />
+                    } else if (isDriveDocumentFile(mimeType)) {
+                      return (
+                        <DocumentViewer
+                          file={file}
+                          userInfo={userInfo}
+                          onSaveComplete={triggerSidebarRefresh}
+                        />
+                      )
+                    } else if (isDriveSpreadsheetFile(mimeType)) {
+                      return (
+                        <SpreadsheetViewer
+                          file={file}
+                          userInfo={userInfo}
+                          onSaveComplete={triggerSidebarRefresh}
+                        />
+                      )
+                    } else if (isDrivePresentationFile(mimeType)) {
+                      return (
+                        <PowerPointViewer
+                          file={file}
+                          userInfo={userInfo}
+                          onSaveComplete={triggerSidebarRefresh}
+                        />
+                      )
                     }
                   }
                   
@@ -668,8 +706,8 @@ export const renderPanel = ({
               src={BanburyLogo} 
               alt="Banbury" 
               className="opacity-20 dark:opacity-15 mb-4"
-              width={80}
-              height={80}
+              width={160}
+              height={160}
               priority
             />
             <div className="flex flex-col items-center gap-4">

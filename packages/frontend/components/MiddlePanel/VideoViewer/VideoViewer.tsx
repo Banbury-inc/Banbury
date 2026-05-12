@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '../../common/ui/button';
 import { ApiService } from '../../../../backend/api/apiService';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import { CONFIG } from '../../../config/config';
 import { RecallVideoViewer } from './RecallVideoViewer';
 
 interface VideoViewerProps {
@@ -42,6 +41,7 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
 
     const isDriveFile = file.path?.startsWith('drive://');
     const isOneDriveFile = file.path?.startsWith('onedrive://');
+    const isDropboxFile = file.path?.startsWith('dropbox://');
 
     // For regular videos, retry the download
     let fetchPromise: Promise<{ success: boolean; url: string }>;
@@ -53,6 +53,11 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
       });
     } else if (isOneDriveFile) {
       fetchPromise = ApiService.OneDrive.getFileBlob(file.file_id || '').then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        return { success: true, url };
+      });
+    } else if (isDropboxFile) {
+      fetchPromise = ApiService.Dropbox.getFileBlob(file.file_id || '').then(blob => {
         const url = window.URL.createObjectURL(blob);
         return { success: true, url };
       });
@@ -85,6 +90,7 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
 
     const isDriveFile = file.path?.startsWith('drive://');
     const isOneDriveFile = file.path?.startsWith('onedrive://');
+    const isDropboxFile = file.path?.startsWith('dropbox://');
 
     // For regular videos, use the download endpoint
     const fetchRegularVideo = async () => {
@@ -98,6 +104,10 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
         } else if (isOneDriveFile) {
           // Handle OneDrive video
           const blob = await ApiService.OneDrive.getFileBlob(file.file_id || '');
+          const url = window.URL.createObjectURL(blob);
+          setVideoUrl(url);
+        } else if (isDropboxFile) {
+          const blob = await ApiService.Dropbox.getFileBlob(file.file_id || '');
           const url = window.URL.createObjectURL(blob);
           setVideoUrl(url);
         } else {
@@ -141,6 +151,7 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
 
     const isDriveFile = file.path?.startsWith('drive://');
     const isOneDriveFile = file.path?.startsWith('onedrive://');
+    const isDropboxFile = file.path?.startsWith('dropbox://');
 
     // Fallback: fetch the URL
     let fetchPromise: Promise<{ success: boolean; url: string }>;
@@ -152,6 +163,11 @@ export function VideoViewer({ file, userInfo }: VideoViewerProps) {
       });
     } else if (isOneDriveFile) {
       fetchPromise = ApiService.OneDrive.getFileBlob(file.file_id || '').then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        return { success: true, url };
+      });
+    } else if (isDropboxFile) {
+      fetchPromise = ApiService.Dropbox.getFileBlob(file.file_id || '').then(blob => {
         const url = window.URL.createObjectURL(blob);
         return { success: true, url };
       });

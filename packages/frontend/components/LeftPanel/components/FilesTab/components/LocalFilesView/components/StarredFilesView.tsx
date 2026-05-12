@@ -37,6 +37,7 @@ interface StarredFilesViewProps {
   onShareFile: (file: FileSystemItem) => void
   driveAvailable: boolean
   oneDriveConnected: boolean
+  dropboxConnected: boolean
   triggerSidebarRefresh?: () => void
 }
 
@@ -71,6 +72,7 @@ export function StarredFilesView({
   onShareFile,
   driveAvailable,
   oneDriveConnected,
+  dropboxConnected,
   triggerSidebarRefresh,
 }: StarredFilesViewProps) {
   if (filteredStarredFiles.length === 0) {
@@ -133,6 +135,7 @@ export function StarredFilesView({
           onShareFile={onShareFile}
           driveAvailable={driveAvailable}
           oneDriveConnected={oneDriveConnected}
+          dropboxConnected={dropboxConnected}
           triggerSidebarRefresh={triggerSidebarRefresh}
         />
       ))}

@@ -43,6 +43,7 @@ export interface ToolPreferences {
   calendar?: boolean
   msCalendar?: boolean
   // Development tools
+  notion?: boolean
   github?: boolean
   // Media tools
   generate_image?: boolean
@@ -50,6 +51,8 @@ export interface ToolPreferences {
   // System tools
   memory?: boolean
   slack?: boolean
+  teams?: boolean
+  onedrive?: boolean
   model_provider?: "anthropic" | "openai" | "google"
   model_id?: string
   image_generation_model?: string

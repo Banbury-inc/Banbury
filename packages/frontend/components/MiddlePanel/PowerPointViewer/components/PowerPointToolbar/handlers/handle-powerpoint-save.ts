@@ -41,6 +41,7 @@ export async function handlePowerPointSave({
     // Check if this is a Google Drive or OneDrive file
     const isDriveFile = currentFile.path?.startsWith('drive://')
     const isOneDriveFile = currentFile.path?.startsWith('onedrive://')
+    const isDropboxFile = currentFile.path?.startsWith('dropbox://')
     const isGoogleSlides = currentFile.mimeType?.includes('vnd.google-apps.presentation')
 
     // Create File object with PPTX MIME type (actual content type)
@@ -73,6 +74,18 @@ export async function handlePowerPointSave({
 
       toast({
         title: "Presentation saved to OneDrive",
+        description: `${currentFile.name} has been updated successfully.`,
+        variant: "success",
+      })
+    } else if (isDropboxFile) {
+      await ApiService.Dropbox.updateFile(
+        currentFile.file_id,
+        fileToUpload,
+        currentFile.name
+      )
+
+      toast({
+        title: "Presentation saved to Dropbox",
         description: `${currentFile.name} has been updated successfully.`,
         variant: "success",
       })

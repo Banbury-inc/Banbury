@@ -43,6 +43,8 @@ export function normalizeToolPreferences({
     generate_video: toolPreferences.generate_video !== false,
     // System tools
     memory: toolPreferences.memory !== false,
+    teams: typeof toolPreferences.teams === "boolean" ? toolPreferences.teams : false,
+    onedrive: typeof toolPreferences.onedrive === "boolean" ? toolPreferences.onedrive : false,
     langgraph_mode: true,
     model_provider: toolPreferences.model_provider === "openai" ? "openai" : toolPreferences.model_provider === "google" ? "google" : "anthropic",
     model_id: toolPreferences.model_id,

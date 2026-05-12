@@ -10,6 +10,7 @@ import { Button } from '../../common/ui/button'
 import { Typography } from '../../common/ui/typography'
 import { ApiService } from '../../../../backend/api/apiService'
 import { UserScopes, AvailableFeatures } from '../../../../backend/api/scopes/scopes'
+import { ConnectionIconFrame } from './ConnectionIconFrame'
 
 interface ScopeManagerProps {
   onFeatureActivated?: (feature: string) => void
@@ -67,7 +68,7 @@ export function ScopeManager({ onFeatureActivated, className = '' }: ScopeManage
     switch (featureKey) {
       case 'profile':
         return (
-          <div className="bg-white rounded p-1">
+          <div className="rounded p-1">
             <img
               src="https://cdn.simpleicons.org/google"
               alt="Google"
@@ -77,7 +78,7 @@ export function ScopeManager({ onFeatureActivated, className = '' }: ScopeManage
         )
       case 'drive':
         return (
-          <div className="bg-white rounded p-1">
+          <div className="rounded p-1">
             <img
               src="https://cdn.simpleicons.org/googledrive"
               alt="Google Drive"
@@ -87,7 +88,7 @@ export function ScopeManager({ onFeatureActivated, className = '' }: ScopeManage
         )
       case 'gmail':
         return (
-          <div className="bg-white rounded p-1">
+          <div className="rounded p-1">
             <img
               src="https://cdn.simpleicons.org/gmail"
               alt="Gmail"
@@ -97,7 +98,7 @@ export function ScopeManager({ onFeatureActivated, className = '' }: ScopeManage
         )
       case 'calendar':
         return (
-          <div className="bg-white rounded p-1">
+          <div className="rounded p-1">
             <img
               src="https://cdn.simpleicons.org/googlecalendar"
               alt="Google Calendar"
@@ -173,11 +174,11 @@ export function ScopeManager({ onFeatureActivated, className = '' }: ScopeManage
             className="flex items-center justify-between gap-4"
           >
             <div className="flex items-center gap-3">
-              <div className={`rounded-lg p-2 ${isActive ? 'bg-primary/10' : 'bg-muted'}`}>
-                <div className={isActive ? '[&_img]:brightness-110' : '[&_img]:opacity-60'}>
+              <ConnectionIconFrame isActive={isActive}>
+                <div className={isActive ? '[&_img]:brightness-110' : ''}>
                   {getFeatureIcon(featureKey)}
                 </div>
-              </div>
+              </ConnectionIconFrame>
               <div>
                 <Typography variant="small" className="font-medium text-foreground">{feature.name}</Typography>
               </div>

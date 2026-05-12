@@ -19,7 +19,7 @@ interface PDFViewerProps {
   } | null;
 }
 
-export function PDFViewer({ file, userInfo }: PDFViewerProps) {
+export function PDFViewer({ file }: PDFViewerProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +43,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
       try {
         const isDriveFile = file.path?.startsWith('drive://');
         const isOneDriveFile = file.path?.startsWith('onedrive://');
+        const isDropboxFile = file.path?.startsWith('dropbox://');
         
         if (isDriveFile) {
           // Handle Google Drive file
@@ -53,6 +54,11 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
         } else if (isOneDriveFile) {
           // Handle OneDrive file
           const blob = await ApiService.OneDrive.getFileBlob(file.file_id);
+          const url = window.URL.createObjectURL(blob);
+          currentUrl = url;
+          setPdfUrl(url);
+        } else if (isDropboxFile) {
+          const blob = await ApiService.Dropbox.getFileBlob(file.file_id);
           const url = window.URL.createObjectURL(blob);
           currentUrl = url;
           setPdfUrl(url);
@@ -89,6 +95,7 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
     try {
       const isDriveFile = file.path?.startsWith('drive://');
       const isOneDriveFile = file.path?.startsWith('onedrive://');
+      const isDropboxFile = file.path?.startsWith('dropbox://');
       let url: string;
       
       if (isDriveFile) {
@@ -96,6 +103,9 @@ export function PDFViewer({ file, userInfo }: PDFViewerProps) {
         url = window.URL.createObjectURL(blob);
       } else if (isOneDriveFile) {
         const blob = await ApiService.OneDrive.getFileBlob(file.file_id);
+        url = window.URL.createObjectURL(blob);
+      } else if (isDropboxFile) {
+        const blob = await ApiService.Dropbox.getFileBlob(file.file_id);
         url = window.URL.createObjectURL(blob);
       } else {
         const result = await ApiService.downloadFromS3(file.file_id, file.name);

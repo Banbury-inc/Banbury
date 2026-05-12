@@ -74,8 +74,8 @@ export function createRenderPanelGroup({
           src={BanburyLogo} 
           alt="Banbury" 
           className="opacity-20 dark:opacity-15"
-          width={isMobile ? 60 : 80}
-          height={isMobile ? 60 : 80}
+          width={isMobile ? 120 : 160}
+          height={isMobile ? 120 : 160}
           priority
         />
         <div className="flex flex-col items-center gap-4 max-w-md w-full">

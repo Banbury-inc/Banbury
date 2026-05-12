@@ -13,7 +13,7 @@ interface ImageViewerProps {
   } | null;
 }
 
-export function ImageViewer({ file, userInfo }: ImageViewerProps) {
+export function ImageViewer({ file }: ImageViewerProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +34,7 @@ export function ImageViewer({ file, userInfo }: ImageViewerProps) {
       try {
         const isDriveFile = file.path?.startsWith('drive://');
         const isOneDriveFile = file.path?.startsWith('onedrive://');
+        const isDropboxFile = file.path?.startsWith('dropbox://');
         
         if (isDriveFile) {
           // Handle Google Drive file
@@ -44,6 +45,11 @@ export function ImageViewer({ file, userInfo }: ImageViewerProps) {
         } else if (isOneDriveFile) {
           // Handle OneDrive file
           const blob = await ApiService.OneDrive.getFileBlob(file.file_id);
+          const url = window.URL.createObjectURL(blob);
+          currentUrl = url;
+          setImageUrl(url);
+        } else if (isDropboxFile) {
+          const blob = await ApiService.Dropbox.getFileBlob(file.file_id);
           const url = window.URL.createObjectURL(blob);
           currentUrl = url;
           setImageUrl(url);

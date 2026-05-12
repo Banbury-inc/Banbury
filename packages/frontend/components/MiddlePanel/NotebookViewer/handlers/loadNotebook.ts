@@ -13,6 +13,7 @@ export async function loadNotebookFile(file: FileSystemItem): Promise<NotebookDo
   
   const isDriveFile = file.path?.startsWith('drive://')
   const isOneDriveFile = file.path?.startsWith('onedrive://')
+  const isDropboxFile = file.path?.startsWith('dropbox://')
   
   let blob: Blob
   
@@ -20,6 +21,8 @@ export async function loadNotebookFile(file: FileSystemItem): Promise<NotebookDo
     blob = await ApiService.Drive.getFileBlob(file.file_id)
   } else if (isOneDriveFile) {
     blob = await ApiService.OneDrive.getFileBlob(file.file_id)
+  } else if (isDropboxFile) {
+    blob = await ApiService.Dropbox.getFileBlob(file.file_id)
   } else {
     const result = await ApiService.downloadS3File(file.file_id, file.name)
     blob = result.blob

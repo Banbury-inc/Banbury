@@ -404,6 +404,7 @@ export async function handleSpreadsheetSave({
     // Check if this is a Google Drive or OneDrive file
     const isDriveFile = currentFile.path?.startsWith('drive://');
     const isOneDriveFile = currentFile.path?.startsWith('onedrive://');
+    const isDropboxFile = currentFile.path?.startsWith('dropbox://');
     const isGoogleSheet = currentFile.mimeType?.includes('vnd.google-apps.spreadsheet');
     
     // Clean up the current blob URL before saving
@@ -472,6 +473,19 @@ export async function handleSpreadsheetSave({
       // Show success toast
       toast({
         title: "Spreadsheet saved to OneDrive",
+        description: "Your spreadsheet has been updated successfully.",
+        variant: "success",
+      });
+    } else if (isDropboxFile) {
+      await ApiService.Dropbox.updateFile(
+        currentFile.file_id,
+        xlsxBlob,
+        fileName
+      );
+
+      onSaveComplete?.();
+      toast({
+        title: "Spreadsheet saved to Dropbox",
         description: "Your spreadsheet has been updated successfully.",
         variant: "success",
       });

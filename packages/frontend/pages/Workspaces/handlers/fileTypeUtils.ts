@@ -166,8 +166,9 @@ export const isViewableFileExtended = (file: { name: string; path?: string; mime
   const isDriveFile = file.path?.startsWith('drive://')
   // Check if it's a OneDrive file
   const isOneDriveFile = file.path?.startsWith('onedrive://')
+  const isDropboxFile = file.path?.startsWith('dropbox://')
 
-  if (isDriveFile || isOneDriveFile) {
+  if (isDriveFile || isOneDriveFile || isDropboxFile) {
     // Use mimeType-based detection for cloud providers
     return isDriveFileViewable(file.mimeType, file.name)
   }

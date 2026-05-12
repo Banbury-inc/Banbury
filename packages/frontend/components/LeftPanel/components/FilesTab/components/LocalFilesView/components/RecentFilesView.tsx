@@ -37,6 +37,7 @@ interface RecentFilesViewProps {
   onShareFile: (file: FileSystemItem) => void
   driveAvailable: boolean
   oneDriveConnected: boolean
+  dropboxConnected: boolean
   triggerSidebarRefresh?: () => void
 }
 
@@ -71,6 +72,7 @@ export function RecentFilesView({
   onShareFile,
   driveAvailable,
   oneDriveConnected,
+  dropboxConnected,
   triggerSidebarRefresh,
 }: RecentFilesViewProps) {
   if (filteredRecentFiles.length === 0) {
@@ -133,6 +135,7 @@ export function RecentFilesView({
           onShareFile={onShareFile}
           driveAvailable={driveAvailable}
           oneDriveConnected={oneDriveConnected}
+          dropboxConnected={dropboxConnected}
           triggerSidebarRefresh={triggerSidebarRefresh}
         />
       ))}

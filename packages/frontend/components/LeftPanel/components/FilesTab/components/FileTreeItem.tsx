@@ -26,6 +26,7 @@ import { ApiService } from "../../../../../../backend/api/apiService"
 import { useToast } from "../../../../common/ui/use-toast"
 import { handleCopyLocalToDrive } from "./FileContextMenu/handlers/handleCopyLocalToDrive"
 import { handleCopyLocalToOneDrive } from "./FileContextMenu/handlers/handleCopyLocalToOneDrive"
+import { handleCopyLocalToDropbox } from "./FileContextMenu/handlers/handleCopyLocalToDropbox"
 import { handleLocalFileDownload } from "../handlers/handleLocalFileDownload"
 import { handleSaveAsPDF } from "./FileContextMenu/handlers/handleSaveAsPDF"
 import { CloudFileContextMenu } from "./FileContextMenu/CloudFileContextMenu"
@@ -75,6 +76,7 @@ export interface FileTreeItemProps {
   onShareFile?: (file: FileSystemItem) => void
   driveAvailable?: boolean
   oneDriveConnected?: boolean
+  dropboxConnected?: boolean
   triggerSidebarRefresh?: () => void
 }
 
@@ -247,6 +249,7 @@ export function FileTreeItem({
   onShareFile,
   driveAvailable,
   oneDriveConnected,
+  dropboxConnected,
   triggerSidebarRefresh,
 }: FileTreeItemProps) {
   
@@ -609,6 +612,7 @@ export function FileTreeItem({
             onShare={item.type === 'file' && item.file_id ? () => onShareFile?.(item) : undefined}
             driveAvailable={driveAvailable}
             oneDriveConnected={oneDriveConnected}
+            dropboxConnected={dropboxConnected}
             onCopyToDrive={item.type === 'file' && item.file_id ? () => {
               handleCopyLocalToDrive({
                 s3FileId: item.file_id!,
@@ -618,6 +622,13 @@ export function FileTreeItem({
             } : undefined}
             onCopyToOneDrive={item.type === 'file' && item.file_id ? () => {
               handleCopyLocalToOneDrive({
+                s3FileId: item.file_id!,
+                fileName: item.name,
+                showToast: toast
+              })
+            } : undefined}
+            onCopyToDropbox={item.type === 'file' && item.file_id ? () => {
+              handleCopyLocalToDropbox({
                 s3FileId: item.file_id!,
                 fileName: item.name,
                 showToast: toast
@@ -709,6 +720,7 @@ export function FileTreeItem({
               onShareFile={onShareFile}
               driveAvailable={driveAvailable}
               oneDriveConnected={oneDriveConnected}
+              dropboxConnected={dropboxConnected}
             />
           ))}
         </>

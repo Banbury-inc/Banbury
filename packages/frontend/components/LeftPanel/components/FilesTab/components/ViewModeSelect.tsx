@@ -10,20 +10,22 @@ import type { Dispatch } from "react"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../../../../common/ui/select"
 import { Typography } from "../../../../common/ui/typography"
 
-type FileProvider = 'local' | 'google-drive' | 'onedrive'
+type FileProvider = 'local' | 'google-drive' | 'onedrive' | 'dropbox'
 type LocalViewMode = 'all' | 'recent' | 'starred' | 'shared'
 type GoogleDriveViewMode = 'my-drive' | 'recent' | 'starred' | 'trash'
 type OneDriveViewMode = 'root' | 'recent' | 'favorites' | 'search' | 'trash'
+type DropboxViewMode = 'root' | 'recent' | 'favorites' | 'search' | 'trash'
 
 interface ViewModeSelectProps {
   fileProvider: FileProvider
   localViewMode: LocalViewMode
   googleDriveViewMode: GoogleDriveViewMode
   oneDriveViewMode: OneDriveViewMode
+  dropboxViewMode: DropboxViewMode
   onViewModeChange: Dispatch<string>
 }
 
-function getViewModeIcon(provider: FileProvider, localViewMode: LocalViewMode, googleDriveViewMode: GoogleDriveViewMode, oneDriveViewMode: OneDriveViewMode) {
+function getViewModeIcon(provider: FileProvider, localViewMode: LocalViewMode, googleDriveViewMode: GoogleDriveViewMode, oneDriveViewMode: OneDriveViewMode, dropboxViewMode: DropboxViewMode) {
   switch (provider) {
     case 'local':
       switch (localViewMode) {
@@ -50,11 +52,20 @@ function getViewModeIcon(provider: FileProvider, localViewMode: LocalViewMode, g
         case 'trash': return Trash2
       }
       break
+    case 'dropbox':
+      switch (dropboxViewMode) {
+        case 'root': return Folder
+        case 'recent': return Clock
+        case 'favorites': return Star
+        case 'search': return Search
+        case 'trash': return Trash2
+      }
+      break
   }
   return Folder
 }
 
-function getViewModeDisplayName(provider: FileProvider, localViewMode: LocalViewMode, googleDriveViewMode: GoogleDriveViewMode, oneDriveViewMode: OneDriveViewMode) {
+function getViewModeDisplayName(provider: FileProvider, localViewMode: LocalViewMode, googleDriveViewMode: GoogleDriveViewMode, oneDriveViewMode: OneDriveViewMode, dropboxViewMode: DropboxViewMode) {
   switch (provider) {
     case 'local':
       switch (localViewMode) {
@@ -81,15 +92,25 @@ function getViewModeDisplayName(provider: FileProvider, localViewMode: LocalView
         case 'trash': return 'Trash'
       }
       break
+    case 'dropbox':
+      switch (dropboxViewMode) {
+        case 'root': return 'All Files'
+        case 'recent': return 'Recent'
+        case 'favorites': return 'Favorites'
+        case 'search': return 'Search'
+        case 'trash': return 'Trash'
+      }
+      break
   }
   return 'All Files'
 }
 
-function getCurrentViewMode(fileProvider: FileProvider, localViewMode: LocalViewMode, googleDriveViewMode: GoogleDriveViewMode, oneDriveViewMode: OneDriveViewMode) {
+function getCurrentViewMode(fileProvider: FileProvider, localViewMode: LocalViewMode, googleDriveViewMode: GoogleDriveViewMode, oneDriveViewMode: OneDriveViewMode, dropboxViewMode: DropboxViewMode) {
   switch (fileProvider) {
     case 'local': return localViewMode
     case 'google-drive': return googleDriveViewMode
     case 'onedrive': return oneDriveViewMode
+    case 'dropbox': return dropboxViewMode
   }
 }
 
@@ -98,11 +119,12 @@ export function ViewModeSelect({
   localViewMode,
   googleDriveViewMode,
   oneDriveViewMode,
+  dropboxViewMode,
   onViewModeChange,
 }: ViewModeSelectProps) {
-  const currentViewMode = getCurrentViewMode(fileProvider, localViewMode, googleDriveViewMode, oneDriveViewMode)
-  const Icon = getViewModeIcon(fileProvider, localViewMode, googleDriveViewMode, oneDriveViewMode)
-  const displayName = getViewModeDisplayName(fileProvider, localViewMode, googleDriveViewMode, oneDriveViewMode)
+  const currentViewMode = getCurrentViewMode(fileProvider, localViewMode, googleDriveViewMode, oneDriveViewMode, dropboxViewMode)
+  const Icon = getViewModeIcon(fileProvider, localViewMode, googleDriveViewMode, oneDriveViewMode, dropboxViewMode)
+  const displayName = getViewModeDisplayName(fileProvider, localViewMode, googleDriveViewMode, oneDriveViewMode, dropboxViewMode)
 
   return (
     <Select key={`view-mode-${fileProvider}-${currentViewMode}`} value={currentViewMode} onValueChange={onViewModeChange}>
@@ -187,6 +209,41 @@ export function ViewModeSelect({
               <div className="flex items-center gap-2">
                 <Folder className="h-3.5 w-3.5" strokeWidth={1.5} />
                 <Typography variant="xs" className="font-medium">My Files</Typography>
+              </div>
+            </SelectItem>
+            <SelectItem value="recent">
+              <div className="flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5" strokeWidth={1.5} />
+                <Typography variant="xs" className="font-medium">Recent</Typography>
+              </div>
+            </SelectItem>
+            <SelectItem value="favorites">
+              <div className="flex items-center gap-2">
+                <Star className="h-3.5 w-3.5" strokeWidth={1.5} />
+                <Typography variant="xs" className="font-medium">Favorites</Typography>
+              </div>
+            </SelectItem>
+            <SelectItem value="search">
+              <div className="flex items-center gap-2">
+                <Search className="h-3.5 w-3.5" strokeWidth={1.5} />
+                <Typography variant="xs" className="font-medium">Search</Typography>
+              </div>
+            </SelectItem>
+            <SelectItem value="trash">
+              <div className="flex items-center gap-2">
+                <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                <Typography variant="xs" className="font-medium">Trash</Typography>
+              </div>
+            </SelectItem>
+          </SelectGroup>
+        )}
+        {fileProvider === 'dropbox' && (
+          <SelectGroup>
+            <SelectLabel>View</SelectLabel>
+            <SelectItem value="root">
+              <div className="flex items-center gap-2">
+                <Folder className="h-3.5 w-3.5" strokeWidth={1.5} />
+                <Typography variant="xs" className="font-medium">All Files</Typography>
               </div>
             </SelectItem>
             <SelectItem value="recent">

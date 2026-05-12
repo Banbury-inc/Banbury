@@ -36,7 +36,16 @@ export default function IntegrationsTab() {
               • <Link href="/docs/microsoft-calendar" className="underline underline-offset-4">Microsoft Calendar</Link> — Schedule and manage calendar events
             </Typography>
             <Typography variant="p" className="mb-1">
+              • <Link href="/docs/microsoft-teams" className="underline underline-offset-4">Microsoft Teams</Link> — Read Teams context and send channel messages
+            </Typography>
+            <Typography variant="p" className="mb-1">
               • <Link href="/docs/onedrive" className="underline underline-offset-4">OneDrive</Link> — Access and sync cloud files
+            </Typography>
+            <Typography variant="p" className="mb-1">
+              • <Link href="/docs/dropbox" className="underline underline-offset-4">Dropbox</Link> — Browse and manage cloud storage
+            </Typography>
+            <Typography variant="p" className="mb-1">
+              • <Link href="/docs/notion" className="underline underline-offset-4">Notion</Link> — Search workspace knowledge and create pages
             </Typography>
             <Typography variant="p">
               • <Link href="/docs/x" className="underline underline-offset-4">X (Twitter)</Link> — Social media read/post

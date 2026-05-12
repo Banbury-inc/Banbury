@@ -994,6 +994,43 @@ export default class Files {
   }
 
   /**
+   * Copy a Dropbox file to Local (S3) storage
+   */
+  static async copyDropboxFileToLocal(dropboxItemId: string): Promise<{
+    success: boolean
+    local_file_id?: string
+    local_path?: string
+    file_name?: string
+  }> {
+    try {
+      ApiService.loadAuthToken()
+
+      const response = await ApiService.post<{
+        result?: string
+        local_file_id?: string
+        local_path?: string
+        file_name?: string
+        error?: string
+      }>('/files/transfer/dropbox_to_s3/', { dropbox_item_id: dropboxItemId })
+
+      if (response.result === 'success') {
+        return {
+          success: true,
+          local_file_id: response.local_file_id,
+          local_path: response.local_path,
+          file_name: response.file_name
+        }
+      } else if (response.error) {
+        throw new Error(response.error)
+      }
+      throw new Error('Failed to copy file from Dropbox')
+    } catch (error) {
+      console.error('copyDropboxFileToLocal error:', error)
+      throw ApiService.enhanceError(error, 'Failed to copy file from Dropbox to Local')
+    }
+  }
+
+  /**
    * Copy a Local (S3) file to Google Drive
    */
   static async copyLocalFileToDrive(s3FileId: string): Promise<{
@@ -1058,6 +1095,40 @@ export default class Files {
     } catch (error) {
       console.error('copyLocalFileToOneDrive error:', error)
       throw ApiService.enhanceError(error, 'Failed to copy file to OneDrive')
+    }
+  }
+
+  /**
+   * Copy a Local (S3) file to Dropbox
+   */
+  static async copyLocalFileToDropbox(s3FileId: string): Promise<{
+    success: boolean
+    dropbox_item_id?: string
+    dropbox_file_name?: string
+  }> {
+    try {
+      ApiService.loadAuthToken()
+
+      const response = await ApiService.post<{
+        result?: string
+        dropbox_item_id?: string
+        dropbox_file_name?: string
+        error?: string
+      }>('/files/transfer/s3_to_dropbox/', { s3_file_id: s3FileId })
+
+      if (response.result === 'success') {
+        return {
+          success: true,
+          dropbox_item_id: response.dropbox_item_id,
+          dropbox_file_name: response.dropbox_file_name
+        }
+      } else if (response.error) {
+        throw new Error(response.error)
+      }
+      throw new Error('Failed to copy file to Dropbox')
+    } catch (error) {
+      console.error('copyLocalFileToDropbox error:', error)
+      throw ApiService.enhanceError(error, 'Failed to copy file to Dropbox')
     }
   }
 

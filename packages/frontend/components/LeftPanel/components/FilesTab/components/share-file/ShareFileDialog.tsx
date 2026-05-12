@@ -29,7 +29,7 @@ interface ShareFileDialogProps {
   file: {
     id: string
     name: string
-    type: "s3" | "drive" | "onedrive"
+    type: "s3" | "drive" | "onedrive" | "dropbox"
   } | null
   onShareSuccess?: () => void
 }
@@ -134,6 +134,18 @@ export function ShareFileDialog({
         } else {
           // Fallback: create a shareable link
           const result = await ApiService.OneDrive.createShareLink(file.id, "edit")
+          setSuccessMessage(`Shareable link created: ${result.link}`)
+        }
+        setSelectedUsers([])
+        onShareSuccess?.()
+        setTimeout(() => onOpenChange(false), 1500)
+      } else if (file.type === "dropbox") {
+        const emails = recipients.map((r) => r.email).filter(Boolean) as string[]
+        if (emails.length > 0) {
+          await ApiService.Dropbox.inviteToShare(file.id, emails, "write")
+          setSuccessMessage(`File shared with ${emails.length} user(s) via Dropbox`)
+        } else {
+          const result = await ApiService.Dropbox.createShareLink(file.id, "edit")
           setSuccessMessage(`Shareable link created: ${result.link}`)
         }
         setSelectedUsers([])

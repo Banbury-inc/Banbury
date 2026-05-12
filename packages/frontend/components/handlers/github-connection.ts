@@ -1,4 +1,7 @@
+import axios from 'axios'
 import { ApiService } from '../../../backend/api/apiService'
+
+const GITHUB_STATUS_TIMEOUT_MS = 5000
 
 export interface GitHubConnectionStatus {
   connected: boolean
@@ -9,14 +12,20 @@ export interface GitHubConnectionStatus {
 
 export async function checkGitHubConnectionStatus(): Promise<GitHubConnectionStatus> {
   try {
-    const response = await ApiService.get('/authentication/github/status/') as GitHubConnectionStatus
-    return response
-  } catch (error: any) {
-    // Handle 401 Unauthorized or other errors gracefully - user is not authenticated or not connected
-    if (error?.response?.status === 401 || error?.response?.status === 403) {
-      return { connected: false }
+    const response = await axios.get<GitHubConnectionStatus>(
+      `${ApiService.baseURL}/authentication/github/status/`,
+      { timeout: GITHUB_STATUS_TIMEOUT_MS }
+    )
+
+    return response.data
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status
+      const isConnectionUnavailable = error.code === 'ECONNABORTED' || status === 401 || status === 403
+
+      if (isConnectionUnavailable) return { connected: false }
     }
-    // For other errors, still return not connected but rethrow for logging
+
     console.error('Error checking GitHub connection status:', error)
     return { connected: false }
   }
