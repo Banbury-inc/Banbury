@@ -1,4 +1,4 @@
-import { CalendarDays, Clock, Users, Download, FileText, Upload, Radio } from "lucide-react"
+import { Clock, Users, Download, FileText, Upload, Radio } from "lucide-react"
 import { Button } from "../../../common/ui/button"
 import { Separator } from "../../../common/ui/separator"
 import { Typography } from "../../../common/ui/typography"
@@ -36,15 +36,12 @@ export function MeetingActionsBar({
   const statusLabel = meeting.status.replace(/-/g, ' ')
 
   return (
-    <div className="border-b border-border bg-card px-4 py-3 shadow-sm sm:px-6 lg:px-8">
+    <div className="border-b border-border bg-card px-4 py-2 shadow-sm sm:px-6 lg:px-8">
       {/* Left: meeting identity and metadata */}
       <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex min-w-0 flex-1 items-start gap-3">
-          <div className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-border bg-card shadow-sm">
-            <CalendarDays className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-          </div>
+        <div className="flex min-w-0 flex-1 items-start">
           <div className="min-w-0 flex-1 space-y-1.5">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span className="truncate text-base font-semibold leading-tight text-foreground">
                 {meetingTitle}
               </span>
@@ -52,9 +49,7 @@ export function MeetingActionsBar({
                 {isLiveMeeting && <Radio className="h-3 w-3 text-destructive" aria-hidden="true" />}
                 {statusLabel}
               </span>
-            </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               {!isTimedLiveMeeting && (
                 <div className="flex items-center gap-1.5 rounded-full bg-card px-2 py-1 ring-1 ring-border" aria-label="Duration">
                   <Clock className="h-3.5 w-3.5" aria-hidden="true" />
@@ -66,6 +61,7 @@ export function MeetingActionsBar({
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
+                      type="button"
                       className="flex items-center gap-1.5 rounded-full bg-card px-2 py-1 ring-1 ring-border transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       aria-label={`${displayParticipantNames.length} participants, click to view`}
                     >
@@ -103,7 +99,7 @@ export function MeetingActionsBar({
                   <span>{formatDuration(duration)}/{meeting.metadata.maxDuration}m</span>
                 </div>
               )}
-              </div>
+            </div>
           </div>
         </div>
 
@@ -114,7 +110,7 @@ export function MeetingActionsBar({
           {meeting.status === 'completed' && (meeting.recordingUrl || videoStreamUrl) && (
             <Button
               size="sm"
-              variant="outline"
+              variant="ghost"
               onClick={onDownloadRecording}
               disabled={isLoading}
             >

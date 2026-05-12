@@ -61,7 +61,7 @@ export function VideoPlayer({
   return (
     <div
       ref={containerRef}
-      className="group relative aspect-video overflow-hidden rounded-2xl border border-border bg-background shadow-sm ring-1 ring-border/40"
+      className="group relative h-full overflow-hidden border border-border bg-background shadow-sm ring-1 ring-border/40"
     >
       <div className="absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-background/45 to-transparent pointer-events-none" />
       {isVideoLoading && (
@@ -99,7 +99,7 @@ export function VideoPlayer({
         <video
           ref={videoRef}
           src={videoStreamUrl}
-          className="w-full h-full object-contain bg-background"
+          className="h-full w-full bg-background object-contain outline-none focus:outline-none focus-visible:outline-none"
           preload="metadata"
           onLoadStart={onLoadStart}
           crossOrigin="anonymous"

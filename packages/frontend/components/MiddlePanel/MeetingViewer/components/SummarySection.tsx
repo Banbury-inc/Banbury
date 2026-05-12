@@ -34,7 +34,7 @@ export function SummarySection({
   onContentChange
 }: SummarySectionProps) {
   return (
-    <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden border border-border bg-card shadow-sm">
       <div className="flex flex-shrink-0 flex-col gap-2 border-b border-border bg-muted/30 px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div>

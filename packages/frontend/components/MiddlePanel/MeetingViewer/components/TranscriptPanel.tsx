@@ -26,13 +26,13 @@ export function TranscriptPanel({
   return (
     <div className="min-h-0 w-full flex-shrink-0 lg:w-[22rem] lg:min-w-80">
       {isTranscriptionLoading ? (
-        <Card className="overflow-hidden rounded-2xl border-border bg-card shadow-sm">
+        <Card className="overflow-hidden border-border bg-card shadow-sm">
           <div className="flex items-center justify-center p-10">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-label="Loading transcript" />
           </div>
         </Card>
       ) : allSegments.length > 0 ? (
-        <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border-border bg-card shadow-sm">
+        <Card className="flex h-full min-h-0 flex-col overflow-hidden border-border bg-card shadow-sm">
           <div className="flex flex-shrink-0 items-center justify-between border-b border-border bg-muted/35 px-4 py-3">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background ring-1 ring-border">
