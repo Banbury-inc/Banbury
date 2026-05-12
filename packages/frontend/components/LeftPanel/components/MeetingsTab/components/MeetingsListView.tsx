@@ -3,6 +3,7 @@ import { MeetingSession } from '../../../../../types/meeting-types'
 import { Typography } from '../../../../common/ui/typography'
 import { Button } from '../../../../common/ui/button'
 import { Video, Clock, Users, CheckCircle2, XCircle, PlayCircle, Calendar, Trash2 } from 'lucide-react'
+import { MeetingContextMenu } from './MeetingContextMenu'
 
 interface MeetingsListViewProps {
   meetings: MeetingSession[]
@@ -10,6 +11,11 @@ interface MeetingsListViewProps {
   onMeetingSelect?: (meeting: MeetingSession) => void
   selectedMeeting?: MeetingSession | null
   onMeetingDeleted?: (meetingId: string) => void
+  onMeetingRename?: (meeting: MeetingSession) => void
+  onMeetingShare?: (meeting: MeetingSession) => void
+  onMeetingCopyUrl?: (meeting: MeetingSession) => void
+  onMeetingDownloadRecording?: (meeting: MeetingSession) => void
+  onMeetingDownloadTranscript?: (meeting: MeetingSession) => void
 }
 
 type MeetingStatus = MeetingSession['status']
@@ -78,7 +84,18 @@ function getMeetingDate(meeting: MeetingSession & { createdAt?: string | Date })
 
 
 
-export function MeetingsListView({ meetings, loading, onMeetingSelect, selectedMeeting, onMeetingDeleted }: MeetingsListViewProps) {
+export function MeetingsListView({
+  meetings,
+  loading,
+  onMeetingSelect,
+  selectedMeeting,
+  onMeetingDeleted,
+  onMeetingRename,
+  onMeetingShare,
+  onMeetingCopyUrl,
+  onMeetingDownloadRecording,
+  onMeetingDownloadTranscript
+}: MeetingsListViewProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center flex-1 p-4">
@@ -102,9 +119,8 @@ export function MeetingsListView({ meetings, loading, onMeetingSelect, selectedM
           const StatusIcon = getStatusIcon(meeting.status)
           const isSelected = selectedMeeting?.id === meeting.id
 
-          return (
+          const row = (
             <div
-              key={meeting.id}
               className={`
                 group p-2 rounded-md transition-colors min-w-0
                 ${isSelected 
@@ -164,6 +180,21 @@ export function MeetingsListView({ meetings, loading, onMeetingSelect, selectedM
                 )}
               </div>
             </div>
+          )
+
+          return (
+            <MeetingContextMenu
+              key={meeting.id}
+              onOpen={() => onMeetingSelect?.(meeting)}
+              onRename={() => onMeetingRename?.(meeting)}
+              onShare={() => onMeetingShare?.(meeting)}
+              onCopyUrl={() => onMeetingCopyUrl?.(meeting)}
+              onDownloadRecording={() => onMeetingDownloadRecording?.(meeting)}
+              onDownloadTranscript={() => onMeetingDownloadTranscript?.(meeting)}
+              onDelete={() => onMeetingDeleted?.(meeting.id)}
+            >
+              {row}
+            </MeetingContextMenu>
           )
         })}
       </div>

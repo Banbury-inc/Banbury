@@ -97,6 +97,8 @@ export interface ToolPreferences {
   web_search?: boolean;
   tiptap_ai?: boolean;
   memory?: boolean;
+  notion?: boolean;
+  onedrive?: boolean;
   model_provider?: "anthropic" | "openai";
   model_id?: string;
 }
@@ -162,6 +164,8 @@ export function useLangGraphAssistant(initialThreadId?: string) {
       web_search: toolPreferences?.web_search !== false,
       tiptap_ai: toolPreferences?.tiptap_ai !== false,
       memory: true,
+      notion: toolPreferences?.notion !== false,
+      onedrive: typeof toolPreferences?.onedrive === "boolean" ? toolPreferences.onedrive : false,
       model_provider: modelProvider,
       model_id: modelId,
     };

@@ -10,6 +10,7 @@ import { handleDownloadTranscription } from "./handlers/handle-download-transcri
 import { toggleVideoPlayPause, handleVideoSeek, handleVideoVolumeChange, toggleVideoMute, handleTranscriptSegmentClick, toggleFullscreen } from "./handlers/video-player-handlers"
 import { fetchTranscriptFromUrl } from "./handlers/transcript-handlers"
 import { RecordingUploadDialog } from "../../../pages/MeetingAgent/components/RecordingUploadDialog"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "../../common/ui/resizable"
 import { MeetingActionsBar } from "./components/MeetingActionsBar"
 import { VideoPlayer } from "./components/VideoPlayer"
 import { TranscriptPanel } from "./components/TranscriptPanel"
@@ -49,6 +50,7 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
   const [isSavingSummary, setIsSavingSummary] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const summaryEditorRef = useRef<MeetingSummaryEditorRef>(null)
+  const hasVideo = !!(currentMeeting.recordingUrl || currentMeeting.recallBot?.videoUrl || videoStreamUrl)
 
   useEffect(() => {
     setCurrentMeeting(meeting)
@@ -405,7 +407,7 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
   const duration = getDuration(currentMeeting as MeetingSession & { createdAt?: string | Date })
 
   return (
-    <div className="h-full flex flex-col bg-card">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       {/* Actions */}
       <MeetingActionsBar
         meeting={currentMeeting}
@@ -420,51 +422,76 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
       />
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="px-4 py-4 space-y-4">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-muted/30 lg:overflow-hidden">
+        <div className="min-h-full pb-5 lg:h-full lg:min-h-0 lg:pb-6">
           {/* Two-column layout: Video/Summary on left, Transcript on right */}
-          <div className="flex flex-col lg:flex-row gap-4">
+          <div className="mx-auto flex h-full min-h-0 w-full max-w-[1440px] flex-col gap-y-5 lg:flex-row">
             {/* Left Column: Video and Summary */}
-            <div className="flex-1 space-y-4 min-w-0">
-              {(currentMeeting.recordingUrl || currentMeeting.recallBot?.videoUrl || videoStreamUrl) && (
-                <VideoPlayer
-                  videoRef={videoRef}
-                  containerRef={videoContainerRef}
-                  videoStreamUrl={videoStreamUrl}
-                  isVideoLoading={isVideoLoading}
-                  isVideoPlaying={isVideoPlaying}
-                  videoError={videoError}
-                  videoCurrentTime={videoCurrentTime}
-                  videoDuration={videoDuration}
-                  videoVolume={videoVolume}
-                  isVideoMuted={isVideoMuted}
-                  onTogglePlayPause={onToggleVideoPlayPause}
-                  onVideoSeek={onVideoSeek}
-                  onVolumeChange={onVideoVolumeChange}
-                  onToggleMute={onToggleVideoMute}
-                  onToggleFullscreen={onToggleFullscreen}
-                  onLoadStart={() => setIsVideoLoading(true)}
-                  setVideoError={setVideoError}
-                  setIsVideoLoading={setIsVideoLoading}
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+              {hasVideo ? (
+                <ResizablePanelGroup direction="vertical" className="min-h-0 flex-1">
+                  <ResizablePanel defaultSize={45} minSize={35}>
+                    <VideoPlayer
+                      videoRef={videoRef}
+                      containerRef={videoContainerRef}
+                      videoStreamUrl={videoStreamUrl}
+                      isVideoLoading={isVideoLoading}
+                      isVideoPlaying={isVideoPlaying}
+                      videoError={videoError}
+                      videoCurrentTime={videoCurrentTime}
+                      videoDuration={videoDuration}
+                      videoVolume={videoVolume}
+                      isVideoMuted={isVideoMuted}
+                      onTogglePlayPause={onToggleVideoPlayPause}
+                      onVideoSeek={onVideoSeek}
+                      onVolumeChange={onVideoVolumeChange}
+                      onToggleMute={onToggleVideoMute}
+                      onToggleFullscreen={onToggleFullscreen}
+                      onLoadStart={() => setIsVideoLoading(true)}
+                      setVideoError={setVideoError}
+                      setIsVideoLoading={setIsVideoLoading}
+                    />
+                  </ResizablePanel>
+
+                  <ResizableHandle />
+
+                  <ResizablePanel defaultSize={55} minSize={35}>
+                    <SummarySection
+                      summaryEditorRef={summaryEditorRef}
+                      summaryHtml={summaryHtml}
+                      isGeneratingSummary={isGeneratingSummary}
+                      isSavingSummary={isSavingSummary}
+                      hasUnsavedChanges={hasUnsavedChanges}
+                      hasSummary={!!(currentMeeting.summary || summaryHtml)}
+                      hasTranscription={!!(currentMeeting.transcriptionText || transcriptionFullText)}
+                      meetingId={currentMeeting.id}
+                      onSave={onSaveSummary}
+                      onRegenerate={onRegenerateSummary}
+                      onGenerate={onGenerateSummary}
+                      onContentChange={() => {
+                        if (!isGeneratingSummary) setHasUnsavedChanges(true)
+                      }}
+                    />
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              ) : (
+                <SummarySection
+                  summaryEditorRef={summaryEditorRef}
+                  summaryHtml={summaryHtml}
+                  isGeneratingSummary={isGeneratingSummary}
+                  isSavingSummary={isSavingSummary}
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  hasSummary={!!(currentMeeting.summary || summaryHtml)}
+                  hasTranscription={!!(currentMeeting.transcriptionText || transcriptionFullText)}
+                  meetingId={currentMeeting.id}
+                  onSave={onSaveSummary}
+                  onRegenerate={onRegenerateSummary}
+                  onGenerate={onGenerateSummary}
+                  onContentChange={() => {
+                    if (!isGeneratingSummary) setHasUnsavedChanges(true)
+                  }}
                 />
               )}
-
-              <SummarySection
-                summaryEditorRef={summaryEditorRef}
-                summaryHtml={summaryHtml}
-                isGeneratingSummary={isGeneratingSummary}
-                isSavingSummary={isSavingSummary}
-                hasUnsavedChanges={hasUnsavedChanges}
-                hasSummary={!!(currentMeeting.summary || summaryHtml)}
-                hasTranscription={!!(currentMeeting.transcriptionText || transcriptionFullText)}
-                meetingId={currentMeeting.id}
-                onSave={onSaveSummary}
-                onRegenerate={onRegenerateSummary}
-                onGenerate={onGenerateSummary}
-                onContentChange={() => {
-                  if (!isGeneratingSummary) setHasUnsavedChanges(true)
-                }}
-              />
             </div>
 
             {/* Right Column: Transcript */}

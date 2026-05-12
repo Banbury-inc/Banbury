@@ -170,7 +170,7 @@ export function FlowsTab({
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card">
         <Button
           variant="ghost"
           size="xs"

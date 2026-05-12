@@ -15,7 +15,7 @@ interface SpreadsheetViewerProps {
   onSaveComplete?: () => void;
 }
 
-export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: SpreadsheetViewerProps) {
+export function SpreadsheetViewer({ file, onSaveComplete }: SpreadsheetViewerProps) {
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +65,7 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
         // Check if this is a Google Drive or OneDrive file
         const isDriveFile = currentFile.path?.startsWith('drive://');
         const isOneDriveFile = currentFile.path?.startsWith('onedrive://');
+        const isDropboxFile = currentFile.path?.startsWith('dropbox://');
         const isGoogleSheet = currentFile.mimeType?.includes('vnd.google-apps.spreadsheet');
         
         if (isDriveFile && isGoogleSheet) {
@@ -76,6 +77,11 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
         } else if (isOneDriveFile) {
           // Download from OneDrive
           const blob = await ApiService.OneDrive.getFileBlob(currentFile.file_id);
+          currentUrl = URL.createObjectURL(blob);
+          setDocumentUrl(currentUrl);
+          setDocumentBlob(blob);
+        } else if (isDropboxFile) {
+          const blob = await ApiService.Dropbox.getFileBlob(currentFile.file_id);
           currentUrl = URL.createObjectURL(blob);
           setDocumentUrl(currentUrl);
           setDocumentBlob(blob);
@@ -117,6 +123,7 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
     try {
       const isDriveFile = currentFile.path?.startsWith('drive://');
       const isOneDriveFile = currentFile.path?.startsWith('onedrive://');
+      const isDropboxFile = currentFile.path?.startsWith('dropbox://');
       const isGoogleSheet = currentFile.mimeType?.includes('vnd.google-apps.spreadsheet');
       
       // Determine download filename
@@ -148,6 +155,16 @@ export function SpreadsheetViewer({ file, userInfo, onSaveComplete }: Spreadshee
         setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       } else if (isOneDriveFile) {
         const blob = await ApiService.OneDrive.getFileBlob(currentFile.file_id);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = downloadName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      } else if (isDropboxFile) {
+        const blob = await ApiService.Dropbox.getFileBlob(currentFile.file_id);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

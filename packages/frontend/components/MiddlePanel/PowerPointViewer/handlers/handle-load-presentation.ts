@@ -51,6 +51,7 @@ export async function handleLoadPresentation({
     // Check if this is a Google Drive or OneDrive file
     const isDriveFile = currentFile.path?.startsWith('drive://')
     const isOneDriveFile = currentFile.path?.startsWith('onedrive://')
+    const isDropboxFile = currentFile.path?.startsWith('dropbox://')
     const isGoogleSlides = currentFile.mimeType?.includes('vnd.google-apps.presentation')
 
     let blob: Blob
@@ -61,6 +62,8 @@ export async function handleLoadPresentation({
     } else if (isOneDriveFile) {
       // Download from OneDrive
       blob = await ApiService.OneDrive.getFileBlob(currentFile.file_id)
+    } else if (isDropboxFile) {
+      blob = await ApiService.Dropbox.getFileBlob(currentFile.file_id)
     } else {
       // Download regular file from S3
       const result = await ApiService.downloadFromS3(currentFile.file_id, currentFile.name)

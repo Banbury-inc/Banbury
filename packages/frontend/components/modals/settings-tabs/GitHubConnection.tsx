@@ -4,6 +4,7 @@ import { Button } from '../../common/ui/button'
 import { useToast } from '../../common/ui/use-toast'
 import { Typography } from '../../common/ui/typography'
 import { CONFIG } from '../../../config/config'
+import { ConnectionIconFrame } from './ConnectionIconFrame'
 import { 
   checkGitHubConnectionStatus, 
   initiateGitHubOAuth, 
@@ -11,29 +12,47 @@ import {
   type GitHubConnectionStatus 
 } from '../../handlers/github-connection'
 
+interface GitHubConnectionProps {
+  cachedConnectionStatus?: GitHubConnectionStatus
+  shouldLoadStatus?: boolean
+  onStatusChange?: (status: GitHubConnectionStatus) => void
+}
+
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback
 }
 
-export const GitHubConnection = () => {
+export const GitHubConnection = ({
+  cachedConnectionStatus,
+  shouldLoadStatus = true,
+  onStatusChange,
+}: GitHubConnectionProps) => {
   const { toast } = useToast()
-  const [connectionStatus, setConnectionStatus] = useState<GitHubConnectionStatus>({ connected: false })
-  const [loading, setLoading] = useState(true)
+  const [connectionStatus, setConnectionStatus] = useState<GitHubConnectionStatus>(cachedConnectionStatus ?? { connected: false })
+  const [loading, setLoading] = useState(shouldLoadStatus && !cachedConnectionStatus)
   const [connecting, setConnecting] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
 
   useEffect(() => {
-    loadStatus()
-  }, [])
+    if (cachedConnectionStatus) {
+      setConnectionStatus(cachedConnectionStatus)
+      setLoading(false)
+      return
+    }
+
+    if (shouldLoadStatus) loadStatus()
+  }, [cachedConnectionStatus, shouldLoadStatus])
 
   async function loadStatus() {
     try {
       setLoading(true)
       const status = await checkGitHubConnectionStatus()
       setConnectionStatus(status)
+      onStatusChange?.(status)
     } catch (error) {
       console.error('Error checking GitHub connection status:', error)
       setConnectionStatus({ connected: false })
+      onStatusChange?.({ connected: false })
     } finally {
       setLoading(false)
     }
@@ -63,6 +82,7 @@ export const GitHubConnection = () => {
       setDisconnecting(true)
       await disconnectGitHubAccount()
       setConnectionStatus({ connected: false })
+      onStatusChange?.({ connected: false })
       toast({
         title: 'Disconnected',
         description: 'Successfully disconnected from GitHub'
@@ -91,9 +111,9 @@ export const GitHubConnection = () => {
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <div className={`rounded-lg p-2 ${connectionStatus.connected ? 'bg-primary/10' : 'bg-muted'}`}>
+        <ConnectionIconFrame isActive={connectionStatus.connected}>
           <Github className={`h-5 w-5 ${connectionStatus.connected ? 'text-primary' : 'text-muted-foreground'}`} />
-        </div>
+        </ConnectionIconFrame>
         <div>
           <Typography variant="small" className="font-medium text-foreground">GitHub</Typography>
         </div>
@@ -120,10 +140,7 @@ export const GitHubConnection = () => {
               Connecting…
             </>
           ) : (
-            <>
-              <Github className="h-4 w-4 mr-2" />
-              Connect
-            </>
+            'Connect'
           )}
         </Button>
       )}

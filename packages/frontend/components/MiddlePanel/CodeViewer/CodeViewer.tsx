@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileSystemItem } from '../utils/fileTreeUtils';
 import { ApiService } from '../services/apiService';
-import { getLanguageDisplayName } from './languageUtils';
-import { CodeHeader } from './CodeHeader';
 
 interface CodeViewerProps {
   file: FileSystemItem;
@@ -26,6 +24,7 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file }) => {
 
         const isDriveFile = file.path?.startsWith('drive://');
         const isOneDriveFile = file.path?.startsWith('onedrive://');
+        const isDropboxFile = file.path?.startsWith('dropbox://');
         
         let fileContent: string;
         
@@ -36,6 +35,9 @@ const CodeViewer: React.FC<CodeViewerProps> = ({ file }) => {
         } else if (isOneDriveFile) {
           // Get file content from OneDrive
           const blob = await ApiService.OneDrive.getFileBlob(file.file_id);
+          fileContent = await blob.text();
+        } else if (isDropboxFile) {
+          const blob = await ApiService.Dropbox.getFileBlob(file.file_id);
           fileContent = await blob.text();
         } else {
           // Get the file content from S3 using the ApiService

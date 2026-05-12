@@ -28,12 +28,13 @@ export const handleFileSelect = ({
 }: HandleFileSelectParams) => {
   // Check if it's a Drive file
   const isDriveFile = file.path?.startsWith('drive://')
+  const isDropboxFile = file.path?.startsWith('dropbox://')
   
   // For Drive files, check mimeType; for local files, check extension
   let viewable = false
-  if (isDriveFile) {
+  if (isDriveFile || isDropboxFile) {
     // Google Workspace files are always viewable (Docs, Sheets, Slides)
-    if (file.mimeType?.includes('vnd.google-apps')) {
+    if (isDriveFile && file.mimeType?.includes('vnd.google-apps')) {
       viewable = true
     } else {
       // Check other Drive file types (images, PDFs, videos, documents, spreadsheets, presentations, etc)

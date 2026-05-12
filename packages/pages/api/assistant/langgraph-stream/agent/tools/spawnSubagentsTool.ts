@@ -15,6 +15,7 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai"
 import { SystemMessage, HumanMessage } from "@langchain/core/messages"
 import { createReactAgent } from "@langchain/langgraph/prebuilt"
 import { getServerContextValue } from "../../../../../../frontend/assistant/langraph/serverContext"
+import { getOpenAITemperatureOptions } from "../modelOptions"
 import {
   SpawnSubagentsInputSchema,
   ROLE_TOOL_ALLOWLISTS,
@@ -58,6 +59,22 @@ import {
   evaluatePresentationTool,
 } from "./pptxTools"
 import { tldrawAiTool } from "./tldrawAiTool"
+import {
+  onedriveStatusTool,
+  onedriveListRootTool,
+  onedriveListFolderTool,
+  onedriveSearchTool,
+  onedriveGetItemTool,
+  onedriveDownloadFileTool,
+  onedriveUploadTextFileTool,
+  onedriveUpdateTextFileTool,
+  onedriveCreateFolderTool,
+  onedriveRenameMoveTool,
+  onedriveDeleteItemTool,
+  onedriveCreateShareLinkTool,
+  onedriveInviteTool,
+  onedriveGetPermissionsTool,
+} from "./onedriveTools"
 
 // ============================================================================
 // Tool Registry
@@ -94,6 +111,20 @@ const TOOL_REGISTRY: Record<string, any> = {
   pptx_replace_text: replaceTextTool,
   pptx_evaluate_presentation: evaluatePresentationTool,
   tldraw_ai: tldrawAiTool,
+  onedrive_status: onedriveStatusTool,
+  onedrive_list_root: onedriveListRootTool,
+  onedrive_list_folder: onedriveListFolderTool,
+  onedrive_search: onedriveSearchTool,
+  onedrive_get_item: onedriveGetItemTool,
+  onedrive_download_file: onedriveDownloadFileTool,
+  onedrive_upload_text_file: onedriveUploadTextFileTool,
+  onedrive_update_text_file: onedriveUpdateTextFileTool,
+  onedrive_create_folder: onedriveCreateFolderTool,
+  onedrive_rename_move: onedriveRenameMoveTool,
+  onedrive_delete_item: onedriveDeleteItemTool,
+  onedrive_create_share_link: onedriveCreateShareLinkTool,
+  onedrive_invite: onedriveInviteTool,
+  onedrive_get_permissions: onedriveGetPermissionsTool,
 }
 
 /**
@@ -111,6 +142,8 @@ function getToolsForRole(role: SubagentRole): any[] {
 // ============================================================================
 
 type ModelProvider = "anthropic" | "openai" | "google"
+// eslint-disable-next-line no-unused-vars
+type SendSubagentEvent = (event: any) => void
 
 function getDefaultModelForProvider(provider: ModelProvider): string {
   if (provider === "openai") return "gpt-4o-mini"
@@ -125,7 +158,7 @@ function createChatModel(provider: ModelProvider, modelId?: string) {
     return new ChatOpenAI({
       model: actualModelId,
       apiKey: process.env.OPENAI_API_KEY,
-      temperature: 0.2,
+      ...getOpenAITemperatureOptions(actualModelId),
     })
   }
 
@@ -157,7 +190,7 @@ async function executeSubagent(
   provider: ModelProvider,
   modelId: string | undefined,
   options: Required<SubagentOptions>,
-  sendEvent: ((event: any) => void) | undefined
+  sendEvent: SendSubagentEvent | undefined
 ): Promise<SubagentResult> {
   const startTime = Date.now()
   const subagentId = spec.id
@@ -357,7 +390,7 @@ async function runSubagentsWithConcurrency(
   provider: ModelProvider,
   modelId: string | undefined,
   options: Required<SubagentOptions>,
-  sendEvent: ((event: any) => void) | undefined
+  sendEvent: SendSubagentEvent | undefined
 ): Promise<SubagentResult[]> {
   const results: SubagentResult[] = []
   const pending: SubagentSpec[] = [...subagents]
@@ -397,7 +430,7 @@ export const spawnSubagentsTool = tool(
     const startTime = Date.now()
 
     // Get server context values
-    const sendEvent = getServerContextValue<(event: any) => void>("sendEvent")
+    const sendEvent = getServerContextValue<SendSubagentEvent>("sendEvent")
     const toolPreferences = getServerContextValue<any>("toolPreferences")
     
     // Determine model provider and ID

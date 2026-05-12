@@ -174,7 +174,7 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-card">
-      <div className="border-b border-border px-4 py-3">
+      <div className="border-b border-border px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <Database className="h-4 w-4" />

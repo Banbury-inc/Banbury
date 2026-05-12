@@ -15,7 +15,10 @@ import GoogleDocsTab from './components/Tabs/GoogleDocsTab'
 import GoogleSheetsTab from './components/Tabs/GoogleSheetsTab'
 import OutlookTab from './components/Tabs/OutlookTab'
 import MicrosoftCalendarTab from './components/Tabs/MicrosoftCalendarTab'
+import MicrosoftTeamsTab from './components/Tabs/MicrosoftTeamsTab'
 import OneDriveTab from './components/Tabs/OneDriveTab'
+import DropboxTab from './components/Tabs/DropboxTab'
+import NotionTab from './components/Tabs/NotionTab'
 import XTab from './components/Tabs/XTab'
 import MemoriesTab from './components/Tabs/MemoriesTab'
 import DocsFeatureTab from './components/Tabs/DocsFeatureTab'
@@ -55,7 +58,10 @@ const DOCS_SECTION_IDS = [
   'google-sheets',
   'outlook',
   'microsoft-calendar',
+  'microsoft-teams',
   'onedrive',
+  'dropbox',
+  'notion',
   'x',
   'docs-feature',
   'spreadsheets-feature',
@@ -150,7 +156,13 @@ const Docs = () => {
 
             {activeSection === 'microsoft-calendar' && <MicrosoftCalendarTab />}
 
+            {activeSection === 'microsoft-teams' && <MicrosoftTeamsTab />}
+
             {activeSection === 'onedrive' && <OneDriveTab />}
+
+            {activeSection === 'dropbox' && <DropboxTab />}
+
+            {activeSection === 'notion' && <NotionTab />}
 
             {activeSection === 'x' && <XTab />}
 

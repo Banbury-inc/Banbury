@@ -911,7 +911,7 @@ export function EmailTab({
     <div className="h-full flex flex-col">
       {/* Email Tab Header */}
       <div className="flex flex-col bg-card flex-shrink-0">
-        <div className="flex items-center justify-between px-4 py-3 border-b gap-2">
+        <div className="flex items-center justify-between px-4 py-2 border-b gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1 @container">
             {/* Provider Selector */}
             <Select value={selectedProvider} onValueChange={(v) => handleProviderChange(v as EmailProvider)}>

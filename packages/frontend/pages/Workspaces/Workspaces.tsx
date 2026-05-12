@@ -997,6 +997,7 @@ const Workspaces = (): React.ReactNode => {
                           <LeftPanel
                             userInfo={userInfo}
                             activeTab={activeLeftPanelTab}
+                            eagerMountWorkspaceTabs
                             onAdminTabClick={(tabId) => openAdminInTabCallback(tabId, activePanelId)}
                             selectedFile={selectedFile}
                             refreshTrigger={refreshTrigger}

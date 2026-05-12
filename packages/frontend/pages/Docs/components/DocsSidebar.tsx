@@ -1,6 +1,6 @@
 import { ChevronRight, X } from 'lucide-react'
 import { useRouter } from 'next/router'
-import { useState } from 'react'
+import { useState, type Dispatch } from 'react'
 
 import { Button } from '../../../components/common/ui/button'
 import { Sheet, SheetContent, SheetTitle } from '../../../components/common/ui/sheet'
@@ -25,7 +25,7 @@ interface SidebarItem {
 interface DocsSidebarProps {
   activeSection?: string
   mobileOpen: boolean
-  onMobileOpenChange: (open: boolean) => void
+  onMobileOpenChange: Dispatch<boolean>
 }
 
 const sections: SidebarSection[] = [
@@ -87,7 +87,10 @@ const sections: SidebarSection[] = [
       { id: 'google-sheets', title: 'Google Sheets', href: '/docs/google-sheets' },
       { id: 'outlook', title: 'Outlook', href: '/docs/outlook' },
       { id: 'microsoft-calendar', title: 'Microsoft Calendar', href: '/docs/microsoft-calendar' },
+      { id: 'microsoft-teams', title: 'Microsoft Teams', href: '/docs/microsoft-teams' },
       { id: 'onedrive', title: 'OneDrive', href: '/docs/onedrive' },
+      { id: 'dropbox', title: 'Dropbox', href: '/docs/dropbox' },
+      { id: 'notion', title: 'Notion', href: '/docs/notion' },
       { id: 'x', title: 'X (Twitter)', href: '/docs/x' },
     ],
   },

@@ -15,6 +15,11 @@ import {
   Recording
 } from '../../../frontend/types/meeting-types';
 
+export interface MeetingShareRecipient {
+  username: string
+  email?: string
+}
+
 export default class MeetingAgent {
 
   private static baseEndpoint = '/meeting-agent'
@@ -521,6 +526,80 @@ export default class MeetingAgent {
       return response
     } catch (error) {
       console.error('Failed to delete meeting session:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Rename a meeting session owned by the current user
+   */
+  static async renameMeetingSession(sessionId: string, title: string): Promise<{
+    success: boolean
+    message: string
+    session?: MeetingSession
+  }> {
+    try {
+      const response = await ApiService.post<{
+        success?: boolean
+        result?: string
+        message?: string
+        error?: string
+        session?: MeetingSession
+      }>(`${this.baseEndpoint}/sessions/${sessionId}/rename/`, { title })
+
+      if (response.success || response.result === 'success') {
+        return {
+          success: true,
+          message: response.message || 'Meeting renamed successfully',
+          session: response.session
+        }
+      }
+
+      throw new Error(response.error || response.message || 'Failed to rename meeting')
+    } catch (error) {
+      console.error('Failed to rename meeting session:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Share a meeting session with other Banbury users
+   */
+  static async shareMeetingSession(
+    sessionId: string,
+    recipients: MeetingShareRecipient[],
+    access: 'edit' | 'view' = 'edit'
+  ): Promise<{
+    success: boolean
+    message: string
+    sharedWithCount?: number
+    notFoundUsers?: string[]
+  }> {
+    try {
+      const response = await ApiService.post<{
+        success?: boolean
+        result?: string
+        message?: string
+        error?: string
+        shared_with_count?: number
+        not_found_users?: string[]
+      }>(`${this.baseEndpoint}/sessions/${sessionId}/share/`, {
+        recipients,
+        access
+      })
+
+      if (response.success || response.result === 'success') {
+        return {
+          success: true,
+          message: response.message || 'Meeting shared successfully',
+          sharedWithCount: response.shared_with_count,
+          notFoundUsers: response.not_found_users
+        }
+      }
+
+      throw new Error(response.error || response.message || 'Failed to share meeting')
+    } catch (error) {
+      console.error('Failed to share meeting session:', error)
       throw error
     }
   }

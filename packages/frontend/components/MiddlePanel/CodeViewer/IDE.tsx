@@ -104,13 +104,24 @@ const IDE: React.FC<IDEProps> = ({ file, userInfo, onSaveComplete }) => {
       setLoading(true)
       setError(null)
 
-      const downloadResult = await ApiService.Files.downloadS3File(fileItem.file_id || '', fileItem.name)
+      const isDriveFile = fileItem.path?.startsWith('drive://')
+      const isOneDriveFile = fileItem.path?.startsWith('onedrive://')
+      const isDropboxFile = fileItem.path?.startsWith('dropbox://')
 
-      if (!downloadResult.success) {
-        throw new Error('Failed to download file')
+      let blob: Blob
+      if (isDriveFile) {
+        blob = await ApiService.Drive.getFileBlob(fileItem.file_id || '')
+      } else if (isOneDriveFile) {
+        blob = await ApiService.OneDrive.getFileBlob(fileItem.file_id || '')
+      } else if (isDropboxFile) {
+        blob = await ApiService.Dropbox.getFileBlob(fileItem.file_id || '')
+      } else {
+        const downloadResult = await ApiService.Files.downloadS3File(fileItem.file_id || '', fileItem.name)
+        if (!downloadResult.success) throw new Error('Failed to download file')
+        blob = downloadResult.blob
       }
 
-      const fileContent = await downloadResult.blob.text()
+      const fileContent = await blob.text()
       const detectedLanguage = getLanguageMonacoId(fileItem.name)
 
       setLanguage(detectedLanguage)

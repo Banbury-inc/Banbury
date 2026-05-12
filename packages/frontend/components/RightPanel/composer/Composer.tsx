@@ -44,6 +44,8 @@ export interface ComposerToolPreferences {
   browser: boolean;
   x_api: boolean;
   slack: boolean;
+  teams: boolean;
+  onedrive: boolean;
   sheet_ai: boolean;
   docx_ai: boolean;
   pptx_ai: boolean;
@@ -55,6 +57,7 @@ export interface ComposerToolPreferences {
   search_files: boolean;
   calendar: boolean;
   msCalendar: boolean;
+  notion: boolean;
   github: boolean;
   generate_image: boolean;
   generate_video: boolean;

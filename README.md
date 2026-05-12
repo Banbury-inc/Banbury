@@ -17,7 +17,7 @@
 
 <div align="center">
 
-![Workspaces](packages/public/workspaces.png)
+![Workspaces](packages/public/workspaces1.png)
 
 </div>
 

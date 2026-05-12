@@ -225,22 +225,35 @@ export default class OneDrive {
    * Update a file in OneDrive (overwrite content)
    */
   static async updateFile(itemId: string, file: File | Blob, filename?: string): Promise<OneDriveFile> {
-    const formData = new FormData()
-    
-    if (file instanceof Blob && !(file instanceof File)) {
-      const fileWithName = new File([file], filename || 'file', { type: file.type })
-      formData.append('file', fileWithName)
-    } else {
-      formData.append('file', file)
-    }
-    
-    const resp = await axios.post(
+    void filename
+
+    const contentType = file.type || 'application/octet-stream'
+    const content = await file.arrayBuffer()
+
+    const resp = await axios.put(
       `${ApiService.baseURL}/authentication/onedrive/items/${encodeURIComponent(itemId)}/update/`,
-      formData,
+      content,
       {
         headers: {
           ...this.withAuthHeaders(),
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': contentType
+        }
+      }
+    )
+    return resp.data
+  }
+
+  /**
+   * Update a text-like OneDrive file with raw content.
+   */
+  static async updateTextFile(itemId: string, content: string, contentType = 'text/plain;charset=utf-8'): Promise<OneDriveFile> {
+    const resp = await axios.put(
+      `${ApiService.baseURL}/authentication/onedrive/items/${encodeURIComponent(itemId)}/update/`,
+      content,
+      {
+        headers: {
+          ...this.withAuthHeaders(),
+          'Content-Type': contentType
         }
       }
     )

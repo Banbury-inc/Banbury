@@ -11,9 +11,9 @@ import {
   FileOutput,
 } from "lucide-react"
 import { Typography } from "../../../../../common/ui/typography"
-import { GoogleDriveIcon, OneDriveIcon } from "../../../../../icons"
+import { DropboxIcon, GoogleDriveIcon, OneDriveIcon } from "../../../../../icons"
 
-export type CloudProvider = 'local' | 'drive' | 'onedrive'
+export type CloudProvider = 'local' | 'drive' | 'onedrive' | 'dropbox'
 
 export interface CloudFileContextMenuProps {
   children: React.ReactNode
@@ -33,6 +33,7 @@ export interface CloudFileContextMenuProps {
   onCopyToLocal?: () => void
   onCopyToDrive?: () => void
   onCopyToOneDrive?: () => void
+  onCopyToDropbox?: () => void
   
   // Folder-specific actions (for local files)
   onNewFolder?: () => void
@@ -45,6 +46,7 @@ export interface CloudFileContextMenuProps {
   // Provider availability
   driveAvailable?: boolean
   oneDriveConnected?: boolean
+  dropboxConnected?: boolean
 }
 
 export function CloudFileContextMenu({
@@ -61,12 +63,14 @@ export function CloudFileContextMenu({
   onCopyToLocal,
   onCopyToDrive,
   onCopyToOneDrive,
+  onCopyToDropbox,
   onNewFolder,
   onUploadFile,
   onUploadFolder,
   deleteLabel,
   driveAvailable,
   oneDriveConnected,
+  dropboxConnected,
 }: CloudFileContextMenuProps) {
   return (
     <ContextMenu.Root>
@@ -150,8 +154,8 @@ export function CloudFileContextMenu({
             </ContextMenu.Item>
           )}
 
-          {/* Share (local files only) */}
-          {provider === 'local' && !isFolder && onShare && (
+          {/* Share (files only) */}
+          {!isFolder && onShare && (
             <ContextMenu.Item 
               className="flex items-center gap-2 px-2 py-1.5 hover:bg-sidebar-accent rounded cursor-pointer outline-none"
               onSelect={onShare}
@@ -164,7 +168,7 @@ export function CloudFileContextMenu({
           )}
 
           {/* Cross-provider copy section */}
-          {!isFolder && (onCopyToLocal || onCopyToDrive || onCopyToOneDrive) && (
+          {!isFolder && (onCopyToLocal || onCopyToDrive || onCopyToOneDrive || onCopyToDropbox) && (
             <>
               <ContextMenu.Separator className="h-px bg-sidebar-border my-1" />
               
@@ -216,13 +220,29 @@ export function CloudFileContextMenu({
                   </Typography>
                 </ContextMenu.Item>
               )}
+              {onCopyToDropbox && (
+                <ContextMenu.Item
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded outline-none ${
+                    dropboxConnected
+                      ? 'hover:bg-sidebar-accent cursor-pointer'
+                      : 'opacity-50 cursor-not-allowed'
+                  }`}
+                  onSelect={dropboxConnected ? onCopyToDropbox : undefined}
+                  disabled={!dropboxConnected}
+                >
+                  <DropboxIcon size={16} className="w-4 h-4" />
+                  <Typography variant="xs" className="text-zinc-900 dark:text-white">
+                    Copy to Dropbox
+                  </Typography>
+                </ContextMenu.Item>
+              )}
             </>
           )}
 
           {/* Rename */}
           {onRename && (
             <>
-              {(onCopyToLocal || onCopyToDrive || onCopyToOneDrive) && !isFolder && (
+              {(onCopyToLocal || onCopyToDrive || onCopyToOneDrive || onCopyToDropbox) && !isFolder && (
                 <ContextMenu.Separator className="h-px bg-sidebar-border my-1" />
               )}
               <ContextMenu.Item 

@@ -1,12 +1,12 @@
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { HumanMessage, SystemMessage, AIMessage, ToolMessage } from "@langchain/core/messages";
+import { SystemMessage } from "@langchain/core/messages";
 import { StateGraph, START, END, MessagesAnnotation } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { CONFIG } from "../../../../../frontend/config/config";
 import { getServerContextValue } from "../../../../../frontend/assistant/langraph/serverContext";
 import type { BaseMessage } from "@langchain/core/messages";
+import { getOpenAITemperatureOptions } from "./modelOptions";
 // Import tools from separate files
 import { webSearchTool } from "./tools/webSearchTool";
 import { tavilyExtractTool } from "./tools/tavilyExtractTool";
@@ -75,6 +75,33 @@ import {
   msCalendarDeleteEventTool,
 } from "./tools/microsoftCalendarTools";
 import {
+  msTeamsListTeamsTool,
+  msTeamsListChannelsTool,
+  msTeamsListChannelMessagesTool,
+  msTeamsGetChannelMessageTool,
+  msTeamsSendChannelMessageTool,
+  msTeamsListMessageRepliesTool,
+  msTeamsReplyToMessageTool,
+  msTeamsListMembersTool,
+  msTeamsListChatsTool,
+} from "./tools/microsoftTeamsTools";
+import {
+  onedriveStatusTool,
+  onedriveListRootTool,
+  onedriveListFolderTool,
+  onedriveSearchTool,
+  onedriveGetItemTool,
+  onedriveDownloadFileTool,
+  onedriveUploadTextFileTool,
+  onedriveUpdateTextFileTool,
+  onedriveCreateFolderTool,
+  onedriveRenameMoveTool,
+  onedriveDeleteItemTool,
+  onedriveCreateShareLinkTool,
+  onedriveInviteTool,
+  onedriveGetPermissionsTool,
+} from "./tools/onedriveTools";
+import {
   xApiGetUserInfoTool,
   xApiGetUserTweetsTool,
   xApiSearchTweetsTool,
@@ -100,6 +127,15 @@ import {
   githubGetFileContentsTool,
   githubSearchCodeTool,
 } from "./tools/githubTools";
+import {
+  notionSearchTool,
+  notionGetPageTool,
+  notionGetPageBlocksTool,
+  notionQueryDataSourceTool,
+  notionListTemplatesTool,
+  notionCreatePageTool,
+  notionCreatePageFromTemplateTool,
+} from "./tools/notionTools";
 import { pptxParseOutlineTool } from "./tools/pptxParseOutlineTool";
 import { writeWorkspaceFileTool } from "./tools/writeWorkspaceFileTool";
 import { executeScriptTool } from "./tools/executeScriptTool";
@@ -137,7 +173,7 @@ function createChatModel(provider: ModelProvider, modelId?: string) {
     return new ChatOpenAI({
       model: actualModelId,
       apiKey: process.env.OPENAI_API_KEY,
-      temperature: 0.2,
+      ...getOpenAITemperatureOptions(actualModelId),
     })
   }
 
@@ -224,6 +260,15 @@ const documentTools = [
   generateImageTool,
   createFolderTool,
   getCurrentDateTimeTool,
+  onedriveStatusTool,
+  onedriveListRootTool,
+  onedriveListFolderTool,
+  onedriveSearchTool,
+  onedriveGetItemTool,
+  onedriveDownloadFileTool,
+  onedriveUploadTextFileTool,
+  onedriveUpdateTextFileTool,
+  onedriveCreateFolderTool,
 ]
 
 export function createDocumentAgentForProvider(provider: ModelProvider) {
@@ -248,6 +293,20 @@ const planningTools = [
   msCalendarListCalendarsTool,
   msCalendarListEventsTool,
   msCalendarGetEventTool,
+  msTeamsListTeamsTool,
+  msTeamsListChannelsTool,
+  msTeamsListChannelMessagesTool,
+  msTeamsGetChannelMessageTool,
+  msTeamsListMessageRepliesTool,
+  msTeamsListMembersTool,
+  msTeamsListChatsTool,
+  onedriveStatusTool,
+  onedriveListRootTool,
+  onedriveListFolderTool,
+  onedriveSearchTool,
+  onedriveGetItemTool,
+  onedriveDownloadFileTool,
+  onedriveGetPermissionsTool,
 ]
 
 const askingTools = [
@@ -260,6 +319,13 @@ const askingTools = [
   searchFilesTool,
   searchMemoryTool,
   getCurrentDateTimeTool,
+  onedriveStatusTool,
+  onedriveListRootTool,
+  onedriveListFolderTool,
+  onedriveSearchTool,
+  onedriveGetItemTool,
+  onedriveDownloadFileTool,
+  onedriveGetPermissionsTool,
 ]
 
 export function createPlanningAgentForProvider(provider: ModelProvider) {
@@ -351,6 +417,29 @@ const tools = [
   msCalendarCreateEventTool,
   msCalendarUpdateEventTool,
   msCalendarDeleteEventTool,
+  msTeamsListTeamsTool,
+  msTeamsListChannelsTool,
+  msTeamsListChannelMessagesTool,
+  msTeamsGetChannelMessageTool,
+  msTeamsSendChannelMessageTool,
+  msTeamsListMessageRepliesTool,
+  msTeamsReplyToMessageTool,
+  msTeamsListMembersTool,
+  msTeamsListChatsTool,
+  onedriveStatusTool,
+  onedriveListRootTool,
+  onedriveListFolderTool,
+  onedriveSearchTool,
+  onedriveGetItemTool,
+  onedriveDownloadFileTool,
+  onedriveUploadTextFileTool,
+  onedriveUpdateTextFileTool,
+  onedriveCreateFolderTool,
+  onedriveRenameMoveTool,
+  onedriveDeleteItemTool,
+  onedriveCreateShareLinkTool,
+  onedriveInviteTool,
+  onedriveGetPermissionsTool,
   xApiGetUserInfoTool,
   xApiGetUserTweetsTool,
   xApiSearchTweetsTool,
@@ -371,6 +460,13 @@ const tools = [
   githubListPullRequestsTool,
   githubGetFileContentsTool,
   githubSearchCodeTool,
+  notionSearchTool,
+  notionGetPageTool,
+  notionGetPageBlocksTool,
+  notionQueryDataSourceTool,
+  notionListTemplatesTool,
+  notionCreatePageTool,
+  notionCreatePageFromTemplateTool,
   stagehandCreateSessionTool,
   stagehandGotoTool,
   stagehandObserveTool,

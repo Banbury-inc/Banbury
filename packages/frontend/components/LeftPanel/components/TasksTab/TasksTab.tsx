@@ -74,7 +74,7 @@ export function TasksTab({
     <div className="h-full flex flex-col overflow-hidden">
       {/* Tab Content Header */}
       <div className="flex flex-col bg-card">
-        <div className="flex items-center justify-between px-4 py-3 border-b min-w-0 gap-3">
+        <div className="flex items-center justify-between px-4 py-2 border-b min-w-0 gap-3">
           <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
             {/* Status Filter */}
             <Select value={filter} onValueChange={(value) => setFilter(value as TaskStatus | 'all')}>

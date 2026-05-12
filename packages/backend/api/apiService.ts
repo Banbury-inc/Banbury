@@ -8,6 +8,7 @@ import OutlookCalendar from './outlook-calendar/outlookCalendar'
 import Knowledge from './knowledge/knowledge'
 import Drive from './drive/drive'
 import OneDrive from './onedrive/onedrive'
+import Dropbox from './dropbox/dropbox'
 import MeetingAgent from './meeting-agent/meeting-agent'
 import Conversations from './conversations/conversations'
 import Scopes from './scopes/scopes'
@@ -18,6 +19,7 @@ import Tracking from './tracking/tracking'
 import Themes from './themes/themes'
 import Databases from './databases/databases'
 import Flows from './flows/flows'
+import Notion from './notion/notion'
 
 // Configure axios defaults
 axios.defaults.timeout = 30000; // 30 second timeout
@@ -53,6 +55,7 @@ export class ApiService {
   Knowledge: Knowledge
   Drive: Drive
   OneDrive: OneDrive
+  Dropbox: Dropbox
   MeetingAgent: MeetingAgent
   Conversations: Conversations
   Scopes: Scopes
@@ -63,6 +66,7 @@ export class ApiService {
   Themes: Themes
   Databases: Databases
   Flows: typeof Flows
+  Notion: typeof Notion
   constructor() {
     this.Files = new Files(this)
     this.Emails = new Emails(this)
@@ -71,6 +75,7 @@ export class ApiService {
     this.Knowledge = new Knowledge(this)
     this.Drive = new Drive(this)
     this.OneDrive = new OneDrive(this)
+    this.Dropbox = new Dropbox(this)
     this.MeetingAgent = new MeetingAgent(this)
     this.Conversations = new Conversations(this)
     this.Scopes = new Scopes(this)
@@ -81,6 +86,7 @@ export class ApiService {
     this.Themes = new Themes(this)
     this.Databases = new Databases(this)
     this.Flows = Flows
+    this.Notion = Notion
   }
   static baseURL = CONFIG.url;
   static Files = Files;
@@ -90,6 +96,7 @@ export class ApiService {
   static Knowledge = Knowledge;
   static Drive = Drive;
   static OneDrive = OneDrive;
+  static Dropbox = Dropbox;
   static MeetingAgent = MeetingAgent;
   static Conversations = Conversations;
   static Scopes = Scopes;
@@ -100,6 +107,7 @@ export class ApiService {
   static Themes = Themes;
   static Databases = Databases;
   static Flows = Flows;
+  static Notion = Notion;
   /**
    * Set global authorization token for all requests
    */

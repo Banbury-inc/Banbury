@@ -8,9 +8,14 @@ import { ApiService } from '../../../../../backend/api/apiService'
 import { MeetingsListView } from './components/MeetingsListView'
 import { handleRefreshMeetings } from './handlers/handleRefreshMeetings'
 import { handleDeleteMeeting } from './handlers/handleDeleteMeeting'
+import { handleRenameMeeting } from './handlers/handleRenameMeeting'
+import { handleCopyMeetingUrl } from './handlers/handleCopyMeetingUrl'
 import { DesktopRecordingPanel } from './components/DesktopRecordingPanel'
+import { ShareMeetingDialog } from './components/ShareMeetingDialog'
 import { useToast } from '../../../common/ui/use-toast'
 import { useMeetingWorkspaceHandlers } from './handlers/workspaceHandlers'
+import { handleDownloadRecording } from '../../../MiddlePanel/MeetingViewer/handlers/handle-download-recording'
+import { handleDownloadTranscription } from '../../../MiddlePanel/MeetingViewer/handlers/handle-download-transcription'
 import { PanelGroup } from '../../../../pages/Workspaces/types'
 
 type MeetingStatusFilter = 'all' | MeetingSession['status']
@@ -53,6 +58,7 @@ export function MeetingsTab({
   const [refreshCounter, setRefreshCounter] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isDesktopRecordingExpanded, setIsDesktopRecordingExpanded] = useState(true)
+  const [shareMeeting, setShareMeeting] = useState<MeetingSession | null>(null)
   const { toast } = useToast()
   
   // Check if running in Electron desktop environment
@@ -105,11 +111,98 @@ export function MeetingsTab({
     })
   }, [toast])
 
+  const handleMeetingRename = useCallback(async (meeting: MeetingSession) => {
+    await handleRenameMeeting({
+      meetingId: meeting.id,
+      currentTitle: meeting.title || 'Untitled meeting',
+      onSuccess: () => {
+        toast({
+          title: 'Success',
+          description: 'Meeting renamed'
+        })
+        setRefreshCounter(prev => prev + 1)
+      },
+      onError: (errorMessage) => {
+        toast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive'
+        })
+      }
+    })
+  }, [toast])
+
+  const handleMeetingCopyUrl = useCallback(async (meeting: MeetingSession) => {
+    await handleCopyMeetingUrl({
+      meeting,
+      onSuccess: () => {
+        toast({
+          title: 'Copied',
+          description: 'Meeting URL copied to clipboard'
+        })
+      },
+      onError: (errorMessage) => {
+        toast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive'
+        })
+      }
+    })
+  }, [toast])
+
+  const handleMeetingDownloadRecording = useCallback(async (meeting: MeetingSession) => {
+    if (!meeting.recordingUrl) {
+      toast({
+        title: 'Recording unavailable',
+        description: 'No recording is available for this meeting yet',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    await handleDownloadRecording(
+      meeting,
+      () => {
+        toast({
+          title: 'Success',
+          description: 'Recording download started'
+        })
+      },
+      (errorMessage) => {
+        toast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive'
+        })
+      }
+    )
+  }, [toast])
+
+  const handleMeetingDownloadTranscript = useCallback(async (meeting: MeetingSession) => {
+    await handleDownloadTranscription(
+      meeting,
+      () => {
+        toast({
+          title: 'Success',
+          description: 'Transcript downloaded'
+        })
+      },
+      (errorMessage) => {
+        toast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive'
+        })
+      }
+    )
+  }, [toast])
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Tab Content Header */}
       <div className="flex flex-col bg-card">
-        <div className="flex items-center justify-between px-4 py-3 border-b min-w-0 gap-3">
+        <div className="flex items-center justify-between px-4 py-2 border-b min-w-0 gap-3">
           <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
             {/* Status Filter */}
             <Select value={filter} onValueChange={(value) => setFilter(value as MeetingStatusFilter)}>
@@ -211,8 +304,26 @@ export function MeetingsTab({
           onMeetingSelect={onMeetingSelect}
           selectedMeeting={selectedMeeting}
           onMeetingDeleted={handleMeetingDeleted}
+          onMeetingRename={handleMeetingRename}
+          onMeetingShare={setShareMeeting}
+          onMeetingCopyUrl={handleMeetingCopyUrl}
+          onMeetingDownloadRecording={handleMeetingDownloadRecording}
+          onMeetingDownloadTranscript={handleMeetingDownloadTranscript}
         />
       </div>
+      <ShareMeetingDialog
+        open={Boolean(shareMeeting)}
+        onOpenChange={(open) => {
+          if (!open) setShareMeeting(null)
+        }}
+        meeting={shareMeeting}
+        onShareSuccess={() => {
+          toast({
+            title: 'Success',
+            description: 'Meeting shared'
+          })
+        }}
+      />
     </div>
   )
 }

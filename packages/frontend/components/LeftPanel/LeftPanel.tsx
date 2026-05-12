@@ -46,7 +46,10 @@ interface AppSidebarProps {
   selectedFlow?: FlowItem | null
   setSelectedFlow?: React.Dispatch<React.SetStateAction<FlowItem | null>>
   onFlowSelect?: (flow: FlowItem) => void
+  eagerMountWorkspaceTabs?: boolean
 }
+
+const eagerWorkspaceTabs = ['email', 'calendar', 'tasks', 'meetings', 'databases', 'flows']
 
 export function LeftPanel({ 
   userInfo, 
@@ -80,16 +83,21 @@ export function LeftPanel({
   selectedFlow,
   setSelectedFlow,
   onFlowSelect,
+  eagerMountWorkspaceTabs = false,
 }: AppSidebarProps) {
   const router = useRouter()
   const currentActiveTab = activeTab || 'files'
+  const shouldRenderTab = (tabId: string) => currentActiveTab === tabId || (eagerMountWorkspaceTabs && eagerWorkspaceTabs.includes(tabId))
+  const getTabClassName = (tabId: string) => currentActiveTab === tabId
+    ? 'flex-1 flex flex-col mt-0 overflow-hidden'
+    : 'hidden'
 
   return (
     <div className="h-full w-full bg-card border-r border-zinc-200 dark:border-white/[0.06] flex flex-col relative z-10 shadow-soft left-panel-container">
       {/* Tab Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {currentActiveTab === 'files' && (
-          <div className="flex-1 flex flex-col mt-0 overflow-hidden">
+        {shouldRenderTab('files') && (
+          <div className={getTabClassName('files')}>
             <FilesTab
               userInfo={userInfo}
               selectedFile={selectedFile}
@@ -110,8 +118,8 @@ export function LeftPanel({
           </div>
         )}
 
-        {currentActiveTab === 'email' && (
-          <div className="flex-1 flex flex-col mt-0 overflow-hidden">
+        {shouldRenderTab('email') && (
+          <div className={getTabClassName('email')}>
             <EmailTab 
               onOpenEmailApp={() => router.push('/email')}
               onOpenEmailInbox={onOpenEmailInbox}
@@ -125,8 +133,8 @@ export function LeftPanel({
           </div>
         )}
 
-        {currentActiveTab === 'calendar' && (
-          <div className="flex-1 flex flex-col mt-0 overflow-hidden">
+        {shouldRenderTab('calendar') && (
+          <div className={getTabClassName('calendar')}>
             <CalendarTab 
               onOpenCalendarApp={onOpenCalendar}
               activePanelId={activePanelId}
@@ -139,8 +147,8 @@ export function LeftPanel({
           </div>
         )}
 
-        {currentActiveTab === 'tasks' && (
-          <div className="flex-1 flex flex-col mt-0 overflow-hidden">
+        {shouldRenderTab('tasks') && (
+          <div className={getTabClassName('tasks')}>
             <TasksTab
               selectedTask={selectedTask}
               activePanelId={activePanelId}
@@ -152,8 +160,8 @@ export function LeftPanel({
           </div>
         )}
 
-        {currentActiveTab === 'meetings' && (
-          <div className="flex-1 flex flex-col mt-0 overflow-hidden">
+        {shouldRenderTab('meetings') && (
+          <div className={getTabClassName('meetings')}>
             <MeetingsTab
               selectedMeeting={selectedMeeting}
               refreshTrigger={meetingsRefreshTrigger}
@@ -166,8 +174,8 @@ export function LeftPanel({
           </div>
         )}
 
-        {currentActiveTab === 'databases' && (
-          <div className="flex-1 flex flex-col mt-0 overflow-hidden">
+        {shouldRenderTab('databases') && (
+          <div className={getTabClassName('databases')}>
             <DatabasesTab
               onOpenDatabaseTable={payload => onOpenDatabaseTable?.(payload)}
               toast={toast || (() => {})}
@@ -175,8 +183,8 @@ export function LeftPanel({
           </div>
         )}
 
-        {currentActiveTab === 'flows' && (
-          <div className="flex-1 flex flex-col mt-0 overflow-hidden">
+        {shouldRenderTab('flows') && (
+          <div className={getTabClassName('flows')}>
             <FlowsTab
               selectedFlow={selectedFlow}
               activePanelId={activePanelId}

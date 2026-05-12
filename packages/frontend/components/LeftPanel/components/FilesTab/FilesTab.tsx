@@ -1,16 +1,19 @@
 import { 
   RefreshCw,
 } from "lucide-react"
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { LocalFilesView, LocalFilesViewRef } from "./components/LocalFilesView/LocalFilesView"
 import { GoogleDriveView } from "./components/GoogleDriveView/GoogleDriveView"
 import { OneDriveView } from "./components/OneDriveView/OneDriveView"
+import { DropboxView } from "./components/DropboxView/DropboxView"
+import Dropbox from "../../../../../backend/api/dropbox/dropbox"
 import { FileProviderSelect } from "./components/FileProviderSelect"
 import { ViewModeSelect } from "./components/ViewModeSelect"
 import { FileTypeFilter } from "./components/FileTypeFilter"
 import { LocalFilesCreateMenu } from "./components/LocalFilesView/components/LocalFilesCreateMenu/LocalFilesCreateMenu"
 import { GoogleDriveCreateMenu } from "./components/GoogleDriveView/components/GoogleDriveCreateMenu"
 import { OneDriveCreateMenu } from "./components/OneDriveView/components/OneDriveCreateMenu"
+import { DropboxCreateMenu } from "./components/DropboxView/components/DropboxCreateMenu"
 import { Button } from "../../../common/ui/button"
 import { FileSystemItem } from "../../../../utils/fileTreeUtils"
 import { handleRefreshFiles } from "./handlers/handleRefreshFiles"
@@ -18,10 +21,11 @@ import { handleRefreshComplete } from "./handlers/handleRefreshComplete"
 import { useWorkspaceHandlers } from "./handlers/workspaceHandlers"
 import { PanelGroup, UserInfo } from "../../../../pages/Workspaces/types"
 
-type FileProvider = 'local' | 'google-drive' | 'onedrive'
+type FileProvider = 'local' | 'google-drive' | 'onedrive' | 'dropbox'
 type LocalViewMode = 'all' | 'recent' | 'starred' | 'shared'
 type GoogleDriveViewMode = 'my-drive' | 'recent' | 'starred' | 'trash'
 type OneDriveViewMode = 'root' | 'recent' | 'favorites' | 'search' | 'trash'
+type DropboxViewMode = 'root' | 'recent' | 'favorites' | 'search' | 'trash'
 
 interface FilesTabProps {
   userInfo?: UserInfo | null
@@ -86,6 +90,8 @@ export function FilesTab({
   const [localViewMode, setLocalViewMode] = useState<LocalViewMode>('all')
   const [googleDriveViewMode, setGoogleDriveViewMode] = useState<GoogleDriveViewMode>('my-drive')
   const [oneDriveViewMode, setOneDriveViewMode] = useState<OneDriveViewMode>('root')
+  const [dropboxViewMode, setDropboxViewMode] = useState<DropboxViewMode>('root')
+  const [dropboxConnected, setDropboxConnected] = useState(false)
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set())
 
   const toggleFilter = (categoryKey: string) => {
@@ -107,6 +113,7 @@ export function FilesTab({
 
 
   const handleProviderChange = (newProvider: FileProvider) => {
+    if (newProvider === 'dropbox' && !dropboxConnected) return
     setFileProvider(newProvider)
   }
 
@@ -120,6 +127,9 @@ export function FilesTab({
         break
       case 'onedrive':
         setOneDriveViewMode(value as OneDriveViewMode)
+        break
+      case 'dropbox':
+        setDropboxViewMode(value as DropboxViewMode)
         break
     }
   }
@@ -146,18 +156,44 @@ export function FilesTab({
     }
   }
 
+  useEffect(() => {
+    let isMounted = true
+
+    async function checkDropboxConnection() {
+      try {
+        const status = await Dropbox.getStatus()
+        if (isMounted) setDropboxConnected(status.connected)
+      } catch {
+        if (isMounted) setDropboxConnected(false)
+      }
+    }
+
+    checkDropboxConnection()
+    window.addEventListener('focus', checkDropboxConnection)
+
+    return () => {
+      isMounted = false
+      window.removeEventListener('focus', checkDropboxConnection)
+    }
+  }, [])
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex flex-col bg-card">
-        <div className="flex items-center justify-between px-4 py-3 border-b min-w-0 gap-3">
+        <div className="flex items-center justify-between px-4 py-2 border-b min-w-0 gap-3">
           <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden @container">
-            <FileProviderSelect fileProvider={fileProvider} onProviderChange={handleProviderChange} />
+            <FileProviderSelect
+              fileProvider={fileProvider}
+              onProviderChange={handleProviderChange}
+              dropboxConnected={dropboxConnected}
+            />
 
             <ViewModeSelect
               fileProvider={fileProvider}
               localViewMode={localViewMode}
               googleDriveViewMode={googleDriveViewMode}
               oneDriveViewMode={oneDriveViewMode}
+              dropboxViewMode={dropboxViewMode}
               onViewModeChange={handleViewModeChange}
             />
           </div>
@@ -197,6 +233,13 @@ export function FilesTab({
             {/* OneDrive + Menu (only in My Files view) */}
             {fileProvider === 'onedrive' && oneDriveViewMode === 'root' && (
               <OneDriveCreateMenu
+                onCreateDocument={handleCreateDocument}
+                onCreateSpreadsheet={handleCreateSpreadsheet}
+                onCreatePowerpoint={handleCreatePowerpoint}
+              />
+            )}
+            {fileProvider === 'dropbox' && dropboxViewMode === 'root' && (
+              <DropboxCreateMenu
                 onCreateDocument={handleCreateDocument}
                 onCreateSpreadsheet={handleCreateSpreadsheet}
                 onCreatePowerpoint={handleCreatePowerpoint}
@@ -252,6 +295,15 @@ export function FilesTab({
         {fileProvider === 'onedrive' && (
           <OneDriveView
             viewMode={oneDriveViewMode}
+            onFileSelect={handleFileSelect}
+            selectedFile={selectedFile}
+            activeFilters={activeFilters}
+          />
+        )}
+
+        {fileProvider === 'dropbox' && (
+          <DropboxView
+            viewMode={dropboxViewMode}
             onFileSelect={handleFileSelect}
             selectedFile={selectedFile}
             activeFilters={activeFilters}

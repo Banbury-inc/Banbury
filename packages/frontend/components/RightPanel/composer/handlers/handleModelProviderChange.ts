@@ -9,6 +9,8 @@ interface HandleModelProviderChangeParams {
     browser: boolean
     x_api: boolean
     slack: boolean
+    onedrive: boolean
+    notion: boolean
     model_provider: "anthropic" | "openai"
   }
   onUpdateToolPreferences: (
@@ -21,6 +23,8 @@ interface HandleModelProviderChangeParams {
       browser: boolean
       x_api: boolean
       slack: boolean
+      onedrive: boolean
+      notion: boolean
       model_provider: "anthropic" | "openai"
     }
   ) => void

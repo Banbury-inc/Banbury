@@ -20,9 +20,10 @@ import { BrowserTool } from "../../components/BrowserTool";
 import { SubagentTool } from "../../components/SubagentTool";
 import { CreateFileTool } from "../../components/CreateFileTool";
 import { DownloadFileTool } from "../../components/DownloadFileTool";
+import { OneDriveTool } from "../../components/OneDriveTool";
 import { BranchPicker } from "./BranchPicker";
 import { VoiceControls } from "./VoiceControls";
-import { Typography, typographyVariants } from "../../../../common/ui/typography";
+import { typographyVariants } from "../../../../common/ui/typography";
 import { cn } from "../../../../../utils";
 import type { FC } from "react";
 
@@ -98,6 +99,20 @@ export const AssistantMessage: FC = () => {
                   spawn_subagents: SubagentTool,
                   create_file: CreateFileTool,
                   download_from_url: DownloadFileTool,
+                  onedrive_status: OneDriveTool,
+                  onedrive_list_root: OneDriveTool,
+                  onedrive_list_folder: OneDriveTool,
+                  onedrive_search: OneDriveTool,
+                  onedrive_get_item: OneDriveTool,
+                  onedrive_download_file: OneDriveTool,
+                  onedrive_upload_text_file: OneDriveTool,
+                  onedrive_update_text_file: OneDriveTool,
+                  onedrive_create_folder: OneDriveTool,
+                  onedrive_rename_move: OneDriveTool,
+                  onedrive_delete_item: OneDriveTool,
+                  onedrive_create_share_link: OneDriveTool,
+                  onedrive_invite: OneDriveTool,
+                  onedrive_get_permissions: OneDriveTool,
                 },
                 Fallback: ToolFallback 
               },
