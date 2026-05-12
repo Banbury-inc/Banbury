@@ -15,6 +15,7 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai"
 import { SystemMessage, HumanMessage } from "@langchain/core/messages"
 import { createReactAgent } from "@langchain/langgraph/prebuilt"
 import { getServerContextValue } from "../../../../../../frontend/assistant/langraph/serverContext"
+import { getOpenAITemperatureOptions } from "../modelOptions"
 import {
   SpawnSubagentsInputSchema,
   ROLE_TOOL_ALLOWLISTS,
@@ -157,7 +158,7 @@ function createChatModel(provider: ModelProvider, modelId?: string) {
     return new ChatOpenAI({
       model: actualModelId,
       apiKey: process.env.OPENAI_API_KEY,
-      temperature: 0.2,
+      ...getOpenAITemperatureOptions(actualModelId),
     })
   }
 

@@ -6,6 +6,7 @@ import { StateGraph, START, END, MessagesAnnotation } from "@langchain/langgraph
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { getServerContextValue } from "../../../../../frontend/assistant/langraph/serverContext";
 import type { BaseMessage } from "@langchain/core/messages";
+import { getOpenAITemperatureOptions } from "./modelOptions";
 // Import tools from separate files
 import { webSearchTool } from "./tools/webSearchTool";
 import { tavilyExtractTool } from "./tools/tavilyExtractTool";
@@ -172,7 +173,7 @@ function createChatModel(provider: ModelProvider, modelId?: string) {
     return new ChatOpenAI({
       model: actualModelId,
       apiKey: process.env.OPENAI_API_KEY,
-      temperature: 0.2,
+      ...getOpenAITemperatureOptions(actualModelId),
     })
   }
 
