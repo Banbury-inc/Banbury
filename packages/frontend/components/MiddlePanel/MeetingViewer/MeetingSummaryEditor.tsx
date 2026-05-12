@@ -168,10 +168,10 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
   }
 
   return (
-    <div className={cn("relative meeting-summary-wrapper h-full overflow-auto bg-card border border-border rounded-lg", styles.darkScrollbar)}>
+    <div className={cn("relative meeting-summary-wrapper h-full overflow-auto rounded-xl bg-transparent", styles.darkScrollbar)}>
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
-          <div className="text-muted-foreground">Generating summary...</div>
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/70 backdrop-blur-sm">
+          <div className="rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground shadow-sm">Generating summary...</div>
         </div>
       )}
       <style>{`
@@ -180,7 +180,7 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
           padding: 1.5rem;
           min-height: 400px;
           color: var(--foreground);
-          background: var(--card);
+          background: transparent;
         }
         
         .meeting-summary-wrapper .ProseMirror[contenteditable="false"] {
@@ -188,11 +188,12 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
         }
         
         .meeting-summary-wrapper .ProseMirror h1 {
-          font-size: 2rem;
-          font-weight: 600;
+          font-size: 1.625rem;
+          font-weight: 650;
           margin-top: 1.5rem;
           margin-bottom: 0.75rem;
           line-height: 1.2;
+          letter-spacing: -0.03em;
           color: var(--foreground);
         }
         
@@ -201,17 +202,18 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
         }
         
         .meeting-summary-wrapper .ProseMirror h2 {
-          font-size: 1.5rem;
-          font-weight: 600;
-          margin-top: 1.25rem;
+          font-size: 1.2rem;
+          font-weight: 650;
+          margin-top: 1.5rem;
           margin-bottom: 0.625rem;
           line-height: 1.3;
+          letter-spacing: -0.02em;
           color: var(--foreground);
         }
         
         .meeting-summary-wrapper .ProseMirror h3 {
-          font-size: 1.25rem;
-          font-weight: 600;
+          font-size: 1rem;
+          font-weight: 650;
           margin-top: 1rem;
           margin-bottom: 0.5rem;
           line-height: 1.4;
@@ -219,7 +221,7 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
         }
         
         .meeting-summary-wrapper .ProseMirror h4 {
-          font-size: 1.1rem;
+          font-size: 0.95rem;
           font-weight: 600;
           margin-top: 0.875rem;
           margin-bottom: 0.5rem;
@@ -228,8 +230,9 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
         }
         
         .meeting-summary-wrapper .ProseMirror p {
-          margin: 0.75rem 0;
-          line-height: 1.6;
+          margin: 0.85rem 0;
+          font-size: 0.925rem;
+          line-height: 1.7;
           color: var(--foreground);
         }
         
@@ -240,8 +243,9 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
         }
         
         .meeting-summary-wrapper .ProseMirror li {
-          margin: 0.5rem 0;
-          line-height: 1.6;
+          margin: 0.55rem 0;
+          font-size: 0.925rem;
+          line-height: 1.65;
           color: var(--foreground);
         }
         
@@ -325,7 +329,7 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
         }
         
         .meeting-summary-wrapper .ProseMirror blockquote {
-          border-left: 4px solid var(--border);
+          border-left: 3px solid var(--border);
           padding-left: 1rem;
           margin: 1rem 0;
           color: var(--muted-foreground);

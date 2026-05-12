@@ -405,7 +405,7 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
   const duration = getDuration(currentMeeting as MeetingSession & { createdAt?: string | Date })
 
   return (
-    <div className="h-full flex flex-col bg-card">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       {/* Actions */}
       <MeetingActionsBar
         meeting={currentMeeting}
@@ -420,12 +420,12 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
       />
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="px-4 py-4 space-y-4">
+      <div className="min-h-0 flex-1 overflow-hidden bg-muted/30">
+        <div className="h-full px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
           {/* Two-column layout: Video/Summary on left, Transcript on right */}
-          <div className="flex flex-col lg:flex-row gap-4">
+          <div className="mx-auto flex h-full min-h-0 w-full max-w-[1440px] flex-col gap-5 lg:flex-row xl:gap-6">
             {/* Left Column: Video and Summary */}
-            <div className="flex-1 space-y-4 min-w-0">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-5">
               {(currentMeeting.recordingUrl || currentMeeting.recallBot?.videoUrl || videoStreamUrl) && (
                 <VideoPlayer
                   videoRef={videoRef}

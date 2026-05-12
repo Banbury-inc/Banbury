@@ -34,12 +34,16 @@ export function SummarySection({
   onContentChange
 }: SummarySectionProps) {
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <Typography variant="h4" className="text-base font-semibold">
-          Summary
-        </Typography>
-        <div className="flex items-center gap-2">
+    <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="flex flex-shrink-0 flex-col gap-2 border-b border-border bg-muted/30 px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div>
+            <Typography variant="h4" className="text-base font-semibold leading-none">
+              Summary
+            </Typography>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           {hasUnsavedChanges && (
             <Button
               size="xs"
@@ -86,7 +90,7 @@ export function SummarySection({
       </div>
 
       {/* Always render the editor so the ref is available for summary generation */}
-      <div className={hasSummary || isGeneratingSummary ? "min-h-[200px]" : "hidden"}>
+      <div className={hasSummary || isGeneratingSummary ? "min-h-0 flex-1 p-3" : "hidden"}>
         <MeetingSummaryEditor
           key={meetingId}
           initialContent={summaryHtml}
@@ -99,9 +103,12 @@ export function SummarySection({
       </div>
 
       {!hasSummary && !isGeneratingSummary && (
-        <div className="py-8 space-y-3">
-          <div className="space-y-1">
-            <Typography variant="p" className="text-sm font-medium">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-6 py-12 text-center">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted ring-1 ring-border">
+            <Sparkles className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+          </div>
+          <div className="max-w-md space-y-1">
+            <Typography variant="p" className="text-sm font-semibold">
               No summary yet
             </Typography>
             <Typography variant="p" className="text-sm text-muted-foreground">
@@ -114,12 +121,13 @@ export function SummarySection({
             size="sm"
             onClick={onGenerate}
             disabled={isGeneratingSummary || !hasTranscription}
+            className="mt-5"
           >
             <Sparkles className="h-4 w-4 mr-2" />
             Generate Summary
           </Button>
         </div>
       )}
-    </div>
+    </section>
   )
 }
