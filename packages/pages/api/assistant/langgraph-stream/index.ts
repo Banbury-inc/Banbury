@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next"
-import { SystemMessage, HumanMessage, ChatMessage } from "@langchain/core/messages"
+import { SystemMessage, ChatMessage } from "@langchain/core/messages"
 import { createReactAgentForProvider, createDocumentAgentForProvider, createPlanningAgentForProvider, createAskAgentForProvider } from "./agent/agent"
 import { runWithServerContext } from "../../../../frontend/assistant/langraph/serverContext"
 import type { StreamRequestBody } from "./types"
-import { SYSTEM_PROMPT, DOCUMENT_SYSTEM_PROMPT, ASK_MODE_SYSTEM_PROMPT, API_CONFIG } from "./constants"
+import { API_CONFIG, getLangGraphPrompts } from "./constants"
 import { PLANNER_SYSTEM_PROMPT } from "../planner-stream/constants"
 import { normalizeMessages } from "./handlers/normalizeMessages"
 import { enrichWithDocumentContext } from "./handlers/enrichWithDocumentContext"
@@ -29,6 +29,21 @@ const CODE_FILE_EXTENSIONS = [
   ".md", ".sql", ".sh", ".bash", ".vue", ".svelte", ".r", ".m", ".pl", ".lua", ".dart", ".elm",
   ".clj", ".hs", ".fs", ".vb", ".asm", ".s", ".coffee", ".litcoffee", ".iced",
 ]
+
+function createRequestId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID()
+  return `lg-${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
+function createErrorDiagnostics(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error)
+  const stack = error instanceof Error ? error.stack : undefined
+  return {
+    message,
+    name: error instanceof Error ? error.name : "UnknownError",
+    stack: process.env.NODE_ENV === "production" ? undefined : stack,
+  }
+}
 
 function isCodeFileName(fileName: string): boolean {
   const lower = fileName.toLowerCase()
@@ -59,6 +74,9 @@ function inferCurrentCodeFileFromMessages(messages: any[]): CurrentCodeFileConte
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const requestId = createRequestId()
+  res.setHeader("X-Request-Id", requestId)
+
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"])
     res.status(405).end()
@@ -89,6 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    const prompts = getLangGraphPrompts()
     const body = req.body as StreamRequestBody
     const effectiveCurrentCodeFile = body.currentCodeFile || inferCurrentCodeFileFromMessages(body.messages || [])
     const token = req.headers.authorization?.replace('Bearer ', '')
@@ -186,13 +205,13 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
       // 4. Default: Use general assistant prompt
       let basePrompt: string
       if (isAskMode) {
-        basePrompt = ASK_MODE_SYSTEM_PROMPT
+        basePrompt = prompts.askModeSystemPrompt
       } else if (isPlanMode) {
         basePrompt = PLANNER_SYSTEM_PROMPT
       } else if (isDocumentRequest) {
-        basePrompt = DOCUMENT_SYSTEM_PROMPT
+        basePrompt = prompts.documentSystemPrompt
       } else {
-        basePrompt = SYSTEM_PROMPT
+        basePrompt = prompts.systemPrompt
       }
       const systemText = basePrompt + dateTimeSuffix + planContextSuffix + codeFileContextSuffix
       // Google's API doesn't support SystemMessage - convert to ChatMessage for Google provider
@@ -339,11 +358,15 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
       
       // Stream detailed error information
       const errorMessage = graphError instanceof Error ? graphError.message : "Graph execution failed"
-      send({ type: "error", error: errorMessage })
+      console.error("langgraph-stream graph error", {
+        requestId,
+        ...createErrorDiagnostics(graphError),
+      })
+      send({ type: "error", error: errorMessage, requestId })
       
       // Stream error details for debugging
       if (graphError instanceof Error && graphError.stack) {
-        send({ type: "error-details", stack: graphError.stack })
+        send({ type: "error-details", stack: graphError.stack, requestId })
       }
       
       res.end()
@@ -429,7 +452,17 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
 
   } catch (e: any) {
     const errorMessage = parseErrorMessage({ error: e })
-    send({ type: "error", error: errorMessage })
+    const diagnostics = createErrorDiagnostics(e)
+    console.error("langgraph-stream request error", {
+      requestId,
+      ...diagnostics,
+    })
+    send({
+      type: "error",
+      error: errorMessage,
+      requestId,
+      details: diagnostics.message,
+    })
     res.end()
   }
 }

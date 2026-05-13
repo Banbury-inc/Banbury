@@ -27,7 +27,7 @@ import {
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { ApiService } from '../../../backend/api/apiService'
 import { loadStripe } from '@stripe/stripe-js'
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { Elements } from '@stripe/react-stripe-js'
 import { useToast } from '../common/ui/use-toast'
 import { Toaster } from '../common/ui/toaster'
 import { Typography } from '../common/ui/typography'
@@ -43,6 +43,7 @@ import {
   AboutTab,
 } from './settings-tabs'
 import { handleUpdateProfile } from './handlers/settingsHandlers'
+import { CheckoutForm } from './CheckoutForm'
 
 const stripePromise = loadStripe('pk_live_51PGNdQJ2FLdDk2RmRpHZE9kX2yHJ9rIiVr5t8JfmV5eB1LyazU2uei7Qe0GdkpTnsMOz69w6hPNsU3KDmbUxyGOx00WxE03DQP')
 
@@ -65,46 +66,13 @@ interface PaymentStatus {
   payment_succeeded_at?: string
 }
 
-interface PaymentVerificationResponse {
-  payment_succeeded: boolean
-}
-
 interface PaymentIntentResponse {
   clientSecret?: string
 }
 
-function getUserInfo() {
-  if (typeof window === 'undefined') return null
-  
-  const userEmail = localStorage.getItem('userEmail')
-  const username = localStorage.getItem('username')
-  
-  return {
-    email: userEmail || '',
-    name: username || ''
-  }
-}
-
-async function verifyPaymentSuccess(paymentIntentId: string) {
-  try {
-    const response = await ApiService.post('/billing/verify-payment-intent/', {
-      payment_intent_id: paymentIntentId
-    }) as PaymentVerificationResponse
-    
-    if (response.payment_succeeded) {
-      return response
-    } else {
-      throw new Error('Payment not successful')
-    }
-  } catch (error) {
-    console.error('Error verifying payment:', error)
-    throw error
-  }
-}
-
 async function checkPaymentStatus() {
   try {
-    const response = await ApiService.get('/billing/check-payment-status/') as PaymentStatus
+    const response = await ApiService.get<PaymentStatus>('/billing/check-payment-status/')
     return response
   } catch (error) {
     console.error('Error checking payment status:', error)
@@ -112,122 +80,7 @@ async function checkPaymentStatus() {
   }
 }
 
-function CheckoutForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
-  const stripe = useStripe()
-  const elements = useElements()
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [paymentElementReady, setPaymentElementReady] = useState(false)
-  const [userInfo, setUserInfo] = useState(getUserInfo())
-
-  useEffect(() => {
-    const info = getUserInfo()
-    setUserInfo(info)
-    
-    const handleStorageChange = () => {
-      const updatedInfo = getUserInfo()
-      setUserInfo(updatedInfo)
-    }
-    
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [])
-
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    
-    if (!stripe || !elements) {
-      setError('Payment system not loaded')
-      return
-    }
-
-    if (!paymentElementReady) {
-      setError('Payment form not ready. Please wait a moment and try again.')
-      return
-    }
-
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const { error: submitError } = await elements.submit()
-      if (submitError) {
-        setError(submitError.message || 'An error occurred')
-        setIsLoading(false)
-        return
-      }
-
-      const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: `${window.location.origin}/settings?payment=success`,
-          payment_method_data: {
-            billing_details: {
-              name: userInfo?.name || undefined,
-              email: userInfo?.email || undefined,
-            },
-          },
-        },
-        redirect: 'if_required',
-      })
-
-      if (confirmError) {
-        setError(confirmError.message || 'Payment failed')
-        setIsLoading(false)
-      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        try {
-          await verifyPaymentSuccess(paymentIntent.id)
-          onSuccess()
-        } catch (verifyError) {
-          console.error('Error verifying payment:', verifyError)
-          onSuccess()
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred')
-      setIsLoading(false)
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement 
-        onReady={() => setPaymentElementReady(true)}
-        options={{
-          layout: 'tabs',
-        }}
-      />
-      
-      {error && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3">
-          <Typography variant="small" className="text-destructive">
-            {error}
-          </Typography>
-        </div>
-      )}
-
-      <div className="flex gap-3">
-        <Button
-          type="submit"
-          disabled={!stripe || !paymentElementReady || isLoading}
-          className="flex-1"
-        >
-          {isLoading ? 'Processing...' : 'Subscribe'}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-        >
-          Cancel
-        </Button>
-      </div>
-    </form>
-  )
-}
-
-export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
+export function SettingsModal({ open, onOpenChange }: Readonly<SettingsModalProps>) {
   const router = useRouter()
   const { toast } = useToast()
   const { theme, setTheme } = useTheme()
@@ -397,9 +250,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
         throw new Error('Please log in to subscribe')
       }
 
-      const response = await ApiService.post('/billing/create-payment-intent/', {
+      const response = await ApiService.post<PaymentIntentResponse>('/billing/create-payment-intent/', {
         amount: 1000,
-      }) as PaymentIntentResponse
+      })
 
       if (response.clientSecret) {
         setClientSecret(response.clientSecret)
@@ -466,9 +319,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogPortal>
           <DialogOverlay className="bg-background/60 backdrop-blur-sm" />
-          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 h-[92vh] w-[calc(100vw-1.5rem)] max-w-5xl translate-x-[-50%] translate-y-[-50%] overflow-hidden border border-border bg-card shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:h-[82vh] sm:rounded-lg">
+          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 h-[92vh] w-[calc(100vw-1.5rem)] max-w-5xl translate-x-[-50%] translate-y-[-50%] overflow-hidden border border-border bg-popover shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:h-[82vh] sm:rounded-lg">
           <div className="flex h-full flex-col md:flex-row">
-            <div className="border-b border-border bg-card p-4 md:w-64 md:border-b-0 md:border-r md:p-6">
+            <div className="border-b border-border bg-popover p-4 md:w-64 md:border-b-0 md:border-r md:p-6">
               <DialogHeader className="mb-4 md:mb-6">
                 <DialogTitle className="text-xl font-bold text-foreground">
                   <Typography variant="h2">Settings</Typography>
@@ -501,7 +354,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               </nav>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-card p-5 sm:p-6 md:p-8">
+            <div className="flex-1 overflow-y-auto bg-popover p-5 sm:p-6 md:p-8">
               {activeTab === 'profile' && (
                 <ProfileTab 
                   scopeActivated={scopeActivated}

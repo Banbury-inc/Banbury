@@ -12,6 +12,18 @@ interface GoogleModelDto {
   maxOutputTokens?: number
 }
 
+function createRequestId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID()
+  return `gm-${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
+function getConfiguredGoogleKeyName(): string | undefined {
+  if (process.env.GOOGLE_API_KEY) return "GOOGLE_API_KEY"
+  if (process.env.GOOGLE_AI_API_KEY) return "GOOGLE_AI_API_KEY"
+  if (process.env.GEMINI_API_KEY) return "GEMINI_API_KEY"
+  return undefined
+}
+
 function stripModelsPrefix(name: string): string {
   return name.startsWith("models/") ? name.slice("models/".length) : name
 }
@@ -71,36 +83,59 @@ function rowToDto(m: GoogleListModelRow): GoogleModelDto | null {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const requestId = createRequestId()
+  res.setHeader("X-Request-Id", requestId)
+
   if (req.method !== "GET") {
     res.setHeader("Allow", ["GET"])
-    return res.status(405).json({ error: "Method not allowed" })
+    return res.status(405).json({ error: "Method not allowed", requestId })
   }
 
+  const configuredKeyName = getConfiguredGoogleKeyName()
   const apiKey =
     process.env.GOOGLE_API_KEY ||
     process.env.GOOGLE_AI_API_KEY ||
     process.env.GEMINI_API_KEY
   if (!apiKey) {
-    return res.status(503).json({ error: "Google API key not configured" })
+    console.error("google-models missing api key", { requestId })
+    return res.status(503).json({
+      error: "Google API key not configured",
+      details: "Set GOOGLE_API_KEY, GOOGLE_AI_API_KEY, or GEMINI_API_KEY in the production environment.",
+      requestId,
+    })
   }
 
   let listResult: Awaited<ReturnType<typeof fetchGoogleGenerativeLanguageModels>>
   try {
     listResult = await fetchGoogleGenerativeLanguageModels(apiKey)
   } catch (e) {
-    console.error("google-models unexpected error", e)
+    console.error("google-models unexpected error", {
+      requestId,
+      configuredKeyName,
+      message: e instanceof Error ? e.message : String(e),
+      stack: e instanceof Error ? e.stack : undefined,
+    })
     return res.status(502).json({
       error: "Failed to list Google models",
       details: e instanceof Error ? e.message : String(e),
+      configuredKeyName,
+      requestId,
     })
   }
 
   if (!listResult.ok) {
-    console.error("google-models list failed", listResult.status, listResult.message)
+    console.error("google-models list failed", {
+      requestId,
+      configuredKeyName,
+      googleStatus: listResult.status,
+      details: listResult.message,
+    })
     return res.status(502).json({
       error: "Failed to list Google models",
       googleStatus: listResult.status,
       details: listResult.message,
+      configuredKeyName,
+      requestId,
     })
   }
 

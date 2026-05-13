@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { Dispatch } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin, RefreshCw } from 'lucide-react'
 import { Button } from '../../common/ui/button'
 import { CalendarEvent, CalendarListEntry } from '../../../../backend/api/calendar/calendar'
@@ -9,6 +10,8 @@ import {
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuCheckboxItem, 
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel
@@ -30,10 +33,57 @@ import { applyInitialEventSelection } from './handlers/applyInitialEventSelectio
 
 type CalendarView = 'month' | 'week' | 'day'
 
+const calendarViewLabels: Record<CalendarView, string> = {
+  month: 'Month',
+  week: 'Week',
+  day: 'Day'
+}
+
+const allDayEventRowHeight = 24
+
+function getDateKey(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function createDateFromKey(dateKey: string) {
+  const [year, month, day] = dateKey.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+function isAllDayEvent(event: CalendarEvent) {
+  return Boolean(event.start?.date && !event.start.dateTime)
+}
+
+function getAllDayEndDateKey(event: CalendarEvent) {
+  if (!event.start?.date) return null
+  if (!event.end?.date) return event.start.date
+
+  const startDate = createDateFromKey(event.start.date)
+  const exclusiveEndDate = createDateFromKey(event.end.date)
+
+  if (exclusiveEndDate <= startDate) return event.start.date
+
+  exclusiveEndDate.setDate(exclusiveEndDate.getDate() - 1)
+  return getDateKey(exclusiveEndDate)
+}
+
+function getEventStartKey(event: CalendarEvent) {
+  const start = event.start?.dateTime || event.start?.date
+  if (!start) return null
+  return getDateKey(new Date(start))
+}
+
+function getAllDayEventsForDate(eventsByDate: Map<string, CalendarEvent[]>, date: Date) {
+  return (eventsByDate.get(getDateKey(date)) || []).filter(isAllDayEvent)
+}
+
 interface CalendarViewerProps {
   initialDate?: Date
   initialView?: CalendarView
-  onEventClick?: (event: CalendarEvent) => void
+  onEventClick?: Dispatch<CalendarEvent>
   onDateChange?: () => void
   initialEvent?: CalendarEvent
   onInitialEventConsumed?: () => void
@@ -77,6 +127,8 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
   const [isClosingPopover, setIsClosingPopover] = useState(false)
   const [calendars, setCalendars] = useState<CalendarListEntry[]>([])
   const [visibleCalendarIds, setVisibleCalendarIds] = useState<string[]>(() => getVisibleCalendarIds())
+  const monthDayRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const [monthEventCapacityByDate, setMonthEventCapacityByDate] = useState<Record<string, number>>({})
 
   const startOfWeek = useCallback((date: Date) => {
     const d = new Date(date)
@@ -231,7 +283,16 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
     return calendars.find(c => c.id === calendarId)?.backgroundColor
   }
 
-  const goToday = () => setCurrentDate(new Date())
+  const getEventCalendarDetails = (event: CalendarEvent | null) => {
+    if (!event?.calendarId) return undefined
+    const calendar = calendars.find(cal => cal.id === event.calendarId)
+
+    return {
+      name: calendar ? getCalendarDisplayName(calendar) : event.calendarId,
+      color: calendar?.backgroundColor
+    }
+  }
+
   const goPrev = () => {
     const d = new Date(currentDate)
     if (view === 'day') d.setDate(d.getDate() - 1)
@@ -269,14 +330,37 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
       map.set(key, arr)
     }
     for (const ev of events) {
-      const startStr = ev.start?.dateTime || ev.start?.date
-      if (!startStr) continue
-      const d = new Date(startStr)
-      const key = d.toISOString().slice(0, 10)
-      add(key, ev)
+      if (isAllDayEvent(ev)) {
+        const startKey = ev.start?.date
+        const endKey = getAllDayEndDateKey(ev)
+        if (!startKey || !endKey) continue
+
+        const cursor = createDateFromKey(startKey)
+        const endDate = createDateFromKey(endKey)
+
+        while (cursor <= endDate) {
+          add(getDateKey(cursor), ev)
+          cursor.setDate(cursor.getDate() + 1)
+        }
+
+        continue
+      }
+
+      const key = getEventStartKey(ev)
+      if (key) add(key, ev)
     }
     return map
   }, [events])
+
+  const timedEventsByDate = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>()
+
+    eventsByDate.forEach((dayEvents, key) => {
+      map.set(key, dayEvents.filter(event => !isAllDayEvent(event)))
+    })
+
+    return map
+  }, [eventsByDate])
 
   const formatTime = (iso?: string) => {
     if (!iso) return ''
@@ -284,18 +368,96 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
 
-  const renderEventButton = (ev: CalendarEvent, onClick: (e: React.MouseEvent) => void) => {
+  const calculateVisibleMonthEventCount = useCallback((dayCell: HTMLDivElement, eventCount: number) => {
+    if (eventCount === 0) return 0
+
+    const dateHeader = dayCell.querySelector<HTMLElement>('[data-month-day-header]')
+    const eventList = dayCell.querySelector<HTMLElement>('[data-month-day-events]')
+    const firstEvent = dayCell.querySelector<HTMLElement>('[data-month-day-event]')
+    const moreIndicator = dayCell.querySelector<HTMLElement>('[data-month-day-more]')
+
+    if (!eventList || !dateHeader) return eventCount
+
+    const dayStyles = window.getComputedStyle(dayCell)
+    const eventListStyles = window.getComputedStyle(eventList)
+    const paddingTop = Number.parseFloat(dayStyles.paddingTop) || 0
+    const paddingBottom = Number.parseFloat(dayStyles.paddingBottom) || 0
+    const rowGap = Number.parseFloat(eventListStyles.rowGap) || 0
+    const eventHeight = firstEvent?.offsetHeight || 22
+    const moreHeight = moreIndicator?.offsetHeight || eventHeight
+    const availableHeight = dayCell.clientHeight - paddingTop - paddingBottom - dateHeader.offsetHeight
+
+    if (availableHeight <= 0) return 0
+
+    const totalRowsThatFit = Math.floor((availableHeight + rowGap) / (eventHeight + rowGap))
+
+    if (eventCount <= totalRowsThatFit) return eventCount
+    if (totalRowsThatFit <= 1) return 0
+
+    const rowsWithMoreIndicator = Math.floor((availableHeight - moreHeight + rowGap) / (eventHeight + rowGap))
+    return Math.max(rowsWithMoreIndicator, 0)
+  }, [])
+
+  useEffect(() => {
+    if (view !== 'month') return
+
+    const recalculateMonthEventCapacities = () => {
+      const nextCapacityByDate: Record<string, number> = {}
+
+      monthDayRefs.current.forEach((dayCell, key) => {
+        const eventCount = eventsByDate.get(key)?.length || 0
+        nextCapacityByDate[key] = calculateVisibleMonthEventCount(dayCell, eventCount)
+      })
+
+      setMonthEventCapacityByDate((currentCapacityByDate) => {
+        const currentKeys = Object.keys(currentCapacityByDate)
+        const nextKeys = Object.keys(nextCapacityByDate)
+        const isSameCapacity = currentKeys.length === nextKeys.length
+          && nextKeys.every(key => currentCapacityByDate[key] === nextCapacityByDate[key])
+
+        return isSameCapacity ? currentCapacityByDate : nextCapacityByDate
+      })
+    }
+
+    recalculateMonthEventCapacities()
+
+    const resizeObserver = new ResizeObserver(recalculateMonthEventCapacities)
+    monthDayRefs.current.forEach(dayCell => resizeObserver.observe(dayCell))
+
+    return () => resizeObserver.disconnect()
+  }, [view, eventsByDate, calculateVisibleMonthEventCount])
+
+  const renderEventButton = (ev: CalendarEvent, onClick: React.MouseEventHandler<HTMLButtonElement>) => {
     const calColor = getCalendarColor(ev.calendarId)
     return (
       <button 
         key={`${ev.calendarId}-${ev.id}`}
         onClick={onClick}
-        className="w-full text-left truncate text-xs px-1 py-0.5 rounded hover:opacity-80 transition-opacity overflow-hidden"
+        data-month-day-event
+        className="w-full text-left truncate text-xs px-1 py-0.5 rounded hover:opacity-80 transition-opacity overflow-hidden bg-accent text-accent-foreground border border-border"
         style={{ 
           backgroundColor: calColor ? `${calColor}20` : undefined,
           borderColor: calColor || undefined,
-          borderWidth: '1px',
-          borderStyle: 'solid',
+          color: calColor || undefined
+        }}
+        title={ev.summary || '(No title)'}
+      >
+        {ev.summary || '(No title)'}
+      </button>
+    )
+  }
+
+  const renderAllDayEventButton = (ev: CalendarEvent, onClick: React.MouseEventHandler<HTMLButtonElement>) => {
+    const calColor = getCalendarColor(ev.calendarId)
+
+    return (
+      <button
+        key={`${ev.calendarId}-${ev.id}`}
+        onClick={onClick}
+        className="h-6 w-full truncate rounded border border-border bg-accent px-1 text-left text-xs text-accent-foreground transition-opacity hover:opacity-80"
+        style={{
+          backgroundColor: calColor ? `${calColor}20` : undefined,
+          borderColor: calColor || undefined,
           color: calColor || undefined
         }}
         title={ev.summary || '(No title)'}
@@ -320,26 +482,32 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
             <div key={d} className="p-2 text-xs font-medium text-muted-foreground border-r border-b border-border">{d}</div>
           ))}
           {days.map((d, idx) => {
-            const key = d.toISOString().slice(0,10)
+            const key = getDateKey(d)
             const dayEvents = eventsByDate.get(key) || []
             const isCurrentMonth = d.getMonth() === currentDate.getMonth()
             const isToday = (new Date()).toDateString() === d.toDateString()
+            const visibleEventCount = monthEventCapacityByDate[key] ?? dayEvents.length
+            const hiddenEventCount = Math.max(dayEvents.length - visibleEventCount, 0)
             return (
               <div 
                 key={idx} 
-                className={`min-h-[7rem] p-1 border-r border-b border-border ${isCurrentMonth ? 'bg-card' : 'bg-background'} ${isToday ? 'ring-1 ring-blue-500' : ''} cursor-pointer hover:bg-accent/50 transition-colors`}
+                ref={(node) => {
+                  if (node) monthDayRefs.current.set(key, node)
+                  else monthDayRefs.current.delete(key)
+                }}
+                className={`min-h-[7rem] overflow-hidden p-1 border-r border-b border-border ${isCurrentMonth ? 'bg-card' : 'bg-background'} ${isToday ? 'ring-1 ring-blue-500' : ''} cursor-pointer hover:bg-accent/50 transition-colors`}
                 onClick={(e) => handleDateClick(d, { x: e.clientX, y: e.clientY })}
               >
-                <div className="text-xs text-muted-foreground mb-1 flex items-center justify-between">
+                <div data-month-day-header className="text-xs text-muted-foreground mb-1 flex items-center justify-between">
                   <span className={`px-1 rounded ${isToday ? 'bg-blue-600 text-white' : ''}`}>{d.getDate()}</span>
                 </div>
-                <div className="space-y-0.5">
-                  {dayEvents.slice(0, 3).map(ev => renderEventButton(ev, (e) => {
+                <div data-month-day-events className="space-y-0.5">
+                  {dayEvents.slice(0, visibleEventCount).map(ev => renderEventButton(ev, (e) => {
                     e.stopPropagation()
                     handleEventClick(ev, { x: e.clientX, y: e.clientY })
                   }))}
-                  {dayEvents.length > 3 && (
-                    <div className="text-[10px] text-muted-foreground">+{dayEvents.length - 3} more</div>
+                  {hiddenEventCount > 0 && (
+                    <div data-month-day-more className="text-[10px] text-muted-foreground">+{hiddenEventCount} more</div>
                   )}
                 </div>
               </div>
@@ -430,6 +598,24 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
                 </div>
               ))}
             </div>
+            <div className="grid grid-cols-7 border-b border-border bg-card">
+              {days.map((day) => {
+                const allDayEvents = getAllDayEventsForDate(eventsByDate, day)
+
+                return (
+                  <div
+                    key={`all-day-${getDateKey(day)}`}
+                    className="min-h-8 space-y-0.5 border-r border-border p-1"
+                    style={{ height: Math.max(32, allDayEvents.length * allDayEventRowHeight + 8) }}
+                  >
+                    {allDayEvents.map(event => renderAllDayEventButton(event, (e) => {
+                      e.stopPropagation()
+                      handleEventClick(event, { x: e.clientX, y: e.clientY })
+                    }))}
+                  </div>
+                )
+              })}
+            </div>
             
             <div className="flex-1 grid grid-cols-7 grid-rows-23 relative">
               {timeSlots.map((hour) => (
@@ -452,8 +638,8 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
               )}
               
               {days.map((day, dayIndex) => {
-                const key = day.toISOString().slice(0,10)
-                const dayEvents = (eventsByDate.get(key) || []).slice().sort((a,b) => {
+                const key = getDateKey(day)
+                const dayEvents = (timedEventsByDate.get(key) || []).slice().sort((a,b) => {
                   const as = a.start?.dateTime || a.start?.date || ''
                   const bs = b.start?.dateTime || b.start?.date || ''
                   return as.localeCompare(bs)
@@ -463,18 +649,18 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
                   const position = getEventPosition(event, dayIndex)
                   if (!position) return null
                   
-                  const calColor = getCalendarColor(event.calendarId) || '#3b82f6'
+                  const calColor = getCalendarColor(event.calendarId)
                   
                   return (
                     <div
                       key={`${event.calendarId}-${event.id}`}
-                      className="absolute rounded p-1 text-white text-xs cursor-pointer hover:opacity-80 transition-opacity overflow-hidden z-20"
+                      className="absolute rounded bg-primary p-1 text-primary-foreground text-xs cursor-pointer hover:opacity-80 transition-opacity overflow-hidden z-20"
                       style={{
                         left: `${(position.dayIndex / 7) * 100}%`,
                         width: `${100 / 7}%`,
                         top: `${(position.top / 22) * 100}%`,
                         height: `${Math.max((position.height / 22) * 100, 4)}%`,
-                        backgroundColor: calColor
+                        backgroundColor: calColor || undefined
                       }}
                       onClick={(e) => {
                         e.stopPropagation()
@@ -525,12 +711,13 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
   }
 
   const renderDay = () => {
-    const key = currentDate.toISOString().slice(0,10)
-    const dayEvents = (eventsByDate.get(key) || []).slice().sort((a,b) => {
+    const key = getDateKey(currentDate)
+    const dayEvents = (timedEventsByDate.get(key) || []).slice().sort((a,b) => {
       const as = a.start?.dateTime || a.start?.date || ''
       const bs = b.start?.dateTime || b.start?.date || ''
       return as.localeCompare(bs)
     })
+    const allDayEvents = getAllDayEventsForDate(eventsByDate, currentDate)
 
     const timeSlots = []
     for (let hour = 1; hour <= 23; hour++) {
@@ -569,14 +756,37 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
     return (
       <div className="flex-1 bg-card relative">
         <div className="flex h-full">
-          <div className="w-16 flex-shrink-0 border-r border-border grid grid-rows-23">
+          <div className="w-16 flex-shrink-0 border-r border-border flex flex-col">
+            {allDayEvents.length > 0 && (
+              <div
+                className="flex items-center justify-end border-b border-border pr-2 text-xs text-muted-foreground"
+                style={{ height: allDayEvents.length * allDayEventRowHeight + 8 }}
+              >
+                All day
+              </div>
+            )}
+            <div className="flex-1 grid grid-rows-23">
             {timeSlots.map((hour) => (
               <div key={hour} className="flex items-center justify-end pr-2 border-b border-border">
                 <span className="text-xs text-muted-foreground">{formatTimeLabel(hour)}</span>
               </div>
             ))}
+            </div>
           </div>
           
+          <div className="flex-1 flex flex-col">
+            {allDayEvents.length > 0 && (
+              <div
+                className="space-y-0.5 border-b border-border p-1"
+                style={{ height: allDayEvents.length * allDayEventRowHeight + 8 }}
+              >
+                {allDayEvents.map(event => renderAllDayEventButton(event, (e) => {
+                  e.stopPropagation()
+                  handleEventClick(event, { x: e.clientX, y: e.clientY })
+                }))}
+              </div>
+            )}
+
           <div className="flex-1 relative grid grid-rows-23">
             {timeSlots.map((hour) => (
               <div key={hour} className="border-b border-border" />
@@ -593,16 +803,16 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
               const position = getEventPosition(event)
               if (!position) return null
               
-              const calColor = getCalendarColor(event.calendarId) || '#3b82f6'
+              const calColor = getCalendarColor(event.calendarId)
               
               return (
                 <div
                   key={`${event.calendarId}-${event.id}`}
-                  className="absolute left-1 right-1 rounded p-1 text-white text-xs cursor-pointer hover:opacity-80 transition-opacity overflow-hidden z-20"
+                  className="absolute left-1 right-1 rounded bg-primary p-1 text-primary-foreground text-xs cursor-pointer hover:opacity-80 transition-opacity overflow-hidden z-20"
                   style={{
                     top: `${(position.top / 22) * 100}%`,
                     height: `${Math.max((position.height / 22) * 100, 4)}%`,
-                    backgroundColor: calColor
+                    backgroundColor: calColor || undefined
                   }}
                   onClick={(e) => {
                     e.stopPropagation()
@@ -641,6 +851,7 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
               }}
             />
           </div>
+          </div>
         </div>
       </div>
     )
@@ -661,7 +872,6 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
           <Button variant="primary" size="icon-sm" onClick={goNext}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button variant="primary" size="icon-sm" className="h-8 w-14 px-3 bg-accent hover:bg-accent/80 text-foreground" onClick={goToday}>Today</Button>
           <div className="ml-3 text-sm font-medium text-foreground flex items-center gap-2">
             <CalendarIcon className="h-4 w-4" />
             {title}
@@ -691,8 +901,8 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
                       className="flex items-center gap-2"
                     >
                       <div 
-                        className="w-3 h-3 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: cal.backgroundColor || '#3b82f6' }}
+                        className="w-3 h-3 rounded-full flex-shrink-0 bg-muted"
+                        style={{ backgroundColor: cal.backgroundColor || undefined }}
                       />
                       <span className="truncate">{getCalendarDisplayName(cal)}</span>
                       {cal.primary && <span className="text-xs text-muted-foreground ml-auto">(Primary)</span>}
@@ -702,9 +912,23 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="primary" size="icon-sm" className={`h-8 w-14 px-3 ${view==='month' ? 'bg-accent text-foreground border-border' : 'text-muted-foreground border-border hover:bg-accent/50'}`} onClick={() => setView('month')}>Month</Button>
-          <Button variant="primary" size="icon-sm" className={`h-8 w-14 px-3 ${view==='week' ? 'bg-accent text-foreground border-border' : 'text-muted-foreground border-border hover:bg-accent/50'}`} onClick={() => setView('week')}>Week</Button>
-          <Button variant="primary" size="icon-sm" className={`h-8 w-14 px-3 ${view==='day' ? 'bg-accent text-foreground border-border' : 'text-muted-foreground border-border hover:bg-accent/50'}`} onClick={() => setView('day')}>Day</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 w-24 justify-between px-3">
+                {calendarViewLabels[view]}
+                <ChevronRight className="h-4 w-4 rotate-90 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32">
+              <DropdownMenuLabel>View</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={view} onValueChange={(nextView) => setView(nextView as CalendarView)}>
+                <DropdownMenuRadioItem value="month">Month</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="week">Week</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="day">Day</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="primary" size="icon-sm" onClick={loadEventsFromCalendars} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
@@ -727,8 +951,10 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
           isOpen={isEventPopoverOpen}
           position={eventPopoverPos}
           event={selectedEvent}
+          calendarDetails={getEventCalendarDetails(selectedEvent)}
           onClose={handleEventPopoverClose}
           onEdit={handleSwitchToEditMode}
+          onDeleted={handleEventDeleted}
         />
       ) : (
         <EditEventPopover

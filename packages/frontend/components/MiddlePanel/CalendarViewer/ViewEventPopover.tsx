@@ -1,21 +1,32 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Clock, MapPin, Users, X, Edit3, ExternalLink } from 'lucide-react'
+import { Calendar, Clock, Edit3, ExternalLink, MapPin, Trash2, Users, X } from 'lucide-react'
 import { Button } from '../../common/ui/button'
 import { CalendarEvent } from '../../../../backend/api/calendar/calendar'
 import { FormattedText } from '../../../utils/textFormatter'
+import { deleteCalendarEvent } from './handlers/deleteCalendarEvent'
+
+interface EventCalendarDetails {
+  name: string
+  color?: string
+}
 
 interface ViewEventPopoverProps {
   isOpen: boolean
   position: { x: number; y: number } | null
   event: CalendarEvent | null
+  calendarDetails?: EventCalendarDetails
   onClose: () => void
   onEdit: () => void
+  onDeleted: () => void
 }
 
-export function ViewEventPopover({ isOpen, position, event, onClose, onEdit }: ViewEventPopoverProps) {
+export function ViewEventPopover({ isOpen, position, event, calendarDetails, onClose, onEdit, onDeleted }: ViewEventPopoverProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const headerRef = useRef<HTMLDivElement | null>(null)
   const [measuredWidth, setMeasuredWidth] = useState<number>(380)
   const [measuredHeight, setMeasuredHeight] = useState<number>(300)
+  const [headerHeight, setHeaderHeight] = useState<number>(0)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -23,10 +34,12 @@ export function ViewEventPopover({ isOpen, position, event, onClose, onEdit }: V
     const obs = new ResizeObserver(() => {
       setMeasuredWidth(el.offsetWidth)
       setMeasuredHeight(el.offsetHeight)
+      setHeaderHeight(headerRef.current?.offsetHeight || 0)
     })
     obs.observe(el)
     setMeasuredWidth(el.offsetWidth)
     setMeasuredHeight(el.offsetHeight)
+    setHeaderHeight(headerRef.current?.offsetHeight || 0)
     return () => obs.disconnect()
   }, [isOpen])
 
@@ -40,6 +53,13 @@ export function ViewEventPopover({ isOpen, position, event, onClose, onEdit }: V
     const y = Math.min(Math.max(margin, position.y), Math.max(margin, maxY))
     return { x, y }
   }, [position, measuredWidth, measuredHeight])
+
+  const bodyMaxHeight = useMemo(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const margin = 8
+    return Math.max(120, window.innerHeight - clampedPosition.y - headerHeight - margin)
+  }, [clampedPosition.y, headerHeight])
 
   useEffect(() => {
     if (!isOpen) return
@@ -76,6 +96,7 @@ export function ViewEventPopover({ isOpen, position, event, onClose, onEdit }: V
   const description = event.description || ''
   const location = event.location || ''
   const attendees = event.attendees?.map(a => a.email || a.displayName || '').filter(Boolean) || []
+  const calendarName = calendarDetails?.name || event.calendarId || 'Calendar'
 
   return (
     <div
@@ -83,7 +104,7 @@ export function ViewEventPopover({ isOpen, position, event, onClose, onEdit }: V
       className="fixed z-50 w-[420px] max-w-[90vw] bg-popover border border-border rounded-lg shadow-xl"
       style={{ left: clampedPosition.x, top: clampedPosition.y }}
     >
-      <div className="flex items-center justify-between p-3 border-b border-border">
+      <div ref={headerRef} className="flex items-center justify-between p-3 border-b border-border">
         <h2 className="text-sm font-semibold text-foreground truncate flex-1 pr-2">{title}</h2>
         <div className="flex items-center gap-1">
           {event.htmlLink && (
@@ -109,6 +130,16 @@ export function ViewEventPopover({ isOpen, position, event, onClose, onEdit }: V
           <Button
             variant="ghost"
             size="sm"
+            className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+            onClick={() => deleteCalendarEvent({ event, onDeleted, onClose, setIsDeleting })}
+            disabled={isDeleting}
+            title="Delete event"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
             onClick={onClose}
           >
@@ -117,7 +148,20 @@ export function ViewEventPopover({ isOpen, position, event, onClose, onEdit }: V
         </div>
       </div>
 
-      <div className="p-3 space-y-3">
+      <div className="space-y-3 overflow-y-auto p-3" style={{ maxHeight: bodyMaxHeight }}>
+        <div className="flex items-start gap-2 text-sm text-muted-foreground">
+          <Calendar className="h-4 w-4 mt-0.5 shrink-0" />
+          <span className="flex min-w-0 items-center gap-2 text-foreground">
+            {calendarDetails?.color && (
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: calendarDetails.color }}
+              />
+            )}
+            <span className="truncate">{calendarName}</span>
+          </span>
+        </div>
+
         <div className="flex items-start gap-2 text-sm text-muted-foreground">
           <Clock className="h-4 w-4 mt-0.5 shrink-0" />
           <span className="text-foreground">{formattedTime}</span>
@@ -139,29 +183,13 @@ export function ViewEventPopover({ isOpen, position, event, onClose, onEdit }: V
 
         {description && (
           <div className="pt-2 border-t border-border">
-            <div className="text-sm text-foreground max-h-40 overflow-y-auto">
+            <div className="text-sm text-foreground">
               <FormattedText text={description} className="text-sm leading-relaxed" />
             </div>
           </div>
         )}
       </div>
 
-      <div className="flex gap-2 p-3 pt-0">
-        <Button
-          onClick={onEdit}
-          className="flex-1 text-xs"
-          variant="default"
-        >
-          <Edit3 className="h-3 w-3 mr-1" /> Edit
-        </Button>
-        <Button
-          variant="outline"
-          className="flex-1 text-xs"
-          onClick={onClose}
-        >
-          Close
-        </Button>
-      </div>
     </div>
   )
 }

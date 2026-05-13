@@ -3,11 +3,23 @@ import { join } from 'node:path'
 
 const PROMPTS_DIR = join(process.cwd(), 'pages/api/assistant/langgraph-stream/prompts')
 
+export interface LangGraphPrompts {
+  systemPrompt: string
+  documentSystemPrompt: string
+  askModeSystemPrompt: string
+}
+
 function readPromptFile(fileName: string): string {
   return readFileSync(join(PROMPTS_DIR, fileName), 'utf-8').trimEnd()
 }
 
-export const SYSTEM_PROMPT = readPromptFile('system-prompt.md').trim()
+export function getLangGraphPrompts(): LangGraphPrompts {
+  return {
+    systemPrompt: readPromptFile('system-prompt.md').trim(),
+    documentSystemPrompt: readPromptFile('document-system-prompt.md'),
+    askModeSystemPrompt: readPromptFile('ask-mode-system-prompt.md'),
+  }
+}
 
 /**
  * Specialized system prompt for document creation and editing requests.
@@ -21,7 +33,6 @@ export const SYSTEM_PROMPT = readPromptFile('system-prompt.md').trim()
  *
  * @see prompts/document-system-prompt.md
  */
-export const DOCUMENT_SYSTEM_PROMPT = readPromptFile('document-system-prompt.md')
 
 /**
  * System prompt for Ask mode - read-only exploration and research.
@@ -30,7 +41,6 @@ export const DOCUMENT_SYSTEM_PROMPT = readPromptFile('document-system-prompt.md'
  *
  * @see prompts/ask-mode-system-prompt.md
  */
-export const ASK_MODE_SYSTEM_PROMPT = readPromptFile('ask-mode-system-prompt.md')
 
 export const API_CONFIG = {
   api: {
