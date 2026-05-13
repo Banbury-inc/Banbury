@@ -73,6 +73,19 @@ function inferCurrentCodeFileFromMessages(messages: any[]): CurrentCodeFileConte
   return undefined
 }
 
+function createSelectedSkillPromptSuffix(skill: StreamRequestBody["selectedSkill"]): string {
+  if (!skill?.content) return ""
+
+  return `\n\n## Selected User Skill
+The user selected this skill for the current request. Apply these instructions only to this run.
+
+Skill: ${skill.name}
+${skill.description ? `Description: ${skill.description}\n` : ""}
+\`\`\`markdown
+${skill.content}
+\`\`\``
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const requestId = createRequestId()
   res.setHeader("X-Request-Id", requestId)
@@ -197,6 +210,7 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
             ? `\n\n### Open File Content (preview)\n\`\`\`\n${codePreview}\n\`\`\``
             : "")
       }
+      const selectedSkillSuffix = createSelectedSkillPromptSuffix(body.selectedSkill)
       
       // Use appropriate system prompt based on mode:
       // 1. Ask mode: Use ask mode prompt for read-only exploration
@@ -213,7 +227,7 @@ Focus on completing your current task thoroughly. ${isSubAgent ? "You are workin
       } else {
         basePrompt = prompts.systemPrompt
       }
-      const systemText = basePrompt + dateTimeSuffix + planContextSuffix + codeFileContextSuffix
+      const systemText = basePrompt + dateTimeSuffix + planContextSuffix + codeFileContextSuffix + selectedSkillSuffix
       // Google's API doesn't support SystemMessage - convert to ChatMessage for Google provider
       if (modelProvider === "google") {
         const systemAsUserMessage = new ChatMessage({ content: `System: ${systemText}`, role: "human" })

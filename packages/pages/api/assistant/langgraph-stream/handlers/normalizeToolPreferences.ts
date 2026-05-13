@@ -36,6 +36,8 @@ export function normalizeToolPreferences({
     // Calendar tools
     calendar: toolPreferences.calendar !== false,
     msCalendar: toolPreferences.msCalendar !== false,
+    // Meeting tools
+    meeting_analysis: toolPreferences.meeting_analysis !== false,
     // Development tools
     github: toolPreferences.github !== false,
     // Media tools

@@ -30,6 +30,7 @@ const defaultToolPreferences: ComposerToolPreferences = {
   search_files: true,
   calendar: false,
   msCalendar: false,
+  meeting_analysis: true,
   notion: false,
   github: false,
   generate_image: true,

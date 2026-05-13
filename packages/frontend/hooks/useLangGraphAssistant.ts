@@ -99,6 +99,7 @@ export interface ToolPreferences {
   memory?: boolean;
   notion?: boolean;
   onedrive?: boolean;
+  meeting_analysis?: boolean;
   model_provider?: "anthropic" | "openai";
   model_id?: string;
 }
@@ -122,7 +123,7 @@ export function useLangGraphAssistant(initialThreadId?: string) {
   const sendMessage = useCallback(async (
     content: string,
     attachments: FileAttachment[] = [],
-    toolPreferences: ToolPreferences = { web_search: true, tiptap_ai: true, memory: true, model_provider: "anthropic" }
+    toolPreferences: ToolPreferences = { web_search: true, tiptap_ai: true, memory: true, meeting_analysis: true, model_provider: "anthropic" }
   ) => {
     if (state.isLoading) return;
 

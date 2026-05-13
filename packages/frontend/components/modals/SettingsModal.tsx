@@ -13,6 +13,7 @@ import {
   Keyboard,
   BarChart3,
   Info,
+  BookOpen,
 } from 'lucide-react'
 
 import { Button } from '../common/ui/button'
@@ -38,6 +39,7 @@ import {
   ConnectionsTab,
   MeetingAgentTab,
   AISettingsTab,
+  SkillsTab,
   KeybindsTab,
   UsageTab,
   AboutTab,
@@ -115,6 +117,11 @@ export function SettingsModal({ open, onOpenChange }: Readonly<SettingsModalProp
       id: 'ai-settings',
       label: 'AI Settings',
       icon: Brain,
+    },
+    {
+      id: 'skills',
+      label: 'Skills',
+      icon: BookOpen,
     },
     {
       id: 'meeting-agent',
@@ -376,6 +383,10 @@ export function SettingsModal({ open, onOpenChange }: Readonly<SettingsModalProp
 
               {activeTab === 'ai-settings' && (
                 <AISettingsTab />
+              )}
+
+              {activeTab === 'skills' && (
+                <SkillsTab />
               )}
 
               {activeTab === 'meeting-agent' && (

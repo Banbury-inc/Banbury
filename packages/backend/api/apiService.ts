@@ -20,6 +20,7 @@ import Themes from './themes/themes'
 import Databases from './databases/databases'
 import Flows from './flows/flows'
 import Notion from './notion/notion'
+import Skills from './skills/skills'
 
 // Configure axios defaults
 axios.defaults.timeout = 30000; // 30 second timeout
@@ -67,6 +68,7 @@ export class ApiService {
   Databases: Databases
   Flows: typeof Flows
   Notion: typeof Notion
+  Skills: typeof Skills
   constructor() {
     this.Files = new Files(this)
     this.Emails = new Emails(this)
@@ -87,6 +89,7 @@ export class ApiService {
     this.Databases = new Databases(this)
     this.Flows = Flows
     this.Notion = Notion
+    this.Skills = Skills
   }
   static baseURL = CONFIG.url;
   static Files = Files;
@@ -108,6 +111,7 @@ export class ApiService {
   static Databases = Databases;
   static Flows = Flows;
   static Notion = Notion;
+  static Skills = Skills;
   /**
    * Set global authorization token for all requests
    */

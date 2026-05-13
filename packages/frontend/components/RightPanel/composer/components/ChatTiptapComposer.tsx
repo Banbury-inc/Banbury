@@ -13,11 +13,13 @@ import { Decoration, DecorationSet } from 'prosemirror-view';
 import tippy, { Instance as TippyInstance } from 'tippy.js';
 
 import { ApiService } from '../../../../../backend/api/apiService';
+import type { Skill } from '../../../../../backend/api/skills/skills';
 import { extractEmailContent } from '../../../../utils/emailUtils';
 import { buildFileTree, flattenFileTree, FileSystemItem } from '../../../../utils/fileTreeUtils';
 import { handleClipboardPaste } from '../../../handlers/handle-clipboard-paste';
 import { useToast } from '../../../common/ui/use-toast';
 import { useUserFiles } from '../../../../contexts/UserFilesContext';
+import { setPendingSkillContext } from '../handlers/pendingSkillContext';
 
 import type { Editor } from '@tiptap/core';
 import type { SuggestionOptions } from '@tiptap/suggestion';
@@ -44,6 +46,13 @@ type FileMentionItem = {
   id: string;
   label: string;
   file: FileSystemItem;
+};
+
+type SkillMentionItem = {
+  id: string;
+  label: string;
+  description: string;
+  skill: Skill;
 };
 
 // Helper function to get document editor content if available
@@ -127,6 +136,9 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
   const [files, setFiles] = React.useState<FileSystemItem[]>([]);
   const filesRef = React.useRef<FileSystemItem[]>([]);
   const loadingRef = React.useRef<boolean>(false);
+  const [skills, setSkills] = React.useState<Skill[]>([]);
+  const skillsRef = React.useRef<Skill[]>([]);
+  const skillsLoadingRef = React.useRef<boolean>(false);
   const [editor, setEditor] = React.useState<Editor | null>(null);
   const { toast } = useToast();
   const toastRef = React.useRef(toast);
@@ -150,6 +162,37 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
   // Keep refs in sync so suggestion reads current data without recreating editor
   useEffect(() => { filesRef.current = files; }, [files]);
   useEffect(() => { loadingRef.current = filesLoading; }, [filesLoading]);
+  useEffect(() => { skillsRef.current = skills; }, [skills]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchSkills() {
+      skillsLoadingRef.current = true;
+      const result = await ApiService.Skills.listSkills();
+      skillsLoadingRef.current = false;
+
+      if (!isMounted) return;
+      if (!result.success) {
+        setSkills([]);
+        return;
+      }
+
+      setSkills((result.skills || []).filter(skill => skill.enabled));
+    }
+
+    fetchSkills();
+
+    const handleSkillsChange = () => {
+      fetchSkills();
+    };
+
+    window.addEventListener('skills-updated', handleSkillsChange);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('skills-updated', handleSkillsChange);
+    };
+  }, []);
 
   // Lightweight visual highlighter for any @token (plain text), excluding email addresses.
   const MentionHighlighter = useMemo(() => {
@@ -203,11 +246,11 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
 
 
 
-  const suggestionOptions = useMemo(() => {
-    const render = () => {
+  const createSuggestionRenderer = useMemo(() => {
+    return function createSuggestionRenderer<TItem extends { label: string; description?: string }>() {
       let component: HTMLDivElement | null = null;
       let popup: TippyInstance[] = [];
-      let items: FileMentionItem[] = [];
+      let items: TItem[] = [];
       let selectedIndex = 0;
       let currentCommand: any = null;
       const activeItemClasses = ['bg-accent', 'text-accent-foreground'];
@@ -305,7 +348,7 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
         },
 
         onUpdate(props: any) {
-          items = (props.items as FileMentionItem[]) || [];
+          items = (props.items as TItem[]) || [];
           selectedIndex = 0;
           currentCommand = props.command;
           if (!component) return;
@@ -319,8 +362,17 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
             items.forEach((item, index) => {
               const el = document.createElement('div');
               el.dataset.index = String(index);
-              el.className = 'px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer transition-colors truncate';
-              el.textContent = item.label;
+              el.className = 'px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer transition-colors';
+              const label = document.createElement('div');
+              label.className = 'truncate';
+              label.textContent = item.label;
+              el.appendChild(label);
+              if (item.description) {
+                const description = document.createElement('div');
+                description.className = 'truncate text-xs text-muted-foreground';
+                description.textContent = item.description;
+                el.appendChild(description);
+              }
               el.title = item.label; // Show full name on hover
               el.addEventListener('mousedown', (e) => {
                 e.preventDefault();
@@ -364,9 +416,12 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
         },
       } as any;
     };
+  }, []);
 
+  const suggestionOptions = useMemo(() => {
     return {
       char: '@',
+      pluginKey: new PluginKey('fileMentionSuggestion'),
       startOfLine: false,
       allowSpaces: true,
       items: ({ query }: { query: string }) => {
@@ -404,7 +459,7 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
           file: { id: 'no_match', name: 'no_match', type: 'file', path: 'no_match' } as any 
         }];
       },
-      render,
+      render: createSuggestionRenderer<FileMentionItem>,
       command: ({ editor, range, props }: { editor: Editor; range: { from: number; to: number }; props: FileMentionItem }) => {
         const item = props as FileMentionItem;
         if (item.id === 'loading' || item.id === 'no_files' || item.id === 'no_match') {
@@ -436,7 +491,72 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
         onFileAttach(item.file);
       },
     } as unknown as SuggestionOptions;
-  }, [onFileAttach]);
+  }, [createSuggestionRenderer, onFileAttach]);
+
+  const skillSuggestionOptions = useMemo(() => {
+    const loadingSkill = { id: 'loading', label: 'Loading skills...', description: '', skill: null as unknown as Skill }
+    const noSkills = { id: 'no_skills', label: 'No skills found', description: 'Create skills in Settings first.', skill: null as unknown as Skill }
+    const noMatch = { id: 'no_match', label: 'No matches', description: '', skill: null as unknown as Skill }
+
+    return {
+      char: '/',
+      pluginKey: new PluginKey('skillMentionSuggestion'),
+      startOfLine: false,
+      allowSpaces: true,
+      items: ({ query }: { query: string }) => {
+        if (skillsLoadingRef.current) {
+          return [loadingSkill];
+        }
+
+        if (skillsRef.current.length === 0) {
+          return [noSkills];
+        }
+
+        const normalizedQuery = query.toLowerCase();
+        const filteredSkills = normalizedQuery
+          ? skillsRef.current.filter(skill =>
+              skill.name.toLowerCase().includes(normalizedQuery) ||
+              skill.description.toLowerCase().includes(normalizedQuery)
+            )
+          : skillsRef.current;
+
+        const mapped = filteredSkills.slice(0, 20).map(skill => ({
+          id: skill.id,
+          label: skill.name,
+          description: skill.description,
+          skill,
+        }));
+
+        return mapped.length > 0
+          ? mapped
+          : [noMatch];
+      },
+      render: createSuggestionRenderer<SkillMentionItem>,
+      command: ({ editor, range, props }: { editor: Editor; range: { from: number; to: number }; props: SkillMentionItem }) => {
+        const item = props as SkillMentionItem;
+        if (item.id === 'loading' || item.id === 'no_skills' || item.id === 'no_match' || !item.skill) return;
+
+        editor.chain().deleteRange(range).run();
+        setPendingSkillContext(item.skill);
+
+        toastRef.current({
+          title: 'Skill Selected',
+          description: `${item.skill.name} will be applied to your next message.`,
+        });
+
+        setTimeout(() => {
+          const el = hiddenInputRef.current;
+          if (el) {
+            const latest = editor.getText();
+            el.value = latest;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            el.dispatchEvent(new CustomEvent('tiptap-update', { bubbles: true, detail: { text: latest } }));
+          }
+        }, 10);
+      },
+    } as unknown as SuggestionOptions;
+  }, [createSuggestionRenderer, hiddenInputRef]);
 
   const editorInstance = useEditor({
     immediatelyRender: false,
@@ -461,6 +581,17 @@ export const ChatTiptapComposer: React.FC<ChatTiptapComposerProps> = ({ hiddenIn
             'data-label': node.attrs.label,
             class: 'mention-chip-white',
           }, `@${label}`];
+        },
+      }),
+      Mention.extend({ name: 'skillMention' }).configure({
+        suggestion: skillSuggestionOptions,
+        HTMLAttributes: {
+          class: 'mention skill-mention',
+          'data-type': 'skill-mention',
+        },
+        renderText({ node }) {
+          const label = node.attrs.label ?? node.attrs.id ?? '';
+          return `/${label}`;
         },
       }),
     ],

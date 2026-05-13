@@ -15,10 +15,10 @@ import {
   FolderSearch,
   Calendar,
   CalendarDays,
+  Video,
   Github,
   NotebookText,
   Image,
-  Video,
   Users,
   Cloud,
 } from "lucide-react";
@@ -54,6 +54,7 @@ export interface ComposerToolPreferences {
   search_files: boolean;
   calendar: boolean;
   msCalendar: boolean;
+  meeting_analysis: boolean;
   notion: boolean;
   github: boolean;
   generate_image: boolean;
@@ -219,6 +220,13 @@ export const toolConfigs: ToolConfig[] = [
     label: "Microsoft Calendar",
     icon: CalendarDays,
     iconColor: "text-blue-600",
+    defaultEnabled: true,
+  },
+  {
+    key: "meeting_analysis",
+    label: "Meetings",
+    icon: Video,
+    iconColor: "text-muted-foreground",
     defaultEnabled: true,
   },
   // Development tools

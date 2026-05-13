@@ -10,6 +10,7 @@ import { getPresentationContext } from "./handlers/getPresentationContext";
 import { getCurrentCodeFileContext } from "./handlers/getCurrentCodeFileContext";
 import { handleFetchError } from "./handlers/handleFetchError";
 import { processStreamEvents } from "./handlers/processStreamEvents";
+import { consumePendingSkillContext } from "../../components/RightPanel/composer/handlers/pendingSkillContext";
 import type { FC, PropsWithChildren } from "react";
 
 export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
@@ -56,6 +57,7 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
       // Get current date/time context
       const dateTimeContext = getCurrentDateTimeContext();
       const currentCodeFile = getCurrentCodeFileContext();
+      const selectedSkill = consumePendingSkillContext();
 
       // Removed client-side browser shim - now handled by AI tools
 
@@ -64,6 +66,7 @@ export const ClaudeRuntimeProvider: FC<PropsWithChildren> = ({ children }) => {
         toolPreferences,
         documentContext: documentContext || undefined,
         presentationContext: presentationContext || undefined,
+        selectedSkill: selectedSkill || undefined,
         currentCodeFile,
         dateTimeContext,
         recursionLimit: langGraphConfig.recursionLimit, // Add recursion limit
