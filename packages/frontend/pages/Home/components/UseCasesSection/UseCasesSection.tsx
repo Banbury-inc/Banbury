@@ -1,10 +1,10 @@
 import { Box, Container, Grid } from '@mui/material'
 import { motion } from 'framer-motion'
+import { Typography } from '../../../../components/common/ui/typography'
+import Link from 'next/link'
 import EmailDemoApp from './components/EmailDemoApp'
 import MeetingDemoApp from './components/MeetingDemoApp'
 import SpreadsheetDemoApp from './components/SpreadsheetDemoApp'
-import { Typography } from '../../../../components/common/ui/typography'
-import Link from 'next/link'
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 16 },
@@ -14,14 +14,22 @@ const fadeInUp = {
 function UseCasesSection() {
   return (
     <Box sx={{ 
-      py: { xs: 8, md: 12 },
-      px: '55px',
-      background: '#000000',
-      borderTop: '1px solid rgba(255,255,255,0.08)',
+      py: { xs: 9, md: 14 },
+      px: { xs: 0, md: '44px' },
+      background: 'var(--background)',
+      borderTop: '1px solid var(--border)',
+      position: 'relative',
     }}>
       <Container maxWidth="xl" sx={{ px: { xs: 3, md: 4 } }}>
+        <Box sx={{ maxWidth: '760px', mb: { xs: 7, md: 10 } }}>
+          <Typography variant="h2" className="mb-4 text-3xl tracking-[-0.05em] sm:text-4xl md:text-5xl">
+            Three workflows, one living workspace.
+          </Typography>
+          <Typography variant="p" className="text-base leading-8 text-muted-foreground md:text-lg">
+            The home page demo shows how Banbury turns everyday operational work into connected, AI-assisted flows.
+          </Typography>
+        </Box>
 
-        {/* Use Case 1 - Email Management (Image Left) */}
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -32,10 +40,13 @@ function UseCasesSection() {
           <Box
             sx={{
               mb: { xs: 8, md: 12 },
-              p: 2,
-              borderRadius: '6px',
-              background: '#323232',
+              p: { xs: 1.5, md: 2 },
+              borderRadius: '28px',
+              background: 'var(--card)',
+              border: '1px solid var(--border)',
+              boxShadow: '0 32px 90px color-mix(in oklch, var(--background) 70%, transparent)',
               transition: 'all 0.4s ease',
+              overflow: 'hidden'
             }}
           >
             <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
@@ -43,7 +54,7 @@ function UseCasesSection() {
                 <Box
                   sx={{
                     position: 'relative',
-                    borderRadius: '6px',
+                    borderRadius: '22px',
                     overflow: 'hidden',
                     backgroundImage: 'url(/white.jpg)',
                     backgroundSize: 'cover',
@@ -54,7 +65,8 @@ function UseCasesSection() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    pl: 2
+                    pl: 2,
+                    boxShadow: 'inset 0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent)'
                   }}
                 >
                     <EmailDemoApp />
@@ -62,17 +74,20 @@ function UseCasesSection() {
               </Grid>
               <Grid item xs={12} md={12} lg={3} sx={{ pl: { md: 0 } }}>
                 <Box>
-                  <Typography variant="h3" className="text-base sm:text-lg md:text-xl lg:text-2xl">
+                  <Typography variant="xs" className="mb-4 inline-flex rounded-full border border-border bg-background/70 px-3 py-1 text-muted-foreground">
+                    Inbox automation
+                  </Typography>
+                  <Typography variant="h3" className="mb-4 text-2xl tracking-[-0.04em] md:text-3xl">
                     Smart Email Management
                   </Typography>
-                  <Typography variant="p" className="text-xs sm:text-sm md:text-base">
-                    Automatically categorize, prioritize, and respond to emails based on content and context. Set up intelligent filters that route messages to the right team members and draft personalized responses instantly.
+                  <Typography variant="p" className="text-sm leading-7 text-muted-foreground md:text-base">
+                    Automatically categorize, prioritize, and respond to emails based on content and context. Set up intelligent filters that route messages to the right team members.
                   </Typography>
                   <Box sx={{ mt: 3 }}>
                     <Link href="/docs/email-management">
                       <Typography variant="xs" className="text-primary hover:text-primary/80 transition-colors font-medium inline-flex items-center gap-1">
-                        Learn more about email management
-                        <span aria-hidden="true">→</span>
+                        <span>Learn more about email management</span>
+                        <span aria-hidden="true">-&gt;</span>
                       </Typography>
                     </Link>
                   </Box>
@@ -82,7 +97,6 @@ function UseCasesSection() {
           </Box>
         </motion.div>
 
-        {/* Use Case 2 - Meeting Automation (Video Right) */}
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -93,10 +107,13 @@ function UseCasesSection() {
           <Box
             sx={{
               mb: { xs: 8, md: 12 },
-              p: 2,
-              borderRadius: '6px',
-              background: '#323232',
+              p: { xs: 1.5, md: 2 },
+              borderRadius: '28px',
+              background: 'var(--card)',
+              border: '1px solid var(--border)',
+              boxShadow: '0 32px 90px color-mix(in oklch, var(--background) 70%, transparent)',
               transition: 'all 0.4s ease',
+              overflow: 'hidden'
             }}
           >
             <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center" direction="row-reverse">
@@ -104,7 +121,7 @@ function UseCasesSection() {
                 <Box
                   sx={{
                     position: 'relative',
-                    borderRadius: '6px',
+                    borderRadius: '22px',
                     overflow: 'hidden',
                     backgroundImage: 'url(/pink.jpg)',
                     backgroundSize: 'cover',
@@ -115,6 +132,7 @@ function UseCasesSection() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     p: 4,
+                    boxShadow: 'inset 0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent)'
                   }}
                 >
                   <Box
@@ -132,17 +150,20 @@ function UseCasesSection() {
               </Grid>
               <Grid item xs={12} md={12} lg={3} sx={{ pl: { md: 0 } }}>
                 <Box>
-                  <Typography variant="h3" className="text-base sm:text-lg md:text-xl lg:text-2xl">
+                  <Typography variant="xs" className="mb-4 inline-flex rounded-full border border-border bg-background/70 px-3 py-1 text-muted-foreground">
+                    Calendar intelligence
+                  </Typography>
+                  <Typography variant="h3" className="mb-4 text-2xl tracking-[-0.04em] md:text-3xl">
                     Automated Meeting Scheduling
                   </Typography>
-                  <Typography variant="p" className="text-xs sm:text-sm md:text-base">
+                  <Typography variant="p" className="text-sm leading-7 text-muted-foreground md:text-base">
                     Schedule meetings across time zones, send automatic reminders, generate meeting agendas, and distribute notes to all attendees without lifting a finger.
                   </Typography>
                   <Box sx={{ mt: 3 }}>
-                      <Link href="/docs/meeting-scheduling">
+                    <Link href="/docs/meeting-scheduling">
                       <Typography variant="xs" className="text-primary hover:text-primary/80 transition-colors font-medium inline-flex items-center gap-1">
-                        Learn more about meeting scheduling
-                        <span aria-hidden="true">→</span>
+                        <span>Learn more about meeting scheduling</span>
+                        <span aria-hidden="true">-&gt;</span>
                       </Typography>
                     </Link>
                   </Box>
@@ -152,7 +173,6 @@ function UseCasesSection() {
           </Box>
         </motion.div>
 
-        {/* Use Case 3 - Spreadsheet Editor (Interactive Left) */}
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -162,11 +182,14 @@ function UseCasesSection() {
         >
           <Box
             sx={{
-              mb: { xs: 8, md: 12 },
-              p: 2,
-              borderRadius: '6px',
-              background: '#323232',
+              mb: { xs: 4, md: 6 },
+              p: { xs: 1.5, md: 2 },
+              borderRadius: '28px',
+              background: 'var(--card)',
+              border: '1px solid var(--border)',
+              boxShadow: '0 32px 90px color-mix(in oklch, var(--background) 70%, transparent)',
               transition: 'all 0.4s ease',
+              overflow: 'hidden'
             }}
           >
             <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
@@ -174,7 +197,7 @@ function UseCasesSection() {
                 <Box
                   sx={{
                     position: 'relative',
-                    borderRadius: '6px',
+                    borderRadius: '22px',
                     overflow: 'hidden',
                     backgroundImage: 'url(/sand.jpg)',
                     backgroundSize: 'cover',
@@ -185,7 +208,8 @@ function UseCasesSection() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    pl: 2
+                    pl: 2,
+                    boxShadow: 'inset 0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent)'
                   }}
                 >
                   <Box
@@ -204,17 +228,20 @@ function UseCasesSection() {
               </Grid>
               <Grid item xs={12} md={12} lg={4} sx={{ pl: { md: 0 } }}>
                 <Box>
-                  <Typography variant="h3" className="text-base sm:text-lg md:text-xl lg:text-2xl">
+                  <Typography variant="xs" className="mb-4 inline-flex rounded-full border border-border bg-background/70 px-3 py-1 text-muted-foreground">
+                    Data workbench
+                  </Typography>
+                  <Typography variant="h3" className="mb-4 text-2xl tracking-[-0.04em] md:text-3xl">
                     Smart Spreadsheet Editor
                   </Typography>
-                  <Typography variant="p" className="text-xs sm:text-sm md:text-base">
-                    Edit, analyze, and collaborate on spreadsheets with AI-powered features. Create formulas, charts, and apply conditional formatting - all within your workflow.
+                  <Typography variant="p" className="text-sm leading-7 text-muted-foreground md:text-base">
+                    Edit, analyze, and collaborate on spreadsheets with AI-powered features. Create formulas, charts, and apply conditional formatting within your workflow.
                   </Typography>
                   <Box sx={{ mt: 3 }}>
                     <Link href="/docs/spreadsheet-editor">
                       <Typography variant="xs" className="text-primary hover:text-primary/80 transition-colors font-medium inline-flex items-center gap-1">
-                        Learn more about the spreadsheet editor
-                        <span aria-hidden="true">→</span>
+                        <span>Learn more about the spreadsheet editor</span>
+                        <span aria-hidden="true">-&gt;</span>
                       </Typography>
                     </Link>
                   </Box>

@@ -74,23 +74,17 @@ const Header = (): JSX.Element => {
   };
 
   return (
-    <>
       <div 
-        className="flex justify-between items-center min-h-[70px] px-4 md:px-6" 
+        className="relative flex min-h-[70px] items-center justify-between overflow-hidden border-b border-border bg-background px-4 text-foreground md:px-6" 
         style={{
-          background: '#000000',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          position: 'relative',
           zIndex: 10,
         }}
       >
-        {/* Logo - Left side */}
         <Link href='/' className="text-decoration-none mr-auto">
-          <div className="flex items-center">
+          <div className="relative flex items-center">
             <h6 
-              className="ml-2.5"
+              className="ml-2.5 text-foreground"
               style={{
-                color: '#ffffff',
                 fontSize: '1.5rem',
                 fontWeight: 600,
                 letterSpacing: '-0.02em',
@@ -103,13 +97,12 @@ const Header = (): JSX.Element => {
           </div>
         </Link>
 
-        {/* Navigation - Center (hidden on mobile) */}
-        <div className="hidden md:flex justify-center">
+        <div className="relative hidden justify-center md:flex">
           <Button 
             asChild 
             variant="ghost" 
             size="lg" 
-            className="ml-4 text-zinc-300 hover:text-white hover:bg-zinc-800/50"
+            className="ml-4 text-muted-foreground hover:bg-card/70 hover:text-foreground"
             style={{
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 400,
@@ -121,7 +114,7 @@ const Header = (): JSX.Element => {
             asChild 
             variant="ghost" 
             size="lg"
-            className="text-zinc-300 hover:text-white hover:bg-zinc-800/50"
+            className="text-muted-foreground hover:bg-card/70 hover:text-foreground"
             style={{
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 400,
@@ -133,7 +126,7 @@ const Header = (): JSX.Element => {
             asChild 
             variant="ghost" 
             size="lg"
-            className="text-zinc-300 hover:text-white hover:bg-zinc-800/50"
+            className="text-muted-foreground hover:bg-card/70 hover:text-foreground"
             style={{
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 400,
@@ -145,7 +138,7 @@ const Header = (): JSX.Element => {
             asChild 
             variant="ghost" 
             size="lg"
-            className="text-zinc-300 hover:text-white hover:bg-zinc-800/50 mr-4"
+            className="mr-4 text-muted-foreground hover:bg-card/70 hover:text-foreground"
             style={{
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 400,
@@ -155,37 +148,34 @@ const Header = (): JSX.Element => {
           </Button>
         </div>
 
-        {/* Right side - Mobile Menu + Profile/Login */}
-        <div className="flex items-center justify-end gap-2">
-          {/* Mobile Navigation Menu */}
+        <div className="relative flex items-center justify-end gap-2">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden p-1 hover:bg-zinc-800/50"
+                className="p-1 hover:bg-card/70 md:hidden"
                 style={{
                   minWidth: '44px',
                   minHeight: '44px',
                 }}
               >
-                <Menu className="h-6 w-6" style={{ color: '#ffffff' }} />
+                <Menu className="h-6 w-6 text-foreground" />
                 <span className="sr-only">Open navigation menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent 
               side="right" 
-              className="w-[280px] border-zinc-800"
-              style={{ background: '#000000' }}
+              className="w-[280px] border-border bg-background"
             >
               <SheetHeader>
-                <SheetTitle className="text-white text-left">Navigation</SheetTitle>
+                <SheetTitle className="text-left text-foreground">Navigation</SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-2 mt-4">
                 <Link 
                   href="/" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center px-4 py-3 text-zinc-300 hover:text-white hover:bg-zinc-800/50 rounded-md transition-colors"
+                  className="flex items-center px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-card/70 rounded-md transition-colors"
                   style={{
                     fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     fontWeight: 400,
@@ -197,7 +187,7 @@ const Header = (): JSX.Element => {
                 <Link 
                   href="/pricing" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center px-4 py-3 text-zinc-300 hover:text-white hover:bg-zinc-800/50 rounded-md transition-colors"
+                  className="flex items-center px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-card/70 rounded-md transition-colors"
                   style={{
                     fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     fontWeight: 400,
@@ -209,7 +199,7 @@ const Header = (): JSX.Element => {
                 <Link 
                   href="/docs" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center px-4 py-3 text-zinc-300 hover:text-white hover:bg-zinc-800/50 rounded-md transition-colors"
+                  className="flex items-center px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-card/70 rounded-md transition-colors"
                   style={{
                     fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     fontWeight: 400,
@@ -221,7 +211,7 @@ const Header = (): JSX.Element => {
                 <Link 
                   href="/download" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center px-4 py-3 text-zinc-300 hover:text-white hover:bg-zinc-800/50 rounded-md transition-colors"
+                  className="flex items-center px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-card/70 rounded-md transition-colors"
                   style={{
                     fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     fontWeight: 400,
@@ -239,9 +229,8 @@ const Header = (): JSX.Element => {
               {/* Welcome text - hidden on mobile */}
               <div className="hidden sm:flex items-center gap-1 mr-4">
                 <span 
-                  className="text-sm"
+                  className="text-sm text-muted-foreground"
                   style={{
-                    color: '#a1a1aa',
                     fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     fontWeight: 400,
                   }}
@@ -249,9 +238,8 @@ const Header = (): JSX.Element => {
                   Welcome,
                 </span>
                 <span 
-                  className="text-sm"
+                  className="text-sm text-foreground"
                   style={{
-                    color: '#ffffff',
                     fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     fontWeight: 500,
                   }}
@@ -265,7 +253,7 @@ const Header = (): JSX.Element => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="p-1 hover:bg-zinc-800/50"
+                  className="p-1 hover:bg-card/70"
                   onClick={toggleDropdown}
                   style={{
                     minWidth: '44px',
@@ -273,30 +261,21 @@ const Header = (): JSX.Element => {
                   }}
                 >
                   <div 
-                    className="w-9 h-9 rounded-full flex items-center justify-center"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                    }}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card/70 shadow-lg backdrop-blur"
                   >
-                    <User className="h-5 w-5" style={{ color: '#ffffff' }} />
+                    <User className="h-5 w-5 text-foreground" />
                   </div>
                 </Button>
                 
                 {isDropdownOpen && (
                   <div 
-                    className="absolute right-0 top-full mt-2 w-48 rounded-md shadow-lg z-50"
-                    style={{
-                      background: '#000000',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                    }}
+                    className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-xl border border-border bg-card/95 shadow-2xl shadow-background/40 backdrop-blur"
                   >
                     <div className="py-1">
                       <button
                         onClick={handleDashboard}
-                        className="flex items-center w-full px-4 py-3 text-sm hover:bg-zinc-800/50"
+                        className="flex w-full items-center px-4 py-3 text-sm text-foreground hover:bg-accent"
                         style={{
-                          color: '#ffffff',
                           fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                           fontWeight: 400,
                           minHeight: '44px',
@@ -307,9 +286,8 @@ const Header = (): JSX.Element => {
                       </button>
                       <button
                         onClick={handleLogoutClick}
-                        className="flex items-center w-full px-4 py-3 text-sm hover:bg-zinc-800/50"
+                        className="flex w-full items-center px-4 py-3 text-sm text-foreground hover:bg-accent"
                         style={{
-                          color: '#ffffff',
                           fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                           fontWeight: 400,
                           minHeight: '44px',
@@ -329,22 +307,18 @@ const Header = (): JSX.Element => {
               variant="default"
               size="lg"
               style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: 'none',
-                color: '#ffffff',
                 fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontWeight: 500,
                 minHeight: '44px',
                 padding: '8px 16px',
               }}
-              className="hover:opacity-90 transition-opacity"
+              className="border border-border bg-card/70 text-foreground transition-opacity hover:bg-accent hover:opacity-90"
             >
               Login
             </Button>
           )}
         </div>
       </div>
-    </>
   );
 };
 

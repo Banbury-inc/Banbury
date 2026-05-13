@@ -10,18 +10,20 @@ const Footer: React.FC = () => {
       component="footer"
       sx={{
         py: 6,
-        background: '#000000',
-        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-        color: '#ffffff',
+        background: 'var(--card)',
+        borderTop: '1px solid var(--border)',
+        color: 'var(--foreground)',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      <Grid container spacing={4} justifyContent="center">
+      <Grid container spacing={4} justifyContent="center" sx={{ position: 'relative', zIndex: 1 }}>
         <Grid item xs={6} md={2}>
           <Typography 
             variant="subtitle1" 
             gutterBottom 
             sx={{
-              color: '#a1a1aa',
+              color: 'var(--muted-foreground)',
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 500,
               fontSize: '0.95rem',
@@ -32,13 +34,13 @@ const Footer: React.FC = () => {
           <Link 
             href="#" 
             sx={{
-              color: '#d4d4d8',
+              color: 'var(--foreground)',
               textDecoration: 'none',
               fontSize: '0.875rem',
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 400,
               '&:hover': {
-                color: '#ffffff',
+                color: 'var(--foreground)',
                 textDecoration: 'underline',
               },
             }}
@@ -52,7 +54,7 @@ const Footer: React.FC = () => {
             variant="subtitle1" 
             gutterBottom 
             sx={{
-              color: '#a1a1aa',
+              color: 'var(--muted-foreground)',
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 500,
               fontSize: '0.95rem',
@@ -63,13 +65,13 @@ const Footer: React.FC = () => {
           <Link 
             href="#" 
             sx={{
-              color: '#d4d4d8',
+              color: 'var(--foreground)',
               textDecoration: 'none',
               fontSize: '0.875rem',
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 400,
               '&:hover': {
-                color: '#ffffff',
+                color: 'var(--foreground)',
                 textDecoration: 'underline',
               },
             }}
@@ -80,13 +82,13 @@ const Footer: React.FC = () => {
           <Link 
             href="#" 
             sx={{
-              color: '#d4d4d8',
+              color: 'var(--foreground)',
               textDecoration: 'none',
               fontSize: '0.875rem',
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 400,
               '&:hover': {
-                color: '#ffffff',
+                color: 'var(--foreground)',
                 textDecoration: 'underline',
               },
             }}
@@ -99,7 +101,7 @@ const Footer: React.FC = () => {
             variant="subtitle1" 
             gutterBottom 
             sx={{
-              color: '#a1a1aa',
+              color: 'var(--muted-foreground)',
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 500,
               fontSize: '0.95rem',
@@ -110,13 +112,13 @@ const Footer: React.FC = () => {
           <Link 
             href="/About" 
             sx={{
-              color: '#d4d4d8',
+              color: 'var(--foreground)',
               textDecoration: 'none',
               fontSize: '0.875rem',
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 400,
               '&:hover': {
-                color: '#ffffff',
+                color: 'var(--foreground)',
                 textDecoration: 'underline',
               },
             }}
@@ -127,13 +129,13 @@ const Footer: React.FC = () => {
           <Link 
             href="/News" 
             sx={{
-              color: '#d4d4d8',
+              color: 'var(--foreground)',
               textDecoration: 'none',
               fontSize: '0.875rem',
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 400,
               '&:hover': {
-                color: '#ffffff',
+                color: 'var(--foreground)',
                 textDecoration: 'underline',
               },
             }}
@@ -147,7 +149,7 @@ const Footer: React.FC = () => {
             variant="subtitle1" 
             gutterBottom 
             sx={{
-              color: '#a1a1aa',
+              color: 'var(--muted-foreground)',
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 500,
               fontSize: '0.95rem',
@@ -158,13 +160,13 @@ const Footer: React.FC = () => {
           <Link 
             href="/Terms_of_use" 
             sx={{
-              color: '#d4d4d8',
+              color: 'var(--foreground)',
               textDecoration: 'none',
               fontSize: '0.875rem',
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 400,
               '&:hover': {
-                color: '#ffffff',
+                color: 'var(--foreground)',
                 textDecoration: 'underline',
               },
             }}
@@ -175,13 +177,13 @@ const Footer: React.FC = () => {
           <Link 
             href="/privacy_policy" 
             sx={{
-              color: '#d4d4d8',
+              color: 'var(--foreground)',
               textDecoration: 'none',
               fontSize: '0.875rem',
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               fontWeight: 400,
               '&:hover': {
-                color: '#ffffff',
+                color: 'var(--foreground)',
                 textDecoration: 'underline',
               },
             }}
@@ -191,12 +193,12 @@ const Footer: React.FC = () => {
         </Grid>
       </Grid>
 
-      <Box sx={{ mt: 4, textAlign: 'center' }}>
+      <Box sx={{ mt: 4, textAlign: 'center', position: 'relative', zIndex: 1 }}>
         <Typography 
           variant="body2" 
           sx={{ 
             mb: 3,
-            color: '#a1a1aa',
+            color: 'var(--muted-foreground)',
             fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             fontWeight: 400,
             fontSize: '0.875rem',
@@ -211,10 +213,10 @@ const Footer: React.FC = () => {
             target="_blank"
             rel="noopener"
             sx={{
-              color: '#71717a',
+              color: 'var(--muted-foreground)',
               '&:hover': {
-                color: '#ffffff',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                color: 'var(--foreground)',
+                backgroundColor: 'color-mix(in oklch, var(--foreground) 10%, transparent)',
               },
             }}
           >
@@ -226,10 +228,10 @@ const Footer: React.FC = () => {
             target="_blank"
             rel="noopener"
             sx={{
-              color: '#71717a',
+              color: 'var(--muted-foreground)',
               '&:hover': {
-                color: '#ffffff',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                color: 'var(--foreground)',
+                backgroundColor: 'color-mix(in oklch, var(--foreground) 10%, transparent)',
               },
             }}
           >
@@ -241,10 +243,10 @@ const Footer: React.FC = () => {
             target="_blank"
             rel="noopener"
             sx={{
-              color: '#71717a',
+              color: 'var(--muted-foreground)',
               '&:hover': {
-                color: '#ffffff',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                color: 'var(--foreground)',
+                backgroundColor: 'color-mix(in oklch, var(--foreground) 10%, transparent)',
               },
             }}
           >

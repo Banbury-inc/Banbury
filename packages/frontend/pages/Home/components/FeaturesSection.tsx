@@ -1,6 +1,6 @@
-import CloudIcon from '@mui/icons-material/Cloud'
-import DevicesIcon from '@mui/icons-material/Devices'
-import FlashOnIcon from '@mui/icons-material/FlashOn'
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
+import CloudSyncIcon from '@mui/icons-material/CloudSync'
+import HubIcon from '@mui/icons-material/Hub'
 import { motion } from 'framer-motion'
 import { Typography } from '../../../components/common/ui/typography'
 
@@ -11,31 +11,30 @@ const fadeInUp = {
 
 const features = [
   {
-    icon: <CloudIcon className="text-muted-foreground text-[40px] md:text-[48px]" />,
-    title: 'AI-Powered Automation',
-    description: 'Intelligent workflows that adapt and optimize themselves, reducing manual work by up to 80%.',
-    highlight: 'Save 20+ hours/week'
+    icon: <HubIcon className="text-foreground text-[34px] md:text-[42px]" />,
+    title: 'Context in one place',
+    description: 'Files, messages, calendar events, and notes sit together so every action starts with the full picture.',
+    highlight: 'No more tab archaeology'
   },
   {
-    icon: <DevicesIcon className="text-muted-foreground text-[40px] md:text-[48px]" />,
-    title: 'Lightning Fast Processing',
-    description: 'Process thousands of operations per second with our optimized cloud infrastructure.',
-    highlight: '< 100ms response time'
+    icon: <AutoFixHighIcon className="text-foreground text-[34px] md:text-[42px]" />,
+    title: 'AI that can operate',
+    description: 'Ask Banbury to draft, organize, summarize, schedule, and route work across the apps your team already uses.',
+    highlight: 'From prompt to progress'
   },
   {
-    icon: <FlashOnIcon className="text-muted-foreground text-[40px] md:text-[48px]" />,
-    title: 'Customer-Driven Development',
-    description: 'We listen to your feedback and rapidly build the features you need. Your requests shape our roadmap.',
-    highlight: 'Feature requests delivered fast'
+    icon: <CloudSyncIcon className="text-foreground text-[34px] md:text-[42px]" />,
+    title: 'Desktop and cloud synced',
+    description: 'Keep local files, cloud tools, and AI workflows moving together without giving up the speed of your desktop.',
+    highlight: 'Work follows you'
   }
 ]
 
 function FeaturesSection() {
   return (
-    <div className="py-16 md:py-24 bg-background">
+    <section className="relative bg-background py-20 md:py-28">
       <div className="container mx-auto max-w-7xl px-6 md:px-4">
-        {/* Section Header */}
-        <div className="text-center mb-12 md:mb-16">
+        <div className="mx-auto mb-12 max-w-3xl text-center md:mb-16">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -43,8 +42,8 @@ function FeaturesSection() {
             variants={fadeInUp}
             transition={{ duration: 0.6, ease: 'easeOut' }}
           >
-            <Typography variant="h2" className="mb-4 md:mb-6">
-              Why Choose Banbury?
+            <Typography variant="h2" className="mb-4 text-3xl tracking-[-0.05em] sm:text-4xl md:text-5xl">
+              Built for the messy middle of real work.
             </Typography>
           </motion.div>
           <motion.div
@@ -54,60 +53,45 @@ function FeaturesSection() {
             variants={fadeInUp}
             transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
           >
-            <Typography variant="p">
-              Experience the power of AI-driven automation with features designed for modern businesses
+            <Typography variant="p" className="mx-auto max-w-2xl text-base leading-8 text-muted-foreground md:text-lg">
+              Banbury is designed around the point where documents, conversations, meetings, and decisions all collide.
             </Typography>
           </motion.div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <div
-              key={index}
-              className="group p-8 md:p-12 h-full bg-card rounded-md border border-border/50 relative overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:border-border hover:bg-accent/5 before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-border/50 before:to-transparent"
+            <motion.article
+              key={feature.title}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={fadeInUp}
+              transition={{ duration: 0.5, ease: 'easeOut', delay: index * 0.08 }}
+              className="group relative h-full overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-lg shadow-background/20 transition-all duration-300 hover:-translate-y-2 hover:border-foreground/20 md:p-10"
             >
-              {/* Icon */}
-              <div className="mb-6">
+              <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-background/70 shadow-xl">
                 {feature.icon}
               </div>
 
-              {/* Title */}
-              <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.2 }}
-                variants={fadeInUp}
-                transition={{ duration: 0.5, ease: 'easeOut', delay: 0.05 }}
-              >
-                <Typography variant="h3" className="mb-4">
-                  {feature.title}
-                </Typography>
-              </motion.div>
+              <Typography variant="h3" className="mb-4 text-2xl tracking-[-0.04em]">
+                {feature.title}
+              </Typography>
 
-              {/* Description */}
-              <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.2 }}
-                variants={fadeInUp}
-                transition={{ duration: 0.5, ease: 'easeOut', delay: 0.12 }}
-              >
-                <Typography variant="p" className="mb-6">
-                  {feature.description}
-                </Typography>
-              </motion.div>
+              <Typography variant="p" className="mb-8 text-sm leading-7 text-muted-foreground md:text-base">
+                {feature.description}
+              </Typography>
 
-              {/* Highlight Badge */}
-              <div className="feature-highlight inline-flex items-center px-4 md:px-6 py-2 rounded-full bg-primary/10 border-none opacity-70 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
-                <Typography variant="p" className="text-primary text-sm font-medium">
+              <div className="inline-flex items-center rounded-full border border-border bg-background/70 px-4 py-2 text-sm font-medium text-foreground opacity-80 transition-all duration-300 group-hover:translate-y-[-2px] group-hover:opacity-100">
+                <Typography variant="xs" className="text-foreground">
                   {feature.highlight}
                 </Typography>
               </div>
-            </div>
+            </motion.article>
           ))}
         </div>
       </div>
-    </div>
+    </section>
   )
 }
 

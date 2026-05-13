@@ -10,10 +10,16 @@ const fadeInUp = {
 
 function IntegrationsSection() {
   return (
-    <Box sx={{ pt: { xs: 8, sm: 10, md: 12, lg: 16 }, pb: { xs: 1, md: 1 }, background: '#000000', position: 'relative', zIndex: 10 }}>
+    <Box sx={{
+      pt: { xs: 8, sm: 10, md: 12, lg: 16 },
+      pb: { xs: 4, md: 6 },
+      background: 'var(--background)',
+      position: 'relative',
+      zIndex: 10,
+      overflow: 'hidden',
+    }}>
       <Box sx={{ width: '100%' }}>
-        {/* Section Header */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 }, px: { xs: 2, md: 0 } }}>
+        <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 }, px: { xs: 2, md: 0 }, position: 'relative', zIndex: 1 }}>
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -21,8 +27,8 @@ function IntegrationsSection() {
             variants={fadeInUp}
             transition={{ duration: 0.6, ease: 'easeOut' }}
           >
-            <Typography variant="h2">
-              Powerful Integrations
+            <Typography variant="h2" className="text-3xl tracking-[-0.05em] sm:text-4xl md:text-5xl">
+              Your tools, finally in conversation.
             </Typography>
           </motion.div>
           <motion.div
@@ -32,23 +38,13 @@ function IntegrationsSection() {
             variants={fadeInUp}
             transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
           >
-            <Typography variant="p" className='pt-4'>
-              Connect with your favorite tools and services. Seamlessly integrate with the platforms you already use to supercharge your workflow.
+            <Typography variant="p" className="mx-auto max-w-2xl pt-4 text-base leading-8 text-muted-foreground md:text-lg">
+              Connect the platforms you already use, then let Banbury carry context between them without another copy-paste loop.
             </Typography>
           </motion.div>
         </Box>
 
         <IntegrationsAutoScroll />
-
-        {/* Coming Soon Section */}
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          variants={fadeInUp}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.4 }}
-        >
-        </motion.div>
       </Box>
     </Box>
   )

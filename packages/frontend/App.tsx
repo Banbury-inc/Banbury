@@ -16,6 +16,7 @@ import Home from './pages/Home/Home';
 import Knowledge from './pages/Knowledge/Knowledge';
 import Login from './pages/Login';
 import MeetingAgent from './pages/MeetingAgent/MeetingAgent';
+import Register from './pages/Register';
 import Workspaces from './pages/Workspaces';
 import Download from './pages/Desktop';
 import { ApiService } from '../backend/api/apiService';
@@ -116,6 +117,7 @@ const App = (): JSX.Element => {
               <Route path='/meeting-agent' element={<MeetingAgent />} />
               <Route path='/admin' element={<Admin />} />
               <Route path='/' element={<RootRoute />} />
+              <Route path='/register' element={<Layout><Register /></Layout>} />
               <Route path='/login' element={<Layout><Login /></Layout>} />
               <Route path='/auth/callback' element={<AuthCallback />} />
               <Route path='/authentication/auth/electron/callback' element={<ElectronCallback />} />
