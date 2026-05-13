@@ -226,8 +226,12 @@ export async function* processStreamEvents({
           // Don't yield - this is metadata, not content
         } else if (evt.type === "error") {
           // Display error message in chat
-          const errorMessage = evt.error || "An error occurred";
-          contentParts.push({ type: "text", text: `❌ Error: ${errorMessage}` });
+          const parts = [
+            evt.error || "An error occurred",
+            typeof evt.details === "string" ? evt.details : undefined,
+            typeof evt.requestId === "string" ? `Request ID: ${evt.requestId}` : undefined,
+          ].filter(Boolean);
+          contentParts.push({ type: "text", text: `❌ Error: ${parts.join("\n")}` });
           yield { content: contentParts, status: { type: "incomplete", reason: "error" } };
           return; // Stop processing further events
         } else if (evt.type === "pptx-live-update") {

@@ -23,11 +23,13 @@ export function fetchGoogleModelsCatalog(): Promise<ModelConfig[]> {
         error?: string
         details?: string
         googleStatus?: number
+        requestId?: string
       }
       const parts = [
         typeof err.error === "string" ? err.error : "Failed to load Google models",
         err.googleStatus != null ? `HTTP ${err.googleStatus}` : "",
         typeof err.details === "string" ? err.details : "",
+        typeof err.requestId === "string" ? `Request ID: ${err.requestId}` : "",
       ].filter(Boolean)
       throw new Error(parts.join(" — "))
     }
