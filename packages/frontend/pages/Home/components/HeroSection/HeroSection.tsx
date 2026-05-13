@@ -12,7 +12,7 @@ const fadeInUp = {
 
 function HeroSection() {
   return (
-    <section className="relative isolate overflow-hidden border-b border-border bg-background">
+    <section className="relative isolate overflow-hidden border-b border-border bg-card">
       <Container
         maxWidth={false}
         sx={{

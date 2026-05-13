@@ -7,7 +7,7 @@ import UseCasesSection from './components/UseCasesSection/UseCasesSection'
 
 const Home = (): JSX.Element => {
   return (
-    <main className="relative w-full max-w-[100vw] overflow-hidden overflow-y-auto bg-background text-foreground">
+    <main className="relative w-full max-w-[100vw] overflow-hidden overflow-y-auto bg-card text-foreground">
       <HeroSection />
       <StatsSection />
       <IntegrationsSection />

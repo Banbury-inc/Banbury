@@ -13,7 +13,7 @@ function IntegrationsSection() {
     <Box sx={{
       pt: { xs: 8, sm: 10, md: 12, lg: 16 },
       pb: { xs: 4, md: 6 },
-      background: 'var(--background)',
+      background: 'var(--card)',
       position: 'relative',
       zIndex: 10,
       overflow: 'hidden',

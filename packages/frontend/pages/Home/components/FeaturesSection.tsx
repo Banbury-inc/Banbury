@@ -32,7 +32,7 @@ const features = [
 
 function FeaturesSection() {
   return (
-    <section className="relative bg-background py-20 md:py-28">
+    <section className="relative bg-card py-20 md:py-28">
       <div className="container mx-auto max-w-7xl px-6 md:px-4">
         <div className="mx-auto mb-12 max-w-3xl text-center md:mb-16">
           <motion.div

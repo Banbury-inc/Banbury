@@ -75,7 +75,7 @@ const Header = (): JSX.Element => {
 
   return (
       <div 
-        className="relative flex min-h-[70px] items-center justify-between overflow-hidden border-b border-border bg-background px-4 text-foreground md:px-6" 
+        className="relative flex min-h-[70px] items-center justify-between overflow-visible border-b border-border bg-card px-4 text-foreground md:px-6" 
         style={{
           zIndex: 10,
         }}

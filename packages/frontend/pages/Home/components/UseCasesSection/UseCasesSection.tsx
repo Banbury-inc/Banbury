@@ -16,7 +16,7 @@ function UseCasesSection() {
     <Box sx={{ 
       py: { xs: 9, md: 14 },
       px: { xs: 0, md: '44px' },
-      background: 'var(--background)',
+      background: 'var(--card)',
       borderTop: '1px solid var(--border)',
       position: 'relative',
     }}>

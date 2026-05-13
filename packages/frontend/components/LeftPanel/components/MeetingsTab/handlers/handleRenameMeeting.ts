@@ -2,29 +2,25 @@ import { ApiService } from '../../../../../../backend/api/apiService'
 
 interface HandleRenameMeetingParams {
   meetingId: string
-  currentTitle: string
+  title: string
   onSuccess?: () => void
   onError?: (error: string) => void
 }
 
 export async function handleRenameMeeting({
   meetingId,
-  currentTitle,
+  title,
   onSuccess,
   onError
 }: HandleRenameMeetingParams) {
-  const nextTitle = window.prompt('Rename meeting', currentTitle)
-
-  if (nextTitle === null) return false
-
-  const title = nextTitle.trim()
-  if (!title) {
+  const nextTitle = title.trim()
+  if (!nextTitle) {
     onError?.('Meeting title cannot be empty')
     return false
   }
 
   try {
-    const result = await ApiService.MeetingAgent.renameMeetingSession(meetingId, title)
+    const result = await ApiService.MeetingAgent.renameMeetingSession(meetingId, nextTitle)
 
     if (result.success) {
       onSuccess?.()

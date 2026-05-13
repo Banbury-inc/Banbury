@@ -15,7 +15,7 @@ function CTASection() {
       sx={{
         py: { xs: 10, md: 18 },
         px: { xs: 2, md: 0 },
-        background: 'var(--background)',
+        background: 'var(--card)',
         borderTop: '1px solid var(--border)',
         position: 'relative',
         overflow: 'hidden'
