@@ -1,14 +1,18 @@
 import { useState } from 'react'
+import Image from 'next/image'
 import { Sparkles } from 'lucide-react'
 import { Button } from '../../../common/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../common/ui/card'
 import {
+  handleMarketingCreateClick,
   handleMarketingRunClick,
+  type MarketingAssetState,
   type MarketingIdea
 } from './handlers/marketingTabHandlers'
 
 export function MarketingTab() {
   const [ideas, setIdeas] = useState<MarketingIdea[]>([])
+  const [assetStates, setAssetStates] = useState<Record<string, MarketingAssetState>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   let content = (
@@ -38,28 +42,108 @@ export function MarketingTab() {
         <table className="w-full min-w-full">
           <thead>
             <tr className="border-b border-zinc-200 dark:border-white/[0.06]">
-              <th className="w-2/3 px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+              <th className="w-1/2 px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                 Description
               </th>
               <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                 Action
               </th>
+              <th className="w-48 px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                Create
+              </th>
             </tr>
           </thead>
           <tbody>
-            {ideas.map((idea) => (
-              <tr
-                key={`${idea.description}-${idea.action}`}
-                className="border-b border-zinc-200 transition-colors last:border-b-0 hover:bg-accent/50 dark:border-white/[0.04] dark:hover:bg-accent/50"
-              >
-                <td className="px-4 py-3 text-sm text-foreground">
-                  {idea.description}
-                </td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">
-                  {idea.action}
-                </td>
-              </tr>
-            ))}
+            {ideas.map((idea) => {
+              const rowKey = `${idea.description}-${idea.action}`
+              const assetState = assetStates[rowKey]
+              const isCreating = assetState?.isCreating || false
+              const asset = assetState?.result
+
+              return (
+                <tr
+                  key={rowKey}
+                  className="border-b border-zinc-200 transition-colors last:border-b-0 hover:bg-accent/50 dark:border-white/[0.04] dark:hover:bg-accent/50"
+                >
+                  <td className="px-4 py-3 text-sm text-foreground align-top">
+                    <div>{idea.description}</div>
+                    {asset && (
+                      <div className="mt-3 space-y-3 rounded-lg border border-zinc-200 bg-background p-3 dark:border-white/[0.06]">
+                        <div>
+                          <div className="text-xs font-medium text-muted-foreground">Post Text</div>
+                          <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{asset.postText}</p>
+                        </div>
+                        {asset.screenshotPreview && (
+                          <Image
+                            src={asset.screenshotPreview}
+                            alt="Marketing screenshot preview"
+                            width={640}
+                            height={360}
+                            unoptimized
+                            className="max-h-56 rounded-md border border-zinc-200 object-cover dark:border-white/[0.06]"
+                          />
+                        )}
+                        {asset.videoPreview && (
+                          <video
+                            src={asset.videoPreview}
+                            controls
+                            className="max-h-56 rounded-md border border-zinc-200 dark:border-white/[0.06]"
+                          >
+                            <track kind="captions" src="" srcLang="en" label="No captions available" />
+                          </video>
+                        )}
+                        {asset.captureUrl && (
+                          <div className="text-xs text-muted-foreground">
+                            Captured: {asset.captureUrl}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground align-top">
+                    <div>{idea.action}</div>
+                    {asset && (
+                      <div className="mt-3 space-y-1 text-xs">
+                        {asset.screenshotFile && (
+                          <div>Screenshot saved: {asset.screenshotFile.file_path}</div>
+                        )}
+                        {asset.videoFile && (
+                          <div>Video saved: {asset.videoFile.file_path}</div>
+                        )}
+                        {asset.postTextFile && (
+                          <div>Text saved: {asset.postTextFile.file_path}</div>
+                        )}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 align-top">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleMarketingCreateClick({
+                        idea,
+                        rowKey,
+                        setAssetStates
+                      })}
+                      disabled={isCreating}
+                      className="border-zinc-200 dark:border-white/[0.06]"
+                    >
+                      {isCreating ? 'Creating' : 'Create'}
+                    </Button>
+                    {assetState?.error && (
+                      <div className="mt-2 text-xs text-destructive">
+                        {assetState.error}
+                      </div>
+                    )}
+                    {asset && (
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Created
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
