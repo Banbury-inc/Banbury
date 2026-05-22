@@ -14,6 +14,7 @@ import {
   BarChart3,
   Info,
   BookOpen,
+  Bell,
 } from 'lucide-react'
 
 import { Button } from '../common/ui/button'
@@ -43,6 +44,7 @@ import {
   KeybindsTab,
   UsageTab,
   AboutTab,
+  NotificationsTab,
 } from './settings-tabs'
 import { handleUpdateProfile } from './handlers/settingsHandlers'
 import { CheckoutForm } from './CheckoutForm'
@@ -112,6 +114,11 @@ export function SettingsModal({ open, onOpenChange }: Readonly<SettingsModalProp
       id: 'keybinds',
       label: 'Keyboard Shortcuts',
       icon: Keyboard,
+    },
+    {
+      id: 'notifications',
+      label: 'Notifications',
+      icon: Bell,
     },
     {
       id: 'ai-settings',
@@ -379,6 +386,10 @@ export function SettingsModal({ open, onOpenChange }: Readonly<SettingsModalProp
 
               {activeTab === 'keybinds' && (
                 <KeybindsTab />
+              )}
+
+              {activeTab === 'notifications' && (
+                <NotificationsTab />
               )}
 
               {activeTab === 'ai-settings' && (

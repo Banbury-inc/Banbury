@@ -8,4 +8,5 @@ export { SkillsTab } from './SkillsTab'
 export { KeybindsTab } from './KeybindsTab'
 export { UsageTab } from './UsageTab'
 export { AboutTab } from './AboutTab'
+export { NotificationsTab } from './NotificationsTab'
 
