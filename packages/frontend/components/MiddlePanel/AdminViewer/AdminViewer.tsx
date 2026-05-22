@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../common/ui/card'
 import { ApiService } from '../../../../backend/api/apiService'
 import { UsersTab } from './components/UsersTab'
 import { AnalyticsTab } from './components/AnalyticsTab'
+import { MarketingTab } from './components/MarketingTab'
 import { convertToEasternTime, formatBytes } from './utils/adminUtils'
 import type {
   User,
@@ -519,6 +520,10 @@ export function AdminViewer({ activeTab }: AdminViewerProps) {
           formatBytes={formatBytes}
           scopesAnalytics={scopesAnalytics}
         />
+      )}
+
+      {activeTab === 'admin-marketing' && (
+        <MarketingTab />
       )}
 
       {(activeTab === 'admin-analytics-overview' || activeTab === 'admin-visitors' || activeTab === 'admin-conversations' || activeTab === 'admin-filetypes' || activeTab === 'admin-api-usage' || activeTab === 'admin-engagement' || activeTab === 'admin-retention' || activeTab === 'admin-features' || activeTab === 'admin-errors') && (

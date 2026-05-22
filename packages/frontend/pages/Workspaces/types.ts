@@ -60,7 +60,7 @@ export interface MeetingTab {
 
 export interface AdminTab {
   id: string
-  adminTabType: 'overview' | 'users' | 'analytics-overview' | 'visitors' | 'conversations' | 'filetypes' | 'api-usage' | 'engagement' | 'retention' | 'features' | 'errors'
+  adminTabType: 'overview' | 'users' | 'analytics-overview' | 'visitors' | 'marketing' | 'conversations' | 'filetypes' | 'api-usage' | 'engagement' | 'retention' | 'features' | 'errors'
   title: string
   type: 'admin'
 }
@@ -231,6 +231,7 @@ export type AdminTabId =
   | 'admin-users'
   | 'admin-analytics-overview'
   | 'admin-visitors'
+  | 'admin-marketing'
   | 'admin-conversations'
   | 'admin-filetypes'
   | 'admin-api-usage'

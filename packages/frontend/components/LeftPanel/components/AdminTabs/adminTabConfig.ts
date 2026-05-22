@@ -3,6 +3,7 @@ import {
   Users,
   BarChart,
   Eye,
+  Megaphone,
   MessageSquare,
   FileType
 } from 'lucide-react'
@@ -26,6 +27,7 @@ export const adminTabs: TabConfig[] = [
   { id: 'admin-users', icon: Users, label: 'Users' },
   { id: 'admin-analytics-overview', icon: BarChart, label: 'Analytics' },
   { id: 'admin-visitors', icon: Eye, label: 'Visitors' },
+  { id: 'admin-marketing', icon: Megaphone, label: 'Marketing' },
   { id: 'admin-conversations', icon: MessageSquare, label: 'AI Chats' },
   { id: 'admin-filetypes', icon: FileType, label: 'File Types' },
   { id: 'admin-api-usage', icon: BarChart, label: 'API Usage' },
