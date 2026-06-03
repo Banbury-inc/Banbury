@@ -8,8 +8,8 @@ import { Toolbar } from './toolbar/Toolbar';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Configure worker from cdnjs to avoid CORS issues
-pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.js`;
+// Worker must match the pdfjs API version bundled with react-pdf (see pdfjs.version)
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface PDFViewerProps {
   file: FileSystemItem;
