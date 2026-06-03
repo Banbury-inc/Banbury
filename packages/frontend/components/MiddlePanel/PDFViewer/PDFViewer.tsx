@@ -5,11 +5,11 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { ApiService } from '../../../../backend/api/apiService'
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { Toolbar } from './toolbar/Toolbar';
+import { getPdfjsWorkerSrc } from './pdfjs-worker';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Worker must match the pdfjs API version bundled with react-pdf (see pdfjs.version)
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = getPdfjsWorkerSrc(pdfjs.version);
 
 interface PDFViewerProps {
   file: FileSystemItem;
