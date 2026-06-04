@@ -37,6 +37,7 @@
     "format:fix": "npm run prettier -- --write",
     "types:check": "bash -c tsc --noEmit --pretty",
     "clean": "rm -rf .next && rm -rf node_modules/.cache && rm -f tsconfig.tsbuildinfo",
+    "postinstall": "node scripts/sync-mapbox-worker.cjs",
     "electron:build": "tsc -p tsconfig.electron.json",
     "desktop:dev": "concurrently --kill-others --names \"next,electron\" \"npm run dev\" \"npx wait-on http://localhost:3000 && npm run electron:build && cross-env NODE_ENV=development electron dist-electron/electron-app/main.js\"",
     "desktop:build": "npm run electron:build",

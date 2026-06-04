@@ -28,6 +28,10 @@ export async function initMapboxMap({
   const mapboxModule = await import('mapbox-gl')
   const mapbox = mapboxModule.default
 
+  // Workers must be same-origin as the page; cross-origin URLs (api.mapbox.com) fail on localhost.
+  // `public/mapbox-gl-csp-worker.js` is copied from `mapbox-gl` (see `postinstall` in package.json).
+  mapbox.workerUrl = '/mapbox-gl-csp-worker.js'
+
   mapbox.accessToken = token
   const basemap = getMapBasemapOption(basemapId)
 

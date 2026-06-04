@@ -12,6 +12,17 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
+  async rewrites() {
+    const tileHost = (
+      process.env.NEXT_PUBLIC_RAINVIEWER_TILE_HOST || 'https://tilecache.rainviewer.com'
+    ).replace(/\/$/, '')
+    return [
+      {
+        source: '/rainviewer-tiles/:path*',
+        destination: `${tileHost}/:path*`,
+      },
+    ]
+  },
   async redirects() {
     return [
       // Redirect capitalized URLs to lowercase
