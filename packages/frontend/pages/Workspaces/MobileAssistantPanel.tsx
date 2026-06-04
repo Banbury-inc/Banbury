@@ -1,4 +1,4 @@
-import { Folder, Mail, Calendar, CheckSquare, Video, UserCog, X, Database, GitBranch } from 'lucide-react'
+import { Folder, Mail, Calendar, CheckSquare, Video, UserCog, X, Database, GitBranch, Map } from 'lucide-react'
 import { Button } from '../../components/common/ui/button'
 import { Sheet, SheetContent } from '../../components/common/ui/sheet'
 import { UserInfo, PanelGroup } from './types'
@@ -30,6 +30,7 @@ export function MobileAssistantPanel({
     { id: 'calendar', icon: Calendar, label: 'Calendar' },
     { id: 'tasks', icon: CheckSquare, label: 'Tasks' },
     { id: 'meetings', icon: Video, label: 'Meetings' },
+    { id: 'maps', icon: Map, label: 'Maps' },
     { id: 'databases', icon: Database, label: 'Databases' },
     { id: 'flows', icon: GitBranch, label: 'Flows' },
     ...(userInfo?.username === 'mmills' || userInfo?.username === 'mmills6060@gmail.com'

@@ -1,8 +1,7 @@
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import { Panel, PanelGroup, WorkspaceTab, FileTab, EmailTab, TaskTab, MeetingTab, AdminTab, TerminalTab, DatabaseTableTab, OpenDatabaseTablePayload, FlowTab, FlowItem } from '../types';
+import { Panel, PanelGroup, WorkspaceTab, FileTab, EmailTab, TaskTab, MeetingTab, AdminTab, TerminalTab, DatabaseTableTab, OpenDatabaseTablePayload, FlowTab, FlowItem, MapTab, MapPlaceLocation } from '../types';
 import { Task } from '../../../pages/TaskStudio/types';
 import { MeetingSession } from '../../../types/meeting-types';
-import { ApiService } from '../../../../backend/api/apiService';
 
 // Open file in a new tab within specified panel
 export const openFileInTab = (
@@ -261,6 +260,58 @@ export const openMeetingInTab = async (
   setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab));
   setActivePanelId(targetPanelId);
 };
+
+// Open a map in a new tab within specified panel
+export const openMapInTab = (
+  place: MapPlaceLocation | null,
+  targetPanelId: string,
+  activePanelId: string,
+  panelLayout: PanelGroup,
+  getAllTabs: (layout: PanelGroup) => WorkspaceTab[],
+  updatePanelActiveTab: (layout: PanelGroup, panelId: string, tabId: string) => PanelGroup,
+  addTabToPanel: (layout: PanelGroup, panelId: string, tab: WorkspaceTab) => PanelGroup,
+  setActivePanelId: React.Dispatch<React.SetStateAction<string>>,
+  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
+) => {
+  const allTabs = getAllTabs(panelLayout);
+  const existingTab = allTabs.find(tab => {
+    if (tab.type !== 'map') return false
+    if (!place && !tab.place) return true
+    if (!place || !tab.place) return false
+    return tab.place.longitude === place.longitude && tab.place.latitude === place.latitude
+  })
+
+  if (existingTab) {
+    const switchToExistingTab = (layout: PanelGroup): boolean => {
+      if (layout.type === 'panel' && layout.panel) {
+        const tabExists = layout.panel.tabs.some(tab => tab.id === existingTab.id)
+        if (tabExists) {
+          setActivePanelId(layout.panel.id)
+          setPanelLayout(prev => updatePanelActiveTab(prev, layout.panel!.id, existingTab.id))
+          return true
+        }
+      }
+      if (layout.type === 'group' && layout.children) {
+        return layout.children.some(child => switchToExistingTab(child))
+      }
+      return false
+    }
+
+    switchToExistingTab(panelLayout)
+    return
+  }
+
+  const tabId = place ? `map_${place.longitude}_${place.latitude}_${Date.now()}` : `map_${Date.now()}`
+  const newTab: MapTab = {
+    id: tabId,
+    title: place?.name || 'Map',
+    place,
+    type: 'map',
+  }
+
+  setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab))
+  setActivePanelId(targetPanelId)
+}
 
 // Close a tab
 export const handleCloseTab = (

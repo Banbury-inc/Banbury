@@ -19,6 +19,7 @@ import Tracking from './tracking/tracking'
 import Themes from './themes/themes'
 import Databases from './databases/databases'
 import Flows from './flows/flows'
+import Maps from './maps/maps'
 import Notion from './notion/notion'
 import Skills from './skills/skills'
 
@@ -67,6 +68,7 @@ export class ApiService {
   Themes: Themes
   Databases: Databases
   Flows: typeof Flows
+  Maps: typeof Maps
   Notion: typeof Notion
   Skills: typeof Skills
   constructor() {
@@ -88,6 +90,7 @@ export class ApiService {
     this.Themes = new Themes(this)
     this.Databases = new Databases(this)
     this.Flows = Flows
+    this.Maps = Maps
     this.Notion = Notion
     this.Skills = Skills
   }
@@ -110,6 +113,7 @@ export class ApiService {
   static Themes = Themes;
   static Databases = Databases;
   static Flows = Flows;
+  static Maps = Maps;
   static Notion = Notion;
   static Skills = Skills;
   /**

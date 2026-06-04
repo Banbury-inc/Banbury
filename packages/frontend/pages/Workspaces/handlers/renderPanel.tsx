@@ -35,6 +35,7 @@ import { MeetingJoinComposer } from '../../../components/MiddlePanel/MeetingView
 import { AdminViewer } from '../../../components/MiddlePanel/AdminViewer/AdminViewer';
 import { DatabaseViewer } from '../../../components/MiddlePanel/DatabaseViewer/DatabaseViewer';
 import { FlowViewer } from '../../../components/MiddlePanel/FlowViewer/FlowViewer';
+import { MapViewer } from '../../../components/MiddlePanel/MapViewer/MapViewer';
 import TerminalViewer from '../../../components/MiddlePanel/TerminalViewer/TerminalViewer';
 
 const PDFViewer = dynamic(
@@ -162,6 +163,7 @@ export const renderPanel = ({
                 else if (t.type === 'terminal') label = t.title;
                 else if (t.type === 'database-table') label = t.title;
                 else if (t.type === 'flow') label = t.title;
+                else if (t.type === 'map') label = t.title;
                 return { id: t.id, label };
               })}
               activeTab={panel.activeTabId || panel.tabs[0]?.id}
@@ -680,6 +682,41 @@ export const renderPanel = ({
                             return layout
                           }
                           return updateFlowInLayout(prev)
+                        })
+                      }}
+                    />
+                  )
+                }
+
+                if (tab.type === 'map') {
+                  return (
+                    <MapViewer
+                      place={tab.place}
+                      onPlaceVisited={(visitedPlace) => {
+                        setPanelLayout((prev: any) => {
+                          const updateMapInLayout = (layout: any): any => {
+                            if (layout.type === 'panel' && layout.panel?.id === panel.id) {
+                              const updatedTabs = layout.panel.tabs.map((t: any) =>
+                                t.id === tab.id
+                                  ? {
+                                      ...t,
+                                      title: visitedPlace.name || 'Map',
+                                      place: {
+                                        name: visitedPlace.name,
+                                        longitude: visitedPlace.longitude,
+                                        latitude: visitedPlace.latitude,
+                                        zoom: visitedPlace.zoom,
+                                      },
+                                    }
+                                  : t
+                              )
+                              return { ...layout, panel: { ...layout.panel, tabs: updatedTabs } }
+                            }
+                            if (layout.type === 'group' && layout.children)
+                              return { ...layout, children: layout.children.map(updateMapInLayout) }
+                            return layout
+                          }
+                          return updateMapInLayout(prev)
                         })
                       }}
                     />

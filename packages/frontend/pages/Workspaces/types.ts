@@ -194,7 +194,35 @@ export interface FlowTab {
   type: 'flow'
 }
 
-export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab | FileBrowserTab | EmailInboxTab | TerminalTab | DatabaseTableTab | FlowTab
+export interface MapPlace {
+  id: string
+  name: string
+  longitude: number
+  latitude: number
+  zoom: number
+  is_favorite: boolean
+  last_visited_at?: string
+  created_at?: string
+}
+
+export interface MapPlaceLocation {
+  name?: string
+  address?: string
+  categories?: string[]
+  mapboxId?: string
+  longitude: number
+  latitude: number
+  zoom: number
+}
+
+export interface MapTab {
+  id: string
+  title: string
+  type: 'map'
+  place?: MapPlaceLocation | null
+}
+
+export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab | FileBrowserTab | EmailInboxTab | TerminalTab | DatabaseTableTab | FlowTab | MapTab
 
 export interface Panel {
   id: string
@@ -225,7 +253,7 @@ export interface DragState {
 }
 
 // Left panel tab types
-export type WorkspaceLeftPanelTabId = 'files' | 'email' | 'calendar' | 'tasks' | 'meetings' | 'databases' | 'flows' | 'admin'
+export type WorkspaceLeftPanelTabId = 'files' | 'email' | 'calendar' | 'tasks' | 'meetings' | 'maps' | 'databases' | 'flows' | 'admin'
 export type AdminTabId =
   | 'admin-overview'
   | 'admin-users'
