@@ -1,12 +1,14 @@
 import type { Dispatch } from 'react'
 import type mapboxgl from 'mapbox-gl'
-import { MapPlaceLocation } from '../../../../pages/Workspaces/types'
+import type { MapPlaceLocation } from '../../../../pages/Workspaces/types'
+import { defaultMapBasemapId, getMapBasemapOption, type MapBasemapId } from '../map-layer-options'
 
 interface InitMapboxMapParams {
   container: HTMLDivElement
   token: string
   initialPlace: MapPlaceLocation
   isDarkTheme: boolean
+  basemapId?: MapBasemapId
   onMoveEnd: Dispatch<MapPlaceLocation>
 }
 
@@ -20,22 +22,28 @@ export async function initMapboxMap({
   token,
   initialPlace,
   isDarkTheme,
+  basemapId = defaultMapBasemapId,
   onMoveEnd,
 }: InitMapboxMapParams): Promise<InitMapboxMapResult> {
   const mapboxModule = await import('mapbox-gl')
   const mapbox = mapboxModule.default
 
   mapbox.accessToken = token
+  const basemap = getMapBasemapOption(basemapId)
 
   const map = new mapbox.Map({
     accessToken: token,
     container,
-    style: 'mapbox://styles/mapbox/standard',
-    config: {
-      basemap: {
-        lightPreset: isDarkTheme ? 'night' : 'day',
-      },
-    },
+    style: basemap.styleUrl,
+    ...(basemap.supportsLightPreset
+      ? {
+          config: {
+            basemap: {
+              lightPreset: isDarkTheme ? 'night' : 'day',
+            },
+          },
+        }
+      : {}),
     center: [initialPlace.longitude, initialPlace.latitude],
     zoom: initialPlace.zoom,
   })

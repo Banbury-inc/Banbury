@@ -5,17 +5,30 @@ import type mapboxgl from 'mapbox-gl'
 import { SearchBoxCore, SessionToken } from '@mapbox/search-js-core'
 import type { SearchBoxSuggestion } from '@mapbox/search-js-core'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { Clock, DollarSign, ExternalLink, Globe, Loader2, Map, MapPin, Phone, Star, X } from 'lucide-react'
+import { Clock, DollarSign, ExternalLink, Globe, Layers, Loader2, Map, MapPin, Phone, Star, X } from 'lucide-react'
 import { CONFIG } from '../../../config/config'
 import { Button } from '../../common/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../common/ui/dropdown-menu'
 import { Input } from '../../common/ui/input'
 import { Typography } from '../../common/ui/typography'
 import { useToast } from '../../common/ui/use-toast'
-import { MapPlace, MapPlaceLocation } from '../../../pages/Workspaces/types'
+import type { MapPlace, MapPlaceLocation } from '../../../pages/Workspaces/types'
 import { getCurrentMapLocation } from './handlers/getCurrentMapLocation'
-import { handleCategorySearch, MapCategoryResult } from './handlers/handleCategorySearch'
-import { GooglePlaceDetails, handleGooglePlaceDetails } from './handlers/handleGooglePlaceDetails'
+import { handleCategorySearch } from './handlers/handleCategorySearch'
+import type { MapCategoryResult } from './handlers/handleCategorySearch'
+import { handleGooglePlaceDetails } from './handlers/handleGooglePlaceDetails'
+import type { GooglePlaceDetails } from './handlers/handleGooglePlaceDetails'
 import { handleFavoriteSelectedPlace } from './handlers/handleFavoriteSelectedPlace'
+import { applyMapLayerSettings, handleMapBasemapSelect, handleMapOverlayToggle } from './handlers/handleMapLayerChange'
 import { handleMapPlaceClick } from './handlers/handleMapPlaceClick'
 import { handleMapSearchSuggest } from './handlers/handleMapSearchSuggest'
 import { handleMapSearchSuggestionSelect } from './handlers/handleMapSearchSuggestionSelect'
@@ -23,6 +36,14 @@ import { handleRecordRecentPlace } from './handlers/handleRecordRecentPlace'
 import { handleSelectedPlaceClose } from './handlers/handleSelectedPlaceClose'
 import { initMapboxMap } from './handlers/initMapboxMap'
 import { clearCategoryMarkers, renderCategoryMarkers } from './handlers/renderCategoryMarkers'
+import {
+  defaultMapBasemapId,
+  getMapBasemapOption,
+  mapBasemapOptions,
+  mapOverlayOptions,
+  type MapBasemapId,
+  type MapOverlayId,
+} from './map-layer-options'
 
 interface MapViewerProps {
   place?: MapPlaceLocation | null
@@ -137,6 +158,8 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
   const [isGooglePlaceLoading, setIsGooglePlaceLoading] = useState(false)
   const [isGooglePlacesConfigured, setIsGooglePlacesConfigured] = useState(true)
   const [mapboxModule, setMapboxModule] = useState<typeof mapboxgl | null>(null)
+  const [selectedBasemapId, setSelectedBasemapId] = useState<MapBasemapId>(defaultMapBasemapId)
+  const [activeOverlayIds, setActiveOverlayIds] = useState<MapOverlayId[]>([])
   const mapboxToken = CONFIG.mapboxToken
   const isDarkTheme = (resolvedTheme || theme) !== 'light'
   const searchCore = useMemo(() => new SearchBoxCore({ accessToken: mapboxToken }), [mapboxToken])
@@ -237,6 +260,7 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
           token: mapboxToken,
           initialPlace: initialLocation,
           isDarkTheme: isDarkThemeRef.current,
+          basemapId: defaultMapBasemapId,
           onMoveEnd: location => setCurrentLocation({
             ...location,
             name: placeNameRef.current || location.name,
@@ -307,9 +331,13 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
     const map = mapRef.current
     if (!map) return
 
-    map.setConfigProperty('basemap', 'lightPreset', isDarkTheme ? 'night' : 'day')
-    map.resize()
-  }, [isDarkTheme])
+    applyMapLayerSettings({
+      map,
+      basemapId: selectedBasemapId,
+      activeOverlayIds,
+      isDarkTheme,
+    })
+  }, [activeOverlayIds, isDarkTheme, selectedBasemapId])
 
   useEffect(() => {
     const map = mapRef.current
@@ -450,6 +478,7 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
   const websiteHost = formatWebsiteHost(googlePlaceDetails?.websiteUri)
   const primaryType = googlePlaceDetails?.primaryType || selectedPlace?.categories?.[0]
   const placeCategoryLabels = getPlaceCategoryLabels(primaryType, selectedPlace?.categories)
+  const selectedBasemap = getMapBasemapOption(selectedBasemapId)
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -559,6 +588,63 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
               )
             })}
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                disabled={!isMapReady}
+                className="flex-shrink-0 gap-1.5"
+              >
+                <Layers className="h-3.5 w-3.5" strokeWidth={1.5} />
+                <span className="hidden sm:inline">Layers</span>
+                <span className="text-muted-foreground">{selectedBasemap.label}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Basemap</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={selectedBasemapId}
+                onValueChange={basemapId => handleMapBasemapSelect({
+                  map: mapRef.current,
+                  basemapId,
+                  activeOverlayIds,
+                  isDarkTheme,
+                  setSelectedBasemapId,
+                })}
+              >
+                {mapBasemapOptions.map(basemap => (
+                  <DropdownMenuRadioItem key={basemap.id} value={basemap.id}>
+                    {basemap.label}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Overlays</DropdownMenuLabel>
+              {mapOverlayOptions.map(overlay => (
+                <DropdownMenuCheckboxItem
+                  key={overlay.id}
+                  checked={activeOverlayIds.includes(overlay.id)}
+                  onCheckedChange={checked => handleMapOverlayToggle({
+                    map: mapRef.current,
+                    overlayId: overlay.id,
+                    isChecked: checked === true,
+                    basemapId: selectedBasemapId,
+                    activeOverlayIds,
+                    isDarkTheme,
+                    setActiveOverlayIds,
+                  })}
+                  onSelect={event => event.preventDefault()}
+                >
+                  <div className="flex min-w-0 flex-col">
+                    <span>{overlay.label}</span>
+                    <span className="text-xs text-muted-foreground">{overlay.description}</span>
+                  </div>
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       <div className="relative flex-1 min-h-0">
