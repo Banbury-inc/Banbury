@@ -34,6 +34,7 @@ import type { MapCategoryResult } from './handlers/handleCategorySearch'
 import { handleGooglePlaceDetails } from './handlers/handleGooglePlaceDetails'
 import type { GooglePlaceDetails } from './handlers/handleGooglePlaceDetails'
 import { handleFavoriteSelectedPlace } from './handlers/handleFavoriteSelectedPlace'
+import { handleRadarPlaybackToggle } from './handlers/handleRadarPlaybackToggle'
 import { applyMapLayerSettings, handleMapBasemapSelect, handleMapOverlayToggle, registerRainViewerPeriodicRefresh } from './handlers/handleMapLayerChange'
 import { setRainViewerRadarTilesTemplate } from './handlers/handleRainViewerRadarTilesUpdate'
 import { handleMapPlaceClick } from './handlers/handleMapPlaceClick'
@@ -187,6 +188,8 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
   const [rainViewerTileSize, setRainViewerTileSize] = useState<256 | 512>(256)
   const [rainViewerFrameIndex, setRainViewerFrameIndex] = useState(0)
   const [isRainViewerPlaying, setIsRainViewerPlaying] = useState(false)
+  const [isRadarPlaybackPreloading, setIsRadarPlaybackPreloading] = useState(false)
+  const radarPlaybackPreloadAbortRef = useRef<AbortController | null>(null)
   const mapboxToken = CONFIG.mapboxToken
   const isDarkTheme = (resolvedTheme || theme) !== 'light'
   const searchCore = useMemo(() => {
@@ -435,6 +438,9 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
 
   useEffect(() => {
     if (!isRadarActive) {
+      radarPlaybackPreloadAbortRef.current?.abort()
+      radarPlaybackPreloadAbortRef.current = null
+      setIsRadarPlaybackPreloading(false)
       setRainViewerHost('')
       setRainViewerTimeline([])
       setRainViewerFrameIndex(0)
@@ -811,6 +817,11 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
                 {formatRainViewerFrameUtc(rainViewerTimeline[rainViewerFrameIndex]?.time ?? 0)}
               </span>
             </Typography>
+            {isRadarPlaybackPreloading && (
+              <Typography variant="xs" className="text-muted-foreground">
+                Caching radar tiles for this view…
+              </Typography>
+            )}
             <div className="flex items-center gap-1">
               <Button
                 type="button"
@@ -819,6 +830,8 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
                 disabled={rainViewerTimeline.length <= 1}
                 aria-label="Previous radar frame"
                 onClick={() => {
+                  radarPlaybackPreloadAbortRef.current?.abort()
+                  setIsRadarPlaybackPreloading(false)
                   setIsRainViewerPlaying(false)
                   setRainViewerFrameIndex(i =>
                     stepRainViewerFrameIndex(rainViewerTimeline.length, i, -1),
@@ -832,12 +845,44 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
                 variant="secondary"
                 size="icon-xs"
                 disabled={rainViewerTimeline.length <= 1}
-                aria-label={isRainViewerPlaying ? 'Pause radar animation' : 'Play radar animation'}
-                onClick={() => setIsRainViewerPlaying(p => !p)}
+                aria-label={
+                  isRadarPlaybackPreloading
+                    ? 'Cancel radar preload'
+                    : isRainViewerPlaying
+                      ? 'Pause radar animation'
+                      : 'Play radar animation'
+                }
+                onClick={() => {
+                  if (isRadarPlaybackPreloading) {
+                    void handleRadarPlaybackToggle({
+                      mapRef,
+                      nextPlaying: false,
+                      rainViewerHost,
+                      rainViewerTimeline,
+                      rainViewerTileSize,
+                      preloadAbortRef: radarPlaybackPreloadAbortRef,
+                      setIsRainViewerPlaying,
+                      setIsRadarPlaybackPreloading,
+                    })
+                    return
+                  }
+                  void handleRadarPlaybackToggle({
+                    mapRef,
+                    nextPlaying: !isRainViewerPlaying,
+                    rainViewerHost,
+                    rainViewerTimeline,
+                    rainViewerTileSize,
+                    preloadAbortRef: radarPlaybackPreloadAbortRef,
+                    setIsRainViewerPlaying,
+                    setIsRadarPlaybackPreloading,
+                  })
+                }}
               >
-                {isRainViewerPlaying
-                  ? <Pause className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  : <Play className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                {isRadarPlaybackPreloading
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
+                  : isRainViewerPlaying
+                    ? <Pause className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    : <Play className="h-3.5 w-3.5" strokeWidth={1.5} />}
               </Button>
               <Button
                 type="button"
@@ -846,6 +891,8 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
                 disabled={rainViewerTimeline.length <= 1}
                 aria-label="Next radar frame"
                 onClick={() => {
+                  radarPlaybackPreloadAbortRef.current?.abort()
+                  setIsRadarPlaybackPreloading(false)
                   setIsRainViewerPlaying(false)
                   setRainViewerFrameIndex(i =>
                     stepRainViewerFrameIndex(rainViewerTimeline.length, i, 1),
@@ -862,6 +909,8 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
                 step={1}
                 value={[rainViewerFrameIndex]}
                 onValueChange={value => {
+                  radarPlaybackPreloadAbortRef.current?.abort()
+                  setIsRadarPlaybackPreloading(false)
                   setIsRainViewerPlaying(false)
                   const next = value[0]
                   if (typeof next !== 'number') return
