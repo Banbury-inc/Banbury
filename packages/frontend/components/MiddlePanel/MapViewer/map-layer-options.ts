@@ -55,6 +55,26 @@ export const mapOverlayOptions = [
     label: '3D buildings',
     description: 'Building extrusions',
   },
+  {
+    id: 'radar',
+    label: 'Weather radar',
+    description: 'Live composite radar (RainViewer; tiles to zoom ~7)',
+  },
+  {
+    id: 'radar-coverage',
+    label: 'Radar coverage',
+    description: 'RainViewer mask: where composite radar data exists',
+  },
+  {
+    id: 'temperature',
+    label: 'Temperature',
+    description: 'GFS 2 m temperature (Mapbox raster-array tileset; forecast band selectable)',
+  },
+  {
+    id: 'wind',
+    label: 'Wind',
+    description: 'GFS wind flow (Mapbox demo raster-array tileset)',
+  },
 ] as const
 
 export type MapBasemapId = (typeof mapBasemapOptions)[number]['id']
