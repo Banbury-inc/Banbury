@@ -25,6 +25,11 @@ import { checkIsRunning } from "./handlers/messageQueue";
 import { checkButtonVisibility, type VisibleButtons } from "./handlers/checkButtonVisibility";
 import { checkForText } from "./handlers/checkForText";
 import { startRecording } from "./handlers/handleStartRecording";
+import {
+  clearPendingSkillContext,
+  peekPendingSkillContext,
+  type PendingSkillContext,
+} from "./handlers/pendingSkillContext";
 import type { FC } from "react";
 import { Typography } from "@/components/common/ui/typography";
 
@@ -57,6 +62,7 @@ export interface ComposerToolPreferences {
   search_files: boolean;
   calendar: boolean;
   msCalendar: boolean;
+  meeting_analysis: boolean;
   notion: boolean;
   github: boolean;
   generate_image: boolean;
@@ -139,7 +145,21 @@ export const Composer: FC<ComposerProps> = ({
   const proseMirrorRef = useRef<HTMLElement | null>(null);
   const sendButtonRef = useRef<HTMLButtonElement | null>(null);
   const [isEditingQueuedMessage, setIsEditingQueuedMessage] = useState(false);
+  const [pendingSkill, setPendingSkill] = useState<PendingSkillContext | null>(null);
   const isRunning = checkIsRunning(threadRuntime);
+
+  useEffect(() => {
+    setPendingSkill(peekPendingSkillContext())
+
+    const handlePendingSkillChange = (event: CustomEvent<PendingSkillContext | null>) => {
+      setPendingSkill(event.detail || null)
+    }
+
+    window.addEventListener('pending-skill-context-change', handlePendingSkillChange as EventListener)
+    return () => {
+      window.removeEventListener('pending-skill-context-change', handlePendingSkillChange as EventListener)
+    }
+  }, [])
 
   useEffect(() => {
     if (!composer.attachments) return;
@@ -213,6 +233,7 @@ export const Composer: FC<ComposerProps> = ({
   useEffect(() => {
     const handleClear = () => {
       setIsEditingQueuedMessage(false)
+      clearPendingSkillContext()
     }
     window.addEventListener('composer-clear', handleClear)
     return () => {
@@ -348,6 +369,23 @@ export const Composer: FC<ComposerProps> = ({
           </div>
         )}
 
+        {pendingSkill && (
+          <div className={`bg-accent border-b border-border px-2 py-1 flex items-center justify-between w-full ${queuedMessages.length === 0 && attachedFiles.length === 0 && attachedEmails.length === 0 && pendingChanges.length === 0 && !isEditingQueuedMessage ? 'rounded-t-md' : ''}`}>
+            <Typography variant="xs" className="font-medium text-foreground">
+              skill: {pendingSkill.name}
+            </Typography>
+            <Button
+              variant="ghost"
+              size="xs"
+              className="h-auto px-2 py-1"
+              onClick={clearPendingSkillContext}
+              title="Remove skill"
+            >
+              <Typography variant="xs" className="text-muted-foreground">remove</Typography>
+            </Button>
+          </div>
+        )}
+
         <ComposerPrimitive.Root className={`relative flex w-full flex-col rounded-md ${isEditingQueuedMessage || pendingChanges.length > 0 ? 'rounded-t-none' : ''}`} data-tab-id={assistantTabId}>
           {/* Hidden native input to keep @assistant-ui runtime in sync */}
           <ComposerPrimitive.Input
@@ -368,7 +406,7 @@ export const Composer: FC<ComposerProps> = ({
               autofocus={composerAutofocus}
               onFileAttach={onFileAttach}
               onAttachmentPayload={onAttachmentPayload}
-              placeholder="Ask anything or type @ to mention a file..."
+              placeholder="Ask anything, type @ for files, or / for skills..."
               className="min-h-16"
               onSend={() => handleSend({
                 composer,

@@ -11,6 +11,7 @@ interface ToolPreferences {
   teams: boolean;
   onedrive: boolean;
   notion: boolean;
+  meeting_analysis: boolean;
   use_skills: boolean;
   plan_mode: boolean;
   ask_mode: boolean;
@@ -30,6 +31,7 @@ export function getToolPreferences(): ToolPreferences {
     teams: false, // Disable Teams by default for workspace messaging safety
     onedrive: false, // Disable OneDrive by default for storage safety
     notion: false, // Disable Notion by default for security
+    meeting_analysis: true,
     use_skills: false, // Disabled by default until API access confirmed
     plan_mode: false, // Disabled by default - use Agent mode
     ask_mode: false, // Disabled by default - use Agent mode
@@ -50,6 +52,7 @@ export function getToolPreferences(): ToolPreferences {
         teams: (parsed && typeof parsed.teams === 'boolean') ? parsed.teams : false,
         onedrive: (parsed && typeof parsed.onedrive === 'boolean') ? parsed.onedrive : false,
         notion: (parsed && typeof parsed.notion === 'boolean') ? parsed.notion : false,
+        meeting_analysis: (parsed && typeof parsed.meeting_analysis === 'boolean') ? parsed.meeting_analysis : true,
         // Auto-enable skills for Anthropic provider
         use_skills: (parsed?.model_provider === 'anthropic'),
         // Plan mode preference

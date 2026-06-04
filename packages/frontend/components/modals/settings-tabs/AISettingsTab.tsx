@@ -25,6 +25,7 @@ interface ToolPreferences {
   slack: boolean
   onedrive: boolean
   notion: boolean
+  meeting_analysis: boolean
   model_provider: "anthropic" | "openai" | "google"
   visibleModels?: string[]
 }
@@ -62,6 +63,7 @@ export function AISettingsTab() {
         slack: false,
         onedrive: false,
         notion: false,
+        meeting_analysis: true,
         model_provider: 'anthropic',
         visibleModels: DEFAULT_VISIBLE_MODELS,
       }
@@ -83,6 +85,7 @@ export function AISettingsTab() {
           slack: typeof parsed.slack === 'boolean' ? parsed.slack : false,
           onedrive: typeof parsed.onedrive === 'boolean' ? parsed.onedrive : false,
           notion: typeof parsed.notion === 'boolean' ? parsed.notion : false,
+          meeting_analysis: typeof parsed.meeting_analysis === 'boolean' ? parsed.meeting_analysis : true,
           model_provider: parsed.model_provider === 'google' ? 'google' : (parsed.model_provider === 'openai' ? 'openai' : 'anthropic'),
           visibleModels: Array.isArray(parsed.visibleModels) ? parsed.visibleModels : DEFAULT_VISIBLE_MODELS,
         }
@@ -102,6 +105,7 @@ export function AISettingsTab() {
       slack: false,
       onedrive: false,
       notion: false,
+      meeting_analysis: true,
       model_provider: 'anthropic',
       visibleModels: DEFAULT_VISIBLE_MODELS,
     }

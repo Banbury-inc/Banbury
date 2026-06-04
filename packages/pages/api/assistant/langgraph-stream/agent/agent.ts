@@ -142,6 +142,7 @@ import { executeScriptTool } from "./tools/executeScriptTool";
 import { createPlanTool } from "./tools/createPlanTool";
 import { spawnSubagentsTool } from "./tools/spawnSubagentsTool";
 import { codeEditOpenFileTool } from "./tools/codeEditOpenFileTool";
+import { meetingAnalysisTool } from "./tools/meetingAnalysisTool";
 
 interface AgentState {
   messages: BaseMessage[];
@@ -282,6 +283,7 @@ const planningTools = [
   searchFilesTool,
   searchMemoryTool,
   getCurrentDateTimeTool,
+  meetingAnalysisTool,
   // Email reading tools
   gmailGetRecentTool,
   gmailSearchTool,
@@ -319,6 +321,7 @@ const askingTools = [
   searchFilesTool,
   searchMemoryTool,
   getCurrentDateTimeTool,
+  meetingAnalysisTool,
   onedriveStatusTool,
   onedriveListRootTool,
   onedriveListFolderTool,
@@ -397,6 +400,7 @@ const tools = [
   downloadFromUrlTool,
   searchFilesTool,
   getCurrentDateTimeTool,
+  meetingAnalysisTool,
   writeWorkspaceFileTool,
   executeScriptTool,
   codeEditOpenFileTool,

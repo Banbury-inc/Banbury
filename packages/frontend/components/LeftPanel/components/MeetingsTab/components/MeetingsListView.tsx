@@ -1,9 +1,14 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { MeetingSession } from '../../../../../types/meeting-types'
 import { Typography } from '../../../../common/ui/typography'
 import { Button } from '../../../../common/ui/button'
 import { Video, Clock, Users, CheckCircle2, XCircle, PlayCircle, Calendar, Trash2 } from 'lucide-react'
 import { MeetingContextMenu } from './MeetingContextMenu'
+import {
+  handleMeetingRenameKeyDown,
+  handleStartMeetingRename,
+  handleSubmitMeetingRename
+} from './handlers/meetingRenameHandlers'
 
 interface MeetingsListViewProps {
   meetings: MeetingSession[]
@@ -11,7 +16,7 @@ interface MeetingsListViewProps {
   onMeetingSelect?: (meeting: MeetingSession) => void
   selectedMeeting?: MeetingSession | null
   onMeetingDeleted?: (meetingId: string) => void
-  onMeetingRename?: (meeting: MeetingSession) => void
+  onMeetingRename?: (meeting: MeetingSession, title: string) => Promise<boolean> | boolean | void
   onMeetingShare?: (meeting: MeetingSession) => void
   onMeetingCopyUrl?: (meeting: MeetingSession) => void
   onMeetingDownloadRecording?: (meeting: MeetingSession) => void
@@ -82,8 +87,6 @@ function getMeetingDate(meeting: MeetingSession & { createdAt?: string | Date })
   return meeting.startTime || meeting.createdAt || null
 }
 
-
-
 export function MeetingsListView({
   meetings,
   loading,
@@ -96,6 +99,22 @@ export function MeetingsListView({
   onMeetingDownloadRecording,
   onMeetingDownloadTranscript
 }: MeetingsListViewProps) {
+  const [renamingMeetingId, setRenamingMeetingId] = useState<string | null>(null)
+  const [renameTitle, setRenameTitle] = useState('')
+  const inputRef = useRef<HTMLInputElement | null>(null)
+
+  const getMeetingEditableTitle = (meeting: MeetingSession) => meeting.title || 'Untitled meeting'
+
+  const getMeetingDisplayTitle = (meeting: MeetingSession) =>
+    meeting.title || formatDateTime(getMeetingDate(meeting))
+
+  useEffect(() => {
+    if (!renamingMeetingId || !inputRef.current) return
+
+    inputRef.current.focus()
+    inputRef.current.select()
+  }, [renamingMeetingId])
+
   if (loading) {
     return (
       <div className="flex items-center justify-center flex-1 p-4">
@@ -118,6 +137,7 @@ export function MeetingsListView({
         {meetings.map((meeting) => {
           const StatusIcon = getStatusIcon(meeting.status)
           const isSelected = selectedMeeting?.id === meeting.id
+          const isRenaming = renamingMeetingId === meeting.id
 
           const row = (
             <div
@@ -136,9 +156,35 @@ export function MeetingsListView({
                   onClick={() => onMeetingSelect?.(meeting)}
                 >
                   <div className="flex items-center gap-2 mb-1 min-w-0">
-                    <Typography variant="xs" className="font-medium truncate flex-1 min-w-0">
-                      {meeting.title || formatDateTime(getMeetingDate(meeting as MeetingSession & { createdAt?: string | Date }))}
-                    </Typography>
+                    {isRenaming ? (
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={renameTitle}
+                        onChange={(event) => setRenameTitle(event.target.value)}
+                        onBlur={() => handleSubmitMeetingRename({
+                          meeting,
+                          renameTitle,
+                          setRenamingMeetingId,
+                          setRenameTitle,
+                          onMeetingRename
+                        })}
+                        onKeyDown={(event) => handleMeetingRenameKeyDown({
+                          event,
+                          meeting,
+                          renameTitle,
+                          setRenamingMeetingId,
+                          setRenameTitle,
+                          onMeetingRename
+                        })}
+                        onClick={(event) => event.stopPropagation()}
+                        className="min-w-0 flex-1 rounded border-none bg-muted px-1 py-0 text-xs font-medium text-foreground outline-none"
+                      />
+                    ) : (
+                      <Typography variant="xs" className="font-medium truncate flex-1 min-w-0">
+                        {getMeetingDisplayTitle(meeting)}
+                      </Typography>
+                    )}
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mb-1 min-w-0 flex-wrap">
                     {meeting.platform && (
@@ -186,7 +232,12 @@ export function MeetingsListView({
             <MeetingContextMenu
               key={meeting.id}
               onOpen={() => onMeetingSelect?.(meeting)}
-              onRename={() => onMeetingRename?.(meeting)}
+              onRename={() => handleStartMeetingRename({
+                meeting,
+                setRenamingMeetingId,
+                setRenameTitle,
+                getMeetingDisplayTitle: getMeetingEditableTitle
+              })}
               onShare={() => onMeetingShare?.(meeting)}
               onCopyUrl={() => onMeetingCopyUrl?.(meeting)}
               onDownloadRecording={() => onMeetingDownloadRecording?.(meeting)}

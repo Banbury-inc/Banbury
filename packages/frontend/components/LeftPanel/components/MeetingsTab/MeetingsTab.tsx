@@ -111,10 +111,10 @@ export function MeetingsTab({
     })
   }, [toast])
 
-  const handleMeetingRename = useCallback(async (meeting: MeetingSession) => {
-    await handleRenameMeeting({
+  const handleMeetingRename = useCallback(async (meeting: MeetingSession, title: string) => {
+    return handleRenameMeeting({
       meetingId: meeting.id,
-      currentTitle: meeting.title || 'Untitled meeting',
+      title,
       onSuccess: () => {
         toast({
           title: 'Success',

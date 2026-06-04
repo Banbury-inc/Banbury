@@ -29,6 +29,8 @@ export interface ThreadToolPreferences {
   // Calendar tools
   calendar: boolean;
   msCalendar: boolean;
+  // Meeting tools
+  meeting_analysis: boolean;
   notion: boolean;
   // Development tools
   github: boolean;
@@ -86,6 +88,8 @@ export function deriveToolPreferences(raw?: any): ThreadToolPreferences {
     // Calendar tools
     calendar: data.calendar !== false,
     msCalendar: data.msCalendar !== false,
+    // Meeting tools
+    meeting_analysis: data.meeting_analysis !== false,
     notion: data.notion !== false,
     // Development tools
     github: data.github !== false,

@@ -42,6 +42,8 @@ export interface ToolPreferences {
   // Calendar tools
   calendar?: boolean
   msCalendar?: boolean
+  // Meeting tools
+  meeting_analysis?: boolean
   // Development tools
   notion?: boolean
   github?: boolean
@@ -100,12 +102,20 @@ export interface PlanContext {
   isSubAgent?: boolean
 }
 
+export interface SelectedSkillContext {
+  id: string
+  name: string
+  description?: string
+  content: string
+}
+
 export interface StreamRequestBody {
   messages: any[]
   threadId?: string
   toolPreferences?: ToolPreferences
   documentContext?: string
   presentationContext?: string
+  selectedSkill?: SelectedSkillContext
   currentCodeFile?: {
     filePath: string
     fileName?: string

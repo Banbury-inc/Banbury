@@ -79,14 +79,12 @@ export const PlusMenu: FC<PlusMenuProps> = ({
             <Paperclip className="mr-2 h-4 w-4" />
             <Typography variant="xs">Attach file</Typography>
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="p-0">
+          <DropdownMenuSubContent className="w-80 max-w-[calc(100vw-2rem)] overflow-hidden p-0">
             <FileAttachmentPicker
               onFileAttach={(file) => {
                 onFileAttach(file)
                 onOpenChange(false)
               }}
-              userInfo={userInfo}
-              isOpen={isOpen}
             />
           </DropdownMenuSubContent>
         </DropdownMenuSub>

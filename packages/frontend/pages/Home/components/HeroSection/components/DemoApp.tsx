@@ -727,15 +727,6 @@ export default function DemoApp() {
             backgroundRepeat: 'no-repeat',
           }}
         >
-          {/* Artistic overlay for painted effect */}
-          <div 
-            className="absolute inset-0 opacity-40"
-            style={{
-              background: 'radial-gradient(circle at 30% 50%, rgba(255,182,193,0.3) 0%, transparent 50%), radial-gradient(circle at 70% 60%, rgba(173,216,230,0.3) 0%, transparent 50%)',
-              mixBlendMode: 'soft-light'
-            }}
-          />
-          
           <div className="h-[500px] sm:h-[600px] lg:h-[600px] w-full max-w-7xl flex overflow-hidden rounded-md border border-white/10 sm:border-2 shadow-xl sm:shadow-2xl bg-zinc-900/50 backdrop-blur-sm relative z-10">
         {/* Nav Sidebar - Wrapper to contain fixed positioning within demo */}
         <div className="relative h-full w-[48px] flex-shrink-0 overflow-hidden [&_.fixed]:!absolute">

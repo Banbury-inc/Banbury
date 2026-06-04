@@ -25,28 +25,6 @@ function IntegrationsAutoScroll() {
       position: 'relative', 
       mb: 8,
       overflow: 'visible',
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '50px',
-        height: '100%',
-        background: 'linear-gradient(90deg, #000000 0%, transparent 100%)',
-        zIndex: 10,
-        pointerEvents: 'none'
-      },
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        width: '50px',
-        height: '100%',
-        background: 'linear-gradient(270deg, #000000 0%, transparent 100%)',
-        zIndex: 10,
-        pointerEvents: 'none'
-      }
     }}>
       <Box 
         sx={{ 
@@ -55,6 +33,10 @@ function IntegrationsAutoScroll() {
           '@keyframes scroll': {
             '0%': { transform: 'translateX(0)' },
             '100%': { transform: 'translateX(-50%)' }
+          },
+          '@media (prefers-reduced-motion: reduce)': {
+            animation: 'none',
+            transform: 'translateX(0)'
           },
           '&:hover': {
             animationPlayState: 'paused'
@@ -85,7 +67,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -95,15 +76,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -138,7 +110,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -148,15 +119,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -191,7 +153,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -201,15 +162,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -244,7 +196,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -254,15 +205,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -297,7 +239,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -307,15 +248,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -350,7 +282,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -360,15 +291,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -403,7 +325,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -413,15 +334,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -456,7 +368,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -466,15 +377,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -509,7 +411,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -519,15 +420,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -562,7 +454,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -572,15 +463,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -615,7 +497,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 position: 'relative',
                 overflow: 'visible',
@@ -624,15 +505,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(66, 133, 244, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(66, 133, 244, 0.5), transparent)',
                 },
               }}
             >
@@ -668,7 +540,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -678,15 +549,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -721,7 +583,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -731,15 +592,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -774,7 +626,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -784,15 +635,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -827,7 +669,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -837,15 +678,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -880,7 +712,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -890,15 +721,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -933,7 +755,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -943,15 +764,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -986,7 +798,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -996,15 +807,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -1039,7 +841,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -1049,15 +850,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -1092,7 +884,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -1102,15 +893,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -1145,7 +927,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
@@ -1155,15 +936,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(255, 255, 255, 0.2)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                 },
               }}
             >
@@ -1198,7 +970,6 @@ function IntegrationsAutoScroll() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 position: 'relative',
                 overflow: 'visible',
@@ -1207,15 +978,6 @@ function IntegrationsAutoScroll() {
                   background: 'rgba(0, 0, 0, 0.4)',
                   border: '2px solid rgba(66, 133, 244, 0.5)',
                   boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(66, 133, 244, 0.5), transparent)',
                 },
               }}
             >

@@ -16,17 +16,12 @@ interface FileAttachmentProps {
   onFileAttach: (file: FileSystemItem) => void
   attachedFiles: FileSystemItem[]
   onFileRemove: (fileId: string) => void
-  userInfo: {
-    username: string
-    email?: string
-  } | null
 }
 
 export const FileAttachment: React.FC<FileAttachmentProps> = ({
   onFileAttach,
   attachedFiles,
-  onFileRemove,
-  userInfo
+  onFileRemove
 }) => {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -54,8 +49,6 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
               onFileAttach(file)
               setIsOpen(false)
             }}
-            userInfo={userInfo}
-            isOpen={isOpen}
           />
         </DropdownMenuContent>
       </DropdownMenu>

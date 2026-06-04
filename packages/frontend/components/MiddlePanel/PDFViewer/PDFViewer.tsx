@@ -5,11 +5,11 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { ApiService } from '../../../../backend/api/apiService'
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { Toolbar } from './toolbar/Toolbar';
+import { getPdfjsWorkerSrc } from './pdfjs-worker';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Configure worker from cdnjs to avoid CORS issues
-pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = getPdfjsWorkerSrc(pdfjs.version);
 
 interface PDFViewerProps {
   file: FileSystemItem;

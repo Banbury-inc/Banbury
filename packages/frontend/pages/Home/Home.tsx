@@ -1,21 +1,22 @@
-import { Box } from '@mui/material';
-import HeroSection from './components/HeroSection/HeroSection';
-import IntegrationsSection from './components/IntegrationsSection/IntegrationsSection';
-import FeaturesSection from './components/FeaturesSection';
-import UseCasesSection from './components/UseCasesSection/UseCasesSection';
-import CTASection from './components/CTASection';
+import CTASection from './components/CTASection'
+import FeaturesSection from './components/FeaturesSection'
+import HeroSection from './components/HeroSection/HeroSection'
+import IntegrationsSection from './components/IntegrationsSection/IntegrationsSection'
+import StatsSection from './components/StatsSection'
+import UseCasesSection from './components/UseCasesSection/UseCasesSection'
 
 const Home = (): JSX.Element => {
   return (
-    <Box sx={{ overflow: 'hidden', overflowY: 'auto', background: '#000000', width: '100%', maxWidth: '100vw' }}>
+    <main className="relative w-full max-w-[100vw] overflow-hidden overflow-y-auto bg-card text-foreground">
       <HeroSection />
+      <StatsSection />
       <IntegrationsSection />
       <UseCasesSection />
       <FeaturesSection />
       <CTASection />
-    </Box>
-  );
-};
+    </main>
+  )
+}
 
-export default Home;
+export default Home
 

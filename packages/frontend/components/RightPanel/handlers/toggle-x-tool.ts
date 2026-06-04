@@ -9,6 +9,7 @@ export interface ToolPreferences {
   slack: boolean
   onedrive: boolean
   notion: boolean
+  meeting_analysis: boolean
 }
 
 export function toggleXTool({ prefs }: { prefs: ToolPreferences }): ToolPreferences {
@@ -24,6 +25,7 @@ export function toggleXTool({ prefs }: { prefs: ToolPreferences }): ToolPreferen
       slack: false,
       onedrive: false,
       notion: false,
+      meeting_analysis: true,
     }
   }
   return { ...prefs, x_api: !prefs.x_api }

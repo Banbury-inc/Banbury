@@ -4,6 +4,7 @@ import { CalendarTab } from "./components/CalendarTab/CalendarTab"
 import { FilesTab } from "./components/FilesTab/FilesTab"
 import { TasksTab } from "./components/TasksTab/TasksTab"
 import { MeetingsTab } from "./components/MeetingsTab/MeetingsTab"
+import { MapsTab } from "./components/MapsTab/MapsTab"
 import { DatabasesTab } from "./components/DatabasesTab/DatabasesTab"
 import { FlowsTab } from "./components/FlowsTab/FlowsTab"
 import { FileSystemItem } from "../../utils/fileTreeUtils"
@@ -49,7 +50,7 @@ interface AppSidebarProps {
   eagerMountWorkspaceTabs?: boolean
 }
 
-const eagerWorkspaceTabs = ['email', 'calendar', 'tasks', 'meetings', 'databases', 'flows']
+const eagerWorkspaceTabs = ['email', 'calendar', 'tasks', 'meetings', 'maps', 'databases', 'flows']
 
 export function LeftPanel({ 
   userInfo, 
@@ -170,6 +171,17 @@ export function LeftPanel({
               setPanelLayout={setPanelLayout}
               setActivePanelId={setActivePanelId}
               setSelectedMeeting={setSelectedMeeting}
+            />
+          </div>
+        )}
+
+        {shouldRenderTab('maps') && (
+          <div className={getTabClassName('maps')}>
+            <MapsTab
+              activePanelId={activePanelId}
+              panelLayout={panelLayout}
+              setPanelLayout={setPanelLayout}
+              setActivePanelId={setActivePanelId}
             />
           </div>
         )}

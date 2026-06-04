@@ -62,4 +62,14 @@ export const CONFIG = {
     // Default to empty to disable embedding when not configured
     return ''
   }
+  ,
+  // Mapbox access token for the Maps tab (required to render the map)
+  get mapboxToken() {
+    const env = (typeof window !== 'undefined' ? (window as any).env : undefined)
+    const fromEnv = (typeof process !== 'undefined' && (process as any).env && (process as any).env.NEXT_PUBLIC_MAPBOX_TOKEN)
+      || (env && env.NEXT_PUBLIC_MAPBOX_TOKEN)
+    if (fromEnv) return String(fromEnv)
+    // Default to empty to disable the map when not configured
+    return ''
+  }
 }

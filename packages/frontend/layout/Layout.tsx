@@ -49,7 +49,7 @@ const Layout = ({ children }: Props): JSX.Element => {
           flexGrow: 1,
           width: '100%',
           margin: '0 auto',
-          background: '#000000',
+          background: 'var(--background)',
         }}
       >
         {children}
