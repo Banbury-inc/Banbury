@@ -312,6 +312,28 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
   }, [isDarkTheme])
 
   useEffect(() => {
+    const map = mapRef.current
+    if (!map || !place) return
+
+    const nextPlace = {
+      ...place,
+      name: place.name || 'Selected place',
+    }
+    placeNameRef.current = nextPlace.name
+    selectedSearchQueryRef.current = nextPlace.name.trim()
+    setCurrentLocation(nextPlace)
+    setSelectedPlace(nextPlace)
+    setPlaceName(nextPlace.name)
+    setSearchValue(nextPlace.name)
+    map.flyTo({
+      center: [nextPlace.longitude, nextPlace.latitude],
+      zoom: nextPlace.zoom,
+      duration: 900,
+      essential: true,
+    })
+  }, [place])
+
+  useEffect(() => {
     if (!selectedPlace) {
       setFavoritePlaceId(null)
       setGooglePlaceDetails(null)

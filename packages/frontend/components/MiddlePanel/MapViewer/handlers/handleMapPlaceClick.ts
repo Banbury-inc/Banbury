@@ -131,5 +131,12 @@ export function handleMapPlaceClick({
   setSearchValue(name)
   setCurrentLocation(location)
   setSelectedPlace(location)
+  map.flyTo({
+    center: [location.longitude, location.latitude],
+    zoom: location.zoom,
+    duration: 900,
+    essential: true,
+  })
+
   return location
 }
