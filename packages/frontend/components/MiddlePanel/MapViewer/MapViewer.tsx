@@ -21,6 +21,7 @@ import {
 import { Input } from '../../common/ui/input'
 import { Label } from '../../common/ui/label'
 import { Slider } from '../../common/ui/slider'
+import { Skeleton } from '../../common/ui/skeleton'
 import { Typography } from '../../common/ui/typography'
 import { useToast } from '../../common/ui/use-toast'
 import type { MapPlace, MapPlaceLocation } from '../../../pages/Workspaces/types'
@@ -141,6 +142,31 @@ function PlaceDetailRow({
       </div>
       <div className="min-w-0 flex-1">
         {children}
+      </div>
+    </div>
+  )
+}
+
+function SelectedPlaceDetailsSkeleton() {
+  return (
+    <div
+      className="space-y-4"
+      aria-busy="true"
+      aria-label="Loading place details"
+    >
+      {[0, 1, 2].map(row => (
+        <div key={row} className="flex gap-3">
+          <Skeleton className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-sm" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-3 w-full max-w-[92%]" />
+            <Skeleton className="h-3 w-[58%] max-w-[75%]" />
+          </div>
+        </div>
+      ))}
+      <div className="flex flex-wrap gap-1.5">
+        <Skeleton className="h-6 w-14 rounded-full" />
+        <Skeleton className="h-6 w-24 rounded-full" />
+        <Skeleton className="h-6 w-20 rounded-full" />
       </div>
     </div>
   )
@@ -1017,44 +1043,60 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
                 <Typography variant="xs" className="font-semibold text-foreground">
                   Selected place
                 </Typography>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => handleSelectedPlaceClose(setSelectedPlace, searchMarkerRef)}
-                  aria-label="Close selected place"
-                >
-                  <X className="h-4 w-4" strokeWidth={1.5} />
-                </Button>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => handleFavoriteSelectedPlace({
+                      location: selectedPlace,
+                      onPlaceVisited,
+                      setFavoritePlaceId,
+                      setIsFavoriteSaving,
+                      toast,
+                    })}
+                    disabled={isFavoriteSaving || favoritePlaceId !== null}
+                    aria-label={
+                      favoritePlaceId
+                        ? 'Saved to favorites'
+                        : isFavoriteSaving
+                          ? 'Saving to favorites'
+                          : 'Add to favorites'
+                    }
+                    className={
+                      favoritePlaceId
+                        ? 'text-primary hover:text-primary'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }
+                  >
+                    {isFavoriteSaving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
+                    ) : (
+                      <Star
+                        className={favoritePlaceId ? 'h-4 w-4 fill-primary text-primary' : 'h-4 w-4'}
+                        strokeWidth={1.5}
+                      />
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => handleSelectedPlaceClose(setSelectedPlace, searchMarkerRef)}
+                    aria-label="Close selected place"
+                  >
+                    <X className="h-4 w-4" strokeWidth={1.5} />
+                  </Button>
+                </div>
               </div>
               <Typography variant="sm" className="font-medium text-foreground">
                 {placeName}
               </Typography>
-              <Button
-                variant={favoritePlaceId ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => handleFavoriteSelectedPlace({
-                  location: selectedPlace,
-                  onPlaceVisited,
-                  setFavoritePlaceId,
-                  setIsFavoriteSaving,
-                  toast,
-                })}
-                disabled={isFavoriteSaving || favoritePlaceId !== null}
-                className="gap-2"
-              >
-                <Star className={favoritePlaceId ? 'h-4 w-4 fill-current' : 'h-4 w-4'} strokeWidth={1.5} />
-                {isFavoriteSaving ? 'Saving...' : 'Favorite'}
-              </Button>
               <div className="space-y-3 rounded-md border border-border bg-background p-3">
                 <Typography variant="xs" className="font-semibold text-foreground">
                   Place information
                 </Typography>
-                {isGooglePlaceLoading && (
-                  <Typography variant="xs" className="text-muted-foreground">
-                    Loading place details...
-                  </Typography>
-                )}
+                {isGooglePlaceLoading && <SelectedPlaceDetailsSkeleton />}
                 {(googlePlaceDetails?.address || selectedPlace.address) && (
                   <PlaceDetailRow icon={<MapPin className="h-4 w-4" strokeWidth={1.5} />}>
                     <Typography variant="xs" className="line-clamp-3 text-foreground">
