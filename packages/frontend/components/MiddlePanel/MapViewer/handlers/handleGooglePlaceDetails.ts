@@ -1,26 +1,7 @@
 import { MapPlaceLocation } from '../../../../pages/Workspaces/types'
+import type { GooglePlaceDetails, GooglePlaceDetailsResponse } from './googlePlaceDetailsTypes'
 
-export interface GooglePlaceDetails {
-  id?: string
-  name?: string
-  address?: string
-  phoneNumber?: string
-  websiteUri?: string
-  googleMapsUri?: string
-  businessStatus?: string
-  priceLevel?: string
-  rating?: number
-  userRatingCount?: number
-  types: string[]
-  primaryType?: string
-  isOpenNow?: boolean
-  weekdayDescriptions: string[]
-}
-
-interface GooglePlaceDetailsResponse {
-  isConfigured?: boolean
-  place?: GooglePlaceDetails
-}
+export type { GooglePlaceDetails, GooglePlaceDetailsResponse } from './googlePlaceDetailsTypes'
 
 export interface GooglePlaceDetailsResult {
   details: GooglePlaceDetails | null

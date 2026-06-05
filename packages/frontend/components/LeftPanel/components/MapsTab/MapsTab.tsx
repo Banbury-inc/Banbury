@@ -15,10 +15,6 @@ interface MapsTabProps {
   setActivePanelId?: React.Dispatch<React.SetStateAction<string>>
 }
 
-function formatCoordinate(value: number) {
-  return value.toFixed(4)
-}
-
 function EmptySection({ label }: Readonly<{ label: string }>) {
   return (
     <div className="px-3 py-4 text-center">
@@ -35,10 +31,9 @@ interface PlaceRowProps {
   place: MapPlace
   onSelect?: PlaceAction
   onDelete: PlaceAction
-  showLocationSubtitle: boolean
 }
 
-function PlaceRow({ place, onSelect, onDelete, showLocationSubtitle }: Readonly<PlaceRowProps>) {
+function PlaceRow({ place, onSelect, onDelete }: Readonly<PlaceRowProps>) {
   return (
     <div className="group flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-accent">
       <button
@@ -52,11 +47,6 @@ function PlaceRow({ place, onSelect, onDelete, showLocationSubtitle }: Readonly<
             <Typography variant="xs" className="truncate font-medium text-foreground">
               {place.name}
             </Typography>
-            {showLocationSubtitle && (
-              <Typography variant="xs" className="truncate text-muted-foreground">
-                {formatCoordinate(place.latitude)}, {formatCoordinate(place.longitude)} · z{place.zoom}
-              </Typography>
-            )}
           </div>
         </div>
       </button>
@@ -79,18 +69,9 @@ interface PlacesSectionProps {
   emptyLabel: string
   onSelect?: PlaceAction
   onDelete: PlaceAction
-  showLocationSubtitle?: boolean
 }
 
-function PlacesSection({
-  title,
-  icon: Icon,
-  places,
-  emptyLabel,
-  onSelect,
-  onDelete,
-  showLocationSubtitle = true,
-}: Readonly<PlacesSectionProps>) {
+function PlacesSection({ title, icon: Icon, places, emptyLabel, onSelect, onDelete }: Readonly<PlacesSectionProps>) {
   return (
     <section className="px-2 py-3">
       <div className="flex items-center gap-2 px-2 pb-2">
@@ -109,7 +90,6 @@ function PlacesSection({
               place={place}
               onSelect={onSelect}
               onDelete={onDelete}
-              showLocationSubtitle={showLocationSubtitle}
             />
           ))}
         </div>
@@ -232,7 +212,6 @@ export function MapsTab({
               emptyLabel="Recent places will appear here"
               onSelect={workspaceHandlers.handlePlaceSelect}
               onDelete={handleDeleteClick}
-              showLocationSubtitle={false}
             />
           </>
         )}
