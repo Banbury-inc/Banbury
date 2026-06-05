@@ -113,6 +113,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
           BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
           BROWSERBASE_PROJECT_ID: ${{ secrets.BROWSERBASE_PROJECT_ID }}
           ZEP_API_KEY: ${{ secrets.ZEP_API_KEY }}
@@ -124,6 +125,7 @@ jobs:
           jq --arg anthropic "$ANTHROPIC_API_KEY" \
              --arg openai "$OPENAI_API_KEY" \
              --arg google "$GOOGLE_API_KEY" \
+             --arg google_places "$GOOGLE_PLACES_API_KEY" \
              --arg browserbase "$BROWSERBASE_API_KEY" \
              --arg browserbase_proj "$BROWSERBASE_PROJECT_ID" \
              --arg zep "$ZEP_API_KEY" \
@@ -134,6 +136,7 @@ jobs:
                {"name": "ANTHROPIC_API_KEY", "value": $anthropic},
                {"name": "OPENAI_API_KEY", "value": $openai},
                {"name": "GOOGLE_API_KEY", "value": $google},
+               {"name": "GOOGLE_PLACES_API_KEY", "value": $google_places},
                {"name": "BROWSERBASE_API_KEY", "value": $browserbase},
                {"name": "BROWSERBASE_PROJECT_ID", "value": $browserbase_proj},
                {"name": "ZEP_API_KEY", "value": $zep},

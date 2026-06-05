@@ -5,7 +5,7 @@ import type mapboxgl from 'mapbox-gl'
 import { SearchBoxCore, SessionToken } from '@mapbox/search-js-core'
 import type { SearchBoxSuggestion } from '@mapbox/search-js-core'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { Clock, DollarSign, ExternalLink, Globe, Layers, Loader2, Map, MapPin, Pause, Phone, Play, SkipBack, SkipForward, Star, X } from 'lucide-react'
+import { Clock, DollarSign, ExternalLink, Globe, Layers, Loader2, Map, MapPin, Pause, Phone, Play, Search, SkipBack, SkipForward, Star, X } from 'lucide-react'
 import { CONFIG } from '../../../config/config'
 import { Button } from '../../common/ui/button'
 import {
@@ -21,6 +21,7 @@ import {
 import { Input } from '../../common/ui/input'
 import { Label } from '../../common/ui/label'
 import { Slider } from '../../common/ui/slider'
+import { Skeleton } from '../../common/ui/skeleton'
 import { Typography } from '../../common/ui/typography'
 import { useToast } from '../../common/ui/use-toast'
 import type { MapPlace, MapPlaceLocation } from '../../../pages/Workspaces/types'
@@ -29,10 +30,9 @@ import type { RainViewerRadarFrame } from './handlers/fetchRainViewerRadarTileUr
 import { advanceRainViewerPlaybackIndex } from './handlers/handleRainViewerRadarPlaybackTick'
 import { clampRainViewerFrameIndex, formatRainViewerFrameUtc, stepRainViewerFrameIndex } from './handlers/handleRainViewerRadarFrameStep'
 import { getCurrentMapLocation } from './handlers/getCurrentMapLocation'
-import { handleCategorySearch } from './handlers/handleCategorySearch'
-import type { MapCategoryResult } from './handlers/handleCategorySearch'
 import { handleGooglePlaceDetails } from './handlers/handleGooglePlaceDetails'
 import type { GooglePlaceDetails } from './handlers/handleGooglePlaceDetails'
+import { SelectedPlaceGoogleEnrichment } from './SelectedPlaceGoogleEnrichment'
 import { handleFavoriteSelectedPlace } from './handlers/handleFavoriteSelectedPlace'
 import { handleRadarPlaybackToggle } from './handlers/handleRadarPlaybackToggle'
 import { applyMapLayerSettings, handleMapBasemapSelect, handleMapOverlayToggle, registerRainViewerPeriodicRefresh } from './handlers/handleMapLayerChange'
@@ -52,7 +52,6 @@ import {
   temperatureForecastBandIds,
 } from './handlers/temperatureLayerConstants'
 import { initMapboxMap } from './handlers/initMapboxMap'
-import { clearCategoryMarkers, renderCategoryMarkers } from './handlers/renderCategoryMarkers'
 import {
   defaultMapBasemapId,
   getMapBasemapOption,
@@ -73,16 +72,6 @@ const defaultLocation: MapPlaceLocation = {
   latitude: 39.8283,
   zoom: 3,
 }
-
-const categoryOptions = [
-  { id: 'restaurant', label: 'Restaurants' },
-  { id: 'gas_station', label: 'Gas' },
-  { id: 'coffee_shop', label: 'Coffee' },
-  { id: 'grocery', label: 'Grocery' },
-  { id: 'hotel', label: 'Hotels' },
-  { id: 'pharmacy', label: 'Pharmacy' },
-  { id: 'parking', label: 'Parking' },
-]
 
 function formatPlaceCategory(category: string) {
   return category
@@ -146,6 +135,41 @@ function PlaceDetailRow({
   )
 }
 
+function SelectedPlaceDetailsSkeleton() {
+  return (
+    <div
+      className="space-y-4"
+      aria-busy="true"
+      aria-label="Loading place details"
+    >
+      {[0, 1, 2].map(row => (
+        <div key={row} className="flex gap-3">
+          <Skeleton className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-sm" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-3 w-full max-w-[92%]" />
+            <Skeleton className="h-3 w-[58%] max-w-[75%]" />
+          </div>
+        </div>
+      ))}
+      <div className="flex gap-2 overflow-hidden pt-1">
+        <Skeleton className="h-20 w-24 flex-shrink-0 rounded-md" />
+        <Skeleton className="h-20 w-24 flex-shrink-0 rounded-md" />
+        <Skeleton className="h-20 w-24 flex-shrink-0 rounded-md" />
+      </div>
+      <div className="space-y-2 border-t border-border pt-3">
+        <Skeleton className="h-3 w-28" />
+        <Skeleton className="h-12 w-full rounded-md" />
+        <Skeleton className="h-12 w-full rounded-md" />
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        <Skeleton className="h-6 w-14 rounded-full" />
+        <Skeleton className="h-6 w-24 rounded-full" />
+        <Skeleton className="h-6 w-20 rounded-full" />
+      </div>
+    </div>
+  )
+}
+
 export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
   const { toast } = useToast()
   const { theme, resolvedTheme } = useTheme()
@@ -153,11 +177,12 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
   placeRef.current = place
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
-  const categoryMarkersRef = useRef<mapboxgl.Marker[]>([])
   const searchMarkerRef = useRef<mapboxgl.Marker | null>(null)
   const searchSessionTokenRef = useRef<SessionToken | null>(null)
   const selectedSearchQueryRef = useRef('')
-  const recordRecentPlaceRef = useRef((_: MapPlaceLocation) => {})
+  const recordRecentPlaceRef = useRef((location: MapPlaceLocation) => {
+    void location
+  })
   const placeNameRef = useRef(place?.name || 'New place')
   const isDarkThemeRef = useRef(false)
   const [currentLocation, setCurrentLocation] = useState<MapPlaceLocation>(place || defaultLocation)
@@ -167,9 +192,6 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isSearchLoading, setIsSearchLoading] = useState(false)
   const [selectedPlace, setSelectedPlace] = useState<MapPlaceLocation | null>(null)
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
-  const [categoryResults, setCategoryResults] = useState<MapCategoryResult[]>([])
-  const [isCategoryLoading, setIsCategoryLoading] = useState(false)
   const [isMapReady, setIsMapReady] = useState(false)
   const [mapLoadError, setMapLoadError] = useState<string | null>(null)
   const [mapRemountKey, setMapRemountKey] = useState(0)
@@ -401,7 +423,6 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
     return () => {
       isMounted = false
       resizeObserver?.disconnect()
-      clearCategoryMarkers(categoryMarkersRef)
       searchMarkerRef.current?.remove()
       searchMarkerRef.current = null
       if (mapRef.current) {
@@ -551,67 +572,6 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
     }
   }, [selectedPlace])
 
-  const handleCategoryResultSelect = (result: MapCategoryResult) => {
-    const nextLocation = {
-      name: result.name,
-      address: result.address,
-      categories: result.categories,
-      mapboxId: result.id,
-      longitude: result.longitude,
-      latitude: result.latitude,
-      zoom: 14,
-    }
-
-    setCurrentLocation(nextLocation)
-    setSelectedPlace(nextLocation)
-    setPlaceName(result.name)
-    setSearchValue(result.name)
-    void recordRecentPlace(nextLocation)
-    mapRef.current?.flyTo({
-      center: [result.longitude, result.latitude],
-      zoom: 14,
-      duration: 900,
-      essential: true,
-    })
-  }
-
-  const handleCategoryClick = async (categoryId: string) => {
-    const map = mapRef.current
-    if (!map || !mapboxModule) return
-
-    setSelectedCategoryId(categoryId)
-    setIsCategoryLoading(true)
-
-    try {
-      const center = map.getCenter()
-      const results = await handleCategorySearch({
-        accessToken: mapboxToken,
-        categoryId,
-        proximity: {
-          longitude: center.lng,
-          latitude: center.lat,
-        },
-        limit: 10,
-      })
-
-      setCategoryResults(results)
-      renderCategoryMarkers({
-        map,
-        mapbox: mapboxModule,
-        markerStore: categoryMarkersRef,
-        results,
-        onSelect: handleCategoryResultSelect,
-      })
-
-      if (results.length === 0)
-        toast({ title: 'No places found', description: 'Try moving the map or choosing another category.' })
-    } catch {
-      toast({ title: 'Error', description: 'Failed to search nearby places', variant: 'destructive' })
-    } finally {
-      setIsCategoryLoading(false)
-    }
-  }
-
   if (!mapboxToken) {
     return (
       <div className="h-full flex items-center justify-center bg-background p-6">
@@ -642,6 +602,10 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
         <div className="flex items-center gap-2">
           {isMapReady && mapRef.current && mapboxModule && (
             <div className="relative w-72 flex-shrink-0 lg:w-80">
+              <Search
+                className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
               <Input
                 value={searchValue}
                 onChange={event => {
@@ -653,7 +617,7 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
                   if (searchSuggestions.length > 0) setIsSearchOpen(true)
                 }}
                 placeholder="Search places"
-                className="h-8"
+                className="h-8 pl-8"
               />
               {(isSearchOpen || isSearchLoading) && (
                 <div
@@ -689,9 +653,6 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
                           setSearchValue,
                           setSelectedPlace,
                           onBeforeSelect: () => {
-                            clearCategoryMarkers(categoryMarkersRef)
-                            setCategoryResults([])
-                            setSelectedCategoryId(null)
                             setSearchSuggestions([])
                             setIsSearchOpen(false)
                           },
@@ -723,88 +684,69 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
               )}
             </div>
           )}
-          <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto">
-            <Typography variant="xs" className="flex-shrink-0 text-muted-foreground">
-              Nearby
-            </Typography>
-            {categoryOptions.map(category => {
-              const isSelected = selectedCategoryId === category.id
-              return (
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
-                  key={category.id}
                   type="button"
-                  variant={isSelected ? 'secondary' : 'ghost'}
+                  variant="ghost"
                   size="xs"
-                  onClick={() => handleCategoryClick(category.id)}
-                  disabled={!isMapReady || isCategoryLoading}
-                  className="flex-shrink-0"
+                  disabled={!isMapReady}
+                  className="flex-shrink-0 gap-1.5"
                 >
-                  {category.label}
+                  <Layers className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  <span className="hidden sm:inline">Layers</span>
+                  <span className="text-muted-foreground">{selectedBasemap.label}</span>
                 </Button>
-              )
-            })}
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                disabled={!isMapReady}
-                className="flex-shrink-0 gap-1.5"
-              >
-                <Layers className="h-3.5 w-3.5" strokeWidth={1.5} />
-                <span className="hidden sm:inline">Layers</span>
-                <span className="text-muted-foreground">{selectedBasemap.label}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Basemap</DropdownMenuLabel>
-              <DropdownMenuRadioGroup
-                value={selectedBasemapId}
-                onValueChange={basemapId => handleMapBasemapSelect({
-                  map: mapRef.current,
-                  basemapId,
-                  activeOverlayIds,
-                  isDarkTheme,
-                  setSelectedBasemapId,
-                  temperatureOverlayOpacity,
-                  temperatureRasterArrayBand,
-                })}
-              >
-                {mapBasemapOptions.map(basemap => (
-                  <DropdownMenuRadioItem key={basemap.id} value={basemap.id}>
-                    {basemap.label}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Overlays</DropdownMenuLabel>
-              {mapOverlayOptions.map(overlay => (
-                <DropdownMenuCheckboxItem
-                  key={overlay.id}
-                  checked={activeOverlayIds.includes(overlay.id)}
-                  onCheckedChange={checked => handleMapOverlayToggle({
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Basemap</DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  value={selectedBasemapId}
+                  onValueChange={basemapId => handleMapBasemapSelect({
                     map: mapRef.current,
-                    overlayId: overlay.id,
-                    isChecked: checked === true,
-                    basemapId: selectedBasemapId,
+                    basemapId,
                     activeOverlayIds,
                     isDarkTheme,
-                    setActiveOverlayIds,
+                    setSelectedBasemapId,
                     temperatureOverlayOpacity,
                     temperatureRasterArrayBand,
                   })}
-                  onSelect={event => event.preventDefault()}
                 >
-                  <div className="flex min-w-0 flex-col">
-                    <span>{overlay.label}</span>
-                    <span className="text-xs text-muted-foreground">{overlay.description}</span>
-                  </div>
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  {mapBasemapOptions.map(basemap => (
+                    <DropdownMenuRadioItem key={basemap.id} value={basemap.id}>
+                      {basemap.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Overlays</DropdownMenuLabel>
+                {mapOverlayOptions.map(overlay => (
+                  <DropdownMenuCheckboxItem
+                    key={overlay.id}
+                    checked={activeOverlayIds.includes(overlay.id)}
+                    onCheckedChange={checked => handleMapOverlayToggle({
+                      map: mapRef.current,
+                      overlayId: overlay.id,
+                      isChecked: checked === true,
+                      basemapId: selectedBasemapId,
+                      activeOverlayIds,
+                      isDarkTheme,
+                      setActiveOverlayIds,
+                      temperatureOverlayOpacity,
+                      temperatureRasterArrayBand,
+                    })}
+                    onSelect={event => event.preventDefault()}
+                  >
+                    <div className="flex min-w-0 flex-col">
+                      <span>{overlay.label}</span>
+                      <span className="text-xs text-muted-foreground">{overlay.description}</span>
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
       <div className="relative flex-1 min-h-0">
@@ -1011,12 +953,50 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
           </div>
         )}
         {selectedPlace && (
-          <div className="absolute right-4 top-4 z-10 w-[min(calc(100%-2rem),22rem)] rounded-lg border border-border bg-card p-3 shadow-lg">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <Typography variant="xs" className="font-semibold text-foreground">
-                  Selected place
-                </Typography>
+          <div className="absolute bottom-4 right-4 top-4 z-10 flex w-[min(calc(100%-2rem),22rem)] min-h-0 min-w-0 flex-col gap-3 overflow-hidden rounded-lg border border-border bg-card p-3 shadow-lg">
+            <div className="flex min-w-0 shrink-0 items-center justify-between gap-2">
+              <Typography
+                variant="sm"
+                title={placeName}
+                className="min-w-0 flex-1 truncate font-medium text-foreground"
+              >
+                {placeName}
+              </Typography>
+              <div className="flex shrink-0 items-center gap-0.5">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => handleFavoriteSelectedPlace({
+                    location: selectedPlace,
+                    onPlaceVisited,
+                    setFavoritePlaceId,
+                    setIsFavoriteSaving,
+                    toast,
+                  })}
+                  disabled={isFavoriteSaving || favoritePlaceId !== null}
+                  aria-label={
+                    favoritePlaceId
+                      ? 'Saved to favorites'
+                      : isFavoriteSaving
+                        ? 'Saving to favorites'
+                        : 'Add to favorites'
+                  }
+                  className={
+                    favoritePlaceId
+                      ? 'text-primary hover:text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }
+                >
+                  {isFavoriteSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
+                  ) : (
+                    <Star
+                      className={favoritePlaceId ? 'h-4 w-4 fill-primary text-primary' : 'h-4 w-4'}
+                      strokeWidth={1.5}
+                    />
+                  )}
+                </Button>
                 <Button
                   type="button"
                   variant="ghost"
@@ -1027,34 +1007,13 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
                   <X className="h-4 w-4" strokeWidth={1.5} />
                 </Button>
               </div>
-              <Typography variant="sm" className="font-medium text-foreground">
-                {placeName}
-              </Typography>
-              <Button
-                variant={favoritePlaceId ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => handleFavoriteSelectedPlace({
-                  location: selectedPlace,
-                  onPlaceVisited,
-                  setFavoritePlaceId,
-                  setIsFavoriteSaving,
-                  toast,
-                })}
-                disabled={isFavoriteSaving || favoritePlaceId !== null}
-                className="gap-2"
-              >
-                <Star className={favoritePlaceId ? 'h-4 w-4 fill-current' : 'h-4 w-4'} strokeWidth={1.5} />
-                {isFavoriteSaving ? 'Saving...' : 'Favorite'}
-              </Button>
-              <div className="space-y-3 rounded-md border border-border bg-background p-3">
+            </div>
+            <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-border bg-background p-3">
+              <div className="min-w-0 space-y-3">
                 <Typography variant="xs" className="font-semibold text-foreground">
                   Place information
                 </Typography>
-                {isGooglePlaceLoading && (
-                  <Typography variant="xs" className="text-muted-foreground">
-                    Loading place details...
-                  </Typography>
-                )}
+                {isGooglePlaceLoading && <SelectedPlaceDetailsSkeleton />}
                 {(googlePlaceDetails?.address || selectedPlace.address) && (
                   <PlaceDetailRow icon={<MapPin className="h-4 w-4" strokeWidth={1.5} />}>
                     <Typography variant="xs" className="line-clamp-3 text-foreground">
@@ -1139,6 +1098,7 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
                     ))}
                   </div>
                 )}
+                {googlePlaceDetails ? <SelectedPlaceGoogleEnrichment details={googlePlaceDetails} /> : null}
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <Typography variant="xs" className="text-muted-foreground">
@@ -1166,36 +1126,6 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
                 )}
               </div>
             </div>
-          </div>
-        )}
-        {(isCategoryLoading || categoryResults.length > 0) && (
-          <div className="absolute left-4 top-4 z-10 w-[min(calc(100%-2rem),22rem)] rounded-lg border border-border bg-card shadow-lg">
-            <div className="border-b border-border px-3 py-2">
-              <Typography variant="xs" className="font-semibold text-foreground">
-                {isCategoryLoading ? 'Searching nearby...' : 'Nearby results'}
-              </Typography>
-            </div>
-            {!isCategoryLoading && (
-              <div className="max-h-80 overflow-y-auto p-1">
-                {categoryResults.map(result => (
-                  <button
-                    key={result.id}
-                    type="button"
-                    onClick={() => handleCategoryResultSelect(result)}
-                    className="w-full rounded-md px-3 py-2 text-left hover:bg-accent"
-                  >
-                    <Typography variant="xs" className="truncate font-medium text-foreground">
-                      {result.name}
-                    </Typography>
-                    {result.address && (
-                      <Typography variant="xs" className="mt-0.5 line-clamp-2 text-muted-foreground">
-                        {result.address}
-                      </Typography>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         )}
       </div>

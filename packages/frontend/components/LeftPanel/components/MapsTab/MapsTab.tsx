@@ -15,10 +15,6 @@ interface MapsTabProps {
   setActivePanelId?: React.Dispatch<React.SetStateAction<string>>
 }
 
-function formatCoordinate(value: number) {
-  return value.toFixed(4)
-}
-
 function EmptySection({ label }: Readonly<{ label: string }>) {
   return (
     <div className="px-3 py-4 text-center">
@@ -50,9 +46,6 @@ function PlaceRow({ place, onSelect, onDelete }: Readonly<PlaceRowProps>) {
           <div className="min-w-0 flex-1">
             <Typography variant="xs" className="truncate font-medium text-foreground">
               {place.name}
-            </Typography>
-            <Typography variant="xs" className="truncate text-muted-foreground">
-              {formatCoordinate(place.latitude)}, {formatCoordinate(place.longitude)} · z{place.zoom}
             </Typography>
           </div>
         </div>
