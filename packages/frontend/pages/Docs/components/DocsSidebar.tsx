@@ -56,6 +56,7 @@ const sections: SidebarSection[] = [
       { id: 'meeting-agent-feature', title: 'Meetings', href: '/docs/meeting-agent-feature' },
       { id: 'folders-feature', title: 'Folders', href: '/docs/folders-feature' },
       { id: 'browse-feature', title: 'Browse', href: '/docs/browse-feature' },
+      { id: 'maps-feature', title: 'Maps', href: '/docs/maps-feature' },
       { id: 'databases', title: 'Databases', href: '/docs/databases' },
       { id: 'canvas-feature', title: 'Canvas', href: '/docs/canvas-feature' },
       { id: 'file-sharing', title: 'File Sharing', href: '/docs/file-sharing' },
@@ -173,7 +174,7 @@ function DocsSidebar({
       <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
         <SheetContent
           side="left"
-          className="flex h-full w-[280px] max-w-[85vw] flex-col gap-0 border-r border-border bg-background p-0 sm:max-w-[280px] [&>button]:hidden md:hidden"
+          className="flex h-full w-[280px] max-w-[85vw] flex-col gap-0 border-r border-border bg-card p-0 sm:max-w-[280px] [&>button]:hidden md:hidden"
         >
           <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
             <SheetTitle className="text-base font-semibold text-foreground">
@@ -194,7 +195,7 @@ function DocsSidebar({
       </Sheet>
 
       <aside
-        className="fixed top-[70px] left-0 z-[1000] hidden h-[calc(100vh-70px)] min-h-[calc(100vh-70px)] w-[280px] min-w-[280px] overflow-y-auto border-r border-border bg-muted/20 md:block"
+        className="fixed top-[70px] left-0 z-[1000] hidden h-[calc(100vh-70px)] min-h-[calc(100vh-70px)] w-[280px] min-w-[280px] overflow-y-auto border-r border-border bg-card md:block"
         aria-label="Documentation"
       >
         <div className="p-4">

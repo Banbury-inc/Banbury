@@ -42,6 +42,7 @@ export default function FeaturesTab() {
             <li><strong>Spreadsheets</strong> — Work with spreadsheet data and formulas</li>
             <li><strong>Folders</strong> — Organize and analyze folder contents</li>
             <li><strong>Browse</strong> — Web browsing and automation capabilities</li>
+            <li><strong>Maps</strong> — Search places, directions, favorites, and map overlays</li>
             <li><strong>Databases</strong> — Connect PostgreSQL, MySQL, and MongoDB; browse and edit data</li>
             <li><strong>Calendar</strong> — Manage events and calendar data</li>
             <li><strong>Canvas</strong> — Create and manage visual canvas elements</li>
@@ -84,6 +85,9 @@ export default function FeaturesTab() {
             </li>
             <li>
               <Link href="/docs/databases" className="underline underline-offset-4">Databases</Link> — Saved connections, SSH tunnels, table viewer, and Flow query nodes
+            </li>
+            <li>
+              <Link href="/docs/maps-feature" className="underline underline-offset-4">Maps</Link> — Interactive Mapbox viewer with search, directions, favorites, and agent map tools
             </li>
           </Typography>
         </div>
