@@ -63,6 +63,7 @@ export interface ComposerToolPreferences {
   calendar: boolean;
   msCalendar: boolean;
   meeting_analysis: boolean;
+  map_tools: boolean;
   notion: boolean;
   github: boolean;
   generate_image: boolean;

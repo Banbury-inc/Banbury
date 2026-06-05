@@ -9,7 +9,6 @@ export function handleToolResult({ evt, contentParts }: HandleToolResultParams):
   // Handle tool result - update the corresponding tool call with the result
   const toolCalls = contentParts.filter(p => (p as any).type === "tool-call")
   const matchingToolCall = toolCalls.find(tc => (tc as any).toolCallId === evt.part.toolCallId)
-  console.log('matchingToolCall', matchingToolCall);
   if (matchingToolCall) {
     try {
       (matchingToolCall as any).result = evt.part.result;
@@ -53,6 +52,26 @@ export function handleToolResult({ evt, contentParts }: HandleToolResultParams):
 
       if (parsed?.success && parsed.proposal) {
         window.dispatchEvent(new CustomEvent("assistant-code-edit-proposed", { detail: parsed.proposal }))
+      }
+    } else if (toolName === 'map_open_viewer' || toolName === 'map_highlight_places' || toolName === 'map_favorite_places') {
+      const raw = (evt as any).part?.result
+      let parsed: any = null
+      if (typeof raw === 'string') {
+        try { parsed = JSON.parse(raw) } catch {}
+      } else if (raw && typeof raw === 'object') {
+        parsed = raw
+      }
+
+      if (parsed?.success) {
+        window.dispatchEvent(new CustomEvent('assistant-open-map', {
+          detail: {
+            action: parsed.action,
+            openMap: parsed.openMap,
+            place: parsed.place,
+            places: parsed.places,
+            title: parsed.title,
+          }
+        }))
       }
     } else if (toolName === 'pptx_create_presentation') {
       // Handle PowerPoint presentation creation - dispatch workspace-reopen-file event

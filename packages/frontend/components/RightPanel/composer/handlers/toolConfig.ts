@@ -15,6 +15,7 @@ import {
   FolderSearch,
   Calendar,
   CalendarDays,
+  Map,
   Video,
   Github,
   NotebookText,
@@ -55,6 +56,7 @@ export interface ComposerToolPreferences {
   calendar: boolean;
   msCalendar: boolean;
   meeting_analysis: boolean;
+  map_tools: boolean;
   notion: boolean;
   github: boolean;
   generate_image: boolean;
@@ -227,6 +229,13 @@ export const toolConfigs: ToolConfig[] = [
     label: "Meetings",
     icon: Video,
     iconColor: "text-muted-foreground",
+    defaultEnabled: true,
+  },
+  {
+    key: "map_tools",
+    label: "Maps",
+    icon: Map,
+    iconColor: "text-primary",
     defaultEnabled: true,
   },
   // Development tools

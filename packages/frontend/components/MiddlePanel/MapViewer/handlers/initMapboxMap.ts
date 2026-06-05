@@ -53,6 +53,14 @@ export async function initMapboxMap({
   })
 
   map.addControl(new mapbox.NavigationControl(), 'top-right')
+  map.addControl(
+    new mapbox.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true,
+      showUserHeading: true,
+    }),
+    'top-right',
+  )
   map.on('moveend', () => {
     const center = map.getCenter()
     onMoveEnd({

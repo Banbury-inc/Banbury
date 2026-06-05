@@ -13,6 +13,14 @@ function parsePhotoResourceName(name: string): string[] | null {
   return segments
 }
 
+function parsePhotoDimension(value: string | string[] | undefined, fallback: number): number {
+  const raw = Array.isArray(value) ? value[0] : value
+  const parsed = typeof raw === 'string' ? Number.parseInt(raw, 10) : NaN
+  if (!Number.isFinite(parsed)) return fallback
+
+  return Math.min(4800, Math.max(1, parsed))
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', ['GET'])
@@ -30,7 +38,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!apiKey) return res.status(503).end()
 
   const encodedPath = segments.map(encodeURIComponent).join('/')
-  const mediaUrl = `https://places.googleapis.com/v1/${encodedPath}/media?maxHeightPx=400&maxWidthPx=400`
+  const maxWidthPx = parsePhotoDimension(req.query.maxWidthPx, 400)
+  const maxHeightPx = parsePhotoDimension(req.query.maxHeightPx, 400)
+  const params = new URLSearchParams({
+    maxWidthPx: String(maxWidthPx),
+    maxHeightPx: String(maxHeightPx),
+  })
+  const mediaUrl = `https://places.googleapis.com/v1/${encodedPath}/media?${params.toString()}`
 
   let upstream: Response
   try {

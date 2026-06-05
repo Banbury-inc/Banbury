@@ -1,5 +1,5 @@
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
-import { Panel, PanelGroup, WorkspaceTab, FileTab, EmailTab, TaskTab, MeetingTab, AdminTab, TerminalTab, DatabaseTableTab, OpenDatabaseTablePayload, FlowTab, FlowItem, MapTab, MapPlaceLocation } from '../types';
+import { Panel, PanelGroup, WorkspaceTab, FileTab, EmailTab, TaskTab, MeetingTab, AdminTab, TerminalTab, DatabaseTableTab, OpenDatabaseTablePayload, FlowTab, FlowItem, MapTab, MapPlaceLocation, ImageUrlTab, ImageUrlTabPayload } from '../types';
 import { Task } from '../../../pages/TaskStudio/types';
 import { MeetingSession } from '../../../types/meeting-types';
 
@@ -271,23 +271,57 @@ export const openMapInTab = (
   updatePanelActiveTab: (layout: PanelGroup, panelId: string, tabId: string) => PanelGroup,
   addTabToPanel: (layout: PanelGroup, panelId: string, tab: WorkspaceTab) => PanelGroup,
   setActivePanelId: React.Dispatch<React.SetStateAction<string>>,
-  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
+  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>,
+  highlightedPlaces: MapPlaceLocation[] = [],
+  title?: string
 ) => {
   const allTabs = getAllTabs(panelLayout);
+  const hasHighlightedPlaces = highlightedPlaces.length > 0
+  const tabTitle = title || place?.name || (hasHighlightedPlaces ? 'Highlighted places' : 'Map')
   const existingTab = allTabs.find(tab => {
     if (tab.type !== 'map') return false
+    if (hasHighlightedPlaces) return tab.title === tabTitle
     if (!place && !tab.place) return true
     if (!place || !tab.place) return false
     return tab.place.longitude === place.longitude && tab.place.latitude === place.latitude
   })
 
   if (existingTab) {
+    const updateExistingMapTab = (layout: PanelGroup): PanelGroup => {
+      if (layout.type === 'panel' && layout.panel) {
+        const tabExists = layout.panel.tabs.some(tab => tab.id === existingTab.id)
+        if (!tabExists) return layout
+
+        return {
+          ...layout,
+          panel: {
+            ...layout.panel,
+            tabs: layout.panel.tabs.map(tab => (
+              tab.id === existingTab.id && tab.type === 'map'
+                ? {
+                    ...tab,
+                    title: tabTitle,
+                    place,
+                    highlightedPlaces,
+                  }
+                : tab
+            )),
+          },
+        }
+      }
+
+      if (layout.type === 'group' && layout.children)
+        return { ...layout, children: layout.children.map(updateExistingMapTab) }
+
+      return layout
+    }
+
     const switchToExistingTab = (layout: PanelGroup): boolean => {
       if (layout.type === 'panel' && layout.panel) {
         const tabExists = layout.panel.tabs.some(tab => tab.id === existingTab.id)
         if (tabExists) {
           setActivePanelId(layout.panel.id)
-          setPanelLayout(prev => updatePanelActiveTab(prev, layout.panel!.id, existingTab.id))
+          setPanelLayout(prev => updatePanelActiveTab(updateExistingMapTab(prev), layout.panel!.id, existingTab.id))
           return true
         }
       }
@@ -304,9 +338,56 @@ export const openMapInTab = (
   const tabId = place ? `map_${place.longitude}_${place.latitude}_${Date.now()}` : `map_${Date.now()}`
   const newTab: MapTab = {
     id: tabId,
-    title: place?.name || 'Map',
+    title: tabTitle,
     place,
+    highlightedPlaces,
     type: 'map',
+  }
+
+  setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab))
+  setActivePanelId(targetPanelId)
+}
+
+export const openImageUrlInTab = (
+  image: ImageUrlTabPayload,
+  targetPanelId: string,
+  panelLayout: PanelGroup,
+  getAllTabs: (layout: PanelGroup) => WorkspaceTab[],
+  updatePanelActiveTab: (layout: PanelGroup, panelId: string, tabId: string) => PanelGroup,
+  addTabToPanel: (layout: PanelGroup, panelId: string, tab: WorkspaceTab) => PanelGroup,
+  setActivePanelId: React.Dispatch<React.SetStateAction<string>>,
+  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
+) => {
+  const allTabs = getAllTabs(panelLayout)
+  const existingTab = allTabs.find(tab => tab.type === 'image-url' && tab.imageUrl === image.imageUrl)
+
+  if (existingTab) {
+    const switchToExistingTab = (layout: PanelGroup): boolean => {
+      if (layout.type === 'panel' && layout.panel) {
+        const tabExists = layout.panel.tabs.some(tab => tab.id === existingTab.id)
+        if (tabExists) {
+          setActivePanelId(layout.panel.id)
+          setPanelLayout(prev => updatePanelActiveTab(prev, layout.panel!.id, existingTab.id))
+          return true
+        }
+      }
+
+      if (layout.type === 'group' && layout.children)
+        return layout.children.some(child => switchToExistingTab(child))
+
+      return false
+    }
+
+    switchToExistingTab(panelLayout)
+    return
+  }
+
+  const newTab: ImageUrlTab = {
+    id: `image_${Date.now()}`,
+    title: image.title,
+    imageUrl: image.imageUrl,
+    alt: image.alt,
+    type: 'image-url',
   }
 
   setPanelLayout(prev => addTabToPanel(prev, targetPanelId, newTab))

@@ -207,6 +207,18 @@ export const ToolUI: React.FC<ToolUIProps> = ({ toolName, toolCallId, args: args
 
     case 'code_edit_open_file':
       return <CodeEditTool args={args} result={result} />;
+
+    case 'map_open_viewer':
+    case 'map_highlight_places':
+    case 'map_favorite_places':
+      return (
+        <ToolCallCard
+          toolName={toolName}
+          argsText={JSON.stringify(args)}
+          result={result}
+          label={getToolLabel(toolName)}
+        />
+      );
     
     case 'search_files':
       return (
@@ -295,6 +307,9 @@ function getToolLabel(toolName: string): string {
     'create_file': 'Create File',
     'download_from_url': 'Download File',
     'code_edit_open_file': 'Code Edit Proposal',
+    'map_open_viewer': 'Map - Open Viewer',
+    'map_highlight_places': 'Map - Highlight Places',
+    'map_favorite_places': 'Map - Favorite Places',
     'search_files': 'Search Files',
     'generate_image': 'Generate Image',
     'get_current_datetime': 'Get Date/Time',

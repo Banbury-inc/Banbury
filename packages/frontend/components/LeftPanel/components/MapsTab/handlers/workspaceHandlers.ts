@@ -12,10 +12,12 @@ interface WorkspaceDependencies {
 
 function toPlaceLocation(place: MapPlace): MapPlaceLocation {
   return {
+    id: place.id,
     name: place.name,
     longitude: place.longitude,
     latitude: place.latitude,
     zoom: place.zoom,
+    drawings: place.drawings,
   }
 }
 

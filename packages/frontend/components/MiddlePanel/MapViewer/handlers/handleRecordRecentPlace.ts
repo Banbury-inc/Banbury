@@ -13,6 +13,7 @@ export async function handleRecordRecentPlace({
     longitude: location.longitude,
     latitude: location.latitude,
     zoom: location.zoom,
+    drawings: location.drawings,
   })
 
   if (globalThis.window !== undefined) {

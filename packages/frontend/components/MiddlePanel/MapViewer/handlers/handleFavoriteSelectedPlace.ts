@@ -7,6 +7,7 @@ interface FavoriteSelectedPlaceParams {
   location: MapPlaceLocation
   onPlaceVisited?: Dispatch<MapPlace>
   setFavoritePlaceId: Dispatch<SetStateAction<string | null>>
+  setSelectedPlace: Dispatch<SetStateAction<MapPlaceLocation | null>>
   setIsFavoriteSaving: Dispatch<SetStateAction<boolean>>
   toast: ReturnType<typeof useToast>['toast']
 }
@@ -15,6 +16,7 @@ export async function handleFavoriteSelectedPlace({
   location,
   onPlaceVisited,
   setFavoritePlaceId,
+  setSelectedPlace,
   setIsFavoriteSaving,
   toast,
 }: FavoriteSelectedPlaceParams) {
@@ -22,6 +24,9 @@ export async function handleFavoriteSelectedPlace({
   try {
     const favoritePlace = await handleFavoritePlace({ location })
     setFavoritePlaceId(favoritePlace.id)
+    setSelectedPlace(current => current
+      ? { ...current, id: favoritePlace.id }
+      : current)
     onPlaceVisited?.(favoritePlace)
     toast({ title: 'Success', description: 'Place favorited' })
   } catch {
