@@ -3,6 +3,7 @@ import type mapboxgl from 'mapbox-gl'
 import type { SearchBoxCore, SearchBoxSuggestion, SessionToken } from '@mapbox/search-js-core'
 import { MapPlaceLocation } from '../../../../pages/Workspaces/types'
 import { handleMapSearchRetrieve } from './handleMapSearchRetrieve'
+import { setSelectedPlaceMapMarker } from './setSelectedPlaceMapMarker'
 
 interface HandleMapSearchSuggestionSelectParams {
   searchCore: SearchBoxCore
@@ -47,10 +48,7 @@ export async function handleMapSearchSuggestionSelect({
   if (!location) return null
   setSelectedPlace(location)
 
-  searchMarkerRef.current?.remove()
-  searchMarkerRef.current = new mapbox.Marker()
-    .setLngLat([location.longitude, location.latitude])
-    .addTo(map)
+  setSelectedPlaceMapMarker(map, mapbox, searchMarkerRef, location.longitude, location.latitude)
 
   map.flyTo({
     center: [location.longitude, location.latitude],

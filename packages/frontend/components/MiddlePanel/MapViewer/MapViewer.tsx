@@ -38,6 +38,7 @@ import { handleRadarPlaybackToggle } from './handlers/handleRadarPlaybackToggle'
 import { applyMapLayerSettings, handleMapBasemapSelect, handleMapOverlayToggle, registerRainViewerPeriodicRefresh } from './handlers/handleMapLayerChange'
 import { setRainViewerRadarTilesTemplate } from './handlers/handleRainViewerRadarTilesUpdate'
 import { handleMapPlaceClick } from './handlers/handleMapPlaceClick'
+import { setSelectedPlaceMapMarker } from './handlers/setSelectedPlaceMapMarker'
 import { handleMapSearchSuggest } from './handlers/handleMapSearchSuggest'
 import { handleMapSearchSuggestionSelect } from './handlers/handleMapSearchSuggestionSelect'
 import { handleRecordRecentPlace } from './handlers/handleRecordRecentPlace'
@@ -374,6 +375,7 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
           const selectedLocation = handleMapPlaceClick({
             event,
             map,
+            mapbox: loadedMapboxModule,
             searchMarkerRef,
             selectedSearchQueryRef,
             setCurrentLocation,
@@ -518,7 +520,7 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
   useEffect(() => {
     const map = mapRef.current
     const p = placeRef.current
-    if (!map || !p || !placeFlyToKey) return
+    if (!map || !p || !placeFlyToKey || !mapboxModule) return
 
     const nextPlace = {
       ...p,
@@ -530,13 +532,14 @@ export function MapViewer({ place, onPlaceVisited }: Readonly<MapViewerProps>) {
     setSelectedPlace(nextPlace)
     setPlaceName(nextPlace.name)
     setSearchValue(nextPlace.name)
+    setSelectedPlaceMapMarker(map, mapboxModule, searchMarkerRef, nextPlace.longitude, nextPlace.latitude)
     map.flyTo({
       center: [nextPlace.longitude, nextPlace.latitude],
       zoom: nextPlace.zoom,
       duration: 900,
       essential: true,
     })
-  }, [placeFlyToKey, isMapReady])
+  }, [placeFlyToKey, isMapReady, mapboxModule])
 
   useEffect(() => {
     if (!selectedPlace) {
