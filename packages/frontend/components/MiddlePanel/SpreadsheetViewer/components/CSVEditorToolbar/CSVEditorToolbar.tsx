@@ -50,6 +50,7 @@ import { SaveButton } from './components/SaveButton';
 import { DownloadButton } from './components/DownloadButton';
 import { OverflowButton } from './components/OverflowButton';
 import { FontSizeControl } from './components/FontSizeControl';
+import type { SpreadsheetAutosaveStatus } from '../../handlers/use-spreadsheet-autosave';
 
 
 interface CSVEditorToolbarProps {
@@ -85,7 +86,23 @@ interface CSVEditorToolbarProps {
   onShareDocument?: () => void;
   saving?: boolean;
   canSave?: boolean;
+  autosaveStatus?: SpreadsheetAutosaveStatus;
+  lastSavedAt?: Date | null;
   lightMode?: boolean;
+}
+
+function getSaveStatusLabel(status?: SpreadsheetAutosaveStatus, lastSavedAt?: Date | null) {
+  if (status === 'saving') return 'Saving...'
+  if (status === 'dirty') return 'Unsaved changes'
+  if (status === 'error') return 'Unable to save'
+  if (status !== 'saved') return null
+  if (!lastSavedAt) return 'Saved'
+
+  const secondsAgo = Math.max(0, Math.floor((Date.now() - lastSavedAt.getTime()) / 1000))
+  if (secondsAgo < 5) return 'Saved just now'
+  if (secondsAgo < 60) return `Saved ${secondsAgo}s ago`
+
+  return 'Saved'
 }
 
 const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
@@ -122,6 +139,8 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
   onShareDocument,
   saving = false,
   canSave = false,
+  autosaveStatus,
+  lastSavedAt,
 }) => {
   const theme = useTheme();
   const lightMode = theme.palette.mode === 'light';
@@ -189,7 +208,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
     const buttonWidth = 32; // Width of each button
     const dividerWidth = 16; // Width of dividers
     const overflowButtonWidth = 40; // Width of overflow button
-    const saveButtonsWidth = 80; // Approximate width for save/download buttons
+    const saveButtonsWidth = 180; // Approximate width for save/download/status controls
     const fontControlWidth = 120; // Width of font size control
     const availableWidth = toolbarWidth - fontControlWidth - saveButtonsWidth - overflowButtonWidth - 32; // 32px for padding
     let currentWidth = 0;
@@ -316,6 +335,9 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
     { shortcut: ';wf', description: 'Toggle full screen' },
     { shortcut: ';o', description: 'Open URL in cell' },
   ];
+
+  const saveStatusLabel = getSaveStatusLabel(saving ? 'saving' : autosaveStatus, lastSavedAt)
+  const statusClassName = autosaveStatus === 'error' ? 'text-destructive' : 'text-muted-foreground'
 
   return (
     <>
@@ -457,6 +479,11 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
               )}
               {onSaveDocument && (
                 <SaveButton onClick={onSaveDocument} disabled={saving || !canSave} />
+              )}
+              {saveStatusLabel && (
+                <span className={`hidden sm:inline text-xs ${statusClassName}`} aria-live="polite">
+                  {saveStatusLabel}
+                </span>
               )}
               {onDownloadDocument && (
                 <DownloadButton onClick={onDownloadDocument} />

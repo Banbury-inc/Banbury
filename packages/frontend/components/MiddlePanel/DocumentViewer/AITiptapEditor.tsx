@@ -59,6 +59,7 @@ import { DocumentActionButtons } from './components/DocumentActionButtons';
 import { OverflowButton } from './components/OverflowButton';
 import { FontFamilyButton } from './components/FontFamilyButton';
 import { FontSizeButton } from './components/FontSizeButton';
+import type { DocumentAutosaveStatus } from './handlers/use-document-autosave';
 
 interface AITiptapEditorProps {
   initialContent?: string;
@@ -70,6 +71,8 @@ interface AITiptapEditorProps {
   onShare?: () => void;
   saving?: boolean;
   canSave?: boolean;
+  autosaveStatus?: DocumentAutosaveStatus;
+  lastSavedAt?: Date | null;
 }
 
 export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
@@ -81,7 +84,9 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
   onDownload,
   onShare,
   saving = false,
-  canSave = false
+  canSave = false,
+  autosaveStatus,
+  lastSavedAt
 }) => {
   const { setEditor, registerAICommands } = useTiptapAIContext();
 
@@ -503,6 +508,8 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
             onDownload={onDownload}
             saving={saving}
             canSave={canSave}
+            autosaveStatus={autosaveStatus}
+            lastSavedAt={lastSavedAt}
           />
         </div>
       </div>

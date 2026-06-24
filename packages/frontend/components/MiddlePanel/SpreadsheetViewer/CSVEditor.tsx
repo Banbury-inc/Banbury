@@ -44,6 +44,7 @@ import { createDeleteSheetHandler } from './handlers/handle-delete-sheet';
 import { createDuplicateSheetHandler } from './handlers/handle-duplicate-sheet';
 import { createCellRenderer } from './handlers/handle-cell-renderer';
 import { getSelectionFontSize } from './handlers/handle-selection-font-size';
+import type { SpreadsheetAutosaveStatus } from './handlers/use-spreadsheet-autosave';
 // Register all Handsontable modules
 registerAllModules();
 
@@ -71,6 +72,8 @@ interface CSVEditorProps {
   onSheetsLoaded?: (sheets: SheetData[], activeSheetIndex: number) => void;
   saving?: boolean;
   canSave?: boolean;
+  autosaveStatus?: SpreadsheetAutosaveStatus;
+  lastSavedAt?: Date | null;
 }
 
 const CSVEditor: React.FC<CSVEditorProps> = ({
@@ -83,8 +86,11 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   onFormattingChange,
   onSaveDocument,
   onDownloadDocument,
+  onSheetsLoaded,
   saving = false,
   canSave = false,
+  autosaveStatus,
+  lastSavedAt,
 }) => {
   const [data, setData] = useState<any[][]>([
     ['', '', '', '']
@@ -248,6 +254,8 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   onContentChangeRef.current = onContentChange;
   const onFormattingChangeRef = useRef(onFormattingChange);
   onFormattingChangeRef.current = onFormattingChange;
+  const onSheetsLoadedRef = useRef(onSheetsLoaded);
+  onSheetsLoadedRef.current = onSheetsLoaded;
 
   useEffect(() => {
     const handlerParams = {
@@ -671,11 +679,17 @@ const searchFieldKeyupCallback = useCallback(
       onSheetsLoaded: (sheets, initialActiveIndex) => {
         setAllSheets(sheets);
         setActiveSheetIndex(initialActiveIndex);
+        onSheetsLoadedRef.current?.(sheets, initialActiveIndex);
       }
     });
 
     loadCSVContent();
   }, []);
+
+  useEffect(() => {
+    if (allSheets.length === 0) return
+    onSheetsLoadedRef.current?.(allSheets, activeSheetIndex)
+  }, [activeSheetIndex, allSheets])
 
   // Listen for conditional formatting loaded from XLSX metadata sheet
   useEffect(() => {
@@ -1207,6 +1221,8 @@ const searchFieldKeyupCallback = useCallback(
         onDownloadDocument={onDownloadDocument}
         saving={saving}
         canSave={canSave}
+        autosaveStatus={autosaveStatus}
+        lastSavedAt={lastSavedAt}
       />
 
       {/* Removed separate conditional formatting control bar; functionality moved into toolbar popover */}

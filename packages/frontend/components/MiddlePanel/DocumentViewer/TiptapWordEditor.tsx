@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 
 import { useTiptapAIContext } from '../../../contexts/TiptapAIContext';
 import { AITiptapEditor } from './AITiptapEditor';
+import type { DocumentAutosaveStatus } from './handlers/use-document-autosave';
 
 interface TiptapWordEditorProps {
   initialContent?: string;
@@ -12,6 +13,8 @@ interface TiptapWordEditorProps {
   onShare?: () => void;
   saving?: boolean;
   canSave?: boolean;
+  autosaveStatus?: DocumentAutosaveStatus;
+  lastSavedAt?: Date | null;
 }
 
 const TiptapWordEditor: React.FC<TiptapWordEditorProps> = ({
@@ -22,7 +25,9 @@ const TiptapWordEditor: React.FC<TiptapWordEditorProps> = ({
   onDownload,
   onShare,
   saving,
-  canSave
+  canSave,
+  autosaveStatus,
+  lastSavedAt
 }) => {
   const { registerAICommands } = useTiptapAIContext();
 
@@ -71,6 +76,8 @@ Please provide your response in HTML format that can be directly applied to the 
       onShare={onShare}
       saving={saving}
       canSave={canSave}
+      autosaveStatus={autosaveStatus}
+      lastSavedAt={lastSavedAt}
     />
   );
 };

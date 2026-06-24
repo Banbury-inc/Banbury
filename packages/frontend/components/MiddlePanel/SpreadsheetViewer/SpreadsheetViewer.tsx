@@ -1,10 +1,11 @@
 import { AlertCircle } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useToast } from '../../common/ui/use-toast';
 import CSVEditor from './CSVEditor';
 import { ApiService } from '../../../../backend/api/apiService'
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { handleSpreadsheetSave } from './handlers/handle-spreadsheet-save';
+import { useSpreadsheetAutosave } from './handlers/use-spreadsheet-autosave';
 
 interface SpreadsheetViewerProps {
   file: FileSystemItem;
@@ -40,6 +41,10 @@ export function SpreadsheetViewer({ file, onSaveComplete }: SpreadsheetViewerPro
 
   useEffect(() => {
     setCurrentFile(file);
+    setLatestData(null);
+    setLatestFormatting(null);
+    setAllSheets([]);
+    setActiveSheetIndex(0);
   }, [file]);
 
   useEffect(() => {
@@ -190,7 +195,7 @@ export function SpreadsheetViewer({ file, onSaveComplete }: SpreadsheetViewerPro
     }
   };
 
-  const handleSave = async () => {
+  const saveSpreadsheetSnapshot = useCallback(async ({ isAutosave }: { isAutosave: boolean }) => {
     if (!latestData) return;
     setSaving(true);
     try {
@@ -200,7 +205,6 @@ export function SpreadsheetViewer({ file, onSaveComplete }: SpreadsheetViewerPro
         onSaveComplete,
         toast,
         setError,
-        documentUrl,
         cellFormats: latestFormatting?.cellFormats,
         cellStyles: latestFormatting?.cellStyles,
         cellTypeMeta: latestFormatting?.cellTypeMeta,
@@ -208,14 +212,37 @@ export function SpreadsheetViewer({ file, onSaveComplete }: SpreadsheetViewerPro
         conditionalFormatting: latestFormatting?.conditionalFormatting,
         cellLinks: latestFormatting?.cellLinks,
         allSheets: allSheets.length > 0 ? allSheets : undefined,
-        activeSheetIndex
+        activeSheetIndex,
+        isAutosave
       });
     } catch (err) {
-      // Error handling is done in the handler function
+      throw err
     } finally {
       setSaving(false);
     }
-  };
+  }, [activeSheetIndex, allSheets, currentFile, latestData, latestFormatting, onSaveComplete, toast]);
+
+  const spreadsheetSnapshotKey = useMemo(() => {
+    if (!latestData) return ''
+
+    return JSON.stringify({
+      latestData,
+      latestFormatting,
+      allSheets,
+      activeSheetIndex,
+    })
+  }, [activeSheetIndex, allSheets, latestData, latestFormatting])
+
+  const {
+    status: autosaveStatus,
+    lastSavedAt,
+    saveNow: handleSave,
+  } = useSpreadsheetAutosave({
+    snapshotKey: spreadsheetSnapshotKey,
+    canSave: !!currentFile.file_id && !!latestData && latestData.length > 0,
+    fileKey: `${currentFile.file_id}|${currentFile.name}`,
+    saveSpreadsheet: saveSpreadsheetSnapshot,
+  });
 
   if (loading) {
     return (
@@ -263,6 +290,8 @@ export function SpreadsheetViewer({ file, onSaveComplete }: SpreadsheetViewerPro
               }}
               saving={saving}
               canSave={!!latestData && latestData.length > 0}
+              autosaveStatus={autosaveStatus}
+              lastSavedAt={lastSavedAt}
             />
           </div>
         ) : (
