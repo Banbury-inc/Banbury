@@ -2,7 +2,7 @@ import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { draggable, monitorForElements, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { attachClosestEdge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
 import { X as CloseIcon, Plus as AddIcon } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { SplitPreview } from '../SplitPreview';
 import { Typography } from '../ui/typography';
@@ -100,17 +100,23 @@ export const TabComponent = ({ label, isActive, onClick, onClose, style, isNew, 
   </div>
 );
 
-const DropIndicator = ({ left }: { edge: Edge; gap: string; left: number }) => (
+interface DropIndicatorPosition {
+  left: number;
+  top: number;
+  height: number;
+}
+
+const DropIndicator = ({ position }: { edge: Edge; gap: string; position: DropIndicatorPosition }) => (
   <div
     style={{
       position: 'fixed',
       backgroundColor: 'white',
       width: '2px',
-      height: '32px',
-      top: '28px',
-      left: `${left}px`,
+      height: `${position.height}px`,
+      top: `${position.top}px`,
+      left: `${position.left}px`,
       transform: 'translateY(-50%)',
-      transition: 'left 150ms ease',
+      transition: 'left 150ms ease, top 150ms ease',
       boxShadow: '0 0 3px rgba(126, 107, 242, 0.8)',
       borderRadius: '1px',
       zIndex: 10000,
@@ -131,7 +137,7 @@ export const Tabs: React.FC<TabsProps> = ({
   splitPreviewBoundsSelector = 'main.h-full',
 }) => {
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
-  const [indicatorPosition, setIndicatorPosition] = useState<number | null>(null);
+  const [indicatorPosition, setIndicatorPosition] = useState<DropIndicatorPosition | null>(null);
   const [newTabId, setNewTabId] = useState<string | null>(null);
   const [closingTabId, setClosingTabId] = useState<string | null>(null);
   const [renderedTabs, setRenderedTabs] = useState(tabs);
@@ -147,6 +153,7 @@ export const Tabs: React.FC<TabsProps> = ({
   const tabRefs = useRef<(HTMLDivElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const prevTabsLength = useRef(tabs.length);
+  const dragContextData = useMemo(() => dragContext || {}, [dragContext?.panelId]);
 
   const handleTabClose = (tabId: string) => {
     if (tabs.length <= 1) {
@@ -187,7 +194,7 @@ export const Tabs: React.FC<TabsProps> = ({
 
     return dropTargetForElements({
       element,
-      getData: () => ({ type: 'container' }),
+      getData: () => ({ type: 'container', ...dragContextData }),
       onDrag: () => {},
       onDragLeave: () => {
         // Only clear the tab reorder indicator when leaving container
@@ -195,7 +202,7 @@ export const Tabs: React.FC<TabsProps> = ({
       },
       onDrop: () => setClosestEdge(null),
     });
-  }, []);
+  }, [dragContextData]);
 
   useEffect(() => {
     const cleanups = tabs.map((tab, index) => {
@@ -206,7 +213,7 @@ export const Tabs: React.FC<TabsProps> = ({
         draggable({
           element,
           getInitialData: () => {
-            return { id: tab.id, index, type: 'tab', ...(dragContext || {}) };
+            return { id: tab.id, index, type: 'tab', ...dragContextData };
           },
           onGenerateDragPreview: ({ nativeSetDragImage }: { nativeSetDragImage?: (element: Element, x: number, y: number) => void }) => {
             if (!nativeSetDragImage) return;
@@ -306,7 +313,7 @@ export const Tabs: React.FC<TabsProps> = ({
         dropTargetForElements({
           element,
           getData: (args: any) => attachClosestEdge(
-            { id: tab.id, index, type: 'tab' },
+            { id: tab.id, index, type: 'tab', ...dragContextData },
             {
               element,
               input: args.input,
@@ -318,7 +325,11 @@ export const Tabs: React.FC<TabsProps> = ({
             if (edge) {
               const rect = element.getBoundingClientRect();
               setClosestEdge(edge);
-              setIndicatorPosition(edge === 'left' ? rect.left : rect.right);
+              setIndicatorPosition({
+                left: edge === 'left' ? rect.left : rect.right,
+                top: rect.top + rect.height / 2,
+                height: Math.max(24, rect.height - 4),
+              });
             }
           },
           onDragLeave() {
@@ -337,7 +348,7 @@ export const Tabs: React.FC<TabsProps> = ({
     return () => {
       cleanups.forEach((cleanup) => cleanup());
     };
-  }, [tabs]);
+  }, [tabs, dragContextData]);
 
   useEffect(() => {
     return monitorForElements({
@@ -362,7 +373,11 @@ export const Tabs: React.FC<TabsProps> = ({
   }, [tabs, onReorder]);
 
   return (
-    <div ref={containerRef} className="flex items-stretch bg-background">
+    <div
+      ref={containerRef}
+      data-tab-strip-panel-id={dragContextData.panelId}
+      className="flex items-stretch bg-background"
+    >
       <style>
         {`
           .tab {
@@ -409,7 +424,7 @@ export const Tabs: React.FC<TabsProps> = ({
         </button>
       )}
       {closestEdge && indicatorPosition !== null && !suppressReorderIndicator && (
-        <DropIndicator edge={closestEdge} gap="1px" left={indicatorPosition} />
+        <DropIndicator edge={closestEdge} gap="1px" position={indicatorPosition} />
       )}
       
       {/* Split Preview (render internally only if no external handler is provided) */}

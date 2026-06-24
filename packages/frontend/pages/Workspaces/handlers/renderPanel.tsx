@@ -208,6 +208,9 @@ export const renderPanel = ({
       
       {/* Panel Content */}
       <div className="flex-1 overflow-hidden relative">
+        {dragState.isDragging && (
+          <div className="absolute inset-0 z-[9000] cursor-grabbing bg-transparent" />
+        )}
         {panel.tabs.length > 0 ? (
           <>
             {/* Render all tabs but hide inactive ones to preserve state */}

@@ -71,6 +71,7 @@ import {
   MapPlaceLocation,
   Panel,
   SplitDirection,
+  SplitPlacement,
   PanelGroup,
   DragState,
 } from './types';
@@ -349,8 +350,8 @@ const Workspaces = (): React.ReactNode => {
     handleTabChange(panelId, tabId, panelLayout, findPanel, updatePanelActiveTab, setPanelLayout, setActivePanelId, setSelectedFile, setSelectedEmail);
   }, [panelLayout, findPanel, updatePanelActiveTab, setPanelLayout, setActivePanelId, setSelectedFile, setSelectedEmail]);
   
-  const splitPanelCallback = useCallback((panelId: string, direction: SplitDirection, newFileTab?: FileTab) => {
-    splitPanel(panelId, direction, newFileTab, setPanelLayout, setActivePanelId, setSelectedFile);
+  const splitPanelCallback = useCallback((panelId: string, direction: SplitDirection, newFileTab?: FileTab, placement: SplitPlacement = 'after') => {
+    splitPanel(panelId, direction, newFileTab, setPanelLayout, setActivePanelId, setSelectedFile, placement);
   }, [setPanelLayout, setActivePanelId, setSelectedFile]);
 
   const openCalendarInTabCallback = useCallback((targetPanelId: string = activePanelId) => {
@@ -857,11 +858,12 @@ const Workspaces = (): React.ReactNode => {
       dragStateRef,
       setDragState,
       setPanelLayout,
+      setActivePanelId,
       setAssistantDockLayout,
       setActiveAssistantPanelId,
       splitPanelCallback,
     });
-  }, [panelLayout, assistantDockLayout, dragStateRef, setDragState, setPanelLayout, setAssistantDockLayout, setActiveAssistantPanelId, splitPanelCallback]);
+  }, [panelLayout, assistantDockLayout, dragStateRef, setDragState, setPanelLayout, setActivePanelId, setAssistantDockLayout, setActiveAssistantPanelId, splitPanelCallback]);
 
 
 
@@ -1202,6 +1204,8 @@ const Workspaces = (): React.ReactNode => {
         <SplitZones
           isVisible={dragState.isDragging}
           mousePosition={dragState.currentPosition}
+          dropTargetPanel={dragState.dropTargetPanel}
+          dropZone={dragState.dropZone}
         />
 
         <style>{`

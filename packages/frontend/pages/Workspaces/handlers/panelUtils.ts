@@ -45,14 +45,20 @@ export const updatePanelActiveTab = (layout: PanelGroup, panelId: string, tabId:
   return layout;
 };
 
-export const addTabToPanel = (layout: PanelGroup, panelId: string, tab: WorkspaceTab): PanelGroup => {
+export const addTabToPanel = (layout: PanelGroup, panelId: string, tab: WorkspaceTab, insertIndex?: number): PanelGroup => {
   
   if (layout.type === 'panel' && layout.panel?.id === panelId) {
+    const nextTabs = [...layout.panel.tabs];
+    const safeInsertIndex = typeof insertIndex === 'number'
+      ? Math.max(0, Math.min(insertIndex, nextTabs.length))
+      : nextTabs.length;
+    nextTabs.splice(safeInsertIndex, 0, tab);
+
     return {
       ...layout,
       panel: {
         ...layout.panel,
-        tabs: [...layout.panel.tabs, tab],
+        tabs: nextTabs,
         activeTabId: tab.id
       }
     };
@@ -60,7 +66,7 @@ export const addTabToPanel = (layout: PanelGroup, panelId: string, tab: Workspac
   if (layout.type === 'group' && layout.children) {
     return {
       ...layout,
-      children: layout.children.map(child => addTabToPanel(child, panelId, tab))
+      children: layout.children.map(child => addTabToPanel(child, panelId, tab, insertIndex))
     };
   }
   return layout;

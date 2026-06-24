@@ -172,6 +172,9 @@ export function renderAssistantPanel({
 
       {/* Tab Content */}
       <div className="flex-1 min-h-0 overflow-hidden relative">
+        {dragState.isDragging && (
+          <div className="absolute inset-0 z-[9000] cursor-grabbing bg-transparent" />
+        )}
         {allTabs.map((tab) => {
           const isTabActive = tab.id === activeTabId
 
