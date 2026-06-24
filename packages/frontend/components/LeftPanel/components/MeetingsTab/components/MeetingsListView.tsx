@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { MeetingSession } from '../../../../../types/meeting-types'
 import { Typography } from '../../../../common/ui/typography'
 import { Button } from '../../../../common/ui/button'
-import { Video, Clock, Users, CheckCircle2, XCircle, PlayCircle, Calendar, Trash2 } from 'lucide-react'
+import { Monitor, Phone, Trash2, Users, Video } from 'lucide-react'
 import { MeetingContextMenu } from './MeetingContextMenu'
 import {
   handleMeetingRenameKeyDown,
@@ -23,25 +23,6 @@ interface MeetingsListViewProps {
   onMeetingDownloadTranscript?: (meeting: MeetingSession) => void
 }
 
-type MeetingStatus = MeetingSession['status']
-
-function getStatusIcon(status: MeetingStatus) {
-  switch (status) {
-    case 'scheduled':
-      return Calendar
-    case 'joining':
-    case 'active':
-    case 'recording':
-      return PlayCircle
-    case 'completed':
-      return CheckCircle2
-    case 'failed':
-      return XCircle
-    default:
-      return Video
-  }
-}
-
 function getValidDate(date: Date | string | null | undefined) {
   if (!date) return null
 
@@ -49,31 +30,6 @@ function getValidDate(date: Date | string | null | undefined) {
   if (isNaN(parsedDate.getTime())) return null
 
   return parsedDate
-}
-
-function formatDate(date: Date | string | null | undefined) {
-  const meetingDate = getValidDate(date)
-  if (!meetingDate) return 'No date available'
-
-  const now = new Date()
-  const diffMs = meetingDate.getTime() - now.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-  // Use Intl.DateTimeFormat to explicitly use user's locale and timezone
-  const locale = navigator.language || 'en-US'
-
-  if (diffDays === 0) {
-    return new Intl.DateTimeFormat(locale, { 
-      hour: '2-digit', 
-      minute: '2-digit'
-    }).format(meetingDate)
-  }
-
-  if (diffDays === 1) return 'Tomorrow'
-  if (diffDays === -1) return 'Yesterday'
-  if (diffDays > 0 && diffDays < 7) return new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(meetingDate)
-
-  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(meetingDate)
 }
 
 function formatDateTime(date: Date | string | null | undefined) {
@@ -95,11 +51,29 @@ function getMeetingDate(meeting: MeetingSession & { createdAt?: string | Date })
   return getValidDate(meeting.startTime) ?? getValidDate(meeting.createdAt)
 }
 
+function getPlatformId(meeting: MeetingSession) {
+  const platformId = meeting.platform?.id || meeting.platform?.name
+  if (platformId) return platformId.toLowerCase()
+  if (meeting.meetingUrl?.startsWith('desktop://')) return 'desktop'
+
+  return 'unknown'
+}
+
+function PlatformIcon({ meeting }: { meeting: MeetingSession }) {
+  const platformId = getPlatformId(meeting)
+  const iconClassName = 'h-4 w-4 flex-shrink-0 text-muted-foreground'
+
+  if (platformId.includes('desktop')) return <Monitor className={iconClassName} strokeWidth={1.5} aria-hidden="true" />
+  if (platformId.includes('teams')) return <Users className={iconClassName} strokeWidth={1.5} aria-hidden="true" />
+  if (platformId.includes('meet') || platformId.includes('google')) return <Phone className={iconClassName} strokeWidth={1.5} aria-hidden="true" />
+
+  return <Video className={iconClassName} strokeWidth={1.5} aria-hidden="true" />
+}
+
 export function MeetingsListView({
   meetings,
   loading,
   onMeetingSelect,
-  selectedMeeting,
   onMeetingDeleted,
   onMeetingRename,
   onMeetingShare,
@@ -141,83 +115,49 @@ export function MeetingsListView({
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-2 space-y-1">
+      <div className="space-y-0.5 p-1.5">
         {meetings.map((meeting) => {
-          const StatusIcon = getStatusIcon(meeting.status)
-          const isSelected = selectedMeeting?.id === meeting.id
           const isRenaming = renamingMeetingId === meeting.id
-          const meetingDate = getMeetingDate(meeting)
+          const meetingTitle = getMeetingDisplayTitle(meeting)
 
           const row = (
             <div
-              className={`
-                group p-2 rounded-md transition-colors min-w-0
-                ${isSelected 
-                  ? 'bg-primary/10' 
-                  : 'hover:bg-muted'
-                }
-              `}
+              className="group flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground transition-colors hover:bg-muted min-w-0"
+              onClick={() => onMeetingSelect?.(meeting)}
             >
-              <div className="flex items-start gap-2 min-w-0">
-                <StatusIcon className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                <PlatformIcon meeting={meeting} />
                 <div 
-                  className="flex-1 min-w-0 overflow-hidden cursor-pointer"
-                  onClick={() => onMeetingSelect?.(meeting)}
+                  className="flex-1 min-w-0 overflow-hidden"
                 >
-                  <div className="flex items-center gap-2 mb-1 min-w-0">
-                    {isRenaming ? (
-                      <input
-                        ref={inputRef}
-                        type="text"
-                        value={renameTitle}
-                        onChange={(event) => setRenameTitle(event.target.value)}
-                        onBlur={() => handleSubmitMeetingRename({
-                          meeting,
-                          renameTitle,
-                          setRenamingMeetingId,
-                          setRenameTitle,
-                          onMeetingRename
-                        })}
-                        onKeyDown={(event) => handleMeetingRenameKeyDown({
-                          event,
-                          meeting,
-                          renameTitle,
-                          setRenamingMeetingId,
-                          setRenameTitle,
-                          onMeetingRename
-                        })}
-                        onClick={(event) => event.stopPropagation()}
-                        className="min-w-0 flex-1 rounded border-none bg-muted px-1 py-0 text-xs font-medium text-foreground outline-none"
-                      />
-                    ) : (
-                      <Typography variant="xs" className="font-medium truncate flex-1 min-w-0">
-                        {getMeetingDisplayTitle(meeting)}
-                      </Typography>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground mb-1 min-w-0 flex-wrap">
-                    {meeting.platform && (
-                      <div className="flex items-center gap-1 flex-shrink-0 min-w-0">
-                        <Typography variant="xs" className="truncate min-w-0">{meeting.platform.name}</Typography>
-                      </div>
-                    )}
-                    {!meeting.platform && meeting.meetingUrl?.startsWith('desktop://') && (
-                      <div className="flex items-center gap-1 flex-shrink-0 min-w-0">
-                        <Video className="h-4 w-4 flex-shrink-0" />
-                        <Typography variant="xs" className="truncate min-w-0">Desktop Recording</Typography>
-                      </div>
-                    )}
-                    {meeting.participants && meeting.participants.length > 0 && (
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <Users className="h-3 w-3 flex-shrink-0" />
-                        <Typography variant="xs">{meeting.participants.length}</Typography>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
-                    <Clock className="h-3 w-3 flex-shrink-0" />
-                    <Typography variant="xs" className="truncate min-w-0">{formatDate(meetingDate)}</Typography>
-                  </div>
+                  {isRenaming ? (
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={renameTitle}
+                      onChange={(event) => setRenameTitle(event.target.value)}
+                      onBlur={() => handleSubmitMeetingRename({
+                        meeting,
+                        renameTitle,
+                        setRenamingMeetingId,
+                        setRenameTitle,
+                        onMeetingRename
+                      })}
+                      onKeyDown={(event) => handleMeetingRenameKeyDown({
+                        event,
+                        meeting,
+                        renameTitle,
+                        setRenamingMeetingId,
+                        setRenameTitle,
+                        onMeetingRename
+                      })}
+                      onClick={(event) => event.stopPropagation()}
+                      className="w-full min-w-0 rounded border-none bg-muted px-1 py-0 text-xs font-medium text-foreground outline-none"
+                    />
+                  ) : (
+                    <Typography variant="xs" className="truncate font-medium leading-5 text-muted-foreground group-hover:text-foreground">
+                      {meetingTitle}
+                    </Typography>
+                  )}
                 </div>
                 {onMeetingDeleted && (
                   <Button
@@ -228,12 +168,12 @@ export function MeetingsListView({
                       e.stopPropagation()
                       onMeetingDeleted(meeting.id)
                     }}
+                    aria-label={`Delete ${meetingTitle}`}
                     title="Delete meeting"
                   >
                     <Trash2 className="h-3.5 w-3.5 text-destructive" />
                   </Button>
                 )}
-              </div>
             </div>
           )
 
