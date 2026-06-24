@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react"
+import type { Dispatch } from "react"
 import { useToast } from "../../common/ui/use-toast"
 import { TranscriptionSegment } from "../../../types/meeting-types"
 import { ApiService } from "../../../../backend/api/apiService"
@@ -9,6 +10,7 @@ import { handleDownloadRecording } from "./handlers/handle-download-recording"
 import { handleDownloadTranscription } from "./handlers/handle-download-transcription"
 import { toggleVideoPlayPause, handleVideoSeek, handleVideoVolumeChange, toggleVideoMute, handleTranscriptSegmentClick, toggleFullscreen } from "./handlers/video-player-handlers"
 import { fetchTranscriptFromUrl } from "./handlers/transcript-handlers"
+import { findTranscriptSearchMatches, getTranscriptSearchIndex, scrollTranscriptMatchIntoView } from "./handlers/transcript-search-handlers"
 import { RecordingUploadDialog } from "../../../pages/MeetingAgent/components/RecordingUploadDialog"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "../../common/ui/resizable"
 import { MeetingActionsBar } from "./components/MeetingActionsBar"
@@ -22,11 +24,11 @@ import { MeetingSession } from "../../../types/meeting-types"
 
 interface MeetingViewerProps {
   meeting: MeetingSession
-  onBack?: () => void
-  onMeetingUpdated?: (meeting: MeetingSession) => void
+  onBack?(): void
+  onMeetingUpdated?: Dispatch<MeetingSession>
 }
 
-export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingViewerProps) {
+export function MeetingViewer({ meeting, onMeetingUpdated }: MeetingViewerProps) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
@@ -45,6 +47,8 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
   const [transcriptionFullText, setTranscriptionFullText] = useState<string>('')
   const [isTranscriptionLoading, setIsTranscriptionLoading] = useState(false)
   const transcriptScrollRef = useRef<HTMLDivElement>(null)
+  const [transcriptSearchQuery, setTranscriptSearchQuery] = useState('')
+  const [activeTranscriptMatchIndex, setActiveTranscriptMatchIndex] = useState(-1)
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
   const [summaryHtml, setSummaryHtml] = useState<string>('')
   const [isSavingSummary, setIsSavingSummary] = useState(false)
@@ -76,6 +80,30 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
   const displayParticipantNames = useMemo(() => {
     return getDisplayParticipantNames(currentMeeting.participants, extractedParticipants)
   }, [currentMeeting.participants, extractedParticipants])
+
+  const transcriptSearchMatches = useMemo(() => {
+    return findTranscriptSearchMatches({
+      query: transcriptSearchQuery,
+      segments: transcriptionSegments,
+      fullText: transcriptionFullText || currentMeeting.transcriptionText || ''
+    })
+  }, [currentMeeting.transcriptionText, transcriptSearchQuery, transcriptionFullText, transcriptionSegments])
+
+  useEffect(() => {
+    if (!transcriptSearchQuery.trim()) {
+      setActiveTranscriptMatchIndex(-1)
+      return
+    }
+
+    if (transcriptSearchMatches.length === 0) {
+      setActiveTranscriptMatchIndex(-1)
+      return
+    }
+
+    if (activeTranscriptMatchIndex < 0 || activeTranscriptMatchIndex >= transcriptSearchMatches.length) {
+      setActiveTranscriptMatchIndex(0)
+    }
+  }, [activeTranscriptMatchIndex, transcriptSearchMatches.length, transcriptSearchQuery])
 
   const onDownloadRecording = useCallback(async () => {
     setIsLoading(true)
@@ -246,6 +274,34 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
   const onTranscriptSegmentClick = useCallback((startTime: number) => {
     handleTranscriptSegmentClick(videoRef, startTime, setVideoCurrentTime)
   }, [])
+
+  const onTranscriptSearchQueryChange = useCallback((query: string) => {
+    setTranscriptSearchQuery(query)
+    setActiveTranscriptMatchIndex(-1)
+  }, [])
+
+  const onTranscriptSearchNavigate = useCallback((direction: 'next' | 'previous') => {
+    const nextIndex = getTranscriptSearchIndex(
+      activeTranscriptMatchIndex,
+      transcriptSearchMatches.length,
+      direction
+    )
+    const nextMatch = transcriptSearchMatches[nextIndex]
+
+    if (!nextMatch) return
+
+    setActiveTranscriptMatchIndex(nextIndex)
+    scrollTranscriptMatchIntoView(transcriptScrollRef, nextIndex)
+
+    if (typeof nextMatch.startTime === 'number') {
+      handleTranscriptSegmentClick(videoRef, nextMatch.startTime, setVideoCurrentTime)
+    }
+  }, [activeTranscriptMatchIndex, transcriptSearchMatches])
+
+  useEffect(() => {
+    if (activeTranscriptMatchIndex < 0) return
+    scrollTranscriptMatchIntoView(transcriptScrollRef, activeTranscriptMatchIndex)
+  }, [activeTranscriptMatchIndex])
 
   const onSaveSummary = useCallback(async () => {
     try {
@@ -502,6 +558,11 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
                 transcriptionFullText={transcriptionFullText || currentMeeting.transcriptionText || ''}
                 isTranscriptionLoading={isTranscriptionLoading}
                 videoCurrentTime={videoCurrentTime}
+                searchQuery={transcriptSearchQuery}
+                searchMatches={transcriptSearchMatches}
+                activeSearchMatchIndex={activeTranscriptMatchIndex}
+                onSearchQueryChange={onTranscriptSearchQueryChange}
+                onSearchNavigate={onTranscriptSearchNavigate}
                 onSegmentClick={onTranscriptSegmentClick}
               />
             )}
