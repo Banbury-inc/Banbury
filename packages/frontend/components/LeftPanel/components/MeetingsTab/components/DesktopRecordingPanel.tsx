@@ -333,34 +333,28 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
         
         {/* Active Recording Display */}
         {recordingStatus.isRecording && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse" />
-                <span className="font-medium text-red-500">Recording in Progress</span>
-              </div>
-              <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20 font-mono">
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-2 py-1.5">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="h-2 w-2 shrink-0 rounded-full bg-destructive animate-pulse" />
+              <span className="truncate text-xs font-medium text-destructive">Recording in progress</span>
+              <Badge variant="outline" className="h-5 border-destructive/20 bg-background/60 px-1.5 font-mono text-[11px] text-destructive">
                 {recordingDuration}
               </Badge>
             </div>
-            {recordingStatus.platform && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <PlatformLogo platform={recordingStatus.platform} />
-                <span>{getPlatformDisplayName(recordingStatus.platform)}</span>
-              </div>
-            )}
             <Button 
               variant="destructive" 
+              size="xs"
               onClick={handleStop} 
               disabled={isLoading}
-              className="w-full"
+              aria-label="Stop recording"
+              className="h-7 shrink-0 px-2 text-xs"
             >
               {isLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Square className="h-4 w-4 mr-2" />
+                <Square className="mr-1 h-3.5 w-3.5" />
               )}
-              Stop Recording
+              Stop
             </Button>
           </div>
         )}
@@ -390,7 +384,6 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
                       className="flex items-center justify-between bg-muted/50 rounded-lg hover:bg-muted transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <PlatformLogo platform={mostRecentMeeting.platform} />
                         <div>
                           <p className="text-sm font-medium truncate max-w-[200px]">
                             {mostRecentMeeting.title || 'Untitled Meeting'}
