@@ -73,9 +73,10 @@ export function SpreadsheetViewer({ file, onSaveComplete }: SpreadsheetViewerPro
         const isDropboxFile = currentFile.path?.startsWith('dropbox://');
         const isGoogleSheet = currentFile.mimeType?.includes('vnd.google-apps.spreadsheet');
         
-        if (isDriveFile && isGoogleSheet) {
-          // Export Google Sheet as XLSX
-          const blob = await ApiService.Drive.exportSheetAsXlsx(currentFile.file_id);
+        if (isDriveFile) {
+          const blob = isGoogleSheet
+            ? await ApiService.Drive.exportSheetAsXlsx(currentFile.file_id)
+            : await ApiService.Drive.getFileBlob(currentFile.file_id);
           currentUrl = URL.createObjectURL(blob);
           setDocumentUrl(currentUrl);
           setDocumentBlob(blob);
@@ -148,8 +149,10 @@ export function SpreadsheetViewer({ file, onSaveComplete }: SpreadsheetViewerPro
       }
       
       // Fallback to fetching if no URL is available
-      if (isDriveFile && isGoogleSheet) {
-        const blob = await ApiService.Drive.exportSheetAsXlsx(currentFile.file_id);
+      if (isDriveFile) {
+        const blob = isGoogleSheet
+          ? await ApiService.Drive.exportSheetAsXlsx(currentFile.file_id)
+          : await ApiService.Drive.getFileBlob(currentFile.file_id);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

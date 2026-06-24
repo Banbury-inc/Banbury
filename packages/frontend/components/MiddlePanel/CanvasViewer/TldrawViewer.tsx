@@ -13,6 +13,8 @@ import { createSaveTldrawHandler } from './handlers/save-tldraw';
 import { createTldrawHistoryHandlers } from './handlers/tldraw-history-handlers';
 import { createCreateTldrawPageHandler, createSetTldrawPageHandler } from './handlers/tldraw-menu-handlers';
 import { createSetTldrawToolHandler } from './handlers/tldraw-tool-handlers';
+import { useTldrawAutosave } from './handlers/use-tldraw-autosave';
+import type { TldrawAutosaveStatus } from './handlers/use-tldraw-autosave';
 import styles from '../../../styles/SimpleTiptapEditor.module.css';
 import { useToast } from '../../common/ui/use-toast';
 import { registerTldrawEditor, unregisterTldrawEditor, setCurrentTldrawEditor } from '../../RightPanel/handlers/handle-tldraw-ai-response';
@@ -48,6 +50,20 @@ const TLDRAW_TOOLBAR_ITEMS = [
 
 const TLDRAW_LICENSE_KEY = process.env.NEXT_PUBLIC_TLDRAW_LICENSE_KEY;
 
+function getSaveStatusLabel(status?: TldrawAutosaveStatus, lastSavedAt?: Date | null) {
+  if (status === 'saving') return 'Saving...'
+  if (status === 'dirty') return 'Unsaved changes'
+  if (status === 'error') return 'Unable to save'
+  if (status !== 'saved') return null
+  if (!lastSavedAt) return 'Saved'
+
+  const secondsAgo = Math.max(0, Math.floor((Date.now() - lastSavedAt.getTime()) / 1000))
+  if (secondsAgo < 5) return 'Saved just now'
+  if (secondsAgo < 60) return `Saved ${secondsAgo}s ago`
+
+  return 'Saved'
+}
+
 export const TldrawViewer: React.FC<TldrawViewerProps> = ({
   fileName,
   fileId,
@@ -62,9 +78,12 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [changeVersion, setChangeVersion] = useState(0);
   const [currentToolId, setCurrentToolId] = useState('select');
   const [pages, setPages] = useState<TLPage[]>([]);
   const [currentPageId, setCurrentPageId] = useState<TLPageId | null>(null);
+  const changeVersionRef = useRef(0);
 
   const components = useMemo(() => ({
     MenuPanel: null,
@@ -147,6 +166,7 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
     // Listen for changes to track unsaved state
     const handleChange = () => {
       setHasUnsavedChanges(true);
+      setChangeVersion((version) => version + 1);
       setCurrentToolId(editor.getCurrentToolId());
       setPages(editor.getPages());
       setCurrentPageId(editor.getCurrentPageId());
@@ -185,33 +205,64 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
       const data = JSON.parse(fileContent);
       loadSnapshot(editorRef.current.store, data);
       setHasUnsavedChanges(false);
+      setChangeVersion((version) => version + 1);
     } catch (e) {
       console.warn('[TldrawViewer] Failed to load snapshot from updated fileContent:', e);
     }
   }, [fileContent]);
+
+  useEffect(() => {
+    changeVersionRef.current = changeVersion
+  }, [changeVersion])
 
   // Toggle fullscreen mode
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen(!isFullscreen);
   }, [isFullscreen]);
 
-  // Save the current drawing
-  const handleSave = useCallback(async () => {
+  const saveDrawing = useCallback(async ({ isAutosave }: { isAutosave: boolean }) => {
+    const versionAtStart = changeVersionRef.current
     const save = createSaveTldrawHandler({
       editorRef,
       fileId,
       fileName,
-      onSaved: (content: string) => setFileContent(content),
-      clearUnsaved: () => setHasUnsavedChanges(false),
+      onSaved: isAutosave ? undefined : (content: string) => setFileContent(content),
     })
-    const result = await save()
-    if (result.ok) {
-      toast({ title: 'Saved', description: 'Drawing saved successfully.' })
-      if (onSaveComplete) onSaveComplete()
-    } else {
-      toast({ title: 'Save failed', description: 'Could not save the drawing. Check console for details.', variant: 'destructive' })
+
+    setIsSaving(true)
+
+    try {
+      const result = await save()
+
+      if (result.ok) {
+        if (versionAtStart === changeVersionRef.current) setHasUnsavedChanges(false)
+        if (!isAutosave) {
+          toast({ title: 'Saved', description: 'Drawing saved successfully.' })
+          if (onSaveComplete) onSaveComplete()
+        }
+        return true
+      }
+
+      if (!isAutosave) {
+        toast({ title: 'Save failed', description: 'Could not save the drawing. Check console for details.', variant: 'destructive' })
+      }
+
+      return false
+    } finally {
+      setIsSaving(false)
     }
-  }, [editorRef, fileId, fileName, onSaveComplete, toast])
+  }, [fileId, fileName, onSaveComplete, toast])
+
+  const {
+    status: autosaveStatus,
+    lastSavedAt,
+    saveNow: handleSave,
+  } = useTldrawAutosave({
+    changeVersion,
+    canSave: !!fileId && hasUnsavedChanges,
+    fileKey: `${fileId}|${fileName}`,
+    saveDrawing,
+  })
 
   // Refresh the viewer
   const reloadFromServer = useCallback(async () => {
@@ -228,6 +279,7 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
           const data = JSON.parse(text)
           loadSnapshot(editorRef.current.store, data)
           setHasUnsavedChanges(false)
+          setChangeVersion((version) => version + 1)
         } catch (e) {
           console.warn('[TldrawViewer] Failed to parse refreshed content')
         }
@@ -244,6 +296,8 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
   }, [reloadFromServer]);
 
   const currentPageName = pages.find((page) => page.id === currentPageId)?.name ?? 'Page';
+  const saveStatusLabel = getSaveStatusLabel(isSaving ? 'saving' : autosaveStatus, lastSavedAt);
+  const saveStatusClassName = autosaveStatus === 'error' ? 'text-destructive' : 'text-muted-foreground';
 
   // Effect to fetch file content
   useEffect(() => {
@@ -378,7 +432,7 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
                 <DropdownMenuContent align="start" className="w-44">
                   <DropdownMenuLabel>Drawing</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSave} disabled={!hasUnsavedChanges}>
+                  <DropdownMenuItem onClick={handleSave} disabled={isSaving || !hasUnsavedChanges}>
                     Save drawing
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleRefresh}>
@@ -461,12 +515,17 @@ export const TldrawViewer: React.FC<TldrawViewerProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <button
               onClick={handleSave}
-              disabled={!hasUnsavedChanges}
+              disabled={isSaving || !hasUnsavedChanges}
               className={styles['toolbar-button']}
               title="Save drawing"
             >
               <Save size={16} />
             </button>
+            {saveStatusLabel && (
+              <span className={`hidden sm:inline text-xs ${saveStatusClassName}`} aria-live="polite">
+                {saveStatusLabel}
+              </span>
+            )}
             <button
               onClick={handleRefresh}
               className={styles['toolbar-button']}

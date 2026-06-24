@@ -441,7 +441,7 @@ export async function handleSpreadsheetSave({
     }
     
     // Save to Google Drive, OneDrive, or S3 depending on file type
-    if (isDriveFile && isGoogleSheet) {
+    if (isDriveFile) {
       await ApiService.Drive.updateFile(
         currentFile.file_id,
         xlsxBlob,
@@ -452,7 +452,9 @@ export async function handleSpreadsheetSave({
         onSaveComplete?.();
         toast({
           title: "Spreadsheet saved to Google Drive",
-          description: "Your Google Sheet has been updated successfully.",
+          description: isGoogleSheet
+            ? "Your Google Sheet has been updated successfully."
+            : "Your spreadsheet has been updated successfully.",
           variant: "success",
         });
       }

@@ -65,9 +65,10 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
         const isDropboxFile = currentFile.path?.startsWith('dropbox://');
         const isGoogleDoc = currentFile.mimeType?.includes('vnd.google-apps.document');
         
-        if (isDriveFile && isGoogleDoc) {
-          // Export Google Doc as DOCX
-          const blob = await ApiService.Drive.exportDocAsDocx(currentFile.file_id);
+        if (isDriveFile) {
+          const blob = isGoogleDoc
+            ? await ApiService.Drive.exportDocAsDocx(currentFile.file_id)
+            : await ApiService.Drive.getFileBlob(currentFile.file_id);
           currentUrl = URL.createObjectURL(blob);
           setDocumentUrl(currentUrl);
           setDocumentBlob(blob);
@@ -233,8 +234,10 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
       }
       
       // Fallback to fetching if no URL is available
-      if (isDriveFile && isGoogleDoc) {
-        const blob = await ApiService.Drive.exportDocAsDocx(currentFile.file_id);
+      if (isDriveFile) {
+        const blob = isGoogleDoc
+          ? await ApiService.Drive.exportDocAsDocx(currentFile.file_id)
+          : await ApiService.Drive.getFileBlob(currentFile.file_id);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -374,7 +377,7 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
       const isOneDriveFile = currentFile.path?.startsWith('onedrive://');
       const isDropboxFile = currentFile.path?.startsWith('dropbox://');
       
-      if (isDriveFile && isGoogleDoc) {
+      if (isDriveFile) {
         await ApiService.Drive.updateFile(
           currentFile.file_id,
           fileToUpload,

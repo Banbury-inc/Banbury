@@ -1,3 +1,4 @@
+import './url-parse-polyfill'
 import { AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';

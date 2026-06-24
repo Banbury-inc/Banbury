@@ -1,9 +1,25 @@
 import { AlertCircle } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 
 import { ApiService } from '../../../../backend/api/apiService'
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
+import { ImageViewerToolbar } from './ImageViewerToolbar'
+import {
+  createImagePanMoveHandler,
+  createImagePanStartHandler,
+  createImagePanStopHandler,
+} from './handlers/image-pan-handlers'
+import {
+  DEFAULT_IMAGE_ZOOM,
+  createImageWheelZoomHandler,
+  createImageZoomInHandler,
+  createImageZoomOutHandler,
+  createImageZoomResetHandler,
+} from './handlers/image-zoom-handlers'
+
+const IMAGE_PREVIEW_WIDTH = 800
+const IMAGE_PREVIEW_HEIGHT = 600
 
 interface ImageViewerProps {
   file: FileSystemItem;
@@ -17,6 +33,28 @@ export function ImageViewer({ file }: ImageViewerProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [zoomLevel, setZoomLevel] = useState(DEFAULT_IMAGE_ZOOM);
+  const viewerRef = useRef<HTMLDivElement | null>(null)
+  const isPanningRef = useRef(false)
+  const panStartXRef = useRef(0)
+  const panStartYRef = useRef(0)
+  const panScrollLeftRef = useRef(0)
+  const panScrollTopRef = useRef(0)
+  const handleZoomIn = createImageZoomInHandler(setZoomLevel)
+  const handleZoomOut = createImageZoomOutHandler(setZoomLevel)
+  const handleResetZoom = createImageZoomResetHandler(setZoomLevel)
+  const handleWheelZoom = createImageWheelZoomHandler(setZoomLevel)
+  const imagePanOptions = {
+    viewerRef,
+    isPanningRef,
+    startXRef: panStartXRef,
+    startYRef: panStartYRef,
+    scrollLeftRef: panScrollLeftRef,
+    scrollTopRef: panScrollTopRef,
+  }
+  const handlePanStart = createImagePanStartHandler(imagePanOptions)
+  const handlePanMove = createImagePanMoveHandler(imagePanOptions)
+  const handlePanStop = createImagePanStopHandler(isPanningRef)
 
   useEffect(() => {
     let currentUrl: string | null = null;
@@ -30,6 +68,7 @@ export function ImageViewer({ file }: ImageViewerProps) {
 
       setLoading(true);
       setError(null);
+      setZoomLevel(DEFAULT_IMAGE_ZOOM);
 
       try {
         const isDriveFile = file.path?.startsWith('drive://');
@@ -106,20 +145,38 @@ export function ImageViewer({ file }: ImageViewerProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-zinc-900">
-      {/* Header with file info and actions */}
-
-      {/* Image display area */}
-      <div className="flex-1 flex justify-center overflow-auto bg-white dark:bg-zinc-900 p-6">
+    <div className="h-full flex flex-col bg-background">
+      <ImageViewerToolbar
+        zoomLevel={zoomLevel}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onResetZoom={handleResetZoom}
+      />
+      <div
+        ref={viewerRef}
+        className="flex-1 cursor-grab select-none overflow-auto bg-background p-6 active:cursor-grabbing"
+        onWheel={handleWheelZoom}
+        onMouseDown={handlePanStart}
+        onMouseMove={handlePanMove}
+        onMouseUp={handlePanStop}
+        onMouseLeave={handlePanStop}
+      >
         {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt={file.name}
-            width={800}
-            height={600}
-            className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-            unoptimized
-          />
+          <div className="flex h-max min-h-full w-max min-w-full items-center justify-center">
+            <Image
+              src={imageUrl}
+              alt={file.name}
+              width={IMAGE_PREVIEW_WIDTH}
+              height={IMAGE_PREVIEW_HEIGHT}
+              className="max-h-none max-w-none rounded-lg object-contain shadow-lg"
+              style={{
+                width: IMAGE_PREVIEW_WIDTH * zoomLevel,
+                height: IMAGE_PREVIEW_HEIGHT * zoomLevel,
+              }}
+              unoptimized
+              draggable={false}
+            />
+          </div>
         ) : (
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
