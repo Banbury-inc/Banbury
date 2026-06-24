@@ -1040,7 +1040,7 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
         className="flex-1 overflow-y-auto sidebar-scrollbar"
       >
         <div 
-          className="min-h-full"
+          className="min-h-full p-1.5"
           onContextMenu={(e) => {
             e.preventDefault()
             // You could add a root-level context menu here for creating folders at the root

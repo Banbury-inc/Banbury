@@ -1,4 +1,3 @@
-import { Allotment } from 'allotment';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ClaudeRuntimeProvider } from '../../assistant/ClaudeRuntimeProvider/ClaudeRuntimeProvider';
 import { LeftPanel } from "../../components/LeftPanel/LeftPanel";
@@ -52,6 +51,7 @@ import { registerDropTargets } from './handlers/dropTargetRegistration';
 import { extractReplyBody as extractReplyBodyHandler } from './handlers/extractReplyBody';
 import { renderAssistantPanelGroup as renderAssistantPanelGroupHandler } from './handlers/renderAssistantPanelGroup';
 import { setupActiveAiTabId } from './handlers/activeAiTabId';
+import { useRightPanelResize } from './handlers/handleRightPanelResize';
 import { handleFileSelect as handleFileSelectHandler } from '../../components/LeftPanel/components/FilesTab/handlers/handleFileSelect';
 import { 
   getStoredKeybinds, 
@@ -71,6 +71,7 @@ import {
   MapPlaceLocation,
   Panel,
   SplitDirection,
+  SplitPlacement,
   PanelGroup,
   DragState,
 } from './types';
@@ -124,6 +125,12 @@ const Workspaces = (): React.ReactNode => {
     defaultWidth: 320,
     minWidth: 200,
     maxWidth: 600,
+  });
+  const { rightPanelWidth, isAssistantResizing, handleAssistantResizeStart } = useRightPanelResize({
+    isAssistantPanelCollapsed,
+    defaultWidth: 380,
+    minWidth: 280,
+    maxWidth: 700,
   });
   // Mobile state management
   const [mobileFileSidebarOpen, setMobileFileSidebarOpen] = useState(false);
@@ -343,8 +350,8 @@ const Workspaces = (): React.ReactNode => {
     handleTabChange(panelId, tabId, panelLayout, findPanel, updatePanelActiveTab, setPanelLayout, setActivePanelId, setSelectedFile, setSelectedEmail);
   }, [panelLayout, findPanel, updatePanelActiveTab, setPanelLayout, setActivePanelId, setSelectedFile, setSelectedEmail]);
   
-  const splitPanelCallback = useCallback((panelId: string, direction: SplitDirection, newFileTab?: FileTab) => {
-    splitPanel(panelId, direction, newFileTab, setPanelLayout, setActivePanelId, setSelectedFile);
+  const splitPanelCallback = useCallback((panelId: string, direction: SplitDirection, newFileTab?: FileTab, placement: SplitPlacement = 'after') => {
+    splitPanel(panelId, direction, newFileTab, setPanelLayout, setActivePanelId, setSelectedFile, placement);
   }, [setPanelLayout, setActivePanelId, setSelectedFile]);
 
   const openCalendarInTabCallback = useCallback((targetPanelId: string = activePanelId) => {
@@ -851,11 +858,12 @@ const Workspaces = (): React.ReactNode => {
       dragStateRef,
       setDragState,
       setPanelLayout,
+      setActivePanelId,
       setAssistantDockLayout,
       setActiveAssistantPanelId,
       splitPanelCallback,
     });
-  }, [panelLayout, assistantDockLayout, dragStateRef, setDragState, setPanelLayout, setAssistantDockLayout, setActiveAssistantPanelId, splitPanelCallback]);
+  }, [panelLayout, assistantDockLayout, dragStateRef, setDragState, setPanelLayout, setActivePanelId, setAssistantDockLayout, setActiveAssistantPanelId, splitPanelCallback]);
 
 
 
@@ -1081,11 +1089,9 @@ const Workspaces = (): React.ReactNode => {
                     </div>
                   </div>
                 )}
-                <div className="flex-1 min-w-0 overflow-hidden min-h-0">
-                  <Allotment className="h-full">
-                
+                <div className="flex-1 min-w-0 overflow-hidden min-h-0 flex">
                 {/* Main Content Panel */}
-                  <Allotment.Pane minSize={isMobile ? 300 : 400} preferredSize={isMobile ? 800 : 1200}>
+                  <div className="flex-1 min-w-0 overflow-hidden min-h-0">
                     <MiddlePanel
                       isFileSidebarCollapsed={isMobile ? true : isFileSidebarCollapsed}
                       isAssistantPanelCollapsed={isMobile ? true : isAssistantPanelCollapsed}
@@ -1107,15 +1113,39 @@ const Workspaces = (): React.ReactNode => {
                       renderPanelGroup={renderPanelGroup}
                       hasFilesOpen={getAllTabs(panelLayout).length > 0}
                     />
-                  </Allotment.Pane>
+                  </div>
                 
                 {/* Assistant Panel - Dock-based with draggable tabs - Desktop Only */}
-                {!isMobile && !isAssistantPanelCollapsed && (
-                  <Allotment.Pane minSize={isMobile ? 200 : 280}>
-                    <div 
-                      data-assistant-dock 
+                {!isMobile && (
+                  <div
+                    className={`h-full flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${
+                      isAssistantPanelCollapsed ? 'w-0' : ''
+                    }`}
+                    style={!isAssistantPanelCollapsed ? {
+                      width: `${rightPanelWidth}px`,
+                      transition: isAssistantResizing ? 'none' : undefined
+                    } : undefined}
+                  >
+                    <div
+                      data-assistant-dock
                       className="h-full relative"
+                      style={!isAssistantPanelCollapsed ? { width: `${rightPanelWidth}px` } : undefined}
                     >
+                      {/* Resize handle */}
+                      {!isAssistantPanelCollapsed && (
+                        <div
+                          onMouseDown={handleAssistantResizeStart}
+                          className={`absolute left-0 top-0 bottom-0 cursor-ew-resize z-30 transition-colors ${
+                            isAssistantResizing ? 'bg-accent' : 'hover:bg-accent/50'
+                          }`}
+                          style={{
+                            touchAction: 'none',
+                            width: '4px',
+                            marginLeft: '-2px'
+                          }}
+                          title="Drag to resize"
+                        />
+                      )}
                       {/* Collapse button for assistant panel - positioned on left border */}
                       {(selectedFile || selectedEmail || getAllTabs(panelLayout).some(tab => tab.type === 'calendar')) && (
                         <button
@@ -1128,9 +1158,8 @@ const Workspaces = (): React.ReactNode => {
                       )}
                       {renderAssistantPanelGroup(assistantDockLayout)}
                     </div>
-                  </Allotment.Pane>
+                  </div>
                 )}
-                  </Allotment>
                 </div>
               </div>
             </div>
@@ -1175,6 +1204,8 @@ const Workspaces = (): React.ReactNode => {
         <SplitZones
           isVisible={dragState.isDragging}
           mousePosition={dragState.currentPosition}
+          dropTargetPanel={dragState.dropTargetPanel}
+          dropZone={dragState.dropZone}
         />
 
         <style>{`

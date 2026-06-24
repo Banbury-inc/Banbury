@@ -3,6 +3,7 @@ import mammoth from 'mammoth';
 import React, { useState, useEffect } from 'react';
 import TiptapWordEditor from './TiptapWordEditor';
 import { useTiptapAIContext } from '../../../contexts/TiptapAIContext';
+import type { DocumentAutosaveStatus } from './handlers/use-document-autosave';
 
 
 
@@ -20,6 +21,8 @@ interface WordViewerProps {
   onShareDocument?: () => void;
   saving?: boolean;
   canSave?: boolean;
+  autosaveStatus?: DocumentAutosaveStatus;
+  lastSavedAt?: Date | null;
 }
 
 const WordViewer: React.FC<WordViewerProps> = ({
@@ -34,7 +37,9 @@ const WordViewer: React.FC<WordViewerProps> = ({
   onDownloadDocument,
   onShareDocument,
   saving,
-  canSave
+  canSave,
+  autosaveStatus,
+  lastSavedAt
 }) => {
   const [content, setContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -365,6 +370,8 @@ const WordViewer: React.FC<WordViewerProps> = ({
         onShare={onShareDocument}
         saving={saving}
         canSave={canSave}
+        autosaveStatus={autosaveStatus}
+        lastSavedAt={lastSavedAt}
       />
     </Box>
   );

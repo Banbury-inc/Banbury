@@ -22,6 +22,7 @@ import { getSelectedProvider } from '../../LeftPanel/components/CalendarTab/cale
 import { loadMergedEvents } from './handlers/loadMergedEvents'
 import { 
   getVisibleCalendarIds, 
+  initializeVisibleCalendarIds,
   toggleCalendarVisibility, 
   subscribeToVisibilityChanges 
 } from './handlers/calendarVisibility'
@@ -171,6 +172,7 @@ export function CalendarViewer({ initialDate, initialView = 'month', onEventClic
       const provider = getSelectedProvider()
       const cals = provider === 'microsoft' ? await loadMicrosoftCalendars() : await loadCalendars()
       setCalendars(cals)
+      initializeVisibleCalendarIds(cals.map(calendar => calendar.id))
     } catch {
       setCalendars([])
     }

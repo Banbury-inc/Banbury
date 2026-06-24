@@ -6,17 +6,21 @@
 const STORAGE_KEY = 'banbury-visible-calendar-ids'
 const VISIBILITY_EVENT = 'banbury-calendars-visibility-changed'
 
-export function getVisibleCalendarIds(): string[] {
-  if (typeof window === 'undefined') return []
+function getStoredVisibleCalendarIds(): string[] | null {
+  if (typeof window === 'undefined') return null
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    if (!stored) return []
+    if (!stored) return null
     const parsed = JSON.parse(stored)
-    if (Array.isArray(parsed)) return parsed
-    return []
+    if (Array.isArray(parsed)) return parsed.filter(id => typeof id === 'string' && id.length > 0)
+    return null
   } catch {
-    return []
+    return null
   }
+}
+
+export function getVisibleCalendarIds(): string[] {
+  return getStoredVisibleCalendarIds() || []
 }
 
 export function setVisibleCalendarIds(ids: string[]): void {
@@ -36,6 +40,24 @@ export function toggleCalendarVisibility(calendarId: string): void {
   } else {
     setVisibleCalendarIds([...current, calendarId])
   }
+}
+
+export function initializeVisibleCalendarIds(calendarIds: string[]): string[] {
+  const validCalendarIds = calendarIds.filter(id => typeof id === 'string' && id.length > 0)
+  const storedIds = getStoredVisibleCalendarIds()
+
+  if (storedIds === null) {
+    setVisibleCalendarIds(validCalendarIds)
+    return validCalendarIds
+  }
+
+  const hasVisibleCalendar = storedIds.some(id => validCalendarIds.includes(id))
+  if (storedIds.length > 0 && !hasVisibleCalendar) {
+    setVisibleCalendarIds(validCalendarIds)
+    return validCalendarIds
+  }
+
+  return storedIds
 }
 
 export function subscribeToVisibilityChanges(callback: (ids: string[]) => void): () => void {

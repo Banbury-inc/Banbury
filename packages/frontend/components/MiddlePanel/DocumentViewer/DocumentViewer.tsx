@@ -5,6 +5,7 @@ import WordViewer from './WordViewer';
 import { ApiService } from '../../../../backend/api/apiService'
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { ShareFileDialog } from '../../LeftPanel/components/FilesTab/components/share-file/ShareFileDialog';
+import { useDocumentAutosave } from './handlers/use-document-autosave';
 
 interface DocumentViewerProps {
   file: FileSystemItem;
@@ -35,6 +36,7 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
   // Update currentFile when file prop changes
   useEffect(() => {
     setCurrentFile(file);
+    setCurrentContent('');
   }, [file]);
 
   useEffect(() => {
@@ -63,9 +65,10 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
         const isDropboxFile = currentFile.path?.startsWith('dropbox://');
         const isGoogleDoc = currentFile.mimeType?.includes('vnd.google-apps.document');
         
-        if (isDriveFile && isGoogleDoc) {
-          // Export Google Doc as DOCX
-          const blob = await ApiService.Drive.exportDocAsDocx(currentFile.file_id);
+        if (isDriveFile) {
+          const blob = isGoogleDoc
+            ? await ApiService.Drive.exportDocAsDocx(currentFile.file_id)
+            : await ApiService.Drive.getFileBlob(currentFile.file_id);
           currentUrl = URL.createObjectURL(blob);
           setDocumentUrl(currentUrl);
           setDocumentBlob(blob);
@@ -231,8 +234,10 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
       }
       
       // Fallback to fetching if no URL is available
-      if (isDriveFile && isGoogleDoc) {
-        const blob = await ApiService.Drive.exportDocAsDocx(currentFile.file_id);
+      if (isDriveFile) {
+        const blob = isGoogleDoc
+          ? await ApiService.Drive.exportDocAsDocx(currentFile.file_id)
+          : await ApiService.Drive.getFileBlob(currentFile.file_id);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -278,24 +283,18 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
     }
   };
 
+  const saveDocumentContent = useCallback(async (
+    contentToSave: string,
+    { isAutosave }: { isAutosave: boolean }
+  ) => {
+    if (!currentFile.file_id || !contentToSave) return;
 
-
-
-
-  const handleSave = async () => {
-    if (!currentFile.file_id || !currentContent) return;
-    
     setSaving(true);
     try {
       // Check if this is a Google Drive file
       const isDriveFile = currentFile.path?.startsWith('drive://');
       const isGoogleDoc = currentFile.mimeType?.includes('vnd.google-apps.document');
-      
-      // Clean up the current blob URL before saving
-      if (documentUrl && documentUrl.startsWith('blob:')) {
-        window.URL.revokeObjectURL(documentUrl);
-      }
-      
+
       // Determine the file extension and content format
       const fileExtension = currentFile.name.toLowerCase().split('.').pop() || '';
       const isDocxFile = fileExtension === 'docx' || isGoogleDoc;
@@ -305,7 +304,7 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
       
       if (isDocxFile) {
         // Inline external images as data URIs so they are embedded for downstream DOCX conversion
-        const { html: inlinedHtml } = await inlineImagesInHtml({ html: currentContent })
+        const { html: inlinedHtml } = await inlineImagesInHtml({ html: contentToSave })
         // For DOCX files, we'll save the HTML content but mark it as a custom format
         // that our system can recognize as edited DOCX content
         const htmlContent = `<!DOCTYPE html>
@@ -338,7 +337,7 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
     </style>
 </head>
 <body>
-    ${currentContent}
+    ${contentToSave}
 </body>
 </html>`;
         blob = new Blob([htmlContent], { type: 'text/html' });
@@ -346,7 +345,7 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
       } else if (fileExtension === 'txt' || fileExtension === 'log') {
         // For plain text files, extract text from HTML and save as plain text
         // Preserve line breaks by converting <p> tags to newlines
-        const textWithBreaks = currentContent
+        const textWithBreaks = contentToSave
           .replace(/<p[^>]*>/gi, '')
           .replace(/<\/p>/gi, '\n')
           .replace(/<br\s*\/?>/gi, '\n')
@@ -367,7 +366,7 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
         contentType = 'text/plain';
       } else {
         // For other files, save just the content with appropriate type
-        blob = new Blob([currentContent], { type: 'text/html' });
+        blob = new Blob([contentToSave], { type: 'text/html' });
         contentType = 'text/html';
       }
       
@@ -378,19 +377,19 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
       const isOneDriveFile = currentFile.path?.startsWith('onedrive://');
       const isDropboxFile = currentFile.path?.startsWith('dropbox://');
       
-      if (isDriveFile && isGoogleDoc) {
+      if (isDriveFile) {
         await ApiService.Drive.updateFile(
           currentFile.file_id,
           fileToUpload,
           currentFile.name
         );
-        
-        // Show success toast
-        toast({
-          title: "Document saved to Google Drive",
-          description: `${currentFile.name} has been updated successfully.`,
-          variant: "success",
-        });
+        if (!isAutosave) {
+          toast({
+            title: "Document saved to Google Drive",
+            description: `${currentFile.name} has been updated successfully.`,
+            variant: "success",
+          });
+        }
         
         // Call save complete callback if provided
         if (onSaveComplete) {
@@ -402,13 +401,13 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
           fileToUpload,
           currentFile.name
         );
-        
-        // Show success toast
-        toast({
-          title: "Document saved to OneDrive",
-          description: `${currentFile.name} has been updated successfully.`,
-          variant: "success",
-        });
+        if (!isAutosave) {
+          toast({
+            title: "Document saved to OneDrive",
+            description: `${currentFile.name} has been updated successfully.`,
+            variant: "success",
+          });
+        }
         
         // Call save complete callback if provided
         if (onSaveComplete) {
@@ -421,11 +420,13 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
           currentFile.name
         );
 
-        toast({
-          title: "Document saved to Dropbox",
-          description: `${currentFile.name} has been updated successfully.`,
-          variant: "success",
-        });
+        if (!isAutosave) {
+          toast({
+            title: "Document saved to Dropbox",
+            description: `${currentFile.name} has been updated successfully.`,
+            variant: "success",
+          });
+        }
 
         if (onSaveComplete) {
           onSaveComplete();
@@ -442,12 +443,13 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
           throw new Error('Failed to update file');
         }
 
-        // Show success toast
-        toast({
-          title: "Document saved successfully",
-          description: `${currentFile.name} has been saved.`,
-          variant: "success",
-        });
+        if (!isAutosave) {
+          toast({
+            title: "Document saved successfully",
+            description: `${currentFile.name} has been saved.`,
+            variant: "success",
+          });
+        }
         
         // Call save complete callback if provided
         if (onSaveComplete) {
@@ -459,7 +461,18 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
     } finally {
       setSaving(false);
     }
-  };
+  }, [currentFile, onSaveComplete, toast]);
+
+  const {
+    status: autosaveStatus,
+    lastSavedAt,
+    saveNow: handleSave,
+  } = useDocumentAutosave({
+    content: currentContent,
+    canSave: !!currentFile.file_id && !!currentContent,
+    fileKey: `${currentFile.file_id}|${currentFile.name}`,
+    saveDocument: saveDocumentContent,
+  });
 
   // Handle share button click
   const handleShare = useCallback(() => {
@@ -526,6 +539,8 @@ export function DocumentViewer({ file, onSaveComplete }: DocumentViewerProps) {
             onShareDocument={handleShare}
             saving={saving}
             canSave={!!currentContent}
+            autosaveStatus={autosaveStatus}
+            lastSavedAt={lastSavedAt}
           />
         ) : (
           <div className="flex items-center justify-center h-full">

@@ -37,15 +37,15 @@ export function TranscriptPanel({
   onSegmentClick
 }: TranscriptPanelProps) {
   return (
-    <div className="min-h-0 w-full flex-shrink-0 lg:w-[22rem] lg:min-w-80">
+    <div className="min-h-0 w-full flex-shrink-0 lg:h-full lg:w-[22rem] lg:min-w-80">
       {isTranscriptionLoading ? (
-        <Card className="overflow-hidden border-border bg-card shadow-sm">
-          <div className="flex items-center justify-center p-10">
+        <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-none border-border bg-card shadow-sm">
+          <div className="flex min-h-0 flex-1 items-center justify-center p-10">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-label="Loading transcript" />
           </div>
         </Card>
       ) : allSegments.length > 0 ? (
-        <Card className="flex h-full min-h-0 flex-col overflow-hidden border-border bg-card shadow-sm">
+        <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-none border-border bg-card shadow-sm">
           <TranscriptHeader
             searchQuery={searchQuery}
             searchMatches={searchMatches}
@@ -67,7 +67,7 @@ export function TranscriptPanel({
                   key={segment.id || index}
                   data-transcript-segment-id={segment.id}
                   data-segment-start={Math.floor(segment.startTime)}
-                  className={`w-full rounded-md px-2.5 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border ${
+                  className={`w-full rounded-none px-2.5 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border ${
                     isActiveSearchMatch
                       ? 'bg-muted ring-1 ring-inset ring-border shadow-sm'
                       : isActive
@@ -81,7 +81,7 @@ export function TranscriptPanel({
                 >
                   <div className="flex items-start gap-2.5">
                     <div className="flex-shrink-0 pt-0.5">
-                      <Badge variant="outline" className="bg-background px-1.5 py-0 text-[10px] font-medium tabular-nums text-muted-foreground" aria-hidden="true">
+                      <Badge variant="outline" className="rounded-none bg-background px-1.5 py-0 text-[10px] font-medium tabular-nums text-muted-foreground" aria-hidden="true">
                         {formatTimestamp(segment.startTime)}
                       </Badge>
                     </div>
@@ -105,7 +105,7 @@ export function TranscriptPanel({
           </div>
         </Card>
       ) : transcriptionFullText ? (
-        <Card className="flex h-full min-h-0 flex-col overflow-hidden border-border bg-card shadow-sm">
+        <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-none border-border bg-card shadow-sm">
           <TranscriptHeader
             searchQuery={searchQuery}
             searchMatches={searchMatches}
@@ -186,7 +186,7 @@ function TranscriptHeader({
             }}
             placeholder="Search transcript"
             variant="muted"
-            className="h-8 pl-7 pr-8 text-sm"
+            className="h-8 rounded-none pl-7 pr-8 text-sm"
             aria-label="Search transcript"
           />
           {hasSearchQuery && (
@@ -194,7 +194,7 @@ function TranscriptHeader({
               type="button"
               size="icon-xs"
               variant="ghost"
-              className="absolute right-0.5 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-0.5 top-1/2 h-7 w-7 -translate-y-1/2 rounded-none text-muted-foreground hover:text-foreground"
               onClick={() => onSearchQueryChange('')}
               aria-label="Clear transcript search"
             >
@@ -211,6 +211,7 @@ function TranscriptHeader({
             size="icon-xs"
             variant="ghost"
             disabled={matchCount === 0}
+            className="rounded-none"
             onClick={() => onSearchNavigate('previous')}
             aria-label="Previous transcript match"
           >
@@ -221,6 +222,7 @@ function TranscriptHeader({
             size="icon-xs"
             variant="ghost"
             disabled={matchCount === 0}
+            className="rounded-none"
             onClick={() => onSearchNavigate('next')}
             aria-label="Next transcript match"
           >
@@ -252,7 +254,7 @@ function renderHighlightedTranscriptText(
       <mark
         key={match.id}
         data-transcript-match-index={match.index}
-        className={`rounded-sm px-0.5 ${
+        className={`rounded-none px-0.5 ${
           match.index === activeSearchMatchIndex
             ? 'bg-muted text-foreground ring-1 ring-border'
             : 'bg-muted/70 text-foreground'

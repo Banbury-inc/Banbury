@@ -62,6 +62,16 @@ let recordingStatus: RecordingStatus = {
 let detectedMeetings: MeetingWindow[] = []
 let mainWindow: BrowserWindow | null = null
 
+function removeDetectedMeeting(windowId: string | null | undefined): MeetingWindow | null {
+  if (!windowId) return null
+
+  const meeting = detectedMeetings.find(m => m.id === windowId)
+  if (!meeting) return null
+
+  detectedMeetings = detectedMeetings.filter(m => m.id !== windowId)
+  return meeting
+}
+
 // Recall AI SDK interface (dynamically imported)
 interface RecallAiSDKInterface {
   init: (config: RecallSDKConfig) => Promise<void>
@@ -396,10 +406,7 @@ function setupEventListeners(): void {
   RecallAiSdk.addEventListener('meeting-ended', (evt: unknown) => {
     const event = evt as { window: MeetingWindow }
     
-    // Remove from detected meetings
-    const beforeCount = detectedMeetings.length
-    detectedMeetings = detectedMeetings.filter(m => m.id !== event.window.id)
-    const afterCount = detectedMeetings.length
+    removeDetectedMeeting(event.window.id)
     
     // Stop recording if this meeting was being recorded
     if (recordingStatus.isRecording && recordingStatus.windowId === event.window.id) {
@@ -435,6 +442,8 @@ function setupEventListeners(): void {
   // Recording stopped event
   RecallAiSdk.addEventListener('recording-stopped', (evt: unknown) => {
     const event = evt as RecordingStoppedEvent
+    const stoppedWindowId = event.windowId || recordingStatus.windowId
+    const stoppedMeeting = removeDetectedMeeting(stoppedWindowId)
     
     recordingStatus = {
       isRecording: false,
@@ -445,6 +454,7 @@ function setupEventListeners(): void {
     
     // Notify renderer process
     sendToRenderer('desktop-recording:recording-stopped', event)
+    if (stoppedMeeting) sendToRenderer('desktop-recording:meeting-ended', stoppedMeeting)
   })
   
   // Recording error event
@@ -621,6 +631,7 @@ async function stopRecording(windowId: string): Promise<{ success: boolean; erro
     
     // Keep recording status for a moment to track upload state
     const previousWindowId = recordingStatus.windowId
+    const stoppedMeeting = removeDetectedMeeting(actualWindowId)
     
     // Update status to indicate we're now uploading, not recording
     recordingStatus = {
@@ -636,6 +647,7 @@ async function stopRecording(windowId: string): Promise<{ success: boolean; erro
       reason: 'manual',
       message: 'Recording stopped, upload started'
     })
+    if (stoppedMeeting) sendToRenderer('desktop-recording:meeting-ended', stoppedMeeting)
     
     return { success: true }
   } catch (error) {

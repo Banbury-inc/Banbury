@@ -43,8 +43,12 @@ import { createSheetChangeHandler } from './handlers/handle-sheet-change';
 import { createDeleteSheetHandler } from './handlers/handle-delete-sheet';
 import { createDuplicateSheetHandler } from './handlers/handle-duplicate-sheet';
 import { createCellRenderer } from './handlers/handle-cell-renderer';
+import { getSelectionFontSize } from './handlers/handle-selection-font-size';
+import type { SpreadsheetAutosaveStatus } from './handlers/use-spreadsheet-autosave';
 // Register all Handsontable modules
 registerAllModules();
+
+const DEFAULT_FONT_SIZE = 12;
 
 interface CSVEditorProps {
   src: string;
@@ -68,6 +72,8 @@ interface CSVEditorProps {
   onSheetsLoaded?: (sheets: SheetData[], activeSheetIndex: number) => void;
   saving?: boolean;
   canSave?: boolean;
+  autosaveStatus?: SpreadsheetAutosaveStatus;
+  lastSavedAt?: Date | null;
 }
 
 const CSVEditor: React.FC<CSVEditorProps> = ({
@@ -80,8 +86,11 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   onFormattingChange,
   onSaveDocument,
   onDownloadDocument,
+  onSheetsLoaded,
   saving = false,
   canSave = false,
+  autosaveStatus,
+  lastSavedAt,
 }) => {
   const [data, setData] = useState<any[][]>([
     ['', '', '', '']
@@ -90,7 +99,7 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [containerHeight, setContainerHeight] = useState(600);
-  const [fontSize, setFontSize] = useState<number>(12);
+  const [fontSize, setFontSize] = useState<number>(DEFAULT_FONT_SIZE);
   const hotTableRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastSelectionRef = useRef<[number, number, number, number] | null>(null);
@@ -245,6 +254,8 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
   onContentChangeRef.current = onContentChange;
   const onFormattingChangeRef = useRef(onFormattingChange);
   onFormattingChangeRef.current = onFormattingChange;
+  const onSheetsLoadedRef = useRef(onSheetsLoaded);
+  onSheetsLoadedRef.current = onSheetsLoaded;
 
   useEffect(() => {
     const handlerParams = {
@@ -489,13 +500,26 @@ const CSVEditor: React.FC<CSVEditorProps> = ({
     }), [cellTypeMeta, setCellTypeMeta, setHasChanges, onContentChange]
   );
 
-  const { handleFontSize, handleFontSizeChange, handleFontSizeIncrement, handleFontSizeDecrement } = useMemo(() => 
+  const { handleFontSizeChange, handleFontSizeIncrement, handleFontSizeDecrement } = useMemo(() => 
     createFontHandlers({
       fontSize,
       setFontSize,
       applyCellStyle
     }), [fontSize, setFontSize, applyCellStyle]
   );
+
+  const handleSelectionEnd = useCallback((row: number, col: number, row2: number, col2: number) => {
+    const selection: [number, number, number, number] = [row, col, row2, col2];
+    lastSelectionRef.current = selection;
+
+    if (row < 0 || col < 0) return;
+
+    setFontSize(getSelectionFontSize({
+      cellStyles,
+      fallbackFontSize: DEFAULT_FONT_SIZE,
+      selection
+    }));
+  }, [cellStyles]);
 
   const { handleCopy, handlePaste, handleCut, handleSelectAll } = useMemo(() => 
     createCopyPasteHandlers({
@@ -655,11 +679,17 @@ const searchFieldKeyupCallback = useCallback(
       onSheetsLoaded: (sheets, initialActiveIndex) => {
         setAllSheets(sheets);
         setActiveSheetIndex(initialActiveIndex);
+        onSheetsLoadedRef.current?.(sheets, initialActiveIndex);
       }
     });
 
     loadCSVContent();
   }, []);
+
+  useEffect(() => {
+    if (allSheets.length === 0) return
+    onSheetsLoadedRef.current?.(allSheets, activeSheetIndex)
+  }, [activeSheetIndex, allSheets])
 
   // Listen for conditional formatting loaded from XLSX metadata sheet
   useEffect(() => {
@@ -1191,6 +1221,8 @@ const searchFieldKeyupCallback = useCallback(
         onDownloadDocument={onDownloadDocument}
         saving={saving}
         canSave={canSave}
+        autosaveStatus={autosaveStatus}
+        lastSavedAt={lastSavedAt}
       />
 
       {/* Removed separate conditional formatting control bar; functionality moved into toolbar popover */}
@@ -1241,7 +1273,7 @@ const searchFieldKeyupCallback = useCallback(
             selectionMode="multiple"
             search={true}
             afterChange={handleDataChange}
-            afterSelectionEnd={(r: number, c: number, r2: number, c2: number) => { lastSelectionRef.current = [r,c,r2,c2]; }}
+            afterSelectionEnd={handleSelectionEnd}
             afterColumnResize={(currentColumn: number, newSize: number) => {
               setColumnWidths(prev => ({
                 ...prev,

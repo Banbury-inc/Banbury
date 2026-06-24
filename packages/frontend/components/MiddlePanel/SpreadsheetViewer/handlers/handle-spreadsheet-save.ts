@@ -12,7 +12,6 @@ interface SaveSpreadsheetParams {
     variant: 'success' | 'destructive' | 'error';
   }) => void;
   setError: (error: string | null) => void;
-  documentUrl: string | null;
   cellFormats?: {[key: string]: {className?: string}};
   cellStyles?: {[key: string]: React.CSSProperties};
   cellTypeMeta?: {[key: string]: { type: 'dropdown' | 'checkbox' | 'numeric' | 'date' | 'text'; source?: string[]; numericFormat?: { pattern?: string; culture?: string }; dateFormat?: string }};
@@ -22,6 +21,7 @@ interface SaveSpreadsheetParams {
   cellLinks?: {[key: string]: string};
   allSheets?: SheetData[];
   activeSheetIndex?: number;
+  isAutosave?: boolean;
 }
 
 // Convert table data to XLSX blob using ExcelJS with formatting
@@ -387,7 +387,6 @@ export async function handleSpreadsheetSave({
   onSaveComplete,
   toast,
   setError,
-  documentUrl,
   cellFormats,
   cellStyles,
   cellTypeMeta,
@@ -395,7 +394,8 @@ export async function handleSpreadsheetSave({
   conditionalFormatting,
   cellLinks,
   allSheets,
-  activeSheetIndex
+  activeSheetIndex,
+  isAutosave = false
 }: SaveSpreadsheetParams): Promise<void> {
   if (!currentFile.file_id) return;
   if (!latestData || latestData.length === 0) return;
@@ -406,11 +406,6 @@ export async function handleSpreadsheetSave({
     const isOneDriveFile = currentFile.path?.startsWith('onedrive://');
     const isDropboxFile = currentFile.path?.startsWith('dropbox://');
     const isGoogleSheet = currentFile.mimeType?.includes('vnd.google-apps.spreadsheet');
-    
-    // Clean up the current blob URL before saving
-    if (documentUrl && documentUrl.startsWith('blob:')) {
-      window.URL.revokeObjectURL(documentUrl);
-    }
     
     // Create XLSX blob - use multi-sheet if available, otherwise single sheet
     let xlsxBlob: Blob;
@@ -446,21 +441,23 @@ export async function handleSpreadsheetSave({
     }
     
     // Save to Google Drive, OneDrive, or S3 depending on file type
-    if (isDriveFile && isGoogleSheet) {
+    if (isDriveFile) {
       await ApiService.Drive.updateFile(
         currentFile.file_id,
         xlsxBlob,
         fileName
       );
       
-      // Call the save complete callback to refresh the sidebar
-      onSaveComplete?.();
-      // Show success toast
-      toast({
-        title: "Spreadsheet saved to Google Drive",
-        description: "Your Google Sheet has been updated successfully.",
-        variant: "success",
-      });
+      if (!isAutosave) {
+        onSaveComplete?.();
+        toast({
+          title: "Spreadsheet saved to Google Drive",
+          description: isGoogleSheet
+            ? "Your Google Sheet has been updated successfully."
+            : "Your spreadsheet has been updated successfully.",
+          variant: "success",
+        });
+      }
     } else if (isOneDriveFile) {
       await ApiService.OneDrive.updateFile(
         currentFile.file_id,
@@ -468,14 +465,14 @@ export async function handleSpreadsheetSave({
         fileName
       );
       
-      // Call the save complete callback to refresh the sidebar
-      onSaveComplete?.();
-      // Show success toast
-      toast({
-        title: "Spreadsheet saved to OneDrive",
-        description: "Your spreadsheet has been updated successfully.",
-        variant: "success",
-      });
+      if (!isAutosave) {
+        onSaveComplete?.();
+        toast({
+          title: "Spreadsheet saved to OneDrive",
+          description: "Your spreadsheet has been updated successfully.",
+          variant: "success",
+        });
+      }
     } else if (isDropboxFile) {
       await ApiService.Dropbox.updateFile(
         currentFile.file_id,
@@ -483,12 +480,14 @@ export async function handleSpreadsheetSave({
         fileName
       );
 
-      onSaveComplete?.();
-      toast({
-        title: "Spreadsheet saved to Dropbox",
-        description: "Your spreadsheet has been updated successfully.",
-        variant: "success",
-      });
+      if (!isAutosave) {
+        onSaveComplete?.();
+        toast({
+          title: "Spreadsheet saved to Dropbox",
+          description: "Your spreadsheet has been updated successfully.",
+          variant: "success",
+        });
+      }
     } else {
       // Use updateS3File endpoint to update the file content
       const updateResult = await ApiService.Files.updateS3File(
@@ -498,14 +497,14 @@ export async function handleSpreadsheetSave({
       );
       
       if (updateResult.success) {
-        // Call the save complete callback to refresh the sidebar
-        onSaveComplete?.();
-        // Show success toast
-        toast({
-          title: "Spreadsheet saved successfully",
-          description: "Your spreadsheet has been saved.",
-          variant: "success",
-        });
+        if (!isAutosave) {
+          onSaveComplete?.();
+          toast({
+            title: "Spreadsheet saved successfully",
+            description: "Your spreadsheet has been saved.",
+            variant: "success",
+          });
+        }
       } else {
         throw new Error('Update failed');
       }
@@ -513,13 +512,14 @@ export async function handleSpreadsheetSave({
     
   } catch (err) {
     console.error('Save error:', err);
-    setError('Failed to save spreadsheet');
-    // Show error toast notification
-    toast({
-      title: "Failed to save spreadsheet",
-      description: "There was an error saving your spreadsheet. Please try again.",
-      variant: "error",
-    });
+    if (!isAutosave) {
+      setError('Failed to save spreadsheet');
+      toast({
+        title: "Failed to save spreadsheet",
+        description: "There was an error saving your spreadsheet. Please try again.",
+        variant: "error",
+      });
+    }
     throw err;
   }
 }

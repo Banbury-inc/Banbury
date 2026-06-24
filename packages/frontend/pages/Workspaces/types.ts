@@ -286,6 +286,7 @@ export interface Panel {
 }
 
 export type SplitDirection = 'horizontal' | 'vertical'
+export type SplitPlacement = 'before' | 'after'
 
 export interface PanelGroup {
   id: string

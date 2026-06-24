@@ -208,6 +208,9 @@ export const renderPanel = ({
       
       {/* Panel Content */}
       <div className="flex-1 overflow-hidden relative">
+        {dragState.isDragging && (
+          <div className="absolute inset-0 z-[9000] cursor-grabbing bg-transparent" />
+        )}
         {panel.tabs.length > 0 ? (
           <>
             {/* Render all tabs but hide inactive ones to preserve state */}
@@ -752,7 +755,7 @@ export const renderPanel = ({
             <Image 
               src={BanburyLogo} 
               alt="Banbury" 
-              className="opacity-20 dark:opacity-15 mb-4"
+              className="opacity-20 dark:opacity-15 mb-4 invert dark:invert-0"
               width={160}
               height={160}
               priority

@@ -17,6 +17,7 @@ import { Underline } from '@tiptap/extension-underline';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { StarterKit } from '@tiptap/starter-kit';
 import { TextStyle } from '@tiptap/extension-text-style';
+import { FontSize } from '@tiptap/extension-text-style/font-size';
 import { FontFamily } from '@tiptap/extension-font-family';
 import { Insertion, Deletion } from '../../../extensions/TrackChanges';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -56,6 +57,9 @@ import { RedoButton } from './components/RedoButton';
 import { ImageButton } from './components/ImageButton';
 import { DocumentActionButtons } from './components/DocumentActionButtons';
 import { OverflowButton } from './components/OverflowButton';
+import { FontFamilyButton } from './components/FontFamilyButton';
+import { FontSizeButton } from './components/FontSizeButton';
+import type { DocumentAutosaveStatus } from './handlers/use-document-autosave';
 
 interface AITiptapEditorProps {
   initialContent?: string;
@@ -67,6 +71,8 @@ interface AITiptapEditorProps {
   onShare?: () => void;
   saving?: boolean;
   canSave?: boolean;
+  autosaveStatus?: DocumentAutosaveStatus;
+  lastSavedAt?: Date | null;
 }
 
 export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
@@ -78,7 +84,9 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
   onDownload,
   onShare,
   saving = false,
-  canSave = false
+  canSave = false,
+  autosaveStatus,
+  lastSavedAt
 }) => {
   const { setEditor, registerAICommands } = useTiptapAIContext();
 
@@ -96,7 +104,6 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
 
   // Image dropdown local search state
   const [isImageMenuOpen, setIsImageMenuOpen] = useState(false)
-  const [selectedFont, setSelectedFont] = useState<string | null>(null)
 
   // Close context menu when clicking outside
   useEffect(() => {
@@ -120,6 +127,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
       }),
       HorizontalRule,
       TextStyle,
+      FontSize,
       FontFamily,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
@@ -221,16 +229,21 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
         return
       }
       
-      // Measure overflow button width (always visible)
+      // Measure always-visible toolbar controls
       const overflowButton = leftContainer.querySelector('[title="More tools"]') as HTMLElement
       const overflowButtonWidth = overflowButton?.offsetWidth || 32
+      const fontFamilyButton = leftContainer.querySelector('[data-toolbar="font-family"]') as HTMLElement
+      const fontFamilyButtonWidth = fontFamilyButton?.offsetWidth || 100
+      const fontSizeControl = leftContainer.querySelector('[title="Font size"]') as HTMLElement
+      const fontSizeControlWidth = fontSizeControl?.offsetWidth || 88
       
       // Button width and gap
       const buttonWidth = 32
       const gap = 4 // gap-1 = 4px
+      const reservedWidth = overflowButtonWidth + fontFamilyButtonWidth + fontSizeControlWidth + gap * 4
       
-      // Calculate available space for toolbar buttons (reserve space for overflow button)
-      const available = Math.max(0, containerWidth - overflowButtonWidth - gap)
+      // Calculate available space for responsive toolbar buttons
+      const available = Math.max(0, containerWidth - reservedWidth)
       
       let used = 0
       const visible: string[] = []
@@ -424,9 +437,9 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
             {visibleButtons.includes('redo') && (
               <RedoButton editor={editor} onClick={handlers.redo} />
             )}
-            {visibleButtons.includes('redo') && (
-              <div className="w-px h-6 bg-border mx-1" />
-            )}
+            <FontFamilyButton editor={editor} />
+            <FontSizeButton editor={editor} />
+            <div className="w-px h-6 bg-border mx-1" />
             {visibleButtons.includes('bold') && (
               <BoldButton editor={editor} onClick={handlers.toggleBold} />
             )}
@@ -484,8 +497,6 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
             handlers={handlers}
             overflowOpen={overflowOpen}
             setOverflowOpen={setOverflowOpen}
-            selectedFont={selectedFont}
-            setSelectedFont={setSelectedFont}
           />
         </div>
 
@@ -497,6 +508,8 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
             onDownload={onDownload}
             saving={saving}
             canSave={canSave}
+            autosaveStatus={autosaveStatus}
+            lastSavedAt={lastSavedAt}
           />
         </div>
       </div>
