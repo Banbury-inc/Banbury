@@ -243,18 +243,6 @@ export default function MeetingAgent() {
 
       setAgentStatus(statusResult)
       setSessions(sessionsResult.sessions)
-      
-      sessionsResult.sessions.forEach((session, index) => {
-
-       ApiService.MeetingAgent.checkAndUploadSessions() 
-        
-        // Debug participant data structure
-        if (session.participants && session.participants.length > 0) {
-          session.participants.forEach((participant, pIndex) => {
-          })
-        } else {
-        }
-      })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load meeting agent data'
       setError(errorMessage)

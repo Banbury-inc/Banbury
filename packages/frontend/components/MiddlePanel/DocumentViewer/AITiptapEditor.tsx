@@ -81,7 +81,6 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
   canSave = false
 }) => {
   const { setEditor, registerAICommands } = useTiptapAIContext();
-  const [selection, setSelection] = useState<{ from: number; to: number; text: string } | null>(null);
 
   const [contextMenu, setContextMenu] = useState<{
     isOpen: boolean;
@@ -169,11 +168,6 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
       if (onContentChange && !isShowingPreview()) {
         onContentChange(editor.getHTML());
       }
-    },
-    onSelectionUpdate: ({ editor }) => {
-      const { from, to } = editor.state.selection;
-      const text = editor.state.doc.textBetween(from, to);
-      setSelection({ from, to, text });
     },
     editorProps: {
       attributes: {
@@ -416,8 +410,6 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   };
 
-  const hasSelection = selection?.text && selection.text.trim().length > 0;
-
   return (
     <div className={cn(styles['simple-tiptap-container'], className)}>
       {/* Toolbar */}
@@ -514,13 +506,6 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
         className={styles['simple-tiptap-content']}
         onContextMenu={handleContextMenu}
       />
-      
-      {/* Status Bar */}
-      {hasSelection && (
-        <div className="border-t px-3 py-2 text-xs text-muted-foreground bg-muted/50">
-          Selected: {selection?.text.length} characters
-        </div>
-      )}
 
       {/* Table Context Menu */}
       {contextMenu.isOpen && contextMenu.isTable && (

@@ -25,6 +25,7 @@ import DocsFeatureTab from './components/Tabs/DocsFeatureTab'
 import SpreadsheetsFeatureTab from './components/Tabs/SpreadsheetsFeatureTab'
 import FoldersFeatureTab from './components/Tabs/FoldersFeatureTab'
 import BrowseFeatureTab from './components/Tabs/BrowseFeatureTab'
+import MapsFeatureTab from './components/Tabs/MapsFeatureTab'
 import CalendarFeatureTab from './components/Tabs/CalendarFeatureTab'
 import CanvasFeatureTab from './components/Tabs/CanvasFeatureTab'
 import GmailFeatureTab from './components/Tabs/GmailFeatureTab'
@@ -67,6 +68,7 @@ const DOCS_SECTION_IDS = [
   'spreadsheets-feature',
   'folders-feature',
   'browse-feature',
+  'maps-feature',
   'calendar-feature',
   'canvas-feature',
   'gmail-feature',
@@ -102,8 +104,8 @@ const Docs = () => {
   }, [])
 
   return (
-    <div className="flex flex-col overflow-visible bg-background">
-      <div className="sticky top-0 z-[100] flex items-center border-b border-border bg-muted/30 px-4 py-3 md:hidden">
+    <div className="flex flex-col overflow-visible bg-card">
+      <div className="sticky top-0 z-[100] flex items-center border-b border-border bg-card px-4 py-3 md:hidden">
         <Button
           type="button"
           variant="ghost"
@@ -177,6 +179,8 @@ const Docs = () => {
             {activeSection === 'folders-feature' && <FoldersFeatureTab />}
 
             {activeSection === 'browse-feature' && <BrowseFeatureTab />}
+
+            {activeSection === 'maps-feature' && <MapsFeatureTab />}
 
             {activeSection === 'canvas-feature' && <CanvasFeatureTab />}
 

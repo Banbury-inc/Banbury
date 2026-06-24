@@ -6,6 +6,7 @@ import { DocumentViewer } from '../../../components/MiddlePanel/DocumentViewer/D
 import { EmailComposer } from '../../../components/MiddlePanel/EmailViewer/EmailComposer';
 import { EmailViewer } from '../../../components/MiddlePanel/EmailViewer/EmailViewer';
 import { ImageViewer } from '../../../components/MiddlePanel/ImageViewer/ImageViewer';
+import { ImageUrlViewer } from '../../../components/MiddlePanel/ImageViewer/ImageUrlViewer';
 import { CalendarViewer } from '../../../components/MiddlePanel/CalendarViewer/CalendarViewer';
 import { FileBrowserViewer } from '../../../components/MiddlePanel/FileBrowserViewer/FileBrowserViewer';
 import { EmailInboxViewer } from '../../../components/MiddlePanel/EmailInboxViewer/EmailInboxViewer';
@@ -23,7 +24,7 @@ import TldrawViewer from '../../../components/MiddlePanel/CanvasViewer/TldrawVie
 import { PowerPointViewer } from '../../../components/MiddlePanel/PowerPointViewer/PowerPointViewer';
 import { GoogleDriveViewer } from '../../../components/MiddlePanel/GoogleDriveViewer';
 import { CalendarEvent } from '../../../../backend/api/calendar/calendar';
-import { Panel, DragState, UserInfo } from '../types';
+import { Panel, DragState, UserInfo, ImageUrlTabPayload } from '../types';
 import { FileSystemItem } from '../../../utils/fileTreeUtils';
 import { Typography } from '../../../components/common/ui/typography';
 import { Kbd, KbdGroup } from '../../../components/common/ui/kbd';
@@ -88,6 +89,7 @@ interface RenderPanelProps {
   // Callbacks for opening content in tabs
   openFileInTabCallback: (file: FileSystemItem, panelId: string) => void;
   openEmailInTabCallback: (email: any, panelId: string) => void;
+  openImageUrlInTabCallback: (image: ImageUrlTabPayload, panelId: string) => void;
   setSelectedFile: (file: FileSystemItem | null) => void;
   setSelectedEmail: (email: any | null) => void;
   toast: any;
@@ -129,6 +131,7 @@ export const renderPanel = ({
   onClearConversation,
   openFileInTabCallback,
   openEmailInTabCallback,
+  openImageUrlInTabCallback,
   setSelectedFile,
   setSelectedEmail,
   toast,
@@ -164,6 +167,7 @@ export const renderPanel = ({
                 else if (t.type === 'database-table') label = t.title;
                 else if (t.type === 'flow') label = t.title;
                 else if (t.type === 'map') label = t.title;
+                else if (t.type === 'image-url') label = t.title;
                 return { id: t.id, label };
               })}
               activeTab={panel.activeTabId || panel.tabs[0]?.id}
@@ -692,6 +696,8 @@ export const renderPanel = ({
                   return (
                     <MapViewer
                       place={tab.place}
+                      highlightedPlaces={tab.highlightedPlaces}
+                      onPlacePhotoOpen={(image) => openImageUrlInTabCallback(image, panel.id)}
                       onPlaceVisited={(visitedPlace) => {
                         setPanelLayout((prev: any) => {
                           const updateMapInLayout = (layout: any): any => {
@@ -721,6 +727,10 @@ export const renderPanel = ({
                       }}
                     />
                   )
+                }
+
+                if (tab.type === 'image-url') {
+                  return <ImageUrlViewer src={tab.imageUrl} alt={tab.alt} />
                 }
 
                 return null;

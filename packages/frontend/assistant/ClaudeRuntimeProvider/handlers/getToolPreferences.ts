@@ -12,6 +12,7 @@ interface ToolPreferences {
   onedrive: boolean;
   notion: boolean;
   meeting_analysis: boolean;
+  map_tools: boolean;
   use_skills: boolean;
   plan_mode: boolean;
   ask_mode: boolean;
@@ -32,6 +33,7 @@ export function getToolPreferences(): ToolPreferences {
     onedrive: false, // Disable OneDrive by default for storage safety
     notion: false, // Disable Notion by default for security
     meeting_analysis: true,
+    map_tools: true,
     use_skills: false, // Disabled by default until API access confirmed
     plan_mode: false, // Disabled by default - use Agent mode
     ask_mode: false, // Disabled by default - use Agent mode
@@ -53,6 +55,7 @@ export function getToolPreferences(): ToolPreferences {
         onedrive: (parsed && typeof parsed.onedrive === 'boolean') ? parsed.onedrive : false,
         notion: (parsed && typeof parsed.notion === 'boolean') ? parsed.notion : false,
         meeting_analysis: (parsed && typeof parsed.meeting_analysis === 'boolean') ? parsed.meeting_analysis : true,
+        map_tools: (parsed && typeof parsed.map_tools === 'boolean') ? parsed.map_tools : true,
         // Auto-enable skills for Anthropic provider
         use_skills: (parsed?.model_provider === 'anthropic'),
         // Plan mode preference

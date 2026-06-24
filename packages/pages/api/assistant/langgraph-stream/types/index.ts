@@ -44,6 +44,8 @@ export interface ToolPreferences {
   msCalendar?: boolean
   // Meeting tools
   meeting_analysis?: boolean
+  // Map tools
+  map_tools?: boolean
   // Development tools
   notion?: boolean
   github?: boolean

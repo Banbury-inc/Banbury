@@ -35,7 +35,7 @@ const DocsLayout = ({ children }: Props): JSX.Element => {
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
-        background: '#000000',
+        background: 'var(--card)',
       }}
     >
       <Header />

@@ -5,12 +5,15 @@ import Image from 'next/image'
 import { Star } from 'lucide-react'
 import { Button } from '../../common/ui/button'
 import { Typography } from '../../common/ui/typography'
+import type { ImageUrlTabPayload } from '../../../pages/Workspaces/types'
 import type { GooglePlaceDetails } from './handlers/googlePlaceDetailsTypes'
 import { buildGooglePlacePhotoProxyUrl } from './handlers/buildGooglePlacePhotoProxyUrl'
 import { formatGooglePlaceReviewPreview } from './handlers/formatGooglePlaceReviewPreview'
+import { handlePlacePhotoClick } from './handlers/handlePlacePhotoClick'
 
 interface SelectedPlaceGoogleEnrichmentProps {
   details: GooglePlaceDetails
+  onPhotoOpen?: (image: ImageUrlTabPayload) => void
 }
 
 function StarRow({ rating }: Readonly<{ rating: number }>) {
@@ -28,7 +31,7 @@ function StarRow({ rating }: Readonly<{ rating: number }>) {
   )
 }
 
-export function SelectedPlaceGoogleEnrichment({ details }: Readonly<SelectedPlaceGoogleEnrichmentProps>) {
+export function SelectedPlaceGoogleEnrichment({ details, onPhotoOpen }: Readonly<SelectedPlaceGoogleEnrichmentProps>) {
   const [expandedReviewIndex, setExpandedReviewIndex] = useState<number | null>(null)
 
   return (
@@ -41,16 +44,23 @@ export function SelectedPlaceGoogleEnrichment({ details }: Readonly<SelectedPlac
           <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
             {details.photos.map((photo, index) => (
               <div key={photo.name} className="w-24 flex-shrink-0 space-y-1">
-                <Image
-                  src={buildGooglePlacePhotoProxyUrl(photo.name)}
-                  alt={details.name ? `${details.name} — photo ${index + 1}` : `Place photo ${index + 1}`}
-                  width={96}
-                  height={96}
-                  unoptimized
-                  loading={index < 3 ? 'eager' : 'lazy'}
-                  decoding="async"
-                  className="aspect-square w-full rounded-md border border-border bg-muted object-cover"
-                />
+                <button
+                  type="button"
+                  className="group block w-full rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  aria-label={`Open ${details.name ? `${details.name} photo` : 'place photo'} ${index + 1}`}
+                  onClick={() => handlePlacePhotoClick({ details, photo, index, onPhotoOpen })}
+                >
+                  <Image
+                    src={buildGooglePlacePhotoProxyUrl(photo.name, { maxWidthPx: 240, maxHeightPx: 240 })}
+                    alt={details.name ? `${details.name} photo ${index + 1}` : `Place photo ${index + 1}`}
+                    width={96}
+                    height={96}
+                    unoptimized
+                    loading={index < 3 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    className="aspect-square w-full rounded-md border border-border bg-muted object-cover transition-transform group-hover:scale-[1.02]"
+                  />
+                </button>
                 {photo.authorAttributions.length > 0 ? (
                   <Typography variant="xs" className="text-[10px] leading-snug text-muted-foreground">
                     {photo.authorAttributions.map((attr, j) => (

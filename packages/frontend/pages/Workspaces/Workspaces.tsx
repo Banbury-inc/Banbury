@@ -27,7 +27,7 @@ import { handleReplyToEmail } from '../../components/LeftPanel/components/EmailT
 import { handleComposeEmail } from '../../components/LeftPanel/components/EmailTab/handlers/handleComposeEmail';
 import { loadConversations, loadConversation, deleteConversation } from './handlers/conversationManagement';
 import { findPanel, getAllTabs, updatePanelActiveTab, addTabToPanel, removeTabFromPanel } from './handlers/panelUtils';
-import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, openAdminInTab, openDatabaseTableInTab, openFlowInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
+import { openFileInTab, openEmailInTab, openTaskInTab, openMeetingInTab, openAdminInTab, openDatabaseTableInTab, openFlowInTab, openMapInTab, openImageUrlInTab, handleCloseTab, handleTabChange } from './handlers/tabManagement';
 import { 
   isDrawioFile, 
   isTldrawFile, 
@@ -67,6 +67,8 @@ import {
   FileTab,
   FlowItem,
   OpenDatabaseTablePayload,
+  ImageUrlTabPayload,
+  MapPlaceLocation,
   Panel,
   SplitDirection,
   PanelGroup,
@@ -83,6 +85,7 @@ import { createWorkspaceFindAndOpenFileHandler, WORKSPACE_FIND_AND_OPEN_FILE_EVE
 import { createKeybindsUpdateHandler, KEYBINDS_UPDATED_EVENT } from './handlers/handleKeybindsUpdate';
 import { createCreateNewAiTabHandler, CREATE_NEW_AI_TAB_EVENT } from './handlers/handleCreateNewAiTab';
 import { createOpenAiPanelHandler, OPEN_AI_PANEL_EVENT } from './handlers/handleOpenAiPanel';
+import { createAssistantOpenMapHandler, ASSISTANT_OPEN_MAP_EVENT } from './handlers/handleAssistantOpenMap';
 import { MobileFileSidebar } from './MobileFileSidebar';
 import { MobileWorkspaceHeader } from './MobileWorkspaceHeader';
 import { MobileAssistantPanel } from './MobileAssistantPanel';
@@ -298,6 +301,40 @@ const Workspaces = (): React.ReactNode => {
     )
   }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout])
 
+  const openMapInTabCallback = useCallback((
+    place: MapPlaceLocation | null = null,
+    targetPanelId: string = activePanelId,
+    highlightedPlaces?: MapPlaceLocation[],
+    title?: string
+  ) => {
+    openMapInTab(
+      place,
+      targetPanelId,
+      activePanelId,
+      panelLayout,
+      getAllTabs,
+      updatePanelActiveTab,
+      addTabToPanel,
+      setActivePanelId,
+      setPanelLayout,
+      highlightedPlaces,
+      title
+    )
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout])
+
+  const openImageUrlInTabCallback = useCallback((image: ImageUrlTabPayload, targetPanelId: string = activePanelId) => {
+    openImageUrlInTab(
+      image,
+      targetPanelId,
+      panelLayout,
+      getAllTabs,
+      updatePanelActiveTab,
+      addTabToPanel,
+      setActivePanelId,
+      setPanelLayout
+    )
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout])
+
   const handleCloseTabCallback = useCallback((tabId: string, panelId: string) => {
     handleCloseTab(tabId, panelId, findPanel, removeTabFromPanel, setPanelLayout, setSelectedFile, setSelectedEmail);
   }, [findPanel, removeTabFromPanel, setPanelLayout, setSelectedFile, setSelectedEmail]);
@@ -423,11 +460,12 @@ const Workspaces = (): React.ReactNode => {
       },
       openFileInTabCallback,
       openEmailInTabCallback,
+      openImageUrlInTabCallback,
       setSelectedFile,
       setSelectedEmail,
       toast,
     });
-  }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmailCallback, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, isDrawioFile, isTldrawFile, isPowerPointFile, panelLayout, setPanelLayout, setDragState, calendarJumpDate, handleCalendarJumpComplete, calendarSelectedEvent, handleCalendarSelectedEventConsumed, selectedFile, selectedEmail, handleEmailSelect, openFileInTabCallback, openEmailInTabCallback, setSelectedFile, setSelectedEmail, toast]);
+  }, [activePanelId, dragState, userInfo, replyToEmail, setActivePanelId, handleTabChangeCallback, handleCloseTabCallback, handleReplyToEmailCallback, triggerSidebarRefresh, extractReplyBody, isImageFile, isPdfFile, isDocumentFile, isSpreadsheetFile, isVideoFile, isCodeFile, isBrowserFile, isDrawioFile, isTldrawFile, isPowerPointFile, panelLayout, setPanelLayout, setDragState, calendarJumpDate, handleCalendarJumpComplete, calendarSelectedEvent, handleCalendarSelectedEventConsumed, selectedFile, selectedEmail, handleEmailSelect, openFileInTabCallback, openEmailInTabCallback, openImageUrlInTabCallback, setSelectedFile, setSelectedEmail, toast]);
   
   // Render panel group (recursive for nested splits)
   const renderPanelGroup = useCallback(
@@ -742,6 +780,16 @@ const Workspaces = (): React.ReactNode => {
     window.addEventListener(ASSISTANT_OPEN_BROWSER_EVENT, handler)
     return () => window.removeEventListener(ASSISTANT_OPEN_BROWSER_EVENT, handler)
   }, [openFileInTabCallback])
+
+  // Listen for assistant-open-map events to open or update the map viewer
+  useEffect(() => {
+    const handler = createAssistantOpenMapHandler({
+      openMapInTabCallback,
+      toast,
+    }) as EventListener
+    window.addEventListener(ASSISTANT_OPEN_MAP_EVENT, handler)
+    return () => window.removeEventListener(ASSISTANT_OPEN_MAP_EVENT, handler)
+  }, [openMapInTabCallback, toast])
 
   // Listen for file sidebar refresh events (from AI file modifications)
   useEffect(() => {

@@ -1,12 +1,14 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
 import type mapboxgl from 'mapbox-gl'
 import type { SearchBoxSuggestion } from '@mapbox/search-js-core'
-import { MapPlaceLocation } from '../../../../pages/Workspaces/types'
+import type { MapPlaceLocation } from '../../../../pages/Workspaces/types'
 import { handleSelectedPlaceClose } from './handleSelectedPlaceClose'
+import { setSelectedPlaceMapMarker } from './setSelectedPlaceMapMarker'
 
 interface HandleMapPlaceClickParams {
   event: mapboxgl.MapMouseEvent
   map: mapboxgl.Map
+  mapbox: typeof mapboxgl
   searchMarkerRef: MutableRefObject<mapboxgl.Marker | null>
   selectedSearchQueryRef: MutableRefObject<string>
   setCurrentLocation: Dispatch<SetStateAction<MapPlaceLocation>>
@@ -90,6 +92,7 @@ function getFeatureCoordinates(feature: ClickableMapFeature, event: mapboxgl.Map
 export function handleMapPlaceClick({
   event,
   map,
+  mapbox,
   searchMarkerRef,
   selectedSearchQueryRef,
   setCurrentLocation,
@@ -131,6 +134,7 @@ export function handleMapPlaceClick({
   setSearchValue(name)
   setCurrentLocation(location)
   setSelectedPlace(location)
+  setSelectedPlaceMapMarker(map, mapbox, searchMarkerRef, location.longitude, location.latitude)
   map.flyTo({
     center: [location.longitude, location.latitude],
     zoom: location.zoom,

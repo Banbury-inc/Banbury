@@ -13,6 +13,7 @@ export async function handleFavoritePlace({
     longitude: location.longitude,
     latitude: location.latitude,
     zoom: location.zoom,
+    drawings: location.drawings,
   })
 
   const favoritePlace = savedPlace.is_favorite

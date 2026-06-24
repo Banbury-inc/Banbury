@@ -1,5 +1,5 @@
 import { ApiService } from '../apiService'
-import { MapPlace } from '../../../frontend/pages/Workspaces/types'
+import type { MapDrawingFeatureCollection, MapPlace } from '../../../frontend/pages/Workspaces/types'
 
 const BASE = '/maps'
 
@@ -8,6 +8,7 @@ interface SavePlaceInput {
   longitude: number
   latitude: number
   zoom: number
+  drawings?: MapDrawingFeatureCollection
 }
 
 export default class Maps {
@@ -26,6 +27,13 @@ export default class Maps {
 
   static async renamePlace(placeId: string, name: string): Promise<MapPlace> {
     return ApiService.put<MapPlace>(`${BASE}/places/${placeId}/`, { name })
+  }
+
+  static async updateDrawings(
+    placeId: string,
+    drawings: MapDrawingFeatureCollection,
+  ): Promise<MapPlace> {
+    return ApiService.put<MapPlace>(`${BASE}/places/${placeId}/`, { drawings })
   }
 
   static async deletePlace(placeId: string): Promise<{ success: boolean; message: string }> {

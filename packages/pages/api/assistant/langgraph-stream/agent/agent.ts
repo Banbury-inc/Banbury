@@ -143,6 +143,7 @@ import { createPlanTool } from "./tools/createPlanTool";
 import { spawnSubagentsTool } from "./tools/spawnSubagentsTool";
 import { codeEditOpenFileTool } from "./tools/codeEditOpenFileTool";
 import { meetingAnalysisTool } from "./tools/meetingAnalysisTool";
+import { mapFavoritePlacesTool, mapHighlightPlacesTool, mapOpenViewerTool } from "./tools/mapTools";
 
 interface AgentState {
   messages: BaseMessage[];
@@ -401,6 +402,9 @@ const tools = [
   searchFilesTool,
   getCurrentDateTimeTool,
   meetingAnalysisTool,
+  mapOpenViewerTool,
+  mapHighlightPlacesTool,
+  mapFavoritePlacesTool,
   writeWorkspaceFileTool,
   executeScriptTool,
   codeEditOpenFileTool,

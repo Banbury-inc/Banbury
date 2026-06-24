@@ -201,11 +201,50 @@ export interface MapPlace {
   latitude: number
   zoom: number
   is_favorite: boolean
+  drawings?: MapDrawingFeatureCollection
   last_visited_at?: string
   created_at?: string
 }
 
+export type MapDrawingGeometryType = 'Point' | 'LineString' | 'Polygon'
+
+export type MapDrawingCoordinates =
+  | [number, number]
+  | [number, number][]
+  | [number, number][][]
+
+export interface MapDrawingGeometry {
+  type: MapDrawingGeometryType
+  coordinates: MapDrawingCoordinates
+}
+
+export interface MapDrawingMeasurement {
+  label: string
+  value: number
+  unit: 'm' | 'km' | 'm2' | 'km2'
+}
+
+export interface MapDrawingProperties {
+  id?: string
+  label?: string
+  measurement?: MapDrawingMeasurement
+  [key: string]: unknown
+}
+
+export interface MapDrawingFeature {
+  id?: string
+  type: 'Feature'
+  geometry: MapDrawingGeometry
+  properties: MapDrawingProperties
+}
+
+export interface MapDrawingFeatureCollection {
+  type: 'FeatureCollection'
+  features: MapDrawingFeature[]
+}
+
 export interface MapPlaceLocation {
+  id?: string
   name?: string
   address?: string
   categories?: string[]
@@ -213,6 +252,7 @@ export interface MapPlaceLocation {
   longitude: number
   latitude: number
   zoom: number
+  drawings?: MapDrawingFeatureCollection
 }
 
 export interface MapTab {
@@ -220,9 +260,24 @@ export interface MapTab {
   title: string
   type: 'map'
   place?: MapPlaceLocation | null
+  highlightedPlaces?: MapPlaceLocation[]
 }
 
-export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab | FileBrowserTab | EmailInboxTab | TerminalTab | DatabaseTableTab | FlowTab | MapTab
+export interface ImageUrlTab {
+  id: string
+  title: string
+  type: 'image-url'
+  imageUrl: string
+  alt: string
+}
+
+export interface ImageUrlTabPayload {
+  imageUrl: string
+  title: string
+  alt: string
+}
+
+export type WorkspaceTab = FileTab | EmailTab | CalendarTab | AiTab | TaskTab | MeetingTab | AdminTab | FileBrowserTab | EmailInboxTab | TerminalTab | DatabaseTableTab | FlowTab | MapTab | ImageUrlTab
 
 export interface Panel {
   id: string
