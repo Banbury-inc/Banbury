@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { DEFAULT_VIDEO_GENERATION_MODEL_ID } from '../../../frontend/components/RightPanel/composer/handlers/getMediaModelDisplayName'
 
 interface GenerateVideoRequestBody {
   prompt: string
@@ -304,7 +305,7 @@ export default async function handler(
       return
     }
 
-    const chosenModel = model || 'sora-1.0'
+    const chosenModel = model || DEFAULT_VIDEO_GENERATION_MODEL_ID
     const chosenDuration = duration || 5
     const chosenResolution = resolution || '1080p'
 

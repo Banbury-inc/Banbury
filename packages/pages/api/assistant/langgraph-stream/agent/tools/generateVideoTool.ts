@@ -2,6 +2,7 @@ import { tool } from "@langchain/core/tools"
 import { z } from "zod"
 import { CONFIG } from "../../../../../../frontend/config/config"
 import { getServerContextValue } from "../../../../../../frontend/assistant/langraph/serverContext"
+import { DEFAULT_VIDEO_GENERATION_MODEL_ID } from "../../../../../../frontend/components/RightPanel/composer/handlers/getMediaModelDisplayName"
 
 function isOpenAIModel(model: string): boolean {
   return model.startsWith('sora')
@@ -337,7 +338,7 @@ export const generateVideoTool = tool(
     }
 
     const toolPreferences = getServerContextValue<any>('toolPreferences') || {}
-    const videoModel = toolPreferences.video_generation_model || 'sora-2'
+    const videoModel = toolPreferences.video_generation_model || DEFAULT_VIDEO_GENERATION_MODEL_ID
 
     try {
       const prompt = (input?.prompt || '').toString().trim()

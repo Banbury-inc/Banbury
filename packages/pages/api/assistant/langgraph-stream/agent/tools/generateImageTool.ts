@@ -2,6 +2,7 @@ import { tool } from "@langchain/core/tools"
 import { z } from "zod"
 import { CONFIG } from "../../../../../../frontend/config/config"
 import { getServerContextValue } from "../../../../../../frontend/assistant/langraph/serverContext"
+import { DEFAULT_IMAGE_GENERATION_MODEL_ID } from "../../../../../../frontend/components/RightPanel/composer/handlers/getMediaModelDisplayName"
 
 function isGoogleImageModel(model: string): boolean {
   return model.startsWith('gemini') || model === 'gemini-2.5-flash-image'
@@ -83,7 +84,7 @@ export const generateImageTool = tool(
     }
 
     const toolPreferences = getServerContextValue<any>('toolPreferences') || {}
-    const imageModel = toolPreferences.image_generation_model || 'dall-e-3'
+    const imageModel = toolPreferences.image_generation_model || DEFAULT_IMAGE_GENERATION_MODEL_ID
 
     try {
       const prompt = (input?.prompt || '').toString().trim()

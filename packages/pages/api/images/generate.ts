@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { DEFAULT_IMAGE_GENERATION_MODEL_ID } from '../../../frontend/components/RightPanel/composer/handlers/getMediaModelDisplayName'
 
 interface GenerateImageRequestBody {
   prompt: string
@@ -114,7 +115,7 @@ export default async function handler(
       return
     }
 
-    const chosenModel = model || 'dall-e-3'
+    const chosenModel = model || DEFAULT_IMAGE_GENERATION_MODEL_ID
     const chosenSize = size || '1024x1024'
 
     let result: { imageBase64: string; revisedPrompt?: string }

@@ -18,9 +18,13 @@ import {
   toggleToolPreference,
   setImageGenerationModel,
   setVideoGenerationModel,
-  IMAGE_GENERATION_MODELS,
-  VIDEO_GENERATION_MODELS
 } from "../handlers/composer-plus-menu-handlers"
+import {
+  getDefaultImageGenerationModel,
+  getDefaultVideoGenerationModel,
+  getImageGenerationModels,
+  getVideoGenerationModels,
+} from "../handlers/getMediaModelDisplayName"
 import type { ComposerToolPreferences } from "../Composer"
 import type { FileSystemItem } from "../../../../utils/fileTreeUtils"
 import type { FC } from "react"
@@ -54,6 +58,11 @@ export const PlusMenu: FC<PlusMenuProps> = ({
   if (!isMeasuring && !isVisible) {
     return null
   }
+
+  const imageGenerationModels = getImageGenerationModels()
+  const videoGenerationModels = getVideoGenerationModels()
+  const selectedImageModel = toolPreferences.image_generation_model || getDefaultImageGenerationModel()
+  const selectedVideoModel = toolPreferences.video_generation_model || getDefaultVideoGenerationModel()
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={onOpenChange}>
@@ -113,8 +122,8 @@ export const PlusMenu: FC<PlusMenuProps> = ({
             <Typography variant="xs">Image model</Typography>
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="w-56 p-1">
-            {IMAGE_GENERATION_MODELS.map((model) => {
-              const isSelected = (toolPreferences.image_generation_model || 'dall-e-3') === model.id
+            {imageGenerationModels.map((model) => {
+              const isSelected = selectedImageModel === model.id
               return (
                 <div
                   key={model.id}
@@ -143,8 +152,8 @@ export const PlusMenu: FC<PlusMenuProps> = ({
             <Typography variant="xs">Video model</Typography>
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="w-56 p-1">
-            {VIDEO_GENERATION_MODELS.map((model) => {
-              const isSelected = (toolPreferences.video_generation_model || 'sora-2') === model.id
+            {videoGenerationModels.map((model) => {
+              const isSelected = selectedVideoModel === model.id
               return (
                 <div
                   key={model.id}

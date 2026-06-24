@@ -1,4 +1,5 @@
 import { CONFIG } from '../../../../../config/config'
+import { getDefaultImageGenerationModel } from '../../../../RightPanel/composer/handlers/getMediaModelDisplayName'
 
 interface UserInfo {
   username: string
@@ -89,12 +90,12 @@ export async function handleCreateImage(
       const saved = localStorage.getItem('toolPreferences');
       if (saved) {
         const prefs = JSON.parse(saved);
-        imageModel = prefs.image_generation_model || 'dall-e-3';
+        imageModel = prefs.image_generation_model || getDefaultImageGenerationModel();
       } else {
-        imageModel = 'dall-e-3';
+        imageModel = getDefaultImageGenerationModel();
       }
     } catch {
-      imageModel = 'dall-e-3';
+      imageModel = getDefaultImageGenerationModel();
     }
   }
 

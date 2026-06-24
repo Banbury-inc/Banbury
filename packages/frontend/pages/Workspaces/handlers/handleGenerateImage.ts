@@ -1,5 +1,6 @@
 import { UserInfo } from '../types'
 import { handleCreateImage } from '../../../components/LeftPanel/components/FilesTab/handlers/handleCreateImage'
+import { getDefaultImageGenerationModel } from '../../../components/RightPanel/composer/handlers/getMediaModelDisplayName'
 
 interface ToastFunction {
   (options: {
@@ -24,12 +25,12 @@ export async function handleGenerateImage({
   if (!prompt.trim()) return
   
   // Get image generation model from tool preferences
-  let imageModel = 'dall-e-3'
+  let imageModel = getDefaultImageGenerationModel()
   try {
     const saved = localStorage.getItem('toolPreferences')
     if (saved) {
       const prefs = JSON.parse(saved)
-      imageModel = prefs.image_generation_model || 'dall-e-3'
+      imageModel = prefs.image_generation_model || getDefaultImageGenerationModel()
     }
   } catch {}
   

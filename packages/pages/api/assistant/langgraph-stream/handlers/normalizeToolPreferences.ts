@@ -1,4 +1,8 @@
 import type { ToolPreferences } from "../types"
+import {
+  normalizePersistedImageGenerationModel,
+  normalizePersistedVideoGenerationModel,
+} from "../../../../../frontend/components/RightPanel/composer/handlers/getMediaModelDisplayName"
 
 interface NormalizeToolPreferencesParams {
   toolPreferences?: Partial<ToolPreferences>
@@ -52,8 +56,8 @@ export function normalizeToolPreferences({
     langgraph_mode: true,
     model_provider: toolPreferences.model_provider === "openai" ? "openai" : toolPreferences.model_provider === "google" ? "google" : "anthropic",
     model_id: toolPreferences.model_id,
-    image_generation_model: typeof toolPreferences.image_generation_model === "string" ? toolPreferences.image_generation_model : "dall-e-3",
-    video_generation_model: typeof toolPreferences.video_generation_model === "string" ? toolPreferences.video_generation_model : "sora-2",
+    image_generation_model: normalizePersistedImageGenerationModel(toolPreferences.image_generation_model),
+    video_generation_model: normalizePersistedVideoGenerationModel(toolPreferences.video_generation_model),
     // Skills mode: disabled by default until beta access confirmed, only available for Anthropic
     use_skills: toolPreferences.use_skills === true && (toolPreferences.model_provider === "anthropic" || !toolPreferences.model_provider),
     // Plan mode: when enabled, agent uses the planner system prompt to generate implementation plans
