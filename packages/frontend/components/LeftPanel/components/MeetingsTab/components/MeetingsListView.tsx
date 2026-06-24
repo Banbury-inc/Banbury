@@ -42,9 +42,20 @@ function getStatusIcon(status: MeetingStatus) {
   }
 }
 
-function formatDate(date: Date | string) {
+function getValidDate(date: Date | string | null | undefined) {
+  if (!date) return null
+
+  const parsedDate = date instanceof Date ? date : new Date(date)
+  if (isNaN(parsedDate.getTime())) return null
+
+  return parsedDate
+}
+
+function formatDate(date: Date | string | null | undefined) {
+  const meetingDate = getValidDate(date)
+  if (!meetingDate) return 'No date available'
+
   const now = new Date()
-  const meetingDate = date instanceof Date ? date : new Date(date)
   const diffMs = meetingDate.getTime() - now.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
@@ -56,21 +67,18 @@ function formatDate(date: Date | string) {
       hour: '2-digit', 
       minute: '2-digit'
     }).format(meetingDate)
-  } else if (diffDays === 1) {
-    return 'Tomorrow'
-  } else if (diffDays === -1) {
-    return 'Yesterday'
-  } else if (diffDays > 0 && diffDays < 7) {
-    return new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(meetingDate)
-  } else {
-    return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(meetingDate)
   }
+
+  if (diffDays === 1) return 'Tomorrow'
+  if (diffDays === -1) return 'Yesterday'
+  if (diffDays > 0 && diffDays < 7) return new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(meetingDate)
+
+  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(meetingDate)
 }
 
 function formatDateTime(date: Date | string | null | undefined) {
-  if (!date) return 'No date available'
-  const meetingDate = date instanceof Date ? date : new Date(date)
-  if (isNaN(meetingDate.getTime())) return 'Invalid date'
+  const meetingDate = getValidDate(date)
+  if (!meetingDate) return 'No date available'
   
   // Use Intl.DateTimeFormat to explicitly use user's locale and timezone
   return new Intl.DateTimeFormat(navigator.language || 'en-US', {
@@ -84,7 +92,7 @@ function formatDateTime(date: Date | string | null | undefined) {
 }
 
 function getMeetingDate(meeting: MeetingSession & { createdAt?: string | Date }): Date | string | null | undefined {
-  return meeting.startTime || meeting.createdAt || null
+  return getValidDate(meeting.startTime) ?? getValidDate(meeting.createdAt)
 }
 
 export function MeetingsListView({
@@ -138,6 +146,7 @@ export function MeetingsListView({
           const StatusIcon = getStatusIcon(meeting.status)
           const isSelected = selectedMeeting?.id === meeting.id
           const isRenaming = renamingMeetingId === meeting.id
+          const meetingDate = getMeetingDate(meeting)
 
           const row = (
             <div
@@ -207,7 +216,7 @@ export function MeetingsListView({
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
                     <Clock className="h-3 w-3 flex-shrink-0" />
-                    <Typography variant="xs" className="truncate min-w-0">{formatDate(meeting.startTime)}</Typography>
+                    <Typography variant="xs" className="truncate min-w-0">{formatDate(meetingDate)}</Typography>
                   </div>
                 </div>
                 {onMeetingDeleted && (
