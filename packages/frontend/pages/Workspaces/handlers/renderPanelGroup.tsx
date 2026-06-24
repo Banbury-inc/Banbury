@@ -73,7 +73,7 @@ export function createRenderPanelGroup({
         <Image 
           src={BanburyLogo} 
           alt="Banbury" 
-          className="opacity-20 dark:opacity-15"
+          className="opacity-20 dark:opacity-15 invert dark:invert-0"
           width={isMobile ? 120 : 160}
           height={isMobile ? 120 : 160}
           priority

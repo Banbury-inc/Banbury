@@ -752,7 +752,7 @@ export const renderPanel = ({
             <Image 
               src={BanburyLogo} 
               alt="Banbury" 
-              className="opacity-20 dark:opacity-15 mb-4"
+              className="opacity-20 dark:opacity-15 mb-4 invert dark:invert-0"
               width={160}
               height={160}
               priority
