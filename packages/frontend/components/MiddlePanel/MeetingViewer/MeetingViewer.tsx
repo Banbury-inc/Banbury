@@ -423,7 +423,7 @@ export function MeetingViewer({ meeting, onBack, onMeetingUpdated }: MeetingView
 
       {/* Content */}
       <div className="min-h-0 flex-1 overflow-y-auto bg-muted/30 lg:overflow-hidden">
-        <div className="min-h-full pb-5 lg:h-full lg:min-h-0 lg:pb-6">
+        <div className="min-h-full lg:h-full lg:min-h-0">
           {/* Two-column layout: Video/Summary on left, Transcript on right */}
           <div className="mx-auto flex h-full min-h-0 w-full max-w-[1440px] flex-col gap-y-5 lg:flex-row">
             {/* Left Column: Video and Summary */}
