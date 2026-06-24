@@ -219,7 +219,7 @@ export function NavSidebar({ activeTab = 'files', onTabChange, showAdminToggle =
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center justify-center rounded-full hover:ring-2 hover:ring-accent dark:hover:ring-accent transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent dark:focus:ring-accent hover:scale-110 active:scale-95">
-                <Avatar className="h-8 w-8 cursor-pointer">
+                <Avatar className="h-7 w-7 cursor-pointer">
                   {userPicture && (
                     <AvatarImage src={userPicture} alt={username || 'User'} />
                   )}
