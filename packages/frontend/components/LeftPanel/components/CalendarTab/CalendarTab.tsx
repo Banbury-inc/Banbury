@@ -13,6 +13,7 @@ import { loadMicrosoftCalendars } from './handlers/loadMicrosoftCalendars'
 import { checkMicrosoftCalendarStatus, type MicrosoftCalendarStatus } from './handlers/checkMicrosoftCalendarStatus'
 import { 
   getVisibleCalendarIds, 
+  initializeVisibleCalendarIds,
   toggleCalendarVisibility,
   subscribeToVisibilityChanges 
 } from './handlers/calendarVisibility'
@@ -214,6 +215,7 @@ export function CalendarTab({
         ? await loadMicrosoftCalendars()
         : await loadCalendars()
       setCalendars(cals)
+      initializeVisibleCalendarIds(cals.map(calendar => calendar.id))
     } catch {
       setCalendars([])
     } finally {

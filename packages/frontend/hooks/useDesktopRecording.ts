@@ -214,11 +214,14 @@ export function useDesktopRecording(): UseDesktopRecordingReturn {
       const desktopRecording = window.desktopApp?.desktopRecording
       if (!desktopRecording) return { success: false, error: 'Desktop recording API not available' }
       
+      const stoppedWindowId = windowId || recordingStatus.windowId
       const result = await desktopRecording.stopRecording(windowId)
       if (!result.success) {
         setError(result.error || 'Failed to stop recording')
       } else {
         setError(null)
+        setRecordingStatus(defaultRecordingStatus)
+        if (stoppedWindowId) setDetectedMeetings(prev => prev.filter(meeting => meeting.id !== stoppedWindowId))
       }
       return result
     } catch (err) {
@@ -228,7 +231,7 @@ export function useDesktopRecording(): UseDesktopRecordingReturn {
       setError(errorMsg)
       return { success: false, error: errorMsg }
     }
-  }, [isDesktop])
+  }, [isDesktop, recordingStatus.windowId])
   
   const refreshStatus = useCallback(async () => {
     if (!isDesktop) return

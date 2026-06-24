@@ -32,8 +32,8 @@ export const ComposerSendButton: FC<ComposerSendButtonProps> = ({
           size="xs"
           className={`h-7 w-7 flex-shrink-0 ${
             hasText
-              ? 'cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100'
-              : 'opacity-50 bg-zinc-300 dark:bg-zinc-600 text-zinc-500 dark:text-zinc-400 cursor-not-allowed'
+              ? 'cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90'
+              : 'cursor-not-allowed bg-muted text-muted-foreground opacity-50'
           }`}
           title="Send"
           aria-label="Send message"
@@ -57,7 +57,7 @@ export const ComposerSendButton: FC<ComposerSendButtonProps> = ({
                     size="xs"
                     title="Send next queued message (interrupts current)"
                     aria-label="Send next queued message"
-                    className="h-7 px-2 gap-1 cursor-pointer bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 flex-shrink-0 whitespace-nowrap"
+                    className="h-7 px-2 gap-1 cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 flex-shrink-0 whitespace-nowrap"
                     onClick={onSendNextQueued}
                   >
                     <CornerDownLeft height={14} width={14} strokeWidth={1.5} />
@@ -77,7 +77,7 @@ export const ComposerSendButton: FC<ComposerSendButtonProps> = ({
               size="xs"
               title="Stop generating"
               aria-label="Stop generating"
-              className="h-7 w-7 cursor-pointer bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 flex-shrink-0" 
+              className="h-7 w-7 cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 flex-shrink-0"
             >
               <Square height={14} width={14} strokeWidth={1} />
             </Button>

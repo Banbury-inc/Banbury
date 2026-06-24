@@ -1111,7 +1111,7 @@ const Workspaces = (): React.ReactNode => {
                 
                 {/* Assistant Panel - Dock-based with draggable tabs - Desktop Only */}
                 {!isMobile && !isAssistantPanelCollapsed && (
-                  <Allotment.Pane minSize={isMobile ? 200 : 280}>
+                  <Allotment.Pane minSize={isMobile ? 200 : 280} preferredSize={isMobile ? 320 : 380}>
                     <div 
                       data-assistant-dock 
                       className="h-full relative"

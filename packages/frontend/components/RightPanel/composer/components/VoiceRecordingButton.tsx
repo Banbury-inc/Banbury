@@ -27,7 +27,7 @@ export const VoiceRecordingButton: FC<VoiceRecordingButtonProps> = ({
       size="xs"
       className={`h-7 w-7 flex-shrink-0 ${
         isRecording
-          ? "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:text-white dark:hover:bg-red-700"
+          ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
           : ""
       }`}
       onClick={isRecording ? onStopRecording : onStartRecording}

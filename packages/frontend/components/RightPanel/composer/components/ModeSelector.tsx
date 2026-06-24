@@ -15,9 +15,9 @@ export function ModeSelector({ toolPreferences, onUpdateToolPreferences, showTex
     <Popover>
       <PopoverTrigger asChild>
         <Button
-          variant="ghost"
+          variant="primary"
           size="xs"
-          className="h-7 px-2 gap-1 hover:text-primary flex-shrink-0 whitespace-nowrap"
+          className="h-7 px-2 gap-1 flex-shrink-0 whitespace-nowrap"
           title="Mode"
           aria-label="Mode"
         >

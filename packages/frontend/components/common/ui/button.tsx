@@ -11,7 +11,7 @@ const buttonVariants = cva(
         default:
           "bg-primary text-primary-foreground hover:bg-primary/90",
         primary:
-            "text-black dark:text-white dark:hover:bg-zinc-700 dark:hover:text-white hover:bg-zinc-300 hover:text-black transition-colors peer",
+          "text-foreground hover:bg-background/80 hover:text-foreground data-[state=open]:bg-background/80 data-[state=open]:text-foreground transition-colors peer",
         primaryonWhite:
           // "h-10 w-10 text-gray-600 hover:bg-zinc-300 transition-colors peer",
           "text-gray-700 hover:text-gray-900 hover:bg-gray-200 flex-shrink-0 w-auto px-2",

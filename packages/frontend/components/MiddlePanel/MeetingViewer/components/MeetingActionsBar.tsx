@@ -5,7 +5,6 @@ import { Typography } from "../../../common/ui/typography"
 import { Popover, PopoverContent, PopoverTrigger } from "../../../common/ui/popover"
 import { MeetingSession } from "../../../../types/meeting-types"
 import { formatDuration } from "../utils/duration-formatters"
-import { formatDate, getMeetingDate } from "../utils/date-formatters"
 
 interface MeetingActionsBarProps {
   meeting: MeetingSession
@@ -37,7 +36,6 @@ export function MeetingActionsBar({
   onDownloadTranscription,
   onUploadRecording
 }: MeetingActionsBarProps) {
-  const meetingTitle = meeting.title || formatDate(getMeetingDate(meeting))
   const isLiveMeeting = meeting.status === 'active' || meeting.status === 'recording'
   const isTimedLiveMeeting = isLiveMeeting && meeting.metadata.maxDuration
   const statusLabel = meeting.status.replace(/-/g, ' ')
@@ -50,9 +48,6 @@ export function MeetingActionsBar({
         <div className="flex min-w-0 flex-1 items-start">
           <div className="min-w-0 flex-1 space-y-1.5">
             <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <span className="truncate text-base font-semibold leading-tight text-foreground">
-                {meetingTitle}
-              </span>
               <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium capitalize text-muted-foreground">
                 {isLiveMeeting && <Radio className="h-3 w-3 text-destructive" aria-hidden="true" />}
                 {statusLabel}

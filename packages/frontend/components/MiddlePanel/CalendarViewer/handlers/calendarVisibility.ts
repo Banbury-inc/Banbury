@@ -3,6 +3,7 @@
  */
 export {
   getVisibleCalendarIds,
+  initializeVisibleCalendarIds,
   setVisibleCalendarIds,
   toggleCalendarVisibility,
   subscribeToVisibilityChanges
