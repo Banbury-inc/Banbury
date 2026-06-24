@@ -375,7 +375,7 @@ export function GoogleDriveView({
 
   return (
     <div 
-      className="h-full overflow-y-auto sidebar-scrollbar"
+      className="h-full overflow-y-auto sidebar-scrollbar p-1.5"
       onScroll={handleDriveScroll}
     >
       {checkingDriveAccess && (

@@ -234,12 +234,14 @@ export function OneDriveFileTreeItem({
     return <File className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
   }
 
+  const itemPaddingLeft = `${(level * 12) + 8}px`
+  const childItemPaddingLeft = `${((level + 1) * 12) + 8}px`
+  const selectedItemClassName = isSelected ? 'bg-muted text-foreground' : 'text-muted-foreground'
+
   const buttonContent = isRenaming ? (
     <div
-      className={`w-full flex items-center gap-2 text-left px-3 py-2 min-w-0 ${
-        isSelected ? 'bg-muted text-foreground' : 'text-muted-foreground'
-      }`}
-      style={{ paddingLeft: `${(level * 12) + 12}px` }}
+      className={`mb-0.5 flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pr-2 text-left ${selectedItemClassName}`}
+      style={{ paddingLeft: itemPaddingLeft }}
     >
       {isFolder && (
         isExpanded ? 
@@ -254,7 +256,7 @@ export function OneDriveFileTreeItem({
         onChange={(e) => setNewName(e.target.value)}
         onBlur={handleRenameSubmit}
         onKeyDown={handleRenameKeyDown}
-        className="text-sm bg-muted text-foreground px-1 py-0 rounded border-none outline-none flex-1"
+        className="min-w-0 flex-1 rounded border-none bg-muted px-1 py-0 text-xs font-medium text-foreground outline-none"
         autoFocus
         ref={inputRef}
         onClick={(e) => e.stopPropagation()}
@@ -263,10 +265,8 @@ export function OneDriveFileTreeItem({
   ) : (
     <button
       onClick={handleClick}
-      className={`w-full flex items-center gap-2 text-left px-3 py-2 hover:bg-muted cursor-pointer transition-colors ${
-        isSelected ? 'bg-muted text-foreground' : 'text-muted-foreground'
-      }`}
-      style={{ paddingLeft: `${(level * 12) + 12}px` }}
+      className={`group mb-0.5 flex w-full cursor-pointer items-center gap-2 rounded-md py-1.5 pr-2 text-left text-muted-foreground transition-colors hover:bg-muted ${selectedItemClassName}`}
+      style={{ paddingLeft: itemPaddingLeft }}
     >
       {isFolder && (
         isLoading ? (
@@ -279,7 +279,7 @@ export function OneDriveFileTreeItem({
       )}
       {!isFolder && <div className="w-3" />}
       {getFileIcon()}
-      <Typography variant="xs" className="truncate min-w-0 flex-1">
+      <Typography variant="xs" className="min-w-0 flex-1 truncate font-medium leading-5 text-muted-foreground group-hover:text-foreground">
         {file.name}
       </Typography>
       {isFavorite && (
@@ -338,8 +338,8 @@ export function OneDriveFileTreeItem({
       {/* Show loading state for empty expanded folders */}
       {isFolder && isExpanded && isLoading && (
         <div
-          className="w-full flex items-center gap-2 text-left px-3 py-2 text-muted-foreground"
-          style={{ paddingLeft: `${((level + 1) * 12) + 12}px` }}
+          className="mb-0.5 flex w-full items-center gap-2 rounded-md py-1.5 pr-2 text-left text-muted-foreground"
+          style={{ paddingLeft: childItemPaddingLeft }}
         >
           <div className="w-3" />
           <RefreshCw className="h-3 w-3 animate-spin" />
@@ -350,8 +350,8 @@ export function OneDriveFileTreeItem({
       {/* Show empty state for expanded folders with no contents */}
       {isFolder && isExpanded && !isLoading && children.length === 0 && (
         <div
-          className="w-full flex items-center gap-2 text-left px-3 py-2 text-muted-foreground"
-          style={{ paddingLeft: `${((level + 1) * 12) + 12}px` }}
+          className="mb-0.5 flex w-full items-center gap-2 rounded-md py-1.5 pr-2 text-left text-muted-foreground"
+          style={{ paddingLeft: childItemPaddingLeft }}
         >
           <div className="w-3" />
           <Typography variant="muted" className="text-xs">Empty folder</Typography>

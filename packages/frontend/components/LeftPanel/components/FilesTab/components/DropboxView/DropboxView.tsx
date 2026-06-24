@@ -327,7 +327,7 @@ export function DropboxView({
   }, [])
 
   return (
-    <div className="h-full overflow-y-auto sidebar-scrollbar" onScroll={handleScroll}>
+    <div className="h-full overflow-y-auto sidebar-scrollbar p-1.5" onScroll={handleScroll}>
       {checkingConnection && (
         <div className="flex items-center justify-center h-full px-3 py-8">
           <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" strokeWidth={1} />

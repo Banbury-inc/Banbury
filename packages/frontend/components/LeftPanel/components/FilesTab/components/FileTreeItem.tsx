@@ -521,13 +521,15 @@ export function FileTreeItem({
     })
   }
   
+  const itemPaddingLeft = `${(level * 12) + 8}px`
+  const childItemPaddingLeft = `${((level + 1) * 12) + 8}px`
+  const selectedItemClassName = (isSelected || isMultiSelected) ? 'bg-muted text-foreground' : 'text-muted-foreground'
+
   const buttonContent = (
     isRenaming ? (
       <div
-        className={`w-full flex items-center gap-2 text-left px-3 py-2 min-w-0 ${
-          (isSelected || isMultiSelected) ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white' : 'text-zinc-700 dark:text-zinc-300'
-        }`}
-        style={{ paddingLeft: `${(level * 12) + 12}px` }}
+        className={`mb-0.5 flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pr-2 text-left ${selectedItemClassName}`}
+        style={{ paddingLeft: itemPaddingLeft }}
       >
         {hasChildren && (
           isExpanded ? 
@@ -542,7 +544,7 @@ export function FileTreeItem({
           onChange={(e) => setNewName(e.target.value)}
           onBlur={handleRenameSubmit}
           onKeyDown={handleKeyDown}
-          className="text-sm bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white px-1 py-0 rounded border-none outline-none flex-1"
+          className="min-w-0 flex-1 rounded border-none bg-muted px-1 py-0 text-xs font-medium text-foreground outline-none"
           autoFocus
           ref={inputRef}
           onFocus={(e) => selectFilenameWithoutExtension(e.currentTarget)}
@@ -558,10 +560,8 @@ export function FileTreeItem({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`w-full flex items-center gap-2 text-left px-3 py-2 min-w-0 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors ${
-          (isSelected || isMultiSelected) ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white' : 'text-zinc-700 dark:text-zinc-300'
-        } ${isDragged ? 'opacity-50' : ''} ${isDropTarget ? 'bg-zinc-300 dark:bg-zinc-700 ring-2 ring-blue-500' : ''}`}
-        style={{ paddingLeft: `${(level * 12) + 12}px` }}
+        className={`group mb-0.5 flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-md py-1.5 pr-2 text-left text-muted-foreground transition-colors hover:bg-muted ${selectedItemClassName} ${isDragged ? 'opacity-50' : ''} ${isDropTarget ? 'bg-muted ring-2 ring-ring' : ''}`}
+        style={{ paddingLeft: itemPaddingLeft }}
       >
         {hasChildren && (
           isExpanded ? 
@@ -570,7 +570,7 @@ export function FileTreeItem({
         )}
         {!hasChildren && <div className="w-3" />}
         <FileIconComponent className={`h-4 w-4 flex-shrink-0 ${fileIconData.color}`} />
-        <Typography variant="xs" className="truncate min-w-0 flex-1">{item.name}</Typography>
+        <Typography variant="xs" className="min-w-0 flex-1 truncate font-medium leading-5 text-muted-foreground group-hover:text-foreground">{item.name}</Typography>
         {item.type === 'file' && item.file_id && starredFileIds?.has(item.file_id) && (
           <Star className="h-3 w-3 flex-shrink-0 text-yellow-500 fill-yellow-500" strokeWidth={1.5} />
         )}
@@ -655,8 +655,8 @@ export function FileTreeItem({
           {/* Show new folder input if creating */}
           {isCreatingFolder && (
             <div
-              className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300"
-              style={{ paddingLeft: `${((level + 1) * 12) + 12}px` }}
+              className="mb-0.5 flex w-full items-center gap-2 rounded-md py-1.5 pr-2 text-left text-muted-foreground"
+              style={{ paddingLeft: childItemPaddingLeft }}
             >
               <div className="w-4" />
               <Folder className="h-4 w-4" strokeWidth={1} />
@@ -665,7 +665,7 @@ export function FileTreeItem({
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 onKeyDown={handleCreateFolderKeyDown}
-                className="text-sm bg-zinc-700 text-white px-1 py-0 rounded border-none outline-none flex-1"
+                className="min-w-0 flex-1 rounded border-none bg-muted px-1 py-0 text-xs font-medium text-foreground outline-none"
                 autoFocus
                 ref={newFolderInputRef}
                 onFocus={(e) => e.currentTarget.select()}
@@ -676,12 +676,12 @@ export function FileTreeItem({
           {/* Pending creation indicator */}
           {isCreatingFolderPending && pendingFolderName && (
             <div
-              className="w-full flex items-center gap-2 text-left px-3 py-2 text-zinc-300"
-              style={{ paddingLeft: `${((level + 1) * 12) + 12}px` }}
+              className="mb-0.5 flex w-full items-center gap-2 rounded-md py-1.5 pr-2 text-left text-muted-foreground"
+              style={{ paddingLeft: childItemPaddingLeft }}
             >
               <div className="w-4" />
               <RefreshCw className="h-4 w-4 animate-spin" strokeWidth={1} />
-              <Typography variant="xs" className="truncate min-w-0 flex-1">{pendingFolderName}</Typography>
+              <Typography variant="xs" className="min-w-0 flex-1 truncate font-medium leading-5 text-muted-foreground">{pendingFolderName}</Typography>
               <Typography variant="muted" className="text-xs">Creating...</Typography>
             </div>
           )}
