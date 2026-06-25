@@ -258,29 +258,52 @@ export const MeetingSummaryEditor = forwardRef<MeetingSummaryEditorRef, MeetingS
           padding-left: 0;
         }
         
-        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] {
-          display: flex;
-          align-items: flex-start;
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"],
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li.task-item {
+          display: inline-flex;
+          align-items: baseline;
           gap: 0.5rem;
           margin: 0.5rem 0;
+          list-style: none;
+          width: 100%;
         }
         
-        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label {
-          display: flex;
-          align-items: center;
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label,
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li.task-item > label {
+          display: inline-flex;
+          align-items: baseline;
           cursor: pointer;
           margin-right: 0.5rem;
           flex-shrink: 0;
         }
         
-        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label > input[type="checkbox"] {
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label > input[type="checkbox"],
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li.task-item > label > input[type="checkbox"] {
           cursor: pointer;
+          flex-shrink: 0;
+          margin: 0;
+          margin-top: 0.25em;
           width: 1rem;
           height: 1rem;
         }
         
-        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > div {
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > div,
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li.task-item > div {
           flex: 1;
+          min-width: 0;
+          display: inline-block;
+        }
+        
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > div > *,
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li.task-item > div > * {
+          display: inline;
+          margin: 0;
+        }
+        
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] p,
+        .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li.task-item p {
+          display: inline !important;
+          margin: 0 !important;
         }
         
         .meeting-summary-wrapper .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"][data-checked="true"] {
