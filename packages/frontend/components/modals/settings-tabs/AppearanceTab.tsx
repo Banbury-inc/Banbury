@@ -4,7 +4,14 @@ import { Typography } from '@/components/common/ui/typography'
 import { Label } from '@/components/common/ui/label'
 import { Separator } from '@/components/common/ui/separator'
 import { useState, useEffect } from 'react'
-import { getColoredFileIcons, setColoredFileIcons } from './handlers/appearanceHandlers'
+import {
+  DOCUMENT_EDITOR_DARK_MODE_UPDATED_EVENT,
+  createDocumentEditorDarkModeUpdateHandler,
+  getColoredFileIcons,
+  getDocumentEditorDarkMode,
+  handleDocumentEditorDarkModeToggle,
+  setColoredFileIcons,
+} from './handlers/appearanceHandlers'
 import { getIDESettings, setIDESettings } from './handlers/ideSettingsHandlers'
 import { IDE_THEME_OPTIONS, type IDEThemeId } from '../../MiddlePanel/CodeViewer/ideThemes'
 
@@ -15,6 +22,7 @@ interface AppearanceTabProps {
 
 export function AppearanceTab({ isDarkMode, onThemeToggle }: AppearanceTabProps) {
   const [coloredFileIcons, setColoredFileIconsState] = useState(() => getColoredFileIcons())
+  const [isDocumentEditorDarkMode, setDocumentEditorDarkModeState] = useState(() => getDocumentEditorDarkMode())
   const [ideSettings, setIdeSettingsState] = useState(() => getIDESettings())
 
   useEffect(() => {
@@ -30,6 +38,12 @@ export function AppearanceTab({ isDarkMode, onThemeToggle }: AppearanceTabProps)
     const handleIdeSettingsChange = () => setIdeSettingsState(getIDESettings())
     window.addEventListener('ide-settings-updated', handleIdeSettingsChange)
     return () => window.removeEventListener('ide-settings-updated', handleIdeSettingsChange)
+  }, [])
+
+  useEffect(() => {
+    const handleDocumentEditorDarkModeUpdate = createDocumentEditorDarkModeUpdateHandler(setDocumentEditorDarkModeState)
+    window.addEventListener(DOCUMENT_EDITOR_DARK_MODE_UPDATED_EVENT, handleDocumentEditorDarkModeUpdate)
+    return () => window.removeEventListener(DOCUMENT_EDITOR_DARK_MODE_UPDATED_EVENT, handleDocumentEditorDarkModeUpdate)
   }, [])
 
   function handleColoredFileIconsToggle(checked: boolean) {
@@ -75,6 +89,22 @@ export function AppearanceTab({ isDarkMode, onThemeToggle }: AppearanceTabProps)
             id="colored-file-icons-switch"
             checked={coloredFileIcons}
             onCheckedChange={handleColoredFileIconsToggle}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <Label htmlFor="document-editor-dark-mode-switch">
+            <div className="flex flex-col">
+              <Typography variant="p" className="text-foreground">Document Editor Dark Mode</Typography>
+              <Typography variant="small" className="mt-1 text-muted-foreground">
+                Invert the document editor background and text colors.
+              </Typography>
+            </div>
+          </Label>
+          <Switch
+            id="document-editor-dark-mode-switch"
+            checked={isDocumentEditorDarkMode}
+            onCheckedChange={(checked) => handleDocumentEditorDarkModeToggle(checked, setDocumentEditorDarkModeState)}
           />
         </div>
       </div>
