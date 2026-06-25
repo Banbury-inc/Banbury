@@ -136,7 +136,7 @@ export function getFileIcon(fileName: string): { icon: typeof File, color: strin
   if (isSpreadsheetFile(fileName)) return { icon: FileSpreadsheet, color: 'text-green-500' }
   if (isPresentationFile(fileName)) return { icon: FileBarChart, color: 'text-orange-400' }
   if (isCodeFile(fileName)) return { icon: FileCode, color: 'text-yellow-400' }
-  if (isArchiveFile(fileName)) return { icon: FileArchive, color: 'text-gray-400' }
+  if (isArchiveFile(fileName)) return { icon: FileArchive, color: 'text-muted-foreground' }
   if (isDataFile(fileName)) return { icon: FileJson, color: 'text-indigo-400' }
   if (isExecutableFile(fileName)) return { icon: FileCog, color: 'text-red-500' }
   if (isFontFile(fileName)) return { icon: FileType, color: 'text-pink-400' }
@@ -144,5 +144,5 @@ export function getFileIcon(fileName: string): { icon: typeof File, color: strin
   if (isVectorFile(fileName)) return { icon: FileImage, color: 'text-emerald-400' }
   
   // Default file icon
-  return { icon: File, color: 'text-gray-400' }
+  return { icon: File, color: 'text-muted-foreground' }
 }

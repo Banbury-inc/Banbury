@@ -251,8 +251,8 @@ export function SpreadsheetViewer({ file, onSaveComplete }: SpreadsheetViewerPro
     return (
       <div className="flex items-center justify-center h-full bg-card">
         <div className="flex flex-col items-center gap-4 bg-card">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#9ca3af]"></div>
-          <p className="text-[#f3f4f6]">Loading spreadsheet...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-muted-foreground"></div>
+          <p className="text-foreground">Loading spreadsheet...</p>
         </div>
       </div>
     );

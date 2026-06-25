@@ -720,7 +720,7 @@ export default function Admin() {
       case 'error':
         return 'text-red-400'
       default:
-        return 'text-gray-400'
+        return 'text-muted-foreground'
     }
   }
 
@@ -1396,10 +1396,10 @@ export default function Admin() {
                                   <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                                 </linearGradient>
                               </defs>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                               <XAxis 
                                 dataKey="date" 
-                                stroke="#9ca3af"
+                                stroke="var(--muted-foreground)"
                                 fontSize={10}
                                 type="category"
                                 scale="point"
@@ -1413,7 +1413,7 @@ export default function Admin() {
                                 height={50}
                               />
                               <YAxis 
-                                stroke="#9ca3af"
+                                stroke="var(--muted-foreground)"
                                 fontSize={10}
                                 tickFormatter={(value) => value.toLocaleString()}
                                 width={45}
@@ -1842,10 +1842,10 @@ export default function Admin() {
                               <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                             </linearGradient>
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                           <XAxis 
                             dataKey="date" 
-                            stroke="#9ca3af"
+                            stroke="var(--muted-foreground)"
                             fontSize={10}
                             type="category"
                             scale="point"
@@ -1859,7 +1859,7 @@ export default function Admin() {
                             height={50}
                           />
                           <YAxis 
-                            stroke="#9ca3af"
+                            stroke="var(--muted-foreground)"
                             fontSize={10}
                             tickFormatter={(value) => value.toLocaleString()}
                             width={45}

@@ -11,31 +11,17 @@ export function SearchOverlay({ isOpen, searchResultCount, onSearchKeyUp }: Sear
 
   return (
     <div
-      style={{
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        background: '#ffffff',
-        border: '1px solid #1f2937',
-        borderRadius: 6,
-        boxShadow: '0 6px 16px rgba(0,0,0,0.16)',
-        padding: '8px 10px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        zIndex: 1000
-      }}
-      className="csv-search-overlay"
+      className="csv-search-overlay absolute top-2 right-2 z-[1000] flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-2 shadow-md"
       role="dialog"
       aria-label="Search table"
     >
-      <span style={{ fontSize: 12, color: '#111827', minWidth: 64, textAlign: 'center' }}>
+      <span className="min-w-16 text-center text-xs text-foreground">
         {searchResultCount > 0 ? `${searchResultCount} results` : 'No results'}
       </span>
       <input
         id="search_field"
         type="search"
-        style={{ color: '#111827' }}
+        className="text-foreground bg-transparent"
         placeholder="Search"
         onKeyUp={onSearchKeyUp}
       />

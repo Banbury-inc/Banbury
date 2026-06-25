@@ -6,20 +6,20 @@ import { cn } from "../../../utils"
 const typographyVariants = cva("font-mono", {
   variants: {
     variant: {
-      h1: "scroll-m-20 text-4xl font-bold tracking-tight lg:text-5xl text-black dark:text-white",
-      h2: "scroll-m-20 text-2xl font-bold tracking-tight first:mt-0 text-black dark:text-white",
-      h3: "scroll-m-20 text-xl font-semibold tracking-tight text-black dark:text-white",
-      h4: "scroll-m-20 text-lg font-semibold tracking-tight text-black dark:text-white",
-      p: "leading-7 [&:not(:first-child)]:mt-6 text-black dark:text-gray-300",
-      blockquote: "mt-6 border-l-2 italic text-black dark:text-gray-300",
-      list: "my-6 ml-6 list-disc [&>li]:mt-2 text-black dark:text-gray-300",
+      h1: "scroll-m-20 text-4xl font-bold tracking-tight lg:text-5xl text-foreground",
+      h2: "scroll-m-20 text-2xl font-bold tracking-tight first:mt-0 text-foreground",
+      h3: "scroll-m-20 text-xl font-semibold tracking-tight text-foreground",
+      h4: "scroll-m-20 text-lg font-semibold tracking-tight text-foreground",
+      p: "leading-7 [&:not(:first-child)]:mt-6 text-foreground",
+      blockquote: "mt-6 border-l-2 italic text-foreground",
+      list: "my-6 ml-6 list-disc [&>li]:mt-2 text-foreground",
       inlineCode:
-        "relative rounded bg-muted font-mono text-sm font-semibold text-gray-300 dark:text-gray-300",
-      lead: "text-xl text-black dark:text-gray-400",
-      large: "text-lg font-semibold text-black dark:text-white",
-      small: "text-sm font-medium leading-none text-black dark:text-gray-300",
-      xs: "text-xs font-medium leading-none text-black dark:text-gray-300",
-      muted: "text-sm text-black dark:text-gray-400",
+        "relative rounded bg-muted font-mono text-sm font-semibold text-foreground",
+      lead: "text-xl text-muted-foreground",
+      large: "text-lg font-semibold text-foreground",
+      small: "text-sm font-medium leading-none text-foreground",
+      xs: "text-xs font-medium leading-none text-foreground",
+      muted: "text-sm text-muted-foreground",
     },
   },
   defaultVariants: {

@@ -1,7 +1,6 @@
 import React from 'react'
 import { Plus, Minus } from 'lucide-react'
 import { Box, IconButton, TextField } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
 
 interface FontSizeControlProps {
   fontSize: number
@@ -10,15 +9,23 @@ interface FontSizeControlProps {
   handleFontSizeDecrement: () => void
 }
 
+const iconButtonSx = {
+  width: 24,
+  height: 24,
+  color: 'var(--muted-foreground)',
+  border: '1px solid var(--border)',
+  '&:hover': {
+    backgroundColor: 'var(--accent)',
+    color: 'var(--foreground)',
+  },
+}
+
 export function FontSizeControl({ 
   fontSize, 
   handleFontSizeChange, 
   handleFontSizeIncrement, 
   handleFontSizeDecrement 
 }: FontSizeControlProps) {
-  const theme = useTheme()
-  const lightMode = theme.palette.mode === 'light'
-
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
       <IconButton
@@ -26,16 +33,9 @@ export function FontSizeControl({
         onClick={handleFontSizeDecrement}
         title="Decrease Font Size"
         sx={{
-          width: 24,
-          height: 24,
-          color: '#9ca3af',
+          ...iconButtonSx,
           borderRadius: '2px 0 0 2px',
-          border: '1px solid #3f3f46',
           borderRight: 'none',
-          '&:hover': {
-            backgroundColor: '#e2e8f0',
-            color: '#475569',
-          },
         }}
       >
         <Minus size={12} />
@@ -61,9 +61,9 @@ export function FontSizeControl({
         sx={{
           '& .MuiOutlinedInput-root': {
             height: '24px',
-            border: lightMode ? '1px solid #cbd5e1' : '1px solid #3f3f46',
+            border: '1px solid var(--border)',
             borderRadius: 0,
-            backgroundColor: lightMode ? 'white' : 'transparent',
+            backgroundColor: 'var(--background)',
             '& fieldset': {
               border: 'none',
             },
@@ -76,7 +76,7 @@ export function FontSizeControl({
           },
           '& .MuiInputBase-input': {
             padding: 0,
-            color: lightMode ? '#334155' : '#f3f4f6',
+            color: 'var(--foreground)',
             '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
               WebkitAppearance: 'none',
               margin: 0,
@@ -92,16 +92,9 @@ export function FontSizeControl({
         onClick={handleFontSizeIncrement}
         title="Increase Font Size"
         sx={{
-          width: 24,
-          height: 24,
-          color: '#9ca3af',
+          ...iconButtonSx,
           borderRadius: '0 2px 2px 0',
-          border: '1px solid #3f3f46',
           borderLeft: 'none',
-          '&:hover': {
-            backgroundColor: '#e2e8f0',
-            color: '#475569',
-          },
         }}
       >
         <Plus size={12} />

@@ -1085,10 +1085,10 @@ export function AnalyticsTab({
                           <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                       <XAxis 
                         dataKey="date" 
-                        stroke="#9ca3af"
+                        stroke="var(--muted-foreground)"
                         fontSize={10}
                         type="category"
                         scale="point"
@@ -1101,7 +1101,7 @@ export function AnalyticsTab({
                         height={50}
                       />
                       <YAxis 
-                        stroke="#9ca3af"
+                        stroke="var(--muted-foreground)"
                         fontSize={10}
                         tickFormatter={(value) => value.toLocaleString()}
                         width={45}
@@ -1593,10 +1593,10 @@ export function AnalyticsTab({
                         <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis 
                       dataKey="date" 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       type="category"
                       scale="point"
@@ -1609,7 +1609,7 @@ export function AnalyticsTab({
                       height={40}
                     />
                     <YAxis 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       tickFormatter={(value) => value.toLocaleString()}
                       width={30}
@@ -1687,10 +1687,10 @@ export function AnalyticsTab({
                         <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis 
                       dataKey="date" 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       type="category"
                       scale="point"
@@ -1703,7 +1703,7 @@ export function AnalyticsTab({
                       height={40}
                     />
                     <YAxis 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       tickFormatter={(value) => value.toLocaleString()}
                       width={30}
@@ -1778,10 +1778,10 @@ export function AnalyticsTab({
                         <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis 
                       dataKey="date" 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       type="category"
                       scale="point"
@@ -1794,7 +1794,7 @@ export function AnalyticsTab({
                       height={40}
                     />
                     <YAxis 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       tickFormatter={(value) => value.toLocaleString()}
                       width={30}
@@ -1872,10 +1872,10 @@ export function AnalyticsTab({
                         <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis 
                       dataKey="date" 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       type="category"
                       scale="point"
@@ -1888,7 +1888,7 @@ export function AnalyticsTab({
                       height={40}
                     />
                     <YAxis 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       tickFormatter={(value) => value.toLocaleString()}
                       width={30}
@@ -1966,10 +1966,10 @@ export function AnalyticsTab({
                         <stop offset="95%" stopColor="#ec4899" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis 
                       dataKey="date" 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       type="category"
                       scale="point"
@@ -1982,7 +1982,7 @@ export function AnalyticsTab({
                       height={40}
                     />
                     <YAxis 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       tickFormatter={(value) => value.toLocaleString()}
                       width={30}
@@ -2060,10 +2060,10 @@ export function AnalyticsTab({
                         <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis 
                       dataKey="date" 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       type="category"
                       scale="point"
@@ -2076,7 +2076,7 @@ export function AnalyticsTab({
                       height={40}
                     />
                     <YAxis 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       tickFormatter={(value) => value.toLocaleString()}
                       width={30}
@@ -2176,19 +2176,19 @@ export function AnalyticsTab({
                                 <stop offset="95%" stopColor={colorScheme.stopColor} stopOpacity={0}/>
                               </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                             <XAxis 
                               dataKey="date" 
-                              stroke="#6b7280"
-                              tick={{ fill: '#9ca3af', fontSize: 10 }}
+                              stroke="var(--muted-foreground)"
+                              tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
                               tickFormatter={(value) => {
                                 const date = new Date(value)
                                 return `${date.getMonth() + 1}/${date.getDate()}`
                               }}
                             />
                             <YAxis 
-                              stroke="#6b7280"
-                              tick={{ fill: '#9ca3af', fontSize: 10 }}
+                              stroke="var(--muted-foreground)"
+                              tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
                               width={30}
                             />
                             <ChartTooltip 
@@ -2286,10 +2286,10 @@ export function AnalyticsTab({
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis 
                     dataKey="date" 
-                    stroke="#9ca3af"
+                    stroke="var(--muted-foreground)"
                     fontSize={10}
                     type="category"
                     scale="point"
@@ -2302,7 +2302,7 @@ export function AnalyticsTab({
                     height={50}
                   />
                   <YAxis 
-                    stroke="#9ca3af"
+                    stroke="var(--muted-foreground)"
                     fontSize={10}
                     tickFormatter={(value) => value.toLocaleString()}
                     width={45}
@@ -2835,18 +2835,18 @@ export function AnalyticsTab({
                         className="h-full w-full"
                       >
                         <AreaChart data={fileTypeAnalytics.daily_stats}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                           <XAxis 
                             dataKey="date" 
-                            stroke="#9ca3af"
-                            tick={{ fill: '#9ca3af' }}
+                            stroke="var(--muted-foreground)"
+                            tick={{ fill: 'var(--muted-foreground)' }}
                             angle={-45}
                             textAnchor="end"
                             height={80}
                           />
                           <YAxis 
-                            stroke="#9ca3af"
-                            tick={{ fill: '#9ca3af' }}
+                            stroke="var(--muted-foreground)"
+                            tick={{ fill: 'var(--muted-foreground)' }}
                           />
                           <ChartTooltip />
                           <Area 
@@ -2907,18 +2907,18 @@ export function AnalyticsTab({
                               Other: stat.by_category.Other || 0
                             }))}
                           >
-                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                             <XAxis 
                               dataKey="date" 
-                              stroke="#9ca3af"
-                              tick={{ fill: '#9ca3af', fontSize: 11 }}
+                              stroke="var(--muted-foreground)"
+                              tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
                               angle={-45}
                               textAnchor="end"
                               height={80}
                             />
                             <YAxis 
-                              stroke="#9ca3af"
-                              tick={{ fill: '#9ca3af' }}
+                              stroke="var(--muted-foreground)"
+                              tick={{ fill: 'var(--muted-foreground)' }}
                             />
                             <ChartTooltip />
                             <Area type="monotone" dataKey="Images" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.8} />
@@ -2998,13 +2998,13 @@ export function AnalyticsTab({
                             <AreaChart data={categoryData}>
                               <XAxis 
                                 dataKey="date" 
-                                stroke="#9ca3af"
-                                tick={{ fill: '#9ca3af', fontSize: 10 }}
+                                stroke="var(--muted-foreground)"
+                                tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
                                 hide
                               />
                               <YAxis 
-                                stroke="#9ca3af"
-                                tick={{ fill: '#9ca3af', fontSize: 10 }}
+                                stroke="var(--muted-foreground)"
+                                tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
                                 width={30}
                               />
                               <ChartTooltip />

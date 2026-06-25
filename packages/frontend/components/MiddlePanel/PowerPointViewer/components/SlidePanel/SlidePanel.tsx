@@ -295,7 +295,7 @@ function SlideThumbnail({ slide }: { slide: Slide }) {
               {element.content && (
                 <div
                   className="absolute inset-0 flex items-center justify-center pointer-events-none text-[8px] font-medium"
-                  style={{ color: element.stroke || '#1f2937' }}
+                  style={{ color: element.stroke || 'var(--foreground)' }}
                 >
                   {element.content}
                 </div>

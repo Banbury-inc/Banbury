@@ -59,13 +59,13 @@ export function RecallBotCard({ bot, onStop, onRefresh }: RecallBotCardProps) {
         return { 
           variant: 'destructive' as const, 
           icon: <AlertCircle className="h-4 w-4" />,
-          color: 'text-red-400'
+          color: 'text-destructive'
         }
       default:
         return { 
           variant: 'outline' as const, 
           icon: <Clock className="h-4 w-4" />,
-          color: 'text-gray-400'
+          color: 'text-muted-foreground'
         }
     }
   }

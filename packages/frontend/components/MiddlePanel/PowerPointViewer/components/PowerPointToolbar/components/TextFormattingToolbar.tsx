@@ -271,7 +271,7 @@ export function TextFormattingToolbar({
               <PaintBucket size={16} />
               <div
                 className="absolute bottom-0 left-0 right-0 h-1 rounded-full"
-                style={{ backgroundColor: fillStyleToColorString(selectedElement.textFill) || '#ffffff' }}
+                style={{ backgroundColor: fillStyleToColorString(selectedElement.textFill) || 'var(--background)' }}
               />
             </div>
           </Button>

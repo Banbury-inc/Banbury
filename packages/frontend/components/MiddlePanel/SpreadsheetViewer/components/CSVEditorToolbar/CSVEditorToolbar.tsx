@@ -365,7 +365,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
         )}
         {visibleButtons.includes('currency') && (
           <>
-            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: '#3f3f46' }} />
+            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: 'var(--border)' }} />
             <CurrencyFormatButton onClick={handleCurrencyFormat} />
           </>
         )}
@@ -394,7 +394,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
         )}
         {visibleButtons.includes('bold') && (
           <>
-            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: '#3f3f46' }} />
+            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: 'var(--border)' }} />
             <BoldButton onClick={handleBold} />
           </>
         )}
@@ -406,7 +406,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
         )}
         {visibleButtons.includes('textColor') && (
           <>
-            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: '#3f3f46' }} />
+            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: 'var(--border)' }} />
             <TextColorButton
               applyCellStyle={applyCellStyle}
               removeCellStyle={removeCellStyle}
@@ -421,7 +421,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
         )}
         {visibleButtons.includes('borders') && (
           <>
-            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: '#3f3f46' }} />
+            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: 'var(--border)' }} />
             <BordersButton
               applyBordersOption={applyBordersOption}
               borderStyle={borderStyle}
@@ -434,7 +434,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
         )}
         {visibleButtons.includes('wrap') && (
           <>
-            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: '#3f3f46' }} />
+            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: 'var(--border)' }} />
             <WrapButton
               applyCellStyle={applyCellStyle}
               removeCellStyle={removeCellStyle}
@@ -450,7 +450,7 @@ const CSVEditorToolbar: React.FC<CSVEditorToolbarProps> = ({
         )}
         {visibleButtons.includes('filters') && (
           <>
-            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: '#3f3f46' }} />
+            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: 'var(--border)' }} />
             <FiltersButton onClick={handleToggleFilters} />
           </>
         )}

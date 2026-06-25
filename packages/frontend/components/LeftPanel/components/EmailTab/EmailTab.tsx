@@ -1114,16 +1114,16 @@ export function EmailTab({
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
         {isCheckingAccess ? (
           <div className="flex items-center justify-center h-full">
-            <RefreshCw className="h-4 w-4 animate-spin mr-2 text-gray-400 dark:text-gray-400" strokeWidth={1} />
+            <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" strokeWidth={1} />
             <Typography variant="muted">Checking email access...</Typography>
           </div>
         ) : !currentProviderAvailable ? (
           <div className="flex flex-col items-center justify-center h-full p-4">
-            <Mail className="h-12 w-12 mb-4 opacity-50 text-gray-400 dark:text-gray-400" strokeWidth={1} />
+            <Mail className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" strokeWidth={1} />
             <Typography variant="h3" className="mb-2">
               {selectedProvider === 'outlook' ? 'Outlook' : 'Gmail'} Access Required
             </Typography>
-            <Typography variant="small" className="text-center mb-4 max-w-md text-gray-500 dark:text-gray-400">
+            <Typography variant="small" className="text-center mb-4 max-w-md text-muted-foreground">
               {selectedProvider === 'outlook' 
                 ? 'To use Outlook email features, connect your Microsoft account in Settings → Connections.'
                 : 'To use the email features, you need to grant Gmail access to your Google account.'
@@ -1153,7 +1153,7 @@ export function EmailTab({
                 variant="ghost"
                 size="sm"
                 onClick={() => setComposeOpen(false)}
-                className="text-gray-400 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <ChevronLeft className="h-4 w-4" strokeWidth={1} />
               </Button>
@@ -1161,7 +1161,7 @@ export function EmailTab({
             
             <div className="space-y-3 flex-1">
               <div>
-                <Typography variant="small" className="text-xs text-gray-600 dark:text-gray-300 mb-1 block">To</Typography>
+                <Typography variant="small" className="text-xs text-muted-foreground mb-1 block">To</Typography>
                 <Input
                   value={composeForm.to}
                   onChange={(e) => setComposeForm(prev => ({ ...prev, to: e.target.value }))}
@@ -1171,7 +1171,7 @@ export function EmailTab({
               </div>
               
               <div>
-                <Typography variant="small" className="text-xs text-gray-600 dark:text-gray-300 mb-1 block">Subject</Typography>
+                <Typography variant="small" className="text-xs text-muted-foreground mb-1 block">Subject</Typography>
                 <Input
                   value={composeForm.subject}
                   onChange={(e) => setComposeForm(prev => ({ ...prev, subject: e.target.value }))}
@@ -1181,11 +1181,11 @@ export function EmailTab({
               </div>
               
               <div className="flex-1">
-                <Typography variant="small" className="text-xs text-gray-600 dark:text-gray-300 mb-1 block">Message</Typography>
+                <Typography variant="small" className="text-xs text-muted-foreground mb-1 block">Message</Typography>
                 <textarea
                   value={composeForm.body}
                   onChange={(e) => setComposeForm(prev => ({ ...prev, body: e.target.value }))}
-                  className="w-full h-full bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 text-gray-900 dark:text-white text-sm rounded p-2 resize-none"
+                  className="w-full h-full bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 text-foreground text-sm rounded p-2 resize-none"
                   placeholder="Write your message here..."
                 />
               </div>
@@ -1229,18 +1229,18 @@ export function EmailTab({
             )}
             {loading && !parsedMessages.length ? (
               <div className="flex items-center justify-center h-full">
-                <RefreshCw className="h-4 w-4 animate-spin mr-2 text-gray-400 dark:text-gray-400" strokeWidth={1} />
+                <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" strokeWidth={1} />
                 <Typography variant="muted">Loading emails...</Typography>
               </div>
             ) : (
               <>
                   {parsedMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full p-4">
-                      <Mail className="h-12 w-12 mb-4 opacity-50 text-gray-400 dark:text-gray-400" strokeWidth={1} />
-                      <Typography variant="small" className="mb-2 text-gray-500 dark:text-gray-400">
+                      <Mail className="h-12 w-12 mb-4 opacity-50 text-muted-foreground" strokeWidth={1} />
+                      <Typography variant="small" className="mb-2 text-muted-foreground">
                         No emails in {getLabelDisplayName(selectedLabel)}
                       </Typography>
-                      <Typography variant="muted" className="text-xs text-gray-400 dark:text-gray-500">
+                      <Typography variant="muted" className="text-xs text-muted-foreground">
                         {selectedLabelId === 'INBOX' ? 'Your inbox is empty or try refreshing' :
                          selectedLabelId === 'SENT' ? 'You haven\'t sent any emails yet' :
                          selectedLabelId === 'DRAFT' ? 'You don\'t have any saved drafts' :
@@ -1294,16 +1294,16 @@ export function EmailTab({
                                       </Typography>
                                     )}
                                     <Typography variant="small" className={`font-medium truncate min-w-0 ${
-                                      !email.isRead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'
+                                      !email.isRead ? 'text-foreground' : 'text-muted-foreground'
                                     }`}>
                                       {email.isDraft ? 'Draft' : email.from}
                                     </Typography>
                                     {email.hasAttachments && (
-                                      <Paperclip className="h-4 w-4 text-gray-400 dark:text-gray-400 flex-shrink-0" strokeWidth={1} />
+                                      <Paperclip className="h-4 w-4 text-muted-foreground flex-shrink-0" strokeWidth={1} />
                                     )}
                                   </div>
                                   <Typography variant="small" className={`truncate mb-1 block ${
-                                    !email.isRead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'
+                                    !email.isRead ? 'text-foreground' : 'text-muted-foreground'
                                   }`}>
                                     {email.subject}
                                   </Typography>
@@ -1347,7 +1347,7 @@ export function EmailTab({
                                   </div>
                                 </div>
                                 <div className="relative ml-2">
-                                  <Typography variant="muted" className="text-xs text-gray-400 dark:text-gray-500 group-hover:opacity-0 transition-opacity">
+                                  <Typography variant="muted" className="text-xs text-muted-foreground group-hover:opacity-0 transition-opacity">
                                     {formatDate(email.date)}
                                   </Typography>
                                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
@@ -1358,7 +1358,7 @@ export function EmailTab({
                                          e.stopPropagation()
                                          handleMessageAction(email.id, isStarred ? 'unstar' : 'star', email.provider)
                                        }}
-                                       className="h-6 w-6 p-0 text-gray-400 dark:text-gray-400 hover:text-yellow-400 dark:hover:text-yellow-400"
+                                       className="h-6 w-6 p-0 text-muted-foreground hover:text-chart-4"
                                      >
                                        {isStarred ? (
                                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" strokeWidth={1} />
@@ -1373,7 +1373,7 @@ export function EmailTab({
                                          e.stopPropagation()
                                          handleMessageAction(email.id, 'delete', email.provider)
                                        }}
-                                       className="h-6 w-6 p-0 text-gray-400 dark:text-gray-400 hover:text-red-400 dark:hover:text-red-400"
+                                       className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                                      >
                                        <Trash2 className="h-4 w-4" strokeWidth={1} />
                                      </Button>
@@ -1388,7 +1388,7 @@ export function EmailTab({
                       {/* Loading indicator for infinite scroll */}
                       {isLoadingMore && (
                         <div className="flex items-center justify-center py-4">
-                          <RefreshCw className="h-4 w-4 animate-spin mr-2 text-gray-400 dark:text-gray-400" strokeWidth={1} />
+                          <RefreshCw className="h-4 w-4 animate-spin mr-2 text-muted-foreground" strokeWidth={1} />
                           <Typography variant="muted">Loading more emails...</Typography>
                         </div>
                       )}

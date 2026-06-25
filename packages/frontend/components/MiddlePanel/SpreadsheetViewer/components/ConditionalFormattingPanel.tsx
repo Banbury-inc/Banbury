@@ -84,34 +84,20 @@ export function ConditionalFormattingPanel({
   if (!isOpen) return null
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        height: '100%',
-        width: 360,
-        backgroundColor: '#ffffff',
-        borderLeft: '1px solid #e5e7eb',
-        boxShadow: '-6px 0 16px rgba(0,0,0,0.08)',
-        zIndex: 10000,
-        display: 'flex',
-        flexDirection: 'column'
-      }}
-    >
-      <div style={{ padding: 8, borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h3 style={{ fontSize: 16, fontWeight: 600, color: '#111827' }}>Conditional formatting</h3>
-        <Button size="sm" style={{ color: '#ffffff', backgroundColor: '#111827' , border: '1px solid #111827' }} onClick={onClose}>Close</Button>
+    <div className="absolute top-0 right-0 z-[10000] flex h-full w-[360px] flex-col border-l border-border bg-background shadow-lg">
+      <div className="flex items-center justify-between border-b border-border p-2">
+        <h3 className="text-base font-semibold text-foreground">Conditional formatting</h3>
+        <Button size="sm" variant="primary" onClick={onClose}>Close</Button>
       </div>
-      <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
+      <div className="flex flex-col gap-2 overflow-y-auto p-2">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Label htmlFor="cf-range" style={{ color: '#111827' }}>Apply to range</Label>
-            <Input id="cf-range" value={cfA1Range} onChange={(e) => setCfA1Range(e.target.value)} placeholder="e.g. A1:D10" style={{ color: '#111827' }} />
+            <Label htmlFor="cf-range" className="text-foreground">Apply to range</Label>
+            <Input id="cf-range" value={cfA1Range} onChange={(e) => setCfA1Range(e.target.value)} placeholder="e.g. A1:D10" className="text-foreground" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Label htmlFor="cf-mode" style={{ color: '#111827' }}>Rule type</Label>
-            <select id="cf-mode" value={cfMode} onChange={(e) => setCfMode(e.target.value as any)} className="border rounded-md h-9 px-2 bg-white text-black" style={{ color: '#111827' }}>
+            <Label htmlFor="cf-mode" className="text-foreground">Rule type</Label>
+            <select id="cf-mode" value={cfMode} onChange={(e) => setCfMode(e.target.value as any)} className="h-9 rounded-md border border-border bg-background px-2 text-foreground">
               <option value="numeric">Numeric</option>
               <option value="text">Text</option>
               <option value="date">Date</option>
@@ -123,9 +109,9 @@ export function ConditionalFormattingPanel({
         </div>
         {cfMode === 'numeric' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Label htmlFor="cf-op" style={{ color: '#111827' }}>Condition</Label>
+            <Label htmlFor="cf-op" className="text-foreground">Condition</Label>
             <select id="cf-op" value={cfOperator} onChange={(e) => setCfOperator(e.target.value as any)}
-              className="border rounded-md h-9 px-2 bg-white text-black" style={{ color: '#111827' }}>
+              className="h-9 rounded-md border border-border bg-background px-2 text-foreground">
               <option value="gt">Greater than</option>
               <option value="gte">Greater than or equal</option>
               <option value="lt">Less than</option>
@@ -138,8 +124,8 @@ export function ConditionalFormattingPanel({
         )}
         {cfMode === 'text' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Label htmlFor="cf-text-op" style={{ color: '#111827' }}>Text condition</Label>
-            <select id="cf-text-op" value={cfTextOperator} onChange={(e) => setCfTextOperator(e.target.value as any)} className="border rounded-md h-9 px-2 bg-white text-black" style={{ color: '#111827' }}>
+            <Label htmlFor="cf-text-op" className="text-foreground">Text condition</Label>
+            <select id="cf-text-op" value={cfTextOperator} onChange={(e) => setCfTextOperator(e.target.value as any)} className="h-9 rounded-md border border-border bg-background px-2 text-foreground">
               <option value="contains">Contains</option>
               <option value="startsWith">Starts with</option>
               <option value="endsWith">Ends with</option>
@@ -154,8 +140,8 @@ export function ConditionalFormattingPanel({
         )}
         {cfMode === 'date' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Label htmlFor="cf-date-op" style={{ color: '#111827' }}>Date condition</Label>
-            <select id="cf-date-op" value={cfDateOperator} onChange={(e) => setCfDateOperator(e.target.value as any)} className="border rounded-md h-9 px-2 bg-white text-black" style={{ color: '#111827' }}>
+            <Label htmlFor="cf-date-op" className="text-foreground">Date condition</Label>
+            <select id="cf-date-op" value={cfDateOperator} onChange={(e) => setCfDateOperator(e.target.value as any)} className="h-9 rounded-md border border-border bg-background px-2 text-foreground">
               <option value="today">Today</option>
               <option value="yesterday">Yesterday</option>
               <option value="tomorrow">Tomorrow</option>
@@ -177,69 +163,69 @@ export function ConditionalFormattingPanel({
         {cfMode === 'colorScale' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <Label htmlFor="cf-min-color" style={{ color: '#111827' }}>Min color</Label>
+              <Label htmlFor="cf-min-color" className="text-foreground">Min color</Label>
               <input id="cf-min-color" type="color" value={cfMinColor} onChange={(e) => setCfMinColor(e.target.value)} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <Label htmlFor="cf-max-color" style={{ color: '#111827' }}>Max color</Label>
+              <Label htmlFor="cf-max-color" className="text-foreground">Max color</Label>
               <input id="cf-max-color" type="color" value={cfMaxColor} onChange={(e) => setCfMaxColor(e.target.value)} />
             </div>
           </div>
         )}
         <div style={{ display: cfMode === 'colorScale' ? 'none' : 'flex', gap: 8 }}>
           <div style={{ flex: 1 }}>
-            <Label htmlFor="cf-val1" style={{ color: '#111827' }}>Value</Label>
-            <Input id="cf-val1" style={{ color: '#111827' }} value={cfValue} onChange={(e) => setCfValue(e.target.value)} />
+            <Label htmlFor="cf-val1" className="text-foreground">Value</Label>
+            <Input id="cf-val1" className="text-foreground" value={cfValue} onChange={(e) => setCfValue(e.target.value)} />
           </div>
           {cfOperator === 'between' && (
             <div style={{ flex: 1 }}>
-              <Label htmlFor="cf-val2" style={{ color: '#111827' }}>and</Label>
+              <Label htmlFor="cf-val2" className="text-foreground">and</Label>
               <Input id="cf-val2" value={cfValue2} onChange={(e) => setCfValue2(e.target.value)} />
             </div>
           )}
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <input type="checkbox" checked={cfStopIfTrue} onChange={(e) => setCfStopIfTrue(e.target.checked)} />
-          <span style={{ color: '#111827' }}>Stop if true</span>
+          <span className="text-foreground">Stop if true</span>
         </label>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, alignItems: 'end' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Label htmlFor="cf-fill" style={{ color: '#111827' }}>Fill</Label>
+            <Label htmlFor="cf-fill" className="text-foreground">Fill</Label>
             <input id="cf-fill" type="color" value={cfFillColor} onChange={(e) => setCfFillColor(e.target.value)} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Label htmlFor="cf-text" style={{ color: '#111827' }}>Text</Label>
+            <Label htmlFor="cf-text" className="text-foreground">Text</Label>
             <input id="cf-text" type="color" value={cfTextColor} onChange={(e) => setCfTextColor(e.target.value)} />
           </div>
           <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <input type="checkbox" checked={cfBold} onChange={(e) => setCfBold(e.target.checked)} />
-            <span style={{ color: '#111827' }}>Bold</span>
+            <span className="text-foreground">Bold</span>
           </label>
           <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <input type="checkbox" checked={cfItalic} onChange={(e) => setCfItalic(e.target.checked)} />
-            <span style={{ color: '#111827' }}>Italic</span>
+            <span className="text-foreground">Italic</span>
           </label>
           <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <input type="checkbox" checked={cfUnderline} onChange={(e) => setCfUnderline(e.target.checked)} />
-            <span style={{ color: '#111827' }}>Underline</span>
+            <span className="text-foreground">Underline</span>
           </label>
         </div>
-        <Button style={{ backgroundColor: '#111827', color: '#ffffff' }} onClick={addRuleFromPanel}>Add rule</Button>
+        <Button onClick={addRuleFromPanel}>Add rule</Button>
 
-        <Separator className="my-2" style={{ borderColor: '#e5e7eb' }} />
-        <p style={{ color: '#111827', fontSize: 12, fontWeight: 600 }}>Rules</p>
-        <div style={{ overflowY: 'auto' }}>
+        <Separator className="my-2" />
+        <p className="text-xs font-semibold text-foreground">Rules</p>
+        <div className="overflow-y-auto">
           {[...conditionalRules].sort((a, b) => a.priority - b.priority).map((rule) => (
-            <div key={rule.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid #e5e7eb' }}>
-              <div style={{ color: '#111827', fontSize: 13, fontWeight: 600 }}>
+            <div key={rule.id} className="grid grid-cols-[1fr_auto] items-center border-b border-border py-1">
+              <div className="text-[13px] font-semibold text-foreground">
                 {rule.label || `${rule.condition.kind === 'numeric' ? rule.condition.operator : 'rule'} R${rule.range.startRow + 1}:C${rule.range.startCol + 1}–R${rule.range.endRow + 1}:C${rule.range.endCol + 1}`}
-                {rule.stopIfTrue ? <span style={{ marginLeft: 8, color: '#94a3b8', fontSize: 12, fontWeight: 400 }}>(Stop if true)</span> : null}
+                {rule.stopIfTrue ? <span className="ml-2 text-xs font-normal text-muted-foreground">(Stop if true)</span> : null}
               </div>
-              <div style={{ display: 'flex', gap: 4 }}>
-                <Button size="icon" style={{ color: '#111827', backgroundColor: '#ffffff', border: '1px solid #111827' }} onClick={() => onMoveRule(rule.id, 'up')} title="Move up"><ArrowUpward sx={{ fontSize: 16, color: '#111827' }} /></Button>
-                <Button size="icon" style={{ color: '#111827', backgroundColor: '#ffffff', border: '1px solid #111827' }} onClick={() => onMoveRule(rule.id, 'down')} title="Move down"><ArrowDownward sx={{ fontSize: 16, color: '#111827' }} /></Button>
-                <Button size="icon" style={{ color: '#111827', backgroundColor: '#ffffff', border: '1px solid #111827' }} onClick={() => applySelectionToRule(rule.id)} title="Use selection"><BorderAllIcon sx={{ fontSize: 16, color: '#111827' }} /></Button>
-                <Button size="icon" style={{ color: '#111827', backgroundColor: '#ffffff', border: '1px solid #111827' }} onClick={() => onRemoveRule(rule.id)} title="Delete"><DeleteIcon sx={{ fontSize: 16, color: '#111827' }} /></Button>
+              <div className="flex gap-1">
+                <Button size="icon" variant="outline" onClick={() => onMoveRule(rule.id, 'up')} title="Move up"><ArrowUpward sx={{ fontSize: 16 }} className="text-foreground" /></Button>
+                <Button size="icon" variant="outline" onClick={() => onMoveRule(rule.id, 'down')} title="Move down"><ArrowDownward sx={{ fontSize: 16 }} className="text-foreground" /></Button>
+                <Button size="icon" variant="outline" onClick={() => applySelectionToRule(rule.id)} title="Use selection"><BorderAllIcon sx={{ fontSize: 16 }} className="text-foreground" /></Button>
+                <Button size="icon" variant="outline" onClick={() => onRemoveRule(rule.id)} title="Delete"><DeleteIcon sx={{ fontSize: 16 }} className="text-foreground" /></Button>
               </div>
             </div>
           ))}

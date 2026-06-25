@@ -204,7 +204,7 @@ const getFileIcon = (fileName: string): { icon: any, color: string } => {
   if (isSpreadsheetFile(fileName)) return { icon: FileSpreadsheet, color: coloredIcons ? 'text-green-500' : uniformColor }
   if (isPresentationFile(fileName)) return { icon: FileBarChart, color: coloredIcons ? 'text-orange-400' : uniformColor }
   if (isCodeFile(fileName)) return { icon: FileCode, color: coloredIcons ? 'text-yellow-400' : uniformColor }
-  if (isArchiveFile(fileName)) return { icon: FileArchive, color: coloredIcons ? 'text-gray-400' : uniformColor }
+  if (isArchiveFile(fileName)) return { icon: FileArchive, color: coloredIcons ? 'text-muted-foreground' : uniformColor }
   if (isDataFile(fileName)) return { icon: FileJson, color: coloredIcons ? 'text-indigo-400' : uniformColor }
   if (isExecutableFile(fileName)) return { icon: FileCog, color: coloredIcons ? 'text-red-500' : uniformColor }
   if (isFontFile(fileName)) return { icon: FileType, color: coloredIcons ? 'text-pink-400' : uniformColor }
@@ -212,7 +212,7 @@ const getFileIcon = (fileName: string): { icon: any, color: string } => {
   if (isVectorFile(fileName)) return { icon: FileImage, color: coloredIcons ? 'text-emerald-400' : uniformColor }
   
   // Default file icon
-  return { icon: File, color: coloredIcons ? 'text-gray-400' : uniformColor }
+  return { icon: File, color: coloredIcons ? 'text-muted-foreground' : uniformColor }
 }
 
 
