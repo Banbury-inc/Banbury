@@ -28,6 +28,7 @@ import {
   handleDriveDownload 
 } from "../../../handlers/handleDriveFileActions"
 import { getColoredFileIcons } from "../../../../../../modals/settings-tabs/handlers/appearanceHandlers"
+import { scheduleRenameInputFocus } from "../../../../../../../utils/focusRenameInput"
 
 interface DriveFileTreeItemProps {
   file: DriveFile
@@ -83,21 +84,11 @@ export function DriveFileTreeItem({
   const [, forceUpdate] = useState({})
 
   useEffect(() => {
-    if (isRenaming && inputRef.current) {
-      requestAnimationFrame(() => {
-        if (inputRef.current) {
-          inputRef.current.focus()
-          // Select filename without extension
-          const value = inputRef.current.value
-          const lastDotIndex = value.lastIndexOf('.')
-          if (lastDotIndex > 0 && !isFolder) {
-            inputRef.current.setSelectionRange(0, lastDotIndex)
-          } else {
-            inputRef.current.select()
-          }
-        }
-      })
-    }
+    if (!isRenaming) return
+    return scheduleRenameInputFocus(
+      () => inputRef.current,
+      isFolder ? 'all' : 'filename'
+    )
   }, [isRenaming, isFolder])
 
   useEffect(() => {

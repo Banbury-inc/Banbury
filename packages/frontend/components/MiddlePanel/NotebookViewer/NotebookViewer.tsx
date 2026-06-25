@@ -172,8 +172,8 @@ export function NotebookViewer({ file, userInfo, onSaveComplete }: NotebookViewe
     return (
       <div className="h-full w-full flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-400 mb-2">{error || 'Notebook failed to load'}</div>
-          <div className="text-gray-400 text-sm">{file.name}</div>
+          <div className="text-destructive mb-2">{error || 'Notebook failed to load'}</div>
+          <div className="text-muted-foreground text-sm">{file.name}</div>
         </div>
       </div>
     )
@@ -217,7 +217,7 @@ export function NotebookViewer({ file, userInfo, onSaveComplete }: NotebookViewe
         {notebook.cells.map((cell, idx) => (
           <div key={idx} className="bg-zinc-900 border border-zinc-700 rounded-md p-3">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-xs text-gray-400 uppercase tracking-wide">
+              <div className="text-xs text-muted-foreground uppercase tracking-wide">
                 {cell.cell_type === 'code' ? 'Code' : 'Markdown'} {cell.cell_type === 'code' && (cell as CodeCell).execution_count != null ? `• ${String((cell as CodeCell).execution_count)}` : ''}
               </div>
               {cell.cell_type === 'code' && (

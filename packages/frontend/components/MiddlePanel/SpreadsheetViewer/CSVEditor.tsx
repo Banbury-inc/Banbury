@@ -1181,7 +1181,7 @@ const searchFieldKeyupCallback = useCallback(
     >
 
       {error && (
-        <div style={{ margin: 8, padding: '8px 10px', border: '1px solid #f59e0b', backgroundColor: '#fffbeb', color: '#78350f', borderRadius: 6 }}>
+        <div className="m-2 rounded-md border border-border bg-muted px-2.5 py-2 text-sm text-foreground">
           {error}
         </div>
       )}
@@ -1234,7 +1234,7 @@ const searchFieldKeyupCallback = useCallback(
         style={{ 
           flex: 1,
           position: 'relative',
-          backgroundColor: '#ffffff',
+          backgroundColor: 'var(--card)',
           overflow: 'hidden',
           minHeight: 0, // Allow flex item to shrink below content size
           marginBottom: 0, // Remove any margin that might hide tabs

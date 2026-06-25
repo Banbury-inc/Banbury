@@ -269,8 +269,8 @@ export const SpreadsheetChart: React.FC<SpreadsheetChartProps> = ({
         top: chart.position.y,
         width: chart.size.width,
         height: chart.size.height,
-        backgroundColor: '#ffffff',
-        border: '2px solid #e5e7eb',
+        backgroundColor: 'var(--card)',
+        border: '2px solid var(--border)',
         borderRadius: 8,
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
         zIndex: 100,
@@ -288,29 +288,24 @@ export const SpreadsheetChart: React.FC<SpreadsheetChartProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '8px 12px',
-          borderBottom: '1px solid #e5e7eb',
-          backgroundColor: '#f9fafb',
+          borderBottom: '1px solid var(--border)',
+          backgroundColor: 'var(--muted)',
           borderTopLeftRadius: 6,
           borderTopRightRadius: 6,
           cursor: 'grab'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <MoveIcon size={14} style={{ color: '#6b7280' }} />
-          <h4 style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: 0 }}>
+          <MoveIcon size={14} className="text-muted-foreground" />
+          <h4 className="m-0 text-sm font-semibold text-foreground">
             {chart.options.title || chart.name}
           </h4>
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
           <Button
             size="sm"
-            style={{
-              padding: '4px 8px',
-              height: 'auto',
-              backgroundColor: 'transparent',
-              color: '#6b7280',
-              border: 'none'
-            }}
+            variant="ghost"
+            className="h-auto px-2 py-1 text-muted-foreground"
             onClick={(e) => {
               e.stopPropagation()
               onEdit(chart)
@@ -320,13 +315,8 @@ export const SpreadsheetChart: React.FC<SpreadsheetChartProps> = ({
           </Button>
           <Button
             size="sm"
-            style={{
-              padding: '4px 8px',
-              height: 'auto',
-              backgroundColor: 'transparent',
-              color: '#ef4444',
-              border: 'none'
-            }}
+            variant="ghost"
+            className="h-auto px-2 py-1 text-destructive"
             onClick={(e) => {
               e.stopPropagation()
               onDelete(chart.id)
@@ -353,7 +343,7 @@ export const SpreadsheetChart: React.FC<SpreadsheetChartProps> = ({
           width: 16,
           height: 16,
           cursor: 'nwse-resize',
-          backgroundColor: '#3b82f6',
+          backgroundColor: 'var(--primary)',
           borderBottomRightRadius: 6,
           display: 'flex',
           alignItems: 'center',
@@ -361,7 +351,7 @@ export const SpreadsheetChart: React.FC<SpreadsheetChartProps> = ({
         }}
         onMouseDown={handleResizeMouseDown}
       >
-        <ResizeIcon size={10} style={{ color: '#ffffff' }} />
+        <ResizeIcon size={10} className="text-primary-foreground" />
       </div>
     </div>
   )

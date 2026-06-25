@@ -174,7 +174,7 @@ export function GoogleDriveViewer({ file }: GoogleDriveViewerProps) {
           <div className="absolute inset-0 flex items-center justify-center bg-zinc-900 z-10">
             <div className="text-center">
               <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
-              <Typography variant="small" className="text-gray-400">
+              <Typography variant="small" className="text-muted-foreground">
                 Loading Google Drive file...
               </Typography>
             </div>
@@ -187,7 +187,7 @@ export function GoogleDriveViewer({ file }: GoogleDriveViewerProps) {
               <Typography variant="h3" className="text-xl font-semibold text-white mb-2">
                 Error Loading File
               </Typography>
-              <Typography variant="p" className="text-gray-400 mb-4">
+              <Typography variant="p" className="text-muted-foreground mb-4">
                 {error}. Click the button below to open it in Google Drive or try refreshing.
               </Typography>
               <div className="flex gap-2 justify-center">
@@ -231,7 +231,7 @@ export function GoogleDriveViewer({ file }: GoogleDriveViewerProps) {
               <Typography variant="h3" className="text-xl font-semibold text-white mb-2">
                 Unable to Load File
               </Typography>
-              <Typography variant="p" className="text-gray-400 mb-4">
+              <Typography variant="p" className="text-muted-foreground mb-4">
                 This Google Drive file cannot be previewed. Click the button below to open it in Google Drive.
               </Typography>
               <Button

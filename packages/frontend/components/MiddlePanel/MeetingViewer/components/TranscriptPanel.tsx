@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Loader2, MessageSquareText, Search, X } from "lucide-react"
+import { ChevronDown, ChevronRight, ChevronUp, Loader2, MessageSquareText, Search, X } from "lucide-react"
 import type { Dispatch, ReactNode, RefObject } from "react"
 import { Badge } from "../../../common/ui/badge"
 import { Button } from "../../../common/ui/button"
@@ -21,6 +21,7 @@ interface TranscriptPanelProps {
   onSearchQueryChange: Dispatch<string>
   onSearchNavigate: Dispatch<'next' | 'previous'>
   onSegmentClick: Dispatch<number>
+  onToggleCollapse?(): void
 }
 
 export function TranscriptPanel({
@@ -34,10 +35,11 @@ export function TranscriptPanel({
   activeSearchMatchIndex,
   onSearchQueryChange,
   onSearchNavigate,
-  onSegmentClick
+  onSegmentClick,
+  onToggleCollapse
 }: TranscriptPanelProps) {
   return (
-    <div className="min-h-0 w-full flex-shrink-0 lg:h-full lg:w-[22rem] lg:min-w-80">
+    <div className="h-full min-h-0 w-full">
       {isTranscriptionLoading ? (
         <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-none border-border bg-card shadow-sm">
           <div className="flex min-h-0 flex-1 items-center justify-center p-10">
@@ -52,6 +54,7 @@ export function TranscriptPanel({
             activeSearchMatchIndex={activeSearchMatchIndex}
             onSearchQueryChange={onSearchQueryChange}
             onSearchNavigate={onSearchNavigate}
+            onToggleCollapse={onToggleCollapse}
           />
           <div
             ref={transcriptScrollRef}
@@ -112,6 +115,7 @@ export function TranscriptPanel({
             activeSearchMatchIndex={activeSearchMatchIndex}
             onSearchQueryChange={onSearchQueryChange}
             onSearchNavigate={onSearchNavigate}
+            onToggleCollapse={onToggleCollapse}
           />
           <div ref={transcriptScrollRef} className="min-h-0 flex-1 overflow-y-auto p-4">
             <Typography variant="p" className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
@@ -135,6 +139,7 @@ interface TranscriptHeaderProps {
   activeSearchMatchIndex: number
   onSearchQueryChange: Dispatch<string>
   onSearchNavigate: Dispatch<'next' | 'previous'>
+  onToggleCollapse?(): void
 }
 
 function TranscriptHeader({
@@ -142,7 +147,8 @@ function TranscriptHeader({
   searchMatches,
   activeSearchMatchIndex,
   onSearchQueryChange,
-  onSearchNavigate
+  onSearchNavigate,
+  onToggleCollapse
 }: TranscriptHeaderProps) {
   const hasSearchQuery = searchQuery.trim().length > 0
   const matchCount = searchMatches.length
@@ -163,6 +169,18 @@ function TranscriptHeader({
             </Typography>
           </div>
         </div>
+        {onToggleCollapse && (
+          <Button
+            type="button"
+            size="icon-xs"
+            variant="ghost"
+            className="rounded-none text-muted-foreground hover:text-foreground"
+            onClick={onToggleCollapse}
+            aria-label="Collapse transcript panel"
+          >
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </Button>
+        )}
       </div>
       <div className="flex items-center gap-2">
         <div className="relative min-w-0 flex-1">

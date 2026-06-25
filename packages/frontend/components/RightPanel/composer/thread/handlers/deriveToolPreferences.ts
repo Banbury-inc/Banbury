@@ -3,6 +3,10 @@ import {
   normalizePersistedModelId,
   DEFAULT_VISIBLE_MODELS,
 } from "../../handlers/getModelDisplayName"
+import {
+  normalizePersistedImageGenerationModel,
+  normalizePersistedVideoGenerationModel,
+} from "../../handlers/getMediaModelDisplayName"
 
 export interface ThreadToolPreferences {
   web_search: boolean;
@@ -100,8 +104,8 @@ export function deriveToolPreferences(raw?: any): ThreadToolPreferences {
     memory: data.memory !== false,
     model_provider: provider,
     model_id: modelId,
-    image_generation_model: typeof data.image_generation_model === "string" ? data.image_generation_model : "dall-e-3",
-    video_generation_model: typeof data.video_generation_model === "string" ? data.video_generation_model : "sora-2",
+    image_generation_model: normalizePersistedImageGenerationModel(data.image_generation_model),
+    video_generation_model: normalizePersistedVideoGenerationModel(data.video_generation_model),
     visibleModels: Array.isArray(data.visibleModels) ? data.visibleModels : DEFAULT_VISIBLE_MODELS,
     // Plan mode
     plan_mode: Boolean(data.plan_mode),

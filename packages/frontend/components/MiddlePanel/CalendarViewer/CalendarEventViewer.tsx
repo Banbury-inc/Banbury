@@ -26,7 +26,7 @@ export function CalendarEventViewer({ event, onBack, onOpenInCalendar }: Calenda
 
   if (!event) {
     return (
-      <div className="h-full flex items-center justify-center text-gray-400 bg-white">
+      <div className="h-full flex items-center justify-center text-muted-foreground bg-background">
         Select an event to view
       </div>
     )

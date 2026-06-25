@@ -32,7 +32,10 @@ export function MeetingContextMenu({
         {children}
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="min-w-[200px] bg-popover border border-border rounded-md p-1 shadow-lg z-50">
+        <ContextMenu.Content
+          className="min-w-[200px] bg-popover border border-border rounded-md p-1 shadow-lg z-50"
+          onCloseAutoFocus={(event) => event.preventDefault()}
+        >
           <ContextMenu.Item className={menuItemClassName} onSelect={onOpen}>
             <FolderOpen className="w-4 h-4" strokeWidth={1} />
             <Typography variant="xs" className="text-popover-foreground">

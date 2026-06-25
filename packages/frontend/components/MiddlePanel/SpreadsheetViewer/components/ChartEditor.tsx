@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Button } from '../../../common/ui/button'
 import { Input } from '../../../common/ui/old-input'
 import { Label } from '../../../common/ui/label'
@@ -122,57 +122,26 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 10000
-      }}
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50"
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel()
       }}
     >
-      <div
-        style={{
-          backgroundColor: '#ffffff',
-          borderRadius: 8,
-          padding: 24,
-          width: '90%',
-          maxWidth: 600,
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-        }}
-      >
-        <h2 style={{ fontSize: 20, fontWeight: 600, color: '#111827', marginBottom: 16 }}>
+      <div className="w-[90%] max-h-[90vh] max-w-xl overflow-y-auto rounded-lg bg-background p-6 shadow-xl">
+        <h2 className="mb-4 text-xl font-semibold text-foreground">
           {chart ? 'Edit Chart' : 'Create Chart'}
         </h2>
 
         {error && (
-          <div
-            style={{
-              padding: '8px 12px',
-              backgroundColor: '#fee2e2',
-              color: '#991b1b',
-              borderRadius: 6,
-              marginBottom: 16,
-              fontSize: 14
-            }}
-          >
+          <div className="mb-4 rounded-md bg-destructive/10 p-2 text-sm text-destructive">
             {error}
           </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="flex flex-col gap-4">
           {/* Chart Name */}
           <div>
-            <Label htmlFor="chart-name" style={{ color: '#111827' }}>
+            <Label htmlFor="chart-name" className="text-foreground">
               Chart Name
             </Label>
             <Input
@@ -180,21 +149,20 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
               value={chartName}
               onChange={(e) => setChartName(e.target.value)}
               placeholder="My Chart"
-              style={{ color: '#111827' }}
+              className="text-foreground"
             />
           </div>
 
           {/* Chart Type */}
           <div>
-            <Label htmlFor="chart-type" style={{ color: '#111827' }}>
+            <Label htmlFor="chart-type" className="text-foreground">
               Chart Type
             </Label>
             <select
               id="chart-type"
               value={chartType}
               onChange={(e) => setChartType(e.target.value as ChartType)}
-              className="border rounded-md h-9 px-2 bg-white text-black w-full"
-              style={{ color: '#111827' }}
+              className="h-9 w-full rounded-md border border-border bg-background px-2 text-foreground"
             >
               <option value="bar">Bar Chart</option>
               <option value="line">Line Chart</option>
@@ -207,7 +175,7 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
 
           {/* Data Range */}
           <div>
-            <Label htmlFor="data-range" style={{ color: '#111827' }}>
+            <Label htmlFor="data-range" className="text-foreground">
               Data Range
             </Label>
             <Input
@@ -218,9 +186,9 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
                 setError('')
               }}
               placeholder="A1:B10"
-              style={{ color: '#111827' }}
+              className="text-foreground"
             />
-            <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
+            <p className="mt-1 text-xs text-muted-foreground">
               Format: A1:D10 (columns and rows)
             </p>
           </div>
@@ -228,7 +196,7 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
           {/* Category Column */}
           {chartType !== 'pie' && (
             <div>
-              <Label htmlFor="category-column" style={{ color: '#111827' }}>
+              <Label htmlFor="category-column" className="text-foreground">
                 Category Column (X-axis)
               </Label>
               <Input
@@ -238,9 +206,9 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
                 onChange={(e) => setCategoryColumn(parseInt(e.target.value, 10) || 0)}
                 min={0}
                 max={maxCols - 1}
-                style={{ color: '#111827' }}
+                className="text-foreground"
               />
-              <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
+              <p className="mt-1 text-xs text-muted-foreground">
                 Column index for labels (0 = first column)
               </p>
             </div>
@@ -248,7 +216,7 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
 
           {/* Chart Title */}
           <div>
-            <Label htmlFor="chart-title" style={{ color: '#111827' }}>
+            <Label htmlFor="chart-title" className="text-foreground">
               Chart Title
             </Label>
             <Input
@@ -256,15 +224,15 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Sales Data"
-              style={{ color: '#111827' }}
+              className="text-foreground"
             />
           </div>
 
           {/* Axis Labels */}
           {chartType !== 'pie' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="x-axis-label" style={{ color: '#111827' }}>
+                <Label htmlFor="x-axis-label" className="text-foreground">
                   X-Axis Label
                 </Label>
                 <Input
@@ -272,11 +240,11 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
                   value={xAxisLabel}
                   onChange={(e) => setXAxisLabel(e.target.value)}
                   placeholder="Month"
-                  style={{ color: '#111827' }}
+                  className="text-foreground"
                 />
               </div>
               <div>
-                <Label htmlFor="y-axis-label" style={{ color: '#111827' }}>
+                <Label htmlFor="y-axis-label" className="text-foreground">
                   Y-Axis Label
                 </Label>
                 <Input
@@ -284,54 +252,41 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
                   value={yAxisLabel}
                   onChange={(e) => setYAxisLabel(e.target.value)}
                   placeholder="Revenue"
-                  style={{ color: '#111827' }}
+                  className="text-foreground"
                 />
               </div>
             </div>
           )}
 
           {/* Options */}
-          <div style={{ display: 'flex', gap: 16 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={showLegend}
                 onChange={(e) => setShowLegend(e.target.checked)}
               />
-              <span style={{ color: '#111827', fontSize: 14 }}>Show Legend</span>
+              <span className="text-sm text-foreground">Show Legend</span>
             </label>
 
             {chartType !== 'pie' && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={showGrid}
                   onChange={(e) => setShowGrid(e.target.checked)}
                 />
-                <span style={{ color: '#111827', fontSize: 14 }}>Show Grid</span>
+                <span className="text-sm text-foreground">Show Grid</span>
               </label>
             )}
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
-            <Button
-              onClick={onCancel}
-              style={{
-                backgroundColor: '#ffffff',
-                color: '#111827',
-                border: '1px solid #d1d5db'
-              }}
-            >
+          <div className="mt-2 flex justify-end gap-2">
+            <Button variant="outline" onClick={onCancel}>
               Cancel
             </Button>
-            <Button
-              onClick={handleSave}
-              style={{
-                backgroundColor: '#3b82f6',
-                color: '#ffffff'
-              }}
-            >
+            <Button onClick={handleSave}>
               {chart ? 'Update Chart' : 'Create Chart'}
             </Button>
           </div>

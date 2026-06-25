@@ -77,7 +77,7 @@ export const toolConfigs: ToolConfig[] = [
     key: "web_search",
     label: "Web Search",
     icon: Search,
-    iconColor: "text-gray-400",
+    iconColor: "text-muted-foreground",
     defaultEnabled: true,
   },
   {
@@ -250,7 +250,7 @@ export const toolConfigs: ToolConfig[] = [
     key: "github",
     label: "GitHub",
     icon: Github,
-    iconColor: "text-gray-700 dark:text-gray-300",
+    iconColor: "text-foreground",
     defaultEnabled: true,
   },
   // Media tools

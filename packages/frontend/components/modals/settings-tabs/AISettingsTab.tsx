@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Brain, Mail, Sparkles, Trash2 } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import { Switch } from '../../common/ui/switch'
 import { Button } from '../../common/ui/button'
 import { Typography } from '@/components/common/ui/typography'
-import { Label } from '@/components/common/ui/label'
-import { Separator } from '@/components/common/ui/separator'
 import { useToast } from '../../common/ui/use-toast'
 import { getAvailableModels, DEFAULT_VISIBLE_MODELS } from '../../RightPanel/composer/handlers/getModelDisplayName'
 import { fetchAnthropicModelsCatalog } from '../../RightPanel/composer/handlers/fetchAnthropicModelsCatalog'
@@ -12,6 +10,16 @@ import { fetchOpenAIModelsCatalog } from '../../RightPanel/composer/handlers/fet
 import { fetchGoogleModelsCatalog } from '../../RightPanel/composer/handlers/fetchGoogleModelsCatalog'
 import { getModelsCatalogRevision } from '../../RightPanel/composer/handlers/getModelDisplayName'
 import { deleteAllConversations } from './handlers/aiSettingsHandlers'
+import {
+  SettingsTabCard,
+  SettingsTabCardBody,
+  SettingsTabGroupLabel,
+  SettingsTabHeader,
+  SettingsTabLayout,
+  SettingsTabNote,
+  SettingsTabRow,
+  SettingsTabSection,
+} from './settings-tab-layout'
 
 interface ToolPreferences {
   web_search: boolean
@@ -29,6 +37,12 @@ interface ToolPreferences {
   model_provider: "anthropic" | "openai" | "google"
   visibleModels?: string[]
 }
+
+const MODEL_PROVIDERS = [
+  { id: 'openai', label: 'OpenAI Models' },
+  { id: 'anthropic', label: 'Anthropic Models' },
+  { id: 'google', label: 'Google Models' },
+] as const
 
 export function AISettingsTab() {
   const { toast } = useToast()
@@ -118,8 +132,6 @@ export function AISettingsTab() {
     }
     setToolPreferences(updatedPreferences)
     localStorage.setItem('toolPreferences', JSON.stringify(updatedPreferences))
-
-    // Dispatch storage event for other components to pick up
     window.dispatchEvent(new Event('storage'))
   }
 
@@ -135,8 +147,6 @@ export function AISettingsTab() {
     }
     setToolPreferences(updatedPreferences)
     localStorage.setItem('toolPreferences', JSON.stringify(updatedPreferences))
-
-    // Dispatch storage event for other components to pick up
     window.dispatchEvent(new Event('storage'))
   }
 
@@ -164,172 +174,83 @@ export function AISettingsTab() {
       description: `Successfully deleted ${result.deletedCount ?? 'all'} conversations.`,
     })
 
-    // Dispatch event so other components can react
     window.dispatchEvent(new CustomEvent('assistant-conversations-cleared'))
   }
 
   return (
-    <div className="space-y-6">
-      <Typography variant="h3" className="mb-4 flex items-center text-foreground">
-        <Brain className="h-5 w-5 mr-2" />
-        AI Tool Settings
-      </Typography>
-      <Separator />
+    <SettingsTabLayout>
+      <SettingsTabHeader title="AI Tool Settings" />
 
-      <div className="space-y-6">
-        {/* Gmail Send Message Tool */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Mail className="h-5 w-5 text-muted-foreground" />
-              <div className="flex-1">
-                <Label htmlFor="gmail-send-toggle">
-                  <Typography variant="p" className="font-medium text-foreground">
-                    Gmail Send Email
-                  </Typography>
-                </Label>
-                <Typography variant="small" className="mt-1 text-muted-foreground">
-                  Allow the AI assistant to send emails on your behalf. Reading emails and creating drafts stays available.
-                </Typography>
-              </div>
-            </div>
+      <SettingsTabCard>
+        <SettingsTabCardBody>
+          <SettingsTabRow
+            label="Gmail Send Email"
+            description="Allow the AI assistant to send emails on your behalf. Reading emails and creating drafts stays available."
+            htmlFor="gmail-send-toggle"
+            align="start"
+          >
             <Switch
               id="gmail-send-toggle"
               checked={toolPreferences.gmailSend}
               onCheckedChange={handleGmailSendToggle}
             />
-          </div>
-        </div>
+          </SettingsTabRow>
+        </SettingsTabCardBody>
+      </SettingsTabCard>
 
-        <Separator />
-
-        {/* Model Visibility Settings */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Sparkles className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <Typography variant="p" className="font-medium text-foreground">
-                Visible Models
-              </Typography>
-              <Typography variant="small" className="mt-1 text-muted-foreground">
-                Choose which AI models appear in the model picker.
-              </Typography>
-            </div>
-          </div>
-
-          {/* OpenAI Models */}
-          <div className="space-y-2 pl-8">
-            <Typography variant="small" className="font-semibold text-foreground">
-              OpenAI Models
-            </Typography>
-            <div className="space-y-2">
-              {availableModels.filter(m => m.provider === "openai").map(model => (
-                <div key={model.id} className="flex items-center justify-between py-1">
-                  <div className="flex-1">
-                    <Label htmlFor={`model-${model.id}`}>
-                      <Typography variant="small" className="text-foreground">
-                        {model.name}
-                      </Typography>
-                    </Label>
-                  </div>
-                  <Switch
-                    id={`model-${model.id}`}
-                    checked={(toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS).includes(model.id)}
-                    onCheckedChange={(checked) => handleModelVisibilityToggle(model.id, checked)}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Anthropic Models */}
-          <div className="space-y-2 pl-8">
-            <Typography variant="small" className="font-semibold text-foreground">
-              Anthropic Models
-            </Typography>
-            <div className="space-y-2">
-              {availableModels.filter(m => m.provider === "anthropic").map(model => (
-                <div key={model.id} className="flex items-center justify-between py-1">
-                  <div className="flex-1">
-                    <Label htmlFor={`model-${model.id}`}>
-                      <Typography variant="small" className="text-foreground">
-                        {model.name}
-                      </Typography>
-                    </Label>
-                  </div>
-                  <Switch
-                    id={`model-${model.id}`}
-                    checked={(toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS).includes(model.id)}
-                    onCheckedChange={(checked) => handleModelVisibilityToggle(model.id, checked)}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Google Models */}
-          <div className="space-y-2 pl-8">
-            <Typography variant="small" className="font-semibold text-foreground">
-              Google Models
-            </Typography>
-            <div className="space-y-2">
-              {availableModels.filter(m => m.provider === "google").map(model => (
-                <div key={model.id} className="flex items-center justify-between py-1">
-                  <div className="flex-1">
-                    <Label htmlFor={`model-${model.id}`}>
-                      <Typography variant="small" className="text-foreground">
-                        {model.name}
-                      </Typography>
-                    </Label>
-                  </div>
-                  <Switch
-                    id={`model-${model.id}`}
-                    checked={(toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS).includes(model.id)}
-                    onCheckedChange={(checked) => handleModelVisibilityToggle(model.id, checked)}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-lg border border-border bg-muted/50 p-4">
-        <Typography variant="small" className="text-muted-foreground">
-          <strong>Note:</strong> Disabling tools will prevent the AI from using them in conversations. Changes take effect immediately.
+      <SettingsTabSection title="Visible Models">
+        <Typography variant="small" className="-mt-2 text-muted-foreground">
+          Choose which AI models appear in the model picker.
         </Typography>
-      </div>
+        <SettingsTabCard>
+          <SettingsTabCardBody>
+            {MODEL_PROVIDERS.map((provider) => (
+              <div key={provider.id}>
+                <SettingsTabGroupLabel>{provider.label}</SettingsTabGroupLabel>
+                {availableModels.filter(m => m.provider === provider.id).map(model => (
+                  <SettingsTabRow key={model.id} label={model.name} htmlFor={`model-${model.id}`}>
+                    <Switch
+                      id={`model-${model.id}`}
+                      checked={(toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS).includes(model.id)}
+                      onCheckedChange={(checked) => handleModelVisibilityToggle(model.id, checked)}
+                    />
+                  </SettingsTabRow>
+                ))}
+              </div>
+            ))}
+          </SettingsTabCardBody>
+        </SettingsTabCard>
+      </SettingsTabSection>
 
-      <Separator className="my-6" />
+      <SettingsTabNote>
+        <strong>Note:</strong> Disabling tools will prevent the AI from using them in conversations. Changes take effect immediately.
+      </SettingsTabNote>
 
-      {/* Danger Zone */}
-      <div className="space-y-4">
-        <Typography variant="h3" className="flex items-center text-destructive">
-          <Trash2 className="h-5 w-5 mr-2" />
-          Danger Zone
-        </Typography>
-        <div className="p-4 border border-destructive/50 rounded-lg bg-destructive/5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <Typography variant="p" className="font-medium text-foreground">
-                Delete All AI Conversations
-              </Typography>
-              <Typography variant="small" className="mt-1 text-muted-foreground">
-                Permanently delete all saved AI conversations associated with your account. This action cannot be undone.
-              </Typography>
+      <SettingsTabSection title="Danger Zone">
+        <SettingsTabCard className="border-destructive/50">
+          <SettingsTabCardBody>
+            <div className="flex items-start justify-between gap-4 px-4 py-3.5">
+              <div className="min-w-0 flex-1">
+                <Typography variant="small" className="font-medium text-foreground">
+                  Delete All AI Conversations
+                </Typography>
+                <Typography variant="xs" className="mt-1 text-muted-foreground">
+                  Permanently delete all saved AI conversations associated with your account. This action cannot be undone.
+                </Typography>
+              </div>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteAllConversations}
+                disabled={isDeleting}
+                className="shrink-0"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {isDeleting ? 'Deleting...' : 'Delete All'}
+              </Button>
             </div>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteAllConversations}
-              disabled={isDeleting}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              {isDeleting ? 'Deleting...' : 'Delete All'}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+          </SettingsTabCardBody>
+        </SettingsTabCard>
+      </SettingsTabSection>
+    </SettingsTabLayout>
   )
 }
-

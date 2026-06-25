@@ -22,9 +22,12 @@ import { LoadConversationDialog } from "./components/LoadConversationDialog";
 import { SaveConversationDialog } from "./components/SaveConversationDialog";
 import type { QueuedMessage } from "../components/queued-messages-display";
 import { getDefaultVisibleModels, getModelsCatalogRevision } from "../handlers/getModelDisplayName"
+import { getMediaModelsCatalogRevision } from "../handlers/getMediaModelDisplayName"
 import { fetchAnthropicModelsCatalog } from "../handlers/fetchAnthropicModelsCatalog"
+import { fetchImageGenerationModelsCatalog } from "../handlers/fetchImageGenerationModelsCatalog"
 import { fetchGoogleModelsCatalog } from "../handlers/fetchGoogleModelsCatalog"
 import { fetchOpenAIModelsCatalog } from "../handlers/fetchOpenAIModelsCatalog"
+import { fetchVideoGenerationModelsCatalog } from "../handlers/fetchVideoGenerationModelsCatalog"
 import type { FC } from "react";
 import { Typography } from "../../../common/ui/typography";
 import { isViewableFileExtended } from "../../../../pages/Workspaces/handlers/fileTypeUtils";
@@ -94,10 +97,12 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
       fetchOpenAIModelsCatalog(),
       fetchAnthropicModelsCatalog(),
       fetchGoogleModelsCatalog(),
+      fetchImageGenerationModelsCatalog(),
+      fetchVideoGenerationModelsCatalog(),
     ])
       .then((results) => {
         if (cancelled) return;
-        setDynamicModelsCatalogRevision(getModelsCatalogRevision());
+        setDynamicModelsCatalogRevision(getModelsCatalogRevision() + getMediaModelsCatalogRevision());
         const openaiModels =
           results[0].status === "fulfilled" ? results[0].value : [];
         const claudeModels =

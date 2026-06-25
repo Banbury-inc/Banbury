@@ -413,7 +413,7 @@ export function CalendarTab({
                             />
                             <div 
                               className="w-3 h-3 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: cal.backgroundColor || '#3b82f6' }}
+                              style={{ backgroundColor: cal.backgroundColor || 'var(--primary)' }}
                             />
                             <Typography variant="xs" className="truncate flex-1">{getCalendarDisplayName(cal)}</Typography>
                             {cal.primary && <Typography variant="xs" className="text-muted-foreground ml-auto">(Primary)</Typography>}

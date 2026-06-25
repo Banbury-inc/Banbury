@@ -144,12 +144,14 @@ async function generatePostText(idea: MarketingIdea) {
     apiKey: process.env.ANTHROPIC_API_KEY
   })
 
-  const prompt = `Create polished marketing post copy for this Banbury feature idea.
+  const prompt = `Create high-performing marketing post copy for this Banbury feature idea.
 
 Description: ${idea.description}
 Action: ${idea.action}
 
-Return ready-to-use text for a social post or short email campaign. Keep it specific, clear, and customer-facing.`
+Write for reach and engagement. Lead with a specific hook, make the pain point obvious, show the before/after value, and keep the copy native to the recommended channel. Avoid generic launch language, corporate phrasing, and vague claims.
+
+Return ready-to-use text for a social post or short email campaign. Keep it specific, clear, customer-facing, and easy to skim.`
 
   const message = await client.messages.create({
     model: 'claude-sonnet-4-5-20250929',

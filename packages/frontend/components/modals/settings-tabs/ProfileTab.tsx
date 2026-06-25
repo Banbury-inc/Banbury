@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle, User, Edit2, Save, X } from 'lucide-react'
+import { CheckCircle, Edit2, Save, X } from 'lucide-react'
 import { Typography } from '../../common/ui/typography'
-import { Separator } from '../../common/ui/separator'
-import { Input } from '../../common/ui/input'
 import { Button } from '../../common/ui/button'
 import { useToast } from '../../common/ui/use-toast'
+import {
+  SettingsTabCard,
+  SettingsTabCardBody,
+  SettingsTabCardFooter,
+  SettingsTabHeader,
+  SettingsTabLayout,
+  SettingsTabNote,
+  SettingsTabValueRow,
+} from './settings-tab-layout'
 
 interface ProfileTabProps {
   scopeActivated: boolean
@@ -76,102 +83,68 @@ export function ProfileTab({ scopeActivated, userInfo, onUpdateProfile }: Profil
   }
 
   return (
-    <div className="space-y-6">
+    <SettingsTabLayout>
       {scopeActivated && (
-        <div className="rounded-lg border border-primary/30 bg-primary/10 p-4">
-          <div className="flex items-center">
-            <CheckCircle className="h-5 w-5 text-primary mr-2" />
-            <Typography variant="p" className="text-foreground">
-              Google integration features activated successfully!
-            </Typography>
-          </div>
-        </div>
+        <SettingsTabNote variant="primary">
+          <span className="flex items-center">
+            <CheckCircle className="mr-2 h-5 w-5 shrink-0 text-primary" />
+            Google integration features activated successfully!
+          </span>
+        </SettingsTabNote>
       )}
 
       {userInfo && (
         <>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="flex items-center font-semibold text-foreground">
-              <User className="h-5 w-5 mr-2" />
-              <Typography variant="h3">
-                Profile
-              </Typography>
-            </h3>
-            {!isEditing && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2"
-              >
-                <Edit2 className="h-4 w-4" />
-                Edit
-              </Button>
-            )}
-          </div>
+          <SettingsTabHeader
+            title="Profile"
+            action={
+              !isEditing ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Edit2 className="h-4 w-4" />
+                  Edit
+                </Button>
+              ) : undefined
+            }
+          />
 
-          <div className="space-y-4">
-            <div>
-              <Typography variant="small" className="text-muted-foreground">Username</Typography>
-              <Typography variant="p" className="text-foreground">{userInfo.username}</Typography>
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <Typography variant="small" className="text-muted-foreground">Email</Typography>
-              {isEditing ? (
-                <Input
-                  aria-label="Email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="mt-1"
-                  placeholder="Enter your email"
-                />
-              ) : (
-                <Typography variant="p" className="text-foreground">{userInfo.email || 'Not provided'}</Typography>
-              )}
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <Typography variant="small" className="text-muted-foreground">First Name</Typography>
-              {isEditing ? (
-                <Input
-                  aria-label="First name"
-                  type="text"
-                  value={formData.first_name}
-                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                  className="mt-1"
-                  placeholder="Enter your first name"
-                />
-              ) : (
-                <Typography variant="p" className="text-foreground">{userInfo.first_name || 'Not provided'}</Typography>
-              )}
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <Typography variant="small" className="text-muted-foreground">Last Name</Typography>
-              {isEditing ? (
-                <Input
-                  aria-label="Last name"
-                  type="text"
-                  value={formData.last_name}
-                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                  className="mt-1"
-                  placeholder="Enter your last name"
-                />
-              ) : (
-                <Typography variant="p" className="text-foreground">{userInfo.last_name || 'Not provided'}</Typography>
-              )}
-            </div>
+          <SettingsTabCard>
+            <SettingsTabCardBody>
+              <SettingsTabValueRow
+                label="Username"
+                value={userInfo.username}
+                readOnly
+              />
+              <SettingsTabValueRow
+                label="Email"
+                value={formData.email}
+                isEditing={isEditing}
+                inputType="email"
+                placeholder="Enter your email"
+                onChange={(email) => setFormData({ ...formData, email })}
+              />
+              <SettingsTabValueRow
+                label="First Name"
+                value={formData.first_name}
+                isEditing={isEditing}
+                placeholder="Enter your first name"
+                onChange={(first_name) => setFormData({ ...formData, first_name })}
+              />
+              <SettingsTabValueRow
+                label="Last Name"
+                value={formData.last_name}
+                isEditing={isEditing}
+                placeholder="Enter your last name"
+                onChange={(last_name) => setFormData({ ...formData, last_name })}
+              />
+            </SettingsTabCardBody>
 
             {isEditing && (
-              <div className="flex gap-3 pt-4">
+              <SettingsTabCardFooter>
                 <Button
                   onClick={handleSave}
                   disabled={loading}
@@ -189,11 +162,11 @@ export function ProfileTab({ scopeActivated, userInfo, onUpdateProfile }: Profil
                   <X className="h-4 w-4" />
                   Cancel
                 </Button>
-              </div>
+              </SettingsTabCardFooter>
             )}
-          </div>
+          </SettingsTabCard>
         </>
       )}
-    </div>
+    </SettingsTabLayout>
   )
 }

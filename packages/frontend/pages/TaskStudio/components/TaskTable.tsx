@@ -323,7 +323,7 @@ export function TaskTable({ refreshTrigger, showTaskScheduler, onToggleTaskSched
                     ) : task.result ? (
                       <Typography variant="small" className="truncate text-sm block" title={task.result}>{task.result}</Typography>
                     ) : (
-                      <Typography variant="small" className="text-gray-400">-</Typography>
+                      <Typography variant="small" className="text-muted-foreground">-</Typography>
                     )}
                   </td>
                   <td className="p-3 min-w-0 overflow-hidden">

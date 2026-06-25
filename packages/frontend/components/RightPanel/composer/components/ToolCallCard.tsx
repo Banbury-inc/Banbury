@@ -109,8 +109,8 @@ export const ToolCallCard = ({
   const isRunning = result === undefined;
 
   return (
-    <div className="mb-2 w-full">
-      <div className="flex items-center gap-2 px-1 py-1 text-xs text-muted-foreground">
+    <div className="ai-tool-card mb-2 w-full [&+.ai-tool-card]:mt-1">
+      <div className="flex min-h-[2.375rem] items-center gap-2 rounded-md px-4 py-2 text-xs text-muted-foreground">
         <div className="flex items-center gap-1.5">
           {icon || <Wrench className="h-3.5 w-3.5 text-zinc-500" />}
           <span className="font-medium text-foreground/90">{label || toolName}</span>

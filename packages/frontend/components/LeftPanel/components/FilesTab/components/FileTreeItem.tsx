@@ -31,6 +31,7 @@ import { handleLocalFileDownload } from "../handlers/handleLocalFileDownload"
 import { handleSaveAsPDF } from "./FileContextMenu/handlers/handleSaveAsPDF"
 import { CloudFileContextMenu } from "./FileContextMenu/CloudFileContextMenu"
 import { getColoredFileIcons } from "../../../../modals/settings-tabs/handlers/appearanceHandlers"
+import { scheduleRenameInputFocus, selectFilenameWithoutExtension } from "../../../../../utils/focusRenameInput"
 
 // Drag and drop state interfaces
 export interface DragState {
@@ -204,7 +205,7 @@ const getFileIcon = (fileName: string): { icon: any, color: string } => {
   if (isSpreadsheetFile(fileName)) return { icon: FileSpreadsheet, color: coloredIcons ? 'text-green-500' : uniformColor }
   if (isPresentationFile(fileName)) return { icon: FileBarChart, color: coloredIcons ? 'text-orange-400' : uniformColor }
   if (isCodeFile(fileName)) return { icon: FileCode, color: coloredIcons ? 'text-yellow-400' : uniformColor }
-  if (isArchiveFile(fileName)) return { icon: FileArchive, color: coloredIcons ? 'text-gray-400' : uniformColor }
+  if (isArchiveFile(fileName)) return { icon: FileArchive, color: coloredIcons ? 'text-muted-foreground' : uniformColor }
   if (isDataFile(fileName)) return { icon: FileJson, color: coloredIcons ? 'text-indigo-400' : uniformColor }
   if (isExecutableFile(fileName)) return { icon: FileCog, color: coloredIcons ? 'text-red-500' : uniformColor }
   if (isFontFile(fileName)) return { icon: FileType, color: coloredIcons ? 'text-pink-400' : uniformColor }
@@ -212,7 +213,7 @@ const getFileIcon = (fileName: string): { icon: any, color: string } => {
   if (isVectorFile(fileName)) return { icon: FileImage, color: coloredIcons ? 'text-emerald-400' : uniformColor }
   
   // Default file icon
-  return { icon: File, color: coloredIcons ? 'text-gray-400' : uniformColor }
+  return { icon: File, color: coloredIcons ? 'text-muted-foreground' : uniformColor }
 }
 
 
@@ -254,15 +255,6 @@ export function FileTreeItem({
 }: FileTreeItemProps) {
   
   // Helper function to select filename without extension
-  const selectFilenameWithoutExtension = (input: HTMLInputElement) => {
-    const value = input.value
-    const lastDotIndex = value.lastIndexOf('.')
-    if (lastDotIndex > 0) {
-      input.setSelectionRange(0, lastDotIndex)
-    } else {
-      input.select()
-    }
-  }
   const { toast } = useToast()
   const isExpanded = expandedItems.has(item.id)
   const hasChildren = item.children && item.children.length > 0
@@ -279,25 +271,16 @@ export function FileTreeItem({
   const [, forceUpdate] = useState({})
 
   useEffect(() => {
-    if (isRenaming && inputRef.current) {
-      requestAnimationFrame(() => {
-        if (inputRef.current) {
-          inputRef.current.focus()
-          selectFilenameWithoutExtension(inputRef.current)
-        }
-      })
-    }
-  }, [isRenaming])
+    if (!isRenaming) return
+    return scheduleRenameInputFocus(
+      () => inputRef.current,
+      item.type === 'folder' ? 'all' : 'filename'
+    )
+  }, [isRenaming, item.type])
 
   useEffect(() => {
-    if (isCreatingFolder && newFolderInputRef.current) {
-      requestAnimationFrame(() => {
-        if (newFolderInputRef.current) {
-          newFolderInputRef.current.focus()
-          selectFilenameWithoutExtension(newFolderInputRef.current)
-        }
-      })
-    }
+    if (!isCreatingFolder) return
+    return scheduleRenameInputFocus(() => newFolderInputRef.current, 'all')
   }, [isCreatingFolder])
 
   useEffect(() => {

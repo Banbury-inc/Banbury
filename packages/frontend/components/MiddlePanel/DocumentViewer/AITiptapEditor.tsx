@@ -60,6 +60,11 @@ import { OverflowButton } from './components/OverflowButton';
 import { FontFamilyButton } from './components/FontFamilyButton';
 import { FontSizeButton } from './components/FontSizeButton';
 import type { DocumentAutosaveStatus } from './handlers/use-document-autosave';
+import {
+  DOCUMENT_EDITOR_DARK_MODE_UPDATED_EVENT,
+  createDocumentEditorDarkModeUpdateHandler,
+  getDocumentEditorDarkMode,
+} from '../../modals/settings-tabs/handlers/appearanceHandlers';
 
 interface AITiptapEditorProps {
   initialContent?: string;
@@ -89,6 +94,8 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
   lastSavedAt
 }) => {
   const { setEditor, registerAICommands } = useTiptapAIContext();
+
+  const [isDocumentEditorDarkMode, setIsDocumentEditorDarkMode] = useState(() => getDocumentEditorDarkMode());
 
   const [contextMenu, setContextMenu] = useState<{
     isOpen: boolean;
@@ -163,7 +170,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-blue-500 underline',
+          class: 'text-primary underline',
         },
       }),
       Placeholder.configure({
@@ -193,6 +200,12 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
   const [overflowOpen, setOverflowOpen] = useState(false)
 
   const handlers = useMemo(() => createToolbarHandlers({ editor, setIsImageMenuOpen }), [editor])
+
+  useEffect(() => {
+    const handleDocumentEditorDarkModeUpdate = createDocumentEditorDarkModeUpdateHandler(setIsDocumentEditorDarkMode)
+    window.addEventListener(DOCUMENT_EDITOR_DARK_MODE_UPDATED_EVENT, handleDocumentEditorDarkModeUpdate)
+    return () => window.removeEventListener(DOCUMENT_EDITOR_DARK_MODE_UPDATED_EVENT, handleDocumentEditorDarkModeUpdate)
+  }, [])
 
   const toolbarButtons = useMemo(() => (
     [
@@ -424,7 +437,13 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
   };
 
   return (
-    <div className={cn(styles['simple-tiptap-container'], className)}>
+    <div
+      className={cn(
+        styles['simple-tiptap-container'],
+        !isDocumentEditorDarkMode && styles['document-editor-dark-mode'],
+        className
+      )}
+    >
       {/* Toolbar */}
       <div ref={toolbarRef} className="flex bg-card items-center px-3 py-2 gap-1 border-b">
         {/* Left side toolbar items */}
@@ -523,68 +542,68 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
       {/* Table Context Menu */}
       {contextMenu.isOpen && contextMenu.isTable && (
         <div
-          className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px]"
+          className="fixed z-50 bg-popover border border-border rounded-lg shadow-lg py-2 min-w-[200px]"
           style={{
             left: getAdjustedPosition(contextMenu.x, contextMenu.y).x,
             top: getAdjustedPosition(contextMenu.x, contextMenu.y).y,
           }}
         >
-          <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
+          <div className="px-3 py-2 text-xs text-muted-foreground border-b border-border">
             💡 Drag column borders to resize
           </div>
           <div className="py-1">
             <button
               onClick={() => handleTableAction(() => editor.chain().focus().addColumnBefore().run())}
               disabled={!editor.can().addColumnBefore()}
-              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-left px-3 py-2 text-sm text-popover-foreground hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Add Column Before
             </button>
             <button
               onClick={() => handleTableAction(() => editor.chain().focus().addColumnAfter().run())}
               disabled={!editor.can().addColumnAfter()}
-              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-left px-3 py-2 text-sm text-popover-foreground hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Add Column After
             </button>
             <button
               onClick={() => handleTableAction(() => editor.chain().focus().deleteColumn().run())}
               disabled={!editor.can().deleteColumn()}
-              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-left px-3 py-2 text-sm text-popover-foreground hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Delete Column
             </button>
           </div>
           
-          <div className="border-t border-gray-100 py-1">
+          <div className="border-t border-border py-1">
             <button
               onClick={() => handleTableAction(() => editor.chain().focus().addRowBefore().run())}
               disabled={!editor.can().addRowBefore()}
-              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-left px-3 py-2 text-sm text-popover-foreground hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Add Row Before
             </button>
             <button
               onClick={() => handleTableAction(() => editor.chain().focus().addRowAfter().run())}
               disabled={!editor.can().addRowAfter()}
-              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-left px-3 py-2 text-sm text-popover-foreground hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Add Row After
             </button>
             <button
               onClick={() => handleTableAction(() => editor.chain().focus().deleteRow().run())}
               disabled={!editor.can().deleteRow()}
-              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-left px-3 py-2 text-sm text-popover-foreground hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Delete Row
             </button>
           </div>
           
-          <div className="border-t border-gray-100 py-1">
+          <div className="border-t border-border py-1">
             <button
               onClick={() => handleTableAction(() => editor.chain().focus().deleteTable().run())}
               disabled={!editor.can().deleteTable()}
-              className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-left px-3 py-2 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Delete Table
             </button>

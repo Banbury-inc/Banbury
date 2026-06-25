@@ -1,5 +1,5 @@
-import { useCallback, useState, type Dispatch, type SetStateAction } from 'react'
-import { ChevronRight, Link, User } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { ChevronRight, User } from 'lucide-react'
 import { XApiConnection } from './XApiConnection'
 import { SlackConnection } from './SlackConnection'
 import { GitHubConnection } from './GitHubConnection'
@@ -22,9 +22,13 @@ import {
   type ConnectionStatuses,
 } from './handlers/connectionStatusStateHandlers'
 import { GmailIcon, GoogleCalendarIcon, GoogleDriveIcon } from '../../icons'
-import { Typography } from '../../common/ui/typography'
-import { Separator } from '../../common/ui/separator'
 import { cn } from '../../../utils'
+import {
+  SettingsTabCard,
+  SettingsTabCardBody,
+  SettingsTabHeader,
+  SettingsTabLayout,
+} from './settings-tab-layout'
 
 interface RenderConnectionActionParams {
   connectionId: ConnectionId
@@ -176,19 +180,11 @@ export function ConnectionsTab() {
     []
   )
 
-  const header = (
-    <div className="space-y-4">
-      <Typography variant="h3" className="mb-4 flex items-center text-foreground">
-        <Link className="h-5 w-5 mr-2" />
-        Connections
-      </Typography>
-    </div>
-  )
+  const header = <SettingsTabHeader title="Connections" />
 
   return (
-    <div className="space-y-6">
+    <SettingsTabLayout>
       {header}
-      <Separator />
 
       {selectedConnection ? (
         <ConnectionDetailPanel
@@ -204,42 +200,39 @@ export function ConnectionsTab() {
         />
       ) : null}
 
-      <div
-        className={cn(
-          'space-y-3 rounded-lg border border-border bg-muted/30 p-3',
-          selectedConnection ? 'hidden' : 'block'
-        )}
+      <SettingsTabCard
+        className={cn(selectedConnection ? 'hidden' : 'block')}
       >
-        {connectionDetails.map((connection) => (
-          <div
-            key={connection.id}
-            role="button"
-            tabIndex={0}
-            aria-label={`View ${connection.name} connection details`}
-            onClick={(event) => handleConnectionRowClick({ event, connectionId: connection.id, setSelectedConnectionId })}
-            onKeyDown={(event) => handleConnectionRowKeyDown({ event, connectionId: connection.id, setSelectedConnectionId })}
-            className={cn(
-              'group flex w-full cursor-pointer items-center gap-3 rounded-lg border border-transparent bg-card/60 p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:border-border hover:bg-card'
-            )}
-          >
-            <div className="min-w-0 flex-1">
-              {renderConnectionAction({
-                connectionId: connection.id,
-                connectionStatuses,
-                shouldLoadStatus: true,
-                onConnectionStatusChange: handleConnectionStatusChange,
-                onGoogleScopeStatusChange: handleGoogleScopeStatusChange,
-              })}
-            </div>
+        <SettingsTabCardBody>
+          {connectionDetails.map((connection) => (
             <div
-              aria-hidden="true"
-              className="flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground transition-colors group-hover:text-foreground"
+              key={connection.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`View ${connection.name} connection details`}
+              onClick={(event) => handleConnectionRowClick({ event, connectionId: connection.id, setSelectedConnectionId })}
+              onKeyDown={(event) => handleConnectionRowKeyDown({ event, connectionId: connection.id, setSelectedConnectionId })}
+              className="group flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:bg-muted/30"
             >
-              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              <div className="min-w-0 flex-1">
+                {renderConnectionAction({
+                  connectionId: connection.id,
+                  connectionStatuses,
+                  shouldLoadStatus: true,
+                  onConnectionStatusChange: handleConnectionStatusChange,
+                  onGoogleScopeStatusChange: handleGoogleScopeStatusChange,
+                })}
+              </div>
+              <div
+                aria-hidden="true"
+                className="flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground transition-colors group-hover:text-foreground"
+              >
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </div>
+          ))}
+        </SettingsTabCardBody>
+      </SettingsTabCard>
+    </SettingsTabLayout>
   )
 }

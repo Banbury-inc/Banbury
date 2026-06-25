@@ -9,6 +9,7 @@ import {
   handleStartMeetingRename,
   handleSubmitMeetingRename
 } from './handlers/meetingRenameHandlers'
+import { scheduleRenameInputFocus } from '../../../../../utils/focusRenameInput'
 
 interface MeetingsListViewProps {
   meetings: MeetingSession[]
@@ -91,10 +92,8 @@ export function MeetingsListView({
     meeting.title || formatDateTime(getMeetingDate(meeting))
 
   useEffect(() => {
-    if (!renamingMeetingId || !inputRef.current) return
-
-    inputRef.current.focus()
-    inputRef.current.select()
+    if (!renamingMeetingId) return
+    return scheduleRenameInputFocus(() => inputRef.current, 'all')
   }, [renamingMeetingId])
 
   if (loading) {

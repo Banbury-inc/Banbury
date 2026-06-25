@@ -290,7 +290,7 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
 
   if (!hasContent) {
     return (
-      <Card className="w-full max-w-2xl shadow-sm">
+      <Card className="ai-tool-card w-full max-w-2xl shadow-sm [&+.ai-tool-card]:mt-1">
         <CardContent className="p-4">
           <div className="flex items-center gap-3 text-muted-foreground">
             <div className="p-2 rounded-full bg-muted/50">
@@ -313,12 +313,12 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
     : 'bg-card dark:bg-card border-border shadow-sm hover:shadow-md';
 
   return (
-    <div className={`w-full max-w-2xl ${bgColor} border rounded-xl overflow-hidden transition-all duration-200`}>
-      <div className="p-3">
+    <div className={`ai-tool-card w-full max-w-2xl ${bgColor} border rounded-md overflow-hidden transition-all duration-200 [&+.ai-tool-card]:mt-1`}>
+      <div className="px-4 py-2">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="p-1.5 rounded-lg bg-muted/80 dark:bg-muted flex-shrink-0">
-              <Icon className="h-4 w-4 text-foreground/70 dark:text-foreground/80 stroke-[2.5]" />
+            <div className="p-1 rounded-md bg-muted/80 dark:bg-muted flex-shrink-0">
+              <Icon className="h-3.5 w-3.5 text-foreground/70 dark:text-foreground/80 stroke-[2.5]" />
             </div>
             <div className="min-w-0 flex-1">
               <Typography
@@ -345,10 +345,10 @@ export const AIToolCard: React.FC<AIToolCardProps> = ({
                 variant="ghost"
                 size="icon-sm"
                 onClick={handleOpenDocument}
-                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-150"
+                className="h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-150"
                 title="Open document in viewer"
               >
-                <ExternalLink className="h-4 w-4 stroke-[2]" />
+                <ExternalLink className="h-3.5 w-3.5 stroke-[2]" />
               </Button>
             )}
           </div>

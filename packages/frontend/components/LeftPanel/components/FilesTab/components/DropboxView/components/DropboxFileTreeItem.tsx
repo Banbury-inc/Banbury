@@ -20,6 +20,7 @@ import { Typography } from "../../../../../../common/ui/typography"
 import { useToast } from "../../../../../../common/ui/use-toast"
 import { CloudFileContextMenu } from "../../FileContextMenu/CloudFileContextMenu"
 import { getColoredFileIcons } from "../../../../../../modals/settings-tabs/handlers/appearanceHandlers"
+import { scheduleRenameInputFocus } from "../../../../../../../utils/focusRenameInput"
 import {
   handleDropboxAddFavorite,
   handleDropboxDelete,
@@ -89,19 +90,11 @@ export function DropboxFileTreeItem({
   const [, forceUpdate] = useState({})
 
   useEffect(() => {
-    if (!isRenaming || !inputRef.current) return
-
-    requestAnimationFrame(() => {
-      if (!inputRef.current) return
-      inputRef.current.focus()
-      const value = inputRef.current.value
-      const lastDotIndex = value.lastIndexOf('.')
-      if (lastDotIndex > 0 && !isFolder) {
-        inputRef.current.setSelectionRange(0, lastDotIndex)
-      } else {
-        inputRef.current.select()
-      }
-    })
+    if (!isRenaming) return
+    return scheduleRenameInputFocus(
+      () => inputRef.current,
+      isFolder ? 'all' : 'filename'
+    )
   }, [isRenaming, isFolder])
 
   useEffect(() => {

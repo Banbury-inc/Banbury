@@ -62,7 +62,7 @@ export function LocalFilesCreateMenu({
         <Plus className="h-4 w-4 text-accent-foreground" strokeWidth={1} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="upload-file" className="[&_svg]:!text-gray-400">
+        <SelectItem value="upload-file" className="[&_svg]:!text-muted-foreground">
           <div className="flex items-center">
             <FilePlus size={16} strokeWidth={1} className="mr-2" />
             <Typography variant="xs" className="font-medium">Upload File</Typography>

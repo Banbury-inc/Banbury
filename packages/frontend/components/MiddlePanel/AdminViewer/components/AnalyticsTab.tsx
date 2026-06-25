@@ -491,6 +491,93 @@ export function AnalyticsTab({
   const taskStudioPageStats = getPageSpecificStats(path => path === '/task-studio' || path.startsWith('/task-studio/') || path.startsWith('/task-studio?'))
   const meetingsPageStats = getPageSpecificStats(path => path === '/meeting-agent' || path.startsWith('/meeting-agent/') || path.startsWith('/meeting-agent?'))
 
+  const docsSectionLabels: Record<string, string> = {
+    'what-is-banbury': 'What is Banbury?',
+    'using-banbury': 'Using Banbury',
+    'desktop-app': 'Desktop App',
+    'features': 'Overview',
+    'features-overview': 'Overview',
+    'agent-modes': 'Agent Modes',
+    'parallel-agents': 'Parallel Agents',
+    'queued-messages': 'Queued Messages',
+    'video-generation': 'Video Generation',
+    'gmail-feature': 'Gmail',
+    'docs-feature': 'Docs',
+    'spreadsheets-feature': 'Spreadsheets',
+    'powerpoint-feature': 'PowerPoint',
+    'context-wheel': 'Context Wheel',
+    'calendar-feature': 'Calendar',
+    'meeting-agent-feature': 'Meetings',
+    'folders-feature': 'Folders',
+    'browse-feature': 'Browse',
+    'maps-feature': 'Maps',
+    'databases': 'Databases',
+    'canvas-feature': 'Canvas',
+    'file-sharing': 'File Sharing',
+    'knowledge-graph': 'Knowledge Graph',
+    'memories': 'Memories',
+    'task-studio': 'Task Studio',
+    'flows': 'Flows',
+    'integrations': 'Integrations',
+    'integrations-overview': 'Integrations',
+    'gmail': 'Gmail',
+    'google-docs': 'Google Docs',
+    'google-sheets': 'Google Sheets',
+    'outlook': 'Outlook',
+    'microsoft-calendar': 'Microsoft Calendar',
+    'microsoft-teams': 'Microsoft Teams',
+    'onedrive': 'OneDrive',
+    'dropbox': 'Dropbox',
+    'notion': 'Notion',
+    'x': 'X (Twitter)',
+    'billing': 'Billing',
+  }
+
+  function formatDocsSectionLabel(section: string) {
+    const normalizedSection = section
+      .trim()
+      .toLowerCase()
+      .replace(/^documentation\s*-\s*/, '')
+      .replace(/[_\s]+/g, '-')
+
+    if (docsSectionLabels[normalizedSection]) return docsSectionLabels[normalizedSection]
+
+    return normalizedSection
+      .split('-')
+      .filter(Boolean)
+      .map(word => word.length <= 3 ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
+
+  function getDocsSectionFromPath(path?: string) {
+    if (!path) return ''
+
+    const cleanPath = path.split('?')[0].split('#')[0]
+    if (cleanPath === '/docs') return 'what-is-banbury'
+    if (!cleanPath.startsWith('/docs/')) return ''
+
+    const [section] = cleanPath.replace('/docs/', '').split('/')
+    return decodeURIComponent(section || '')
+  }
+
+  function isPlaceholderDocsSection(section: string) {
+    return /^\[?section\]?$/i.test(section.trim())
+  }
+
+  function getDocsPageName(visitor: VisitorData) {
+    const rawContentPageName = visitor.content_type?.startsWith('documentation -')
+      ? visitor.content_type.replace('documentation -', '').trim()
+      : ''
+    const pathSection = getDocsSectionFromPath(visitor.path)
+    const section = !rawContentPageName || isPlaceholderDocsSection(rawContentPageName)
+      ? pathSection
+      : rawContentPageName
+
+    if (!section) return ''
+
+    return formatDocsSectionLabel(section)
+  }
+
   // Get documentation page breakdown by individual pages with time-series data
   const getDocsPageBreakdown = () => {
     const filteredVisitors = getFilteredVisitors()
@@ -499,7 +586,9 @@ export function AnalyticsTab({
     // Collect daily stats for each documentation page
     filteredVisitors.forEach(visitor => {
       if (visitor.content_type && visitor.content_type.startsWith('documentation -')) {
-        const pageName = visitor.content_type.replace('documentation - ', '').trim()
+        const pageName = getDocsPageName(visitor)
+        if (!pageName) return
+
         const date = new Date(visitor.time).toISOString().split('T')[0]
         
         if (!docsPages[pageName]) {
@@ -946,6 +1035,124 @@ export function AnalyticsTab({
             </Popover>
           </div>
 
+          <Card className="bg-card border-zinc-200 dark:border-white/[0.06] mb-4">
+            <CardHeader>
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
+                <div>
+                  <CardTitle className="text-foreground">Visitors Over Time</CardTitle>
+                  <CardDescription className="text-muted-foreground">Daily visitor trends for the selected period</CardDescription>
+                </div>
+                <Button 
+                  onClick={() => loadVisitorData(30)} 
+                  variant="outline" 
+                  size="sm"
+                  className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent sm:self-start"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {visitorLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                </div>
+              ) : filteredStats?.daily_stats && filteredStats.daily_stats.length > 0 ? (
+                <div className="w-full h-72 p-4">
+                  {/* Debug info */}
+                  <div className="text-xs text-muted-foreground mb-2">
+                    Chart data points: {filteredStats.daily_stats.length} | 
+                    Date range: {filteredStats.daily_stats[0]?.date} to {filteredStats.daily_stats[filteredStats.daily_stats.length - 1]?.date} |
+                    Today: {new Date().toISOString().split('T')[0]}
+                    {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ' | Filtered'}
+                  </div>
+                  <ChartContainer
+                    config={{
+                      visitors: {
+                        label: "Visitors",
+                        color: "#3b82f6",
+                      },
+                    }}
+                    className="w-full h-full !flex-none"
+                  >
+                    <AreaChart 
+                      data={filteredStats.daily_stats}
+                      margin={{ top: 5, right: 5, left: 5, bottom: 25 }}
+                    >
+                      <defs>
+                        <linearGradient id="visitorGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="var(--muted-foreground)"
+                        fontSize={10}
+                        type="category"
+                        scale="point"
+                        tickFormatter={(value) => {
+                          const date = new Date(value + 'T12:00:00')
+                          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                        }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={50}
+                      />
+                      <YAxis 
+                        stroke="var(--muted-foreground)"
+                        fontSize={10}
+                        tickFormatter={(value) => value.toLocaleString()}
+                        width={45}
+                      />
+                      <ChartTooltip
+                        content={({ active, payload, label }) => {
+                          if (!active || !payload?.length) return null
+                          const date = new Date(label + 'T12:00:00')
+                          return (
+                            <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-3 shadow-lg">
+                              <div className="text-foreground font-medium">
+                                {date.toLocaleDateString('en-US', { 
+                                  weekday: 'long', 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </div>
+                              <div className="text-blue-400">
+                                {payload[0].value} visitors
+                              </div>
+                            </div>
+                          )
+                        }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="count" 
+                        stroke="#3b82f6" 
+                        strokeWidth={2}
+                        fill="url(#visitorGradient)"
+                        fillOpacity={1}
+                      />
+                    </AreaChart>
+                  </ChartContainer>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                  <div className="text-center">
+                    <div>No visitor data available for the selected period</div>
+                    {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
+                      <div className="mt-2 text-xs text-yellow-400">
+                        Try clearing filters to see data
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Enhanced Tracking Summary */}
           {getFilteredVisitors().some(v => v.tracking_version) && (
             <Card className="bg-card border-zinc-200 dark:border-white/[0.06] mb-4">
@@ -1349,124 +1556,6 @@ export function AnalyticsTab({
             )}
           </div>
 
-      <Card className="bg-card border-zinc-200 dark:border-white/[0.06] mb-4">
-        <CardHeader>
-          <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
-            <div>
-              <CardTitle className="text-foreground">Visitors Over Time</CardTitle>
-              <CardDescription className="text-muted-foreground">Daily visitor trends for the selected period</CardDescription>
-            </div>
-            <Button 
-              onClick={() => loadVisitorData(30)} 
-              variant="outline" 
-              size="sm"
-              className="border-zinc-200 dark:border-white/[0.06] hover:bg-accent dark:hover:bg-accent sm:self-start"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          {visitorLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-            </div>
-          ) : filteredStats?.daily_stats && filteredStats.daily_stats.length > 0 ? (
-            <div className="w-full h-72 p-4">
-              {/* Debug info */}
-              <div className="text-xs text-muted-foreground mb-2">
-                Chart data points: {filteredStats.daily_stats.length} | 
-                Date range: {filteredStats.daily_stats[0]?.date} to {filteredStats.daily_stats[filteredStats.daily_stats.length - 1]?.date} |
-                Today: {new Date().toISOString().split('T')[0]}
-                {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && ' | Filtered'}
-              </div>
-              <ChartContainer
-                config={{
-                  visitors: {
-                    label: "Visitors",
-                    color: "#3b82f6",
-                  },
-                }}
-                className="w-full h-full !flex-none"
-              >
-                <AreaChart 
-                  data={filteredStats.daily_stats}
-                  margin={{ top: 5, right: 5, left: 5, bottom: 25 }}
-                >
-                  <defs>
-                    <linearGradient id="visitorGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="date" 
-                    stroke="#9ca3af"
-                    fontSize={10}
-                    type="category"
-                    scale="point"
-                    tickFormatter={(value) => {
-                      const date = new Date(value + 'T12:00:00')
-                      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                    }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={50}
-                  />
-                  <YAxis 
-                    stroke="#9ca3af"
-                    fontSize={10}
-                    tickFormatter={(value) => value.toLocaleString()}
-                    width={45}
-                  />
-                  <ChartTooltip
-                    content={({ active, payload, label }) => {
-                      if (!active || !payload?.length) return null
-                      const date = new Date(label + 'T12:00:00')
-                      return (
-                        <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-3 shadow-lg">
-                          <div className="text-foreground font-medium">
-                            {date.toLocaleDateString('en-US', { 
-                              weekday: 'long', 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
-                            })}
-                          </div>
-                          <div className="text-blue-400">
-                            {payload[0].value} visitors
-                          </div>
-                        </div>
-                      )
-                    }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="count" 
-                    stroke="#3b82f6" 
-                    strokeWidth={2}
-                    fill="url(#visitorGradient)"
-                    fillOpacity={1}
-                  />
-                </AreaChart>
-              </ChartContainer>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center py-8 text-muted-foreground">
-              <div className="text-center">
-                <div>No visitor data available for the selected period</div>
-                {(visitorIpExclusions.length > 0 || visitorLocationExclusions.length > 0 || visitorLocationFilter) && (
-                  <div className="mt-2 text-xs text-yellow-400">
-                    Try clearing filters to see data
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Page-Specific Visitors Over Time Graphs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         {/* Home Page Visitors */}
@@ -1504,10 +1593,10 @@ export function AnalyticsTab({
                         <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis 
                       dataKey="date" 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       type="category"
                       scale="point"
@@ -1520,7 +1609,7 @@ export function AnalyticsTab({
                       height={40}
                     />
                     <YAxis 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       tickFormatter={(value) => value.toLocaleString()}
                       width={30}
@@ -1598,10 +1687,10 @@ export function AnalyticsTab({
                         <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis 
                       dataKey="date" 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       type="category"
                       scale="point"
@@ -1614,7 +1703,7 @@ export function AnalyticsTab({
                       height={40}
                     />
                     <YAxis 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       tickFormatter={(value) => value.toLocaleString()}
                       width={30}
@@ -1689,10 +1778,10 @@ export function AnalyticsTab({
                         <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis 
                       dataKey="date" 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       type="category"
                       scale="point"
@@ -1705,7 +1794,7 @@ export function AnalyticsTab({
                       height={40}
                     />
                     <YAxis 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       tickFormatter={(value) => value.toLocaleString()}
                       width={30}
@@ -1783,10 +1872,10 @@ export function AnalyticsTab({
                         <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis 
                       dataKey="date" 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       type="category"
                       scale="point"
@@ -1799,7 +1888,7 @@ export function AnalyticsTab({
                       height={40}
                     />
                     <YAxis 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       tickFormatter={(value) => value.toLocaleString()}
                       width={30}
@@ -1877,10 +1966,10 @@ export function AnalyticsTab({
                         <stop offset="95%" stopColor="#ec4899" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis 
                       dataKey="date" 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       type="category"
                       scale="point"
@@ -1893,7 +1982,7 @@ export function AnalyticsTab({
                       height={40}
                     />
                     <YAxis 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       tickFormatter={(value) => value.toLocaleString()}
                       width={30}
@@ -1971,10 +2060,10 @@ export function AnalyticsTab({
                         <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis 
                       dataKey="date" 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       type="category"
                       scale="point"
@@ -1987,7 +2076,7 @@ export function AnalyticsTab({
                       height={40}
                     />
                     <YAxis 
-                      stroke="#9ca3af"
+                      stroke="var(--muted-foreground)"
                       fontSize={8}
                       tickFormatter={(value) => value.toLocaleString()}
                       width={30}
@@ -2087,19 +2176,19 @@ export function AnalyticsTab({
                                 <stop offset="95%" stopColor={colorScheme.stopColor} stopOpacity={0}/>
                               </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                             <XAxis 
                               dataKey="date" 
-                              stroke="#6b7280"
-                              tick={{ fill: '#9ca3af', fontSize: 10 }}
+                              stroke="var(--muted-foreground)"
+                              tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
                               tickFormatter={(value) => {
                                 const date = new Date(value)
                                 return `${date.getMonth() + 1}/${date.getDate()}`
                               }}
                             />
                             <YAxis 
-                              stroke="#6b7280"
-                              tick={{ fill: '#9ca3af', fontSize: 10 }}
+                              stroke="var(--muted-foreground)"
+                              tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
                               width={30}
                             />
                             <ChartTooltip 
@@ -2197,10 +2286,10 @@ export function AnalyticsTab({
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis 
                     dataKey="date" 
-                    stroke="#9ca3af"
+                    stroke="var(--muted-foreground)"
                     fontSize={10}
                     type="category"
                     scale="point"
@@ -2213,7 +2302,7 @@ export function AnalyticsTab({
                     height={50}
                   />
                   <YAxis 
-                    stroke="#9ca3af"
+                    stroke="var(--muted-foreground)"
                     fontSize={10}
                     tickFormatter={(value) => value.toLocaleString()}
                     width={45}
@@ -2746,18 +2835,18 @@ export function AnalyticsTab({
                         className="h-full w-full"
                       >
                         <AreaChart data={fileTypeAnalytics.daily_stats}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                           <XAxis 
                             dataKey="date" 
-                            stroke="#9ca3af"
-                            tick={{ fill: '#9ca3af' }}
+                            stroke="var(--muted-foreground)"
+                            tick={{ fill: 'var(--muted-foreground)' }}
                             angle={-45}
                             textAnchor="end"
                             height={80}
                           />
                           <YAxis 
-                            stroke="#9ca3af"
-                            tick={{ fill: '#9ca3af' }}
+                            stroke="var(--muted-foreground)"
+                            tick={{ fill: 'var(--muted-foreground)' }}
                           />
                           <ChartTooltip />
                           <Area 
@@ -2818,18 +2907,18 @@ export function AnalyticsTab({
                               Other: stat.by_category.Other || 0
                             }))}
                           >
-                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                             <XAxis 
                               dataKey="date" 
-                              stroke="#9ca3af"
-                              tick={{ fill: '#9ca3af', fontSize: 11 }}
+                              stroke="var(--muted-foreground)"
+                              tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
                               angle={-45}
                               textAnchor="end"
                               height={80}
                             />
                             <YAxis 
-                              stroke="#9ca3af"
-                              tick={{ fill: '#9ca3af' }}
+                              stroke="var(--muted-foreground)"
+                              tick={{ fill: 'var(--muted-foreground)' }}
                             />
                             <ChartTooltip />
                             <Area type="monotone" dataKey="Images" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.8} />
@@ -2909,13 +2998,13 @@ export function AnalyticsTab({
                             <AreaChart data={categoryData}>
                               <XAxis 
                                 dataKey="date" 
-                                stroke="#9ca3af"
-                                tick={{ fill: '#9ca3af', fontSize: 10 }}
+                                stroke="var(--muted-foreground)"
+                                tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
                                 hide
                               />
                               <YAxis 
-                                stroke="#9ca3af"
-                                tick={{ fill: '#9ca3af', fontSize: 10 }}
+                                stroke="var(--muted-foreground)"
+                                tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
                                 width={30}
                               />
                               <ChartTooltip />

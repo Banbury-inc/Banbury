@@ -720,7 +720,7 @@ export default function Admin() {
       case 'error':
         return 'text-red-400'
       default:
-        return 'text-gray-400'
+        return 'text-muted-foreground'
     }
   }
 
@@ -1347,6 +1347,126 @@ export default function Admin() {
               {/* Overview Tab */}
               {analyticsSubTab === 'overview' && (
                 <div className="space-y-6">
+                  <Card className="bg-zinc-900 border-zinc-700 mb-4">
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <CardTitle className="text-white">Visitors Over Time</CardTitle>
+                          <CardDescription className="text-zinc-400">Daily visitor trends for the selected period</CardDescription>
+                        </div>
+                        <Button 
+                          onClick={() => loadVisitorData(30)} 
+                          variant="outline" 
+                          size="sm"
+                          className="text-white border-zinc-600 hover:bg-zinc-800"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      {visitorLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                        </div>
+                      ) : visitorStats?.daily_stats && visitorStats.daily_stats.length > 0 ? (
+                        <div className="w-full h-72 p-4">
+                          {/* Debug info */}
+                          <div className="text-xs text-zinc-500 mb-2">
+                            Chart data points: {visitorStats.daily_stats.length} | 
+                            Date range: {visitorStats.daily_stats[0]?.date} to {visitorStats.daily_stats[visitorStats.daily_stats.length - 1]?.date} |
+                            Today: {new Date().toISOString().split('T')[0]}
+                          </div>
+                          <ChartContainer
+                            config={{
+                              visitors: {
+                                label: "Visitors",
+                                color: "#3b82f6",
+                              },
+                            }}
+                            className="w-full h-full !flex-none"
+                          >
+                            <AreaChart 
+                              data={visitorStats.daily_stats}
+                              margin={{ top: 5, right: 5, left: 5, bottom: 25 }}
+                            >
+                              <defs>
+                                <linearGradient id="visitorGradient" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                              <XAxis 
+                                dataKey="date" 
+                                stroke="var(--muted-foreground)"
+                                fontSize={10}
+                                type="category"
+                                scale="point"
+                                tickFormatter={(value) => {
+                                  // Fix timezone issue by explicitly treating as local date
+                                  const date = new Date(value + 'T12:00:00')
+                                  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                                }}
+                                angle={-45}
+                                textAnchor="end"
+                                height={50}
+                              />
+                              <YAxis 
+                                stroke="var(--muted-foreground)"
+                                fontSize={10}
+                                tickFormatter={(value) => value.toLocaleString()}
+                                width={45}
+                              />
+                              <ChartTooltip
+                                content={({ active, payload, label }) => {
+                                  if (!active || !payload?.length) return null
+                                  // Fix timezone issue by explicitly treating as local date
+                                  const date = new Date(label + 'T12:00:00')
+                                  return (
+                                    <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-3 shadow-lg">
+                                      <div className="text-white font-medium">
+                                        {date.toLocaleDateString('en-US', { 
+                                          weekday: 'long', 
+                                          year: 'numeric', 
+                                          month: 'long', 
+                                          day: 'numeric' 
+                                        })}
+                                      </div>
+                                      <div className="text-blue-400">
+                                        {payload[0].value} visitors
+                                      </div>
+                                    </div>
+                                  )
+                                }}
+                              />
+                              <Area 
+                                type="monotone" 
+                                dataKey="count" 
+                                stroke="#3b82f6" 
+                                strokeWidth={2}
+                                fill="url(#visitorGradient)"
+                                fillOpacity={1}
+                              />
+                            </AreaChart>
+                          </ChartContainer>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center py-8 text-zinc-400">
+                          <div className="text-center">
+                            <div>No visitor data available for the selected period</div>
+                            {visitorStats && (
+                              <div className="mt-2 text-xs">
+                                <div>Daily stats length: {visitorStats.daily_stats?.length || 0}</div>
+                                <div>Daily stats data: {JSON.stringify(visitorStats.daily_stats || [])}</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
                   {/* Enhanced Tracking Summary */}
                   {visitorData.some(v => v.tracking_version) && (
                     <Card className="bg-zinc-900 border-zinc-700 mb-4">
@@ -1677,126 +1797,6 @@ export default function Admin() {
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
-                      <CardTitle className="text-white">Visitors Over Time</CardTitle>
-                      <CardDescription className="text-zinc-400">Daily visitor trends for the selected period</CardDescription>
-                    </div>
-                    <Button 
-                      onClick={() => loadVisitorData(30)} 
-                      variant="outline" 
-                      size="sm"
-                      className="text-white border-zinc-600 hover:bg-zinc-800"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {visitorLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                    </div>
-                  ) : visitorStats?.daily_stats && visitorStats.daily_stats.length > 0 ? (
-                    <div className="w-full h-72 p-4">
-                      {/* Debug info */}
-                      <div className="text-xs text-zinc-500 mb-2">
-                        Chart data points: {visitorStats.daily_stats.length} | 
-                        Date range: {visitorStats.daily_stats[0]?.date} to {visitorStats.daily_stats[visitorStats.daily_stats.length - 1]?.date} |
-                        Today: {new Date().toISOString().split('T')[0]}
-                      </div>
-                      <ChartContainer
-                        config={{
-                          visitors: {
-                            label: "Visitors",
-                            color: "#3b82f6",
-                          },
-                        }}
-                        className="w-full h-full !flex-none"
-                      >
-                        <AreaChart 
-                          data={visitorStats.daily_stats}
-                          margin={{ top: 5, right: 5, left: 5, bottom: 25 }}
-                        >
-                          <defs>
-                            <linearGradient id="visitorGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                          <XAxis 
-                            dataKey="date" 
-                            stroke="#9ca3af"
-                            fontSize={10}
-                            type="category"
-                            scale="point"
-                            tickFormatter={(value) => {
-                              // Fix timezone issue by explicitly treating as local date
-                              const date = new Date(value + 'T12:00:00')
-                              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                            }}
-                            angle={-45}
-                            textAnchor="end"
-                            height={50}
-                          />
-                          <YAxis 
-                            stroke="#9ca3af"
-                            fontSize={10}
-                            tickFormatter={(value) => value.toLocaleString()}
-                            width={45}
-                          />
-                          <ChartTooltip
-                            content={({ active, payload, label }) => {
-                              if (!active || !payload?.length) return null
-                              // Fix timezone issue by explicitly treating as local date
-                              const date = new Date(label + 'T12:00:00')
-                              return (
-                                <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-3 shadow-lg">
-                                  <div className="text-white font-medium">
-                                    {date.toLocaleDateString('en-US', { 
-                                      weekday: 'long', 
-                                      year: 'numeric', 
-                                      month: 'long', 
-                                      day: 'numeric' 
-                                    })}
-                                  </div>
-                                  <div className="text-blue-400">
-                                    {payload[0].value} visitors
-                                  </div>
-                                </div>
-                              )
-                            }}
-                          />
-                          <Area 
-                            type="monotone" 
-                            dataKey="count" 
-                            stroke="#3b82f6" 
-                            strokeWidth={2}
-                            fill="url(#visitorGradient)"
-                            fillOpacity={1}
-                          />
-                        </AreaChart>
-                      </ChartContainer>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center py-8 text-zinc-400">
-                      <div className="text-center">
-                        <div>No visitor data available for the selected period</div>
-                        {visitorStats && (
-                          <div className="mt-2 text-xs">
-                            <div>Daily stats length: {visitorStats.daily_stats?.length || 0}</div>
-                            <div>Daily stats data: {JSON.stringify(visitorStats.daily_stats || [])}</div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="bg-zinc-900 border-zinc-700 mb-4">
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <div>
                       <CardTitle className="text-white">User Logins Over Time</CardTitle>
                       <CardDescription className="text-zinc-400">Daily login trends for the selected period</CardDescription>
                     </div>
@@ -1842,10 +1842,10 @@ export default function Admin() {
                               <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                             </linearGradient>
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                           <XAxis 
                             dataKey="date" 
-                            stroke="#9ca3af"
+                            stroke="var(--muted-foreground)"
                             fontSize={10}
                             type="category"
                             scale="point"
@@ -1859,7 +1859,7 @@ export default function Admin() {
                             height={50}
                           />
                           <YAxis 
-                            stroke="#9ca3af"
+                            stroke="var(--muted-foreground)"
                             fontSize={10}
                             tickFormatter={(value) => value.toLocaleString()}
                             width={45}

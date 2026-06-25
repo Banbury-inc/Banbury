@@ -472,7 +472,7 @@ export const renderPanel = ({
                       <div className="h-full flex items-center justify-center">
                         <div className="text-center max-w-md">
                           <Typography variant="h3" className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">File Type Not Supported</Typography>
-                          <Typography variant="p" className="text-zinc-600 dark:text-gray-400">
+                          <Typography variant="p" className="text-muted-foreground">
                             Preview for this file type is not available yet.
                           </Typography>
                         </div>
@@ -762,42 +762,42 @@ export const renderPanel = ({
             />
             <div className="flex flex-col items-center gap-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm" style={{ color: '#9ca3af' }}>New Agent:</span>
+                <span className="text-sm text-muted-foreground">New Agent:</span>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-                  <span style={{ color: '#9ca3af' }}>+</span>
+                  <span className="text-muted-foreground">+</span>
                   <Kbd>N</Kbd>
                 </KbdGroup>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm" style={{ color: '#9ca3af' }}>Search files:</span>
+                <span className="text-sm text-muted-foreground">Search files:</span>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-                  <span style={{ color: '#9ca3af' }}>+</span>
+                  <span className="text-muted-foreground">+</span>
                   <Kbd>P</Kbd>
                 </KbdGroup>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm" style={{ color: '#9ca3af' }}>Toggle left sidebar:</span>
+                <span className="text-sm text-muted-foreground">Toggle left sidebar:</span>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-                  <span style={{ color: '#9ca3af' }}>+</span>
+                  <span className="text-muted-foreground">+</span>
                   <Kbd>H</Kbd>
                 </KbdGroup>
-                <span className="text-xs" style={{ color: '#9ca3af' }}>or</span>
+                <span className="text-xs text-muted-foreground">or</span>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-                  <span style={{ color: '#9ca3af' }}>+</span>
+                  <span className="text-muted-foreground">+</span>
                   <Kbd>⇧</Kbd>
-                  <span style={{ color: '#9ca3af' }}>+</span>
+                  <span className="text-muted-foreground">+</span>
                   <Kbd>L</Kbd>
                 </KbdGroup>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm" style={{ color: '#9ca3af' }}>Toggle right sidebar:</span>
+                <span className="text-sm text-muted-foreground">Toggle right sidebar:</span>
                 <KbdGroup>
                   <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-                  <span style={{ color: '#9ca3af' }}>+</span>
+                  <span className="text-muted-foreground">+</span>
                   <Kbd>L</Kbd>
                 </KbdGroup>
               </div>

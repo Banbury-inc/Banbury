@@ -14,6 +14,7 @@ import {
   saveConnection,
 } from './handlers/handleSaveDatabaseConnection'
 import { handleDatabaseNodeSelection } from './handlers/handleDatabaseNodeSelection'
+import { scheduleRenameInputFocus } from '../../../../utils/focusRenameInput'
 import { handleLoadTree } from './handlers/handleLoadTree'
 import { DatabaseTreeNode, OpenDatabaseTablePayload, SavedDatabaseConnection } from './types'
 
@@ -81,6 +82,11 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
     loadSavedConnections().then(setSavedConnections)
   }, [])
 
+  useEffect(() => {
+    if (!renamingId) return
+    return scheduleRenameInputFocus(() => renameInputRef.current, 'all')
+  }, [renamingId])
+
   async function handleConnected(connection: DatabaseConnectionConfig, connectedTree: DatabaseTreeNode[]) {
     const name = buildConnectionName(connection)
     const id = `${connection.provider}-${connection.host}-${connection.port}-${connection.database ?? ''}`
@@ -144,7 +150,6 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
   function startRenaming(saved: SavedDatabaseConnection) {
     setRenamingId(saved.id)
     setRenameValue(saved.name)
-    setTimeout(() => renameInputRef.current?.select(), 0)
   }
 
   async function commitRename(saved: SavedDatabaseConnection) {
@@ -286,7 +291,10 @@ export function DatabasesTab({ onOpenDatabaseTable, toast }: DatabasesTabProps) 
                       </div>
                     </ContextMenu.Trigger>
                     <ContextMenu.Portal>
-                      <ContextMenu.Content className="min-w-[160px] bg-popover border border-zinc-200 dark:border-zinc-700 rounded-md p-1 shadow-lg z-50">
+                      <ContextMenu.Content
+                        className="min-w-[160px] bg-popover border border-zinc-200 dark:border-zinc-700 rounded-md p-1 shadow-lg z-50"
+                        onCloseAutoFocus={(event) => event.preventDefault()}
+                      >
                         <ContextMenu.Item
                           className="flex items-center gap-2 px-2 py-1.5 hover:bg-sidebar-accent rounded cursor-pointer outline-none"
                           onSelect={() => {
