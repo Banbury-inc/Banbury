@@ -31,6 +31,7 @@ import { handleLocalFileDownload } from "../handlers/handleLocalFileDownload"
 import { handleSaveAsPDF } from "./FileContextMenu/handlers/handleSaveAsPDF"
 import { CloudFileContextMenu } from "./FileContextMenu/CloudFileContextMenu"
 import { getColoredFileIcons } from "../../../../modals/settings-tabs/handlers/appearanceHandlers"
+import { scheduleRenameInputFocus, selectFilenameWithoutExtension } from "../../../../../utils/focusRenameInput"
 
 // Drag and drop state interfaces
 export interface DragState {
@@ -254,15 +255,6 @@ export function FileTreeItem({
 }: FileTreeItemProps) {
   
   // Helper function to select filename without extension
-  const selectFilenameWithoutExtension = (input: HTMLInputElement) => {
-    const value = input.value
-    const lastDotIndex = value.lastIndexOf('.')
-    if (lastDotIndex > 0) {
-      input.setSelectionRange(0, lastDotIndex)
-    } else {
-      input.select()
-    }
-  }
   const { toast } = useToast()
   const isExpanded = expandedItems.has(item.id)
   const hasChildren = item.children && item.children.length > 0
@@ -279,25 +271,16 @@ export function FileTreeItem({
   const [, forceUpdate] = useState({})
 
   useEffect(() => {
-    if (isRenaming && inputRef.current) {
-      requestAnimationFrame(() => {
-        if (inputRef.current) {
-          inputRef.current.focus()
-          selectFilenameWithoutExtension(inputRef.current)
-        }
-      })
-    }
-  }, [isRenaming])
+    if (!isRenaming) return
+    return scheduleRenameInputFocus(
+      () => inputRef.current,
+      item.type === 'folder' ? 'all' : 'filename'
+    )
+  }, [isRenaming, item.type])
 
   useEffect(() => {
-    if (isCreatingFolder && newFolderInputRef.current) {
-      requestAnimationFrame(() => {
-        if (newFolderInputRef.current) {
-          newFolderInputRef.current.focus()
-          selectFilenameWithoutExtension(newFolderInputRef.current)
-        }
-      })
-    }
+    if (!isCreatingFolder) return
+    return scheduleRenameInputFocus(() => newFolderInputRef.current, 'all')
   }, [isCreatingFolder])
 
   useEffect(() => {

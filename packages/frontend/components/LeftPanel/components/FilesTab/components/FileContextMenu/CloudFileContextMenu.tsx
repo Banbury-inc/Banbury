@@ -78,7 +78,10 @@ export function CloudFileContextMenu({
         {children}
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="min-w-[160px] bg-popover border border-zinc-200 dark:border-zinc-700 rounded-md p-1 shadow-lg z-50">
+        <ContextMenu.Content
+          className="min-w-[160px] bg-popover border border-zinc-200 dark:border-zinc-700 rounded-md p-1 shadow-lg z-50"
+          onCloseAutoFocus={(event) => event.preventDefault()}
+        >
           {/* Upload actions (local folders only) */}
           {provider === 'local' && onUploadFile && (
             <ContextMenu.Item 
