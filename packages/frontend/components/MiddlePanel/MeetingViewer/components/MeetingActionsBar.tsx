@@ -44,7 +44,7 @@ export function MeetingActionsBar({
   return (
     <div className="border-b border-border bg-card px-4 py-2 shadow-sm sm:px-6 lg:px-8">
       {/* Left: meeting identity and metadata */}
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="flex w-full flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 flex-1 items-start">
           <div className="min-w-0 flex-1 space-y-1.5">
             <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted-foreground">
