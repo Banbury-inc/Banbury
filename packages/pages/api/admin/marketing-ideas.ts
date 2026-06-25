@@ -7,6 +7,9 @@ import { formatOpenAIModelDisplayName, isOpenAIChatModelId } from '../../../fron
 export { API_CONFIG as config } from '../assistant/langgraph-stream/constants'
 
 const MAX_MODEL_DESCRIPTION_LENGTH = 240
+const MARKETING_IDEA_LIMIT = 20
+const MARKETING_IDEA_MAX_TOKENS = 8192
+const RECENT_COMMIT_LIMIT = 50
 
 interface GitHubCommitResponse {
   sha: string
@@ -234,7 +237,7 @@ function parseAnthropicJsonResponse(message: Anthropic.Messages.Message): unknow
 }
 
 async function fetchRecentCommits() {
-  const response = await fetch('https://api.github.com/repos/Banbury-inc/Banbury/commits?per_page=25', {
+  const response = await fetch(`https://api.github.com/repos/Banbury-inc/Banbury/commits?per_page=${RECENT_COMMIT_LIMIT}`, {
     headers: {
       Accept: 'application/vnd.github+json',
       'User-Agent': 'Banbury-Admin-Marketing'
@@ -254,13 +257,15 @@ async function generateMarketingIdeas(commits: CommitPromptContext[], integrated
     apiKey: process.env.ANTHROPIC_API_KEY
   })
 
-  const systemPrompt = `You are a product marketing strategist for Banbury. Review recent repository commits and identify changes that could become useful social media posts or email campaign ideas.
+  const systemPrompt = `You are a growth-focused product marketing strategist for Banbury. Review recent repository commits and identify changes that could become high-performing social media posts or email campaign ideas.
 
 Focus on user-facing product improvements, workflows, reliability wins that customers can understand, feature launches, and newly available AI models that Banbury is currently integrated with. Ignore dependency bumps, formatting, chores, internal refactors, and vague changes unless there is a clear customer benefit.
 
 Use the integrated model catalog to spot timely model-launch angles, model availability announcements, or upgrade messaging. Only suggest a model-related post when the model is present in the catalog and there is a clear customer-facing benefit.
 
-Return concise, practical ideas. The description should explain the feature or benefit. The action should recommend the marketing channel or next step.`
+Optimize for reach, not just completeness. Prefer ideas with a strong hook, novelty, clear before/after contrast, pain-point resonance, founder/build-in-public angle, developer productivity angle, AI trend relevance, or demo potential. Avoid generic launch announcements that would likely get low engagement.
+
+Return concise, practical ideas. The description should lead with the audience-facing hook and explain the feature or benefit. The action should recommend the channel, creative format, opening angle, and next step.`
 
   const userPrompt = `Analyze these recent commits from https://github.com/Banbury-inc/Banbury:
 
@@ -270,7 +275,7 @@ Also consider these currently integrated AI models from live provider catalogs:
 
 ${JSON.stringify(integratedModels, null, 2)}
 
-Return a JSON object with an ideas array. Each idea must include description and action.`
+Return a JSON object with ${MARKETING_IDEA_LIMIT} ideas in the ideas array. Each idea must include description and action. Prioritize the ideas by expected view potential, with the strongest ideas first.`
 
   const outputFormat = {
     type: 'json_schema' as const,
@@ -284,11 +289,11 @@ Return a JSON object with an ideas array. Each idea must include description and
             properties: {
               description: {
                 type: 'string',
-                description: 'A concise customer-facing description of the feature or benefit.'
+                description: 'A concise customer-facing hook that explains the feature or benefit and why people would care.'
               },
               action: {
                 type: 'string',
-                description: 'A recommended marketing action, channel, or campaign next step.'
+                description: 'A recommended marketing action with channel, format, opening angle, and campaign next step.'
               }
             },
             required: ['description', 'action'],
@@ -303,7 +308,7 @@ Return a JSON object with an ideas array. Each idea must include description and
 
   const message = await client.messages.create({
     model: 'claude-sonnet-4-5-20250929',
-    max_tokens: 2048,
+    max_tokens: MARKETING_IDEA_MAX_TOKENS,
     system: systemPrompt,
     messages: [
       {
@@ -319,7 +324,14 @@ Return a JSON object with an ideas array. Each idea must include description and
     }
   } as any)
 
-  return normalizeMarketingIdeas(parseAnthropicJsonResponse(message)).slice(0, 10)
+  if (message.stop_reason === 'max_tokens') {
+    throw new Error('Marketing idea generation reached the token limit before finishing. Please retry.')
+  }
+
+  const ideas = normalizeMarketingIdeas(parseAnthropicJsonResponse(message)).slice(0, MARKETING_IDEA_LIMIT)
+  if (ideas.length === 0) throw new Error('No marketing ideas were returned. Please retry.')
+
+  return ideas
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
