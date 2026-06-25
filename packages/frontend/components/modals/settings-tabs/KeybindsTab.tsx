@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Keyboard, RotateCcw } from 'lucide-react'
+import { RotateCcw } from 'lucide-react'
 import { Button } from '../../common/ui/button'
 import { Switch } from '../../common/ui/switch'
-import { Label } from '@/components/common/ui/label'
 import { Typography } from '@/components/common/ui/typography'
-import { Separator } from '@/components/common/ui/separator'
 import { Kbd, KbdGroup } from '../../common/ui/kbd'
 import {
   KeybindsState,
@@ -16,10 +14,18 @@ import {
   getActiveKey,
   keyEventToString,
 } from './handlers/keybindHandlers'
+import {
+  SettingsTabCard,
+  SettingsTabCardBody,
+  SettingsTabHeader,
+  SettingsTabLayout,
+  SettingsTabNote,
+  SettingsTabRow,
+  SettingsTabSection,
+} from './settings-tab-layout'
 
 interface KeybindRowProps {
   keybind: KeybindConfig
-  keybindId: keyof KeybindsState
   isMac: boolean
   isEditing: boolean
   onStartEdit: () => void
@@ -45,13 +51,11 @@ function KeybindRow({
     event.preventDefault()
     event.stopPropagation()
     
-    // Escape cancels editing
     if (event.key === 'Escape') {
       onCancelEdit()
       return
     }
     
-    // Enter confirms the pending key
     if (event.key === 'Enter' && pendingKey) {
       onSaveEdit(pendingKey)
       return
@@ -81,17 +85,17 @@ function KeybindRow({
   const displayKey = pendingKey ?? activeKey
   
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3 transition-colors hover:bg-muted/60 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex-1">
-        <Typography variant="p" className="font-medium text-foreground">
+    <div className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0 flex-1">
+        <Typography variant="small" className="font-medium text-foreground">
           {keybind.label}
         </Typography>
-        <Typography variant="small" className="mt-0.5 text-muted-foreground">
+        <Typography variant="xs" className="mt-1 text-muted-foreground">
           {keybind.description}
         </Typography>
       </div>
       
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-3">
         {isEditing ? (
           <div className="flex flex-wrap items-center gap-2">
             <div className="min-w-[120px] rounded border-2 border-ring bg-primary/10 px-3 py-1.5 text-center">
@@ -183,7 +187,6 @@ export function KeybindsTab() {
     }
   }, [])
   
-  // Listen for external keybind updates
   useEffect(() => {
     function handleKeybindsUpdate() {
       setKeybinds(getStoredKeybinds())
@@ -234,37 +237,34 @@ export function KeybindsTab() {
   const hasCustomizations = keybindEntries.some(({ config }) => config.customKey !== null)
   
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <Typography variant="h3" className="flex items-center text-foreground">
-          <Keyboard className="h-5 w-5 mr-2" />
-          Keyboard Shortcuts
-        </Typography>
-        {hasCustomizations && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleResetAll}
-            className="text-muted-foreground"
-          >
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Reset All
-          </Button>
-        )}
-      </div>
-      <Separator />
-      
-      <div className="space-y-2">
-        <Typography variant="small" className="mb-4 text-muted-foreground">
-          Click on a shortcut to customize it. All shortcuts use {isMac ? '⌘ (Command)' : 'Ctrl'} as the modifier key.
-        </Typography>
-        
-        <div className="space-y-2">
+    <SettingsTabLayout>
+      <SettingsTabHeader
+        title="Keyboard Shortcuts"
+        action={
+          hasCustomizations ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResetAll}
+              className="text-muted-foreground"
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Reset All
+            </Button>
+          ) : undefined
+        }
+      />
+
+      <Typography variant="small" className="text-muted-foreground">
+        Click on a shortcut to customize it. All shortcuts use {isMac ? '⌘ (Command)' : 'Ctrl'} as the modifier key.
+      </Typography>
+
+      <SettingsTabCard>
+        <SettingsTabCardBody>
           {keybindEntries.map(({ id, config }) => (
             <KeybindRow
               key={id}
               keybind={config}
-              keybindId={id}
               isMac={isMac}
               isEditing={editingId === id}
               onStartEdit={() => handleStartEdit(id)}
@@ -273,40 +273,31 @@ export function KeybindsTab() {
               onReset={() => handleResetKeybind(id)}
             />
           ))}
-        </div>
-      </div>
-      
-      <div className="mt-6 rounded-lg border border-border bg-muted/50 p-4">
-        <Typography variant="small" className="text-muted-foreground">
-          <strong>Tip:</strong> Press a letter or number key (with optional Shift) while editing to set a new shortcut. Press Escape to cancel or Enter to confirm.
-        </Typography>
-      </div>
+        </SettingsTabCardBody>
+      </SettingsTabCard>
 
-      <Separator className="my-6" />
+      <SettingsTabNote>
+        <strong>Tip:</strong> Press a letter or number key (with optional Shift) while editing to set a new shortcut. Press Escape to cancel or Enter to confirm.
+      </SettingsTabNote>
 
-      <div className="space-y-4">
-        <Typography variant="h4" className="text-foreground">
-          Editor Settings
-        </Typography>
-
-        <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-4 py-3">
-          <div className="flex-1">
-            <Label htmlFor="vim-mode-switch">
-              <Typography variant="p" className="font-medium text-foreground">
-                Vim Keybindings (Spreadsheet)
-              </Typography>
-            </Label>
-            <Typography variant="small" className="mt-1 text-muted-foreground">
-              Enable Vim modal editing in the spreadsheet editor with Normal, Insert, and Visual modes.
-            </Typography>
-          </div>
-          <Switch
-            id="vim-mode-switch"
-            checked={isVimMode}
-            onCheckedChange={handleVimModeToggle}
-          />
-        </div>
-      </div>
-    </div>
+      <SettingsTabSection title="Editor Settings">
+        <SettingsTabCard>
+          <SettingsTabCardBody>
+            <SettingsTabRow
+              label="Vim Keybindings (Spreadsheet)"
+              description="Enable Vim modal editing in the spreadsheet editor with Normal, Insert, and Visual modes."
+              htmlFor="vim-mode-switch"
+              align="start"
+            >
+              <Switch
+                id="vim-mode-switch"
+                checked={isVimMode}
+                onCheckedChange={handleVimModeToggle}
+              />
+            </SettingsTabRow>
+          </SettingsTabCardBody>
+        </SettingsTabCard>
+      </SettingsTabSection>
+    </SettingsTabLayout>
   )
 }

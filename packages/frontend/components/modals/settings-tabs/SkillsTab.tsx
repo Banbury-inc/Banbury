@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
-import { BookOpen, Edit3, Plus, Trash2, X } from 'lucide-react'
+import { Edit3, Plus, Trash2, X } from 'lucide-react'
 
 import { Button } from '../../common/ui/button'
 import { Badge } from '../../common/ui/badge'
 import { Label } from '../../common/ui/label'
-import { Separator } from '../../common/ui/separator'
 import { Switch } from '../../common/ui/switch'
 import { Textarea } from '../../common/ui/textarea'
 import { Typography } from '@/components/common/ui/typography'
@@ -17,6 +16,15 @@ import {
   saveSkill,
   updateSkillEnabled,
 } from './handlers/skillHandlers'
+import {
+  SettingsTabCard,
+  SettingsTabCardBody,
+  SettingsTabCardFooter,
+  SettingsTabHeader,
+  SettingsTabLayout,
+  SettingsTabRow,
+  SettingsTabSection,
+} from './settings-tab-layout'
 
 export function SkillsTab() {
   const { toast } = useToast()
@@ -137,144 +145,137 @@ export function SkillsTab() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <SettingsTabLayout>
       <div>
-        <Typography variant="h3" className="mb-4 flex items-center gap-2 text-foreground">
-          <BookOpen className="h-5 w-5" />
-          Skills
-        </Typography>
-        <Typography variant="small" className="text-muted-foreground">
+        <SettingsTabHeader title="Skills" />
+        <Typography variant="small" className="mt-2 text-muted-foreground">
           Create reusable SKILL.md instructions and apply them from the composer with `/`.
         </Typography>
       </div>
 
-      <Separator />
-
       <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
-        <div className="flex flex-col gap-3">
-          <Button type="button" variant="outline" onClick={handleCreateNew} className="justify-start">
+        <SettingsTabSection title="Your Skills">
+          <Button type="button" variant="outline" onClick={handleCreateNew} className="w-full justify-start">
             <Plus className="mr-2 h-4 w-4" />
             New Skill
           </Button>
 
-          <div className="flex flex-col gap-2">
-            {isLoading ? (
-              <Typography variant="small" className="text-muted-foreground">
-                Loading skills...
-              </Typography>
-            ) : skills.length === 0 ? (
-              <div className="rounded-lg border border-border bg-muted/40 p-4">
-                <Typography variant="small" className="text-muted-foreground">
-                  No skills yet. Create one to make it available from the composer.
-                </Typography>
-              </div>
-            ) : (
-              skills.map(skill => (
-                <div
-                  key={skill.id}
-                  className="rounded-lg border border-border bg-card p-3 text-card-foreground"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={() => handleEditSkill(skill)}
-                      className="min-w-0 flex-1 text-left"
-                    >
-                      <Typography variant="small" className="truncate font-medium text-foreground">
-                        {skill.name}
-                      </Typography>
-                      <Typography variant="xs" className="mt-1 line-clamp-2 text-muted-foreground">
-                        {skill.description || 'No description'}
-                      </Typography>
-                    </button>
-                    <Badge variant={skill.enabled ? 'secondary' : 'outline'}>
-                      {skill.enabled ? 'Enabled' : 'Disabled'}
-                    </Badge>
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    <Switch
-                      checked={skill.enabled}
-                      onCheckedChange={checked => handleToggleSkill(skill, checked)}
-                      aria-label={`Toggle ${skill.name}`}
-                    />
-                    <div className="flex items-center gap-1">
-                      <Button type="button" variant="ghost" size="sm" onClick={() => handleEditSkill(skill)}>
-                        <Edit3 className="h-4 w-4" />
-                        <span className="sr-only">Edit {skill.name}</span>
-                      </Button>
-                      <Button
+          <SettingsTabCard>
+            <SettingsTabCardBody>
+              {isLoading ? (
+                <div className="px-4 py-3.5">
+                  <Typography variant="small" className="text-muted-foreground">
+                    Loading skills...
+                  </Typography>
+                </div>
+              ) : skills.length === 0 ? (
+                <div className="px-4 py-3.5">
+                  <Typography variant="small" className="text-muted-foreground">
+                    No skills yet. Create one to make it available from the composer.
+                  </Typography>
+                </div>
+              ) : (
+                skills.map(skill => (
+                  <div key={skill.id} className="px-4 py-3.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteSkill(skill)}
-                        disabled={isDeleting}
+                        onClick={() => handleEditSkill(skill)}
+                        className="min-w-0 flex-1 text-left"
                       >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Delete {skill.name}</span>
-                      </Button>
+                        <Typography variant="small" className="truncate font-medium text-foreground">
+                          {skill.name}
+                        </Typography>
+                        <Typography variant="xs" className="mt-1 line-clamp-2 text-muted-foreground">
+                          {skill.description || 'No description'}
+                        </Typography>
+                      </button>
+                      <Badge variant={skill.enabled ? 'secondary' : 'outline'}>
+                        {skill.enabled ? 'Enabled' : 'Disabled'}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between gap-2">
+                      <Switch
+                        checked={skill.enabled}
+                        onCheckedChange={checked => handleToggleSkill(skill, checked)}
+                        aria-label={`Toggle ${skill.name}`}
+                      />
+                      <div className="flex items-center gap-1">
+                        <Button type="button" variant="ghost" size="sm" onClick={() => handleEditSkill(skill)}>
+                          <Edit3 className="h-4 w-4" />
+                          <span className="sr-only">Edit {skill.name}</span>
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteSkill(skill)}
+                          disabled={isDeleting}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete {skill.name}</span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+                ))
+              )}
+            </SettingsTabCardBody>
+          </SettingsTabCard>
+        </SettingsTabSection>
 
-        <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 text-card-foreground">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <Typography variant="p" className="font-medium text-foreground">
-                {selectedSkill ? `Edit ${selectedSkill.name}` : 'Create Skill'}
-              </Typography>
-              <Typography variant="small" className="mt-1 text-muted-foreground">
-                Save a complete SKILL.md-style markdown document. Frontmatter name and description are used in lists.
-              </Typography>
-            </div>
-            {selectedSkill && (
-              <Button type="button" variant="ghost" size="sm" onClick={handleCreateNew}>
-                <X className="h-4 w-4" />
-                <span className="sr-only">Clear selected skill</span>
-              </Button>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-background p-3">
-            <div>
-              <Label htmlFor="skill-enabled">
+        <SettingsTabCard>
+          <SettingsTabCardBody>
+            <div className="flex items-start justify-between gap-3 px-4 py-3.5">
+              <div>
                 <Typography variant="small" className="font-medium text-foreground">
-                  Available in composer
+                  {selectedSkill ? `Edit ${selectedSkill.name}` : 'Create Skill'}
+                </Typography>
+                <Typography variant="xs" className="mt-1 text-muted-foreground">
+                  Save a complete SKILL.md-style markdown document. Frontmatter name and description are used in lists.
+                </Typography>
+              </div>
+              {selectedSkill && (
+                <Button type="button" variant="ghost" size="sm" onClick={handleCreateNew}>
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Clear selected skill</span>
+                </Button>
+              )}
+            </div>
+
+            <SettingsTabRow
+              label="Available in composer"
+              description="Disabled skills stay saved but do not appear in `/` search."
+              htmlFor="skill-enabled"
+              align="start"
+            >
+              <Switch id="skill-enabled" checked={draftEnabled} onCheckedChange={setDraftEnabled} />
+            </SettingsTabRow>
+
+            <div className="space-y-2 px-4 py-3.5">
+              <Label htmlFor="skill-content">
+                <Typography variant="small" className="font-medium text-foreground">
+                  SKILL.md Content
                 </Typography>
               </Label>
-              <Typography variant="xs" className="mt-1 text-muted-foreground">
-                Disabled skills stay saved but do not appear in `/` search.
-              </Typography>
+              <Textarea
+                id="skill-content"
+                value={draftContent}
+                onChange={event => setDraftContent(event.target.value)}
+                className="min-h-[360px] font-mono text-sm"
+                placeholder={createDefaultSkillContent()}
+              />
             </div>
-            <Switch id="skill-enabled" checked={draftEnabled} onCheckedChange={setDraftEnabled} />
-          </div>
+          </SettingsTabCardBody>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="skill-content">
-              <Typography variant="small" className="font-medium text-foreground">
-                SKILL.md Content
-              </Typography>
-            </Label>
-            <Textarea
-              id="skill-content"
-              value={draftContent}
-              onChange={event => setDraftContent(event.target.value)}
-              className="min-h-[360px] font-mono text-sm"
-              placeholder={createDefaultSkillContent()}
-            />
-          </div>
-
-          <div className="flex justify-end">
+          <SettingsTabCardFooter className="justify-end">
             <Button type="button" onClick={handleSaveSkill} disabled={isSaving}>
               {isSaving ? 'Saving...' : 'Save Skill'}
             </Button>
-          </div>
-        </div>
+          </SettingsTabCardFooter>
+        </SettingsTabCard>
       </div>
-    </div>
+    </SettingsTabLayout>
   )
 }

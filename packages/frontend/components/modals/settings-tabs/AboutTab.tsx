@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react'
-import { Info, Download } from 'lucide-react'
-import { Typography } from '../../common/ui/typography'
+import { Download } from 'lucide-react'
 import { Button } from '../../common/ui/button'
 import { useToast } from '../../common/ui/use-toast'
 import { checkForUpdates } from './handlers/aboutHandlers'
+import {
+  SettingsTabCard,
+  SettingsTabCardBody,
+  SettingsTabCardFooter,
+  SettingsTabHeader,
+  SettingsTabLayout,
+  SettingsTabValueRow,
+} from './settings-tab-layout'
 
 function isElectronApp(): boolean {
   return typeof window !== 'undefined' && !!window.desktopApp?.isDesktop
@@ -15,21 +22,14 @@ export function AboutTab() {
   const [isChecking, setIsChecking] = useState(false)
 
   useEffect(() => {
-    // Get version from package.json
-    // In Next.js, we can fetch it from the API or use an environment variable
-    // For now, we'll try to get it from window or use a default
     if (typeof window !== 'undefined') {
-      // Try to get version from electron if available
       if (window.desktopApp?.updater) {
         window.desktopApp.updater.getCurrentVersion().then((v) => {
           setVersion(v)
         }).catch(() => {
-          // Fallback to default if unavailable
           setVersion('0.1.9')
         })
       } else {
-        // For web version, use the package.json version
-        // This could be injected via env variable or API
         setVersion('0.1.9')
       }
     }
@@ -68,7 +68,7 @@ export function AboutTab() {
           description: `You are running the latest version (${result.currentVersion || version}).`,
         })
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "An unexpected error occurred while checking for updates",
@@ -80,26 +80,20 @@ export function AboutTab() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center mb-4">
-        <Info className="h-5 w-5 mr-2 text-foreground" />
-        <Typography variant="h3" className="text-foreground">
-          About
-        </Typography>
-      </div>
+    <SettingsTabLayout>
+      <SettingsTabHeader title="About" />
 
-      <div className="space-y-4">
-        <div>
-          <Typography variant="small" className="mb-2 text-muted-foreground">
-            Version
-          </Typography>
-          <Typography variant="p" className="text-foreground">
-            {version || 'Loading...'}
-          </Typography>
-        </div>
+      <SettingsTabCard>
+        <SettingsTabCardBody>
+          <SettingsTabValueRow
+            label="Version"
+            value={version || 'Loading...'}
+            readOnly
+          />
+        </SettingsTabCardBody>
 
         {isElectronApp() && (
-          <div className="pt-4">
+          <SettingsTabCardFooter className="justify-end">
             <Button
               onClick={handleCheckForUpdates}
               disabled={isChecking}
@@ -108,9 +102,9 @@ export function AboutTab() {
               <Download className="h-4 w-4" />
               {isChecking ? 'Checking...' : 'Check for Updates'}
             </Button>
-          </div>
+          </SettingsTabCardFooter>
         )}
-      </div>
-    </div>
+      </SettingsTabCard>
+    </SettingsTabLayout>
   )
 }
