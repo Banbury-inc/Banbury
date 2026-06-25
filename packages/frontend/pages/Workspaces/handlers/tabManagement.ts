@@ -194,6 +194,10 @@ export const openTaskInTab = (
 };
 
 // Open meeting in a new tab within specified panel
+export function getMeetingTranscriptFileId(meetingId: string): string {
+  return `meeting-transcript-${meetingId}`
+}
+
 export const openMeetingInTab = async (
   meeting: MeetingSession | null, // null for join meeting composer
   targetPanelId: string,
@@ -203,7 +207,8 @@ export const openMeetingInTab = async (
   updatePanelActiveTab: (layout: PanelGroup, panelId: string, tabId: string) => PanelGroup,
   addTabToPanel: (layout: PanelGroup, panelId: string, tab: WorkspaceTab) => PanelGroup,
   setActivePanelId: React.Dispatch<React.SetStateAction<string>>,
-  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>
+  setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>,
+  setSelectedMeeting?: React.Dispatch<React.SetStateAction<MeetingSession | null>>
 ) => {
   // For join meeting composer (meeting is null), always create a new tab
   if (meeting === null) {
@@ -242,6 +247,7 @@ export const openMeetingInTab = async (
     };
     
     switchToExistingTab(panelLayout);
+    setSelectedMeeting?.(meeting);
     return;
   }
   
@@ -402,7 +408,8 @@ export const handleCloseTab = (
   removeTabFromPanel: (layout: PanelGroup, panelId: string, tabId: string) => PanelGroup,
   setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>,
   setSelectedFile: React.Dispatch<React.SetStateAction<FileSystemItem | null>>,
-  setSelectedEmail: React.Dispatch<React.SetStateAction<any | null>>
+  setSelectedEmail: React.Dispatch<React.SetStateAction<any | null>>,
+  setSelectedMeeting?: React.Dispatch<React.SetStateAction<MeetingSession | null>>
 ) => {
   setPanelLayout(prev => {
     // Dispatch an event before removal so listeners (e.g., Thread) can react
@@ -417,12 +424,18 @@ export const handleCloseTab = (
             fileName: closingTab.file.name,
           }
         }));
+      } else if (closingTab && closingTab.type === 'meeting' && closingTab.meetingId) {
+        window.dispatchEvent(new CustomEvent('workspace-tab-closed', {
+          detail: {
+            fileId: getMeetingTranscriptFileId(closingTab.meetingId),
+          }
+        }));
       }
     } catch {}
 
     const newLayout = removeTabFromPanel(prev, panelId, tabId);
     
-    // Update selected file/email if needed
+    // Update selected file/email/meeting if needed
     const panel = findPanel(newLayout, panelId);
     if (panel && panel.activeTabId) {
       const activeTab = panel.tabs.find(tab => tab.id === panel.activeTabId);
@@ -430,21 +443,26 @@ export const handleCloseTab = (
         if ((activeTab as any).type === 'file') {
           setSelectedFile((activeTab as any).file);
           setSelectedEmail(null);
+          setSelectedMeeting?.(null);
         } else if ((activeTab as any).type === 'email') {
           setSelectedFile(null);
           setSelectedEmail((activeTab as any).email || null);
+          setSelectedMeeting?.(null);
+        } else if ((activeTab as any).type === 'meeting' && (activeTab as MeetingTab).meeting) {
+          setSelectedFile(null);
+          setSelectedEmail(null);
+          setSelectedMeeting?.((activeTab as MeetingTab).meeting);
         } else {
           setSelectedFile(null);
           setSelectedEmail(null);
+          setSelectedMeeting?.(null);
         }
       }
     } else {
       setSelectedFile(null);
       setSelectedEmail(null);
+      setSelectedMeeting?.(null);
     }
-    
-    // Note: Task and meeting tabs don't need to update selectedFile/selectedEmail
-    // as they are managed separately
     
     return newLayout;
   });
@@ -460,25 +478,32 @@ export const handleTabChange = (
   setPanelLayout: React.Dispatch<React.SetStateAction<PanelGroup>>,
   setActivePanelId: React.Dispatch<React.SetStateAction<string>>,
   setSelectedFile: React.Dispatch<React.SetStateAction<FileSystemItem | null>>,
-  setSelectedEmail: React.Dispatch<React.SetStateAction<any | null>>
+  setSelectedEmail: React.Dispatch<React.SetStateAction<any | null>>,
+  setSelectedMeeting?: React.Dispatch<React.SetStateAction<MeetingSession | null>>
 ) => {
   setPanelLayout(prev => updatePanelActiveTab(prev, panelId, tabId));
   setActivePanelId(panelId);
   
-  // Update selected file/email
+  // Update selected file/email/meeting
   const panel = findPanel(panelLayout, panelId);
   if (panel) {
     const tab = panel.tabs.find(t => t.id === tabId);
     if (tab && (tab as any).type === 'file') {
       setSelectedFile((tab as any).file);
       setSelectedEmail(null);
+      setSelectedMeeting?.(null);
     } else if (tab && (tab as any).type === 'email') {
       setSelectedFile(null);
       setSelectedEmail((tab as any).email || null);
-    } else {
-      // For task, meeting, calendar, and ai tabs, clear file/email selection
+      setSelectedMeeting?.(null);
+    } else if (tab && (tab as any).type === 'meeting' && (tab as MeetingTab).meeting) {
       setSelectedFile(null);
       setSelectedEmail(null);
+      setSelectedMeeting?.((tab as MeetingTab).meeting);
+    } else {
+      setSelectedFile(null);
+      setSelectedEmail(null);
+      setSelectedMeeting?.(null);
     }
   }
 };

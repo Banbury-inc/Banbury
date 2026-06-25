@@ -10,6 +10,7 @@ import { handleFetchError } from "../../assistant/ClaudeRuntimeProvider/handlers
 import { processStreamEvents } from "../../assistant/ClaudeRuntimeProvider/handlers/processStreamEvents"
 import { Thread } from "./composer/thread/thread"
 import { FileSystemItem } from "../../utils/fileTreeUtils"
+import { MeetingSession } from "../../types/meeting-types"
 import { CONFIG } from "../../config/config"
 
 import type { FC } from "react"
@@ -23,6 +24,7 @@ interface AiConversationTabPaneProps {
   } | null
   selectedFile?: FileSystemItem | null
   selectedEmail?: any | null
+  selectedMeeting?: MeetingSession | null
   onEmailSelect?: (email: any) => void
   onClearConversation?: () => void
 }
@@ -33,6 +35,7 @@ export const AiConversationTabPane: FC<AiConversationTabPaneProps> = ({
   userInfo,
   selectedFile,
   selectedEmail,
+  selectedMeeting,
   onEmailSelect,
 }) => {
   // Create a dedicated adapter for this tab (same logic as ClaudeRuntimeProvider)
@@ -342,6 +345,7 @@ export const AiConversationTabPane: FC<AiConversationTabPaneProps> = ({
         userInfo={userInfo}
         selectedFile={selectedFile}
         selectedEmail={selectedEmail}
+        selectedMeeting={selectedMeeting}
         onEmailSelect={onEmailSelect}
         assistantTabId={tabId}
       />

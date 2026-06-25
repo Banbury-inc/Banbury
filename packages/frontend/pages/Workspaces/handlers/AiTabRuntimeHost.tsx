@@ -5,6 +5,7 @@ import { AiConversationTabPane } from "../../../components/RightPanel/AiConversa
 import { getAllTabs } from "./panelUtils"
 import type { PanelGroup, AiTab } from "../types"
 import type { FileSystemItem } from "../../../utils/fileTreeUtils"
+import type { MeetingSession } from "../../../types/meeting-types"
 
 interface AiTabRuntimeHostProps {
   panelLayout: PanelGroup
@@ -15,6 +16,7 @@ interface AiTabRuntimeHostProps {
   } | null
   selectedFile?: FileSystemItem | null
   selectedEmail?: any | null
+  selectedMeeting?: MeetingSession | null
   onEmailSelect?: (email: any) => void
 }
 
@@ -26,6 +28,7 @@ interface AiTabRuntimeProps {
   } | null
   selectedFile?: FileSystemItem | null
   selectedEmail?: any | null
+  selectedMeeting?: MeetingSession | null
   onEmailSelect?: (email: any) => void
 }
 
@@ -48,6 +51,7 @@ function AiTabRuntime({
   userInfo,
   selectedFile,
   selectedEmail,
+  selectedMeeting,
   onEmailSelect,
 }: AiTabRuntimeProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -118,6 +122,7 @@ function AiTabRuntime({
         userInfo={userInfo}
         selectedFile={selectedFile}
         selectedEmail={selectedEmail}
+        selectedMeeting={selectedMeeting}
         onEmailSelect={onEmailSelect}
       />
     </div>
@@ -137,6 +142,7 @@ export function AiTabRuntimeHost({
   userInfo,
   selectedFile,
   selectedEmail,
+  selectedMeeting,
   onEmailSelect,
 }: AiTabRuntimeHostProps) {
   // Track all known tabs - we never remove tabs from this until explicitly closed
@@ -216,6 +222,7 @@ export function AiTabRuntimeHost({
           userInfo={userInfo}
           selectedFile={selectedFile}
           selectedEmail={selectedEmail}
+          selectedMeeting={selectedMeeting}
           onEmailSelect={onEmailSelect}
         />
       ))}

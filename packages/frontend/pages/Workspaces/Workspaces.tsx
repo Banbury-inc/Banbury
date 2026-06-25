@@ -343,12 +343,12 @@ const Workspaces = (): React.ReactNode => {
   }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout])
 
   const handleCloseTabCallback = useCallback((tabId: string, panelId: string) => {
-    handleCloseTab(tabId, panelId, findPanel, removeTabFromPanel, setPanelLayout, setSelectedFile, setSelectedEmail);
-  }, [findPanel, removeTabFromPanel, setPanelLayout, setSelectedFile, setSelectedEmail]);
+    handleCloseTab(tabId, panelId, findPanel, removeTabFromPanel, setPanelLayout, setSelectedFile, setSelectedEmail, setSelectedMeeting);
+  }, [findPanel, removeTabFromPanel, setPanelLayout, setSelectedFile, setSelectedEmail, setSelectedMeeting]);
 
   const handleTabChangeCallback = useCallback((panelId: string, tabId: string) => {
-    handleTabChange(panelId, tabId, panelLayout, findPanel, updatePanelActiveTab, setPanelLayout, setActivePanelId, setSelectedFile, setSelectedEmail);
-  }, [panelLayout, findPanel, updatePanelActiveTab, setPanelLayout, setActivePanelId, setSelectedFile, setSelectedEmail]);
+    handleTabChange(panelId, tabId, panelLayout, findPanel, updatePanelActiveTab, setPanelLayout, setActivePanelId, setSelectedFile, setSelectedEmail, setSelectedMeeting);
+  }, [panelLayout, findPanel, updatePanelActiveTab, setPanelLayout, setActivePanelId, setSelectedFile, setSelectedEmail, setSelectedMeeting]);
   
   const splitPanelCallback = useCallback((panelId: string, direction: SplitDirection, newFileTab?: FileTab, placement: SplitPlacement = 'after') => {
     splitPanel(panelId, direction, newFileTab, setPanelLayout, setActivePanelId, setSelectedFile, placement);
@@ -678,9 +678,10 @@ const Workspaces = (): React.ReactNode => {
       updatePanelActiveTab,
       addTabToPanel,
       setActivePanelId,
-      setPanelLayout
+      setPanelLayout,
+      setSelectedMeeting
     );
-  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout]);
+  }, [activePanelId, panelLayout, getAllTabs, updatePanelActiveTab, addTabToPanel, setActivePanelId, setPanelLayout, setSelectedMeeting]);
 
   const openFlowInTabCallback = useCallback((flow: FlowItem | null, targetPanelId: string = activePanelId) => {
     openFlowInTab(
@@ -906,6 +907,7 @@ const Workspaces = (): React.ReactNode => {
             userInfo={userInfo}
             selectedFile={selectedFile}
             selectedEmail={selectedEmail}
+            selectedMeeting={selectedMeeting}
             onEmailSelect={handleEmailSelect}
           />
 
