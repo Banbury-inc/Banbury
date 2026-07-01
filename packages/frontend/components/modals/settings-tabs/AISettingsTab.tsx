@@ -10,12 +10,14 @@ import { fetchOpenAIModelsCatalog } from '../../RightPanel/composer/handlers/fet
 import { fetchGoogleModelsCatalog } from '../../RightPanel/composer/handlers/fetchGoogleModelsCatalog'
 import { getModelsCatalogRevision } from '../../RightPanel/composer/handlers/getModelDisplayName'
 import { deleteAllConversations } from './handlers/aiSettingsHandlers'
+import { toggleVisibleModel } from './handlers/visibleModelsHandlers'
+import { VisibleModelsProviderDropdown } from './VisibleModelsProviderDropdown'
 import {
   SettingsTabCard,
   SettingsTabCardBody,
-  SettingsTabGroupLabel,
   SettingsTabHeader,
   SettingsTabLayout,
+  SettingsTabLabel,
   SettingsTabNote,
   SettingsTabRow,
   SettingsTabSection,
@@ -137,9 +139,7 @@ export function AISettingsTab() {
 
   function handleModelVisibilityToggle(modelId: string, checked: boolean) {
     const currentVisible = toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS
-    const updatedVisible = checked
-      ? [...currentVisible, modelId]
-      : currentVisible.filter(id => id !== modelId)
+    const updatedVisible = toggleVisibleModel(currentVisible, modelId, checked)
 
     const updatedPreferences = {
       ...toolPreferences,
@@ -205,18 +205,13 @@ export function AISettingsTab() {
         <SettingsTabCard>
           <SettingsTabCardBody>
             {MODEL_PROVIDERS.map((provider) => (
-              <div key={provider.id}>
-                <SettingsTabGroupLabel>{provider.label}</SettingsTabGroupLabel>
-                {availableModels.filter(m => m.provider === provider.id).map(model => (
-                  <SettingsTabRow key={model.id} label={model.name} htmlFor={`model-${model.id}`}>
-                    <Switch
-                      id={`model-${model.id}`}
-                      checked={(toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS).includes(model.id)}
-                      onCheckedChange={(checked) => handleModelVisibilityToggle(model.id, checked)}
-                    />
-                  </SettingsTabRow>
-                ))}
-              </div>
+              <VisibleModelsProviderDropdown
+                key={provider.id}
+                label={provider.label}
+                models={availableModels.filter((model) => model.provider === provider.id)}
+                visibleModelIds={toolPreferences.visibleModels || DEFAULT_VISIBLE_MODELS}
+                onToggle={handleModelVisibilityToggle}
+              />
             ))}
           </SettingsTabCardBody>
         </SettingsTabCard>
@@ -231,12 +226,10 @@ export function AISettingsTab() {
           <SettingsTabCardBody>
             <div className="flex items-start justify-between gap-4 px-4 py-3.5">
               <div className="min-w-0 flex-1">
-                <Typography variant="small" className="font-medium text-foreground">
-                  Delete All AI Conversations
-                </Typography>
-                <Typography variant="xs" className="mt-1 text-muted-foreground">
-                  Permanently delete all saved AI conversations associated with your account. This action cannot be undone.
-                </Typography>
+                <SettingsTabLabel
+                  label="Delete All AI Conversations"
+                  description="Permanently delete all saved AI conversations associated with your account. This action cannot be undone."
+                />
               </div>
               <Button
                 variant="destructive"

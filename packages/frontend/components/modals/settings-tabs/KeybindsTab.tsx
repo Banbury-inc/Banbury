@@ -19,6 +19,7 @@ import {
   SettingsTabCardBody,
   SettingsTabHeader,
   SettingsTabLayout,
+  SettingsTabLabel,
   SettingsTabNote,
   SettingsTabRow,
   SettingsTabSection,
@@ -87,12 +88,7 @@ function KeybindRow({
   return (
     <div className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0 flex-1">
-        <Typography variant="small" className="font-medium text-foreground">
-          {keybind.label}
-        </Typography>
-        <Typography variant="xs" className="mt-1 text-muted-foreground">
-          {keybind.description}
-        </Typography>
+        <SettingsTabLabel label={keybind.label} description={keybind.description} />
       </div>
       
       <div className="flex shrink-0 items-center gap-3">

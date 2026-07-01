@@ -13,6 +13,7 @@ import {
   SettingsTabCardFooter,
   SettingsTabHeader,
   SettingsTabLayout,
+  SettingsTabLabel,
   SettingsTabRow,
 } from './settings-tab-layout'
 
@@ -259,12 +260,11 @@ export function MeetingAgentTab() {
                 <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
                   <Video className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <Typography variant="small" className="mb-1 text-muted-foreground">
-                  No profile picture set
-                </Typography>
-                <Typography variant="xs" className="text-muted-foreground">
-                  Select an image to upload
-                </Typography>
+                <SettingsTabLabel
+                  label="No profile picture set"
+                  description="Select an image to upload"
+                  labelClassName="font-normal text-muted-foreground"
+                />
               </div>
             )}
 

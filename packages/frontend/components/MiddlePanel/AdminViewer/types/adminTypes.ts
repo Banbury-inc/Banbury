@@ -29,6 +29,7 @@ export interface User {
   hasDriveScope?: boolean
   hasCalendarScope?: boolean
   hasContactsScope?: boolean
+  marketingEmailsOptOut?: boolean
 }
 
 export interface SystemStats {

@@ -7,6 +7,7 @@ import {
   SettingsTabCardFooter,
   SettingsTabHeader,
   SettingsTabLayout,
+  SettingsTabLabel,
   SettingsTabSection,
   SettingsTabValueRow,
 } from './settings-tab-layout'
@@ -27,14 +28,7 @@ function FeatureItem({ title, description }: { title: string; description: strin
   return (
     <div className="flex items-start gap-3 px-4 py-3">
       <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-      <div>
-        <Typography variant="small" className="font-medium text-foreground">
-          {title}
-        </Typography>
-        <Typography variant="xs" className="mt-1 text-muted-foreground">
-          {description}
-        </Typography>
-      </div>
+      <SettingsTabLabel label={title} description={description} />
     </div>
   )
 }
