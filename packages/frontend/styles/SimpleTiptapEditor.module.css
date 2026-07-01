@@ -184,29 +184,34 @@
   color: var(--color-card-foreground);
 }
 
+.simple-tiptap-container.document-editor-dark-mode {
+  background: var(--color-card-foreground);
+  color: var(--color-card);
+}
+
 .document-editor-dark-mode .simple-tiptap-content,
 .document-editor-dark-mode .simple-tiptap-editor {
-  background: var(--color-card);
-  color: var(--color-card-foreground);
+  background: var(--color-card-foreground);
+  color: var(--color-card);
 }
 
 .document-editor-dark-mode .simple-tiptap-editor {
-  caret-color: var(--color-card-foreground);
+  caret-color: var(--color-card);
 }
 
 .document-editor-dark-mode .simple-tiptap-editor li::marker {
-  color: var(--color-card-foreground);
+  color: var(--color-card);
 }
 
 .document-editor-dark-mode .simple-tiptap-editor blockquote {
-  border-left-color: color-mix(in oklch, var(--color-card-foreground) 40%, transparent);
-  color: color-mix(in oklch, var(--color-card-foreground) 70%, transparent);
+  border-left-color: color-mix(in oklch, var(--color-card) 40%, transparent);
+  color: color-mix(in oklch, var(--color-card) 70%, transparent);
 }
 
 .document-editor-dark-mode .simple-tiptap-editor code,
 .document-editor-dark-mode .simple-tiptap-editor pre {
-  background: color-mix(in oklch, var(--color-card-foreground) 15%, var(--color-card));
-  color: var(--color-card-foreground);
+  background: color-mix(in oklch, var(--color-card) 15%, var(--color-card-foreground));
+  color: var(--color-card);
 }
 
 .document-editor-dark-mode .simple-tiptap-editor pre code {
@@ -214,26 +219,26 @@
 }
 
 .document-editor-dark-mode .simple-tiptap-editor mark {
-  background: color-mix(in oklch, var(--color-card-foreground) 30%, var(--color-card));
-  color: var(--color-card-foreground);
+  background: color-mix(in oklch, var(--color-card) 30%, var(--color-card-foreground));
+  color: var(--color-card);
 }
 
 .document-editor-dark-mode .simple-tiptap-editor a {
-  color: color-mix(in oklch, var(--color-primary) 80%, var(--color-card-foreground));
+  color: color-mix(in oklch, var(--color-primary) 80%, var(--color-card));
 }
 
 .document-editor-dark-mode .simple-tiptap-editor table,
 .document-editor-dark-mode .simple-tiptap-editor th,
 .document-editor-dark-mode .simple-tiptap-editor td {
-  background: var(--color-card) !important;
-  color: var(--color-card-foreground) !important;
+  background: var(--color-card-foreground) !important;
+  color: var(--color-card) !important;
 }
 
 .document-editor-dark-mode .simple-tiptap-editor thead,
 .document-editor-dark-mode .simple-tiptap-editor th,
 .document-editor-dark-mode .simple-tiptap-editor tbody tr:nth-child(even),
 .document-editor-dark-mode .simple-tiptap-editor tbody tr:hover {
-  background: color-mix(in oklch, var(--color-card-foreground) 12%, var(--color-card)) !important;
+  background: color-mix(in oklch, var(--color-card) 12%, var(--color-card-foreground)) !important;
 }
 
 .simple-tiptap-editor blockquote {

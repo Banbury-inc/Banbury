@@ -440,7 +440,7 @@ export const AITiptapEditor: React.FC<AITiptapEditorProps> = ({
     <div
       className={cn(
         styles['simple-tiptap-container'],
-        !isDocumentEditorDarkMode && styles['document-editor-dark-mode'],
+        isDocumentEditorDarkMode && styles['document-editor-dark-mode'],
         className
       )}
     >
