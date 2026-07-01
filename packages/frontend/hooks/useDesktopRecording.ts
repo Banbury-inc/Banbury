@@ -45,6 +45,7 @@ interface UseDesktopRecordingReturn {
   recordingStatus: RecordingStatus
   detectedMeetings: MeetingWindow[]
   error: string | null
+  isVideoCapturing: boolean
   
   // Actions
   requestPermissions: () => Promise<void>
@@ -74,6 +75,7 @@ export function useDesktopRecording(): UseDesktopRecordingReturn {
   const [recordingStatus, setRecordingStatus] = useState<RecordingStatus>(defaultRecordingStatus)
   const [detectedMeetings, setDetectedMeetings] = useState<MeetingWindow[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [isVideoCapturing, setIsVideoCapturing] = useState(true)
   
   // Keep track of cleanup functions
   const cleanupFnsRef = useRef<(() => void)[]>([])
@@ -138,13 +140,20 @@ export function useDesktopRecording(): UseDesktopRecordingReturn {
         
         const cleanupRecordingStarted = desktopRecording.onRecordingStarted((status) => {
           setRecordingStatus(status)
+          setIsVideoCapturing(true)
         })
         cleanupFnsRef.current.push(cleanupRecordingStarted)
         
         const cleanupRecordingStopped = desktopRecording.onRecordingStopped(() => {
           setRecordingStatus(defaultRecordingStatus)
+          setIsVideoCapturing(true)
         })
         cleanupFnsRef.current.push(cleanupRecordingStopped)
+
+        const cleanupMediaCaptureStatus = desktopRecording.onMediaCaptureStatus?.((status) => {
+          if (status.type === 'video') setIsVideoCapturing(status.capturing)
+        })
+        if (cleanupMediaCaptureStatus) cleanupFnsRef.current.push(cleanupMediaCaptureStatus)
         
         const cleanupPermissionUpdate = desktopRecording.onPermissionUpdate((perms) => {
           setPermissions(perms)
@@ -259,6 +268,7 @@ export function useDesktopRecording(): UseDesktopRecordingReturn {
     recordingStatus,
     detectedMeetings,
     error,
+    isVideoCapturing,
     requestPermissions,
     startRecording,
     stopRecording,

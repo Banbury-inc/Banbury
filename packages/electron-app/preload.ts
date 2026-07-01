@@ -243,6 +243,13 @@ contextBridge.exposeInMainWorld('desktopApp', {
      */
     onError: (callback: (error: { error: string; windowId?: string }) => void): () => void => {
       return addIPCListener('desktop-recording:error', callback)
+    },
+
+    /**
+     * Subscribe to media capture status changes (video/audio interrupted or resumed)
+     */
+    onMediaCaptureStatus: (callback: (status: { window: MeetingWindow; type: 'video' | 'audio'; capturing: boolean }) => void): () => void => {
+      return addIPCListener('desktop-recording:media-capture-status', callback)
     }
   },
 
@@ -413,6 +420,7 @@ declare global {
         onRecordingStopped: (callback: (event: { windowId: string; reason: string }) => void) => () => void
         onPermissionUpdate: (callback: (permissions: PermissionStatus) => void) => () => void
         onError: (callback: (error: { error: string; windowId?: string }) => void) => () => void
+        onMediaCaptureStatus: (callback: (status: { window: MeetingWindow; type: 'video' | 'audio'; capturing: boolean }) => void) => () => void
       }
       updater: {
         checkForUpdates: () => Promise<{ available: boolean; error?: string; currentVersion?: string; latestVersion?: string }>

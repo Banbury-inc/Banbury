@@ -356,3 +356,28 @@ export function formatRecordingDuration(startTime: number | null): string {
   
   return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 }
+
+/**
+ * Whether a platform is a browser-based meeting that requires the tab to stay visible
+ */
+export function isBrowserBasedMeetingPlatform(platform: string): boolean {
+  return platform.toLowerCase() === 'meet'
+}
+
+/**
+ * Guidance shown when recording browser-based meetings like Google Meet
+ */
+export function getBrowserMeetingRecordingGuidance(platform: string): string | null {
+  if (!isBrowserBasedMeetingPlatform(platform)) return null
+
+  return 'Keep the Google Meet tab visible on screen, or enable Picture-in-Picture before switching away. If the Meet tab is hidden, video will record as a black screen (audio may still work).'
+}
+
+/**
+ * Toast description when starting a browser-based meeting recording
+ */
+export function getBrowserMeetingRecordingStartMessage(platform: string): string | null {
+  if (!isBrowserBasedMeetingPlatform(platform)) return null
+
+  return 'Switch back to your Google Meet tab or enable Picture-in-Picture so video can be captured.'
+}
