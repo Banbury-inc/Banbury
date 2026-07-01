@@ -58,6 +58,10 @@ export interface DesktopAppAPI {
   getPlatform: () => string
   isDesktop: boolean
   getElectronVersion: () => string
+  openFileDialog?: (options?: { multiple?: boolean }) => Promise<{
+    canceled: boolean
+    files: Array<{ name: string; data: ArrayBuffer; mimeType: string }>
+  }>
   desktopRecording: DesktopRecordingAPI
 }
 

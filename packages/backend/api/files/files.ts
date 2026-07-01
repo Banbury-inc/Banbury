@@ -2,6 +2,19 @@ import { ApiService } from "../apiService";
 import axios from 'axios';
 
 export default class Files {
+  private static async postMultipartForm(url: string, formData: FormData) {
+    ApiService.loadAuthToken()
+
+    const multipartClient = axios.create()
+    delete (multipartClient.defaults.headers.common as Record<string, unknown>)['Content-Type']
+
+    return multipartClient.post(url, formData, {
+      headers: {
+        Authorization: axios.defaults.headers.common['Authorization'] as string,
+      },
+    })
+  }
+
   /**
    * Get user's S3 cloud files
    */
@@ -108,24 +121,16 @@ export default class Files {
    */
   static async uploadToS3(file: File | Blob, fileName: string, deviceName: string = 'web-editor', filePath: string = '', fileParent: string = '') {
     try {
-      // Ensure token is loaded
-      ApiService.loadAuthToken();
-      
       const formData = new FormData();
       formData.append('file', file, fileName);
       formData.append('device_name', deviceName);
       formData.append('file_path', filePath);
       formData.append('file_parent', fileParent);
 
-      const response = await axios({
-        method: 'post',
-        url: `${ApiService.baseURL}/files/upload_to_s3/`,
-        data: formData,
-        headers: {
-          'Authorization': axios.defaults.headers.common['Authorization'],
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const response = await this.postMultipartForm(
+        `${ApiService.baseURL}/files/upload_to_s3/`,
+        formData,
+      );
 
       if (response.data.result === 'success') {
         return {
@@ -487,15 +492,10 @@ export default class Files {
       formData.append('file_path', markerFilePath);
       formData.append('file_parent', fullFolderPath);
 
-      const response = await axios({
-        method: 'post',
-        url: `${ApiService.baseURL}/files/upload_to_s3/`,
-        data: formData,
-        headers: {
-          'Authorization': axios.defaults.headers.common['Authorization'],
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const response = await this.postMultipartForm(
+        `${ApiService.baseURL}/files/upload_to_s3/`,
+        formData,
+      );
 
       if (response.data.result === 'success') {
         return {

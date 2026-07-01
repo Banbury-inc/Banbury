@@ -4,6 +4,7 @@ import path from 'path'
 import fs from 'fs'
 import { initDesktopRecording, setupDesktopRecordingIPC, cleanupDesktopRecording } from './desktop-recording'
 import { setupTerminalIPC, cleanupAllTerminalSessions, cleanupTerminalSessionsForWebContents } from './terminal'
+import { setupFileDialogIPC } from './file-dialog'
 
 let autoUpdater: any = null
 let isUpdaterAvailable = false
@@ -517,6 +518,9 @@ app.whenReady().then(() => {
 
   // Set up terminal PTY IPC handlers
   setupTerminalIPC()
+
+  // Set up native file dialog for desktop uploads
+  setupFileDialogIPC()
   
   // Set up IPC handler for opening URLs in system browser (required for OAuth)
   ipcMain.handle('shell:open-external', async (_event, url: string) => {

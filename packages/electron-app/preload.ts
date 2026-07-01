@@ -91,6 +91,26 @@ contextBridge.exposeInMainWorld('desktopApp', {
   },
 
   /**
+   * Open native file dialog (desktop only)
+   */
+  openFileDialog: (options?: { multiple?: boolean }): Promise<{
+    canceled: boolean
+    files: Array<{ name: string; data: ArrayBuffer; mimeType: string }>
+  }> => {
+    return ipcRenderer.invoke('dialog:open-files', options ?? {}).then((result) => ({
+      canceled: result.canceled,
+      files: (result.files ?? []).map((file: { name: string; data: Uint8Array; mimeType: string }) => {
+        const bytes = file.data instanceof Uint8Array ? file.data : new Uint8Array(file.data)
+        return {
+          name: file.name,
+          mimeType: file.mimeType,
+          data: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+        }
+      }),
+    }))
+  },
+
+  /**
    * Window Controls API
    */
   windowControls: {
@@ -360,6 +380,10 @@ declare global {
       isDesktop: boolean
       getElectronVersion: () => string
       openExternal: (url: string) => Promise<{ success: boolean; error?: string }>
+      openFileDialog: (options?: { multiple?: boolean }) => Promise<{
+        canceled: boolean
+        files: Array<{ name: string; data: ArrayBuffer; mimeType: string }>
+      }>
       windowControls: {
         minimizeWindow: () => Promise<void>
         maximizeWindow: () => Promise<void>
