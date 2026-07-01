@@ -37,9 +37,10 @@ export function useMeetingWorkspaceHandlers(deps: WorkspaceDependencies) {
       updatePanelActiveTab,
       addTabToPanel,
       setActivePanelId,
-      setPanelLayout
+      setPanelLayout,
+      setSelectedMeeting
     )
-  }, [activePanelId, panelLayout, setActivePanelId, setPanelLayout, hasWorkspaceDeps])
+  }, [activePanelId, panelLayout, setActivePanelId, setPanelLayout, setSelectedMeeting, hasWorkspaceDeps])
 
   const handleMeetingSelect = useCallback((meeting: MeetingSession) => {
     if (!hasWorkspaceDeps) return

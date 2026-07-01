@@ -28,6 +28,7 @@ import { handleCreatePowerpointSubmit } from "../../handlers/handleCreatePowerpo
 import { handleCreateCodeFileSubmit } from "../../handlers/handleCreateCodeFileSubmit"
 import { handleCreateRootFolderSubmit } from "../../handlers/handleCreateRootFolderSubmit"
 import { getRecentFileIds, addRecentFileId } from "../../handlers/handleRecentFiles"
+import { handleFileUpload as handleFileUploadAction } from "./handlers/handleFileUpload"
 import { fetchStarredFileIds, starFile, unstarFile } from "../../handlers/handleStarredFiles"
 import { filterFileTree, filterFlatFileList } from "../../handlers/handleFileTypeFilter"
 import { 
@@ -75,6 +76,7 @@ export interface LocalFilesViewRef {
   triggerCreateTldraw: () => void
   triggerCreatePowerpoint: () => void
   triggerCreateCodeFile: () => void
+  triggerFileUpload: () => void
 }
 
 export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>(function LocalFilesView({
@@ -845,9 +847,13 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
 
   // Handle file upload
   const handleFileUpload = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click()
-    }
+    handleFileUploadAction({
+      username: userInfo?.username,
+      onUploadStart: () => setUploadingFolder(true),
+      onUploadEnd: () => setUploadingFolder(false),
+      onSuccess: fetchUserFiles,
+      onError: () => alert('Failed to upload file. Please try again.'),
+    })
   }
 
   // Handle folder upload
@@ -1000,7 +1006,8 @@ export const LocalFilesView = forwardRef<LocalFilesViewRef, LocalFilesViewProps>
     triggerCreateTldraw: handleCreateTldraw,
     triggerCreatePowerpoint: handleCreatePowerpoint,
     triggerCreateCodeFile: handleCreateCodeFile,
-  }), [handleCreateDocument, handleCreateSpreadsheet, handleCreateTldraw, handleCreatePowerpoint, handleCreateCodeFile])
+    triggerFileUpload: handleFileUpload,
+  }), [handleCreateDocument, handleCreateSpreadsheet, handleCreateTldraw, handleCreatePowerpoint, handleCreateCodeFile, handleFileUpload])
 
   // Expose handlers for parent components (legacy window-based approach)
   useEffect(() => {

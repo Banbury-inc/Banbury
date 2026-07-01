@@ -5,6 +5,7 @@ import { ChatOpenAI } from "@langchain/openai"
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai"
 import { randomUUID } from "crypto"
 import { PLANNER_SYSTEM_PROMPT, API_CONFIG } from "./constants"
+import { getAnthropicChatModelOptions } from "../langgraph-stream/agent/modelOptions"
 
 export const config = API_CONFIG
 
@@ -49,12 +50,14 @@ function getModel(provider: string, modelId?: string) {
         apiKey: process.env.GOOGLE_AI_API_KEY,
         temperature: 0.3,
       })
-    default:
+    default: {
+      const model = modelId || process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514"
       return new ChatAnthropic({
-        model: modelId || process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514",
+        model,
         apiKey: process.env.ANTHROPIC_API_KEY,
-        temperature: 0.3,
+        ...getAnthropicChatModelOptions(model, 0.3),
       })
+    }
   }
 }
 

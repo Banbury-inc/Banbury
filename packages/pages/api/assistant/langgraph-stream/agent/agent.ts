@@ -6,7 +6,7 @@ import { StateGraph, START, END, MessagesAnnotation } from "@langchain/langgraph
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { getServerContextValue } from "../../../../../frontend/assistant/langraph/serverContext";
 import type { BaseMessage } from "@langchain/core/messages";
-import { getOpenAITemperatureOptions } from "./modelOptions";
+import { getOpenAITemperatureOptions, getAnthropicChatModelOptions } from "./modelOptions";
 // Import tools from separate files
 import { webSearchTool } from "./tools/webSearchTool";
 import { tavilyExtractTool } from "./tools/tavilyExtractTool";
@@ -190,8 +190,7 @@ function createChatModel(provider: ModelProvider, modelId?: string) {
   return new ChatAnthropic({
     model: actualModelId,
     apiKey: process.env.ANTHROPIC_API_KEY,
-    temperature: 0.2,
-    invocationKwargs: { top_p: undefined },
+    ...getAnthropicChatModelOptions(actualModelId),
   })
 }
 

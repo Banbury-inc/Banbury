@@ -145,9 +145,7 @@ export function FilesTab({
   }, [setIsRefreshing, externalOnRefreshComplete])
 
   const handleFileUpload = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click()
-    }
+    localFilesViewRef.current?.triggerFileUpload()
   }
 
   const handleFolderUpload = () => {

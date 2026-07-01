@@ -96,6 +96,7 @@ export class ApiService {
   }
   static baseURL = CONFIG.url;
   static Files = Files;
+  static uploadToS3 = Files.uploadToS3.bind(Files);
   static Emails = Emails;
   static Calendar = Calendar;
   static OutlookCalendar = OutlookCalendar;

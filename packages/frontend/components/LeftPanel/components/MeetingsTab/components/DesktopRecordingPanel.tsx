@@ -333,35 +333,35 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
         
         {/* Active Recording Display */}
         {recordingStatus.isRecording && (
-          <div className="flex items-center justify-between gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-2 py-1.5">
-            <div className="flex min-w-0 items-center gap-2">
-              <div className="h-2 w-2 shrink-0 rounded-full bg-destructive animate-pulse" />
-              <span className="truncate text-xs font-medium text-destructive">Recording in progress</span>
-              <Badge variant="outline" className="h-5 border-destructive/20 bg-background/60 px-1.5 font-mono text-[11px] text-destructive">
-                {recordingDuration}
-              </Badge>
+          <div className="flex items-center justify-between bg-muted/50 rounded-lg px-2 py-1.5 hover:bg-muted transition-colors">
+            <div className="flex items-center gap-3">
+              <div>
+                <p className="text-sm font-medium truncate max-w-[200px]">
+                  Recording in progress
+                </p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  {recordingDuration}
+                </p>
+              </div>
             </div>
-            <Button 
-              variant="destructive" 
+            <Button
               size="xs"
-              onClick={handleStop} 
+              onClick={handleStop}
               disabled={isLoading}
               aria-label="Stop recording"
-              className="h-7 shrink-0 px-2 text-xs"
             >
               {isLoading ? (
-                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Square className="mr-1 h-3.5 w-3.5" />
+                <Square className="h-4 w-4" />
               )}
-              Stop
             </Button>
           </div>
         )}
         
         {/* Detected Meetings List */}
         {!recordingStatus.isRecording && allPermissionsGranted && isPlatformSupported && (
-          <div className="">
+          <div>
             
             {detectedMeetings.length === 0 ? (
               <div className="text-center">
@@ -381,7 +381,7 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
                   return (
                     <div 
                       key={mostRecentMeeting.id}
-                      className="flex items-center justify-between bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                      className="flex items-center justify-between bg-muted/50 rounded-lg px-2 py-1.5 hover:bg-muted transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div>
@@ -402,8 +402,7 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <>
-                            <Play className="h-4 w-4 mr-1" />
-                            Record
+                            <Play className="h-4 w-4" />
                           </>
                         )}
                       </Button>

@@ -41,6 +41,9 @@ import { loadConversations as loadConversationsHandler } from "./handlers/loadCo
 import { handleStorageChange } from "./handlers/handleStorageChange";
 import { syncAttachmentsToLocalStorage } from "./handlers/syncAttachmentsToLocalStorage";
 import { syncCurrentCodeFileContext } from "./handlers/syncCurrentCodeFileContext";
+import { fetchMeetingTranscriptAttachment } from "./handlers/fetchMeetingTranscriptAttachment";
+import { getMeetingTranscriptFileId } from "../../../../pages/Workspaces/handlers/tabManagement";
+import { MeetingSession } from "../../../../types/meeting-types";
 
 
 // Destructure Assistant UI primitives from namespace import to avoid named import type issues
@@ -58,23 +61,26 @@ interface ThreadProps {
   } | null;
   selectedFile?: FileSystemItem | null;
   selectedEmail?: any | null;
+  selectedMeeting?: MeetingSession | null;
   onEmailSelect?: (email: any) => void;
   assistantTabId?: string;
   /** Disable composer autofocus to prevent scroll-to-input on mount (e.g. in embedded demos) */
   composerAutofocus?: boolean;
 }
 
-export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail, onEmailSelect, assistantTabId, composerAutofocus = true }) => {
+export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail, selectedMeeting, onEmailSelect, assistantTabId, composerAutofocus = true }) => {
   const { toast } = useToast();
   const [attachedFiles, setAttachedFiles] = useState<FileSystemItem[]>([]);
   const [attachedEmails, setAttachedEmails] = useState<any[]>([]);
   const lastAutoAttachedFileIdRef = useRef<string | null>(null);
   const lastAutoAttachedEmailIdRef = useRef<string | null>(null);
+  const lastAutoAttachedMeetingIdRef = useRef<string | null>(null);
 
   // Reset the auto-attach refs when the tab changes
   useEffect(() => {
     lastAutoAttachedFileIdRef.current = null;
     lastAutoAttachedEmailIdRef.current = null;
+    lastAutoAttachedMeetingIdRef.current = null;
   }, [assistantTabId]);
   const [drawioModalOpen, setDrawioModalOpen] = useState(false);
   const [selectedDrawioFile, setSelectedDrawioFile] = useState<FileSystemItem | null>(null);
@@ -345,6 +351,57 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
     }
   }, [selectedEmail]);
 
+  // Auto-attach meeting transcript when a meeting tab is active
+  useEffect(() => {
+    let cancelled = false;
+
+    const removeMeetingTranscriptAttachment = (meetingId: string) => {
+      const fileId = getMeetingTranscriptFileId(meetingId);
+      setAttachedFiles((prev) => prev.filter((file) => file.file_id !== fileId));
+      setAttachmentPayloads((prev) => {
+        const next = { ...prev };
+        delete next[fileId];
+        return next;
+      });
+    };
+
+    if (selectedMeeting?.id) {
+      if (lastAutoAttachedMeetingIdRef.current === selectedMeeting.id) {
+        return;
+      }
+
+      const meetingId = selectedMeeting.id;
+      const previousMeetingId = lastAutoAttachedMeetingIdRef.current;
+      if (previousMeetingId && previousMeetingId !== meetingId) {
+        removeMeetingTranscriptAttachment(previousMeetingId);
+      }
+
+      fetchMeetingTranscriptAttachment(selectedMeeting).then((attachment) => {
+        if (cancelled) return;
+
+        if (!attachment) {
+          toast({
+            title: "No transcript available",
+            description: "This meeting does not have a transcript yet.",
+          });
+          lastAutoAttachedMeetingIdRef.current = meetingId;
+          return;
+        }
+
+        handleAttachmentPayload(attachment.file.file_id!, attachment.payload);
+        handleFileAttach(attachment.file);
+        lastAutoAttachedMeetingIdRef.current = meetingId;
+      });
+    } else if (lastAutoAttachedMeetingIdRef.current) {
+      removeMeetingTranscriptAttachment(lastAutoAttachedMeetingIdRef.current);
+      lastAutoAttachedMeetingIdRef.current = null;
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedMeeting]);
+
   // Keep active code-file context in localStorage for AI code-edit tool calls.
   useEffect(() => {
     syncCurrentCodeFileContext(selectedFile || null);
@@ -560,6 +617,13 @@ export const Thread: FC<ThreadProps> = ({ userInfo, selectedFile, selectedEmail,
           if (filePath) return f.path !== filePath;
           return true;
         }));
+        if (fileId) {
+          setAttachmentPayloads((prev) => {
+            const next = { ...prev };
+            delete next[fileId];
+            return next;
+          });
+        }
       }
       
       if (emailId) {

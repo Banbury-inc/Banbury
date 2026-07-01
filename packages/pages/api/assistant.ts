@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import { tool } from "@langchain/core/tools";
 import { ChatAnthropic } from "@langchain/anthropic";
+import { getAnthropicChatModelOptions } from "./assistant/langgraph-stream/agent/modelOptions";
 import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
 
 // Simple DOCX text extraction function
@@ -94,11 +95,12 @@ const webSearch: any = tool(
   } as any
 );
 
+const anthropicModelId = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
+
 const anthropicModel = new ChatAnthropic({
-  model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514",
+  model: anthropicModelId,
   apiKey: process.env.ANTHROPIC_API_KEY,
-  temperature: 0.2,
-  invocationKwargs: { top_p: undefined }, // Override to prevent -1 being sent to newer models
+  ...getAnthropicChatModelOptions(anthropicModelId),
 });
 
 const tools = [webSearch];
