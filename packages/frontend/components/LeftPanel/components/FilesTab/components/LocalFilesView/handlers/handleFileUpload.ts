@@ -1,5 +1,5 @@
-import { ApiService } from '../../../../../../backend/api/apiService'
-import { openFilePicker } from '../../../../../utils/open-file-picker'
+import { ApiService } from '../../../../../../../../backend/api/apiService'
+import { openFilePicker } from '../../../../../../../utils/open-file-picker'
 
 interface HandleFileUploadParams {
   username: string | undefined
