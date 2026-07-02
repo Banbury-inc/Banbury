@@ -19,7 +19,9 @@ import {
   handleStartDesktopSDKRecording, 
   handleStopDesktopSDKRecording,
   getPlatformDisplayName,
-  formatRecordingDuration
+  formatRecordingDuration,
+  getBrowserMeetingRecordingGuidance,
+  getBrowserMeetingRecordingStartMessage
 } from '../../../../../pages/MeetingAgent/handlers/desktopRecordingHandlers'
 import { useToast } from '../../../../common/ui/use-toast'
 import zoomLogo from '../../../../../assets/images/zoom-fondo-blanco-vertical-seeklogo.png'
@@ -89,7 +91,8 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
     requestPermissions,
     startRecording,
     stopRecording,
-    refreshStatus
+    refreshStatus,
+    isVideoCapturing
   } = useDesktopRecording()
   
   const { toast } = useToast()
@@ -153,9 +156,10 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
       )
       
       if (result.success) {
+        const startMessage = getBrowserMeetingRecordingStartMessage(platform)
         toast({
           title: 'Recording Started',
-          description: `Recording ${getPlatformDisplayName(platform)} meeting.`
+          description: startMessage || `Recording ${getPlatformDisplayName(platform)} meeting.`
         })
         
         // Store the session ID for when we stop recording
@@ -333,7 +337,16 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
         
         {/* Active Recording Display */}
         {recordingStatus.isRecording && (
-          <div className="flex items-center justify-between bg-muted/50 rounded-lg px-2 py-1.5 hover:bg-muted transition-colors">
+          <div className="space-y-2">
+            {!isVideoCapturing && (
+              <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-2 text-yellow-600 dark:text-yellow-500 text-xs">
+                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>
+                  Video capture paused. Switch back to your Google Meet tab or enable Picture-in-Picture to restore video.
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-between bg-muted/50 rounded-lg px-2 py-1.5 hover:bg-muted transition-colors">
             <div className="flex items-center gap-3">
               <div>
                 <p className="text-sm font-medium truncate max-w-[200px]">
@@ -357,6 +370,7 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
               )}
             </Button>
           </div>
+          </div>
         )}
         
         {/* Detected Meetings List */}
@@ -378,7 +392,15 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
                 {(() => {
                   // Only show the most recent meeting (last in array, as it's the most recently detected)
                   const mostRecentMeeting = detectedMeetings[detectedMeetings.length - 1]
+                  const meetGuidance = getBrowserMeetingRecordingGuidance(mostRecentMeeting.platform)
                   return (
+                    <div className="space-y-2">
+                      {meetGuidance && (
+                        <div className="flex items-start gap-2 bg-muted/50 border border-border rounded-lg p-2 text-xs text-muted-foreground">
+                          <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                          <span>{meetGuidance}</span>
+                        </div>
+                      )}
                     <div 
                       key={mostRecentMeeting.id}
                       className="flex items-center justify-between bg-muted/50 rounded-lg px-2 py-1.5 hover:bg-muted transition-colors"
@@ -406,6 +428,7 @@ export function DesktopRecordingPanel({ onRecordingComplete, onRecordingStarted 
                           </>
                         )}
                       </Button>
+                    </div>
                     </div>
                   )
                 })()}

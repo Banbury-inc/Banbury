@@ -14,7 +14,7 @@ import { Input } from '../components/common/ui/old-input';
 import { Label } from '../components/common/ui/label';
 import { CONFIG } from '../config/config';
 import { ApiService } from '../../backend/api/apiService';
-import { handleGoogleLogin as handleGoogleLoginAction, isElectronApp } from './handlers/login';
+import { handleGoogleLogin as handleGoogleLoginAction, getPostLoginRedirect, isElectronApp } from './handlers/login';
 
 const Login = (): JSX.Element => {
   const router = useRouter();
@@ -72,8 +72,8 @@ const Login = (): JSX.Element => {
       const result = await ApiService.login(formData.username, formData.password);
       
       if (result.success) {
-        // Redirect to workspaces
-        router.push('/workspaces');
+        // Redirect to the original deep link if one was preserved, otherwise workspaces
+        router.push(getPostLoginRedirect(router.query.returnUrl));
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';

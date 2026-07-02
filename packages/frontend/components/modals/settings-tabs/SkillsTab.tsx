@@ -22,6 +22,7 @@ import {
   SettingsTabCardFooter,
   SettingsTabHeader,
   SettingsTabLayout,
+  SettingsTabLabel,
   SettingsTabRow,
   SettingsTabSection,
 } from './settings-tab-layout'
@@ -183,12 +184,12 @@ export function SkillsTab() {
                         onClick={() => handleEditSkill(skill)}
                         className="min-w-0 flex-1 text-left"
                       >
-                        <Typography variant="small" className="truncate font-medium text-foreground">
-                          {skill.name}
-                        </Typography>
-                        <Typography variant="xs" className="mt-1 line-clamp-2 text-muted-foreground">
-                          {skill.description || 'No description'}
-                        </Typography>
+                        <SettingsTabLabel
+                          label={skill.name}
+                          description={skill.description || 'No description'}
+                          labelClassName="truncate"
+                          descriptionClassName="line-clamp-2"
+                        />
                       </button>
                       <Badge variant={skill.enabled ? 'secondary' : 'outline'}>
                         {skill.enabled ? 'Enabled' : 'Disabled'}
@@ -228,14 +229,10 @@ export function SkillsTab() {
         <SettingsTabCard>
           <SettingsTabCardBody>
             <div className="flex items-start justify-between gap-3 px-4 py-3.5">
-              <div>
-                <Typography variant="small" className="font-medium text-foreground">
-                  {selectedSkill ? `Edit ${selectedSkill.name}` : 'Create Skill'}
-                </Typography>
-                <Typography variant="xs" className="mt-1 text-muted-foreground">
-                  Save a complete SKILL.md-style markdown document. Frontmatter name and description are used in lists.
-                </Typography>
-              </div>
+              <SettingsTabLabel
+                label={selectedSkill ? `Edit ${selectedSkill.name}` : 'Create Skill'}
+                description="Save a complete SKILL.md-style markdown document. Frontmatter name and description are used in lists."
+              />
               {selectedSkill && (
                 <Button type="button" variant="ghost" size="sm" onClick={handleCreateNew}>
                   <X className="h-4 w-4" />

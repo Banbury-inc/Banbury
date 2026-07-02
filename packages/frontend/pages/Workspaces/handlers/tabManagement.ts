@@ -552,6 +552,7 @@ export const openAdminInTab = (
     'users': 'User Management',
     'analytics-overview': 'Analytics',
     'visitors': 'Visitors',
+    'email': 'Email',
     'marketing': 'Marketing',
     'conversations': 'AI Conversations',
     'filetypes': 'File Types',

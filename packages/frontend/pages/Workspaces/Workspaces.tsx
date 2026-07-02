@@ -118,6 +118,7 @@ const Workspaces = (): React.ReactNode => {
   const [isMac, setIsMac] = useState(false);
   const [fileSearchOpen, setFileSearchOpen] = useState(false);
   const [activeLeftPanelTab, setActiveLeftPanelTab] = useState<string>('files');
+  const hasInitializedAuthRef = useRef(false);
 
   // Left panel resize functionality
   const { leftPanelWidth, isResizing, handleResizeStart } = useLeftPanelResize({
@@ -746,6 +747,12 @@ const Workspaces = (): React.ReactNode => {
   }, [toast, triggerSidebarRefresh]);
 
   useEffect(() => {
+    // Run once on mount: `router` changes identity on every route change (including
+    // shallow query-param replaces like ?openSettings=true), and re-running the auth
+    // check flips `loading` back on, unmounting NavSidebar and closing the settings modal
+    if (hasInitializedAuthRef.current) return;
+    hasInitializedAuthRef.current = true;
+
     // Ensure dark mode is enabled
     window.localStorage.setItem('themeMode', 'dark');
     

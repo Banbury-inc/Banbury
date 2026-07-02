@@ -1,4 +1,4 @@
-import { Minus, Square, X } from 'lucide-react'
+import { Maximize, Minus, SquareSquare, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '../common/ui/button'
 
@@ -54,7 +54,11 @@ export function WindowControls() {
         className="w-[50px] p-0 rounded-none hover:bg-zinc-700/50 align-middle"
         title={isMaximized ? "Restore" : "Maximize"}
       >
-        <Square />
+        {isMaximized ? (
+          <SquareSquare className="h-4 w-4" strokeWidth={1.5} />
+        ) : (
+          <Maximize className="h-4 w-4" strokeWidth={1.5} />
+        )}
       </Button>
       <Button
         variant="ghost"

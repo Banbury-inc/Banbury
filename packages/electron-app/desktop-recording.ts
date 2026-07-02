@@ -350,11 +350,12 @@ function setupEventListeners(): void {
   }
   
   // Log all events for debugging
-  const debugEvents = ['permissions-granted', 'meeting-detected', 'meeting-ended', 
-                       'recording-started', 'recording-stopped', 'recording-error',
+  const debugEvents = ['permissions-granted', 'meeting-detected', 'meeting-ended', 'meeting-closed', 'meeting-updated',
+                       'recording-started', 'recording-stopped', 'recording-ended', 'recording-error',
                        'error', 'sdk-error', 'initialized',
                        'upload-started', 'upload-progress', 'upload-complete', 'upload-error',
                        'uploading', 'upload-failed',
+                       'media-capture-status', 'participant-capture-status',
                        'transcript.data', 'transcript.partial_data', 'transcript-data', 'transcript-partial-data']
   
   debugEvents.forEach(eventName => {
@@ -402,8 +403,7 @@ function setupEventListeners(): void {
     sendToRenderer('desktop-recording:meeting-detected', event.window)
   })
   
-  // Meeting ended event
-  RecallAiSdk.addEventListener('meeting-ended', (evt: unknown) => {
+  function handleMeetingEnded(evt: unknown): void {
     const event = evt as { window: MeetingWindow }
     
     removeDetectedMeeting(event.window.id)
@@ -420,7 +420,11 @@ function setupEventListeners(): void {
     
     // Notify renderer process
     sendToRenderer('desktop-recording:meeting-ended', event.window)
-  })
+  }
+
+  // Meeting ended event (SDK 1.x and 2.x event names)
+  RecallAiSdk.addEventListener('meeting-ended', handleMeetingEnded)
+  RecallAiSdk.addEventListener('meeting-closed', handleMeetingEnded)
   
   // Recording started event
   RecallAiSdk.addEventListener('recording-started', (evt: unknown) => {
@@ -439,10 +443,9 @@ function setupEventListeners(): void {
     sendToRenderer('desktop-recording:recording-started', recordingStatus)
   })
   
-  // Recording stopped event
-  RecallAiSdk.addEventListener('recording-stopped', (evt: unknown) => {
-    const event = evt as RecordingStoppedEvent
-    const stoppedWindowId = event.windowId || recordingStatus.windowId
+  function handleRecordingStopped(evt: unknown): void {
+    const event = evt as RecordingStoppedEvent & { window?: MeetingWindow }
+    const stoppedWindowId = event.windowId || event.window?.id || recordingStatus.windowId
     const stoppedMeeting = removeDetectedMeeting(stoppedWindowId)
     
     recordingStatus = {
@@ -453,8 +456,21 @@ function setupEventListeners(): void {
     }
     
     // Notify renderer process
-    sendToRenderer('desktop-recording:recording-stopped', event)
+    sendToRenderer('desktop-recording:recording-stopped', {
+      windowId: stoppedWindowId || '',
+      reason: 'stopped'
+    })
     if (stoppedMeeting) sendToRenderer('desktop-recording:meeting-ended', stoppedMeeting)
+  }
+
+  // Recording stopped event (SDK 1.x and 2.x event names)
+  RecallAiSdk.addEventListener('recording-stopped', handleRecordingStopped)
+  RecallAiSdk.addEventListener('recording-ended', handleRecordingStopped)
+
+  // Video/audio capture interrupted (e.g. Meet tab hidden without PIP)
+  RecallAiSdk.addEventListener('media-capture-status', (evt: unknown) => {
+    const event = evt as { window: MeetingWindow; type: 'video' | 'audio'; capturing: boolean }
+    sendToRenderer('desktop-recording:media-capture-status', event)
   })
   
   // Recording error event
@@ -522,6 +538,7 @@ type DesktopRecordingEventData =
   | RecordingStatus
   | RecordingStoppedEvent
   | { error: string; windowId?: string }
+  | { window: MeetingWindow; type: 'video' | 'audio'; capturing: boolean }
 
 /**
  * Send message to renderer process

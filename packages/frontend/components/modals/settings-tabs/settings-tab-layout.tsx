@@ -94,6 +94,45 @@ export function SettingsTabGroupLabel({ children }: SettingsTabGroupLabelProps) 
   )
 }
 
+interface SettingsTabLabelProps {
+  label: string
+  description?: string
+  htmlFor?: string
+  labelClassName?: string
+  descriptionClassName?: string
+}
+
+export function SettingsTabLabel({
+  label,
+  description,
+  htmlFor,
+  labelClassName,
+  descriptionClassName,
+}: SettingsTabLabelProps) {
+  const content = (
+    <>
+      <Typography variant="small" className={cn('block font-medium text-foreground', labelClassName)}>
+        {label}
+      </Typography>
+      {description && (
+        <Typography variant="xs" className={cn('block text-muted-foreground', descriptionClassName)}>
+          {description}
+        </Typography>
+      )}
+    </>
+  )
+
+  if (htmlFor) {
+    return (
+      <Label htmlFor={htmlFor} className="flex cursor-pointer flex-col gap-1">
+        {content}
+      </Label>
+    )
+  }
+
+  return <div className="flex flex-col gap-1">{content}</div>
+}
+
 interface SettingsTabRowProps {
   label: string
   description?: string
@@ -109,28 +148,8 @@ export function SettingsTabRow({
   align = 'center',
   children,
 }: SettingsTabRowProps) {
-  const labelContent = htmlFor ? (
-    <Label htmlFor={htmlFor} className="block cursor-pointer">
-      <Typography variant="small" className="font-medium text-foreground">
-        {label}
-      </Typography>
-      {description && (
-        <Typography variant="xs" className="mt-1 text-muted-foreground">
-          {description}
-        </Typography>
-      )}
-    </Label>
-  ) : (
-    <>
-      <Typography variant="small" className="font-medium text-foreground">
-        {label}
-      </Typography>
-      {description && (
-        <Typography variant="xs" className="mt-1 text-muted-foreground">
-          {description}
-        </Typography>
-      )}
-    </>
+  const labelContent = (
+    <SettingsTabLabel label={label} description={description} htmlFor={htmlFor} />
   )
 
   return (
@@ -208,16 +227,7 @@ interface SettingsTabBlockProps {
 export function SettingsTabBlock({ label, description, children }: SettingsTabBlockProps) {
   return (
     <div className="space-y-3 px-4 py-3.5">
-      <div>
-        <Typography variant="small" className="font-medium text-foreground">
-          {label}
-        </Typography>
-        {description && (
-          <Typography variant="xs" className="mt-1 text-muted-foreground">
-            {description}
-          </Typography>
-        )}
-      </div>
+      <SettingsTabLabel label={label} description={description} />
       {children}
     </div>
   )

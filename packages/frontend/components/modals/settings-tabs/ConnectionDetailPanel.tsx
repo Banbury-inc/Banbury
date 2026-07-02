@@ -12,6 +12,7 @@ import {
 import { Separator } from '../../common/ui/separator'
 import { Typography } from '../../common/ui/typography'
 import type { ConnectionMetadata } from './connection-details'
+import { SettingsTabLabel } from './settings-tab-layout'
 
 interface ConnectionDetailPanelProps {
   connection: ConnectionMetadata
@@ -88,12 +89,12 @@ export function ConnectionDetailPanel({
               <div className="space-y-2">
                 {connection.tools.map((tool) => (
                   <div key={tool.name} className="rounded-md border border-border bg-muted/40 p-3">
-                    <Typography variant="xs" className="font-semibold text-foreground">
-                      {tool.name}
-                    </Typography>
-                    <Typography variant="muted" className="mt-1 text-xs text-muted-foreground">
-                      {tool.description}
-                    </Typography>
+                    <SettingsTabLabel
+                      label={tool.name}
+                      description={tool.description}
+                      labelClassName="text-xs font-semibold"
+                      descriptionClassName="text-xs font-normal"
+                    />
                   </div>
                 ))}
               </div>

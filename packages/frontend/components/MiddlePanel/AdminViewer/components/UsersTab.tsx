@@ -39,6 +39,7 @@ interface User {
   workspaceVisitCount?: number
   lastWorkspaceVisitDate?: string
   preferredAuthMethod?: string
+  marketingEmailsOptOut?: boolean
 }
 
 interface GoogleScopesAnalytics {
@@ -81,12 +82,13 @@ const COLUMNS: ColumnConfig[] = [
   { key: 'workspaceVisits', label: 'Workspace Visits', defaultVisible: true },
   { key: 'lastWorkspaceVisit', label: 'Last Workspace Visit', defaultVisible: true },
   { key: 'auth', label: 'Auth Method', defaultVisible: true },
+  { key: 'marketingOptOut', label: 'Marketing Opt-Out', defaultVisible: true },
   { key: 'created', label: 'Created', defaultVisible: true },
 ]
 
 const STORAGE_KEY = 'usersTab-visibleColumns'
 
-type SortKey = 'user' | 'email' | 'integrations' | 'plan' | 'files' | 'storage' | 'aiMessages' | 'logins' | 'lastLogin' | 'workspaceVisits' | 'lastWorkspaceVisit' | 'auth' | 'created' | null
+type SortKey = 'user' | 'email' | 'integrations' | 'plan' | 'files' | 'storage' | 'aiMessages' | 'logins' | 'lastLogin' | 'workspaceVisits' | 'lastWorkspaceVisit' | 'auth' | 'marketingOptOut' | 'created' | null
 type SortDirection = 'asc' | 'desc' | null
 
 export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnalytics }: UsersTabProps) {
@@ -224,6 +226,10 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
           aValue = a.auth_method || ''
           bValue = b.auth_method || ''
           break
+        case 'marketingOptOut':
+          aValue = a.marketingEmailsOptOut ? 1 : 0
+          bValue = b.marketingEmailsOptOut ? 1 : 0
+          break
         case 'created':
           aValue = a.created_at ? new Date(a.created_at).getTime() : 0
           bValue = b.created_at ? new Date(b.created_at).getTime() : 0
@@ -355,6 +361,10 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
                       <div>
                         <div className="text-muted-foreground text-xs">Last Login</div>
                         <div className="text-foreground text-xs">{user.lastLoginDate ? convertToEasternTime(user.lastLoginDate) : 'Never'}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground text-xs">Marketing Opt-Out</div>
+                        <div className="text-foreground font-medium text-sm">{user.marketingEmailsOptOut ? 'Yes' : 'No'}</div>
                       </div>
                     </div>
                     <div className="pt-2 border-t border-zinc-200 dark:border-white/[0.04]">
@@ -519,6 +529,17 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
                       </div>
                     </th>
                   )}
+                  {isColumnVisible('marketingOptOut') && (
+                    <th 
+                      className="text-center py-2 px-2 text-muted-foreground font-medium text-xs cursor-pointer hover:bg-accent/50 transition-colors select-none"
+                      onClick={() => handleSort('marketingOptOut')}
+                    >
+                      <div className="flex items-center justify-center">
+                        Marketing Opt-Out
+                        {getSortIcon('marketingOptOut')}
+                      </div>
+                    </th>
+                  )}
                   {isColumnVisible('created') && (
                     <th 
                       className="text-center py-2 px-2 text-muted-foreground font-medium text-xs cursor-pointer hover:bg-accent/50 transition-colors select-none"
@@ -663,6 +684,17 @@ export function UsersTab({ users, convertToEasternTime, formatBytes, scopesAnaly
                             : 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
                         }`}>
                           {user.auth_method === 'google_oauth' ? 'Google' : 'Email'}
+                        </span>
+                      </td>
+                    )}
+                    {isColumnVisible('marketingOptOut') && (
+                      <td className="py-2 px-2 text-center">
+                        <span className={`px-1 py-0.5 rounded text-xs font-medium ${
+                          user.marketingEmailsOptOut
+                            ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300'
+                            : 'bg-muted text-muted-foreground'
+                        }`}>
+                          {user.marketingEmailsOptOut ? 'Yes' : 'No'}
                         </span>
                       </td>
                     )}
