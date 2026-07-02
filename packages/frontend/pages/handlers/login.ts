@@ -29,6 +29,17 @@ async function openUrlForOAuth(url: string): Promise<void> {
 }
 
 /**
+ * Resolves where to send the user after a successful login.
+ * Only allows internal paths (e.g. deep links like the email unsubscribe link)
+ * to prevent open-redirect abuse.
+ */
+export function getPostLoginRedirect(returnUrl: unknown): string {
+  if (typeof returnUrl !== 'string') return '/workspaces'
+  if (!returnUrl.startsWith('/') || returnUrl.startsWith('//')) return '/workspaces'
+  return returnUrl
+}
+
+/**
  * Handles Google OAuth login flow.
  * Opens OAuth URL in system browser when running in Electron to avoid
  * "This browser doesn't support JavaScript" error from Google.

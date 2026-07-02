@@ -2,6 +2,12 @@ import { NextRouter } from 'next/router';
 import { ApiService } from '../../../../backend/api/apiService';
 import { UserInfo } from '../types';
 
+function buildLoginUrl(router: NextRouter): string {
+  // Preserve deep links (e.g. the email unsubscribe link) through the login flow
+  if (!router.asPath.includes('?')) return '/login';
+  return `/login?returnUrl=${encodeURIComponent(router.asPath)}`;
+}
+
 export const checkAuthAndFetchUser = async (
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   router: NextRouter,
@@ -16,7 +22,7 @@ export const checkAuthAndFetchUser = async (
 
     if (!isValidToken) {
       // Token is invalid, redirect to login
-      router.push('/login');
+      router.push(buildLoginUrl(router));
       return;
     }
 
@@ -59,7 +65,7 @@ export const checkAuthAndFetchUser = async (
         triggerSidebarRefresh();
       }, 500);
     } else {
-      router.push('/login');
+      router.push(buildLoginUrl(router));
       return;
     }
   } finally {
