@@ -1,6 +1,11 @@
 import type { Dispatch, SetStateAction } from 'react'
+import axios from 'axios'
 import { ApiService } from '../../../../../../backend/api/apiService'
 import type { User } from '../../types/adminTypes'
+
+// Bulk sends can take a while (one SMTP send per recipient), so this request
+// gets a much longer timeout than the 30s axios default
+const SEND_EMAIL_TIMEOUT_MS = 5 * 60 * 1000
 
 export interface SendEmailSummary {
   sent: number
@@ -69,11 +74,15 @@ export async function handleSendMarketingEmail({
   setSendSummary(null)
 
   try {
-    const response = await ApiService.post<SendMarketingEmailResponse>('/users/send_marketing_email/', {
-      subject: subject.trim(),
-      body: body.trim(),
-      user_ids: selectedUserIds
-    })
+    const { data: response } = await axios.post<SendMarketingEmailResponse>(
+      `${ApiService.baseURL}/users/send_marketing_email/`,
+      {
+        subject: subject.trim(),
+        body: body.trim(),
+        user_ids: selectedUserIds
+      },
+      { timeout: SEND_EMAIL_TIMEOUT_MS }
+    )
 
     if (response.result !== 'success') {
       setSendError(response.message || 'Failed to send emails')
