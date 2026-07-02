@@ -8,10 +8,22 @@ const anthropicModelsWithoutSamplingParams = [
   "claude-fable-5",
 ] as const
 
+/**
+ * Models that reject `thinking.type: "disabled"` (the @langchain/anthropic default).
+ * These models only accept adaptive thinking or `enabled` with a budget.
+ */
+const anthropicAdaptiveThinkingModelPrefixes = ["claude-fable-5"] as const
+
+function matchesModelPrefix(modelId: string, prefixes: readonly string[]): boolean {
+  return prefixes.some((prefix) => modelId === prefix || modelId.startsWith(`${prefix}-`))
+}
+
 export function anthropicModelRejectsSamplingParams(modelId: string): boolean {
-  return anthropicModelsWithoutSamplingParams.some(
-    (prefix) => modelId === prefix || modelId.startsWith(`${prefix}-`),
-  )
+  return matchesModelPrefix(modelId, anthropicModelsWithoutSamplingParams)
+}
+
+export function anthropicModelRequiresAdaptiveThinking(modelId: string): boolean {
+  return matchesModelPrefix(modelId, anthropicAdaptiveThinkingModelPrefixes)
 }
 
 export function getOpenAITemperatureOptions(modelId: string) {
@@ -25,6 +37,12 @@ export function getOpenAITemperatureOptions(modelId: string) {
 }
 
 export function getAnthropicChatModelOptions(modelId: string, temperature = 0.2) {
+  // @langchain/anthropic defaults to `thinking: { type: "disabled" }`, which these
+  // models reject with a 400. Override via invocationKwargs (spread into the request
+  // payload after `thinking`) since the SDK types don't yet include "adaptive".
+  if (anthropicModelRequiresAdaptiveThinking(modelId))
+    return { invocationKwargs: { thinking: { type: "adaptive" } } }
+
   if (anthropicModelRejectsSamplingParams(modelId)) return {}
 
   return {
